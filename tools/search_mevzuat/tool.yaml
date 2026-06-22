@@ -21,7 +21,7 @@ parameters:
     required: false
     default: 1
     description: 1-indexed page number.
-  mevzuat_turu:
+  legislation_type:
     type: string
     required: false
     default: ""

@@ -42,7 +42,7 @@ BIREYSEL_HTML = """
 @respx.mock
 def test_norm_parses_results():
     route = respx.get(NORM_URL).mock(return_value=httpx.Response(200, text=NORM_HTML))
-    out = run_tool(query="ifade özgürlüğü", basvuru_turu="norm", limit=5)
+    out = run_tool(query="ifade özgürlüğü", application_type="norm", limit=5)
     assert route.called
     assert out["total"] == 2
     assert out["count"] == 2
@@ -58,7 +58,7 @@ def test_norm_parses_results():
 @respx.mock
 def test_norm_sends_keyword_and_respects_limit():
     route = respx.get(NORM_URL).mock(return_value=httpx.Response(200, text=NORM_HTML))
-    out = run_tool(query="mülkiyet", basvuru_turu="norm", limit=1)
+    out = run_tool(query="mülkiyet", application_type="norm", limit=1)
     sent = route.calls.last.request
     assert "KelimeAra%5B%5D=m%C3%BClkiyet" in str(sent.url) or "KelimeAra[]" in str(sent.url)
     assert out["count"] == 1
@@ -70,7 +70,7 @@ def test_bireysel_parses_results():
     route = respx.get(BIREYSEL_URL).mock(
         return_value=httpx.Response(200, text=BIREYSEL_HTML)
     )
-    out = run_tool(query="adil yargılanma", basvuru_turu="bireysel", limit=5)
+    out = run_tool(query="adil yargılanma", application_type="bireysel", limit=5)
     assert route.called
     assert out["total"] == 1
     assert out["count"] == 1
@@ -87,7 +87,7 @@ def test_empty_results():
     respx.get(NORM_URL).mock(
         return_value=httpx.Response(200, text="<html><body></body></html>")
     )
-    out = run_tool(query="zzz", basvuru_turu="norm")
+    out = run_tool(query="zzz", application_type="norm")
     assert out["total"] == 0
     assert out["results"] == []
 
@@ -96,4 +96,4 @@ def test_invalid_basvuru_turu():
     import pytest
 
     with pytest.raises(ValueError):
-        run_tool(query="x", basvuru_turu="hatali")
+        run_tool(query="x", application_type="hatali")

@@ -1,4 +1,4 @@
-# Which specialty module may use which tools (see MIMARI.md §12).
+# Which specialty module may use which tools (see ARCHITECTURE.md §12).
 # Tools are discovered from tools/*/tool.yaml; a tool whose `requires_key` env var is
 # missing is auto-disabled by core/tool_registry.py (never offered to the model).
 #

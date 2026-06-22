@@ -1,4 +1,4 @@
-# Fields redacted before any cloud call (see MIMARI.md §5). Applied by core/redactor.py.
+# Fields redacted before any cloud call (see ARCHITECTURE.md §5). Applied by core/redactor.py.
 # Public case-law/legislation queries need no redaction; only client context does.
 detectors:
   tckn:   { pattern: '\b[1-9][0-9]{10}\b', validate_checksum: true, token: "[TCKN]" }

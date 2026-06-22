@@ -2,7 +2,7 @@
 
 Each external capability is an **independent, CLI-runnable, self-documenting** tool. Korkut
 (its specialty modules) uses them as a toolset; each can also be tested on its own from the
-shell. See ARCHITECTURE: MIMARI.md §12.
+shell. See ARCHITECTURE: ARCHITECTURE.md §12.
 
 ## Layout (`tools/<name>/`)
 ```

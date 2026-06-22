@@ -9,7 +9,7 @@ plain HTML pages with no JSON API and no auth:
         https://kararlarbilgibankasi.anayasa.gov.tr/Ara
 
 Both accept a GET search and render a result list we scrape. This one client
-covers both; `basvuru_turu` selects the portal and the matching result layout.
+covers both; `application_type` selects the portal and the matching result layout.
 """
 
 from __future__ import annotations
@@ -170,14 +170,14 @@ def _envelope(rows: list[dict[str, Any]], total: int, page: int) -> dict[str, An
 
 def run_tool(
     query: str,
-    basvuru_turu: str = "norm",
+    application_type: str = "norm",
     limit: int = 10,
     page: int = 1,
 ) -> dict[str, Any]:
     """Search Constitutional Court decisions.
 
     query        : free-text search phrase (matched as a keyword).
-    basvuru_turu : "norm" for norm control (norm denetimi) or "bireysel" for
+    application_type : "norm" for norm control (norm denetimi) or "bireysel" for
                    individual applications (bireysel başvuru).
     limit        : maximum results to return for this page.
     page         : 1-indexed page number.
@@ -185,9 +185,9 @@ def run_tool(
     Returns {"total", "page", "count", "results"} where each result is
     {id, title, type, date, url}.
     """
-    turu = (basvuru_turu or "norm").strip().lower()
+    turu = (application_type or "norm").strip().lower()
     if turu not in {"norm", "bireysel"}:
-        raise ValueError("basvuru_turu must be 'norm' or 'bireysel'")
+        raise ValueError("application_type must be 'norm' or 'bireysel'")
     with AnayasaClient() as client:
         if turu == "norm":
             return client.search_norm(query, limit=limit, page=page)

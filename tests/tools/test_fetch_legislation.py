@@ -27,7 +27,7 @@ def test_fetch_full_text_converts_html_to_markdown():
     route = respx.post(DOC_URL).mock(
         return_value=httpx.Response(200, json=_doc_response(html, title="Türk Borçlar Kanunu"))
     )
-    out = run_tool(mevzuat_id="12345")
+    out = run_tool(legislation_id="12345")
     assert out["id"] == "12345"
     assert out["title"] == "Türk Borçlar Kanunu"
     assert "Türk Borçlar Kanunu" in out["markdown"]
@@ -46,7 +46,7 @@ def test_fetch_single_article_uses_madde_id():
     route = respx.post(DOC_URL).mock(
         return_value=httpx.Response(200, json=_doc_response(html))
     )
-    out = run_tool(mevzuat_id="12345", madde_id="67890")
+    out = run_tool(legislation_id="12345", article_id="67890")
     assert out["id"] == "67890"
     assert "MADDE 27" in out["markdown"]
     assert "mevzuatId=12345" in out["sourceUrl"]
@@ -64,9 +64,9 @@ def test_error_metadata_raises():
         )
     )
     with pytest.raises(ValueError):
-        run_tool(mevzuat_id="does-not-exist")
+        run_tool(legislation_id="does-not-exist")
 
 
 def test_missing_mevzuat_id_raises():
     with pytest.raises(ValueError):
-        run_tool(mevzuat_id="")
+        run_tool(legislation_id="")

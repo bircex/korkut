@@ -4,9 +4,9 @@ Search **KİK (Kamu İhale Kurulu / Public Procurement Authority)** board decisi
 via the official **kik.gov.tr v2 API** (`ekapv2.kik.gov.tr`). No key required.
 
 The v2 API splits board decisions into three families, each at its own POST endpoint
-under `/b_ihalearaclari/api/KurulKararlari/`. Pick one with `karar_turu`:
+under `/b_ihalearaclari/api/KurulKararlari/`. Pick one with `decision_type`:
 
-| `karar_turu` | Meaning | Endpoint |
+| `decision_type` | Meaning | Endpoint |
 |--------------|---------|----------|
 | `uyusmazlik` (default) | Disputes | `https://ekapv2.kik.gov.tr/b_ihalearaclari/api/KurulKararlari/GetKurulKararlari` |
 | `duzenleyici` | Regulatory | `https://ekapv2.kik.gov.tr/b_ihalearaclari/api/KurulKararlari/GetKurulKararlariDk` |
@@ -16,7 +16,7 @@ under `/b_ihalearaclari/api/KurulKararlari/`. Pick one with `karar_turu`:
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
 | `query` | string | — (required) | Free-text search over decision content (`KararMetni`). May be empty. |
-| `karar_turu` | string | `uyusmazlik` | Decision family: `uyusmazlik` / `duzenleyici` / `mahkeme`. |
+| `decision_type` | string | `uyusmazlik` | Decision family: `uyusmazlik` / `duzenleyici` / `mahkeme`. |
 | `limit` | int | 10 | Results per page (>= 1). |
 | `page` | int | 1 | 1-indexed page. |
 | `karar_no` | string | "" | Optional decision number, e.g. `2025/UH.II-1801`. |
@@ -28,8 +28,8 @@ under `/b_ihalearaclari/api/KurulKararlari/`. Pick one with `karar_turu`:
 ## CLI
 ```bash
 python -m tools.search_kik --query "aşırı düşük teklif" --limit 5
-python -m tools.search_kik --query "" --karar_turu duzenleyici --limit 10
-echo '{"query": "ihale iptali", "karar_turu": "mahkeme", "limit": 5}' | python -m tools.search_kik
+python -m tools.search_kik --query "" --decision_type duzenleyici --limit 10
+echo '{"query": "ihale iptali", "decision_type": "mahkeme", "limit": 5}' | python -m tools.search_kik
 ```
 
 ## Output (stdout JSON)

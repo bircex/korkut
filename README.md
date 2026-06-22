@@ -9,22 +9,22 @@ talks to a single identity — **Korkut** — while specialized modules run in p
 
 ## Documents
 - **[PLAN.md](PLAN.md)** — roadmap, principles, phases, technology, scope decisions
-- **[MIMARI.md](MIMARI.md)** — technical design: process topology, message flow, core,
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — technical design: process topology, message flow, core,
   data model, Korkut's internal structure, **tools layer (§12)**, approval flow
-- **[KAYNAKLAR.md](KAYNAKLAR.md)** — legal data sources and access (case law/legislation)
-- **[GUVENLIK.md](GUVENLIK.md)** — single-gate Mattermost, mobile, 2FA, network hardening
-- **[KORPUS.md](KORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
-- **[RAKIPLER.md](RAKIPLER.md)** — competitor products (preliminary review); detailed research pending
+- **[SOURCES.md](SOURCES.md)** — legal data sources and access (case law/legislation)
+- **[SECURITY.md](SECURITY.md)** — single-gate Mattermost, mobile, 2FA, network hardening
+- **[CORPUS.md](CORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
+- **[COMPETITORS.md](COMPETITORS.md)** — competitor products (preliminary review); detailed research pending
 
 ## Architecture overview
 - **Interface:** self-hosted Mattermost (single gate, mobile, mandatory 2FA); channels + DMs
 - **Korkut:** single identity; specialized modules under the hood — routing, court hearing, petition, research (parallel)
 - **Model:** cloud = GPT (with redacted text); local model once the hardware arrives
 - **Capabilities:** tools under `tools/`, run from the CLI, configured into Korkut
-- **Data:** Postgres + `data/dosyalar/`; all on the server
+- **Data:** Postgres + `data/files/`; all on the server
 
 ## Status
-Design complete (PLAN/MIMARI/KAYNAKLAR/GUVENLIK/KORPUS/RAKIPLER). **Tools layer built**:
+Design complete (PLAN/ARCHITECTURE/SOURCES/SECURITY/CORPUS/COMPETITORS). **Tools layer built**:
 11 CLI tools under `tools/` (`search_*` + `fetch_*`) over a shared base client, with docs +
 tests (45 passing). Next: core (router/redactor/db) and the Mattermost bridge.
 

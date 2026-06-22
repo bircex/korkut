@@ -90,20 +90,20 @@ class MevzuatClient(BaseClient):
     @staticmethod
     def _normalize(entry: dict[str, Any]) -> dict[str, Any]:
         """Map a raw API record to stable English legislation keys."""
-        mevzuat_id = entry.get("mevzuatId")
+        legislation_id = entry.get("mevzuatId")
         tur = entry.get("mevzuatTur")
         if isinstance(tur, dict):
             tur = tur.get("name") or tur.get("description")
         return {
-            "id": mevzuat_id,
+            "id": legislation_id,
             "title": entry.get("mevzuatAdi"),
             "type": tur,
             "number": entry.get("mevzuatNo"),
             "series": entry.get("mevzuatTertip"),
             "date": entry.get("resmiGazeteTarihi"),
             "gazetteNo": entry.get("resmiGazeteSayisi"),
-            "url": f"https://mevzuat.adalet.gov.tr/mevzuat?mevzuatId={mevzuat_id}"
-            if mevzuat_id
+            "url": f"https://mevzuat.adalet.gov.tr/mevzuat?mevzuatId={legislation_id}"
+            if legislation_id
             else entry.get("url"),
         }
 
@@ -112,17 +112,17 @@ def run_tool(
     query: str,
     limit: int = 10,
     page: int = 1,
-    mevzuat_turu: str = "",
+    legislation_type: str = "",
 ) -> dict[str, Any]:
     """Search Turkish legislation by title.
 
     query        : title keyword(s) to match against legislation names.
     limit        : results per page (1-50).
     page         : 1-indexed page.
-    mevzuat_turu : optional legislation type filter, e.g. "KANUN", "KHK",
+    legislation_type : optional legislation type filter, e.g. "KANUN", "KHK",
                    "TUZUK", "YONETMELIK", "CB_KARARNAME". Comma-separated values
                    are accepted to filter by several types at once.
     """
-    types = [t.strip().upper() for t in mevzuat_turu.split(",") if t.strip()]
+    types = [t.strip().upper() for t in legislation_type.split(",") if t.strip()]
     with MevzuatClient() as client:
         return client.search(query, limit=limit, page=page, types=types or None)

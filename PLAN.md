@@ -3,7 +3,7 @@
 > Status: Design approved, ready for setup. This document is the single source of truth for all decisions.
 
 ## 1. Purpose
-A system that runs a law office's daily work (hearing reminders, petition (dilekçe) drafts, legal
+A system that runs a law office's daily work (hearing reminders, petition drafts, legal
 research) through a single assistant called **Korkut**, keeping the data in the office.
 Korkut is a single identity on Mattermost; specialty modules (in parallel) run internally.
 
@@ -17,12 +17,12 @@ Korkut is a single identity on Mattermost; specialty modules (in parallel) run i
   from the channel (@Korkut) and **privately (DM)**.
 - **No persistent action without approval.** Korkut summarizes what it will do, asks in natural language
   "do you approve?"; until approval is given, no hearing/petition/data is persisted. If a correction is
-  requested, it applies it and resubmits for approval. (Details: MIMARI.md §9)
-- **Model selection from config.** Each task → `yerel` or `bulut`; changed with a single line.
+  requested, it applies it and resubmits for approval. (Details: ARCHITECTURE.md §9)
+- **Model selection from config.** Each task → `local` or `cloud`; changed with a single line.
 - **Provider is pluggable.** Today cloud = GPT; later Claude / local model.
-- **Capabilities are tools.** Every external capability (case law (içtihat)/legislation (mevzuat) search,
+- **Capabilities are tools.** Every external capability (case law/legislation search,
   text extraction...) is an independent tool under `tools/`: **runs standalone from the CLI**, carries its
-  own documentation, and is **configured as a toolset** for Korkut. New capability = new folder. (Details: MIMARI.md §12)
+  own documentation, and is **configured as a toolset** for Korkut. New capability = new folder. (Details: ARCHITECTURE.md §12)
 
 ## 3. Architecture
 
@@ -39,8 +39,8 @@ Dispatcher service  (single Python process, listens to channel+DM)
    │   outputs merge into a SINGLE Korkut response
    ▼
 core/  (router + redactor + db)
-   ├─ model: yerel  → Ollama         (when hardware arrives; falls back to cloud when absent)
-   └─ model: bulut  → redact → GPT   (later Claude/others)
+   ├─ model: local  → Ollama         (when hardware arrives; falls back to cloud when absent)
+   └─ model: cloud  → redact → GPT   (later Claude/others)
 ```
 
 **Key rule:** The user sees a **single identity, Korkut**; every message gets a single Korkut response.
@@ -54,10 +54,10 @@ A single bot on Mattermost: **Korkut**. Internally there are these modules (not 
 
 | Module | Job | Model |
 |-------|----|-------|
-| Router | Understands intent → hands to module + general chat | bulut |
-| Hearing | Reminders, calendar (add/list) | yerel → for now bulut |
-| Petition | Template + draft generation | bulut |
-| Research | Legislation/case law search + summary | bulut |
+| Router | Understands intent → hands to module + general chat | cloud |
+| Hearing | Reminders, calendar (add/list) | local → for now cloud |
+| Petition | Template + draft generation | cloud |
+| Research | Legislation/case law search + summary | cloud |
 
 ## 5. Directory structure
 
@@ -69,10 +69,10 @@ korkut/
 │  ├─ korkut.yaml              # Korkut persona + specialty modules + bot
 │  └─ redaction-rules.yaml     # fields to redact
 ├─ data/                       # .gitignore — never leaves the outside
-│  └─ dosyalar/<dava-no>/      # petitions, attachments, rulings
+│  └─ files/<case-no>/      # petitions, attachments, rulings
 │                              # (structured data in Postgres: asistan-db)
 ├─ core/
-│  ├─ router.py                # model selector (yerel/bulut), fallback rule
+│  ├─ router.py                # model selector (local/cloud), fallback rule
 │  ├─ redactor.py              # redact / reverse
 │  ├─ providers/               # gpt.py, (later) claude.py, ollama.py
 │  ├─ tool_registry.py         # reads tools/ manifests → gives Korkut a toolset
@@ -81,7 +81,7 @@ korkut/
 │  ├─ README.md                # index of all tools + CLI contract
 │  ├─ _base/                   # shared base client (httpx + rate-limit + cache)
 │  ├─ search_yargitay/         # Yargıtay search (Bedesten)
-│  │   ├─ __main__.py          #   CLI: python -m tools.search_yargitay --sorgu "..."
+│  │   ├─ __main__.py          #   CLI: python -m tools.search_yargitay --query "..."
 │  │   ├─ tool.yaml            #   name/description/params + requires_key (function-calling)
 │  │   └─ README.md            #   documentation (sample input/output)
 │  ├─ search_danistay/         # Danıştay search
@@ -94,11 +94,11 @@ korkut/
 │  └─ mattermost.py            # channel+DM listener + Korkut dispatcher + single bot identity
 ├─ korkut/                     # single identity; specialty modules inside
 │  ├─ persona.py               # Korkut's single system instruction
-│  ├─ yonlendirici.py          # intent classification → dispatch to module
-│  ├─ durusma.py               # hearing module
-│  ├─ dilekce.py               # petition module
-│  └─ arastirma.py             # research module
-├─ templates/dilekce/          # Turkish law petition templates (.docx/.md)
+│  ├─ dispatcher.py          # intent classification → dispatch to module
+│  ├─ hearing.py               # hearing module
+│  ├─ petition.py               # petition module
+│  └─ research.py             # research module
+├─ templates/petition/          # Turkish law petition templates (.docx/.md)
 └─ scripts/cron/               # hearing reminder job
 ```
 
@@ -106,35 +106,35 @@ korkut/
 
 `config/model-routing.yaml`
 ```yaml
-backendler:
-  bulut: gpt          # for now OpenAI; later: claude / others
-  yerel: ollama       # active when hardware arrives
+backends:
+  cloud: gpt          # for now OpenAI; later: claude / others
+  local: ollama       # active when hardware arrives
 
-# When Ollama is off, jobs requesting "yerel" automatically fall back to bulut + are logged.
-yerel_yoksa_buluta_dus: true
+# When Ollama is off, jobs requesting "local" automatically fall back to cloud + are logged.
+fallback_to_cloud_if_no_local: true
 
-uzmanliklar:
-  yonlendirici: { model: bulut }
-  durusma:      { model: yerel }
-  dilekce:      { model: bulut }
-  arastirma:    { model: bulut }
+specialties:
+  dispatcher: { model: cloud }
+  hearing:    { model: local }
+  petition:   { model: cloud }
+  research:   { model: cloud }
 ```
 
 `config/korkut.yaml`
 ```yaml
 bot:
-  ad: "Korkut"               # the single bot identity on Mattermost
-  kanal: ofis                # main channel (DM is also always open)
-persona: "Korkut, bir avukatlık ofisinin yapay zekâ asistanı..."  # single system instruction
-uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visible to the user
+  name: "Korkut"             # the single bot identity on Mattermost
+  channel: office            # main channel (DM is also always open)
+persona_file: korkut/persona.py                         # single system instruction
+specialties: [dispatcher, hearing, petition, research]  # internal; not visible to the user
 ```
 
-## 7. Redaction (rumuzlama)
+## 7. Redaction
 - **Detection:** TCKN (11 digits + algorithm check), phone, IBAN, license plate, case file number
   (regex) + name (Turkish name dictionary + rules; later local NER).
-- **Redact:** `Ahmet Yılmaz → [KİŞİ_1]`; mapping in `data/rumuz-eslemeleri/`.
+- **Redact:** `Ahmet Yılmaz → [PERSON_1]`; mapping in `data/redaction-maps/`.
 - **Reverse:** Tokens in the cloud response are replaced with the real values.
-- **Rule:** `yerel` → not redacted (it doesn't leave anyway). `bulut` → **always** redacted.
+- **Rule:** `local` → not redacted (it doesn't leave anyway). `cloud` → **always** redacted.
 
 ## 8. Phases
 
@@ -152,13 +152,13 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visibl
 - **Phase 3 — Hearing module:** Manual hearing entry + cron reminder → Korkut writes "tomorrow's
   hearings" to the channel/DM.
 - **Phase 4 — Petition module:** Template + cloud draft (redacted) → `.docx` via `python-docx` →
-  under `data/dosyalar/` with an "awaiting approval" label.
+  under `data/files/` with an "awaiting approval" label.
 - **Phase 5 — Research module (RAG):** Build one lightweight data tool per source under
   `tools/` — `search_yargitay`, `search_danistay`, `search_emsal`, `search_mevzuat`,
   `fetch_decision`, `fetch_legislation` (our own httpx clients over shared `tools/_base/`).
   Each runs cleanly from the CLI + tool.yaml (+ `requires_key`) + README. **Corpus strategy: RAG** (live search →
   fine ranking → synthesis → **citation verification** + lazy cache + polite rate-limit). Later a
-  focused local index. Details: KORPUS.md. Sources: KAYNAKLAR.md.
+  focused local index. Details: CORPUS.md. Sources: SOURCES.md.
 - **Later:** Local model (Ollama + GPU), UYAP integration, authorization/multi-user.
 
 ## 9. Technology stack (Python)
@@ -176,8 +176,8 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visibl
 
 ## 10. KVKK (Turkish data protection law) / legal checklist
 - [ ] Clarify data processing terms / DPA status with OpenAI.
-- [ ] Client (müvekkil) disclosure text + explicit consent template (processing with AI).
-- [ ] Compliance with bar association (baro) advertising/ethics rules.
+- [ ] Client disclosure text + explicit consent template (processing with AI).
+- [ ] Compliance with bar association advertising/ethics rules.
 - [ ] Disk encryption (LUKS) + access control + backup policy.
 - [ ] Redaction tests (proof of no PII leakage).
 
@@ -190,7 +190,7 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visibl
 ## 12. Scope decisions (fixed)
 - **Runtime engine: our own Python framework** — NOT clawbot/Claude Code (that is only a
   development tool; once the product is set up it runs independently). The agent loop is a **thin layer**:
-  official provider SDKs (`openai`...) + our own small loop; no heavy framework. (MIMARI.md §13)
+  official provider SDKs (`openai`...) + our own small loop; no heavy framework. (ARCHITECTURE.md §13)
 - **Branding: Level 1** — the office name is asked during setup, written as the Site Name.
   Free, no license issue. Logo/white-label later (if it becomes a product).
 - **Deployment: single office** — for now, setup at our own office. The multi-office distributed package comes later.

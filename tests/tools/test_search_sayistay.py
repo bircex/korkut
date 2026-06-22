@@ -87,7 +87,7 @@ def test_genel_kurul_parses_and_is_default():
 @respx.mock
 def test_temyiz_kurulu_parses():
     _mock("/KararlarTemyiz", TEMYIZ_JSON)
-    out = run_tool(query="harcırah", karar_turu="temyiz_kurulu")
+    out = run_tool(query="harcırah", decision_type="temyiz_kurulu")
     assert out["total"] == 2
     first = out["results"][0]
     assert first["id"] == 6002
@@ -99,7 +99,7 @@ def test_temyiz_kurulu_parses():
 @respx.mock
 def test_daire_parses():
     _mock("/KararlarDaire", DAIRE_JSON)
-    out = run_tool(query="personel", karar_turu="daire")
+    out = run_tool(query="personel", decision_type="daire")
     assert out["total"] == 7
     first = out["results"][0]
     assert first["id"] == 7003
@@ -131,4 +131,4 @@ def test_empty_results():
 
 def test_invalid_decision_type_raises():
     with pytest.raises(ValueError):
-        run_tool(query="x", karar_turu="bogus")
+        run_tool(query="x", decision_type="bogus")

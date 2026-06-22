@@ -1,11 +1,11 @@
 # Competitors — Turkey Legal Artificial Intelligence Products
 
-> Status: **Preliminary review (ön-inceleme)** (quick scan). User request: record these as competitors;
+> Status: **Preliminary review** (quick scan). User request: record these as competitors;
 > **detailed research to be done LATER** (see §3). Goal: to go **far beyond** the
 > quality of these products.
 >
-> ⚠️ **Korkut is NON-COMMERCIAL (ticari değil)** — an internal tool for our own office. For this reason **price/market share
-> are secondary**; our main axis of comparison is **quality (kalite)**, especially **research (legal research)** and
+> ⚠️ **Korkut is NON-COMMERCIAL** — an internal tool for our own office. For this reason **price/market share
+> are secondary**; our main axis of comparison is **quality**, especially **research (legal research)** and
 > **petition writing**. The prices below are for reference only.
 >
 > Note: Our interface is not a **web chat** like these — it is **Mattermost-native** (mobile,
@@ -18,7 +18,7 @@
 | 1 | [LawChat](https://www.lawchat.com.tr/) | LawChat (TR) | Petition generation, precedent analysis, UYAP integration, mobile app | undisclosed ("try for free") |
 | 2 | [De Jure AI](https://www.dejure.ai/) | De Jure | Deep research, petition/contract, UYAP/UETS, court tracking | **disclosed: 1.500–6.800₺/month**, annual 60–80K₺ |
 | 3 | [LexChat](https://lexchat.ai/) | UC Yazılım (Istanbul, 2025) | **Agentic**: autonomous agents, case file management, 10M+ decisions, document generation (tracked changes, UDF) | undisclosed |
-| 4 | [FulLegal](https://www.fullegal.com/hukukcu-yapay-zeka) | FulLegal Yazılım | Case law (içtihat)/legislation (mevzuat) Q&A, document analysis (20 documents), UYAP desktop agent, petition | undisclosed (Pro/Ultra/Max) |
+| 4 | [FulLegal](https://www.fullegal.com/hukukcu-yapay-zeka) | FulLegal Yazılım | Case law/legislation Q&A, document analysis (20 documents), UYAP desktop agent, petition | undisclosed (Pro/Ultra/Max) |
 | 5 | [HukukChat](https://hukukchat.com/) | **Opex AI Labs** | Fine-tuned legal LLMs, multi-layered architecture, legislation/case law/document analysis | undisclosed |
 | 6 | [Apilex](https://www.apilex.ai/) | Att. Cebrail Ergül + team | Semantic decision search, projects, **Agent Beta** (deep research); TR+FR+DE | undisclosed (after login) |
 | 7 | [LawyerTeam](https://lawyerteam.pro/) | Since 1999 + Dece Software | Full **office automation** + AI: 15M decisions, 20K legislation, 200+ file formats, enforcement/strategy | undisclosed |
@@ -32,23 +32,23 @@
 > **Kılavuz** (kilavuztek.com), **Lawantra**, **LegalEngine**, **Sinerji Hukuk Asistanı**.
 
 ## 2. Common patterns (industry "table stakes")
-Present in almost all of them: **semantic precedent decision (emsal karar) search**, **petition/contract generation**,
+Present in almost all of them: **semantic precedent decision search**, **petition/contract generation**,
 **legislation/case law Q&A (with source citations)**, **document/UYAP analysis**, document management.
 Many claim to be "**agentic**" (LexChat, mevzuat.ai, Apilex). Data-scale advertising:
 3.5M–15M decisions. **Almost all of them are web-app chat UI + cloud SaaS, single-user focused.**
 
 ### Our differentiation points (to be far ahead)
-- **Data sovereignty (veri egemenliği):** Self-hosted, data stays in the office → a strong KVKK/privacy (gizlilik)
+- **Data sovereignty:** Self-hosted, data stays in the office → a strong KVKK/privacy
   advantage against competitors' cloud SaaS.
 - **Team workflow:** Mattermost (channels + DM, multi-user) → beyond single web chats.
-- **Proactivity:** Not just Q&A; a foresightful assistant with **hearing reminders (duruşma hatırlatma) + calendar + cron**.
+- **Proactivity:** Not just Q&A; a foresightful assistant with **hearing reminders + calendar + cron**.
 - **Built-in human approval:** No persistent action without approval (natural-language approval dialog).
 - **Open data layer:** our own thin clients over the public APIs (Bedesten API + portals) — same sources as competitors.
 - **Provider-independent + own framework:** GPT↔Claude↔local; no lock-in.
 
 ## 2b. "Millions of documents" claims — where does the data come from? (critical)
 **Almost all** of the competitors' claims of "3.5M / 10M / 15M decisions, 20K legislation" come **from publicly
-available government sources** — that is, the endpoints in KAYNAKLAR.md that **we also access**:
+available government sources** — that is, the endpoints in SOURCES.md that **we also access**:
 - **UYAP Emsal + Bedesten API** (Yargıtay/Danıştay/court of appeals), **karararama.yargitay/danistay**,
   **mevzuat.gov.tr** → anonymous, millions of records.
 - The competitors have **fetched this once (ingest) and indexed it into their own DBs** (embedding for

@@ -10,7 +10,7 @@ endpoint under ``/b_ihalearaclari/api/KurulKararlari/``:
     * "duzenleyici" (regulatory)  -> GetKurulKararlariDk
     * "mahkeme"     (court)       -> GetKurulKararlariMk
 
-The decision family is chosen via the ``karar_turu`` parameter (default
+The decision family is chosen via the ``decision_type`` parameter (default
 "uyusmazlik"). Each endpoint takes a small key/value criteria envelope and
 returns the same record shape, so a single parser covers all three.
 
@@ -38,7 +38,7 @@ from tools._base.client import BaseClient
 
 BASE_URL = "https://ekapv2.kik.gov.tr"
 
-# karar_turu -> (endpoint path, request root key, response wrapper, result key)
+# decision_type -> (endpoint path, request root key, response wrapper, result key)
 _DECISION_TYPES: dict[str, tuple[str, str, str, str]] = {
     "uyusmazlik": (
         "/b_ihalearaclari/api/KurulKararlari/GetKurulKararlari",
@@ -166,7 +166,7 @@ class KikClient(BaseClient):
 
     def search(
         self,
-        karar_turu: str,
+        decision_type: str,
         query: str,
         *,
         limit: int = 10,
@@ -177,11 +177,11 @@ class KikClient(BaseClient):
         date_start: str = "",
         date_end: str = "",
     ) -> dict[str, Any]:
-        if karar_turu not in _DECISION_TYPES:
+        if decision_type not in _DECISION_TYPES:
             valid = ", ".join(_DECISION_TYPES)
-            raise ValueError(f"karar_turu must be one of: {valid}")
+            raise ValueError(f"decision_type must be one of: {valid}")
 
-        endpoint, root_key, wrapper_key, result_key = _DECISION_TYPES[karar_turu]
+        endpoint, root_key, wrapper_key, result_key = _DECISION_TYPES[decision_type]
         payload = {
             root_key: {
                 "keyValuePairs": {
@@ -211,7 +211,7 @@ class KikClient(BaseClient):
 
         start = max(0, (page - 1) * limit)
         window = records[start : start + max(1, limit)]
-        results = [self._to_result(r, karar_turu) for r in window]
+        results = [self._to_result(r, decision_type) for r in window]
         return {
             "total": len(records),
             "page": page,
@@ -220,14 +220,14 @@ class KikClient(BaseClient):
         }
 
     @staticmethod
-    def _to_result(record: dict[str, Any], karar_turu: str) -> dict[str, Any]:
+    def _to_result(record: dict[str, Any], decision_type: str) -> dict[str, Any]:
         decision_id = record.get("gundemMaddesiId") or ""
         title = record.get("basvuruKonusu") or record.get("idareAdi") or record.get("kararNo") or ""
         url = f"{_DOCUMENT_URL}{decision_id}" if decision_id else ""
         return {
             "id": str(decision_id),
             "title": title,
-            "decisionType": karar_turu,
+            "decisionType": decision_type,
             "date": record.get("kararTarihi") or "",
             "url": url,
         }
@@ -235,7 +235,7 @@ class KikClient(BaseClient):
 
 def run_tool(
     query: str,
-    karar_turu: str = "uyusmazlik",
+    decision_type: str = "uyusmazlik",
     limit: int = 10,
     page: int = 1,
     karar_no: str = "",
@@ -247,7 +247,7 @@ def run_tool(
     """Search KİK board decisions.
 
     query        : free-text decision-content search (KararMetni)
-    karar_turu   : decision family — "uyusmazlik" (default), "duzenleyici", "mahkeme"
+    decision_type   : decision family — "uyusmazlik" (default), "duzenleyici", "mahkeme"
     limit        : results per page (>= 1)
     page         : 1-indexed page
     karar_no     : optional decision number, e.g. "2025/UH.II-1801"
@@ -260,7 +260,7 @@ def run_tool(
     """
     with KikClient() as client:
         return client.search(
-            karar_turu,
+            decision_type,
             query,
             limit=limit,
             page=page,

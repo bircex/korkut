@@ -48,7 +48,7 @@ def test_search_parses_results():
 @respx.mock
 def test_search_sends_query_and_type_filter():
     route = respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=SAMPLE))
-    run_tool(query="kira", mevzuat_turu="kanun, khk")
+    run_tool(query="kira", legislation_type="kanun, khk")
     sent = route.calls.last.request
     body = json.loads(sent.content)
     assert body["data"]["mevzuatAdi"] == "kira"
