@@ -186,16 +186,16 @@ Each external capability is an **independent, CLI-runnable, self-documenting** t
 
 ### Folder contract (`tools/<ad>/`)
 ```
-tools/ictihat_ara/
+tools/search_yargitay/
   ├─ __main__.py    # CLI entry
   ├─ tool.yaml      # name, description, parameter schema (JSON Schema) → function-calling
   ├─ README.md      # what it does, example input/output, which endpoint it hits
-  └─ client.py      # httpx client adapted from vendor/ (MIT notice preserved)
+  └─ client.py      # thin client over tools/_base/ (httpx client adapted from vendor/, MIT notice preserved)
 ```
 
 ### CLI contract (clean, agent-independent)
 ```
-python -m tools.ictihat_ara --sorgu "kira tespiti" --mahkeme yargitay --limit 10
+python -m tools.search_yargitay --sorgu "kira tespiti" --limit 10
   • Input: arguments or stdin JSON
   • Output: a SINGLE JSON object to stdout (for machines, not humans)
   • Log: stderr   • Success/error: exit code (0/≠0)
@@ -204,12 +204,12 @@ This way each tool is tested on its own; it works even without the agent.
 
 ### tool.yaml (example)
 ```yaml
-ad: ictihat_ara
-aciklama: "Yargıtay/Danıştay/Emsal kararlarında arama yapar (Bedesten API)."
+ad: search_yargitay
+aciklama: "Searches Yargıtay (Court of Cassation) decisions (Bedesten API)."
+requires_key: null        # e.g. BRAVE_API_KEY for niche sources; null = no key needed
 parametreler:
-  sorgu:   { tip: string, zorunlu: true }
-  mahkeme: { tip: string, secenekler: [yargitay, danistay, emsal] }
-  limit:   { tip: integer, varsayilan: 10 }
+  sorgu: { tip: string, zorunlu: true }
+  limit: { tip: integer, varsayilan: 10 }
 ```
 
 ### Registration and invocation (registry)
@@ -223,17 +223,44 @@ parametreler:
 ```yaml
 # Korkut is a single identity; tools are grouped internally by specialty.
 durusma:   [durusma_ekle, durusma_listele]
-dilekce:   [sablon_getir, dilekce_uret, ictihat_ara]
-arastirma: [ictihat_ara, mevzuat_ara, karar_metin]
+dilekce:   [sablon_getir, dilekce_uret, search_yargitay, search_mevzuat, fetch_decision]
+arastirma: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
 ```
 
 ### Privacy
 - If the tool input is going to a cloud model, **redaction rules apply** (§5).
 - Case law/legislation queries are public; but if client context is added, that part is redacted.
 
+### Resource granularity (one lightweight tool per source)
+- **Shared base client** `tools/_base/` (httpx + token-bucket rate-limit + cache) → each
+  source client stays truly thin (just that endpoint + param mapping). Mirrors the vendor
+  module-per-source layout.
+- **One tool per source:** `search_yargitay`, `search_danistay`, `search_emsal`,
+  `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`,
+  `search_mevzuat`, plus `fetch_decision` / `fetch_legislation`. Each has its own
+  tool.yaml + README and is CLI-runnable.
+- **Tiered exposure (avoid tool bloat):** the registry always offers the **core** tools
+  (yargitay, danistay, emsal, mevzuat, fetch_*); **niche** ones (kik, rekabet, sayistay,
+  gib, kvkk, bddk, sigorta_tahkim) load on demand when the query targets that domain → GPT's
+  tool list stays small and selection stays sharp.
+
+### Key handling (`requires_key`)
+- A tool's `tool.yaml` declares any needed key (e.g. `requires_key: BRAVE_API_KEY`). At
+  startup `tool_registry` checks the env; **if the key is missing the tool is disabled
+  (never offered to GPT) + logged** → graceful degradation, the system never breaks.
+- **Group A — no key (core):** Yargıtay, Danıştay, Emsal, Bedesten, Anayasa, KİK, Rekabet,
+  Sayıştay, GİB, mevzuat.gov.tr → plain httpx.
+- **Group B — needs a search provider:** KVKK, BDDK, Sigorta Tahkim → optional; prefer our
+  own search/scrape over Brave/Tavily; deferred (core covers ~95%).
+- **Group C — embedding:** semantic search → **local embedding** (HF TEI/Ollama), no
+  external key, data stays in the office.
+- Keys live in `.env` (never in the repo).
+
 ### First tool set (Phase 5)
-`ictihat_ara`, `mevzuat_ara`, `karar_metin` — adapted from the `vendor/` clients
-(KAYNAKLAR.md §8). Subsequent tools (court hearing, petition) are added with the same contract.
+`search_yargitay` + `search_mevzuat` + `fetch_decision`/`fetch_legislation` — adapted from
+the `vendor/` clients (KAYNAKLAR.md §8). Other sources and the court-hearing/petition tools
+follow the same contract. (Supersedes the earlier `ictihat_ara`/`mevzuat_ara`/`karar_metin`
+sketch — now one tool per source.)
 
 ## 13. Runtime engine (framework decision)
 - Korkut is **our own Python application**; not clawbot/Claude Code (those are only

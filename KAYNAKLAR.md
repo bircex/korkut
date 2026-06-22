@@ -96,10 +96,17 @@ via an enterprise agreement; a standard self-serve API is not common — must be
 - KVKK/BDDK/Sigorta Tahkim depend on third-party search → low priority, extra key.
 
 ## 8. Integration decision (for the research module)
-- **Decision: vendor → tool** — cloned into `vendor/`; since it is MIT, we adapt the fetch clients
-  (`bedesten_client.py`, `mevzuat_client.py`, etc.) into individual **CLI tools** under `tools/`:
-  `ictihat_ara`, `mevzuat_ara`, `karar_metin` (each with CLI + tool.yaml +
-  README, MIMARI.md §12). "Exactly the way the author fetches it" — no auth, just httpx.
+- **Decision: vendor → tool (one tool per source)** — cloned into `vendor/`; since it is MIT,
+  we adapt the fetch clients (`bedesten_client.py`, `mevzuat_client.py`, etc.) into **one
+  lightweight CLI tool per source** under `tools/`: `search_yargitay`, `search_danistay`,
+  `search_emsal`, `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`,
+  `search_gib`, `search_mevzuat`, plus `fetch_decision`/`fetch_legislation`. Shared base
+  client (`tools/_base/`) carries httpx + rate-limit + cache; tiered exposure + `requires_key`
+  key handling per MIMARI.md §12. "Exactly the way the author fetches it" — no auth, just httpx.
+- **Key groups:** A) no key (core, plain httpx): Yargıtay, Danıştay, Emsal, Bedesten, Anayasa,
+  KİK, Rekabet, Sayıştay, GİB, mevzuat.gov.tr. B) needs search provider (Brave/Tavily) →
+  optional, prefer our own search, deferred: KVKK, BDDK, Sigorta Tahkim. C) embedding → local
+  (HF TEI/Ollama), no key. Missing-key tools auto-disable (never offered to the model).
 - **License obligation:** Preserve the MIT copyright notice in the imported files.
 - **Core target endpoints:** Bedesten API (case law + legislation), karararama.yargitay/danistay,
   emsal.uyap, anayasa, gib. KVKK/BDDK/Sigorta-Tahkim (dependent on 3rd-party search) → later.
