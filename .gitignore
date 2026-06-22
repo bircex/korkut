@@ -1,0 +1,32 @@
+# Müvekkil verisi ve sırlar — ASLA commit edilmez (KVKK / avukatlık sırrı)
+data/
+*.env
+.env
+.env.*
+secrets/
+*.key
+*.pem
+
+# Vendor (referans) — manifest'ten yeniden klonlanır; kodu repoya almıyoruz
+vendor/yargi-mcp/
+vendor/mevzuat-mcp/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Yedek / log
+*.log
+*.bak
+backups/
+
+# OS / editör
+.DS_Store
+.idea/
+.vscode/
