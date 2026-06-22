@@ -13,6 +13,7 @@ tek kimlikle — **Korkut** — konuşur; içeride uzmanlık modülleri paralel 
   veri modeli, Korkut'un iç yapısı, **tools katmanı (§12)**, onay akışı
 - **[KAYNAKLAR.md](KAYNAKLAR.md)** — hukuki veri kaynakları ve erişim (içtihat/mevzuat)
 - **[GUVENLIK.md](GUVENLIK.md)** — tek-kapı Mattermost, mobil, 2FA, ağ sertleştirme
+- **[KORPUS.md](KORPUS.md)** — research/dilekçe veri stratejisi: RAG (şimdi) → odaklı index → geniş korpüs
 - **[RAKIPLER.md](RAKIPLER.md)** — rakip ürünler (ön-inceleme); detaylı araştırma bekliyor
 
 ## Özet mimari

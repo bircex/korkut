@@ -150,10 +150,11 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # içeride; kullanıc�
   duruşmalar"ı kanala/DM'e yazar.
 - **Faz 4 — Dilekçe modülü:** Şablon + bulut taslak (rumuzlu) → `python-docx` ile
   `.docx` → `data/dosyalar/` altına "onay bekliyor" etiketiyle.
-- **Faz 5 — Araştırma modülü:** Veri tool'larını `tools/` altında inşa et —
+- **Faz 5 — Araştırma modülü (RAG):** Veri tool'larını `tools/` altında inşa et —
   `ictihat_ara`, `mevzuat_ara`, `karar_metin` (vendor/ httpx istemcilerinden, MIT). Her
-  biri CLI'dan tertemiz + tool.yaml + README. Korkut bunları toolset olarak kullanır →
-  kaynaklı özet. Kaynaklar: KAYNAKLAR.md.
+  biri CLI'dan tertemiz + tool.yaml + README. **Korpüs stratejisi: RAG** (canlı arama →
+  ince sıralama → sentez → **atıf doğrulama** + tembel cache + kibar rate-limit). İleride
+  odaklı yerel index. Detay: KORPUS.md. Kaynaklar: KAYNAKLAR.md.
 - **Sonra:** Yerel model (Ollama + GPU), UYAP entegrasyonu, yetkilendirme/çok kullanıcı.
 
 ## 9. Teknoloji yığını (Python)
