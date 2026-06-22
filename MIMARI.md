@@ -190,7 +190,7 @@ tools/search_yargitay/
   ├─ __main__.py    # CLI entry
   ├─ tool.yaml      # name, description, parameter schema (JSON Schema) → function-calling
   ├─ README.md      # what it does, example input/output, which endpoint it hits
-  └─ client.py      # thin client over tools/_base/ (httpx client adapted from vendor/, MIT notice preserved)
+  └─ client.py      # thin client over tools/_base/ (our own httpx client for this source)
 ```
 
 ### CLI contract (clean, agent-independent)
@@ -233,8 +233,7 @@ arastirma: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetc
 
 ### Resource granularity (one lightweight tool per source)
 - **Shared base client** `tools/_base/` (httpx + token-bucket rate-limit + cache) → each
-  source client stays truly thin (just that endpoint + param mapping). Mirrors the vendor
-  module-per-source layout.
+  source client stays truly thin (just that endpoint + param mapping). One module per source.
 - **One tool per source:** `search_yargitay`, `search_danistay`, `search_emsal`,
   `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`,
   `search_mevzuat`, plus `fetch_decision` / `fetch_legislation`. Each has its own
@@ -257,8 +256,8 @@ arastirma: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetc
 - Keys live in `.env` (never in the repo).
 
 ### First tool set (Phase 5)
-`search_yargitay` + `search_mevzuat` + `fetch_decision`/`fetch_legislation` — adapted from
-the `vendor/` clients (KAYNAKLAR.md §8). Other sources and the court-hearing/petition tools
+`search_yargitay` + `search_mevzuat` + `fetch_decision`/`fetch_legislation` — built as
+our own httpx clients over `tools/_base/` (KAYNAKLAR.md §8). Other sources and the court-hearing/petition tools
 follow the same contract. (Supersedes the earlier `ictihat_ara`/`mevzuat_ara`/`karar_metin`
 sketch — now one tool per source.)
 

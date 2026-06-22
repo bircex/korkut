@@ -1,0 +1,9 @@
+# Fields redacted before any cloud call (see MIMARI.md §5). Applied by core/redactor.py.
+# Public case-law/legislation queries need no redaction; only client context does.
+detectors:
+  tckn:   { pattern: '\b[1-9][0-9]{10}\b', validate_checksum: true, token: "[TCKN]" }
+  phone:  { pattern: '\b(?:0|\+90)?5\d{9}\b', token: "[PHONE]" }
+  iban:   { pattern: '\bTR\d{24}\b', token: "[IBAN]" }
+  plate:  { pattern: '\b\d{2}\s?[A-Z]{1,3}\s?\d{2,4}\b', token: "[PLATE]" }
+  case_no: { pattern: '\b\d{4}/\d+\b', token: "[CASE_NO]" }
+  person: { source: name_dictionary, token: "[PERSON]" }   # + Turkish name list; later: local NER

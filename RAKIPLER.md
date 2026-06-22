@@ -43,7 +43,7 @@ Many claim to be "**agentic**" (LexChat, mevzuat.ai, Apilex). Data-scale adverti
 - **Team workflow:** Mattermost (channels + DM, multi-user) → beyond single web chats.
 - **Proactivity:** Not just Q&A; a foresightful assistant with **hearing reminders (duruşma hatırlatma) + calendar + cron**.
 - **Built-in human approval:** No persistent action without approval (natural-language approval dialog).
-- **Open data layer:** yargi-mcp/mevzuat-mcp + Bedesten API (same sources as competitors).
+- **Open data layer:** our own thin clients over the public APIs (Bedesten API + portals) — same sources as competitors.
 - **Provider-independent + own framework:** GPT↔Claude↔local; no lock-in.
 
 ## 2b. "Millions of documents" claims — where does the data come from? (critical)

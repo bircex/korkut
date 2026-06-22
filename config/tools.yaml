@@ -1,0 +1,15 @@
+# Which specialty module may use which tools (see MIMARI.md §12).
+# Tools are discovered from tools/*/tool.yaml; a tool whose `requires_key` env var is
+# missing is auto-disabled by core/tool_registry.py (never offered to the model).
+#
+# Tiered exposure: 'core' tools are always offered; 'niche' load on demand by domain.
+
+research:
+  core:  [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
+  niche: [search_anayasa, search_kik, search_rekabet, search_sayistay, search_gib]
+
+petition:
+  core:  [search_yargitay, search_mevzuat, fetch_decision, fetch_legislation]
+
+hearing:   []
+dispatcher: []

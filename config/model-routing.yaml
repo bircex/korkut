@@ -1,0 +1,13 @@
+# Which backend each specialty uses. Provider is swappable; see MIMARI.md §13.
+backends:
+  cloud: gpt          # OpenAI for now; later: claude / other
+  local: ollama       # active once the hardware (GPU) arrives
+
+# If a "local" specialty is requested but Ollama is down, fall back to cloud + log.
+fallback_to_cloud_if_no_local: true
+
+specialties:
+  dispatcher: { model: cloud }
+  hearing:    { model: local }
+  petition:   { model: cloud }
+  research:   { model: cloud }

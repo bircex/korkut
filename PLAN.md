@@ -90,7 +90,6 @@ korkut/
 │  ├─ fetch_decision/          # decision full text (Markdown)
 │  ├─ fetch_legislation/       # legislation full text (Markdown)
 │  └─ ...                      # new source/capability = new folder (same contract)
-├─ vendor/                     # yargi-mcp + mevzuat-mcp (MIT) — source/reference
 ├─ bridge/
 │  └─ mattermost.py            # channel+DM listener + Korkut dispatcher + single bot identity
 ├─ korkut/                     # single identity; specialty modules inside
@@ -156,7 +155,7 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visibl
   under `data/dosyalar/` with an "awaiting approval" label.
 - **Phase 5 — Research module (RAG):** Build one lightweight data tool per source under
   `tools/` — `search_yargitay`, `search_danistay`, `search_emsal`, `search_mevzuat`,
-  `fetch_decision`, `fetch_legislation` (from vendor/ httpx clients, MIT; shared `tools/_base/`).
+  `fetch_decision`, `fetch_legislation` (our own httpx clients over shared `tools/_base/`).
   Each runs cleanly from the CLI + tool.yaml (+ `requires_key`) + README. **Corpus strategy: RAG** (live search →
   fine ranking → synthesis → **citation verification** + lazy cache + polite rate-limit). Later a
   focused local index. Details: KORPUS.md. Sources: KAYNAKLAR.md.
