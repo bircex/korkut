@@ -183,6 +183,9 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # içeride; kullanıc�
 - **Çok ofis (sonra):** Her ofis = bir kanal; ofisi organizasyon boyutu olarak ekleme.
 
 ## 12. Kapsam kararları (sabit)
+- **Çalışma motoru: kendi Python framework'ümüz** — clawbot/Claude Code DEĞİL (o sadece
+  geliştirme aracı; ürün kurulunca bağımsız çalışır). Ajan döngüsü **ince katman**: resmî
+  provider SDK'ları (`openai`...) + kendi küçük döngümüz; ağır framework yok. (MIMARI.md §13)
 - **Markalama: Seviye 1** — kurulumda ofis adı sorulur, Site Adı olarak yazılır.
   Ücretsiz, lisans sorunu yok. Logo/white-label ileride (ürünleşirse).
 - **Dağıtım: tek ofis** — şimdilik kendi ofise kurulum. Çok-ofise dağıtılan paket sonra.

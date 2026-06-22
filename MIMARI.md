@@ -232,4 +232,23 @@ arastirma: [ictihat_ara, mevzuat_ara, karar_metin]
 ### İlk tool seti (Faz 5)
 `ictihat_ara`, `mevzuat_ara`, `karar_metin` — `vendor/` istemcilerinden uyarlanır
 (KAYNAKLAR.md §8). Sonraki tool'lar (duruşma, dilekçe) aynı sözleşmeyle eklenir.
-```
+
+## 13. Çalışma motoru (framework kararı)
+- Korkut **kendi Python uygulamamız**; clawbot/Claude Code değil (o sadece *geliştirme*
+  aracı — ürün kurulunca ona ihtiyaç yok, bağımsız servis).
+- Ajan döngüsü **ince katman**: resmî provider SDK'ları (`openai`; sonra `anthropic`,
+  `ollama`) + kendi yazdığımız küçük döngü. **Ağır orkestrasyon framework'ü yok**
+  (LangChain/LangGraph vb.).
+- Döngü (provider-bağımsız):
+  ```
+  mesajlar + tool şemaları → model
+     ├─ model tool çağırdıysa → tool_registry.calistir → sonucu ekle → tekrar
+     └─ final metin → döndür (Korkut kimliğiyle yaz)
+  ```
+- Tüm model çağrıları `core/router`'dan geçer → **tek noktada** redaction + provider
+  seçimi + "yerel yoksa buluta düş".
+- `core/providers/<ad>.py` her sağlayıcının function-calling formatını **ortak arayüze**
+  çevirir → GPT↔Claude↔yerel swap'ı tek dosya.
+- **Neden ince katman:** (1) provider-swap önceliğimiz, ağır framework zorlaştırır;
+  (2) redaction tek chokepoint'te garanti; (3) döngü küçük (~150 satır), az bağımlılık =
+  uzun ömür; (4) tool'lar zaten `tools/`+registry, framework tool soyutlaması gereksiz.
