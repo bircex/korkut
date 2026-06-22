@@ -4,9 +4,12 @@
 > **detaylı araştırma SONRA yapılacak** (bkz. §3). Hedef: bu ürünlerin kalitesinin
 > **çok ötesine** geçmek.
 >
+> ⚠️ **Korkut TİCARİ DEĞİL** — kendi ofisimiz için iç araç. Bu yüzden **fiyat/pazar payı
+> ikincil**; asıl kıyas eksenimiz **kalite**, özellikle **research (hukuki araştırma)** ve
+> **dilekçe yazma**. Fiyatlar aşağıda yalnızca referans.
+>
 > Not: Bizim arayüzümüz bunlar gibi **web chat** değil — **Mattermost-native** (mobil,
-> ekip kanalları + DM), tek kimlik Korkut, **veri ofiste** (self-hosted). Bu, çoğu rakibe
-> karşı yapısal bir fark (KVKK/veri egemenliği + ekip iş akışı).
+> ekip kanalları + DM), tek kimlik Korkut, **veri ofiste** (self-hosted).
 
 ## 1. Rakip listesi (ön-inceleme)
 
@@ -43,6 +46,21 @@ Birçoğu "**agentic**" iddiasında (LexChat, mevzuat.ai, Apilex). Veri ölçeğ
 - **İnsan onayı yerleşik:** Onaysız kalıcı işlem yok (doğal dil onay diyaloğu).
 - **Açık veri katmanı:** yargi-mcp/mevzuat-mcp + Bedesten API (rakiplerle aynı kaynaklar).
 - **Sağlayıcı-bağımsız + kendi framework:** GPT↔Claude↔yerel; kilit yok.
+
+## 2b. "Milyonlarca döküman" iddiaları — veri nereden? (kritik)
+Rakiplerin "3.5M / 10M / 15M karar, 20K mevzuat" iddialarının **neredeyse tamamı kamuya
+açık devlet kaynaklarından** gelir — yani KAYNAKLAR.md'deki **bizim de eriştiğimiz** uçlar:
+- **UYAP Emsal + Bedesten API** (Yargıtay/Danıştay/istinaf), **karararama.yargitay/danistay**,
+  **mevzuat.gov.tr** → anonim, milyonlarca kayıt.
+- Rakipler bunu **bir kez çekip (ingest) kendi DB'lerine indekslemiş** (semantik arama için
+  embedding). Sayı farkı = ne kadarını çektikleriyle ilgili; **veri özel değil**.
+- **Tek istisna Lexpera/Kazancı:** editöryel + lisanslı içerik (eski/dijitalleşmemiş karar,
+  kitap/makale) → kamudan toplanamaz; gerçek "moat" bu.
+
+**Bizim için anlam:** Veriyi "bulmaya" gerek yok — kamuya açık, bizde de var. Rakip
+seviyesini yakalamak = **public korpüsü yerel DB'ye çekip semantik index kurmak** (yerel
+embedding ile, veri ofisten çıkmadan). Research + dilekçe kalitesinin asıl kaldıracı bu.
+Karar (research/dilekçe modülü): **canlı API mi, yerel index mi, hibrit mi** → §3 sonrası karar.
 
 ## 3. Detaylı araştırma — BEKLİYOR (kullanıcı talebi: "daha sonra")
 Her rakip için derinlemesine incelenecek (deep-research):
