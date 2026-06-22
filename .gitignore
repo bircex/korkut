@@ -7,10 +7,6 @@ secrets/
 *.key
 *.pem
 
-# Vendor (referans) — manifest'ten yeniden klonlanır; kodu repoya almıyoruz
-vendor/yargi-mcp/
-vendor/mevzuat-mcp/
-
 # Python
 __pycache__/
 *.py[cod]

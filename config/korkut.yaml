@@ -1,0 +1,7 @@
+# Korkut is a single Mattermost bot identity. Specialty modules run inside and all
+# surface as Korkut (see MIMARI.md §2, §7). DM is always open in addition to the channel.
+bot:
+  name: "Korkut"
+  channel: ofis            # primary channel; office name is set at install (Mattermost SiteName)
+persona_file: korkut/persona.py
+specialties: [dispatcher, hearing, petition, research]   # internal; not user-visible

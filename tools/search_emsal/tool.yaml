@@ -1,0 +1,30 @@
+name: search_emsal
+description: >
+  Search UYAP Emsal precedent decisions — local civil courts and civil courts of appeals
+  (istinaf) — via the Bedesten API. Returns decision metadata (documentId, court,
+  case/decision number, date). Use fetch_decision with a documentId for full text.
+requires_key: null
+parameters:
+  query:
+    type: string
+    required: true
+    description: >
+      Search phrase. Supports "exact phrase", +required, -exclude, AND/OR/NOT. No wildcards.
+  limit:
+    type: integer
+    required: false
+    default: 10
+    description: Results per page (1-10).
+  page:
+    type: integer
+    required: false
+    default: 1
+    description: 1-indexed page number.
+  date_start:
+    type: string
+    required: false
+    description: Optional start date, YYYY-MM-DD (or full ISO 8601).
+  date_end:
+    type: string
+    required: false
+    description: Optional end date, YYYY-MM-DD (or full ISO 8601).

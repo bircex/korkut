@@ -5,22 +5,18 @@
 > endpoints behind publicly accessible portals (semi-official), scraping, or commercial
 > provider APIs.
 
-## 0. Strategy — don't write from scratch, use the ready-made layer
-Two open-source projects solve 90% of the work, and they also document the actual endpoints underneath:
-- **yargi-mcp** — all judicial decisions + administrative board decisions. github.com/saidsurucu/yargi-mcp
-- **mevzuat-mcp** — legislation (mevzuat) (laws/KHK/regulations/presidential decrees...).
-  github.com/saidsurucu/mevzuat-mcp
-- Both are **FastMCP** (Python). Korkut either consumes them as MCP, or calls the
-  endpoints underneath (especially the **Bedesten API**) directly.
-- **Cloned:** `vendor/yargi-mcp`, `vendor/mevzuat-mcp` (MIT). Review + vendor source.
+## 0. Strategy — our own thin clients over the public APIs
+We access the public Turkish government portals directly with our own lightweight HTTP
+clients under `tools/` (one per source, sharing a base in `tools/_base/`). The key finding:
+these portals need **no auth/token** — the **Bedesten API** (`bedesten.adalet.gov.tr`) and the
+others are public JSON/HTML endpoints reachable with plain httpx + browser-like headers.
 
-### Verified from the code — NO TOKEN REQUIRED
-- Data access is via **plain httpx**, with **no auth** (`bedesten_client.py`: "Pure httpx - no
-  authentication or Playwright needed"). Browser-impersonating headers + a JSON wrapper are enough.
-- The Clerk/Stripe/JWT/Redis/OpenRouter keys in `.env` are **not for data** — they are for the
-  author's paid SaaS layer (login/payment/session). We skip them with `ENABLE_AUTH=false`.
-- Only optional one: legislation "semantic" search → OpenRouter **or fully local embedding**
-  (HF TEI / Ollama, no external service). If local is chosen, the "data stays in the office" principle is preserved.
+### No token required
+- Data access is **plain httpx, no auth** — browser-impersonating headers + the API's JSON
+  wrapper are enough. Confirmed by hitting the endpoints.
+- Optional only: legislation "semantic" search can use an embedding provider — we prefer a
+  **fully local embedding** (HF TEI / Ollama, no external service) so the "data stays in the
+  office" principle holds; a hosted embedding key is never required for core search.
 
 ## 1. Judicial decisions (case law / içtihat)
 
@@ -48,7 +44,7 @@ Two open-source projects solve 90% of the work, and they also document the actua
 > Note: KVKK/BDDK/Sigorta Tahkim have no official endpoint; access goes through third-party
 > search (Brave/Tavily) → separate API key + more fragile. Low priority.
 
-## 3. Legislation and presidential decrees (with mevzuat-mcp)
+## 3. Legislation and presidential decrees
 
 Via `mevzuat.gov.tr` (Presidential Legislation Information System), filtered by type:
 - **KANUN, KHK, TÜZÜK, YÖNETMELİK, TEBLİĞ, KKY, UY, MÜLGA**
@@ -95,22 +91,17 @@ via an enterprise agreement; a standard self-serve API is not common — must be
   UYAP (your own files) is sensitive.
 - KVKK/BDDK/Sigorta Tahkim depend on third-party search → low priority, extra key.
 
-## 8. Integration decision (for the research module)
-- **Decision: vendor → tool (one tool per source)** — cloned into `vendor/`; since it is MIT,
-  we adapt the fetch clients (`bedesten_client.py`, `mevzuat_client.py`, etc.) into **one
-  lightweight CLI tool per source** under `tools/`: `search_yargitay`, `search_danistay`,
-  `search_emsal`, `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`,
-  `search_gib`, `search_mevzuat`, plus `fetch_decision`/`fetch_legislation`. Shared base
-  client (`tools/_base/`) carries httpx + rate-limit + cache; tiered exposure + `requires_key`
-  key handling per MIMARI.md §12. "Exactly the way the author fetches it" — no auth, just httpx.
-- **Key groups:** A) no key (core, plain httpx): Yargıtay, Danıştay, Emsal, Bedesten, Anayasa,
-  KİK, Rekabet, Sayıştay, GİB, mevzuat.gov.tr. B) needs search provider (Brave/Tavily) →
-  optional, prefer our own search, deferred: KVKK, BDDK, Sigorta Tahkim. C) embedding → local
-  (HF TEI/Ollama), no key. Missing-key tools auto-disable (never offered to the model).
-- **License obligation:** Preserve the MIT copyright notice in the imported files.
+## 8. Integration — one lightweight tool per source (BUILT)
+- **Implemented** as one CLI tool per source under `tools/` (our own httpx clients over the
+  shared `tools/_base/`): `search_yargitay`, `search_danistay`, `search_emsal`,
+  `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`,
+  `search_mevzuat`, plus `fetch_decision` / `fetch_legislation`. No auth, just httpx;
+  tiered exposure + `requires_key` key handling per MIMARI.md §12.
+- **Key groups:** A) no key (core): Yargıtay, Danıştay, Emsal, Bedesten, Anayasa, KİK,
+  Rekabet, Sayıştay, GİB, mevzuat.gov.tr. B) needs a search provider (Brave/Tavily) →
+  optional, prefer our own search, deferred: KVKK, BDDK, Sigorta Tahkim. C) embedding →
+  local (HF TEI/Ollama), no key. Missing-key tools auto-disable (never offered to the model).
 - **Core target endpoints:** Bedesten API (case law + legislation), karararama.yargitay/danistay,
   emsal.uyap, anayasa, gib. KVKK/BDDK/Sigorta-Tahkim (dependent on 3rd-party search) → later.
-- **Alternative (always open):** Run the MCPs as-is in Docker and make Korkut an MCP
-  client. We chose the vendor path because it increases control; this remains a fallback.
-- **Maintenance risk:** The endpoints are undocumented and rely on browser-impersonating headers →
-  they can change. Once vendored, we track updates by diffing against the upstream in `vendor/`.
+- **Maintenance risk:** The endpoints are undocumented and rely on browser-impersonating
+  headers → they can change; verify against the live APIs periodically (each tool's README notes this).

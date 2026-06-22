@@ -1,0 +1,34 @@
+name: search_danistay
+description: >
+  Search Danıştay (Council of State / Danıştay) decisions — Turkey's highest administrative
+  court — via the Bedesten API. Returns decision metadata (documentId, chamber, case/decision
+  number, date). Use fetch_decision with a documentId for full text.
+requires_key: null
+parameters:
+  query:
+    type: string
+    required: true
+    description: >
+      Search phrase. Supports "exact phrase", +required, -exclude, AND/OR/NOT. No wildcards.
+  limit:
+    type: integer
+    required: false
+    default: 10
+    description: Results per page (1-10).
+  page:
+    type: integer
+    required: false
+    default: 1
+    description: 1-indexed page number.
+  chamber:
+    type: string
+    required: false
+    description: Optional chamber filter, e.g. "3. Daire" or "İdari Dava Daireleri Kurulu".
+  date_start:
+    type: string
+    required: false
+    description: Optional start date, YYYY-MM-DD (or full ISO 8601).
+  date_end:
+    type: string
+    required: false
+    description: Optional end date, YYYY-MM-DD (or full ISO 8601).

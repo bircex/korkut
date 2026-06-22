@@ -4,7 +4,7 @@
 > Context: KAYNAKLAR.md (sources), RAKIPLER.md §2b (data is public).
 
 ## 0. Rate limit reality (the constraint that shapes the design)
-- **Bedesten API** (measured, vendor 2026-05-08): **10 requests per 30 s per IP**
+- **Bedesten API** (measured 2026-05-08): **10 requests per 30 s per IP**
   (≈ 1 request/3 s steady; ≈ 20/min; ≈ 28.800/day theoretical 24/7). Returns 429 + `Retry-After`.
 - For other endpoints (Yargıtay/Danıştay native, UYAP Emsal, mevzuat.gov.tr) the limit is undocumented →
   act with similar caution, verify by measuring.
@@ -30,8 +30,8 @@ question → (live) top-N candidate decisions/legislation via the state search
 ```
 - **Lazy cache:** fetched document + metadata into the local DB → repeat calls are reduced (rate-limit friendly).
 - **Polite rate limiter:** comply with Bedesten 10/30s; on 429 wait for `Retry-After`; avoid parallel
-  repeated calls (token-bucket — ready-made logic exists in the vendor).
-- Tools: `tools/ictihat_ara`, `tools/mevzuat_ara`, `tools/karar_metin` (MIMARI.md §12).
+  repeated calls (token-bucket implemented in `tools/_base`).
+- Tools: `tools/search_yargitay`, `tools/search_mevzuat`, `tools/fetch_decision`, … (MIMARI.md §12).
 
 ## 3. Phase B — Focused local index (medium term)
 - **Mirror legislation FULLY:** since it is small, the entirety goes into the local DB + kept current →

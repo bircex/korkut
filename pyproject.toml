@@ -1,0 +1,48 @@
+[project]
+name = "korkut"
+version = "0.1.0"
+description = "Korkut — AI assistant for a law office over Mattermost (single identity, specialty modules)"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "markdownify>=0.13",
+    "pypdf>=4.0",
+]
+
+[project.optional-dependencies]
+# Runtime modules beyond the tools layer (added in later phases).
+app = [
+    "openai>=1.40",
+    "mattermostdriver>=7.3",
+    "psycopg[binary]>=3.2",
+    "python-docx>=1.1",
+    "SQLAlchemy>=2.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "tools", "bridge", "korkut"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "live: hits real external endpoints (deselected by default; run with -m live)",
+]
+addopts = "-m 'not live'"
+
+[tool.ruff]
+line-length = 100

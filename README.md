@@ -24,4 +24,13 @@ talks to a single identity — **Korkut** — while specialized modules run in p
 - **Data:** Postgres + `data/dosyalar/`; all on the server
 
 ## Status
-Design complete (PLAN/MIMARI/KAYNAKLAR/GUVENLIK). Up next: **Phase 0** (Linux setup).
+Design complete (PLAN/MIMARI/KAYNAKLAR/GUVENLIK/KORPUS/RAKIPLER). **Tools layer built**:
+11 CLI tools under `tools/` (`search_*` + `fetch_*`) over a shared base client, with docs +
+tests (45 passing). Next: core (router/redactor/db) and the Mattermost bridge.
+
+## Quickstart (dev)
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/pytest                       # offline tests (live tests deselected by default)
+.venv/bin/python -m tools.search_yargitay --query "kira tespiti" --limit 5
+```
