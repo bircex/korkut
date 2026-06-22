@@ -1,68 +1,72 @@
-# Avukatlık Ofisi Asistanı — Uygulama Planı
+# Korkut — Uygulama Planı
 
 > Durum: Tasarım onaylandı, kuruluma hazır. Bu doküman tüm kararların tek kaynağıdır.
 
 ## 1. Amaç
 Bir avukatlık ofisinin günlük işlerini (duruşma hatırlatma, dilekçe taslağı, hukuki
-araştırma) tek bir sohbet arayüzünden yürüten, veriyi ofiste tutan asistan sistemi.
+araştırma) **Korkut** adlı tek asistan üzerinden yürüten, veriyi ofiste tutan sistem.
+Korkut Mattermost'ta tek kimliktir; içeride uzmanlık modülleri (paralel) çalışır.
 
 ## 2. İlkeler
 - **Veri ofiste kalır.** Sohbet sunucusu (Mattermost) kendi makinemizde; `data/` asla
   dışarı/depoya çıkmaz, şifreli diskte durur.
 - **Buluta giden her şey önce rumuzlanır.** İsim/TCKN/dosya no → token. Geri-açma
   eşlemesi yalnızca sunucuda. (Sağlayıcı GPT de olsa Claude da olsa kural aynı.)
-- **Onaysız kalıcı işlem yok.** Ajan ne yapacağını özetler, doğal dille "onaylıyor
+- **Tek kimlik: Korkut.** Kullanıcı tek asistanla konuşur. İçeride uzmanlık modülleri
+  (yönlendirme/duruşma/dilekçe/araştırma) paralel çalışabilir ama hepsi Korkut olarak
+  yanıtlar. Hem kanaldan (@Korkut) hem **özelden (DM)** erişilir.
+- **Onaysız kalıcı işlem yok.** Korkut ne yapacağını özetler, doğal dille "onaylıyor
   musunuz?" diye sorar; onay alınmadan duruşma/dilekçe/veri kalıcılaşmaz. Düzeltme
   istenirse uygulayıp tekrar onaya sunar. (Detay: MIMARI.md §9)
 - **Model seçimi config'ten.** Her iş → `yerel` veya `bulut`; tek satırla değiştirilir.
 - **Sağlayıcı takılıp çıkarılabilir.** Bugün bulut = GPT; ileride Claude / yerel model.
 - **Yetenekler tool'dur.** Her dış yetenek (içtihat/mevzuat arama, metin çekme...) `tools/`
   altında bağımsız bir araç: **CLI'dan tek başına çalışır**, kendi dökümantasyonunu taşır,
-  ajanlara **toolset olarak configure edilir**. Yeni yetenek = yeni klasör. (Detay: MIMARI.md §12)
+  Korkut'a **toolset olarak configure edilir**. Yeni yetenek = yeni klasör. (Detay: MIMARI.md §12)
 
 ## 3. Mimari
 
 ```
-#ofis  (TEK kanal, self-hosted Mattermost — veri ofisten çıkmaz)
-   │   herkes buraya yazar
+Mattermost (self-hosted — veri ofisten çıkmaz)
+   │   (a) kanal: @Korkut / Korkut'un thread'i      (b) özel mesaj (DM): her mesaj
    ▼
-Dağıtıcı servis  (tek Python süreci, kanalı WebSocket ile dinler)
+Dağıtıcı servis  (tek Python süreci, kanal+DM dinler)
    │
-   ├─ Mesajda bir ajan etiketlenmişse → o ajan yanıtlar
-   │     "@Defne yarınki duruşmaları listele"
-   │
-   └─ Etiketsiz mesaj → Kâtip (yönlendirici) niyeti anlar, doğru ajana verir
-         "boşanma için cevap dilekçesi taslağı"  → Kerem'e
-   │
+   └─ Korkut (TEK kimlik) → yönlendirici niyeti anlar → uzmanlık modülü(ne) verir
+         "yarınki duruşmalar"        → duruşma modülü
+         "cevap dilekçesi taslağı"   → dilekçe modülü     (birden çoğu PARALEL olabilir)
+         "emsal karar var mı"        → araştırma modülü
+   │   çıktılar TEK Korkut yanıtında birleşir
    ▼
 core/  (router + redactor + db)
    ├─ model: yerel  → Ollama         (donanım gelince; yokken bulut'a düşer)
    └─ model: bulut  → rumuzla → GPT  (ileride Claude/diğer)
 ```
 
-**Kilit kural:** Mesaj başına **tek** ajan cevap verir. Etiketlersen o ajan; etiketlemezsen
-Kâtip karar verir. Tüm ajanlar tek serviste çalışır ama Mattermost'ta ayrı bot
-kullanıcısı (kendi adı + avatarı) olarak görünür.
+**Kilit kural:** Kullanıcıya **tek kimlik Korkut** görünür; her mesaja tek Korkut yanıtı
+döner. İçeride uzmanlık modülleri (paralel) çalışır, hepsi Korkut olarak konuşur.
 
-> Not: İleride **çok ofis** (her ofis = bir kanal) eklenecek; şimdilik tek kanalla başlıyoruz.
+> Not: İleride **çok kanal/çok ofis** eklenebilir; şimdilik tek kanal + DM ile başlıyoruz.
 
-## 4. Ajanlar
+## 4. Korkut (tek kimlik) ve uzmanlık modülleri
 
-| Ad | Rol | İş | Model |
-|----|-----|----|-------|
-| **Kâtip** | Yönlendirici | Etiketsiz mesajları doğru ajana yöneltir + genel sohbet | bulut |
-| **Defne** | Duruşma | Hatırlatma, takvim (ekle/listele) | yerel → şimdilik bulut |
-| **Kerem** | Dilekçe | Şablon + taslak üretimi | bulut |
-| **Bilge** | Araştırma | Mevzuat/içtihat arama + özet | bulut |
+Mattermost'ta tek bot: **Korkut**. İçeride şu modüller var (kullanıcıya görünmez):
+
+| Modül | İş | Model |
+|-------|----|-------|
+| Yönlendirici | Niyeti anlar → modüle verir + genel sohbet | bulut |
+| Duruşma | Hatırlatma, takvim (ekle/listele) | yerel → şimdilik bulut |
+| Dilekçe | Şablon + taslak üretimi | bulut |
+| Araştırma | Mevzuat/içtihat arama + özet | bulut |
 
 ## 5. Dizin yapısı
 
 ```
-hukuk-asistan/
+korkut/
 ├─ PLAN.md                     # bu doküman
 ├─ config/
-│  ├─ model-routing.yaml       # backend seçimi + ajan→model
-│  ├─ ajanlar.yaml             # ajan adları, botlar, persona
+│  ├─ model-routing.yaml       # backend seçimi + uzmanlık→model
+│  ├─ korkut.yaml              # Korkut personası + uzmanlık modülleri + bot
 │  └─ redaction-rules.yaml     # rumuzlanacak alanlar
 ├─ data/                       # .gitignore — asla dışarı çıkmaz
 │  └─ dosyalar/<dava-no>/      # dilekçeler, ekler, kararlar
@@ -71,9 +75,9 @@ hukuk-asistan/
 │  ├─ router.py                # model seçici (yerel/bulut), düşme kuralı
 │  ├─ redactor.py              # rumuzla / geri-aç
 │  ├─ providers/               # gpt.py, (sonra) claude.py, ollama.py
-│  ├─ tool_registry.py         # tools/ manifestlerini okur → ajanlara toolset verir
+│  ├─ tool_registry.py         # tools/ manifestlerini okur → Korkut'a toolset verir
 │  └─ db.py
-├─ tools/                      # ajan YETENEKLERİ — her biri CLI'dan tertemiz çalışır
+├─ tools/                      # Korkut'un YETENEKLERİ — her biri CLI'dan tertemiz çalışır
 │  ├─ README.md                # tüm tool'ların indeksi + CLI sözleşmesi
 │  ├─ ictihat_ara/             # Yargıtay/Danıştay/Emsal arama (Bedesten)
 │  │   ├─ __main__.py          #   CLI: python -m tools.ictihat_ara --sorgu "..."
@@ -84,12 +88,13 @@ hukuk-asistan/
 │  └─ ...                      # yeni yetenek = yeni klasör (aynı sözleşme)
 ├─ vendor/                     # yargi-mcp + mevzuat-mcp (MIT) — kaynak/referans
 ├─ bridge/
-│  └─ mattermost.py            # tek kanal dinleyici + ajan dağıtıcı + bot kimlikleri
-├─ agents/
-│  ├─ katip.py                 # yönlendirici (niyet sınıflama)
-│  ├─ defne.py                 # duruşma
-│  ├─ kerem.py                 # dilekçe
-│  └─ bilge.py                 # araştırma
+│  └─ mattermost.py            # kanal+DM dinleyici + Korkut dağıtıcı + tek bot kimliği
+├─ korkut/                     # tek kimlik; içeride uzmanlık modülleri
+│  ├─ persona.py               # Korkut'un tek sistem talimatı
+│  ├─ yonlendirici.py          # niyet sınıflama → modüle dağıt
+│  ├─ durusma.py               # duruşma modülü
+│  ├─ dilekce.py               # dilekçe modülü
+│  └─ arastirma.py             # araştırma modülü
 ├─ templates/dilekce/          # Türk hukuku dilekçe şablonları (.docx/.md)
 └─ scripts/cron/               # duruşma hatırlatma job'ı
 ```
@@ -105,21 +110,20 @@ backendler:
 # Ollama kapalıyken "yerel" istenen işler otomatik bulut'a düşer + loglanır.
 yerel_yoksa_buluta_dus: true
 
-ajanlar:
-  katip:  { model: bulut }
-  defne:  { model: yerel }
-  kerem:  { model: bulut }
-  bilge:  { model: bulut }
+uzmanliklar:
+  yonlendirici: { model: bulut }
+  durusma:      { model: yerel }
+  dilekce:      { model: bulut }
+  arastirma:    { model: bulut }
 ```
 
-`config/ajanlar.yaml`
+`config/korkut.yaml`
 ```yaml
-kanal: ofis
-ajanlar:
-  katip: { ad: "Kâtip", rol: yonlendirici }
-  defne: { ad: "Defne", rol: durusma }
-  kerem: { ad: "Kerem", rol: dilekce }
-  bilge: { ad: "Bilge", rol: arastirma }
+bot:
+  ad: "Korkut"               # Mattermost'taki tek bot kimliği
+  kanal: ofis                # ana kanal (DM ayrıca her zaman açık)
+persona: "Korkut, bir avukatlık ofisinin yapay zekâ asistanı..."  # tek sistem talimatı
+uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # içeride; kullanıcıya görünmez
 ```
 
 ## 7. Rumuzlama (redaction)
@@ -140,15 +144,15 @@ ajanlar:
 - **Faz 1 — core:** Model router (+ "yerel yoksa buluta düş" kuralı) + rumuzlama + DB +
   **tool registry** (`tools/` sözleşmesi: CLI + tool.yaml → ajan toolset'i).
   Test: buluta hiçbir gerçek ad/TCKN gitmiyor; örnek tool CLI'dan çalışıyor.
-- **Faz 2 — Mattermost köprüsü:** Tek kanal dinleyici, etiket/niyet ile ajan dağıtımı,
-  4 bot kimliği (Kâtip/Defne/Kerem/Bilge).
-- **Faz 3 — Defne (duruşma):** Manuel duruşma girişi + cron hatırlatma → kanala
-  "yarınki duruşmalar" düşer.
-- **Faz 4 — Kerem (dilekçe):** Şablon + bulut taslak (rumuzlu) → `python-docx` ile
+- **Faz 2 — Mattermost köprüsü:** Kanal + **DM** dinleyici, niyetle uzmanlık modülü
+  dağıtımı, **tek Korkut bot kimliği**. (İçeride paralel modüller, dışarıda tek Korkut.)
+- **Faz 3 — Duruşma modülü:** Manuel duruşma girişi + cron hatırlatma → Korkut "yarınki
+  duruşmalar"ı kanala/DM'e yazar.
+- **Faz 4 — Dilekçe modülü:** Şablon + bulut taslak (rumuzlu) → `python-docx` ile
   `.docx` → `data/dosyalar/` altına "onay bekliyor" etiketiyle.
-- **Faz 5 — Bilge (araştırma):** Veri tool'larını `tools/` altında inşa et —
+- **Faz 5 — Araştırma modülü:** Veri tool'larını `tools/` altında inşa et —
   `ictihat_ara`, `mevzuat_ara`, `karar_metin` (vendor/ httpx istemcilerinden, MIT). Her
-  biri CLI'dan tertemiz + tool.yaml + README. Bilge bunları toolset olarak kullanır →
+  biri CLI'dan tertemiz + tool.yaml + README. Korkut bunları toolset olarak kullanır →
   kaynaklı özet. Kaynaklar: KAYNAKLAR.md.
 - **Sonra:** Yerel model (Ollama + GPU), UYAP entegrasyonu, yetkilendirme/çok kullanıcı.
 
