@@ -14,8 +14,8 @@
         │
 ┌─ systemd servisi ────────────────────┐
 │  asistan  (tek Python süreci)         │
-│    ├─ bridge/      MM dinle + dağıt    │
-│    ├─ agents/      Kâtip/Defne/Kerem/Bilge
+│    ├─ bridge/      MM dinle (kanal+DM)  │
+│    ├─ korkut/      tek kimlik; içeride uzmanlık modülleri (paralel)
 │    └─ core/        router+redactor+db  │
 └───────────────────────────────────────┘
         │
@@ -34,41 +34,42 @@
   (aynı sunucu, farklı DB). Baştan Postgres → çok kullanıcı/ofise büyümeye hazır.
 - Hepsi aynı makinede; dış bağımlılık yalnızca OpenAI API (rumuzlanmış metinle).
 
-## 2. Mattermost bot kimlikleri
-- 4 ayrı **bot hesabı**: Kâtip, Defne, Kerem, Bilge → her birinin kendi token'ı.
-- `asistan` servisi **tek WebSocket** ile (Kâtip token'ı) kanalı dinler — mesajları tek
-  sefer alır (çoklu WS = çift mesaj olurdu).
-- Yanıt verirken ilgili ajanın token'ıyla **REST** ile yazar → kanalda o ajan konuşmuş görünür.
-- **Döngü koruması:** Servis, 4 botun kendi yazdığı mesajları yok sayar.
+## 2. Mattermost bot kimliği — tek "Korkut"
+- **Tek bot hesabı: Korkut** (tek token). Kullanıcı tek bir asistanla konuşur.
+- İçeride uzmanlık modülleri (yönlendirme, duruşma, dilekçe, araştırma) var; gerekirse
+  **paralel** çalışır ama **hepsi Korkut olarak** yazar → kullanıcıya tek kimlik görünür.
+- `asistan` servisi tek WebSocket ile dinler, REST ile **Korkut** olarak yazar.
+- **İki yüzey:** (a) kanal — `@Korkut` etiketi / Korkut'un thread'i; (b) **özel mesaj (DM)**
+  — Korkut'la birebir yazışma.
+- **Döngü koruması:** Servis, Korkut'un kendi mesajlarını yok sayar.
 
 ## 3. Mesaj akışı (adım adım)
 
 ```
-1. Kullanıcı kanala yazar.
-2. bridge mesajı WS'ten alır. Bot mesajıysa → yok say (dur).
-3. Tetikleme kontrolü (KARAR-1: SADECE etiketlenince):
-     a) Mesaj bir ajanı etiketliyorsa (@Defne) → o ajana git.
-     b) @Kâtip etiketliyse → Kâtip niyeti sınıflar → doğru ajana yönlendirir.
-     c) Botun başlattığı bir thread'e yanıtsa → o ajan devam eder.
-     d) Hiçbiri değilse → yok say (kanalı boğmaz, maliyet yok).
-4. Seçilen ajan çalışır:
-     - Gerekiyorsa DB'den o işin verisini çeker (ofis sonra; şimdilik tüm veri).
-     - LLM gerekiyorsa core.router'a (is_tipi, metin) verir.
-5. core.router: ajan→model eşlemesine bakar.
+1. Kullanıcı kanala veya Korkut'a DM yazar.
+2. bridge mesajı WS'ten alır. Korkut'un kendi mesajıysa → yok say (dur).
+3. Tetikleme:
+     a) DM ise → her mesaj Korkut'a gider (özel sohbet; etiket gerekmez).
+     b) Kanalda @Korkut etiketli VEYA Korkut'un thread'ine yanıtsa → Korkut'a gider.
+     c) Kanalda etiketsiz → yok say (kanalı boğmaz, maliyet yok).
+4. Korkut'un yönlendiricisi niyeti anlar → ilgili uzmanlık modülü(ne) yönlendirir
+   (duruşma / dilekçe / araştırma); birden çoğu gerekiyorsa PARALEL çalışır.
+5. Modül DB'den veriyi çeker; LLM gerekiyorsa core.router'a (uzmanlık, is_tipi, metin) verir.
+6. core.router: uzmanlık→model eşlemesi.
      - model=yerel & Ollama kapalı → bulut'a düş + logla.
      - model=bulut → redactor.rumuzla → provider(gpt) → redactor.geri_ac.
-6. Ajan sonucu thread'e ilgili bot kimliğiyle yazar.
-7. Veri yazımı varsa (duruşma/dilekçe) → DB/dosya + onay durumu.
+7. Çıktılar **tek Korkut yanıtında** birleşir; thread'e/DM'e **Korkut kimliğiyle** yazılır.
+8. Veri yazımı varsa (duruşma/dilekçe) → DB/dosya + onay durumu.
 ```
 
-- **Bağlam = Mattermost thread'i.** Her iş bir thread; ajan o thread'in mesajlarını
-  bağlam olarak görür. Kalıcı bilgi (dava/müvekkil) DB'de.
+- **Bağlam = Mattermost thread'i / DM dizisi.** Korkut o dizinin mesajlarını bağlam
+  olarak görür. Kalıcı bilgi (dava/müvekkil) DB'de.
 
 ## 4. core sözleşmeleri (arayüzler)
 
 ```
-router.cevapla(ajan: str, is_tipi: str, mesajlar: list) -> str
-    # ajan→model seç, yerel/bulut, düşme kuralı; redaction'ı kendi içinde uygular.
+router.cevapla(uzmanlik: str, is_tipi: str, mesajlar: list) -> str
+    # uzmanlık→model seç, yerel/bulut, düşme kuralı; redaction'ı kendi içinde uygular.
 
 redactor.rumuzla(metin: str) -> (rumuzlu_metin: str, harita: dict)
 redactor.geri_ac(metin: str, harita: dict) -> str
@@ -120,21 +121,24 @@ dilekçe(id, dava_id, tur, dosya_yolu,
 - Tüm hassas alanlar zaten LUKS şifreli diskte. TCKN için alan-bazlı ek şifreleme
   opsiyon (gerekirse). `ofis` alanı çok-ofis fazında eklenecek.
 
-## 7. Ajan iç yapısı
+## 7. Korkut'un iç yapısı (tek kimlik, uzmanlık modülleri)
+Kullanıcıya tek **Korkut** görünür. İçeride yönlendirici niyeti anlar, ilgili modül(ler)i
+çalıştırır (paralel olabilir), çıktılar **tek Korkut yanıtında** birleşir.
 
-| Ajan | Tetik | Yaptığı | LLM araçları | Veri |
-|------|-------|---------|--------------|------|
-| **Kâtip** | etiketsiz / @Kâtip | niyet sınıfla → ajana yönlendir, genel sohbet | sınıflama | — |
-| **Defne** | @Defne / "duruşma" | duruşma ekle/listele, hatırlatma | tarih/varlık çıkarımı | duruşma, dava |
-| **Kerem** | @Kerem / "dilekçe" | şablon seç + taslak üret → .docx | metin üretimi | dava, dilekçe, şablon |
-| **Bilge** | @Bilge / "araştırma" | mevzuat/içtihat ara + özetle | tools/ (ictihat_ara, mevzuat_ara, karar_metin) | dış portal API |
+| Modül (içeride) | İş | LLM / araçlar | Veri |
+|-----------------|----|---------------|------|
+| **yönlendirici** | niyet anla → modüle ver, genel sohbet | sınıflama | — |
+| **duruşma** | duruşma ekle/listele, hatırlatma | tarih/varlık çıkarımı | duruşma, dava |
+| **dilekçe** | şablon seç + taslak üret → .docx | metin üretimi | dava, dilekçe, şablon |
+| **araştırma** | mevzuat/içtihat ara + özetle | tools/ (ictihat_ara, mevzuat_ara, karar_metin) | dış portal API |
 
-- Her ajanın bir **persona/sistem talimatı** var (rol, sınırlar, "taslaktır" uyarısı).
+- Korkut'un **tek persona/sistem talimatı** var (rol, sınırlar, "taslaktır" uyarısı);
+  modüller bu personanın içinde uzmanlaşır.
 
 ## 8. Veri girişi (duruşma/müvekkil) — KARAR-2: Doğal dil + onay
-- Ajana doğal dille yazılır: "Defne, Ahmet Yılmaz boşanma dosyası 15 Temmuz 10:00
+- Korkut'a doğal dille yazılır: "Korkut, Ahmet Yılmaz boşanma dosyası 15 Temmuz 10:00
   Antalya 3. Aile Mahkemesi'nde".
-- Ajan alanları **çıkarır** ve **yapılandırılmış özet** olarak gösterir.
+- Korkut alanları **çıkarır** ve **yapılandırılmış özet** olarak gösterir.
 - Kaydetmeden önce **§9'daki doğal dil onay diyaloğunu** uygular — kullanıcı onaylamadan
   DB'ye yazmaz; "şu tarihi düzelt" derse düzeltip tekrar onaya sunar.
 
@@ -166,8 +170,8 @@ Kullanıcı doğal dille cevap verir:
   doğal dil onayıyla kesinleşir. Bu, tüm yazma işlemleri için çapraz ilkedir.
 
 ## 11. Tasarım kararları (kapandı)
-- **KARAR-1 — Tetikleme:** ✅ Sadece etiketlenince (@ajan / @Kâtip) veya botun thread'ine
-  yanıt. Etiketsiz mesajlar yok sayılır.
+- **KARAR-1 — Tetikleme:** ✅ Kanalda sadece `@Korkut` / Korkut'un thread'i; **DM'de her
+  mesaj**. Kanalda etiketsiz mesajlar yok sayılır.
 - **KARAR-2 — Veri girişi:** ✅ Doğal dil + yapılandırılmış özet + onay (§8).
 - **KARAR-3 — Rumuz haritası:** ✅ Varsayılan: yalnızca RAM'de, istek sonrası silinir
   (asgari PII izi). Audit gerekirse şifreli kalıcı log opsiyon olarak eklenir.
@@ -176,7 +180,7 @@ Kullanıcı doğal dille cevap verir:
 
 ## 12. Tools katmanı (ajan yetenekleri)
 Her dış yetenek `tools/` altında **bağımsız, CLI'dan çalışan, kendi kendini belgeleyen**
-bir araçtır. Ajanlar bunları toolset olarak kullanır.
+bir araçtır. Korkut (uzmanlık modülleri) bunları toolset olarak kullanır.
 
 ### Klasör sözleşmesi (`tools/<ad>/`)
 ```
@@ -213,12 +217,12 @@ parametreler:
 - GPT bir tool çağırınca registry onu çalıştırır (in-process import; gerekirse subprocess
   CLI) ve JSON sonucu modele döndürür.
 
-### config/tools.yaml (hangi ajan neye erişir)
+### config/tools.yaml (hangi uzmanlık modülü neye erişir)
 ```yaml
-defne: [durusma_ekle, durusma_listele]
-kerem: [sablon_getir, dilekce_uret, ictihat_ara]
-bilge: [ictihat_ara, mevzuat_ara, karar_metin]
-katip: []
+# Korkut tek kimlik; tool'lar içeride uzmanlığa göre gruplanır.
+durusma:   [durusma_ekle, durusma_listele]
+dilekce:   [sablon_getir, dilekce_uret, ictihat_ara]
+arastirma: [ictihat_ara, mevzuat_ara, karar_metin]
 ```
 
 ### Gizlilik

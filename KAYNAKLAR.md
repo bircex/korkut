@@ -1,6 +1,6 @@
 # Hukuki Veri Kaynakları — Erişim Listesi
 
-> Bilge (araştırma) ve Kerem (dilekçe) ajanlarının ham maddesi. Türkiye'de **resmî,
+> Korkut'un araştırma ve dilekçe modüllerinin ham maddesi. Türkiye'de **resmî,
 > dokümante, SLA'lı açık API neredeyse yok**; erişim çoğunlukla kamuya açık portalların
 > arkasındaki JSON uçları (yarı-resmî), scraping veya ticari sağlayıcı API'leri ile.
 
@@ -9,7 +9,7 @@
 - **yargi-mcp** — tüm yargı kararları + idari kurul kararları. github.com/saidsurucu/yargi-mcp
 - **mevzuat-mcp** — mevzuat (kanun/KHK/yönetmelik/Cumhurbaşkanlığı kararnameleri...).
   github.com/saidsurucu/mevzuat-mcp
-- Her ikisi de **FastMCP** (Python). Bilge bunları ya MCP olarak tüketir, ya da
+- Her ikisi de **FastMCP** (Python). Korkut bunları ya MCP olarak tüketir, ya da
   altlarındaki uçları (özellikle **Bedesten API**) doğrudan çağırır.
 - **Klonlandı:** `vendor/yargi-mcp`, `vendor/mevzuat-mcp` (MIT). İnceleme + vendor kaynağı.
 
@@ -61,7 +61,7 @@
 - **Resmî açık API yok** → arşiv scraping (tarih bazlı HTML/PDF). Çoğu kararname zaten
   mevzuat.gov.tr'de yapılandırılmış; Resmî Gazete'yi yalnızca "o günkü ham yayım" için.
 
-## 4. Kendi dosyaların / duruşma günleri (Defne için — AYRI kategori!)
+## 4. Kendi dosyaların / duruşma günleri (duruşma modülü — AYRI kategori!)
 Bunlar içtihat değil; **ofisin kendi davalarının** safahatı ve duruşma günleri.
 - **UYAP Avukat Portal** (`avukat.uyap.gov.tr`) / **Vatandaş Portal**
   (`vatandas.uyap.gov.tr`).
@@ -92,7 +92,7 @@ kurumsal anlaşmayla; standart self-serve API yaygın değil — talep edilmeli.
   UYAP (kendi dosyalar) hassas.
 - KVKK/BDDK/Sigorta Tahkim üçüncü-taraf aramaya bağlı → düşük öncelik, ek anahtar.
 
-## 8. Entegrasyon kararı (Bilge için)
+## 8. Entegrasyon kararı (araştırma modülü için)
 - **Karar: vendor → tool** — `vendor/`'a klonlandı; MIT olduğu için çekme istemcilerini
   (`bedesten_client.py`, `mevzuat_client.py` vb.) `tools/` altında birer **CLI tool**'a
   uyarlarız: `ictihat_ara`, `mevzuat_ara`, `karar_metin` (her biri CLI + tool.yaml +
@@ -100,7 +100,7 @@ kurumsal anlaşmayla; standart self-serve API yaygın değil — talep edilmeli.
 - **Lisans yükümlülüğü:** Alınan dosyalarda MIT telif notunu koru.
 - **Çekirdek hedef uçlar:** Bedesten API (içtihat + mevzuat), karararama.yargitay/danistay,
   emsal.uyap, anayasa, gib. KVKK/BDDK/Sigorta-Tahkim (3. taraf aramaya bağlı) → sonraya.
-- **Alternatif (her an açık):** MCP'leri olduğu gibi Docker'da çalıştırıp Bilge'yi MCP
+- **Alternatif (her an açık):** MCP'leri olduğu gibi Docker'da çalıştırıp Korkut'u MCP
   client yapmak. Vendor yolu kontrolü artırdığı için onu seçtik; bu da yedek.
 - **Bakım riski:** Uçlar dokümante değil, tarayıcı-taklidi header'lara dayalı →
   değişebilir. Vendor edince güncellemeyi `vendor/`'daki upstream'den diff'leyerek izleriz.
