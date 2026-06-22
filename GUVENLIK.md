@@ -1,72 +1,72 @@
-# Güvenlik Tasarımı
+# Security Design
 
-> Hedef: Sisteme **tek kapı Mattermost**, mobilden erişim, **2FA zorunlu**, başka hiçbir
-> yerden erişim yok. Müvekkil verisi ofiste kalır (bkz. PLAN.md ilkeleri, MIMARI.md §5).
+> Goal: **single gateway (tek kapı) Mattermost** into the system, access from mobile, **2FA mandatory**, no
+> access from anywhere else. Client (müvekkil) data stays in the office (ofis) (see PLAN.md principles, MIMARI.md §5).
 
-## 1. İlke: Tek kapı = Mattermost
-- İnternete açık **tek servis Mattermost** (HTTPS / 443). Başka hiçbir şey dışarıdan
-  erişilemez.
-- `asistan` (Python), Postgres, `tools/`, OpenAI çağrıları → hepsi **localhost / iç ağ**,
-  firewall arkasında. Kullanıcı bunların hiçbirine doğrudan ulaşamaz.
-- Önde bir **reverse proxy** (Caddy/nginx) yalnızca Mattermost'u yayınlar; **otomatik TLS**
-  (Let's Encrypt). Mobil uygulama geçerli sertifika ister.
+## 1. Principle: Single gateway = Mattermost
+- The **only service exposed to the internet is Mattermost** (HTTPS / 443). Nothing else is
+  reachable from outside.
+- `asistan` (Python), Postgres, `tools/`, OpenAI calls → all **localhost / internal network**,
+  behind the firewall. The user cannot reach any of these directly.
+- A **reverse proxy** in front (Caddy/nginx) publishes only Mattermost; **automatic TLS**
+  (Let's Encrypt). The mobile app requires a valid certificate.
 
 ```
-İnternet ──TLS/443──> reverse proxy ──> Mattermost ──localhost──> asistan ─┬─> Postgres
+Internet ──TLS/443──> reverse proxy ──> Mattermost ──localhost──> asistan ─┬─> Postgres
                                                                             ├─> tools/
-                                                                            └─> OpenAI (rumuzlu, tek dış çağrı)
-  (diğer her port: yalnızca localhost'a bind, dışarıdan KAPALI)
+                                                                            └─> OpenAI (redacted, only external call)
+  (every other port: bound to localhost only, CLOSED to the outside)
 ```
 
-## 2. Ağ sertleştirme
-- **Firewall (ufw):** yalnızca 443 açık. Diğer her şey kapalı.
-- **Port binding:** Postgres (5432), Mattermost iç (8065), `asistan` → sadece
-  `127.0.0.1`'e bind; dışarıya açılmaz.
-- **SSH (yönetim):** parola kapalı, **yalnızca anahtar**; ve sadece yönetici IP / VPN'e
-  açık (mümkünse tamamen kapalı, konsol/VPN ile yönet). [KARAR-G2]
-- **fail2ban** + kaba-kuvvet koruması.
+## 2. Network hardening (ağ sertleştirme)
+- **Firewall (ufw):** only 443 open. Everything else closed.
+- **Port binding:** Postgres (5432), Mattermost internal (8065), `asistan` → bound only to
+  `127.0.0.1`; not exposed externally.
+- **SSH (administration):** password disabled, **key only**; and open only to the admin IP / VPN
+  (fully closed if possible, manage via console/VPN). [KARAR-G2]
+- **fail2ban** + brute-force protection.
 
-## 3. Kimlik & MFA (UI'da ön planda)
-- **MFA/2FA zorunlu (TOTP):** Mattermost System Console → *Enforce Multi-factor
-  Authentication*. İlk girişte kullanıcıya kurulum **dayatılır** (Google Authenticator/
-  Authy). MFA'sız giriş yok.
-- **Açık kayıt KAPALI:** *Enable Open Server = false*. Hesaplar yalnızca **davetle/admin**
-  tarafından açılır. E-posta doğrulama zorunlu.
-- **Güçlü parola politikası:** min. uzunluk + büyük/küçük/sembol; giriş denemesi limiti.
-- **Oturum:** makul süre + idle timeout. Mobilde uygulama içi **PIN/biyometrik kilit**.
+## 3. Identity & MFA (front and center in the UI)
+- **MFA/2FA mandatory (TOTP):** Mattermost System Console → *Enforce Multi-factor
+  Authentication*. On first login the user is **forced** through setup (Google Authenticator/
+  Authy). No login without MFA.
+- **Open registration DISABLED:** *Enable Open Server = false*. Accounts are created only **by
+  invitation/admin**. Email verification mandatory.
+- **Strong password policy:** min. length + uppercase/lowercase/symbol; login attempt limit.
+- **Session:** reasonable duration + idle timeout. On mobile, an in-app **PIN/biometric lock**.
 
-## 4. Mobil erişim
-- Mattermost mobil uygulaması; sunucu URL'si = bizim alan adımız (TLS şart).
-- **Push bildirim gizliliği [KARAR-G1]:** MM mobil push varsayılan olarak Mattermost'un
-  barındırdığı push proxy'sinden (HPNS) geçer → bildirim **içeriği** 3. tarafa gidebilir.
-  Hukuk bürosu için kabul edilemez. Seçenekler:
-  - **(a) id-only push (önerilen):** bildirimde içerik yok ("yeni mesajınız var");
-    uygulama açılınca içerik sunucudan çekilir → veri sızmaz, kurulum kolay.
-  - **(b) Kendi push proxy'ni self-host et:** tam kontrol, daha çok kurulum.
-  - En az **(a)** uygulanacak.
-- (Opsiyonel) **MDM** ile yalnızca onaylı cihazlara kurulum.
+## 4. Mobile access
+- Mattermost mobile app; server URL = our domain name (TLS required).
+- **Push notification privacy [KARAR-G1]:** MM mobile push by default goes through Mattermost's
+  hosted push proxy (HPNS) → notification **content** may go to a third party. Unacceptable
+  for a law office. Options:
+  - **(a) id-only push (recommended):** no content in the notification ("you have a new message");
+    content is fetched from the server when the app opens → no data leaks, easy to set up.
+  - **(b) Self-host your own push proxy:** full control, more setup.
+  - At minimum **(a)** will be applied.
+- (Optional) Installation on approved devices only via **MDM**.
 
-## 5. Veri güvenliği
-- **Disk:** LUKS tam disk şifreleme (PLAN.md Faz 0). DB **yedekleri de şifreli**.
-- **Bulut'a giden her şey rumuzlu** (redaction, MIMARI.md §5). id-only push seçilirse
-  **tek dış çağrı OpenAI** olur, o da rumuzlu.
-- Gizli anahtarlar (.env) repoya girmez; sunucuda dosya izinleriyle korunur.
+## 5. Data security
+- **Disk:** LUKS full disk encryption (PLAN.md Phase 0). DB **backups also encrypted**.
+- **Everything sent to the cloud is redacted** (redaction/pseudonymization (rumuzlama), MIMARI.md §5). If id-only push is chosen,
+  the **only external call is OpenAI**, and that too is redacted.
+- Secret keys (.env) do not go into the repo; protected on the server with file permissions.
 
-## 6. İzleme
-- Mattermost erişim/denetim logları; başarısız giriş uyarıları.
-- (Compliance export Enterprise özelliği — şimdilik gerek yok.)
+## 6. Monitoring
+- Mattermost access/audit logs; failed login alerts.
+- (Compliance export is an Enterprise feature — not needed for now.)
 
-## 7. İzin matrisi
-| Yön | İzin |
+## 7. Permission matrix (izin matrisi)
+| Direction | Permission |
 |-----|------|
-| İnternet → Mattermost 443 (TLS) | ✅ tek kapı |
-| İnternet → diğer her şey | ❌ kapalı |
-| Mobil → Mattermost (MFA + TLS) | ✅ |
-| asistan ↔ Mattermost / Postgres / tools | ✅ yalnızca localhost |
-| asistan → OpenAI (rumuzlu) | ✅ tek dış çağrı |
-| Yönetim SSH | anahtar + VPN/IP (veya kapalı) |
+| Internet → Mattermost 443 (TLS) | ✅ single gateway |
+| Internet → everything else | ❌ closed |
+| Mobile → Mattermost (MFA + TLS) | ✅ |
+| asistan ↔ Mattermost / Postgres / tools | ✅ localhost only |
+| asistan → OpenAI (redacted) | ✅ only external call |
+| Admin SSH | key + VPN/IP (or closed) |
 
-## 8. Kararlar
-- **KARAR-G1 — Push gizliliği:** id-only (a) mı, self-host proxy (b) mi? (Varsayılan: a)
-- **KARAR-G2 — SSH:** Yönetim için kısıtlı SSH (anahtar + IP/VPN) mi, tamamen kapalı +
-  VPN-only mi?
+## 8. Decisions
+- **KARAR-G1 — Push privacy:** id-only (a) or self-host proxy (b)? (Default: a)
+- **KARAR-G2 — SSH:** Restricted SSH for administration (key + IP/VPN), or fully closed +
+  VPN-only?

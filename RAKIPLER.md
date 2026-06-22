@@ -1,73 +1,72 @@
-# Rakipler — Türkiye Hukuk Yapay Zekâ Ürünleri
+# Competitors — Turkey Legal Artificial Intelligence Products
 
-> Durum: **Ön-inceleme** (hızlı tarama). Kullanıcı talebi: bunları rakip olarak kaydet;
-> **detaylı araştırma SONRA yapılacak** (bkz. §3). Hedef: bu ürünlerin kalitesinin
-> **çok ötesine** geçmek.
+> Status: **Preliminary review (ön-inceleme)** (quick scan). User request: record these as competitors;
+> **detailed research to be done LATER** (see §3). Goal: to go **far beyond** the
+> quality of these products.
 >
-> ⚠️ **Korkut TİCARİ DEĞİL** — kendi ofisimiz için iç araç. Bu yüzden **fiyat/pazar payı
-> ikincil**; asıl kıyas eksenimiz **kalite**, özellikle **research (hukuki araştırma)** ve
-> **dilekçe yazma**. Fiyatlar aşağıda yalnızca referans.
+> ⚠️ **Korkut is NON-COMMERCIAL (ticari değil)** — an internal tool for our own office. For this reason **price/market share
+> are secondary**; our main axis of comparison is **quality (kalite)**, especially **research (legal research)** and
+> **petition writing**. The prices below are for reference only.
 >
-> Not: Bizim arayüzümüz bunlar gibi **web chat** değil — **Mattermost-native** (mobil,
-> ekip kanalları + DM), tek kimlik Korkut, **veri ofiste** (self-hosted).
+> Note: Our interface is not a **web chat** like these — it is **Mattermost-native** (mobile,
+> team channels + DM), single identity Korkut, **data in the office** (self-hosted).
 
-## 1. Rakip listesi (ön-inceleme)
+## 1. Competitor list (preliminary review)
 
-| # | Ürün | Geliştirici | Ne yapıyor | Fiyat (görünen) |
+| # | Product | Developer | What it does | Price (visible) |
 |---|------|-------------|-----------|-----------------|
-| 1 | [LawChat](https://www.lawchat.com.tr/) | LawChat (TR) | Dilekçe üretimi, emsal analizi, UYAP entegrasyonu, mobil app | gizli ("ücretsiz dene") |
-| 2 | [De Jure AI](https://www.dejure.ai/) | De Jure | Derin araştırma, dilekçe/sözleşme, UYAP/UETS, mahkeme takibi | **açık: 1.500–6.800₺/ay**, yıllık 60–80K₺ |
-| 3 | [LexChat](https://lexchat.ai/) | UC Yazılım (İst., 2025) | **Agentic**: otonom ajanlar, dava dosyası yönetimi, 10M+ karar, belge üretimi (tracked changes, UDF) | gizli |
-| 4 | [FulLegal](https://www.fullegal.com/hukukcu-yapay-zeka) | FulLegal Yazılım | İçtihat/mevzuat Q&A, belge analizi (20 evrak), UYAP masaüstü ajan, dilekçe | gizli (Pro/Ultra/Max) |
-| 5 | [HukukChat](https://hukukchat.com/) | **Opex AI Labs** | Fine-tuned hukuk LLM'leri, çok-katmanlı mimari, mevzuat/içtihat/doküman analizi | gizli |
-| 6 | [Apilex](https://www.apilex.ai/) | Av. Cebrail Ergül + ekip | Semantik karar arama, projeler, **Agent Beta** (derin araştırma); TR+FR+DE | gizli (giriş sonrası) |
-| 7 | [LawyerTeam](https://lawyerteam.pro/) | 1999'dan beri + Dece Software | Tam **ofis otomasyonu** + AI: 15M karar, 20K mevzuat, 200+ dosya formatı, icra/strateji | gizli |
-| 8 | [hukuk.chat (VeriUs)](https://verius.com.tr/tr/urunlerimiz/hukuk.chat) | **VeriUs** | Türk hukuku AI asistanı (app: ai.hukuk.chat); soru-cevap, belge | gizli |
-| 9 | [Lexpera LEXI](https://www.lexpera.com.tr/ayrintilar/lexi) | Lexpera | LEXPERA içeriği (1.6M+ karar) üstüne AI asistan; **beta** | gizli (beta) |
-| 10 | [Mevzuat AI](https://mevzuat.ai/tr/) | (belirsiz) | **AI Agent** mimarisi: resmi DB'lerden mevzuat/içtihat, belge analizi, dilekçe | gizli |
-| 11 | [Ayboğa AI](https://ayboga.av.tr/ayboga-ai/) | Ayboğa Avukatlık (Ankara) | 3.5M+ emsal, mevzuat arama, dilekçe/sözleşme üretimi + analiz | gizli |
-| 12 | [hukukchat.com](https://hukukchat.com/) → bkz. #5 | — | (Opex; #5 ile aynı) | — |
+| 1 | [LawChat](https://www.lawchat.com.tr/) | LawChat (TR) | Petition generation, precedent analysis, UYAP integration, mobile app | undisclosed ("try for free") |
+| 2 | [De Jure AI](https://www.dejure.ai/) | De Jure | Deep research, petition/contract, UYAP/UETS, court tracking | **disclosed: 1.500–6.800₺/month**, annual 60–80K₺ |
+| 3 | [LexChat](https://lexchat.ai/) | UC Yazılım (Istanbul, 2025) | **Agentic**: autonomous agents, case file management, 10M+ decisions, document generation (tracked changes, UDF) | undisclosed |
+| 4 | [FulLegal](https://www.fullegal.com/hukukcu-yapay-zeka) | FulLegal Yazılım | Case law (içtihat)/legislation (mevzuat) Q&A, document analysis (20 documents), UYAP desktop agent, petition | undisclosed (Pro/Ultra/Max) |
+| 5 | [HukukChat](https://hukukchat.com/) | **Opex AI Labs** | Fine-tuned legal LLMs, multi-layered architecture, legislation/case law/document analysis | undisclosed |
+| 6 | [Apilex](https://www.apilex.ai/) | Att. Cebrail Ergül + team | Semantic decision search, projects, **Agent Beta** (deep research); TR+FR+DE | undisclosed (after login) |
+| 7 | [LawyerTeam](https://lawyerteam.pro/) | Since 1999 + Dece Software | Full **office automation** + AI: 15M decisions, 20K legislation, 200+ file formats, enforcement/strategy | undisclosed |
+| 8 | [hukuk.chat (VeriUs)](https://verius.com.tr/tr/urunlerimiz/hukuk.chat) | **VeriUs** | Turkish law AI assistant (app: ai.hukuk.chat); Q&A, documents | undisclosed |
+| 9 | [Lexpera LEXI](https://www.lexpera.com.tr/ayrintilar/lexi) | Lexpera | AI assistant on top of LEXPERA content (1.6M+ decisions); **beta** | undisclosed (beta) |
+| 10 | [Mevzuat AI](https://mevzuat.ai/tr/) | (unclear) | **AI Agent** architecture: legislation/case law from official DBs, document analysis, petition | undisclosed |
+| 11 | [Ayboğa AI](https://ayboga.av.tr/ayboga-ai/) | Ayboğa Avukatlık (Ankara) | 3.5M+ precedents, legislation search, petition/contract generation + analysis | undisclosed |
+| 12 | [hukukchat.com](https://hukukchat.com/) → see #5 | — | (Opex; same as #5) | — |
 
-> Ön-incelemede ek olarak görülen oyuncular (araştırmaya dahil edilebilir): **YasalZeka**,
+> Additional players seen during the preliminary review (may be included in research): **YasalZeka**,
 > **Kılavuz** (kilavuztek.com), **Lawantra**, **LegalEngine**, **Sinerji Hukuk Asistanı**.
 
-## 2. Ortak desenler (sektör "table stakes")
-Neredeyse hepsinde olan: **semantik emsal karar arama**, **dilekçe/sözleşme üretimi**,
-**mevzuat/içtihat Q&A (kaynak atıflı)**, **belge/UYAP analizi**, doküman yönetimi.
-Birçoğu "**agentic**" iddiasında (LexChat, mevzuat.ai, Apilex). Veri ölçeği reklamı:
-3.5M–15M karar. **Hemen hepsi web-app chat UI + bulut SaaS, tek kullanıcı odaklı.**
+## 2. Common patterns (industry "table stakes")
+Present in almost all of them: **semantic precedent decision (emsal karar) search**, **petition/contract generation**,
+**legislation/case law Q&A (with source citations)**, **document/UYAP analysis**, document management.
+Many claim to be "**agentic**" (LexChat, mevzuat.ai, Apilex). Data-scale advertising:
+3.5M–15M decisions. **Almost all of them are web-app chat UI + cloud SaaS, single-user focused.**
 
-### Bizim ayrışma noktalarımız (çok daha ileride olmak için)
-- **Veri egemenliği:** Self-hosted, veri ofiste kalır → rakiplerin bulut SaaS'ına karşı
-  güçlü KVKK/gizlilik avantajı.
-- **Ekip iş akışı:** Mattermost (kanal + DM, çok kullanıcı) → tekil web chat'lerin ötesi.
-- **Proaktiflik:** Sadece soru-cevap değil; **duruşma hatırlatma + takvim + cron** ile
-  öngörülü asistan.
-- **İnsan onayı yerleşik:** Onaysız kalıcı işlem yok (doğal dil onay diyaloğu).
-- **Açık veri katmanı:** yargi-mcp/mevzuat-mcp + Bedesten API (rakiplerle aynı kaynaklar).
-- **Sağlayıcı-bağımsız + kendi framework:** GPT↔Claude↔yerel; kilit yok.
+### Our differentiation points (to be far ahead)
+- **Data sovereignty (veri egemenliği):** Self-hosted, data stays in the office → a strong KVKK/privacy (gizlilik)
+  advantage against competitors' cloud SaaS.
+- **Team workflow:** Mattermost (channels + DM, multi-user) → beyond single web chats.
+- **Proactivity:** Not just Q&A; a foresightful assistant with **hearing reminders (duruşma hatırlatma) + calendar + cron**.
+- **Built-in human approval:** No persistent action without approval (natural-language approval dialog).
+- **Open data layer:** yargi-mcp/mevzuat-mcp + Bedesten API (same sources as competitors).
+- **Provider-independent + own framework:** GPT↔Claude↔local; no lock-in.
 
-## 2b. "Milyonlarca döküman" iddiaları — veri nereden? (kritik)
-Rakiplerin "3.5M / 10M / 15M karar, 20K mevzuat" iddialarının **neredeyse tamamı kamuya
-açık devlet kaynaklarından** gelir — yani KAYNAKLAR.md'deki **bizim de eriştiğimiz** uçlar:
-- **UYAP Emsal + Bedesten API** (Yargıtay/Danıştay/istinaf), **karararama.yargitay/danistay**,
-  **mevzuat.gov.tr** → anonim, milyonlarca kayıt.
-- Rakipler bunu **bir kez çekip (ingest) kendi DB'lerine indekslemiş** (semantik arama için
-  embedding). Sayı farkı = ne kadarını çektikleriyle ilgili; **veri özel değil**.
-- **Tek istisna Lexpera/Kazancı:** editöryel + lisanslı içerik (eski/dijitalleşmemiş karar,
-  kitap/makale) → kamudan toplanamaz; gerçek "moat" bu.
+## 2b. "Millions of documents" claims — where does the data come from? (critical)
+**Almost all** of the competitors' claims of "3.5M / 10M / 15M decisions, 20K legislation" come **from publicly
+available government sources** — that is, the endpoints in KAYNAKLAR.md that **we also access**:
+- **UYAP Emsal + Bedesten API** (Yargıtay/Danıştay/court of appeals), **karararama.yargitay/danistay**,
+  **mevzuat.gov.tr** → anonymous, millions of records.
+- The competitors have **fetched this once (ingest) and indexed it into their own DBs** (embedding for
+  semantic search). The difference in numbers = how much they fetched; **the data is not proprietary**.
+- **The only exception is Lexpera/Kazancı:** editorial + licensed content (old/non-digitized decisions,
+  books/articles) → cannot be collected from public sources; this is the real "moat".
 
-**Bizim için anlam:** Veriyi "bulmaya" gerek yok — kamuya açık, bizde de var. Rakip
-seviyesini yakalamak = **public korpüsü yerel DB'ye çekip semantik index kurmak** (yerel
-embedding ile, veri ofisten çıkmadan). Research + dilekçe kalitesinin asıl kaldıracı bu.
-Karar (research/dilekçe modülü): **canlı API mi, yerel index mi, hibrit mi** → §3 sonrası karar.
+**What this means for us:** No need to "find" the data — it is publicly available and we have it too. Catching up to the
+competitor level = **fetching the public corpus into a local DB and building a semantic index** (with local
+embedding, without data leaving the office). This is the real lever for research + petition quality.
+Decision (research/petition module): **live API, local index, or hybrid** → decided after §3.
 
-## 3. Detaylı araştırma — BEKLİYOR (kullanıcı talebi: "daha sonra")
-Her rakip için derinlemesine incelenecek (deep-research):
-- Tam özellik matrisi + bizimkiyle karşılaştırma
-- Fiyatlandırma katmanları (gizli olanlar için kayıt/teklif)
-- Hangi LLM/altyapı, veri kaynakları, ölçek iddialarının doğruluğu
-- Gizlilik/KVKK duruşu (bulut mu, veri nerede), UYAP entegrasyon derinliği
-- Güçlü/zayıf yönler, kullanıcı yorumları, pazar konumu
-- Bizim "çok daha ileride" olmamız için somut fırsat alanları
-> Hazır olunca `deep-research` ile tek tek veya toplu çalıştırılabilir.
+## 3. Detailed research — PENDING (user request: "later")
+To be examined in depth for each competitor (deep-research):
+- Full feature matrix + comparison with ours
+- Pricing tiers (registration/quote for undisclosed ones)
+- Which LLM/infrastructure, data sources, accuracy of scale claims
+- Privacy/KVKK stance (cloud or not, where the data is), UYAP integration depth
+- Strengths/weaknesses, user reviews, market position
+- Concrete opportunity areas for us to be "far ahead"
+> When ready, it can be run with `deep-research` one by one or in bulk.
