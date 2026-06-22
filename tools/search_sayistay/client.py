@@ -83,7 +83,7 @@ class SayistayClient(BaseClient):
     ) -> dict[str, Any]:
         if decision_type not in DECISION_TYPES:
             raise ValueError(
-                f"karar_turu must be one of {DECISION_TYPES}, got {decision_type!r}"
+                f"decision_type must be one of {DECISION_TYPES}, got {decision_type!r}"
             )
 
         length = max(1, min(limit, 10))
@@ -191,14 +191,14 @@ _MAPPERS: dict[str, Callable[[dict[str, Any], str], dict[str, Any]]] = {
 
 def run_tool(
     query: str,
-    karar_turu: str = "genel_kurul",
+    decision_type: str = "genel_kurul",
     limit: int = 10,
     page: int = 1,
 ) -> dict[str, Any]:
     """Search Sayıştay decisions.
 
     query       : free-text search phrase.
-    karar_turu  : decision type — one of "genel_kurul", "temyiz_kurulu", "daire".
+    decision_type  : decision type — one of "genel_kurul", "temyiz_kurulu", "daire".
     limit        : results per page (1-10).
     page         : 1-indexed page number.
 
@@ -206,4 +206,4 @@ def run_tool(
     date, url}, ...]}.
     """
     with SayistayClient() as client:
-        return client.search(karar_turu, query, limit=limit, page=page)
+        return client.search(decision_type, query, limit=limit, page=page)

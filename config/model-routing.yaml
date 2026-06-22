@@ -1,4 +1,4 @@
-# Which backend each specialty uses. Provider is swappable; see MIMARI.md §13.
+# Which backend each specialty uses. Provider is swappable; see ARCHITECTURE.md §13.
 backends:
   cloud: gpt          # OpenAI for now; later: claude / other
   local: ollama       # active once the hardware (GPU) arrives

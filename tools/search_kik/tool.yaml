@@ -3,14 +3,14 @@ description: >
   Search KİK (Kamu İhale Kurulu / Public Procurement Authority) board decisions via the
   official kik.gov.tr v2 API. The v2 API exposes three decision families at separate
   endpoints — disputes (uyusmazlik), regulatory (duzenleyici), and court (mahkeme) — selected
-  with karar_turu. Returns decision metadata (id, subject, date, document URL). No API key.
+  with decision_type. Returns decision metadata (id, subject, date, document URL). No API key.
 requires_key: null
 parameters:
   query:
     type: string
     required: true
     description: Free-text search over decision content (KararMetni). May be empty to list recent decisions.
-  karar_turu:
+  decision_type:
     type: string
     required: false
     default: uyusmazlik

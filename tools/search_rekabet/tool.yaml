@@ -13,7 +13,7 @@ parameters:
     description: >
       Free-text title search (maps to the portal's "sayfaAdi" field). Plain words; no
       operators, wildcards, or regex.
-  karar_turu:
+  decision_type:
     type: string
     required: false
     default: ""

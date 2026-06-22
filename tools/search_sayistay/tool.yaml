@@ -10,7 +10,7 @@ parameters:
     type: string
     required: true
     description: Free-text search phrase.
-  karar_turu:
+  decision_type:
     type: string
     required: false
     default: genel_kurul

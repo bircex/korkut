@@ -6,7 +6,7 @@ Search **Sayıştay (Court of Accounts)** decisions via the official portal
 Sayıştay is Turkey's supreme audit institution. It publishes three kinds of
 decisions, each behind its own DataTables search endpoint:
 
-| `karar_turu`   | Body            | Endpoint                              |
+| `decision_type`   | Body            | Endpoint                              |
 |----------------|-----------------|---------------------------------------|
 | `genel_kurul`  | Genel Kurul (General Assembly) | `/KararlarGenelKurul/DataTablesList` |
 | `temyiz_kurulu`| Temyiz Kurulu (Appeals Board)  | `/KararlarTemyiz/DataTablesList`     |
@@ -16,14 +16,14 @@ decisions, each behind its own DataTables search endpoint:
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
 | `query` | string | — (required) | Free-text search phrase. |
-| `karar_turu` | string | `genel_kurul` | One of `genel_kurul`, `temyiz_kurulu`, `daire`. |
+| `decision_type` | string | `genel_kurul` | One of `genel_kurul`, `temyiz_kurulu`, `daire`. |
 | `limit` | int | 10 | Results per page (1–10). |
 | `page` | int | 1 | 1-indexed page. |
 
 ## CLI
 ```bash
-python -m tools.search_sayistay --query "ihale" --karar_turu temyiz_kurulu --limit 5
-echo '{"query": "harcırah", "karar_turu": "daire"}' | python -m tools.search_sayistay
+python -m tools.search_sayistay --query "ihale" --decision_type temyiz_kurulu --limit 5
+echo '{"query": "harcırah", "decision_type": "daire"}' | python -m tools.search_sayistay
 ```
 
 ## Output (stdout JSON)

@@ -72,7 +72,7 @@ def test_duzenleyici_routes_to_dk_endpoint():
         "SorgulaKurulKararlariDkResponse", "SorgulaKurulKararlariDkResult", [RECORD]
     )
     route = respx.post(DUZENLEYICI_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="x", karar_turu="duzenleyici")
+    out = run_tool(query="x", decision_type="duzenleyici")
     assert route.called
     assert out["results"][0]["decisionType"] == "duzenleyici"
 
@@ -83,7 +83,7 @@ def test_mahkeme_routes_to_mk_endpoint():
         "SorgulaKurulKararlariMkResponse", "SorgulaKurulKararlariMkResult", [RECORD]
     )
     route = respx.post(MAHKEME_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="x", karar_turu="mahkeme")
+    out = run_tool(query="x", decision_type="mahkeme")
     assert route.called
     assert out["results"][0]["decisionType"] == "mahkeme"
 
@@ -134,7 +134,7 @@ def test_api_error_raises():
 
 def test_invalid_karar_turu_raises():
     try:
-        run_tool(query="x", karar_turu="bogus")
+        run_tool(query="x", decision_type="bogus")
         raise AssertionError("expected ValueError")
     except ValueError as exc:
-        assert "karar_turu" in str(exc)
+        assert "decision_type" in str(exc)

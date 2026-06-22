@@ -1,7 +1,7 @@
 # Security Design
 
-> Goal: **single gateway (tek kapı) Mattermost** into the system, access from mobile, **2FA mandatory**, no
-> access from anywhere else. Client (müvekkil) data stays in the office (ofis) (see PLAN.md principles, MIMARI.md §5).
+> Goal: **single gateway Mattermost** into the system, access from mobile, **2FA mandatory**, no
+> access from anywhere else. Client data stays in the office (see PLAN.md principles, ARCHITECTURE.md §5).
 
 ## 1. Principle: Single gateway = Mattermost
 - The **only service exposed to the internet is Mattermost** (HTTPS / 443). Nothing else is
@@ -18,7 +18,7 @@ Internet ──TLS/443──> reverse proxy ──> Mattermost ──localhost�
   (every other port: bound to localhost only, CLOSED to the outside)
 ```
 
-## 2. Network hardening (ağ sertleştirme)
+## 2. Network hardening
 - **Firewall (ufw):** only 443 open. Everything else closed.
 - **Port binding:** Postgres (5432), Mattermost internal (8065), `asistan` → bound only to
   `127.0.0.1`; not exposed externally.
@@ -48,7 +48,7 @@ Internet ──TLS/443──> reverse proxy ──> Mattermost ──localhost�
 
 ## 5. Data security
 - **Disk:** LUKS full disk encryption (PLAN.md Phase 0). DB **backups also encrypted**.
-- **Everything sent to the cloud is redacted** (redaction/pseudonymization (rumuzlama), MIMARI.md §5). If id-only push is chosen,
+- **Everything sent to the cloud is redacted** (redaction/pseudonymization, ARCHITECTURE.md §5). If id-only push is chosen,
   the **only external call is OpenAI**, and that too is redacted.
 - Secret keys (.env) do not go into the repo; protected on the server with file permissions.
 
@@ -56,7 +56,7 @@ Internet ──TLS/443──> reverse proxy ──> Mattermost ──localhost�
 - Mattermost access/audit logs; failed login alerts.
 - (Compliance export is an Enterprise feature — not needed for now.)
 
-## 7. Permission matrix (izin matrisi)
+## 7. Permission matrix
 | Direction | Permission |
 |-----|------|
 | Internet → Mattermost 443 (TLS) | ✅ single gateway |

@@ -80,7 +80,7 @@ def test_search_parses_results():
 @respx.mock
 def test_search_sends_decision_type_guid_and_page():
     route = respx.get(SEARCH_URL).mock(return_value=httpx.Response(200, html=SAMPLE_HTML))
-    run_tool(query="birleşme", karar_turu="birlesme_devralma", page=3)
+    run_tool(query="birleşme", decision_type="birlesme_devralma", page=3)
 
     sent = route.calls.last.request
     params = sent.url.params
@@ -109,8 +109,8 @@ def test_empty_results():
 
 def test_unknown_karar_turu_raises():
     try:
-        run_tool(query="x", karar_turu="bogus")
+        run_tool(query="x", decision_type="bogus")
     except ValueError as exc:
         assert "bogus" in str(exc)
     else:  # pragma: no cover
-        raise AssertionError("expected ValueError for unknown karar_turu")
+        raise AssertionError("expected ValueError for unknown decision_type")

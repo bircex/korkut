@@ -1,7 +1,7 @@
 # Corpus Strategy — Research & Petition Data Access
 
 > Decision: **RAG now (query-time).** A phased roadmap for the future is below.
-> Context: KAYNAKLAR.md (sources), RAKIPLER.md §2b (data is public).
+> Context: SOURCES.md (sources), COMPETITORS.md §2b (data is public).
 
 ## 0. Rate limit reality (the constraint that shapes the design)
 - **Bedesten API** (measured 2026-05-08): **10 requests per 30 s per IP**
@@ -31,7 +31,7 @@ question → (live) top-N candidate decisions/legislation via the state search
 - **Lazy cache:** fetched document + metadata into the local DB → repeat calls are reduced (rate-limit friendly).
 - **Polite rate limiter:** comply with Bedesten 10/30s; on 429 wait for `Retry-After`; avoid parallel
   repeated calls (token-bucket implemented in `tools/_base`).
-- Tools: `tools/search_yargitay`, `tools/search_mevzuat`, `tools/fetch_decision`, … (MIMARI.md §12).
+- Tools: `tools/search_yargitay`, `tools/search_mevzuat`, `tools/fetch_decision`, … (ARCHITECTURE.md §12).
 
 ## 3. Phase B — Focused local index (medium term)
 - **Mirror legislation FULLY:** since it is small, the entirety goes into the local DB + kept current →
@@ -39,8 +39,8 @@ question → (live) top-N candidate decisions/legislation via the state search
 - **Focused index for case law:** grow the office's practice areas (e.g. divorce/enforcement/rent/criminal)
   in a targeted way from a polite nightly crawl plus the cache that builds up through usage → semantic search
   with **pgvector**.
-- **Embedding:** case law (içtihat)/legislation (mevzuat) is PUBLIC → cloud embedding is KVKK-clean (not client
-  (müvekkil) data); or local embedding once a GPU arrives (data never leaves). See KAYNAKLAR.md (local
+- **Embedding:** case law/legislation is PUBLIC → cloud embedding is KVKK-clean (not client
+  data); or local embedding once a GPU arrives (data never leaves). See SOURCES.md (local
   embedding option available in .env).
 - Incremental update: new daily decisions/Resmî Gazete → add to the index.
 

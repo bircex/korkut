@@ -12,13 +12,13 @@ communiqués (tebliğ).
 | `query` | string | — (required) | Title keyword(s) matched against legislation names. |
 | `limit` | int | 10 | Results per page (1–50). |
 | `page` | int | 1 | 1-indexed page. |
-| `mevzuat_turu` | string | "" | Optional type filter: `KANUN`, `KHK`, `TUZUK`, `YONETMELIK`, `CB_KARARNAME`, `CB_YONETMELIK`, `CB_KARAR`, `CB_GENELGE`, `KKY`, `UY`, `TEBLIGLER`, `MULGA`. Comma-separated for several types. |
+| `legislation_type` | string | "" | Optional type filter: `KANUN`, `KHK`, `TUZUK`, `YONETMELIK`, `CB_KARARNAME`, `CB_YONETMELIK`, `CB_KARAR`, `CB_GENELGE`, `KKY`, `UY`, `TEBLIGLER`, `MULGA`. Comma-separated for several types. |
 
 ## CLI
 ```bash
 python -m tools.search_mevzuat --query "türk borçlar kanunu" --limit 5
-python -m tools.search_mevzuat --query "kira" --mevzuat_turu KANUN
-echo '{"query": "vergi", "limit": 5, "mevzuat_turu": "KANUN,KHK"}' | python -m tools.search_mevzuat
+python -m tools.search_mevzuat --query "kira" --legislation_type KANUN
+echo '{"query": "vergi", "limit": 5, "legislation_type": "KANUN,KHK"}' | python -m tools.search_mevzuat
 ```
 
 ## Output (stdout JSON)

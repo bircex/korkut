@@ -1,6 +1,6 @@
 # Legal Data Sources — Access List
 
-> Raw material for Korkut's research and petition (dilekçe) modules. In Turkey there is
+> Raw material for Korkut's research and petition modules. In Turkey there is
 > **almost no official, documented, SLA-backed open API**; access is mostly through the JSON
 > endpoints behind publicly accessible portals (semi-official), scraping, or commercial
 > provider APIs.
@@ -18,14 +18,14 @@ others are public JSON/HTML endpoints reachable with plain httpx + browser-like 
   **fully local embedding** (HF TEI / Ollama, no external service) so the "data stays in the
   office" principle holds; a hosted embedding key is never required for core search.
 
-## 1. Judicial decisions (case law / içtihat)
+## 1. Judicial decisions (case law)
 
 | Source | What it contains | Official portal | Access |
 |--------|-----------|--------------|--------|
 | **Bedesten API** ⭐ | Yargıtay + Danıştay + local court + appellate + KYB (5 types, combined) | `bedesten.adalet.gov.tr` | Semi-official JSON, **no auth** |
 | **Yargıtay** | Yargıtay decisions | `karararama.yargitay.gov.tr` | JSON endpoint (native + Bedesten) |
 | **Danıştay** | Danıştay decisions | `karararama.danistay.gov.tr` | JSON endpoint (keyword + detailed + Bedesten) |
-| **UYAP Emsal** | Local + appellate precedent decisions (emsal karar) | `emsal.uyap.gov.tr` | UYAP JSON endpoint |
+| **UYAP Emsal** | Local + appellate precedent decisions | `emsal.uyap.gov.tr` | UYAP JSON endpoint |
 | **Anayasa Mahkemesi** | Norm review + individual application | `anayasa.gov.tr` | Official search endpoint |
 | **Uyuşmazlık Mahkemesi** | Jurisdiction/judgment disputes | official URLs | Direct document URLs |
 
@@ -36,7 +36,7 @@ others are public JSON/HTML endpoints reachable with plain httpx + browser-like 
 | **KİK** | Public Procurement Board decisions | `kik.gov.tr` | KİK v2 API, no auth |
 | **Rekabet Kurumu** | Competition decisions | `rekabet.gov.tr` | Official endpoint |
 | **Sayıştay** | Sayıştay decisions | `sayistay.gov.tr` | Official endpoint |
-| **GİB** | Tax rulings (vergi özelgesi)/legislation | `gib.gov.tr` | Official JSON API |
+| **GİB** | Tax rulings/legislation | `gib.gov.tr` | Official JSON API |
 | **KVKK** | Data protection decisions | `kvkk.gov.tr` | On-site search (Brave API key required) |
 | **BDDK** | Banking regulation | `bddk.org.tr` | Search + URL (Brave API key) |
 | **Sigorta Tahkim** | Insurance arbitration decisions | `sigortatahkim.org` | Tavily search + PDF (API key) |
@@ -49,20 +49,20 @@ others are public JSON/HTML endpoints reachable with plain httpx + browser-like 
 Via `mevzuat.gov.tr` (Presidential Legislation Information System), filtered by type:
 - **KANUN, KHK, TÜZÜK, YÖNETMELİK, TEBLİĞ, KKY, UY, MÜLGA**
 - **Presidential:** CB_KARARNAME, CB_KARAR, CB_YONETMELIK, CB_GENELGE
-- In-title search, exact phrase, **Official Gazette (Resmî Gazete) date/issue filter**, fetching
+- In-title search, exact phrase, **Resmî Gazete date/issue filter**, fetching
   content as Markdown. (21 tools for mevzuat.gov.tr + 5 tools for bedesten.adalet.gov.tr.)
 - A semantic search option is available (requires OPENROUTER_API_KEY).
 
-### Official Gazette (Resmî Gazete) (additional)
-- `resmigazete.gov.tr` — daily publication (presidential decrees (kararname), appointments, announcements).
+### Resmî Gazete (additional)
+- `resmigazete.gov.tr` — daily publication (presidential decrees, appointments, announcements).
 - **No official open API** → archive scraping (date-based HTML/PDF). Most presidential decrees are
-  already structured on mevzuat.gov.tr; use the Official Gazette only for "that day's raw publication".
+  already structured on mevzuat.gov.tr; use the Resmî Gazete only for "that day's raw publication".
 
 ## 4. Your own files / hearing dates (hearing module — SEPARATE category!)
-These are not case law; they are the proceedings and hearing dates (duruşma günü) of **the office's own cases (dava)**.
+These are not case law; they are the proceedings and hearing dates of **the office's own cases**.
 - **UYAP Avukat Portal** (`avukat.uyap.gov.tr`) / **Vatandaş Portal**
   (`vatandas.uyap.gov.tr`).
-- **NO official open API.** Login is via **e-Government (e-Devlet) / e-signature (e-imza) / mobile signature**; session-based.
+- **NO official open API.** Login is via **e-Government / e-signature / mobile signature**; session-based.
 - Result: Hearing-date automation becomes **semi-automatic** (logging in and scraping) or
   **manual entry** (in the plan, the start of Phase 3 is manual). Official integration is separate work.
 - ⚠️ For automated access, mind the UYAP terms of use + KVKK.
@@ -86,7 +86,7 @@ via an enterprise agreement; a standard self-serve API is not common — must be
   maintenance, but breakage risk still exists.
 - **Rate limit:** Bedesten measured ≈ **10 requests per 30 sec per IP** (429 + Retry-After);
   other endpoints undocumented. Be polite (token-bucket/backoff), avoid bulk crude fetching. "Download
-  everything" is not realistic (millions = years). Strategy: KORPUS.md.
+  everything" is not realistic (millions = years). Strategy: CORPUS.md.
 - **Terms of use:** For automated access, check each portal's ToS; especially
   UYAP (your own files) is sensitive.
 - KVKK/BDDK/Sigorta Tahkim depend on third-party search → low priority, extra key.
@@ -96,7 +96,7 @@ via an enterprise agreement; a standard self-serve API is not common — must be
   shared `tools/_base/`): `search_yargitay`, `search_danistay`, `search_emsal`,
   `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`,
   `search_mevzuat`, plus `fetch_decision` / `fetch_legislation`. No auth, just httpx;
-  tiered exposure + `requires_key` key handling per MIMARI.md §12.
+  tiered exposure + `requires_key` key handling per ARCHITECTURE.md §12.
 - **Key groups:** A) no key (core): Yargıtay, Danıştay, Emsal, Bedesten, Anayasa, KİK,
   Rekabet, Sayıştay, GİB, mevzuat.gov.tr. B) needs a search provider (Brave/Tavily) →
   optional, prefer our own search, deferred: KVKK, BDDK, Sigorta Tahkim. C) embedding →

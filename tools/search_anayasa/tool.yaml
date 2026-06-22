@@ -9,7 +9,7 @@ parameters:
     type: string
     required: true
     description: Search phrase, matched as a keyword against the decision corpus.
-  basvuru_turu:
+  application_type:
     type: string
     required: false
     default: norm

@@ -7,16 +7,16 @@ documents, and can fetch either the whole legislation or a single article.
 ## Parameters
 | Name | Type | Description |
 |------|------|-------------|
-| `mevzuat_id` | string (required) | Legislation `id` from a `search_mevzuat` result. |
-| `madde_id` | string (optional) | Article id; when given, only that article is fetched. |
+| `legislation_id` | string (required) | Legislation `id` from a `search_mevzuat` result. |
+| `article_id` | string (optional) | Article id; when given, only that article is fetched. |
 
 ## CLI
 ```bash
-python -m tools.fetch_legislation --mevzuat_id "12345"
+python -m tools.fetch_legislation --legislation_id "12345"
 # single article:
-python -m tools.fetch_legislation --mevzuat_id "12345" --madde_id "67890"
+python -m tools.fetch_legislation --legislation_id "12345" --article_id "67890"
 # or pipe JSON:
-echo '{"mevzuat_id": "12345"}' | python -m tools.fetch_legislation
+echo '{"legislation_id": "12345"}' | python -m tools.fetch_legislation
 ```
 
 ## Output (stdout JSON)
@@ -35,9 +35,9 @@ echo '{"mevzuat_id": "12345"}' | python -m tools.fetch_legislation
 
 Request body:
 ```json
-{"data": {"documentType": "MEVZUAT", "id": "<mevzuat_id>"}, "applicationName": "UyapMevzuat"}
+{"data": {"documentType": "MEVZUAT", "id": "<legislation_id>"}, "applicationName": "UyapMevzuat"}
 ```
-For a single article, `documentType` is `"MADDE"` and `id` is the `madde_id`. The response
+For a single article, `documentType` is `"MADDE"` and `id` is the `article_id`. The response
 returns the document body base64-encoded under `data.content` with a `data.mimeType`
 (`text/html` or `application/pdf`), which is decoded and converted to Markdown.
 

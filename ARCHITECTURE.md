@@ -24,7 +24,7 @@
 └───────────────────────────────────────┘
         ▲
 ┌─ cron ───────────────────────────────┐
-│  hatirlatma  (calls core every morning│
+│  reminder  (calls core every morning  │
 │              → writes hearing summary to MM)│
 └───────────────────────────────────────┘
 ```
@@ -55,10 +55,10 @@
      c) Unmentioned in a channel → ignore (does not flood the channel, no cost).
 4. Korkut's dispatcher understands the intent → routes to the relevant specialty module(s)
    (court hearing / petition / research); if more than one is needed they run IN PARALLEL.
-5. The module fetches data from the DB; if an LLM is needed it passes (uzmanlik, is_tipi, text) to core.router.
+5. The module fetches data from the DB; if an LLM is needed it passes (specialty, task_type, text) to core.router.
 6. core.router: specialty→model mapping.
      - model=local & Ollama down → fall back to cloud + log.
-     - model=cloud → redactor.rumuzla → provider(gpt) → redactor.geri_ac.
+     - model=cloud → redactor.redact → provider(gpt) → redactor.restore.
 7. The outputs merge into **a single Korkut response**; written to the thread/DM **as the Korkut identity**.
 8. If there is a data write (court hearing/petition) → DB/file + approval status.
 ```
@@ -69,20 +69,21 @@
 ## 4. core contracts (interfaces)
 
 ```
-router.cevapla(uzmanlik: str, is_tipi: str, mesajlar: list) -> str
+router.respond(specialty: str, task_type: str, messages: list) -> str
     # select specialty→model, local/cloud, fallback rule; applies redaction internally.
 
-redactor.rumuzla(metin: str) -> (rumuzlu_metin: str, harita: dict)
-redactor.geri_ac(metin: str, harita: dict) -> str
+redactor.redact(text: str) -> (redacted_text: str, mapping: dict)
+redactor.restore(text: str, mapping: dict) -> str
 
-providers.gpt.uret(mesajlar: list, ayar: dict) -> str      # OpenAI
-providers.ollama.uret(...)                                  # later
-providers.claude.uret(...)                                  # later
+providers.gpt.generate(messages: list, config: dict) -> str   # OpenAI
+providers.ollama.generate(...)                                # later
+providers.claude.generate(...)                                # later
 
-db: müvekkil / dava / duruşma / dilekçe CRUD (schema below)
+db: client / case / hearing / petition CRUD (schema below)
 
-tool_registry.yukle() -> list[Tool]          # scans tools/ and reads manifests
-tool_registry.calistir(ad: str, args: dict) -> dict   # run a tool, return JSON
+tool_registry.discover() -> list[ToolSpec]    # scans tools/ and reads manifests
+tool_registry.available_tools() -> list[ToolSpec]   # specs whose required key is present (key-gated)
+tool_registry.run(name: str, params: dict) -> Any   # run a tool by name
     # Tools live under tools/; can also be called from the CLI. Detail: §12.
 ```
 
@@ -95,10 +96,10 @@ tool_registry.calistir(ad: str, args: dict) -> dict   # run a tool, return JSON
 ```
 text ──> detection (regex + name dictionary)
             • TCKN (11 digits + algorithm)  • phone     • IBAN
-            • plate                          • case file number (esas/dosya no)
+            • plate                          • case file number
             • person name (dictionary + rule)
-       ──> replace with token:  "Ahmet Yılmaz" → "[KİŞİ_1]"
-       ──> map: { "[KİŞİ_1]": "Ahmet Yılmaz", ... }  (in RAM, per request)
+       ──> replace with token:  "Ahmet Yılmaz" → "[PERSON_1]"
+       ──> map: { "[PERSON_1]": "Ahmet Yılmaz", ... }  (in RAM, per request)
        ──> provider(gpt) call  (only redacted text is sent)
        ──> put the tokens back in the returned answer
 ```
@@ -109,18 +110,18 @@ text ──> detection (regex + name dictionary)
 ## 6. Data model (Postgres — first draft)
 
 ```sql
-müvekkil(id, ad_soyad, tckn, telefon, eposta, adres, notlar, olusturma)
-dava(id, dosya_no, müvekkil_id, mahkeme, dava_turu, karsi_taraf,
-     durum, acilis_tarihi, notlar)
-duruşma(id, dava_id, tarih, saat, yer, tur, sonuc,
-        hatirlatma_durumu, notlar)
-dilekçe(id, dava_id, tur, dosya_yolu,
-        durum,            -- taslak | onay_bekliyor | onaylandi
-        olusturan, olusturma)
+client(id, full_name, national_id, phone, email, address, notes, created_at)
+case(id, file_no, client_id, court, case_type, counterparty,
+     status, opened_at, notes)
+hearing(id, case_id, date, time, location, type, result,
+        reminder_status, notes)
+petition(id, case_id, type, file_path,
+         status,           -- draft | pending_approval | approved
+         created_by, created_at)
 ```
 
 - All sensitive fields are already on a LUKS-encrypted disk. Field-level extra encryption
-  for the TCKN is optional (if needed). The `ofis` field will be added in the multi-office phase.
+  for the TCKN is optional (if needed). The `office` field will be added in the multi-office phase.
 
 ## 7. Korkut's internal structure (single identity, specialty modules)
 The user sees a single **Korkut**. Inside, the dispatcher understands intent, runs the
@@ -129,9 +130,9 @@ relevant module(s) (may be parallel), and the outputs merge into **a single Kork
 | Module (internal) | Job | LLM / tools | Data |
 |-----------------|----|---------------|------|
 | **dispatcher** | understand intent → hand to module, general chat | classification | — |
-| **court hearing** | add/list hearing, reminder | date/entity extraction | duruşma, dava |
-| **petition** | select template + generate draft → .docx | text generation | dava, dilekçe, şablon |
-| **research** | search legislation/case law + summarize | tools/ (ictihat_ara, mevzuat_ara, karar_metin) | external portal API |
+| **court hearing** | add/list hearing, reminder | date/entity extraction | hearing, case |
+| **petition** | select template + generate draft → .docx | text generation | case, petition, template |
+| **research** | search legislation/case law + summarize | tools/ (search_yargitay, search_mevzuat, fetch_decision) | external portal API |
 
 - Korkut has a **single persona/system instruction** (role, limits, "this is a draft" warning);
   the modules specialize within this persona.
@@ -150,7 +151,7 @@ This applies not only to the petition, but to **every persistent/important opera
 
 ```
 The agent prepares the work → SUMMARIZES what it will do → ASKS "Do you approve?"
-   │   (status: onay_bekliyor — not yet persistent)
+   │   (status: pending_approval — not yet persistent)
    ▼
 The user responds in natural language:
    • "okay / fine / I approve / yes"          → the agent FINALIZES the operation
@@ -168,7 +169,7 @@ The user responds in natural language:
 - Ollama down + model=local → fall back to cloud, silent to the user, write to log.
 - Provider error/timeout → the agent says "I can't reach it right now, could you try again"; it does not crash.
 - If unsure about the redaction detection → **err on the safe side**: redact the suspect field too.
-- **No persistent operation without approval** (§9). DB/file writes are first `onay_bekliyor`; they
+- **No persistent operation without approval** (§9). DB/file writes are first `pending_approval`; they
   are only finalized with natural-language approval. This is a cross-cutting principle for all write operations.
 
 ## 11. Design decisions (closed)
@@ -195,7 +196,7 @@ tools/search_yargitay/
 
 ### CLI contract (clean, agent-independent)
 ```
-python -m tools.search_yargitay --sorgu "kira tespiti" --limit 10
+python -m tools.search_yargitay --query "kira tespiti" --limit 10
   • Input: arguments or stdin JSON
   • Output: a SINGLE JSON object to stdout (for machines, not humans)
   • Log: stderr   • Success/error: exit code (0/≠0)
@@ -204,12 +205,12 @@ This way each tool is tested on its own; it works even without the agent.
 
 ### tool.yaml (example)
 ```yaml
-ad: search_yargitay
-aciklama: "Searches Yargıtay (Court of Cassation) decisions (Bedesten API)."
+name: search_yargitay
+description: "Searches Yargıtay (Court of Cassation) decisions (Bedesten API)."
 requires_key: null        # e.g. BRAVE_API_KEY for niche sources; null = no key needed
-parametreler:
-  sorgu: { tip: string, zorunlu: true }
-  limit: { tip: integer, varsayilan: 10 }
+parameters:
+  query: { type: string, required: true }
+  limit: { type: integer, default: 10 }
 ```
 
 ### Registration and invocation (registry)
@@ -222,9 +223,9 @@ parametreler:
 ### config/tools.yaml (which specialty module accesses what)
 ```yaml
 # Korkut is a single identity; tools are grouped internally by specialty.
-durusma:   [durusma_ekle, durusma_listele]
-dilekce:   [sablon_getir, dilekce_uret, search_yargitay, search_mevzuat, fetch_decision]
-arastirma: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
+hearing:   [add_hearing, list_hearings]
+petition:   [get_template, draft_petition, search_yargitay, search_mevzuat, fetch_decision]
+research: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
 ```
 
 ### Privacy
@@ -257,7 +258,7 @@ arastirma: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetc
 
 ### First tool set (Phase 5)
 `search_yargitay` + `search_mevzuat` + `fetch_decision`/`fetch_legislation` — built as
-our own httpx clients over `tools/_base/` (KAYNAKLAR.md §8). Other sources and the court-hearing/petition tools
+our own httpx clients over `tools/_base/` (SOURCES.md §8). Other sources and the court-hearing/petition tools
 follow the same contract. (Supersedes the earlier `ictihat_ara`/`mevzuat_ara`/`karar_metin`
 sketch — now one tool per source.)
 
@@ -270,7 +271,7 @@ sketch — now one tool per source.)
 - The loop (provider-independent):
   ```
   messages + tool schemas → model
-     ├─ if the model called a tool → tool_registry.calistir → append result → repeat
+     ├─ if the model called a tool → tool_registry.run → append result → repeat
      └─ final text → return (write as the Korkut identity)
   ```
 - All model calls go through `core/router` → redaction + provider selection +

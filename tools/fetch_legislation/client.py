@@ -7,8 +7,8 @@ whole piece of legislation (`documentType: "MEVZUAT"`) or a single article
 (`documentType: "MADDE"`), selected by the `id` field. This client maps our
 English params onto that endpoint and normalises the result to stable keys.
 
-The `mevzuat_id` comes from a `search_mevzuat` result (its `id` field); a
-`madde_id` (article id) can be obtained from the legislation's article tree.
+The `legislation_id` comes from a `search_mevzuat` result (its `id` field); a
+`article_id` (article id) can be obtained from the legislation's article tree.
 """
 
 from __future__ import annotations
@@ -32,17 +32,17 @@ class LegislationClient(BaseClient):
     }
     DOCUMENT = "/mevzuat/getDocumentContent"
 
-    def document_markdown(self, mevzuat_id: str, madde_id: str = "") -> dict[str, Any]:
-        """Fetch a whole piece of legislation, or a single article if `madde_id`.
+    def document_markdown(self, legislation_id: str, article_id: str = "") -> dict[str, Any]:
+        """Fetch a whole piece of legislation, or a single article if `article_id`.
 
-        Returns {"id", "title", "markdown", "sourceUrl"}. When `madde_id` is
+        Returns {"id", "title", "markdown", "sourceUrl"}. When `article_id` is
         given the article is fetched (documentType MADDE) and its id is the
         canonical document id; otherwise the full text is fetched (MEVZUAT).
         """
-        if madde_id:
-            document_id, document_type = madde_id, "MADDE"
+        if article_id:
+            document_id, document_type = article_id, "MADDE"
         else:
-            document_id, document_type = mevzuat_id, "MEVZUAT"
+            document_id, document_type = legislation_id, "MEVZUAT"
 
         body = self.post_json(
             self.DOCUMENT,
@@ -73,20 +73,20 @@ class LegislationClient(BaseClient):
         result: dict[str, Any] = {
             "id": document_id,
             "markdown": markdown,
-            "sourceUrl": f"https://mevzuat.adalet.gov.tr/mevzuat?mevzuatId={mevzuat_id}",
+            "sourceUrl": f"https://mevzuat.adalet.gov.tr/mevzuat?mevzuatId={legislation_id}",
         }
         if title:
             result["title"] = title
         return result
 
 
-def run_tool(mevzuat_id: str, madde_id: str = "") -> dict[str, Any]:
+def run_tool(legislation_id: str, article_id: str = "") -> dict[str, Any]:
     """Fetch the full text of Turkish legislation (or one article) as Markdown.
 
-    mevzuat_id : the legislation id returned by `search_mevzuat` (its `id`).
-    madde_id   : optional article id; when given, only that article is fetched.
+    legislation_id : the legislation id returned by `search_mevzuat` (its `id`).
+    article_id   : optional article id; when given, only that article is fetched.
     """
-    if not mevzuat_id:
-        raise ValueError("mevzuat_id is required")
+    if not legislation_id:
+        raise ValueError("legislation_id is required")
     with LegislationClient() as client:
-        return client.document_markdown(mevzuat_id, madde_id)
+        return client.document_markdown(legislation_id, article_id)

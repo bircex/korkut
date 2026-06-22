@@ -6,7 +6,7 @@ the search results page is server-rendered HTML, so this tool fetches that page
 and parses the decision list out of it. Each result links to a decision landing
 page identified by a ``kararId`` GUID.
 
-Decision-type filtering is exposed through the ``karar_turu`` argument, mapped to
+Decision-type filtering is exposed through the ``decision_type`` argument, mapped to
 the GUID the portal expects on the ``KararTuruID`` query parameter.
 """
 
@@ -58,14 +58,14 @@ class RekabetClient(BaseClient):
         self,
         query: str,
         *,
-        karar_turu: str = "",
+        decision_type: str = "",
         limit: int = 10,
         page: int = 1,
     ) -> dict[str, Any]:
-        guid = DECISION_TYPE_GUIDS.get(karar_turu.strip().lower())
+        guid = DECISION_TYPE_GUIDS.get(decision_type.strip().lower())
         if guid is None:
             allowed = ", ".join(k for k in DECISION_TYPE_GUIDS if k)
-            raise ValueError(f"unknown karar_turu {karar_turu!r}; allowed: {allowed}")
+            raise ValueError(f"unknown decision_type {decision_type!r}; allowed: {allowed}")
 
         params: list[tuple[str, str]] = [
             ("sayfaAdi", query or ""),
@@ -93,21 +93,21 @@ class RekabetClient(BaseClient):
 
 def run_tool(
     query: str,
-    karar_turu: str = "",
+    decision_type: str = "",
     limit: int = 10,
     page: int = 1,
 ) -> dict[str, Any]:
     """Search Competition Authority decisions.
 
     query       : free-text title search (maps to the portal's "sayfaAdi" field)
-    karar_turu  : optional decision type filter — one of "birlesme_devralma",
+    decision_type  : optional decision type filter — one of "birlesme_devralma",
                   "diger", "menfi_tespit_muafiyet", "ozellestirme",
                   "rekabet_ihlali" (empty = all types)
     limit       : results per page (1-10)
     page        : 1-indexed page number
     """
     with RekabetClient() as client:
-        return client.search(query, karar_turu=karar_turu, limit=limit, page=page)
+        return client.search(query, decision_type=decision_type, limit=limit, page=page)
 
 
 class _SearchHTMLParser(HTMLParser):

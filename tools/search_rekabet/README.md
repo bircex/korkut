@@ -16,11 +16,11 @@ Search **Rekabet Kurumu** (Turkish Competition Authority) decisions.
 | name         | type    | default | description                                                          |
 |--------------|---------|---------|----------------------------------------------------------------------|
 | `query`      | string  | —       | Free-text title search (portal field `sayfaAdi`).                    |
-| `karar_turu` | string  | `""`    | Decision-type filter (see below). Empty = all.                       |
+| `decision_type` | string  | `""`    | Decision-type filter (see below). Empty = all.                       |
 | `limit`      | integer | `10`    | Results per page (1-10).                                             |
 | `page`       | integer | `1`     | 1-indexed page number.                                              |
 
-### `karar_turu` values
+### `decision_type` values
 
 | value                    | meaning                          |
 |--------------------------|----------------------------------|
@@ -34,7 +34,7 @@ Search **Rekabet Kurumu** (Turkish Competition Authority) decisions.
 ## CLI
 
 ```bash
-python -m tools.search_rekabet --query "telekomünikasyon" --karar_turu birlesme_devralma --limit 5
+python -m tools.search_rekabet --query "telekomünikasyon" --decision_type birlesme_devralma --limit 5
 # or pipe JSON:
 echo '{"query": "telekomünikasyon", "limit": 5}' | python -m tools.search_rekabet
 ```
