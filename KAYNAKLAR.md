@@ -87,7 +87,9 @@ kurumsal anlaşmayla; standart self-serve API yaygın değil — talep edilmeli.
 - Bölüm 1-3'teki "API"ler çoğunlukla **dokümante edilmemiş, ters-mühendislikle bulunmuş
   JSON uçları** → habersiz değişebilir, SLA yok. MCP sarmalayıcılar bu bakımı üstleniyor
   ama yine de kırılma riski var.
-- **Rate limit belirsiz** → kibar ol (gecikme/backoff), toplu çekimden kaçın.
+- **Rate limit:** Bedesten ölçülen ≈ **IP başına 30 sn'de 10 istek** (429 + Retry-After);
+  diğer uçlar belgesiz. Kibar ol (token-bucket/backoff), toplu kaba çekimden kaçın. "Hepsini
+  indir" gerçekçi değil (milyonlar = yıllar). Strateji: KORPUS.md.
 - **Kullanım şartları:** Otomatik erişimde her portalın ToS'unu kontrol et; özellikle
   UYAP (kendi dosyalar) hassas.
 - KVKK/BDDK/Sigorta Tahkim üçüncü-taraf aramaya bağlı → düşük öncelik, ek anahtar.
