@@ -1,111 +1,112 @@
-# Mimari — Teknik Tasarım
+# Architecture — Technical Design
 
-> PLAN.md yol haritası; bu doküman *nasıl çalışır*ın detayı. Kuruluma başlamadan önce
-> netleştirilecek tüm yapısal kararlar burada.
+> PLAN.md is the roadmap; this document is the detail of *how it works*. All structural
+> decisions to be clarified before starting setup are here.
 
-## 1. Süreç topolojisi (tek Linux sunucu)
+## 1. Process topology (single Linux server)
 
 ```
 ┌─ Docker ─────────────────────────────┐
 │  mattermost      (web + WebSocket)    │
-│  mattermost-db   (Postgres, sadece MM)│
+│  mattermost-db   (Postgres, MM only)  │
 └───────────────────────────────────────┘
-        ▲ WebSocket (al) + REST (yaz)
+        ▲ WebSocket (read) + REST (write)
         │
-┌─ systemd servisi ────────────────────┐
-│  asistan  (tek Python süreci)         │
-│    ├─ bridge/      MM dinle (kanal+DM)  │
-│    ├─ korkut/      tek kimlik; içeride uzmanlık modülleri (paralel)
+┌─ systemd service ────────────────────┐
+│  asistan  (single Python process)     │
+│    ├─ bridge/      MM listen (channel+DM)
+│    ├─ korkut/      single identity; specialty modules inside (parallel)
 │    └─ core/        router+redactor+db  │
 └───────────────────────────────────────┘
         │
 ┌─ Docker ─────────────────────────────┐
-│  asistan-db   (Postgres, uygulama)    │
+│  asistan-db   (Postgres, application) │
 └───────────────────────────────────────┘
         ▲
 ┌─ cron ───────────────────────────────┐
-│  hatirlatma  (her sabah core'u çağırır│
-│              → MM'e duruşma özeti yazar)│
+│  hatirlatma  (calls core every morning│
+│              → writes hearing summary to MM)│
 └───────────────────────────────────────┘
 ```
 
-- **3 çalışan parça:** Mattermost (Docker), `asistan` (Python servisi), `cron` (hatırlatma).
-- Mattermost kendi Postgres'ini kullanır; **uygulama verisi ayrı Postgres** database'inde
-  (aynı sunucu, farklı DB). Baştan Postgres → çok kullanıcı/ofise büyümeye hazır.
-- Hepsi aynı makinede; dış bağımlılık yalnızca OpenAI API (rumuzlanmış metinle).
+- **3 running parts:** Mattermost (Docker), `asistan` (Python service), `cron` (reminder).
+- Mattermost uses its own Postgres; **application data lives in a separate Postgres**
+  database (same server, different DB). Postgres from the start → ready to grow to
+  multiple users/offices.
+- All on the same machine; the only external dependency is the OpenAI API (with redacted text).
 
-## 2. Mattermost bot kimliği — tek "Korkut"
-- **Tek bot hesabı: Korkut** (tek token). Kullanıcı tek bir asistanla konuşur.
-- İçeride uzmanlık modülleri (yönlendirme, duruşma, dilekçe, araştırma) var; gerekirse
-  **paralel** çalışır ama **hepsi Korkut olarak** yazar → kullanıcıya tek kimlik görünür.
-- `asistan` servisi tek WebSocket ile dinler, REST ile **Korkut** olarak yazar.
-- **İki yüzey:** (a) kanal — `@Korkut` etiketi / Korkut'un thread'i; (b) **özel mesaj (DM)**
-  — Korkut'la birebir yazışma.
-- **Döngü koruması:** Servis, Korkut'un kendi mesajlarını yok sayar.
+## 2. Mattermost bot identity — a single "Korkut"
+- **Single bot account: Korkut** (single token). The user talks to one assistant.
+- Inside there are specialty modules (dispatch, court hearing, petition, research); when
+  needed they run **in parallel** but **all write as Korkut** → the user sees a single identity.
+- The `asistan` service listens over a single WebSocket and writes as **Korkut** via REST.
+- **Two surfaces:** (a) channel — `@Korkut` mention / Korkut's thread; (b) **direct message (DM)**
+  — one-on-one conversation with Korkut.
+- **Loop protection:** The service ignores Korkut's own messages.
 
-## 3. Mesaj akışı (adım adım)
+## 3. Message flow (step by step)
 
 ```
-1. Kullanıcı kanala veya Korkut'a DM yazar.
-2. bridge mesajı WS'ten alır. Korkut'un kendi mesajıysa → yok say (dur).
-3. Tetikleme:
-     a) DM ise → her mesaj Korkut'a gider (özel sohbet; etiket gerekmez).
-     b) Kanalda @Korkut etiketli VEYA Korkut'un thread'ine yanıtsa → Korkut'a gider.
-     c) Kanalda etiketsiz → yok say (kanalı boğmaz, maliyet yok).
-4. Korkut'un yönlendiricisi niyeti anlar → ilgili uzmanlık modülü(ne) yönlendirir
-   (duruşma / dilekçe / araştırma); birden çoğu gerekiyorsa PARALEL çalışır.
-5. Modül DB'den veriyi çeker; LLM gerekiyorsa core.router'a (uzmanlık, is_tipi, metin) verir.
-6. core.router: uzmanlık→model eşlemesi.
-     - model=yerel & Ollama kapalı → bulut'a düş + logla.
-     - model=bulut → redactor.rumuzla → provider(gpt) → redactor.geri_ac.
-7. Çıktılar **tek Korkut yanıtında** birleşir; thread'e/DM'e **Korkut kimliğiyle** yazılır.
-8. Veri yazımı varsa (duruşma/dilekçe) → DB/dosya + onay durumu.
+1. The user writes in a channel or DMs Korkut.
+2. bridge receives the message over WS. If it is Korkut's own message → ignore (stop).
+3. Trigger:
+     a) If DM → every message goes to Korkut (private chat; no mention needed).
+     b) If @Korkut is mentioned in a channel OR it is a reply in Korkut's thread → goes to Korkut.
+     c) Unmentioned in a channel → ignore (does not flood the channel, no cost).
+4. Korkut's dispatcher understands the intent → routes to the relevant specialty module(s)
+   (court hearing / petition / research); if more than one is needed they run IN PARALLEL.
+5. The module fetches data from the DB; if an LLM is needed it passes (uzmanlik, is_tipi, text) to core.router.
+6. core.router: specialty→model mapping.
+     - model=local & Ollama down → fall back to cloud + log.
+     - model=cloud → redactor.rumuzla → provider(gpt) → redactor.geri_ac.
+7. The outputs merge into **a single Korkut response**; written to the thread/DM **as the Korkut identity**.
+8. If there is a data write (court hearing/petition) → DB/file + approval status.
 ```
 
-- **Bağlam = Mattermost thread'i / DM dizisi.** Korkut o dizinin mesajlarını bağlam
-  olarak görür. Kalıcı bilgi (dava/müvekkil) DB'de.
+- **Context = Mattermost thread / DM sequence.** Korkut sees the messages of that
+  sequence as context. Persistent information (case/client) is in the DB.
 
-## 4. core sözleşmeleri (arayüzler)
+## 4. core contracts (interfaces)
 
 ```
 router.cevapla(uzmanlik: str, is_tipi: str, mesajlar: list) -> str
-    # uzmanlık→model seç, yerel/bulut, düşme kuralı; redaction'ı kendi içinde uygular.
+    # select specialty→model, local/cloud, fallback rule; applies redaction internally.
 
 redactor.rumuzla(metin: str) -> (rumuzlu_metin: str, harita: dict)
 redactor.geri_ac(metin: str, harita: dict) -> str
 
 providers.gpt.uret(mesajlar: list, ayar: dict) -> str      # OpenAI
-providers.ollama.uret(...)                                  # sonra
-providers.claude.uret(...)                                  # sonra
+providers.ollama.uret(...)                                  # later
+providers.claude.uret(...)                                  # later
 
-db: müvekkil / dava / duruşma / dilekçe CRUD (aşağıdaki şema)
+db: müvekkil / dava / duruşma / dilekçe CRUD (schema below)
 
-tool_registry.yukle() -> list[Tool]          # tools/ tarayıp manifestleri okur
-tool_registry.calistir(ad: str, args: dict) -> dict   # bir tool'u çalıştır, JSON döndür
-    # Tool'lar tools/ altında; CLI'dan da çağrılabilir. Detay: §12.
+tool_registry.yukle() -> list[Tool]          # scans tools/ and reads manifests
+tool_registry.calistir(ad: str, args: dict) -> dict   # run a tool, return JSON
+    # Tools live under tools/; can also be called from the CLI. Detail: §12.
 ```
 
-- **Sağlayıcı eklemek = `providers/` altına bir dosya + config'e bir satır.** Ajanlar
-  ve bridge hiç değişmez.
-- **Yeni yetenek eklemek = `tools/` altına bir tool** (CLI + tool.yaml + README). §12.
+- **Adding a provider = a file under `providers/` + one line in config.** The agents
+  and bridge do not change at all.
+- **Adding a new capability = a tool under `tools/`** (CLI + tool.yaml + README). §12.
 
-## 5. Rumuzlama akışı (bulut'a giden her metin)
+## 5. Redaction flow (every text going to the cloud)
 
 ```
-metin ──> tespit (regex + isim sözlüğü)
-            • TCKN (11 hane + algoritma)   • telefon   • IBAN
-            • plaka                         • esas/dosya no
-            • kişi adı (sözlük + kural)
-       ──> token ile değiştir:  "Ahmet Yılmaz" → "[KİŞİ_1]"
-       ──> harita: { "[KİŞİ_1]": "Ahmet Yılmaz", ... }  (RAM'de, isteğe özel)
-       ──> provider(gpt) çağrısı  (yalnızca rumuzlu metin gider)
-       ──> dönen cevapta token'ları geri koy
+text ──> detection (regex + name dictionary)
+            • TCKN (11 digits + algorithm)  • phone     • IBAN
+            • plate                          • case file number (esas/dosya no)
+            • person name (dictionary + rule)
+       ──> replace with token:  "Ahmet Yılmaz" → "[KİŞİ_1]"
+       ──> map: { "[KİŞİ_1]": "Ahmet Yılmaz", ... }  (in RAM, per request)
+       ──> provider(gpt) call  (only redacted text is sent)
+       ──> put the tokens back in the returned answer
 ```
 
-- `yerel` modele giden metin **rumuzlanmaz** (zaten dışarı çıkmıyor).
-- Harita istek başına RAM'de; kalıcı tutulursa (audit) `data/`'da şifreli. [KARAR-3]
+- Text going to the `local` model **is not redacted** (it does not leave the machine anyway).
+- The map is in RAM per request; if kept persistently (audit), encrypted in `data/`. [KARAR-3]
 
-## 6. Veri modeli (Postgres — ilk taslak)
+## 6. Data model (Postgres — first draft)
 
 ```sql
 müvekkil(id, ad_soyad, tckn, telefon, eposta, adres, notlar, olusturma)
@@ -118,89 +119,90 @@ dilekçe(id, dava_id, tur, dosya_yolu,
         olusturan, olusturma)
 ```
 
-- Tüm hassas alanlar zaten LUKS şifreli diskte. TCKN için alan-bazlı ek şifreleme
-  opsiyon (gerekirse). `ofis` alanı çok-ofis fazında eklenecek.
+- All sensitive fields are already on a LUKS-encrypted disk. Field-level extra encryption
+  for the TCKN is optional (if needed). The `ofis` field will be added in the multi-office phase.
 
-## 7. Korkut'un iç yapısı (tek kimlik, uzmanlık modülleri)
-Kullanıcıya tek **Korkut** görünür. İçeride yönlendirici niyeti anlar, ilgili modül(ler)i
-çalıştırır (paralel olabilir), çıktılar **tek Korkut yanıtında** birleşir.
+## 7. Korkut's internal structure (single identity, specialty modules)
+The user sees a single **Korkut**. Inside, the dispatcher understands intent, runs the
+relevant module(s) (may be parallel), and the outputs merge into **a single Korkut response**.
 
-| Modül (içeride) | İş | LLM / araçlar | Veri |
+| Module (internal) | Job | LLM / tools | Data |
 |-----------------|----|---------------|------|
-| **yönlendirici** | niyet anla → modüle ver, genel sohbet | sınıflama | — |
-| **duruşma** | duruşma ekle/listele, hatırlatma | tarih/varlık çıkarımı | duruşma, dava |
-| **dilekçe** | şablon seç + taslak üret → .docx | metin üretimi | dava, dilekçe, şablon |
-| **araştırma** | mevzuat/içtihat ara + özetle | tools/ (ictihat_ara, mevzuat_ara, karar_metin) | dış portal API |
+| **dispatcher** | understand intent → hand to module, general chat | classification | — |
+| **court hearing** | add/list hearing, reminder | date/entity extraction | duruşma, dava |
+| **petition** | select template + generate draft → .docx | text generation | dava, dilekçe, şablon |
+| **research** | search legislation/case law + summarize | tools/ (ictihat_ara, mevzuat_ara, karar_metin) | external portal API |
 
-- Korkut'un **tek persona/sistem talimatı** var (rol, sınırlar, "taslaktır" uyarısı);
-  modüller bu personanın içinde uzmanlaşır.
+- Korkut has a **single persona/system instruction** (role, limits, "this is a draft" warning);
+  the modules specialize within this persona.
 
-## 8. Veri girişi (duruşma/müvekkil) — KARAR-2: Doğal dil + onay
-- Korkut'a doğal dille yazılır: "Korkut, Ahmet Yılmaz boşanma dosyası 15 Temmuz 10:00
-  Antalya 3. Aile Mahkemesi'nde".
-- Korkut alanları **çıkarır** ve **yapılandırılmış özet** olarak gösterir.
-- Kaydetmeden önce **§9'daki doğal dil onay diyaloğunu** uygular — kullanıcı onaylamadan
-  DB'ye yazmaz; "şu tarihi düzelt" derse düzeltip tekrar onaya sunar.
+## 8. Data entry (court hearing/client) — KARAR-2: Natural language + approval
+- It is written to Korkut in natural language: "Korkut, Ahmet Yılmaz divorce case, July 15
+  10:00 at the Antalya 3rd Family Court".
+- Korkut **extracts** the fields and shows them as a **structured summary**.
+- Before saving, it applies the **natural-language approval dialog in §9** — it does not
+  write to the DB until the user approves; if the user says "fix this date" it corrects
+  it and presents it for approval again.
 
-## 9. Onay akışı — KARAR-4: Doğal dil diyaloğu (tüm kalıcı işlemler için)
-Bu sadece dilekçeye değil, **kalıcı/önemli her işleme** uygulanır (duruşma kaydı,
-dilekçe finalize, veri değişikliği).
+## 9. Approval flow — KARAR-4: Natural-language dialog (for all persistent operations)
+This applies not only to the petition, but to **every persistent/important operation**
+(court hearing record, petition finalization, data change).
 
 ```
-Ajan işi hazırlar → ne yapacağını ÖZETLER → "Onaylıyor musunuz?" diye SORAR
-   │   (durum: onay_bekliyor — henüz kalıcı değil)
+The agent prepares the work → SUMMARIZES what it will do → ASKS "Do you approve?"
+   │   (status: onay_bekliyor — not yet persistent)
    ▼
-Kullanıcı doğal dille cevap verir:
-   • "tamam / olur / onaylıyorum / evet"      → ajan işlemi KESİNLEŞTİRİR
-   • "yok / dur / iptal"                       → işlemi YAPMAZ, bırakır
-   • "şu tarihi düzelt / karşı tarafı ekle"    → ajan DEĞİŞİKLİĞİ uygular,
-                                                  tekrar özetleyip yeniden onay ister
+The user responds in natural language:
+   • "okay / fine / I approve / yes"          → the agent FINALIZES the operation
+   • "no / stop / cancel"                      → it does NOT perform the operation, drops it
+   • "fix this date / add the opposing party"  → the agent APPLIES THE CHANGE,
+                                                  re-summarizes and asks for approval again
 ```
 
-- Ajan onay/ret/düzeltme niyetini **doğal dilden** anlar (sabit komut yok).
-- **Onay alınmadan hiçbir kalıcı işlem yapılmaz.** Belirsiz cevapta tekrar sorar.
-- Dilekçe için ek olarak: değişmesi gereken yerleri ajan kendi **analiz edip önerebilir**
-  ("şu maddede tarih eksik, eklememi ister misiniz?").
+- The agent understands the approval/rejection/correction intent **from natural language** (no fixed command).
+- **No persistent operation is performed without approval.** On an ambiguous answer it asks again.
+- For the petition, additionally: the agent can **analyze and propose** the places that need
+  to change ("the date is missing in this clause, would you like me to add it?").
 
-## 10. Hata / düşme davranışı
-- Ollama kapalı + model=yerel → bulut'a düş, kullanıcıya sessiz, log'a düş.
-- Provider hatası/timeout → ajan "şu an ulaşamadım, tekrar dener misin" der; çökmez.
-- Redaction tespitinden emin değilse → **güvenli taraf**: şüpheli alanı da rumuzla.
-- **Onaysız hiçbir kalıcı işlem yok** (§9). DB/dosya yazımı önce `onay_bekliyor`; ancak
-  doğal dil onayıyla kesinleşir. Bu, tüm yazma işlemleri için çapraz ilkedir.
+## 10. Error / fallback behavior
+- Ollama down + model=local → fall back to cloud, silent to the user, write to log.
+- Provider error/timeout → the agent says "I can't reach it right now, could you try again"; it does not crash.
+- If unsure about the redaction detection → **err on the safe side**: redact the suspect field too.
+- **No persistent operation without approval** (§9). DB/file writes are first `onay_bekliyor`; they
+  are only finalized with natural-language approval. This is a cross-cutting principle for all write operations.
 
-## 11. Tasarım kararları (kapandı)
-- **KARAR-1 — Tetikleme:** ✅ Kanalda sadece `@Korkut` / Korkut'un thread'i; **DM'de her
-  mesaj**. Kanalda etiketsiz mesajlar yok sayılır.
-- **KARAR-2 — Veri girişi:** ✅ Doğal dil + yapılandırılmış özet + onay (§8).
-- **KARAR-3 — Rumuz haritası:** ✅ Varsayılan: yalnızca RAM'de, istek sonrası silinir
-  (asgari PII izi). Audit gerekirse şifreli kalıcı log opsiyon olarak eklenir.
-- **KARAR-4 — Onay:** ✅ Doğal dil diyaloğu; onaysız kalıcı işlem yok (§9).
-- **KARAR-5 — Uygulama DB'si:** ✅ Baştan Postgres (ayrı database).
+## 11. Design decisions (closed)
+- **KARAR-1 — Trigger:** ✅ In a channel only `@Korkut` / Korkut's thread; **every message
+  in DM**. Unmentioned messages in a channel are ignored.
+- **KARAR-2 — Data entry:** ✅ Natural language + structured summary + approval (§8).
+- **KARAR-3 — Redaction map:** ✅ Default: in RAM only, deleted after the request
+  (minimal PII trace). If audit is needed, an encrypted persistent log is added as an option.
+- **KARAR-4 — Approval:** ✅ Natural-language dialog; no persistent operation without approval (§9).
+- **KARAR-5 — Application DB:** ✅ Postgres from the start (separate database).
 
-## 12. Tools katmanı (ajan yetenekleri)
-Her dış yetenek `tools/` altında **bağımsız, CLI'dan çalışan, kendi kendini belgeleyen**
-bir araçtır. Korkut (uzmanlık modülleri) bunları toolset olarak kullanır.
+## 12. Tools layer (agent capabilities)
+Each external capability is an **independent, CLI-runnable, self-documenting** tool under
+`tools/`. Korkut (the specialty modules) uses these as a toolset.
 
-### Klasör sözleşmesi (`tools/<ad>/`)
+### Folder contract (`tools/<ad>/`)
 ```
 tools/ictihat_ara/
-  ├─ __main__.py    # CLI girişi
-  ├─ tool.yaml      # ad, açıklama, parametre şeması (JSON Schema) → function-calling
-  ├─ README.md      # ne yapar, örnek girdi/çıktı, hangi uca gider
-  └─ client.py      # vendor/'dan uyarlanmış httpx istemcisi (MIT notu korunur)
+  ├─ __main__.py    # CLI entry
+  ├─ tool.yaml      # name, description, parameter schema (JSON Schema) → function-calling
+  ├─ README.md      # what it does, example input/output, which endpoint it hits
+  └─ client.py      # httpx client adapted from vendor/ (MIT notice preserved)
 ```
 
-### CLI sözleşmesi (tertemiz, ajandan bağımsız)
+### CLI contract (clean, agent-independent)
 ```
 python -m tools.ictihat_ara --sorgu "kira tespiti" --mahkeme yargitay --limit 10
-  • Girdi: argüman veya stdin JSON
-  • Çıktı: stdout'a TEK JSON nesnesi (insan için değil, makine için)
-  • Log: stderr   • Başarı/hata: exit code (0/≠0)
+  • Input: arguments or stdin JSON
+  • Output: a SINGLE JSON object to stdout (for machines, not humans)
+  • Log: stderr   • Success/error: exit code (0/≠0)
 ```
-Bu sayede her tool tek başına test edilir; ajan olmadan da çalışır.
+This way each tool is tested on its own; it works even without the agent.
 
-### tool.yaml (örnek)
+### tool.yaml (example)
 ```yaml
 ad: ictihat_ara
 aciklama: "Yargıtay/Danıştay/Emsal kararlarında arama yapar (Bedesten API)."
@@ -210,45 +212,46 @@ parametreler:
   limit:   { tip: integer, varsayilan: 10 }
 ```
 
-### Kayıt ve çağrı (registry)
-- `core/tool_registry.py` açılışta `tools/`'u tarar, her `tool.yaml`'ı okur.
-- Manifestler GPT'ye **function-calling tool'ları** olarak verilir (config'te hangi
-  ajan hangi tool'a erişir: `config/tools.yaml`).
-- GPT bir tool çağırınca registry onu çalıştırır (in-process import; gerekirse subprocess
-  CLI) ve JSON sonucu modele döndürür.
+### Registration and invocation (registry)
+- `core/tool_registry.py` scans `tools/` at startup and reads each `tool.yaml`.
+- The manifests are given to GPT as **function-calling tools** (config defines which
+  agent can access which tool: `config/tools.yaml`).
+- When GPT calls a tool, the registry runs it (in-process import; subprocess CLI if
+  needed) and returns the JSON result to the model.
 
-### config/tools.yaml (hangi uzmanlık modülü neye erişir)
+### config/tools.yaml (which specialty module accesses what)
 ```yaml
-# Korkut tek kimlik; tool'lar içeride uzmanlığa göre gruplanır.
+# Korkut is a single identity; tools are grouped internally by specialty.
 durusma:   [durusma_ekle, durusma_listele]
 dilekce:   [sablon_getir, dilekce_uret, ictihat_ara]
 arastirma: [ictihat_ara, mevzuat_ara, karar_metin]
 ```
 
-### Gizlilik
-- Tool girdisi bulut modele gidecekse **redaction kuralları geçerli** (§5).
-- İçtihat/mevzuat sorguları kamuya açık; ama müvekkil bağlamı eklenmişse o kısım rumuzlanır.
+### Privacy
+- If the tool input is going to a cloud model, **redaction rules apply** (§5).
+- Case law/legislation queries are public; but if client context is added, that part is redacted.
 
-### İlk tool seti (Faz 5)
-`ictihat_ara`, `mevzuat_ara`, `karar_metin` — `vendor/` istemcilerinden uyarlanır
-(KAYNAKLAR.md §8). Sonraki tool'lar (duruşma, dilekçe) aynı sözleşmeyle eklenir.
+### First tool set (Phase 5)
+`ictihat_ara`, `mevzuat_ara`, `karar_metin` — adapted from the `vendor/` clients
+(KAYNAKLAR.md §8). Subsequent tools (court hearing, petition) are added with the same contract.
 
-## 13. Çalışma motoru (framework kararı)
-- Korkut **kendi Python uygulamamız**; clawbot/Claude Code değil (o sadece *geliştirme*
-  aracı — ürün kurulunca ona ihtiyaç yok, bağımsız servis).
-- Ajan döngüsü **ince katman**: resmî provider SDK'ları (`openai`; sonra `anthropic`,
-  `ollama`) + kendi yazdığımız küçük döngü. **Ağır orkestrasyon framework'ü yok**
-  (LangChain/LangGraph vb.).
-- Döngü (provider-bağımsız):
+## 13. Runtime engine (framework decision)
+- Korkut is **our own Python application**; not clawbot/Claude Code (those are only
+  *development* tools — once the product is set up they are not needed, it is an independent service).
+- The agent loop is a **thin layer**: official provider SDKs (`openai`; later `anthropic`,
+  `ollama`) + our own small loop. **No heavy orchestration framework**
+  (LangChain/LangGraph, etc.).
+- The loop (provider-independent):
   ```
-  mesajlar + tool şemaları → model
-     ├─ model tool çağırdıysa → tool_registry.calistir → sonucu ekle → tekrar
-     └─ final metin → döndür (Korkut kimliğiyle yaz)
+  messages + tool schemas → model
+     ├─ if the model called a tool → tool_registry.calistir → append result → repeat
+     └─ final text → return (write as the Korkut identity)
   ```
-- Tüm model çağrıları `core/router`'dan geçer → **tek noktada** redaction + provider
-  seçimi + "yerel yoksa buluta düş".
-- `core/providers/<ad>.py` her sağlayıcının function-calling formatını **ortak arayüze**
-  çevirir → GPT↔Claude↔yerel swap'ı tek dosya.
-- **Neden ince katman:** (1) provider-swap önceliğimiz, ağır framework zorlaştırır;
-  (2) redaction tek chokepoint'te garanti; (3) döngü küçük (~150 satır), az bağımlılık =
-  uzun ömür; (4) tool'lar zaten `tools/`+registry, framework tool soyutlaması gereksiz.
+- All model calls go through `core/router` → redaction + provider selection +
+  "fall back to cloud if no local" **at a single point**.
+- `core/providers/<ad>.py` converts each provider's function-calling format into a
+  **common interface** → GPT↔Claude↔local swap is a single file.
+- **Why a thin layer:** (1) provider-swap is our priority, a heavy framework makes it harder;
+  (2) redaction guaranteed at a single chokepoint; (3) the loop is small (~150 lines), few
+  dependencies = longevity; (4) tools are already in `tools/`+registry, the framework's tool
+  abstraction is unnecessary.

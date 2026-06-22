@@ -1,108 +1,109 @@
-# Hukuki Veri Kaynakları — Erişim Listesi
+# Legal Data Sources — Access List
 
-> Korkut'un araştırma ve dilekçe modüllerinin ham maddesi. Türkiye'de **resmî,
-> dokümante, SLA'lı açık API neredeyse yok**; erişim çoğunlukla kamuya açık portalların
-> arkasındaki JSON uçları (yarı-resmî), scraping veya ticari sağlayıcı API'leri ile.
+> Raw material for Korkut's research and petition (dilekçe) modules. In Turkey there is
+> **almost no official, documented, SLA-backed open API**; access is mostly through the JSON
+> endpoints behind publicly accessible portals (semi-official), scraping, or commercial
+> provider APIs.
 
-## 0. Strateji — sıfırdan yazma, hazır katmanı kullan
-İki açık kaynak proje işin %90'ını çözüyor; altlarındaki gerçek uçları da belgeliyorlar:
-- **yargi-mcp** — tüm yargı kararları + idari kurul kararları. github.com/saidsurucu/yargi-mcp
-- **mevzuat-mcp** — mevzuat (kanun/KHK/yönetmelik/Cumhurbaşkanlığı kararnameleri...).
+## 0. Strategy — don't write from scratch, use the ready-made layer
+Two open-source projects solve 90% of the work, and they also document the actual endpoints underneath:
+- **yargi-mcp** — all judicial decisions + administrative board decisions. github.com/saidsurucu/yargi-mcp
+- **mevzuat-mcp** — legislation (mevzuat) (laws/KHK/regulations/presidential decrees...).
   github.com/saidsurucu/mevzuat-mcp
-- Her ikisi de **FastMCP** (Python). Korkut bunları ya MCP olarak tüketir, ya da
-  altlarındaki uçları (özellikle **Bedesten API**) doğrudan çağırır.
-- **Klonlandı:** `vendor/yargi-mcp`, `vendor/mevzuat-mcp` (MIT). İnceleme + vendor kaynağı.
+- Both are **FastMCP** (Python). Korkut either consumes them as MCP, or calls the
+  endpoints underneath (especially the **Bedesten API**) directly.
+- **Cloned:** `vendor/yargi-mcp`, `vendor/mevzuat-mcp` (MIT). Review + vendor source.
 
-### Koddan doğrulandı — TOKEN GEREKMİYOR
-- Veri erişimi **düz httpx** ile, **auth yok** (`bedesten_client.py`: "Pure httpx - no
-  authentication or Playwright needed"). Tarayıcı taklidi header'lar + JSON sarmalı yeter.
-- `.env`'deki Clerk/Stripe/JWT/Redis/OpenRouter anahtarları **veri için değil** — adamın
-  ücretli SaaS katmanı (giriş/ödeme/oturum) için. Biz `ENABLE_AUTH=false` ile atlıyoruz.
-- Tek opsiyonel: mevzuat "semantic" araması → OpenRouter **veya tam yerel embedding**
-  (HF TEI / Ollama, dış servis yok). Yerel seçilirse "veri ofiste" ilkesi korunur.
+### Verified from the code — NO TOKEN REQUIRED
+- Data access is via **plain httpx**, with **no auth** (`bedesten_client.py`: "Pure httpx - no
+  authentication or Playwright needed"). Browser-impersonating headers + a JSON wrapper are enough.
+- The Clerk/Stripe/JWT/Redis/OpenRouter keys in `.env` are **not for data** — they are for the
+  author's paid SaaS layer (login/payment/session). We skip them with `ENABLE_AUTH=false`.
+- Only optional one: legislation "semantic" search → OpenRouter **or fully local embedding**
+  (HF TEI / Ollama, no external service). If local is chosen, the "data stays in the office" principle is preserved.
 
-## 1. Yargı kararları (içtihat)
+## 1. Judicial decisions (case law / içtihat)
 
-| Kaynak | Ne içerir | Resmî portal | Erişim |
+| Source | What it contains | Official portal | Access |
 |--------|-----------|--------------|--------|
-| **Bedesten API** ⭐ | Yargıtay + Danıştay + yerel mahkeme + istinaf + KYB (5 tür, birleşik) | `bedesten.adalet.gov.tr` | Yarı-resmî JSON, **auth yok** |
-| **Yargıtay** | Yargıtay kararları | `karararama.yargitay.gov.tr` | JSON uç (native + Bedesten) |
-| **Danıştay** | Danıştay kararları | `karararama.danistay.gov.tr` | JSON uç (keyword + detaylı + Bedesten) |
-| **UYAP Emsal** | Yerel + istinaf emsal kararları | `emsal.uyap.gov.tr` | UYAP JSON ucu |
-| **Anayasa Mahkemesi** | Norm denetimi + bireysel başvuru | `anayasa.gov.tr` | Resmî arama ucu |
-| **Uyuşmazlık Mahkemesi** | Görev/hüküm uyuşmazlıkları | resmî URL'ler | Doğrudan belge URL'leri |
+| **Bedesten API** ⭐ | Yargıtay + Danıştay + local court + appellate + KYB (5 types, combined) | `bedesten.adalet.gov.tr` | Semi-official JSON, **no auth** |
+| **Yargıtay** | Yargıtay decisions | `karararama.yargitay.gov.tr` | JSON endpoint (native + Bedesten) |
+| **Danıştay** | Danıştay decisions | `karararama.danistay.gov.tr` | JSON endpoint (keyword + detailed + Bedesten) |
+| **UYAP Emsal** | Local + appellate precedent decisions (emsal karar) | `emsal.uyap.gov.tr` | UYAP JSON endpoint |
+| **Anayasa Mahkemesi** | Norm review + individual application | `anayasa.gov.tr` | Official search endpoint |
+| **Uyuşmazlık Mahkemesi** | Jurisdiction/judgment disputes | official URLs | Direct document URLs |
 
-## 2. İdari kurul/kurum kararları
+## 2. Administrative board/agency decisions
 
-| Kaynak | Ne içerir | Portal | Erişim |
+| Source | What it contains | Portal | Access |
 |--------|-----------|--------|--------|
-| **KİK** | Kamu İhale Kurulu kararları | `kik.gov.tr` | KİK v2 API, auth yok |
-| **Rekabet Kurumu** | Rekabet kararları | `rekabet.gov.tr` | Resmî uç |
-| **Sayıştay** | Sayıştay kararları | `sayistay.gov.tr` | Resmî uç |
-| **GİB** | Vergi özelgeleri/mevzuat | `gib.gov.tr` | Resmî JSON API |
-| **KVKK** | Veri koruma kararları | `kvkk.gov.tr` | Site-içi arama (Brave API key gerekir) |
-| **BDDK** | Bankacılık düzenleme | `bddk.org.tr` | Arama + URL (Brave API key) |
-| **Sigorta Tahkim** | Sigorta tahkim kararları | `sigortatahkim.org` | Tavily arama + PDF (API key) |
+| **KİK** | Public Procurement Board decisions | `kik.gov.tr` | KİK v2 API, no auth |
+| **Rekabet Kurumu** | Competition decisions | `rekabet.gov.tr` | Official endpoint |
+| **Sayıştay** | Sayıştay decisions | `sayistay.gov.tr` | Official endpoint |
+| **GİB** | Tax rulings (vergi özelgesi)/legislation | `gib.gov.tr` | Official JSON API |
+| **KVKK** | Data protection decisions | `kvkk.gov.tr` | On-site search (Brave API key required) |
+| **BDDK** | Banking regulation | `bddk.org.tr` | Search + URL (Brave API key) |
+| **Sigorta Tahkim** | Insurance arbitration decisions | `sigortatahkim.org` | Tavily search + PDF (API key) |
 
-> Not: KVKK/BDDK/Sigorta Tahkim'in resmî ucu yok; üçüncü taraf arama (Brave/Tavily)
-> üzerinden gidiliyor → ayrı API anahtarı + daha kırılgan. Düşük öncelik.
+> Note: KVKK/BDDK/Sigorta Tahkim have no official endpoint; access goes through third-party
+> search (Brave/Tavily) → separate API key + more fragile. Low priority.
 
-## 3. Mevzuat ve kararnameler (mevzuat-mcp ile)
+## 3. Legislation and presidential decrees (with mevzuat-mcp)
 
-`mevzuat.gov.tr` (Cumhurbaşkanlığı Mevzuat Bilgi Sistemi) üzerinden, tür filtreli:
+Via `mevzuat.gov.tr` (Presidential Legislation Information System), filtered by type:
 - **KANUN, KHK, TÜZÜK, YÖNETMELİK, TEBLİĞ, KKY, UY, MÜLGA**
-- **Cumhurbaşkanlığı:** CB_KARARNAME, CB_KARAR, CB_YONETMELIK, CB_GENELGE
-- Başlık-içi arama, tam cümle, **Resmî Gazete tarih/sayı filtresi**, içeriği Markdown
-  olarak çekme. (21 araç mevzuat.gov.tr + 5 araç bedesten.adalet.gov.tr.)
-- Anlamsal (semantic) arama opsiyonu var (OPENROUTER_API_KEY gerektirir).
+- **Presidential:** CB_KARARNAME, CB_KARAR, CB_YONETMELIK, CB_GENELGE
+- In-title search, exact phrase, **Official Gazette (Resmî Gazete) date/issue filter**, fetching
+  content as Markdown. (21 tools for mevzuat.gov.tr + 5 tools for bedesten.adalet.gov.tr.)
+- A semantic search option is available (requires OPENROUTER_API_KEY).
 
-### Resmî Gazete (ek)
-- `resmigazete.gov.tr` — günlük yayım (kararnameler, atamalar, ilanlar).
-- **Resmî açık API yok** → arşiv scraping (tarih bazlı HTML/PDF). Çoğu kararname zaten
-  mevzuat.gov.tr'de yapılandırılmış; Resmî Gazete'yi yalnızca "o günkü ham yayım" için.
+### Official Gazette (Resmî Gazete) (additional)
+- `resmigazete.gov.tr` — daily publication (presidential decrees (kararname), appointments, announcements).
+- **No official open API** → archive scraping (date-based HTML/PDF). Most presidential decrees are
+  already structured on mevzuat.gov.tr; use the Official Gazette only for "that day's raw publication".
 
-## 4. Kendi dosyaların / duruşma günleri (duruşma modülü — AYRI kategori!)
-Bunlar içtihat değil; **ofisin kendi davalarının** safahatı ve duruşma günleri.
+## 4. Your own files / hearing dates (hearing module — SEPARATE category!)
+These are not case law; they are the proceedings and hearing dates (duruşma günü) of **the office's own cases (dava)**.
 - **UYAP Avukat Portal** (`avukat.uyap.gov.tr`) / **Vatandaş Portal**
   (`vatandas.uyap.gov.tr`).
-- **Resmî açık API YOK.** Giriş **e-Devlet / e-imza / mobil imza** ile; oturum bazlı.
-- Sonuç: Duruşma günü otomasyonu **yarı-otomatik** olur (oturum açıp scraping) veya
-  **manuel giriş** (planda Faz 3 başlangıcı manuel). Resmî entegrasyon ayrı iş.
-- ⚠️ Otomatik erişimde UYAP kullanım şartları + KVKK dikkat.
+- **NO official open API.** Login is via **e-Government (e-Devlet) / e-signature (e-imza) / mobile signature**; session-based.
+- Result: Hearing-date automation becomes **semi-automatic** (logging in and scraping) or
+  **manual entry** (in the plan, the start of Phase 3 is manual). Official integration is separate work.
+- ⚠️ For automated access, mind the UYAP terms of use + KVKK.
 
-## 5. Uluslararası (gerekirse)
-- **HUDOC (AİHM/ECHR)** — `hudoc.echr.coe.int`. Türkiye kararları için. Genel
-  arama/erişim ucu mevcut (doğrulanacak). İnsan hakları dosyalarında değerli.
+## 5. International (if needed)
+- **HUDOC (ECtHR/ECHR)** — `hudoc.echr.coe.int`. For Turkey decisions. A general
+  search/access endpoint exists (to be verified). Valuable in human rights cases.
 
-## 6. Ticari hukuk veritabanları (ücretli, en zengin içerik)
-İçtihat + mevzuat + literatür + sözleşme örnekleri entegre. API/entegrasyon genelde
-kurumsal anlaşmayla; standart self-serve API yaygın değil — talep edilmeli.
-- **Lexpera** (`lexpera.com.tr`) — 1.6M+ Yargıtay kararı, kitap/makale tam metin.
-- **Kazancı** — içtihat + mevzuat otomasyonu.
-- **HukukTürk**, **Jurix** (dergi/makale).
-> Karar: Önce ücretsiz resmî/yarı-resmî kaynaklarla (Bölüm 1-3) git; içerik/kapsam
-> yetmezse ticari API'yi değerlendir.
+## 6. Commercial legal databases (paid, richest content)
+Case law + legislation + literature + contract templates integrated. API/integration is usually
+via an enterprise agreement; a standard self-serve API is not common — must be requested.
+- **Lexpera** (`lexpera.com.tr`) — 1.6M+ Yargıtay decisions, full text of books/articles.
+- **Kazancı** — case law + legislation automation.
+- **HukukTürk**, **Jurix** (journals/articles).
+> Decision: Go with the free official/semi-official sources first (Sections 1-3); if
+> content/coverage falls short, evaluate a commercial API.
 
-## 7. Risk / dikkat notları
-- Bölüm 1-3'teki "API"ler çoğunlukla **dokümante edilmemiş, ters-mühendislikle bulunmuş
-  JSON uçları** → habersiz değişebilir, SLA yok. MCP sarmalayıcılar bu bakımı üstleniyor
-  ama yine de kırılma riski var.
-- **Rate limit:** Bedesten ölçülen ≈ **IP başına 30 sn'de 10 istek** (429 + Retry-After);
-  diğer uçlar belgesiz. Kibar ol (token-bucket/backoff), toplu kaba çekimden kaçın. "Hepsini
-  indir" gerçekçi değil (milyonlar = yıllar). Strateji: KORPUS.md.
-- **Kullanım şartları:** Otomatik erişimde her portalın ToS'unu kontrol et; özellikle
-  UYAP (kendi dosyalar) hassas.
-- KVKK/BDDK/Sigorta Tahkim üçüncü-taraf aramaya bağlı → düşük öncelik, ek anahtar.
+## 7. Risk / caution notes
+- The "APIs" in Sections 1-3 are mostly **undocumented JSON endpoints discovered by
+  reverse-engineering** → they can change without notice, no SLA. The MCP wrappers take on this
+  maintenance, but breakage risk still exists.
+- **Rate limit:** Bedesten measured ≈ **10 requests per 30 sec per IP** (429 + Retry-After);
+  other endpoints undocumented. Be polite (token-bucket/backoff), avoid bulk crude fetching. "Download
+  everything" is not realistic (millions = years). Strategy: KORPUS.md.
+- **Terms of use:** For automated access, check each portal's ToS; especially
+  UYAP (your own files) is sensitive.
+- KVKK/BDDK/Sigorta Tahkim depend on third-party search → low priority, extra key.
 
-## 8. Entegrasyon kararı (araştırma modülü için)
-- **Karar: vendor → tool** — `vendor/`'a klonlandı; MIT olduğu için çekme istemcilerini
-  (`bedesten_client.py`, `mevzuat_client.py` vb.) `tools/` altında birer **CLI tool**'a
-  uyarlarız: `ictihat_ara`, `mevzuat_ara`, `karar_metin` (her biri CLI + tool.yaml +
-  README, MIMARI.md §12). "Adam nasıl alıyorsa öyle" — auth yok, sadece httpx.
-- **Lisans yükümlülüğü:** Alınan dosyalarda MIT telif notunu koru.
-- **Çekirdek hedef uçlar:** Bedesten API (içtihat + mevzuat), karararama.yargitay/danistay,
-  emsal.uyap, anayasa, gib. KVKK/BDDK/Sigorta-Tahkim (3. taraf aramaya bağlı) → sonraya.
-- **Alternatif (her an açık):** MCP'leri olduğu gibi Docker'da çalıştırıp Korkut'u MCP
-  client yapmak. Vendor yolu kontrolü artırdığı için onu seçtik; bu da yedek.
-- **Bakım riski:** Uçlar dokümante değil, tarayıcı-taklidi header'lara dayalı →
-  değişebilir. Vendor edince güncellemeyi `vendor/`'daki upstream'den diff'leyerek izleriz.
+## 8. Integration decision (for the research module)
+- **Decision: vendor → tool** — cloned into `vendor/`; since it is MIT, we adapt the fetch clients
+  (`bedesten_client.py`, `mevzuat_client.py`, etc.) into individual **CLI tools** under `tools/`:
+  `ictihat_ara`, `mevzuat_ara`, `karar_metin` (each with CLI + tool.yaml +
+  README, MIMARI.md §12). "Exactly the way the author fetches it" — no auth, just httpx.
+- **License obligation:** Preserve the MIT copyright notice in the imported files.
+- **Core target endpoints:** Bedesten API (case law + legislation), karararama.yargitay/danistay,
+  emsal.uyap, anayasa, gib. KVKK/BDDK/Sigorta-Tahkim (dependent on 3rd-party search) → later.
+- **Alternative (always open):** Run the MCPs as-is in Docker and make Korkut an MCP
+  client. We chose the vendor path because it increases control; this remains a fallback.
+- **Maintenance risk:** The endpoints are undocumented and rely on browser-impersonating headers →
+  they can change. Once vendored, we track updates by diffing against the upstream in `vendor/`.

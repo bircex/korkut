@@ -1,27 +1,27 @@
 # Korkut
 
-Bir avukatlık ofisinin günlük işlerini (duruşma hatırlatma, dilekçe taslağı, hukuki
-araştırma) **Mattermost** üzerinden yürüten, **veriyi ofiste tutan** asistan. Kullanıcı
-tek kimlikle — **Korkut** — konuşur; içeride uzmanlık modülleri paralel çalışır.
+An assistant that runs a law firm's daily work (court hearing reminders, petition drafts, legal
+research) over **Mattermost**, **keeping the data in the office**. The user
+talks to a single identity — **Korkut** — while specialized modules run in parallel under the hood.
 
-> ⚠️ Bu repo özeldir. Müvekkil verisi (`data/`), sırlar (`.env`) ve yedekler **asla**
-> repoya girmez (bkz. `.gitignore`).
+> ⚠️ This repo is private. Client data (`data/`), secrets (`.env`), and backups **never**
+> go into the repo (see `.gitignore`).
 
-## Dokümanlar
-- **[PLAN.md](PLAN.md)** — yol haritası, ilkeler, fazlar, teknoloji, kapsam kararları
-- **[MIMARI.md](MIMARI.md)** — teknik tasarım: süreç topolojisi, mesaj akışı, core,
-  veri modeli, Korkut'un iç yapısı, **tools katmanı (§12)**, onay akışı
-- **[KAYNAKLAR.md](KAYNAKLAR.md)** — hukuki veri kaynakları ve erişim (içtihat/mevzuat)
-- **[GUVENLIK.md](GUVENLIK.md)** — tek-kapı Mattermost, mobil, 2FA, ağ sertleştirme
-- **[KORPUS.md](KORPUS.md)** — research/dilekçe veri stratejisi: RAG (şimdi) → odaklı index → geniş korpüs
-- **[RAKIPLER.md](RAKIPLER.md)** — rakip ürünler (ön-inceleme); detaylı araştırma bekliyor
+## Documents
+- **[PLAN.md](PLAN.md)** — roadmap, principles, phases, technology, scope decisions
+- **[MIMARI.md](MIMARI.md)** — technical design: process topology, message flow, core,
+  data model, Korkut's internal structure, **tools layer (§12)**, approval flow
+- **[KAYNAKLAR.md](KAYNAKLAR.md)** — legal data sources and access (case law/legislation)
+- **[GUVENLIK.md](GUVENLIK.md)** — single-gate Mattermost, mobile, 2FA, network hardening
+- **[KORPUS.md](KORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
+- **[RAKIPLER.md](RAKIPLER.md)** — competitor products (preliminary review); detailed research pending
 
-## Özet mimari
-- **Arayüz:** self-hosted Mattermost (tek kapı, mobil, 2FA zorunlu); kanal + DM
-- **Korkut:** tek kimlik; içeride uzmanlık modülleri — yönlendirme, duruşma, dilekçe, araştırma (paralel)
-- **Model:** bulut = GPT (rumuzlanmış metinle); yerel model donanım gelince
-- **Yetenekler:** `tools/` altında, CLI'dan çalışan, Korkut'a configure edilen araçlar
-- **Veri:** Postgres + `data/dosyalar/`; hepsi sunucuda
+## Architecture overview
+- **Interface:** self-hosted Mattermost (single gate, mobile, mandatory 2FA); channels + DMs
+- **Korkut:** single identity; specialized modules under the hood — routing, court hearing, petition, research (parallel)
+- **Model:** cloud = GPT (with redacted text); local model once the hardware arrives
+- **Capabilities:** tools under `tools/`, run from the CLI, configured into Korkut
+- **Data:** Postgres + `data/dosyalar/`; all on the server
 
-## Durum
-Tasarım tamam (PLAN/MIMARI/KAYNAKLAR/GUVENLIK). Sıradaki: **Faz 0** (Linux kurulum).
+## Status
+Design complete (PLAN/MIMARI/KAYNAKLAR/GUVENLIK). Up next: **Phase 0** (Linux setup).
