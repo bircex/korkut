@@ -77,15 +77,19 @@ korkut/
 │  ├─ providers/               # gpt.py, (later) claude.py, ollama.py
 │  ├─ tool_registry.py         # reads tools/ manifests → gives Korkut a toolset
 │  └─ db.py
-├─ tools/                      # Korkut's CAPABILITIES — each runs cleanly from the CLI
+├─ tools/                      # Korkut's CAPABILITIES — one lightweight tool per source, CLI-runnable
 │  ├─ README.md                # index of all tools + CLI contract
-│  ├─ ictihat_ara/             # Yargıtay/Danıştay/Precedent search (Bedesten)
-│  │   ├─ __main__.py          #   CLI: python -m tools.ictihat_ara --sorgu "..."
-│  │   ├─ tool.yaml            #   name/description/parameter schema (function-calling)
+│  ├─ _base/                   # shared base client (httpx + rate-limit + cache)
+│  ├─ search_yargitay/         # Yargıtay search (Bedesten)
+│  │   ├─ __main__.py          #   CLI: python -m tools.search_yargitay --sorgu "..."
+│  │   ├─ tool.yaml            #   name/description/params + requires_key (function-calling)
 │  │   └─ README.md            #   documentation (sample input/output)
-│  ├─ mevzuat_ara/             # mevzuat.gov.tr search
-│  ├─ karar_metin/             # ruling/legislation full text (Markdown)
-│  └─ ...                      # new capability = new folder (same contract)
+│  ├─ search_danistay/         # Danıştay search
+│  ├─ search_emsal/            # UYAP Emsal search
+│  ├─ search_mevzuat/          # mevzuat.gov.tr search
+│  ├─ fetch_decision/          # decision full text (Markdown)
+│  ├─ fetch_legislation/       # legislation full text (Markdown)
+│  └─ ...                      # new source/capability = new folder (same contract)
 ├─ vendor/                     # yargi-mcp + mevzuat-mcp (MIT) — source/reference
 ├─ bridge/
 │  └─ mattermost.py            # channel+DM listener + Korkut dispatcher + single bot identity
@@ -150,9 +154,10 @@ uzmanliklar: [yonlendirici, durusma, dilekce, arastirma]  # internal; not visibl
   hearings" to the channel/DM.
 - **Phase 4 — Petition module:** Template + cloud draft (redacted) → `.docx` via `python-docx` →
   under `data/dosyalar/` with an "awaiting approval" label.
-- **Phase 5 — Research module (RAG):** Build the data tools under `tools/` —
-  `ictihat_ara`, `mevzuat_ara`, `karar_metin` (from vendor/ httpx clients, MIT). Each runs
-  cleanly from the CLI + tool.yaml + README. **Corpus strategy: RAG** (live search →
+- **Phase 5 — Research module (RAG):** Build one lightweight data tool per source under
+  `tools/` — `search_yargitay`, `search_danistay`, `search_emsal`, `search_mevzuat`,
+  `fetch_decision`, `fetch_legislation` (from vendor/ httpx clients, MIT; shared `tools/_base/`).
+  Each runs cleanly from the CLI + tool.yaml (+ `requires_key`) + README. **Corpus strategy: RAG** (live search →
   fine ranking → synthesis → **citation verification** + lazy cache + polite rate-limit). Later a
   focused local index. Details: KORPUS.md. Sources: KAYNAKLAR.md.
 - **Later:** Local model (Ollama + GPU), UYAP integration, authorization/multi-user.
