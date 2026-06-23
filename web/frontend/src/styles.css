@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #18181b;
 }
 
 html,
@@ -12,86 +18,49 @@ body,
 
 body {
   margin: 0;
-  background: #000;
-  color: #f4f4f5;
+  background: var(--bg);
+  color: var(--text);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Rendered markdown inside assistant bubbles. */
-.md > :first-child {
-  margin-top: 0;
-}
-.md > :last-child {
-  margin-bottom: 0;
-}
-.md p {
-  margin: 0.5em 0;
-}
-.md h1,
-.md h2,
-.md h3,
-.md h4 {
-  margin: 0.9em 0 0.4em;
-  font-weight: 700;
-  line-height: 1.3;
-}
-.md h1 {
-  font-size: 1.3em;
-}
-.md h2 {
-  font-size: 1.15em;
-}
-.md h3 {
-  font-size: 1.05em;
-}
-.md ul,
-.md ol {
-  margin: 0.5em 0;
-  padding-left: 1.4em;
-}
-.md li {
-  margin: 0.25em 0;
-}
-.md li > p {
-  margin: 0.2em 0;
-}
-.md a {
-  color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.md strong {
-  font-weight: 700;
-}
+/* Rendered markdown (assistant bubbles, proposal preview) — light. */
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0.5em 0; }
+.md h1, .md h2, .md h3, .md h4 { margin: 0.9em 0 0.4em; font-weight: 700; line-height: 1.3; }
+.md h1 { font-size: 1.3em; }
+.md h2 { font-size: 1.15em; }
+.md h3 { font-size: 1.05em; }
+.md ul, .md ol { margin: 0.5em 0; padding-left: 1.4em; }
+.md li { margin: 0.25em 0; }
+.md li > p { margin: 0.2em 0; }
+.md a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 2px; }
+.md strong { font-weight: 700; }
 .md blockquote {
   margin: 0.6em 0;
-  border-left: 3px solid #3f3f46;
+  border-left: 3px solid #d4d4d8;
   padding-left: 0.9em;
-  color: #a1a1aa;
+  color: #52525b;
 }
 .md code {
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
   border-radius: 5px;
   padding: 0.05em 0.35em;
   font-size: 0.9em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .md pre {
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
   border-radius: 10px;
   padding: 0.8em 1em;
   overflow-x: auto;
   margin: 0.6em 0;
 }
-.md pre code {
-  background: none;
-  border: none;
-  padding: 0;
-}
+.md pre code { background: none; border: none; padding: 0; }
 .md table {
   border-collapse: collapse;
   margin: 0.6em 0;
@@ -100,34 +69,32 @@ body {
   display: block;
   overflow-x: auto;
 }
-.md th,
-.md td {
-  border: 1px solid #3f3f46;
-  padding: 0.4em 0.6em;
-  text-align: left;
-}
-.md th {
-  background: #18181b;
-  font-weight: 600;
-}
-.md hr {
-  border: none;
-  border-top: 1px solid #27272a;
-  margin: 1em 0;
-}
+.md th, .md td { border: 1px solid #d4d4d8; padding: 0.4em 0.6em; text-align: left; }
+.md th { background: #f4f4f5; font-weight: 600; }
+.md hr { border: none; border-top: 1px solid #e4e4e7; margin: 1em 0; }
 
-/* TipTap editor surface */
-.doc-editor .ProseMirror {
-  outline: none;
-  min-height: 100%;
+/* CKEditor — A4 document page on a light canvas. */
+.doc-canvas {
+  background: #ececee;
 }
-.doc-editor .ProseMirror:focus {
-  outline: none;
+.doc-canvas .ck.ck-editor__editable {
+  background: #ffffff;
+  width: 100%;
+  max-width: 794px; /* ~A4 at 96dpi */
+  min-height: 1000px;
+  margin: 16px auto;
+  padding: 56px 64px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
-.doc-editor .ProseMirror p.is-editor-empty:first-child::before {
-  content: "Belgeyi buraya yazın ya da Korkut'a yaptırın…";
-  color: #52525b;
-  float: left;
-  pointer-events: none;
-  height: 0;
+.doc-canvas .ck.ck-toolbar {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
 }
+.doc-canvas .ck-editor__editable:focus { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); }
+.ck-content h1 { font-size: 1.6em; }
+.ck-content h2 { font-size: 1.3em; }
+.ck-content h3 { font-size: 1.1em; }

@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "aciklama": "Tüm dilekçe şablonlarının türeyeceği taban iskelet. FORMAT.md §3 dizilimine uyar. Korkut bu bölümleri Case/Client verisi + hukuki araştırma ile doldurur. {{...}} = yer tutucu; köşeli parantezli notlar üretim sırasında doldurulur/silinir.",
+    "uyumluluk": "HMK m.119 (a-h). Kritik alanlar (a,d,e,f,g) boş bırakılamaz — bkz FORMAT.md §2.",
+    "yer_tutucular": [
+      "{{mahkeme_basligi}}", "{{davaci}}", "{{davaci_vekili}}", "{{davali}}",
+      "{{dava_konusu}}", "{{dava_degeri}}", "{{aciklamalar}}", "{{hukuki_nedenler}}",
+      "{{deliller}}", "{{sonuc_ve_istem}}", "{{tarih}}", "{{imza}}"
+    ]
+  },
+  "doc_type": "dilekce-base",
+  "bolumler": [
+    { "id": "baslik", "etiket": null, "hizalama": "center", "stil": "bold",
+      "zorunlu": true, "hmk": "119/a",
+      "icerik": "{{mahkeme_basligi}}\n[Cevap/ara dilekçesi ise: DOSYA NO: {{esas_no}}]" },
+
+    { "id": "davaci", "etiket": "DAVACI", "zorunlu": true, "hmk": "119/b-c",
+      "icerik": "{{davaci_ad_soyad}} (T.C. {{davaci_tckn}})\n{{davaci_adres}}" },
+
+    { "id": "davaci_vekili", "etiket": "VEKİLİ", "zorunlu": false, "hmk": "119/ç",
+      "icerik": "Av. {{vekil_ad_soyad}} ({{baro}} Barosu, Sicil {{sicil_no}})\n{{vekil_adres}}" },
+
+    { "id": "davali", "etiket": "DAVALI", "zorunlu": true, "hmk": "119/b",
+      "icerik": "{{davali_ad_soyad}}\n{{davali_adres}} [bilinmiyorsa: adres araştırması talep olunur]" },
+
+    { "id": "konu", "etiket": "KONU", "zorunlu": true, "hmk": "119/d",
+      "icerik": "{{dava_konusu_tek_cumle}}\n[Malvarlığı davası ise] Dava Değeri: {{dava_degeri}}" },
+
+    { "id": "aciklamalar", "etiket": "AÇIKLAMALAR", "zorunlu": true, "hmk": "119/e-f",
+      "not": "Vakıalar SIRA NUMARASIYLA (1., 2., 3. ...), kronolojik; her vakıaya bağlı delil işaret edilir.",
+      "icerik": "{{aciklamalar_numarali_vakialar}}" },
+
+    { "id": "hukuki_nedenler", "etiket": "HUKUKİ NEDENLER", "zorunlu": true, "hmk": "119/g",
+      "icerik": "{{dayanak_mevzuat}} (örn. HMK, TMK, TBK, İİK ... ilgili maddeler)" },
+
+    { "id": "deliller", "etiket": "DELİLLER", "zorunlu": true, "hmk": "119/f",
+      "icerik": "{{delil_listesi}}\nve ikamesi mümkün her türlü yasal delil." },
+
+    { "id": "sonuc_ve_istem", "etiket": "SONUÇ VE İSTEM", "zorunlu": true, "hmk": "119/ğ",
+      "not": "Numaralı talepler + yargılama gideri ve vekâlet ücretinin karşı tarafa yükletilmesi.",
+      "icerik": "{{numarali_talepler}}\nYargılama giderleri ile vekâlet ücretinin karşı tarafa yükletilmesine karar verilmesini saygıyla talep ederim." },
+
+    { "id": "imza", "etiket": null, "hizalama": "right", "zorunlu": true, "hmk": "119/h",
+      "icerik": "{{tarih}}\n{{imza_sahibi}} [Davacı | Davacı Vekili]\n{{ad_soyad}}" }
+  ]
+}
