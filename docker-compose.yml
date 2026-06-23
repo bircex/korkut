@@ -33,9 +33,14 @@ services:
       MM_SERVICESETTINGS_SITEURL: http://localhost:8065
       MM_SERVICESETTINGS_ENABLEBOTACCOUNTCREATION: "true"
       MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
-      # White-label (Level 1, free on Team Edition): the office/brand name replaces
-      # "Mattermost" in the tab title, app header, and notification emails.
-      MM_TEAMSETTINGS_SITENAME: "${SITE_NAME:-Korkut}"
+      # White-label (free on Team Edition): the office/brand name replaces "Mattermost"
+      # in the tab title, app header, and notification emails.
+      MM_TEAMSETTINGS_SITENAME: "${SITE_NAME:-Cankar Hukuk}"
+      # NOTE: forcing an org-wide theme (DefaultTheme/EnableThemeSelection) is an ENTERPRISE
+      # feature — ignored on Team Edition. Free options: each user picks "Mattermost Dark"
+      # in Display settings, or inject custom CSS/logo (see branding/README.md).
+      MM_THEMESETTINGS_DEFAULTTHEME: "mattermostDark"
+      MM_THEMESETTINGS_ENABLETHEMESELECTION: "false"
     volumes:
       - mm-config:/mattermost/config
       - mm-data:/mattermost/data

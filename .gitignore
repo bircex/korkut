@@ -22,6 +22,13 @@ venv/
 *.bak
 backups/
 
+# Branding assets (keep owned/licensed logos out of the repo)
+branding/*.png
+branding/*.jpg
+branding/*.jpeg
+branding/*.svg
+branding/*.ico
+
 # OS / editör
 .DS_Store
 .idea/
