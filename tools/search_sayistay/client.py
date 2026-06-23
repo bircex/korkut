@@ -1,21 +1,29 @@
 """Search Sayıştay (Turkish Court of Accounts) decisions via sayistay.gov.tr.
 
-Sayıştay publishes three kinds of decisions, each behind its own ASP.NET WebForms
-DataTables endpoint:
+Sayıştay publishes three kinds of decisions, each behind its own ASP.NET Core MVC
+endpoint that drives a server-side jQuery DataTables grid:
 
   * genel_kurul   — Genel Kurul (General Assembly): precedent-setting interpretive
                     rulings by the full assembly.
   * temyiz_kurulu — Temyiz Kurulu (Appeals Board): appeals against chamber decisions.
   * daire         — Daire (Chamber): first-instance audit findings and sanctions.
 
-Each endpoint expects a form-urlencoded DataTables POST carrying a CSRF token
-(``__RequestVerificationToken``) that is harvested from the corresponding search
-page together with the session cookie. The response is DataTables JSON with
-``data``, ``recordsTotal`` and ``recordsFiltered`` fields; the per-row schema
-differs by decision type, so each type is mapped to the shared output contract
-separately.
+Each search page (``/KararlarGenelKurul``, ``/KararlarTemyiz``, ``/KararlarDaire``)
+posts to a ``.../DataTablesList`` action. The request must carry:
 
-No API key is required. All endpoints are public government portals.
+  * the standard server-side DataTables payload — ``draw``, ``start``, ``length``,
+    ``search[value]``, and one ``columns[i][...]`` group per declared column plus
+    an ``order[0][...]`` group. The ASP.NET Core model binder rejects the request
+    with HTTP 500 if these arrays are missing or malformed.
+  * the page-specific search-form fields (the filter model, e.g.
+    ``KararlarGenelKurulAra.KARARTAMAMI`` for the full-text field), which the page
+    serialises into the same POST body.
+  * the antiforgery token ``__RequestVerificationToken`` harvested from the GET
+    page, together with the ``.AspNetCore.Antiforgery.*`` cookie set by that GET.
+
+The response is DataTables JSON (``data``, ``recordsTotal``, ``recordsFiltered``);
+the per-row schema differs by decision type, so each type is mapped to the shared
+output contract separately. No API key is required.
 """
 
 from __future__ import annotations
@@ -27,8 +35,8 @@ from tools._base.client import BaseClient
 
 DECISION_TYPES = ("genel_kurul", "temyiz_kurulu", "daire")
 
-# Page used to bootstrap the session cookie + CSRF token, and the DataTables
-# search endpoint, for each decision type.
+# Page used to bootstrap the antiforgery cookie + token, and the DataTables search
+# action, for each decision type.
 _PAGE = {
     "genel_kurul": "/KararlarGenelKurul",
     "temyiz_kurulu": "/KararlarTemyiz",
@@ -46,17 +54,77 @@ _LABEL = {
     "daire": "Daire",
 }
 
+# DataTables columns declared by each search page, in declaration order. The
+# server-side binder expects one columns[i] group per column; the `data` value
+# must match the page exactly. Sourced from each page's DataTables init script.
+_COLUMNS = {
+    "genel_kurul": ["KARARNO", "KARARNO", "KARARTARIH", "KARAROZETI", ""],
+    "temyiz_kurulu": [
+        "TEMYIZTUTANAKTARIHI",
+        "TEMYIZTUTANAKTARIHI",
+        "ILAMDAIRESI",
+        "TEMYIZKARAR",
+        "",
+    ],
+    "daire": ["YARGILAMADAIRESI", "KARARTRH", "KARARNO", "YARGILAMADAIRESI", "WEBKARARMETNI", ""],
+}
+# Default sort column index used by each page's DataTables init script.
+_ORDER_COLUMN = {"genel_kurul": 2, "temyiz_kurulu": 0, "daire": 1}
+
+# Full-text search field for each decision type's filter model.
+_TEXT_FIELD = {
+    "genel_kurul": "KararlarGenelKurulAra.KARARTAMAMI",
+    "temyiz_kurulu": "KararlarTemyizAra.TEMYIZKARAR",
+    "daire": "KararlarDaireAra.WEBKARARMETNI",
+}
+# Remaining (empty) filter-model fields each page serialises into the POST body.
+_EMPTY_FIELDS = {
+    "genel_kurul": [
+        "KararlarGenelKurulAra.KARARNO",
+        "KararlarGenelKurulAra.KARAREK",
+        "KararlarGenelKurulAra.KARARTARIHBaslangic",
+        "KararlarGenelKurulAra.KARARTARIHBitis",
+    ],
+    "temyiz_kurulu": [
+        "KararlarTemyizAra.DOSYANO",
+        "KararlarTemyizAra.ILAMDAIRESI",
+        "KararlarTemyizAra.ILAMNO",
+        "KararlarTemyizAra.KAMUIDARESITURU",
+        "KararlarTemyizAra.KARARTRHBaslangic",
+        "KararlarTemyizAra.KARARTRHBitis",
+        "KararlarTemyizAra.TEMYIZTUTANAKNO",
+        "KararlarTemyizAra.WEBKARARKONUSU",
+        "KararlarTemyizAra.YILI",
+    ],
+    "daire": [
+        "KararlarDaireAra.HESAPYILI",
+        "KararlarDaireAra.ILAMNO",
+        "KararlarDaireAra.KAMUIDARESITURU",
+        "KararlarDaireAra.KARARTRHBaslangic",
+        "KararlarDaireAra.KARARTRHBitis",
+        "KararlarDaireAra.WEBKARARKONUSU",
+        "KararlarDaireAra.YARGILAMADAIRESI",
+    ],
+}
+
 _CSRF_RE = re.compile(
     r'name="__RequestVerificationToken"[^>]*value="([^"]+)"', re.IGNORECASE
 )
 
-# Some upstream WAF deployments answer the DataTables POST with an HTTP 418 and a
-# Turkish block page instead of JSON. Detect and surface it clearly.
+# Some upstream WAF deployments answer with an HTTP 4xx and a Turkish block page
+# instead of JSON. Detect and surface it clearly.
 _WAF_MARKER = "Bilgi Güvenliği Politikaları Gereği Kısıtlanmıştır"
+
+# DataTables hard-caps the page size the grid renders.
+_MAX_LENGTH = 10
 
 
 class SayistayWafBlocked(RuntimeError):
     """Raised when the upstream WAF blocks the DataTables request."""
+
+
+class SayistaySearchError(RuntimeError):
+    """Raised when the search endpoint returns a non-JSON or error response."""
 
 
 class SayistayClient(BaseClient):
@@ -68,10 +136,62 @@ class SayistayClient(BaseClient):
     }
 
     def _csrf_token(self, decision_type: str) -> str:
-        """Fetch the search page to seed the session cookie and read the CSRF token."""
+        """Fetch the search page to seed the antiforgery cookie and read the token.
+
+        The GET response sets the ``.AspNetCore.Antiforgery.*`` cookie on the shared
+        httpx client; the matching ``__RequestVerificationToken`` is returned here so
+        the subsequent POST can pair them.
+        """
         resp = self.get_text(_PAGE[decision_type])
+        if _WAF_MARKER in resp.text:
+            raise SayistayWafBlocked(
+                "sayistay.gov.tr blocked the request at the upstream WAF while "
+                "loading the search page. This is a server-side restriction that "
+                "affects all clients; try again later."
+            )
         match = _CSRF_RE.search(resp.text)
-        return match.group(1) if match else ""
+        if not match:
+            raise SayistaySearchError(
+                "Could not find the antiforgery token on the Sayıştay search page; "
+                "the page layout may have changed."
+            )
+        return match.group(1)
+
+    def _form_fields(
+        self,
+        decision_type: str,
+        query: str,
+        *,
+        start: int,
+        length: int,
+        token: str,
+    ) -> dict[str, str]:
+        """Build the full server-side DataTables + filter-model POST body.
+
+        Every key is unique (columns are indexed), so a flat dict round-trips to
+        the wire form exactly as the DataTables grid sends it.
+        """
+        fields: dict[str, str] = {
+            "draw": "1",
+            "start": str(start),
+            "length": str(length),
+            "search[value]": "",
+            "search[regex]": "false",
+            "order[0][column]": str(_ORDER_COLUMN[decision_type]),
+            "order[0][dir]": "desc",
+        }
+        for index, data_name in enumerate(_COLUMNS[decision_type]):
+            fields[f"columns[{index}][data]"] = data_name
+            fields[f"columns[{index}][name]"] = ""
+            fields[f"columns[{index}][searchable]"] = "true"
+            fields[f"columns[{index}][orderable]"] = "true"
+            fields[f"columns[{index}][search][value]"] = ""
+            fields[f"columns[{index}][search][regex]"] = "false"
+        fields["__RequestVerificationToken"] = token
+        fields[_TEXT_FIELD[decision_type]] = query or ""
+        for name in _EMPTY_FIELDS[decision_type]:
+            fields[name] = ""
+        return fields
 
     def search(
         self,
@@ -86,60 +206,44 @@ class SayistayClient(BaseClient):
                 f"decision_type must be one of {DECISION_TYPES}, got {decision_type!r}"
             )
 
-        length = max(1, min(limit, 10))
+        length = max(1, min(limit, _MAX_LENGTH))
         start = max(0, (max(1, page) - 1) * length)
         token = self._csrf_token(decision_type)
 
-        fields: dict[str, str] = {
-            "draw": "1",
-            "start": str(start),
-            "length": str(length),
-            "search[value]": query or "",
-            "search[regex]": "false",
-            "__RequestVerificationToken": token,
-        }
-        fields.update(_query_fields(decision_type, query))
-
+        fields = self._form_fields(
+            decision_type, query, start=start, length=length, token=token
+        )
         headers = {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "Referer": f"{self.base_url}{_PAGE[decision_type]}",
         }
         resp = self.post_form(_SEARCH[decision_type], fields, headers=headers)
-        if resp.status_code == 418 or _WAF_MARKER in resp.text:
+        if _WAF_MARKER in resp.text:
             raise SayistayWafBlocked(
-                "sayistay.gov.tr blocked the request at the upstream WAF "
-                f"(HTTP {resp.status_code}). This is a server-side restriction "
-                "that affects all clients; try again later."
+                "sayistay.gov.tr blocked the search request at the upstream WAF. "
+                "This is a server-side restriction that affects all clients; try "
+                "again later."
             )
+        try:
+            body = resp.json() or {}
+        except ValueError as exc:
+            raise SayistaySearchError(
+                "Sayıştay search endpoint returned a non-JSON response "
+                f"(HTTP {resp.status_code}); the request shape may be stale."
+            ) from exc
 
-        body = resp.json() or {}
         rows = body.get("data") or []
         mapper = _MAPPERS[decision_type]
         results = [mapper(row, decision_type) for row in rows]
-        total = body.get("recordsFiltered") or body.get("recordsTotal") or 0
+        total = body.get("recordsFiltered")
+        if total is None:
+            total = body.get("recordsTotal") or 0
         return {
             "total": total,
             "page": page,
             "count": len(results),
             "results": results,
         }
-
-
-def _query_fields(decision_type: str, query: str) -> dict[str, str]:
-    """Map a free-text query onto the type-specific full-text form field.
-
-    Each decision type exposes its own ASP.NET search model with distinct field
-    names. Only the full-text field is wired here; the remaining filters default
-    to empty/all on the server. Field names are best-effort and should be
-    verified against the live API.
-    """
-    if not query:
-        return {}
-    if decision_type == "genel_kurul":
-        return {"KararlarGenelKurulAra.KARARTAMAMI": query}
-    if decision_type == "temyiz_kurulu":
-        return {"KararlarTemyizAra.TEMYIZKARAR": query}
-    return {"KararlarDaireAra.WEBKARARMETNI": query}
 
 
 def _detail_url(decision_type: str, decision_id: Any) -> str:
@@ -151,7 +255,7 @@ def _map_genel_kurul(row: dict[str, Any], decision_type: str) -> dict[str, Any]:
     decision_id = row.get("Id")
     return {
         "id": decision_id,
-        "title": row.get("KARARNO") or "",
+        "title": (row.get("KARARNO") or "").strip(),
         "decisionType": _LABEL[decision_type],
         "date": row.get("KARARTARIH") or "",
         "url": _detail_url(decision_type, decision_id),
@@ -175,7 +279,7 @@ def _map_daire(row: dict[str, Any], decision_type: str) -> dict[str, Any]:
     decision_id = row.get("Id")
     return {
         "id": decision_id,
-        "title": row.get("KARARNO") or row.get("ILAMNO") or "",
+        "title": (row.get("KARARNO") or row.get("ILAMNO") or "").strip(),
         "decisionType": _LABEL[decision_type],
         "date": row.get("KARARTRH") or "",
         "url": _detail_url(decision_type, decision_id),
@@ -197,10 +301,10 @@ def run_tool(
 ) -> dict[str, Any]:
     """Search Sayıştay decisions.
 
-    query       : free-text search phrase.
-    decision_type  : decision type — one of "genel_kurul", "temyiz_kurulu", "daire".
-    limit        : results per page (1-10).
-    page         : 1-indexed page number.
+    query         : free-text search phrase.
+    decision_type : decision type — one of "genel_kurul", "temyiz_kurulu", "daire".
+    limit         : results per page (1-10).
+    page          : 1-indexed page number.
 
     Returns {"total", "page", "count", "results": [{id, title, decisionType,
     date, url}, ...]}.

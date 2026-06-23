@@ -122,6 +122,37 @@ def test_csrf_token_and_pagination_sent():
 
 
 @respx.mock
+def test_datatables_payload_is_complete():
+    route = _mock("/KararlarGenelKurul", GENEL_KURUL_JSON)
+    run_tool(query="ihale", limit=5)
+    body = parse_qs(route.calls.last.request.content.decode("utf-8"))
+    assert body["draw"] == ["1"]
+    assert body["order[0][column]"] == ["2"]
+    assert body["order[0][dir]"] == ["desc"]
+    assert body["columns[0][data]"] == ["KARARNO"]
+    assert body["columns[2][data]"] == ["KARARTARIH"]
+    assert body["columns[3][data]"] == ["KARAROZETI"]
+    assert "X-Requested-With" in route.calls.last.request.headers
+
+
+@respx.mock
+def test_request_uses_antiforgery_session_cookie():
+    cookie = ".AspNetCore.Antiforgery.PL8=abc"
+    respx.get(f"{BASE}/KararlarGenelKurul").mock(
+        return_value=httpx.Response(
+            200, text=PAGE_HTML, headers={"set-cookie": f"{cookie}; path=/; httponly"}
+        )
+    )
+    route = respx.post(f"{BASE}/KararlarGenelKurul/DataTablesList").mock(
+        return_value=httpx.Response(200, json=GENEL_KURUL_JSON)
+    )
+    run_tool(query="ihale")
+    assert ".AspNetCore.Antiforgery.PL8" in route.calls.last.request.headers.get(
+        "cookie", ""
+    )
+
+
+@respx.mock
 def test_empty_results():
     _mock("/KararlarGenelKurul", {"draw": 1, "recordsTotal": 0, "recordsFiltered": 0, "data": []})
     out = run_tool(query="zzz")
