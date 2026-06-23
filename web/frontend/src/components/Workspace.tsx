@@ -142,6 +142,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       }
       const res = file ? await api.uploadToSession(id, file, t) : await api.sessionChat(id, t);
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+      // Korkut opened the Canvas (ChatGPT-style auto-open) for a document task.
+      if (!file && (res as { open_document?: number | null }).open_document) {
+        setDocOpen(true);
+      }
       const fixedId = id;
       setSessions((s) => [
         {

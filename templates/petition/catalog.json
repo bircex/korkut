@@ -1,0 +1,234 @@
+{
+  "_meta": {
+    "aciklama": "Korkut AI dilekçe tipleri kataloğu. Türk hukukunda dilekçe tipleri kapalı bir liste değildir; bu katalog en sık kullanılan tipleri hukuk alanına göre gruplar. Template picker (DOCUMENT_EDITOR.md §5/§9) ve Petition.type için kaynak.",
+    "alan_semasi": {
+      "id": "Petition.type için stabil kimlik (kebab-case)",
+      "ad": "Kullanıcıya gösterilecek Türkçe ad",
+      "mahkeme": "Tipik görevli/yetkili merci",
+      "sik": "true ise picker'da öne çıkarılır"
+    },
+    "standart_bolumler": [
+      "Mahkeme Başlığı",
+      "Taraflar (Davacı/Davalı/Vekil)",
+      "Konu",
+      "Açıklamalar",
+      "Hukuki Sebepler",
+      "Deliller",
+      "Sonuç ve İstem",
+      "Tarih / İmza"
+    ]
+  },
+  "kategoriler": [
+    {
+      "kategori": "Aile Hukuku",
+      "dilekceler": [
+        { "id": "anlasmali-bosanma", "ad": "Anlaşmalı boşanma dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "cekismeli-bosanma", "ad": "Çekişmeli boşanma dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "bosanma-cevap", "ad": "Boşanma davasına cevap dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "bosanma-karsi-dava", "ad": "Boşanmada karşı dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "tedbir-nafakasi", "ad": "Tedbir nafakası talepli dilekçe", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "yoksulluk-nafakasi", "ad": "Yoksulluk nafakası dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "istirak-nafakasi", "ad": "İştirak nafakası dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "nafaka-artirim", "ad": "Nafaka artırım / azaltım dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "velayet-davasi", "ad": "Velayet (değişikliği) dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "kisisel-iliski", "ad": "Kişisel ilişki (çocukla görüş) tesisi dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "mal-rejimi-tasfiye", "ad": "Mal rejiminin tasfiyesi / katkı-değer artış payı dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "soybagi-babalik", "ad": "Babalık / soybağının tespiti dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "soybagi-ret", "ad": "Soybağının reddi dava dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "evlat-edinme", "ad": "Evlat edinme talepli dilekçe", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "aile-konutu-serhi", "ad": "Aile konutu şerhi talebi", "mahkeme": "Aile Mahkemesi", "sik": false },
+        { "id": "6284-koruma", "ad": "6284 sayılı Kanun — koruyucu/önleyici tedbir (uzaklaştırma) talebi", "mahkeme": "Aile Mahkemesi", "sik": true },
+        { "id": "vesayet-kayyim", "ad": "Vesayet / kayyım atanması talebi", "mahkeme": "Sulh Hukuk Mahkemesi", "sik": false },
+        { "id": "nisan-bozma-tazminat", "ad": "Nişanın bozulması nedeniyle tazminat/iade dilekçesi", "mahkeme": "Aile Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Genel Hukuk Yargılaması (HMK)",
+      "dilekceler": [
+        { "id": "dava-dilekcesi", "ad": "Dava dilekçesi (HMK m.119)", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "cevap-dilekcesi", "ad": "Cevap dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "replik", "ad": "Cevaba cevap (replik) dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "duplik", "ad": "İkinci cevap (düplik) dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": false },
+        { "id": "islah", "ad": "Islah dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "bedel-artirim-islah", "ad": "Bedel/ıslah ile talep artırım dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": false },
+        { "id": "delil-listesi", "ad": "Delil listesi dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "tanik-listesi", "ad": "Tanık listesi dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "bilirkisi-itiraz", "ad": "Bilirkişi raporuna itiraz dilekçesi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "ihtiyati-tedbir", "ad": "İhtiyati tedbir talebi", "mahkeme": "Asliye/Sulh Hukuk", "sik": true },
+        { "id": "delil-tespiti", "ad": "Delil tespiti talebi", "mahkeme": "Sulh Hukuk", "sik": false },
+        { "id": "ihtiyati-haciz", "ad": "İhtiyati haciz talebi", "mahkeme": "Asliye Ticaret/Hukuk", "sik": true },
+        { "id": "tavzih", "ad": "Tavzih (hükmün açıklanması) talebi", "mahkeme": "Kararı veren mahkeme", "sik": false },
+        { "id": "yargilama-yenilenmesi", "ad": "Yargılamanın yenilenmesi dilekçesi", "mahkeme": "Kararı veren mahkeme", "sik": false },
+        { "id": "sure-tutum", "ad": "Süre tutum dilekçesi", "mahkeme": "İlgili mahkeme", "sik": true },
+        { "id": "mazeret", "ad": "Mazeret (duruşmaya katılamama) dilekçesi", "mahkeme": "İlgili mahkeme", "sik": true },
+        { "id": "ara-karar-yerine-getirme", "ad": "Ara kararın yerine getirilmesi / dosyaya beyan dilekçesi", "mahkeme": "İlgili mahkeme", "sik": false },
+        { "id": "adli-yardim", "ad": "Adli yardım talebi", "mahkeme": "İlgili mahkeme", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Borçlar / Tazminat / Eşya Hukuku",
+      "dilekceler": [
+        { "id": "alacak-davasi", "ad": "Alacak (itirazın iptali dışı) dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "maddi-manevi-tazminat", "ad": "Maddi ve manevi tazminat dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "trafik-kazasi-tazminat", "ad": "Trafik kazası kaynaklı tazminat dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "haksiz-fiil-tazminat", "ad": "Haksız fiil nedeniyle tazminat dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "sebepsiz-zenginlesme", "ad": "Sebepsiz zenginleşme (istirdat) dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "menfi-tespit", "ad": "Menfi tespit dava dilekçesi", "mahkeme": "Asliye Hukuk/Ticaret", "sik": true },
+        { "id": "istirdat", "ad": "İstirdat dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "tapu-iptal-tescil", "ad": "Tapu iptal ve tescil dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "elatmanin-onlenmesi", "ad": "Elatmanın önlenmesi (müdahalenin meni) dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "ecrimisil", "ad": "Ecrimisil (haksız işgal tazminatı) dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "izale-i-suyu", "ad": "Ortaklığın giderilmesi (izale-i şüyu) dava dilekçesi", "mahkeme": "Sulh Hukuk", "sik": true },
+        { "id": "kamulastirma-bedel-tespiti", "ad": "Kamulaştırma bedel tespiti / bedelsiz el atma dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "sozlesmeye-aykirilik", "ad": "Sözleşmeye aykırılık / fesih ve tazminat dilekçesi", "mahkeme": "Asliye Hukuk/Ticaret", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Kira / Gayrimenkul",
+      "dilekceler": [
+        { "id": "tahliye-temerrut", "ad": "Temerrüt nedeniyle tahliye dava dilekçesi", "mahkeme": "Sulh Hukuk", "sik": true },
+        { "id": "tahliye-ihtiyac", "ad": "İhtiyaç nedeniyle tahliye dava dilekçesi", "mahkeme": "Sulh Hukuk", "sik": true },
+        { "id": "tahliye-taahhut", "ad": "Tahliye taahhüdüne dayalı tahliye dilekçesi", "mahkeme": "Sulh Hukuk / İcra", "sik": true },
+        { "id": "kira-tespiti", "ad": "Kira bedelinin tespiti dava dilekçesi", "mahkeme": "Sulh Hukuk", "sik": true },
+        { "id": "kira-uyarlama", "ad": "Kira sözleşmesinin uyarlanması dava dilekçesi", "mahkeme": "Sulh Hukuk", "sik": false },
+        { "id": "kiralananin-tahliyesi-icra", "ad": "İlamsız tahliye (icra yoluyla) takip talebi", "mahkeme": "İcra Dairesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İş ve Sosyal Güvenlik Hukuku",
+      "dilekceler": [
+        { "id": "ise-iade", "ad": "İşe iade dava dilekçesi", "mahkeme": "İş Mahkemesi", "sik": true },
+        { "id": "iscilik-alacaklari", "ad": "Kıdem/ihbar ve işçilik alacakları dava dilekçesi", "mahkeme": "İş Mahkemesi", "sik": true },
+        { "id": "fazla-mesai", "ad": "Fazla mesai / yıllık izin alacağı dilekçesi", "mahkeme": "İş Mahkemesi", "sik": true },
+        { "id": "is-kazasi-tazminat", "ad": "İş kazası / meslek hastalığı tazminat dilekçesi", "mahkeme": "İş Mahkemesi", "sik": true },
+        { "id": "hizmet-tespiti", "ad": "Hizmet tespiti dava dilekçesi", "mahkeme": "İş Mahkemesi", "sik": false },
+        { "id": "arabuluculuk-basvuru", "ad": "Arabuluculuğa başvuru / dava şartı tutanağı ekli dilekçe", "mahkeme": "Arabuluculuk Bürosu", "sik": true },
+        { "id": "sgk-itiraz", "ad": "SGK işlemine karşı dava/itiraz dilekçesi", "mahkeme": "İş Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Ticaret / Şirketler Hukuku",
+      "dilekceler": [
+        { "id": "ticari-alacak", "ad": "Ticari alacak dava dilekçesi", "mahkeme": "Asliye Ticaret", "sik": true },
+        { "id": "kambiyo-menfi-tespit", "ad": "Kambiyo senedine dayalı menfi tespit dilekçesi", "mahkeme": "Asliye Ticaret", "sik": false },
+        { "id": "genel-kurul-iptali", "ad": "Genel kurul kararının iptali dava dilekçesi", "mahkeme": "Asliye Ticaret", "sik": false },
+        { "id": "haksiz-rekabet", "ad": "Haksız rekabetin tespiti/men'i dava dilekçesi", "mahkeme": "Asliye Ticaret", "sik": false },
+        { "id": "sirket-fesih", "ad": "Şirketin feshi / ortaklıktan çıkma-çıkarılma dilekçesi", "mahkeme": "Asliye Ticaret", "sik": false },
+        { "id": "iflas-konkordato", "ad": "İflas / konkordato talebi dilekçesi", "mahkeme": "Asliye Ticaret", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İcra ve İflas Hukuku",
+      "dilekceler": [
+        { "id": "ilamsiz-takip-talebi", "ad": "İlamsız icra takip talebi", "mahkeme": "İcra Dairesi", "sik": true },
+        { "id": "ilamli-takip-talebi", "ad": "İlamlı icra takip talebi", "mahkeme": "İcra Dairesi", "sik": true },
+        { "id": "kambiyo-takip-talebi", "ad": "Kambiyo senetlerine özgü takip talebi", "mahkeme": "İcra Dairesi", "sik": true },
+        { "id": "odeme-emrine-itiraz", "ad": "Ödeme emrine (borca/imzaya/faize) itiraz dilekçesi", "mahkeme": "İcra Dairesi", "sik": true },
+        { "id": "itirazin-iptali", "ad": "İtirazın iptali dava dilekçesi", "mahkeme": "Asliye Hukuk/Ticaret", "sik": true },
+        { "id": "itirazin-kaldirilmasi", "ad": "İtirazın kaldırılması talebi", "mahkeme": "İcra Hukuk Mahkemesi", "sik": true },
+        { "id": "icra-takibine-itiraz-iiK16", "ad": "İcra memur işlemini şikâyet dilekçesi (İİK m.16)", "mahkeme": "İcra Hukuk Mahkemesi", "sik": true },
+        { "id": "haczin-kaldirilmasi", "ad": "Haczin/yedimin kaldırılması talebi", "mahkeme": "İcra Dairesi/İcra Hukuk", "sik": true },
+        { "id": "istihkak", "ad": "İstihkak dava dilekçesi", "mahkeme": "İcra Hukuk Mahkemesi", "sik": false },
+        { "id": "icranin-geri-birakilmasi", "ad": "İcranın geri bırakılması (tehir-i icra) talebi", "mahkeme": "İcra Hukuk / Bölge Adliye", "sik": true },
+        { "id": "maas-haczi-itiraz", "ad": "Maaş/emekli maaşı haczine itiraz dilekçesi", "mahkeme": "İcra Hukuk Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Ceza Hukuku (CMK)",
+      "dilekceler": [
+        { "id": "sikayet-dilekcesi", "ad": "Şikâyet dilekçesi", "mahkeme": "Cumhuriyet Başsavcılığı", "sik": true },
+        { "id": "suc-duyurusu", "ad": "Suç duyurusu / ihbar dilekçesi", "mahkeme": "Cumhuriyet Başsavcılığı", "sik": true },
+        { "id": "ifadeye-beyan", "ad": "Soruşturmada beyan / ek beyan dilekçesi", "mahkeme": "Cumhuriyet Başsavcılığı", "sik": false },
+        { "id": "kyok-itiraz", "ad": "Kovuşturmaya yer olmadığı kararına (KYOK) itiraz", "mahkeme": "Sulh Ceza Hâkimliği", "sik": true },
+        { "id": "tahliye-talebi", "ad": "Tahliye talebi dilekçesi", "mahkeme": "İlgili Ceza Mahkemesi", "sik": true },
+        { "id": "tutuklamaya-itiraz", "ad": "Tutuklama/adli kontrol kararına itiraz", "mahkeme": "Sulh Ceza Hâkimliği", "sik": true },
+        { "id": "katilma-talebi", "ad": "Davaya katılma (müdahale) talebi", "mahkeme": "İlgili Ceza Mahkemesi", "sik": true },
+        { "id": "esas-hakkinda-savunma", "ad": "Esas hakkında savunma / mütalaaya karşı beyan", "mahkeme": "İlgili Ceza Mahkemesi", "sik": true },
+        { "id": "uzlasma-beyan", "ad": "Uzlaşma / uzlaştırmaya ilişkin beyan dilekçesi", "mahkeme": "Uzlaştırma Bürosu", "sik": false },
+        { "id": "el-koymaya-itiraz", "ad": "Arama/el koyma kararına itiraz dilekçesi", "mahkeme": "Sulh Ceza Hâkimliği", "sik": false },
+        { "id": "infaz-erteleme", "ad": "Cezanın infazının ertelenmesi / denetimli serbestlik talebi", "mahkeme": "Cumhuriyet Başsavcılığı (İnfaz)", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İdari Yargı (İYUK)",
+      "dilekceler": [
+        { "id": "iptal-davasi", "ad": "İptal davası dilekçesi", "mahkeme": "İdare Mahkemesi", "sik": true },
+        { "id": "tam-yargi", "ad": "Tam yargı (tazminat) davası dilekçesi", "mahkeme": "İdare Mahkemesi", "sik": true },
+        { "id": "yurutmenin-durdurulmasi", "ad": "Yürütmenin durdurulması talepli dilekçe", "mahkeme": "İdare/Vergi Mahkemesi", "sik": true },
+        { "id": "idareye-basvuru-iyuk11", "ad": "İdareye başvuru / itiraz dilekçesi (İYUK m.11)", "mahkeme": "İlgili İdare", "sik": true },
+        { "id": "disiplin-cezasi-iptal", "ad": "Disiplin cezasının iptali dava dilekçesi", "mahkeme": "İdare Mahkemesi", "sik": false },
+        { "id": "imar-iptal", "ad": "İmar işlemi / ruhsat iptali dava dilekçesi", "mahkeme": "İdare Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Vergi Hukuku",
+      "dilekceler": [
+        { "id": "vergi-iptal", "ad": "Vergi/ceza ihbarnamesinin iptali dava dilekçesi", "mahkeme": "Vergi Mahkemesi", "sik": true },
+        { "id": "vergi-uzlasma", "ad": "Uzlaşma talebi dilekçesi", "mahkeme": "İlgili Vergi Dairesi", "sik": false },
+        { "id": "duzeltme-sikayet", "ad": "Düzeltme-şikâyet başvurusu dilekçesi", "mahkeme": "Vergi Dairesi / Bakanlık", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Tüketici Hukuku",
+      "dilekceler": [
+        { "id": "tuketici-hakem-basvuru", "ad": "Tüketici Hakem Heyetine başvuru dilekçesi", "mahkeme": "Tüketici Hakem Heyeti", "sik": true },
+        { "id": "tuketici-mahkemesi", "ad": "Tüketici mahkemesi dava dilekçesi", "mahkeme": "Tüketici Mahkemesi", "sik": true },
+        { "id": "ayipli-mal-iade", "ad": "Ayıplı mal/hizmet — bedel iadesi/ayıp dilekçesi", "mahkeme": "Tüketici Hakem Heyeti/Mahkemesi", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Fikri ve Sınai Mülkiyet",
+      "dilekceler": [
+        { "id": "marka-hukumsuzluk", "ad": "Marka/patent hükümsüzlüğü dava dilekçesi", "mahkeme": "Fikri ve Sınai Haklar Mahkemesi", "sik": false },
+        { "id": "tecavuzun-meni", "ad": "Fikri-sınai hakka tecavüzün men'i/tespiti dilekçesi", "mahkeme": "Fikri ve Sınai Haklar Mahkemesi", "sik": false },
+        { "id": "ypek-itiraz", "ad": "TÜRKPATENT YİDK kararına itiraz/iptal dilekçesi", "mahkeme": "Fikri ve Sınai Haklar Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Miras Hukuku",
+      "dilekceler": [
+        { "id": "veraset-ilami", "ad": "Mirasçılık belgesi (veraset ilamı) talebi", "mahkeme": "Sulh Hukuk / Noter", "sik": true },
+        { "id": "mirasin-reddi", "ad": "Mirasın reddi dilekçesi", "mahkeme": "Sulh Hukuk Mahkemesi", "sik": true },
+        { "id": "tenkis", "ad": "Tenkis dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "muris-muvazaasi", "ad": "Muris muvazaası (tapu iptal-tescil) dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "terekenin-tespiti", "ad": "Terekenin tespiti / defter tutma talebi", "mahkeme": "Sulh Hukuk Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Çekişmesiz Yargı / Nüfus / Kişiler Hukuku",
+      "dilekceler": [
+        { "id": "isim-soyisim-degisikligi", "ad": "İsim/soyisim değişikliği dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "yas-duzeltme", "ad": "Yaş/doğum tarihi düzeltme dava dilekçesi", "mahkeme": "Asliye Hukuk", "sik": true },
+        { "id": "nufus-kayit-duzeltme", "ad": "Nüfus kaydı düzeltme (cinsiyet, kütük vb.) dilekçesi", "mahkeme": "Asliye Hukuk", "sik": false },
+        { "id": "gaiplik", "ad": "Gaiplik kararı talebi", "mahkeme": "Sulh/Asliye Hukuk", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Kanun Yolları (Ortak)",
+      "dilekceler": [
+        { "id": "istinaf-basvuru", "ad": "İstinaf başvuru dilekçesi", "mahkeme": "Bölge Adliye Mahkemesi", "sik": true },
+        { "id": "istinafa-cevap", "ad": "İstinaf dilekçesine cevap", "mahkeme": "Bölge Adliye Mahkemesi", "sik": true },
+        { "id": "temyiz-basvuru", "ad": "Temyiz başvuru dilekçesi", "mahkeme": "Yargıtay / Danıştay", "sik": true },
+        { "id": "temyize-cevap", "ad": "Temyiz dilekçesine cevap", "mahkeme": "Yargıtay / Danıştay", "sik": true },
+        { "id": "karar-duzeltme", "ad": "Karar düzeltme dilekçesi (öngörülen hâllerde)", "mahkeme": "Yargıtay / Danıştay", "sik": false },
+        { "id": "istinaf-temyiz-sure-tutum", "ad": "İstinaf/temyiz süre tutum dilekçesi", "mahkeme": "İlgili mahkeme", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Anayasa Mahkemesi / AİHM",
+      "dilekceler": [
+        { "id": "aym-bireysel-basvuru", "ad": "AYM bireysel başvuru formu/dilekçesi", "mahkeme": "Anayasa Mahkemesi", "sik": true },
+        { "id": "aihm-basvuru", "ad": "AİHM başvuru dilekçesi", "mahkeme": "Avrupa İnsan Hakları Mahkemesi", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İdari / Genel Başvuru Dilekçeleri",
+      "dilekceler": [
+        { "id": "cimer-bilgi-edinme", "ad": "CİMER / Bilgi Edinme başvuru dilekçesi", "mahkeme": "İlgili Kamu Kurumu", "sik": true },
+        { "id": "ihtarname", "ad": "İhtarname (noter)", "mahkeme": "Noter", "sik": true },
+        { "id": "vekaletname-azil", "ad": "Vekâletname / azilname dilekçesi", "mahkeme": "Noter / Mahkeme", "sik": false },
+        { "id": "dilekce-hakki-an74", "ad": "Anayasa m.74 dilekçe hakkı kapsamında başvuru", "mahkeme": "TBMM / İlgili Kurum", "sik": false }
+      ]
+    }
+  ]
+}

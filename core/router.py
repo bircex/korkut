@@ -73,13 +73,18 @@ class Router:
         messages: list[dict[str, Any]],
         *,
         tools: list[dict[str, Any]] | None = None,
+        extra_tools: list[Any] | None = None,
+        handlers: dict[str, Any] | None = None,
     ) -> str:
         tier = self._resolve_tier(specialty)
         provider = self._provider_for(tier)
+        # `extra_tools` are session-bound tool specs (e.g. the Canvas signal); their schemas are
+        # not message content, so they are never redacted.
+        all_tools = list(tools or []) + list(extra_tools or [])
 
         if tier == "local":
             # Local model: data never leaves the machine → no redaction.
-            return agent_loop.run(provider, messages, tools)
+            return agent_loop.run(provider, messages, all_tools, handlers=handlers)
 
         # Cloud: redact every message's content with a shared mapping, then restore.
         # The shared agent loop carries the redacted conversation through every model turn;
@@ -87,5 +92,5 @@ class Router:
         contents = [str(m.get("content", "")) for m in messages]
         redacted, mapping = redaction.Redactor().redact_batch(contents)
         safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted)]
-        reply = agent_loop.run(provider, safe_messages, tools)
+        reply = agent_loop.run(provider, safe_messages, all_tools, handlers=handlers)
         return redaction.restore(reply, mapping)
