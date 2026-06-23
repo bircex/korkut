@@ -1,0 +1,33 @@
+/* Cankar Hukuk brand overrides, injected by the nginx reverse proxy.
+   Free white-label on Mattermost Team Edition: hide the Mattermost wordmark/logo and
+   show "Cankar Hukuk". Selectors target Mattermost v11.x; refine against the live page if
+   an element still shows through (inspect → add its selector here). No logo image needed —
+   this uses a text wordmark. */
+
+/* Hide Mattermost logo images wherever they appear (login page, headers, about). */
+img[alt*="Mattermost" i],
+img[src*="logo" i][src*="mattermost" i],
+.AnnouncementBar,
+.about-modal__logo {
+  display: none !important;
+}
+
+/* Login / signup page: replace the Mattermost wordmark area with our brand text. */
+.signup__content .header-logo-link,
+.login-body-card-title,
+.header-logo-link {
+  visibility: hidden;
+  position: relative;
+}
+.signup__content::before,
+.login-body-card-content::before {
+  content: "Cankar Hukuk";
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 8px 0 16px;
+  color: inherit;
+}
+
+/* Tab/site name already shows "Cankar Hukuk" via SiteName; nothing needed there. */

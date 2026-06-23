@@ -25,8 +25,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8065:8065"
+    expose:
+      - "8065"        # internal only; the nginx proxy publishes 8065 to the host
     environment:
       MM_SQLSETTINGS_DRIVERNAME: postgres
       MM_SQLSETTINGS_DATASOURCE: "postgres://korkut:${POSTGRES_PASSWORD:-korkutdev}@db:5432/mattermost?sslmode=disable&connect_timeout=10"
@@ -47,6 +47,19 @@ services:
       - mm-logs:/mattermost/logs
       - mm-plugins:/mattermost/plugins
       - mm-client-plugins:/mattermost/client/plugins
+
+  # Reverse proxy: injects the Cankar Hukuk brand CSS (free white-label) and is the
+  # TLS-termination point later (SECURITY.md §1). Users reach Mattermost through here.
+  proxy:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - mattermost
+    ports:
+      - "8065:8065"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./branding/cankar-brand.css:/etc/nginx/branding/cankar-brand.css:ro
 
 volumes:
   db-data:
