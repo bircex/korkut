@@ -1,0 +1,51 @@
+import { useEffect, useState } from "react";
+import { api, type User } from "./api";
+import { Login } from "./components/Login";
+import { Enroll } from "./components/Enroll";
+import { Mfa } from "./components/Mfa";
+import { Chat } from "./components/Chat";
+
+type Stage = "loading" | "login" | "enroll" | "mfa" | "chat";
+
+export function App() {
+  const [stage, setStage] = useState<Stage>("loading");
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    api
+      .me()
+      .then((u) => {
+        setUser(u);
+        setStage("chat");
+      })
+      .catch(() => setStage("login"));
+  }, []);
+
+  function authed(u: User) {
+    setUser(u);
+    setStage("chat");
+  }
+
+  async function logout() {
+    try {
+      await api.logout();
+    } catch {
+      /* ignore — we drop the session locally regardless */
+    }
+    setUser(null);
+    setStage("login");
+  }
+
+  switch (stage) {
+    case "loading":
+      return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
+    case "login":
+      return <Login onStep={(step) => setStage(step)} />;
+    case "enroll":
+      return <Enroll onDone={authed} />;
+    case "mfa":
+      return <Mfa onDone={authed} />;
+    case "chat":
+      return user ? <Chat user={user} onLogout={logout} /> : <Login onStep={(s) => setStage(s)} />;
+  }
+}
