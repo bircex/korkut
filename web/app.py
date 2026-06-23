@@ -33,6 +33,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from core.tool_registry import ToolSpec
 from korkut import agent
 from web import auth, extract, totp
 from web.models import (
@@ -402,7 +403,18 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=text))
         s.commit()
 
-    reply = agent.answer(text, history=history_msgs)
+    # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
+    canvas = {"used": False}
+
+    def _canvas(_args):
+        canvas["used"] = True
+        return {"ok": True, "note": "Canvas açıldı. Belgeyi Canvas'ta hazırlayacağım; "
+                "sohbete yalnızca tek cümlelik kısa bir bilgilendirme yaz."}
+
+    reply = agent.answer(
+        text, history=history_msgs,
+        extra_tools=[_CANVAS_TOOL], handlers={"dilekce_canvas": _canvas},
+    )
 
     with session() as s:
         conv = s.get(Conversation, cid)
@@ -410,7 +422,22 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         conv.updated_at = _utcnow()
         s.commit()
         title = conv.title
-    return {"reply": reply, "title": title}
+
+    # If Korkut signalled a document task, auto-draft into the session's Canvas.
+    open_document = None
+    if canvas["used"]:
+        with session() as s:
+            doc = s.scalar(select(Document).where(Document.conversation_id == cid))
+            if not doc:
+                conv = s.get(Conversation, cid)
+                doc = Document(conversation_id=cid, title=(conv.title or "Belge")[:200], content_md="")
+                s.add(doc)
+                s.commit()
+            doc_id = doc.id
+        _make_draft(doc_id, text, history_msgs)
+        open_document = doc_id
+
+    return {"reply": reply, "title": title, "open_document": open_document}
 
 
 def _safe_name(filename: str | None) -> str:
@@ -562,21 +589,37 @@ def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default
         return _doc_brief(doc, _pending(s, doc.id))
 
 
-@app.post("/api/documents/{doc_id}/draft")
-def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Cookie(default=None)):
-    """Korkut drafts/edits the document; the result is a pending ProposedEdit (not yet applied)."""
+_CANVAS_TOOL = ToolSpec(
+    name="dilekce_canvas",
+    description=(
+        "Avukat bir hukuki BELGE (dilekçe, ihtarname, sözleşme, başvuru, temyiz/istinaf vb.) "
+        "yazmanı ya da mevcut belgeyi DÜZENLEMENI istediğinde bu aracı çağır. Belgenin metnini "
+        "sohbete YAZMA — belge sağdaki Canvas editöründe hazırlanacak. Sıradan soru-cevap veya "
+        "araştırma için bu aracı ÇAĞIRMA."
+    ),
+    parameters={},
+    requires_key=None,
+    module="",
+)
+
+
+def _first_heading(md: str) -> str | None:
+    for line in md.split("\n"):
+        if line.startswith("# "):
+            return line[2:].strip()
+        if line.startswith("## "):
+            return line[3:].strip()
+    return None
+
+
+def _make_draft(doc_id: int, instruction: str, history: list[dict]) -> dict | None:
+    """Generate a full-document draft as a pending ProposedEdit (redaction round-trips in answer())."""
     with session() as s:
-        _require_user(s, korkut_session)
         doc = s.get(Document, doc_id)
         if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+            return None
         current = doc.content_md
-        rows = s.scalars(
-            select(Message).where(Message.conversation_id == doc.conversation_id).order_by(Message.id)
-        ).all()
-        history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
-
-    instr = (body.instruction or "").strip() or "Bu belgeyi gözden geçir ve geliştir."
+    instr = (instruction or "").strip() or "Bu belgeyi gözden geçir ve geliştir."
     prompt = (
         "[BELGE MODU] Bir hukuki belge (dilekçe) üzerinde çalışıyorsun.\n"
         f"Talimat: {instr}\n\n"
@@ -587,15 +630,36 @@ def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Co
     )
     proposed = _strip_fences(agent.answer(prompt, history=history))
     added, removed = _diffstat(current, proposed)
-
     with session() as s:
         old = _pending(s, doc_id)
         if old:
             old.status = "superseded"
+        doc = s.get(Document, doc_id)
+        heading = _first_heading(proposed)
+        if heading and not current:  # name the doc from its heading on the first draft
+            doc.title = heading[:200]
         pe = ProposedEdit(document_id=doc_id, content_md=proposed, summary=f"+{added} / -{removed} satır")
         s.add(pe)
         s.commit()
-        return {"id": pe.id, "content_md": proposed, "summary": pe.summary}
+        return {"id": pe.id, "content_md": pe.content_md, "summary": pe.summary}
+
+
+@app.post("/api/documents/{doc_id}/draft")
+def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Cookie(default=None)):
+    """Korkut drafts/edits the document; the result is a pending ProposedEdit (not yet applied)."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        rows = s.scalars(
+            select(Message).where(Message.conversation_id == doc.conversation_id).order_by(Message.id)
+        ).all()
+        history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
+    result = _make_draft(doc_id, body.instruction, history)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Belge bulunamadı")
+    return result
 
 
 @app.post("/api/documents/{doc_id}/accept")

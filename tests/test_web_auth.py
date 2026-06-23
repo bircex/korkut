@@ -240,6 +240,44 @@ def test_document_draft_accept_revert(client):
     assert "Dava Dilekçesi" in doc["content_md"] and doc["pending"] is None
 
 
+def test_chat_auto_opens_canvas_for_document(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+
+    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+        # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
+        if handlers and "dilekce_canvas" in handlers:
+            handlers["dilekce_canvas"]({})
+            return "Tahliye ihtarnamesi taslağını Canvas'ta hazırladım."
+        # Draft turn (no handlers): produce the document body.
+        return "# Tahliye İhtarnamesi\n\n**Muhatap:** Kiracı"
+
+    with patch.object(appmod.agent, "answer", side_effect=fake_answer):
+        r = client.post(f"/api/sessions/{cid}/chat", json={"text": "tahliye ihtarnamesi hazırla"})
+    assert r.status_code == 200
+    assert r.json()["open_document"] is not None  # Canvas auto-opens
+
+    doc = client.get(f"/api/sessions/{cid}/document").json()
+    assert doc["pending"] is not None and "Tahliye" in doc["pending"]["content_md"]
+    assert doc["title"] == "Tahliye İhtarnamesi"  # titled from the first heading
+
+
+def test_chat_no_canvas_for_plain_question(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    with patch.object(appmod.agent, "answer", return_value="Zamanaşımı 5 yıldır."):
+        r = client.post(f"/api/sessions/{cid}/chat", json={"text": "zamanaşımı kaç yıl?"})
+    assert r.status_code == 200 and r.json()["open_document"] is None
+
+
 def test_document_strips_code_fences(client):
     from unittest.mock import patch
 

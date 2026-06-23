@@ -26,11 +26,24 @@ def get_router() -> Router:
     return _router
 
 
-def answer(user_text: str, *, specialty: str = "research", history: list[dict] | None = None) -> str:
-    """Answer a user message as Korkut, using tools + the configured cloud model."""
+def answer(
+    user_text: str,
+    *,
+    specialty: str = "research",
+    history: list[dict] | None = None,
+    extra_tools: list | None = None,
+    handlers: dict | None = None,
+) -> str:
+    """Answer a user message as Korkut, using tools + the configured cloud model.
+
+    `extra_tools`/`handlers` let a caller add session-bound tools for this turn (e.g. the web
+    app's document-Canvas signal) without touching the global tool registry.
+    """
     tools = tool_registry.available_tools()
     messages: list[dict] = [{"role": "system", "content": PERSONA}]
     if history:
         messages.extend(history)
     messages.append({"role": "user", "content": user_text})
-    return get_router().respond(specialty, "chat", messages, tools=tools)
+    return get_router().respond(
+        specialty, "chat", messages, tools=tools, extra_tools=extra_tools, handlers=handlers
+    )

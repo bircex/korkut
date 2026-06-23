@@ -81,10 +81,10 @@ export const api = {
   deleteSession: (id: number) =>
     request<{ ok: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
   sessionChat: (id: number, text: string) =>
-    request<{ reply: string; title: string }>(`/api/sessions/${id}/chat`, {
-      method: "POST",
-      body: JSON.stringify({ text }),
-    }),
+    request<{ reply: string; title: string; open_document: number | null }>(
+      `/api/sessions/${id}/chat`,
+      { method: "POST", body: JSON.stringify({ text }) },
+    ),
   uploadToSession: async (id: number, file: File, text: string) => {
     const fd = new FormData();
     fd.append("file", file);

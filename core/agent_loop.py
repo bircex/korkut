@@ -19,6 +19,7 @@ ToolResult = {"id": str, "name": str, "output": str}   # output is a JSON string
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -45,10 +46,16 @@ def run(
     messages: list[dict[str, Any]],
     tools: list[ToolSpec] | None = None,
     *,
+    handlers: dict[str, Callable[[dict[str, Any]], Any]] | None = None,
     max_iters: int = 8,
 ) -> str:
-    """Drive the model→tools→model loop until a final answer (or max_iters)."""
+    """Drive the model→tools→model loop until a final answer (or max_iters).
+
+    `handlers` maps a tool name to an in-process callable (used for stateful, session-bound
+    tools like the document Canvas signal); names not in `handlers` run via `tool_registry`.
+    """
     tools = tools or []
+    handlers = handlers or {}
     convo: list[dict[str, Any]] = list(messages)
     result = StepResult()
     for _ in range(max_iters):
@@ -61,7 +68,11 @@ def run(
         tool_results = []
         for call in result.tool_calls:
             try:
-                output = tool_registry.run(call["name"], call.get("args") or {})
+                args = call.get("args") or {}
+                if call["name"] in handlers:
+                    output = handlers[call["name"]](args)
+                else:
+                    output = tool_registry.run(call["name"], args)
             except Exception as exc:  # noqa: BLE001 — surface tool errors to the model
                 output = {"error": type(exc).__name__, "detail": str(exc)}
             tool_results.append(
