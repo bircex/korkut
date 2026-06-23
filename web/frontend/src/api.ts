@@ -75,4 +75,26 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+  uploadToSession: async (id: number, file: File, text: string) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("text", text);
+    // No JSON Content-Type — the browser sets the multipart boundary.
+    const res = await fetch(`/api/sessions/${id}/upload`, {
+      method: "POST",
+      credentials: "same-origin",
+      body: fd,
+    });
+    if (!res.ok) {
+      let detail = "Yükleme başarısız";
+      try {
+        const b = await res.json();
+        if (b?.detail) detail = b.detail;
+      } catch {
+        /* keep default */
+      }
+      throw new ApiError(res.status, detail);
+    }
+    return (await res.json()) as { reply: string; title: string; user_display: string };
+  },
 };
