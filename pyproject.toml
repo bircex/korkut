@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 # Runtime modules beyond the tools layer (added in later phases).
 app = [
+    "anthropic>=0.40",
     "openai>=1.40",
     "mattermostdriver>=7.3",
     "psycopg[binary]>=3.2",
