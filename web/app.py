@@ -33,7 +33,7 @@ from sqlalchemy.orm import Session
 
 from korkut import agent
 from web import auth, totp
-from web.models import AuthEvent, Message, RecoveryCode, User
+from web.models import AuthEvent, Conversation, Message, RecoveryCode, User
 from web.store import session
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -319,39 +319,87 @@ def coverage_stats(korkut_session: str | None = Cookie(default=None)):
     return coverage.summary()
 
 
-# ---------------- chat endpoints ----------------
+# ---------------- chat sessions (shared office workspace) ----------------
 
-@app.get("/api/history")
-def history(korkut_session: str | None = Cookie(default=None)):
+def _conv_brief(c: Conversation) -> dict:
+    return {
+        "id": c.id,
+        "title": c.title,
+        "created_by_name": c.created_by_name,
+        "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+    }
+
+
+@app.get("/api/sessions")
+def list_sessions(korkut_session: str | None = Cookie(default=None)):
+    """Every session in the office (shared) — newest activity first."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = s.scalars(
+            select(Conversation).order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+        ).all()
+        return [_conv_brief(c) for c in rows]
+
+
+@app.post("/api/sessions")
+def create_session(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        rows = s.scalars(
-            select(Message).where(Message.user_id == user.id).order_by(Message.id)
-        ).all()
-        return [{"role": m.role, "content": m.content} for m in rows]
-
-
-@app.post("/api/chat")
-def chat(body: ChatBody, korkut_session: str | None = Cookie(default=None)):
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        text = body.text.strip()
-        if not text:
-            raise HTTPException(status_code=400, detail="Boş mesaj")
-        rows = s.scalars(
-            select(Message).where(Message.user_id == user.id).order_by(Message.id)
-        ).all()
-        history_msgs = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
-        s.add(Message(user_id=user.id, role="user", content=text))
+        conv = Conversation(created_by=user.id, created_by_name=user.full_name or user.username)
+        s.add(conv)
         s.commit()
-        uid = user.id
+        return _conv_brief(conv)
+
+
+@app.get("/api/sessions/{cid}")
+def get_session(cid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        conv = s.get(Conversation, cid)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        return {**_conv_brief(conv),
+                "messages": [{"role": m.role, "content": m.content} for m in conv.messages]}
+
+
+@app.delete("/api/sessions/{cid}")
+def delete_session(cid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        conv = s.get(Conversation, cid)
+        if conv:
+            s.delete(conv)
+            s.commit()
+        return {"ok": True}
+
+
+@app.post("/api/sessions/{cid}/chat")
+def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(default=None)):
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Boş mesaj")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        conv = s.get(Conversation, cid)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        history_msgs = [
+            {"role": m.role, "content": m.content} for m in conv.messages[-_HISTORY_TURNS:]
+        ]
+        if not conv.messages and conv.title == "Yeni sohbet":
+            conv.title = text[:60] + ("…" if len(text) > 60 else "")
+        s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=text))
+        s.commit()
 
     reply = agent.answer(text, history=history_msgs)
 
     with session() as s:
-        s.add(Message(user_id=uid, role="assistant", content=reply))
+        conv = s.get(Conversation, cid)
+        s.add(Message(conversation_id=cid, role="assistant", content=reply))
+        conv.updated_at = _utcnow()
         s.commit()
-    return {"reply": reply}
+        title = conv.title
+    return {"reply": reply, "title": title}
 
 
 # ---------------- recovery codes / QR ----------------
