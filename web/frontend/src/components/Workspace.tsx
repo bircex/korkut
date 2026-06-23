@@ -4,6 +4,9 @@ import { api, ApiError, type ChatMessage, type SessionBrief, type User } from ".
 const BASE_GREETING =
   "Merhaba, ben Korkut. Cankar Hukuk asistanınız. Size nasıl yardımcı olabilirim?";
 
+const MAX_UPLOAD = 15 * 1024 * 1024;
+const ACCEPT = ".pdf,.docx,.txt,.png,.jpg,.jpeg";
+
 function greeting(total: number): ChatMessage {
   const content =
     total > 0
@@ -26,11 +29,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [text, setText] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -87,18 +92,29 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
+  function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > MAX_UPLOAD) {
+      alert("Dosya çok büyük (en fazla 15 MB).");
+      return;
+    }
+    setAttachment(f);
+  }
+
   async function send() {
     const t = text.trim();
-    if (!t || sending) return;
+    if ((!t && !attachment) || sending) return;
+    const file = attachment;
     setText("");
+    setAttachment(null);
     if (taRef.current) taRef.current.style.height = "auto";
     setSending(true);
 
     const hadGreetingOnly = messages.length <= 1 && currentId === null;
-    setMessages((m) => [
-      ...(hadGreetingOnly ? [] : m),
-      { role: "user", content: t },
-    ]);
+    const userDisplay = file ? (t ? `${t}\n\n📎 ${file.name}` : `📎 ${file.name}`) : t;
+    setMessages((m) => [...(hadGreetingOnly ? [] : m), { role: "user", content: userDisplay }]);
 
     try {
       let id = currentId;
@@ -108,14 +124,17 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         setCurrentId(id);
         setSessions((s) => [created, ...s]);
       }
-      const { reply, title } = await api.sessionChat(id, t);
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
-      setSessions((s) =>
-        [
-          { ...(s.find((x) => x.id === id) as SessionBrief), title, updated_at: new Date().toISOString() },
-          ...s.filter((x) => x.id !== id),
-        ].filter(Boolean),
-      );
+      const res = file ? await api.uploadToSession(id, file, t) : await api.sessionChat(id, t);
+      setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+      const fixedId = id;
+      setSessions((s) => [
+        {
+          ...(s.find((x) => x.id === fixedId) as SessionBrief),
+          title: res.title,
+          updated_at: new Date().toISOString(),
+        },
+        ...s.filter((x) => x.id !== fixedId),
+      ]);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onLogout();
@@ -230,6 +249,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <div ref={endRef} />
         </section>
 
+        {attachment && (
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-2 text-[13px] text-zinc-400">
+            <span className="truncate rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1">
+              📎 {attachment.name}
+            </span>
+            <button
+              type="button"
+              onClick={() => setAttachment(null)}
+              className="shrink-0 text-zinc-500 hover:text-red-400"
+            >
+              kaldır
+            </button>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -237,6 +270,21 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           }}
           className="mx-auto flex w-full max-w-3xl items-end gap-2.5 border-t border-zinc-800 bg-zinc-950 px-4 py-3"
         >
+          <input
+            ref={fileRef}
+            type="file"
+            accept={ACCEPT}
+            className="hidden"
+            onChange={pickFile}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            title="Dosya ekle (PDF, DOCX, TXT, PNG, JPG)"
+            className="shrink-0 rounded-[10px] border border-zinc-800 bg-zinc-900 px-3 py-3 text-lg leading-none text-zinc-300 hover:text-white"
+          >
+            📎
+          </button>
           <textarea
             ref={taRef}
             rows={1}
@@ -257,7 +305,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           />
           <button
             type="submit"
-            disabled={sending || !text.trim()}
+            disabled={sending || (!text.trim() && !attachment)}
             className="rounded-[10px] bg-white px-4 py-3 text-[15px] font-semibold text-black hover:opacity-90 disabled:opacity-50"
           >
             Gönder
