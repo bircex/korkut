@@ -68,33 +68,44 @@ _JSON_TYPES = {
 }
 
 
+def _json_schema(spec: ToolSpec) -> dict[str, Any]:
+    """Build a JSON Schema (object) for a tool's parameters."""
+    properties: dict[str, Any] = {}
+    required: list[str] = []
+    for pname, p in (spec.parameters or {}).items():
+        p = p or {}
+        prop: dict[str, Any] = {"type": _JSON_TYPES.get(p.get("type", "string"), "string")}
+        if p.get("description"):
+            prop["description"] = p["description"]
+        if p.get("options"):
+            prop["enum"] = p["options"]
+        properties[pname] = prop
+        if p.get("required"):
+            required.append(pname)
+    return {"type": "object", "properties": properties, "required": required}
+
+
 def to_openai_tools(specs: list[ToolSpec]) -> list[dict[str, Any]]:
     """Convert ToolSpecs into OpenAI function-calling tool definitions."""
-    tools: list[dict[str, Any]] = []
-    for spec in specs:
-        properties: dict[str, Any] = {}
-        required: list[str] = []
-        for pname, p in (spec.parameters or {}).items():
-            p = p or {}
-            prop: dict[str, Any] = {"type": _JSON_TYPES.get(p.get("type", "string"), "string")}
-            if p.get("description"):
-                prop["description"] = p["description"]
-            if p.get("options"):
-                prop["enum"] = p["options"]
-            properties[pname] = prop
-            if p.get("required"):
-                required.append(pname)
-        tools.append(
-            {
-                "type": "function",
-                "function": {
-                    "name": spec.name,
-                    "description": spec.description,
-                    "parameters": {"type": "object", "properties": properties, "required": required},
-                },
-            }
-        )
-    return tools
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": s.name,
+                "description": s.description,
+                "parameters": _json_schema(s),
+            },
+        }
+        for s in specs
+    ]
+
+
+def to_anthropic_tools(specs: list[ToolSpec]) -> list[dict[str, Any]]:
+    """Convert ToolSpecs into Anthropic (Claude) tool definitions."""
+    return [
+        {"name": s.name, "description": s.description, "input_schema": _json_schema(s)}
+        for s in specs
+    ]
 
 
 def run(name: str, params: dict[str, Any]) -> Any:
