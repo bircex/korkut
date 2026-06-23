@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { api, ApiError, type ChatMessage, type SessionBrief, type User } from "../api";
 
 const BASE_GREETING =
@@ -232,10 +234,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 className={
                   m.role === "user"
                     ? "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-white px-3.5 py-2.5 text-[15px] leading-relaxed text-black"
-                    : "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-[15px] leading-relaxed"
+                    : "md max-w-[85%] rounded-2xl rounded-bl-sm border border-zinc-800 bg-zinc-900 px-4 py-3 text-[15px] leading-relaxed"
                 }
               >
-                {m.content}
+                {m.role === "user" ? (
+                  m.content
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                )}
               </div>
             </div>
           ))}
