@@ -24,9 +24,15 @@ talks to a single identity — **Korkut** — while specialized modules run in p
 - **Data:** Postgres + `data/files/`; all on the server
 
 ## Status
-Design complete (PLAN/ARCHITECTURE/SOURCES/SECURITY/CORPUS/COMPETITORS). **Tools layer built**:
-11 CLI tools under `tools/` (`search_*` + `fetch_*`) over a shared base client, with docs +
-tests (45 passing). Next: core (router/redactor/db) and the Mattermost bridge.
+Design complete (PLAN/ARCHITECTURE/SOURCES/SECURITY/CORPUS/COMPETITORS).
+- **Tools layer (done):** 11 CLI tools under `tools/` (`search_*` + `fetch_*`), all verified
+  live against the real public APIs.
+- **Core / Phase 1 (done):** `core/redactor.py` (PII detection + tokenization + restore),
+  `core/router.py` (specialty→backend + local↔cloud fallback + redaction chokepoint),
+  `core/providers/gpt.py` (OpenAI tool-calling loop), `core/db.py` (SQLAlchemy models:
+  client/case/hearing/petition). 58 tests passing.
+
+Next: Mattermost bridge (Phase 2) + the Korkut agent loop, then hearing/petition/research modules.
 
 ## Quickstart (dev)
 ```bash
