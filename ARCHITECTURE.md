@@ -75,9 +75,10 @@ router.respond(specialty: str, task_type: str, messages: list) -> str
 redactor.redact(text: str) -> (redacted_text: str, mapping: dict)
 redactor.restore(text: str, mapping: dict) -> str
 
-providers.gpt.generate(messages: list, config: dict) -> str   # OpenAI
-providers.ollama.generate(...)                                # later
-providers.claude.generate(...)                                # later
+agent_loop.run(provider, messages: list, tools: list[ToolSpec]) -> str
+    # provider-agnostic loop; runs tools centrally via tool_registry. §13.
+providers.<name>.step(messages: list, tools: list[ToolSpec]) -> StepResult
+    # one model turn (gpt/claude now; ollama later). NEVER runs tools itself.
 
 db: client / case / hearing / petition CRUD (schema below)
 
@@ -265,19 +266,26 @@ sketch — now one tool per source.)
 ## 13. Runtime engine (framework decision)
 - Korkut is **our own Python application**; not clawbot/Claude Code (those are only
   *development* tools — once the product is set up they are not needed, it is an independent service).
-- The agent loop is a **thin layer**: official provider SDKs (`openai`; later `anthropic`,
-  `ollama`) + our own small loop. **No heavy orchestration framework**
-  (LangChain/LangGraph, etc.).
-- The loop (provider-independent):
+- The agent loop is a **thin layer**: official provider SDKs (`openai`, `anthropic`; later
+  `ollama`) + our own small loop. **No heavy orchestration framework** (LangChain/LangGraph).
+- **One provider-agnostic loop — every model uses the SAME skillset and the SAME loop.**
+  `core/agent_loop.py` owns the orchestration and runs the tools **once, centrally**, over a
+  normalized conversation. A provider only takes one turn (`step()`): serialize the normalized
+  history to its wire format, make a single call, return either final text or tool calls — it
+  never runs a tool itself.
   ```
-  messages + tool schemas → model
-     ├─ if the model called a tool → tool_registry.run → append result → repeat
-     └─ final text → return (write as the Korkut identity)
+  agent_loop.run(provider, messages, tools):
+    loop: result = provider.step(messages, tools)        # one model turn, provider-specific
+          if result.tool_calls: tool_registry.run(...)   # tools run HERE, identically for all
+                                append results → repeat
+          else: return result.text
   ```
 - All model calls go through `core/router` → redaction + provider selection +
-  "fall back to cloud if no local" **at a single point**.
-- `core/providers/<ad>.py` converts each provider's function-calling format into a
-  **common interface** → GPT↔Claude↔local swap is a single file.
+  "fall back to cloud if no local" **at a single point**; the router calls `agent_loop.run`.
+- `core/providers/<name>.py` only implements `step()` — translating the shared normalized
+  conversation (system/user/assistant+tool_calls/tool-results) and the shared `ToolSpec`s into
+  that provider's format. Swapping GPT↔Claude↔local changes nothing about how tools are
+  defined, selected, or executed → a new provider is one `step()` file.
 - **Why a thin layer:** (1) provider-swap is our priority, a heavy framework makes it harder;
   (2) redaction guaranteed at a single chokepoint; (3) the loop is small (~150 lines), few
   dependencies = longevity; (4) tools are already in `tools/`+registry, the framework's tool

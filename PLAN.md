@@ -73,8 +73,9 @@ korkut/
 │                              # (structured data in Postgres: asistan-db)
 ├─ core/
 │  ├─ router.py                # model selector (local/cloud), fallback rule
+│  ├─ agent_loop.py            # provider-agnostic tool-calling loop (same skillset for every model)
 │  ├─ redactor.py              # redact / reverse
-│  ├─ providers/               # gpt.py, (later) claude.py, ollama.py
+│  ├─ providers/               # gpt.py + claude.py (step() only); ollama.py later
 │  ├─ tool_registry.py         # reads tools/ manifests → gives Korkut a toolset
 │  └─ db.py
 ├─ tools/                      # Korkut's CAPABILITIES — one lightweight tool per source, CLI-runnable

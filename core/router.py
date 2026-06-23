@@ -17,20 +17,16 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 import yaml
 
-from core import redactor as redaction
+from core import agent_loop, redactor as redaction
+from core.agent_loop import Provider
 
 logger = logging.getLogger("korkut.router")
 
 _CONFIG = Path(__file__).resolve().parent.parent / "config" / "model-routing.yaml"
-
-
-class Provider(Protocol):
-    def generate(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None) -> str:
-        ...
 
 
 def _load_config() -> dict:
@@ -83,11 +79,13 @@ class Router:
 
         if tier == "local":
             # Local model: data never leaves the machine → no redaction.
-            return provider.generate(messages, tools)
+            return agent_loop.run(provider, messages, tools)
 
         # Cloud: redact every message's content with a shared mapping, then restore.
+        # The shared agent loop carries the redacted conversation through every model turn;
+        # tool outputs are public case-law/legislation, so no un-redacted PII reaches the model.
         contents = [str(m.get("content", "")) for m in messages]
         redacted, mapping = redaction.Redactor().redact_batch(contents)
         safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted)]
-        reply = provider.generate(safe_messages, tools)
+        reply = agent_loop.run(provider, safe_messages, tools)
         return redaction.restore(reply, mapping)
