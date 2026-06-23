@@ -14,6 +14,7 @@ talks to a single identity — **Korkut** — while specialized modules run in p
 - **[SOURCES.md](SOURCES.md)** — legal data sources and access (case law/legislation)
 - **[SECURITY.md](SECURITY.md)** — single gateway (the web app), mobile, 2FA, network hardening
 - **[CORPUS.md](CORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
+- **[DOCUMENT_EDITOR.md](DOCUMENT_EDITOR.md)** — design for the petition-drafting Canvas editor (WYSIWYG, UDF/DOCX/PDF export, propose→approve, versioning)
 - **[COMPETITORS.md](COMPETITORS.md)** — competitor products (preliminary review); detailed research pending
 
 ## Architecture overview
