@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "aciklama": "Tüm sözleşme şablonlarının türeyeceği taban iskelet. FORMAT.md dizilimine uyar. Korkut bölümleri taraf/iş verisi + hukuki araştırma ile doldurur. {{...}} = yer tutucu.",
+    "yer_tutucular": [
+      "{{sozlesme_adi}}", "{{taraf_a}}", "{{taraf_b}}", "{{konu}}", "{{bedel}}",
+      "{{sure}}", "{{fesih}}", "{{yetkili_mahkeme}}", "{{tarih}}", "{{imza}}"
+    ]
+  },
+  "doc_type": "sozlesme-base",
+  "bolumler": [
+    { "id": "baslik", "etiket": null, "hizalama": "center", "stil": "bold", "zorunlu": true,
+      "icerik": "{{sozlesme_adi}}" },
+
+    { "id": "taraflar", "etiket": "MADDE 1 - TARAFLAR", "zorunlu": true,
+      "not": "Her taraf: tam unvan/ad-soyad, TCKN/VKN, tam adres; kısa tanım ('bundan böyle \"...\" olarak anılacaktır').",
+      "icerik": "{{taraf_a_unvan}} (TCKN/VKN {{taraf_a_no}}), {{taraf_a_adres}} — bundan böyle \"{{taraf_a_kisa}}\".\n{{taraf_b_unvan}} (TCKN/VKN {{taraf_b_no}}), {{taraf_b_adres}} — bundan böyle \"{{taraf_b_kisa}}\"." },
+
+    { "id": "tanimlar", "etiket": "MADDE 2 - TANIMLAR", "zorunlu": false,
+      "icerik": "{{teknik_terim_tanimlari}} [terim yoksa bu madde atlanır]" },
+
+    { "id": "konu", "etiket": "MADDE 3 - KONU VE KAPSAM", "zorunlu": true,
+      "not": "Neyi kapsadığı KADAR neyi kapsamadığı da yazılır (kapsam dışı).",
+      "icerik": "{{sozlesmenin_konusu}} {{kapsam_disi}}" },
+
+    { "id": "yukumlulukler", "etiket": "MADDE 4 - TARAFLARIN HAK VE YÜKÜMLÜLÜKLERİ", "zorunlu": true,
+      "icerik": "4.1. {{taraf_a_kisa}} yükümlülükleri: {{...}}\n4.2. {{taraf_b_kisa}} yükümlülükleri: {{...}}" },
+
+    { "id": "bedel", "etiket": "MADDE 5 - BEDEL VE ÖDEME KOŞULLARI", "zorunlu": true,
+      "not": "Tutar (rakam+yazı), KDV, ödeme tarihi/yöntemi, gecikme faizi.",
+      "icerik": "{{bedel_tutar}} (KDV {{kdv}}). Ödeme: {{odeme_kosullari}}. Gecikme: {{gecikme_faizi}}." },
+
+    { "id": "sure", "etiket": "MADDE 6 - SÜRE VE YENİLEME", "zorunlu": true,
+      "icerik": "Başlangıç {{baslangic}}, bitiş {{bitis}}. Yenileme: {{yenileme}}." },
+
+    { "id": "fesih", "etiket": "MADDE 7 - FESİH", "zorunlu": true,
+      "not": "Haklı/haksız fesih, bildirim süresi (30/60/90 gün), sonuçları.",
+      "icerik": "{{fesih_kosullari}} Bildirim süresi: {{bildirim_suresi}}." },
+
+    { "id": "gizlilik", "etiket": "MADDE 8 - GİZLİLİK", "zorunlu": true,
+      "icerik": "{{gizlilik_kapsami}} Süre: {{gizlilik_suresi}}. İhlal: {{gizlilik_ihlal}}." },
+
+    { "id": "mucbir-sebep", "etiket": "MADDE 9 - MÜCBİR SEBEP", "zorunlu": false,
+      "icerik": "{{mucbir_sebep_hukmu}}" },
+
+    { "id": "tebligat", "etiket": "MADDE 10 - TEBLİGAT", "zorunlu": false,
+      "icerik": "Madde 1'deki adresler yasal tebligat adresidir; değişiklik 3 gün içinde yazılı bildirilir." },
+
+    { "id": "uyusmazlik", "etiket": "MADDE 11 - UYUŞMAZLIKLARIN ÇÖZÜMÜ VE YETKİLİ MAHKEME", "zorunlu": true,
+      "not": "Yetkili mahkeme/icra daireleri veya tahkim; uygulanacak hukuk (Türk hukuku).",
+      "icerik": "İşbu sözleşmeden doğan uyuşmazlıklarda {{yetkili_mahkeme}} Mahkemeleri ve İcra Daireleri yetkilidir. Uygulanacak hukuk: Türk hukuku." },
+
+    { "id": "yururluk", "etiket": "MADDE 12 - YÜRÜRLÜK", "zorunlu": true,
+      "icerik": "İşbu sözleşme {{madde_sayisi}} madde ve {{nusha}} nüsha olarak {{tarih}} tarihinde taraflarca imzalanarak yürürlüğe girmiştir." },
+
+    { "id": "imza", "etiket": null, "hizalama": "right", "zorunlu": true,
+      "icerik": "{{taraf_a_kisa}}\n{{taraf_a_unvan}}\n(İmza)\n\n{{taraf_b_kisa}}\n{{taraf_b_unvan}}\n(İmza)" }
+  ]
+}

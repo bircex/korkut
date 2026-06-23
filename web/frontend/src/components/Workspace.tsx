@@ -42,6 +42,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
   const [docOpen, setDocOpen] = useState(false);
+  const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -155,6 +156,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
       if (!file && (res as { open_document?: number | null }).open_document) {
         setDocOpen(true);
+        setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
       }
       const fixedId = id;
       setSessions((s) => [
@@ -202,7 +204,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               (docOpen ? "border-zinc-900 text-zinc-900" : "border-zinc-300 text-zinc-700 hover:border-zinc-900")
             }
           >
-            📄 Belge
+            📝 Editör
           </button>
           <div className="relative border-l border-zinc-200 pl-3">
             <button
@@ -287,7 +289,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </>
         )}
 
-        <div className={"min-w-0 flex-1 flex-col " + (docOpen ? "hidden sm:flex" : "flex")}>
+        <div className="relative flex min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
@@ -365,10 +368,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
 
         {docOpen && currentId !== null && (
-          <div className="flex w-full min-w-0 sm:w-1/2">
-            <DocumentPanel key={currentId} sessionId={currentId} onClose={() => setDocOpen(false)} />
+          <div className="drawer-left absolute inset-0 z-30 bg-white shadow-xl">
+            <DocumentPanel
+              key={currentId}
+              sessionId={currentId}
+              refreshKey={docRefresh}
+              onClose={() => setDocOpen(false)}
+            />
           </div>
         )}
+        </div>
       </div>
 
       <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">

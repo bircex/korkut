@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Korkut — Hukuk büronuzun günlük işini yöneten asistan</title>
+<meta name="description" content="Korkut, duruşma hatırlatmalarını, dilekçe taslaklarını ve hukuki araştırmayı tek bir asistan üzerinden yürütür. Veriler ofiste kalır." />
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #0a0a0a;
+    --muted: #6b6b6b;
+    --line: #e3e3e3;
+    --soft: #f5f5f5;
+    --accent: #0a0a0a;
+    --accent-soft: #f0f0f0;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 30px rgba(0,0,0,.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Nav */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,.82);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: -.01em; }
+  .logo {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--ink);
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 16px;
+  }
+  .nav-links { display: flex; align-items: center; gap: 30px; }
+  .nav-links a { color: var(--muted); font-size: 15px; font-weight: 500; }
+  .nav-links a:hover { color: var(--ink); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: 11px; font-weight: 600; font-size: 15px;
+    border: 1px solid transparent; cursor: pointer; transition: .15s ease;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2b2b2b; transform: translateY(-1px); }
+  .btn-ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: #c9d0da; }
+  @media (max-width: 760px) { .nav-links { display: none; } }
+
+  /* Hero */
+  .hero { padding: 92px 0 72px; text-align: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 15px; font-size: 13.5px; font-weight: 600; margin-bottom: 26px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  h1 {
+    font-size: clamp(38px, 5.5vw, 60px); line-height: 1.08; letter-spacing: -.025em;
+    font-weight: 800; max-width: 880px; margin: 0 auto 22px;
+  }
+  h1 .hl { color: var(--accent); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .lead { font-size: clamp(17px, 2vw, 20px); color: var(--muted); max-width: 660px; margin: 0 auto 36px; }
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .hero-note { margin-top: 22px; font-size: 14px; color: var(--muted); }
+
+  /* Chat mock */
+  .mock {
+    max-width: 720px; margin: 64px auto 0; text-align: left;
+    background: #fff; border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .mock-top { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .mock-ava { width: 34px; height: 34px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .mock-name { font-weight: 700; font-size: 15px; }
+  .mock-sub { font-size: 12.5px; color: var(--muted); }
+  .mock-body { padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; background: var(--soft); }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14.5px; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot { align-self: flex-start; background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg.bot b { color: var(--ink); }
+  .approve { display: flex; gap: 8px; margin-top: 10px; }
+  .chip { font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; }
+  .chip.ok { background: var(--ink); color: #fff; }
+  .chip.no { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+
+  /* Sections */
+  section { padding: 84px 0; }
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: 14px; letter-spacing: .02em; text-transform: uppercase; }
+  h2 { font-size: clamp(28px, 3.5vw, 40px); letter-spacing: -.02em; font-weight: 800; margin: 12px 0 16px; }
+  .section-lead { color: var(--muted); font-size: 18px; max-width: 620px; }
+  .center { text-align: center; }
+  .center .section-lead { margin: 0 auto; }
+
+  /* Feature grid */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 52px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px; transition: .18s ease;
+  }
+  .card:hover { border-color: #c9d0da; box-shadow: var(--shadow); transform: translateY(-2px); }
+  .ic { width: 46px; height: 46px; border-radius: 12px; background: var(--accent-soft); display: grid; place-items: center; margin-bottom: 18px; font-size: 22px; }
+  .card h3 { font-size: 18.5px; margin-bottom: 8px; letter-spacing: -.01em; }
+  .card p { color: var(--muted); font-size: 15px; }
+
+  /* Security band */
+  .band { background: var(--soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .band-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  @media (max-width: 900px) { .band-grid { grid-template-columns: 1fr; gap: 32px; } }
+  .checklist { list-style: none; margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .checklist li { display: flex; gap: 13px; align-items: flex-start; font-size: 15.5px; }
+  .tick { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 800; margin-top: 1px; }
+  .checklist b { display: block; }
+  .checklist span { color: var(--muted); font-size: 14.5px; }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 52px; counter-reset: s; }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 540px) { .steps { grid-template-columns: 1fr; } }
+  .step { position: relative; padding: 26px 22px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+  .step .num { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 800; display: grid; place-items: center; margin-bottom: 14px; }
+  .step h4 { font-size: 16.5px; margin-bottom: 6px; }
+  .step p { color: var(--muted); font-size: 14.5px; }
+
+  /* Sources */
+  .tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; justify-content: center; }
+  .tag { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 12px 18px; font-weight: 600; font-size: 15px; }
+  .tag span { color: var(--muted); font-weight: 500; }
+
+  /* CTA */
+  .cta {
+    background: linear-gradient(135deg, #11161d, #1c2733);
+    border-radius: 24px; padding: 64px 40px; text-align: center; color: #fff;
+  }
+  .cta h2 { color: #fff; }
+  .cta p { color: #b8c0cc; font-size: 18px; max-width: 540px; margin: 0 auto 32px; }
+  .cta .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.25); }
+  .cta .btn-ghost:hover { border-color: rgba(255,255,255,.5); }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--line); padding: 40px 0; }
+  .foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .foot .muted { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="logo">K</span> Korkut</div>
+    <nav class="nav-links">
+      <a href="#ozellikler">Özellikler</a>
+      <a href="#guvenlik">Güvenlik</a>
+      <a href="#nasil">Nasıl çalışır</a>
+      <a href="#kaynaklar">Kaynaklar</a>
+    </nav>
+    <a href="#iletisim" class="btn btn-primary">Demo isteyin</a>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="pill"><span class="dot"></span> Hukuk büroları için yapay zeka asistanı</span>
+      <h1>Büronuzun günlük işini <span class="hl">tek bir asistan</span> yönetir</h1>
+      <p class="lead">
+        Korkut; duruşma hatırlatmalarını, dilekçe taslaklarını ve hukuki araştırmayı
+        tek bir sohbet üzerinden yürütür. Tüm veriler ofisinizde kalır — dışarı çıkmaz.
+      </p>
+      <div class="cta-row">
+        <a href="#iletisim" class="btn btn-primary">Demo isteyin</a>
+        <a href="#nasil" class="btn btn-ghost">Nasıl çalışır?</a>
+      </div>
+      <p class="hero-note">Kendi sunucunuzda barındırılır · Onaysız hiçbir kalıcı işlem yapılmaz</p>
+
+      <!-- Chat mock -->
+      <div class="mock">
+        <div class="mock-top">
+          <span class="mock-ava">K</span>
+          <div>
+            <div class="mock-name">Korkut</div>
+            <div class="mock-sub">Tek kimlik · arka planda uzmanlık modülleri</div>
+          </div>
+        </div>
+        <div class="mock-body">
+          <div class="msg user">Yarınki duruşmaları listele ve kira tespiti için bir cevap dilekçesi hazırla.</div>
+          <div class="msg bot">
+            Yarın <b>2 duruşmanız</b> var: 09:30 İstanbul 4. Sulh Hukuk, 14:00 Bakırköy 9. Asliye.
+            Kira tespitiyle ilgili güncel içtihatları taradım, cevap dilekçesi taslağını hazırladım.
+            <div class="approve">
+              <span class="chip ok">✓ Onayla & kaydet</span>
+              <span class="chip no">Düzeltme iste</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="ozellikler">
+    <div class="wrap center">
+      <span class="eyebrow">Yetenekler</span>
+      <h2>Bir asistan, dört uzmanlık</h2>
+      <p class="section-lead">Siz tek bir kişiyle, Korkut'la konuşursunuz. Arka planda uzmanlık modülleri paralel çalışır ve hepsi tek bir yanıtta birleşir.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="ic">📅</div>
+          <h3>Duruşma takibi</h3>
+          <p>Yaklaşan duruşmaları hatırlatır, takvime ekler ve listeler. Hiçbir tarihi kaçırmazsınız.</p>
+        </div>
+        <div class="card">
+          <div class="ic">📝</div>
+          <h3>Dilekçe taslağı</h3>
+          <p>Şablonlardan yola çıkıp dava türüne uygun dilekçe taslakları üretir. Siz inceler, onaylarsınız.</p>
+        </div>
+        <div class="card">
+          <div class="ic">🔎</div>
+          <h3>Hukuki araştırma</h3>
+          <p>Mevzuat ve içtihatta arama yapar, özetler ve kaynak gösterir. Emsal kararları önünüze getirir.</p>
+        </div>
+        <div class="card">
+          <div class="ic">💬</div>
+          <h3>Tek kimlik</h3>
+          <p>Kanaldan (@Korkut) ya da özelden (DM) ulaşın. Her mesaja tek, bütünleşik bir Korkut yanıtı gelir.</p>
+        </div>
+        <div class="card">
+          <div class="ic">🛡️</div>
+          <h3>Onay akışı</h3>
+          <p>Korkut yapacağı işi özetler, "onaylıyor musunuz?" diye sorar. Onay gelmeden hiçbir şey kaydedilmez.</p>
+        </div>
+        <div class="card">
+          <div class="ic">⚙️</div>
+          <h3>Esnek model</h3>
+          <p>Bulut veya yerel model — tek satır ayarla değişir. Sağlayıcı bağımsızdır, ihtiyaca göre seçilir.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section id="guvenlik" class="band">
+    <div class="wrap band-grid">
+      <div>
+        <span class="eyebrow">Gizlilik & Güvenlik</span>
+        <h2>Veriler ofisten çıkmaz</h2>
+        <p class="section-lead">Müvekkil verisi en hassas varlığınızdır. Korkut, baştan sona bu ilkeyle tasarlandı.</p>
+      </div>
+      <ul class="checklist">
+        <li>
+          <span class="tick">✓</span>
+          <div><b>Kendi sunucunuzda barındırılır</b><span>Sohbet uygulaması ve veritabanı sizin makinenizde, şifreli diskte çalışır. Üçüncü taraf platforma bağımlı değilsiniz.</span></div>
+        </li>
+        <li>
+          <span class="tick">✓</span>
+          <div><b>Buluta giden her şey rumuzlanır</b><span>İsim, T.C. kimlik no, dosya numarası → token. Geri eşleme yalnızca sizin sunucunuzda kalır.</span></div>
+        </li>
+        <li>
+          <span class="tick">✓</span>
+          <div><b>Onaysız kalıcı işlem yok</b><span>Duruşma, dilekçe ya da veri — siz onaylamadan hiçbiri kaydedilmez.</span></div>
+        </li>
+        <li>
+          <span class="tick">✓</span>
+          <div><b>Kapalı erişim</b><span>Kendi kendine kayıt yok. Kullanıcıları yalnızca siz tanımlarsınız; her kullanıcının geçmişi kendine ait.</span></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="nasil">
+    <div class="wrap center">
+      <span class="eyebrow">Nasıl çalışır</span>
+      <h2>Sorudan onaya, dört adımda</h2>
+      <p class="section-lead">Doğal dilde yazarsınız; gerisini Korkut hallederek size onaylanacak bir özet sunar.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h4>Yazın</h4>
+          <p>Kanaldan ya da özelden, gündelik dille ne istediğinizi söyleyin.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h4>Yönlendirir</h4>
+          <p>Korkut niyetinizi anlar, ilgili uzmanlık modüllerine paralel dağıtır.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h4>Hazırlar</h4>
+          <p>Gerekirse buluta giden metni rumuzlar, araştırır, taslağı üretir.</p>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <h4>Onaylatır</h4>
+          <p>Yapacağını özetler. Siz onaylayınca kaydeder; düzeltme isterseniz yeniden sunar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sources -->
+  <section id="kaynaklar" class="band">
+    <div class="wrap center">
+      <span class="eyebrow">Kaynaklar</span>
+      <h2>Güncel ve resmi kaynaklardan</h2>
+      <p class="section-lead">Araştırma modülü, sürekli güncellenen resmi hukuki kaynaklarda arama yapar ve daima kaynak gösterir.</p>
+      <div class="tags">
+        <div class="tag">Yargıtay <span>kararları</span></div>
+        <div class="tag">Danıştay <span>kararları</span></div>
+        <div class="tag">Anayasa Mahkemesi</div>
+        <div class="tag">Mevzuat <span>metinleri</span></div>
+        <div class="tag">Resmî Gazete</div>
+        <div class="tag">İçtihat <span>taraması</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="iletisim">
+    <div class="wrap">
+      <div class="cta">
+        <h2>Büronuza Korkut'u getirin</h2>
+        <p>Kendi sunucunuzda, verileriniz sizde kalarak çalışan bir hukuk asistanı. Bir demo planlayalım.</p>
+        <div class="cta-row">
+          <a href="mailto:recepkizilarslan@gmail.com?subject=Korkut%20Demo%20Talebi" class="btn btn-primary">Demo isteyin</a>
+          <a href="#ozellikler" class="btn btn-ghost">Özellikleri inceleyin</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div class="brand" style="font-size:17px;"><span class="logo" style="width:28px;height:28px;font-size:14px;">K</span> Korkut</div>
+    <span class="muted">Hukuk büroları için, veriyi ofiste tutan yapay zeka asistanı.</span>
+    <span class="muted">© 2026 Korkut</span>
+  </div>
+</footer>
+
+</body>
+</html>

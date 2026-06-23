@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "aciklama": "Korkut AI sözleşme tipleri kataloğu. Türk Borçlar Kanunu (TBK) isimli sözleşmeleri + ticari/İK/fikri mülkiyet/gayrimenkul uygulamasındaki sık sözleşmeler. Dilekçe kataloğuyla simetrik; chat'ten otomatik tespit + standart sözleşme formatında taslak için kaynak. Biçim için bkz. FORMAT.md.",
+    "alan_semasi": {
+      "id": "stabil kimlik (kebab-case)",
+      "ad": "Kullanıcıya gösterilecek Türkçe ad",
+      "mevzuat": "Dayanak mevzuat (TBK/İş K./TTK ilgili maddeler)",
+      "sik": "true ise sık kullanılan"
+    }
+  },
+  "kategoriler": [
+    {
+      "kategori": "TBK İsimli Sözleşmeler — Satış / Devir",
+      "dilekceler": [
+        { "id": "tasinir-satis", "ad": "Taşınır satış sözleşmesi", "mevzuat": "TBK m.207 vd.", "sik": true },
+        { "id": "tasinmaz-satis-vaadi", "ad": "Taşınmaz satış vaadi sözleşmesi (noterde)", "mevzuat": "TBK m.29, Noterlik K.", "sik": true },
+        { "id": "arac-satis", "ad": "Araç satış sözleşmesi", "mevzuat": "TBK m.207 vd.", "sik": true },
+        { "id": "trampa", "ad": "Trampa (mal değişim) sözleşmesi", "mevzuat": "TBK m.282-284", "sik": false },
+        { "id": "bagislama", "ad": "Bağışlama sözleşmesi", "mevzuat": "TBK m.285 vd.", "sik": false },
+        { "id": "alacak-temliki", "ad": "Alacağın devri (temlik) sözleşmesi", "mevzuat": "TBK m.183 vd.", "sik": false },
+        { "id": "borc-ustlenme", "ad": "Borcun üstlenilmesi sözleşmesi", "mevzuat": "TBK m.195 vd.", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Kira / Kullandırma",
+      "dilekceler": [
+        { "id": "konut-kira", "ad": "Konut kira sözleşmesi", "mevzuat": "TBK m.299, 339 vd.", "sik": true },
+        { "id": "isyeri-kira", "ad": "İşyeri (çatılı) kira sözleşmesi", "mevzuat": "TBK m.339 vd.", "sik": true },
+        { "id": "urun-kirasi", "ad": "Ürün (hasılat) kirası sözleşmesi", "mevzuat": "TBK m.357 vd.", "sik": false },
+        { "id": "ariyet", "ad": "Kullanım ödüncü (ariyet) sözleşmesi", "mevzuat": "TBK m.379 vd.", "sik": false },
+        { "id": "tuketim-oduncu", "ad": "Tüketim ödüncü (karz / borç para) sözleşmesi", "mevzuat": "TBK m.386 vd.", "sik": false },
+        { "id": "intifa-oturma", "ad": "İntifa / oturma (sükna) hakkı sözleşmesi", "mevzuat": "TMK m.794 vd.", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İş ve İnsan Kaynakları",
+      "dilekceler": [
+        { "id": "belirsiz-sureli-is", "ad": "Belirsiz süreli iş sözleşmesi", "mevzuat": "İş K. m.8 vd.", "sik": true },
+        { "id": "belirli-sureli-is", "ad": "Belirli süreli iş sözleşmesi", "mevzuat": "İş K. m.11", "sik": true },
+        { "id": "kismi-sureli-is", "ad": "Kısmi süreli (part-time) iş sözleşmesi", "mevzuat": "İş K. m.13", "sik": false },
+        { "id": "uzaktan-calisma", "ad": "Uzaktan çalışma sözleşmesi", "mevzuat": "İş K. m.14", "sik": true },
+        { "id": "rekabet-yasagi", "ad": "Rekabet yasağı sözleşmesi", "mevzuat": "TBK m.444-447", "sik": true },
+        { "id": "ibraname", "ad": "İbraname", "mevzuat": "TBK m.420", "sik": true },
+        { "id": "staj-sozlesmesi", "ad": "Staj sözleşmesi", "mevzuat": "3308 s. K. / İş K.", "sik": false },
+        { "id": "danismanlik", "ad": "Danışmanlık (serbest hizmet) sözleşmesi", "mevzuat": "TBK m.502 vd.", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Hizmet / Eser / Vekâlet",
+      "dilekceler": [
+        { "id": "hizmet-sozlesmesi", "ad": "Hizmet sözleşmesi", "mevzuat": "TBK m.393 vd.", "sik": true },
+        { "id": "eser-sozlesmesi", "ad": "Eser (istisna) sözleşmesi", "mevzuat": "TBK m.470 vd.", "sik": true },
+        { "id": "vekalet", "ad": "Vekâlet sözleşmesi", "mevzuat": "TBK m.502 vd.", "sik": true },
+        { "id": "avukatlik-ucret", "ad": "Avukatlık (vekâlet ücreti) sözleşmesi", "mevzuat": "Av. K. m.163-164", "sik": true },
+        { "id": "komisyon", "ad": "Komisyon sözleşmesi", "mevzuat": "TBK m.532 vd.", "sik": false },
+        { "id": "saklama-vedia", "ad": "Saklama (vedia) sözleşmesi", "mevzuat": "TBK m.561 vd.", "sik": false },
+        { "id": "yayim", "ad": "Yayım sözleşmesi", "mevzuat": "TBK m.487 vd.", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Ticari / Şirketler",
+      "dilekceler": [
+        { "id": "distributorluk", "ad": "Distribütörlük (tek satıcılık) sözleşmesi", "mevzuat": "TTK / TBK genel hükümler", "sik": true },
+        { "id": "bayilik", "ad": "Bayilik sözleşmesi", "mevzuat": "TTK / TBK genel hükümler", "sik": true },
+        { "id": "franchise", "ad": "Franchise sözleşmesi", "mevzuat": "TTK / TBK genel hükümler", "sik": true },
+        { "id": "acentelik", "ad": "Acentelik sözleşmesi", "mevzuat": "TTK m.102 vd.", "sik": false },
+        { "id": "tedarik", "ad": "Tedarik (mal/hizmet alım) sözleşmesi", "mevzuat": "TBK / TTK", "sik": true },
+        { "id": "hisse-devri", "ad": "Hisse / pay devir sözleşmesi (SPA)", "mevzuat": "TTK m.490, 595 vd.", "sik": true },
+        { "id": "pay-sahipleri", "ad": "Pay sahipleri / ortaklık sözleşmesi (SHA)", "mevzuat": "TTK", "sik": false },
+        { "id": "adi-ortaklik", "ad": "Adi ortaklık sözleşmesi", "mevzuat": "TBK m.620 vd.", "sik": false },
+        { "id": "is-ortakligi", "ad": "İş ortaklığı (joint venture) sözleşmesi", "mevzuat": "TBK / TTK", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Gayrimenkul / İnşaat",
+      "dilekceler": [
+        { "id": "kat-karsiligi-insaat", "ad": "Kat (arsa payı) karşılığı inşaat sözleşmesi", "mevzuat": "TBK m.470 vd. (eser)", "sik": true },
+        { "id": "gayrimenkul-satis-vaadi", "ad": "Gayrimenkul satış vaadi sözleşmesi", "mevzuat": "TBK m.29, Noterlik K.", "sik": true },
+        { "id": "insaat-taseron", "ad": "İnşaat taşeronluk (alt yüklenici) sözleşmesi", "mevzuat": "TBK m.471 vd.", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Fikri Mülkiyet / Teknoloji",
+      "dilekceler": [
+        { "id": "lisans-sozlesmesi", "ad": "Lisans sözleşmesi (marka/patent/yazılım)", "mevzuat": "SMK / FSEK", "sik": true },
+        { "id": "telif-devri", "ad": "Telif hakkı (mali hak) devir sözleşmesi", "mevzuat": "FSEK m.48 vd.", "sik": false },
+        { "id": "yazilim-gelistirme", "ad": "Yazılım geliştirme sözleşmesi", "mevzuat": "TBK m.470 vd. (eser)", "sik": true },
+        { "id": "saas-sla", "ad": "SaaS / hizmet düzeyi (SLA) sözleşmesi", "mevzuat": "TBK / 6698 KVKK", "sik": true },
+        { "id": "veri-isleme-kvkk", "ad": "Veri işleme / KVKK uyum sözleşmesi (DPA)", "mevzuat": "6698 s. KVKK", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Teminat / Finansal",
+      "dilekceler": [
+        { "id": "kefalet", "ad": "Kefalet sözleşmesi", "mevzuat": "TBK m.581 vd.", "sik": true },
+        { "id": "rehin", "ad": "Rehin (taşınır/alacak) sözleşmesi", "mevzuat": "TMK m.939 vd.", "sik": false },
+        { "id": "kredi", "ad": "Kredi (ödünç) sözleşmesi", "mevzuat": "TBK m.386 vd.", "sik": false },
+        { "id": "finansal-kiralama", "ad": "Finansal kiralama (leasing) sözleşmesi", "mevzuat": "6361 s. K.", "sik": false },
+        { "id": "borc-ikrari", "ad": "Borç ikrarı / ödeme taahhütnamesi", "mevzuat": "TBK m.18", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Genel / Çerçeve",
+      "dilekceler": [
+        { "id": "gizlilik-nda", "ad": "Gizlilik sözleşmesi (NDA)", "mevzuat": "TBK genel hükümler", "sik": true },
+        { "id": "niyet-mektubu-loi", "ad": "Niyet mektubu / ön protokol (LOI/MoU)", "mevzuat": "TBK genel hükümler", "sik": true },
+        { "id": "sulh-uzlasma", "ad": "Sulh (uzlaşma) sözleşmesi", "mevzuat": "TBK m.313 (kıyasen) / HMK", "sik": false },
+        { "id": "cerceve-sozlesme", "ad": "Çerçeve (genel iş ilişkisi) sözleşmesi", "mevzuat": "TBK genel hükümler", "sik": false },
+        { "id": "cezai-sart-protokol", "ad": "Cezai şart / ek protokol", "mevzuat": "TBK m.179 vd.", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Aile / Kişiler",
+      "dilekceler": [
+        { "id": "mal-rejimi-sozlesmesi", "ad": "Mal rejimi (evlilik) sözleşmesi", "mevzuat": "TMK m.202 vd.", "sik": true },
+        { "id": "olunceye-kadar-bakma", "ad": "Ölünceye kadar bakma sözleşmesi", "mevzuat": "TBK m.611 vd.", "sik": false },
+        { "id": "bosanma-protokolu", "ad": "Anlaşmalı boşanma protokolü", "mevzuat": "TMK m.166/3", "sik": true }
+      ]
+    }
+  ]
+}

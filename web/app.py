@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from core.tool_registry import ToolSpec
 from korkut import agent
-from web import auth, extract, totp
+from web import auth, extract, petitions, totp
 from web.models import (
     AuthEvent,
     Conversation,
@@ -434,10 +434,26 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
                 s.add(doc)
                 s.commit()
             doc_id = doc.id
-        _make_draft(doc_id, text, history_msgs)
+        # Korkut infers the petition type itself, then drafts in the standard format and the
+        # result lands straight in the editor (the editor is the lawyer's review surface).
+        _make_draft(doc_id, text, history_msgs, petitions.detect(text))
+        _accept_pending(doc_id)
         open_document = doc_id
 
     return {"reply": reply, "title": title, "open_document": open_document}
+
+
+def _accept_pending(doc_id: int) -> None:
+    """Apply the latest pending draft into the document (records a version). No-op if none."""
+    with session() as s:
+        pe = _pending(s, doc_id)
+        if not pe:
+            return
+        doc = s.get(Document, doc_id)
+        doc.content_md = pe.content_md
+        pe.status = "accepted"
+        s.add(DocumentVersion(document_id=doc_id, content_md=pe.content_md, author="korkut", note=pe.summary))
+        s.commit()
 
 
 def _safe_name(filename: str | None) -> str:
@@ -520,6 +536,7 @@ def session_upload(
 
 class DraftBody(BaseModel):
     instruction: str = ""
+    petition_type: str | None = None
 
 
 class DocSaveBody(BaseModel):
@@ -574,6 +591,20 @@ def _diffstat(a: str, b: str) -> tuple[int, int]:
     return added, removed
 
 
+@app.get("/api/petition-types")
+def petition_types(korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+    return petitions.categories()
+
+
+@app.get("/api/contract-types")
+def contract_types(korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+    return petitions.contract_categories()
+
+
 @app.get("/api/sessions/{cid}/document")
 def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
@@ -612,14 +643,21 @@ def _first_heading(md: str) -> str | None:
     return None
 
 
-def _make_draft(doc_id: int, instruction: str, history: list[dict]) -> dict | None:
+def _make_draft(
+    doc_id: int, instruction: str, history: list[dict], petition_type: str | None = None
+) -> dict | None:
     """Generate a full-document draft as a pending ProposedEdit (redaction round-trips in answer())."""
     with session() as s:
         doc = s.get(Document, doc_id)
         if not doc:
             return None
         current = doc.content_md
-    instr = (instruction or "").strip() or "Bu belgeyi gözden geçir ve geliştir."
+    instr = (instruction or "").strip()
+    fmt = petitions.draft_prompt(petition_type) if petition_type else None
+    if fmt:
+        instr = f"{fmt}\n\nEk talimat: {instr}" if instr else fmt
+    elif not instr:
+        instr = "Bu belgeyi gözden geçir ve geliştir."
     prompt = (
         "[BELGE MODU] Bir hukuki belge (dilekçe) üzerinde çalışıyorsun.\n"
         f"Talimat: {instr}\n\n"
@@ -656,7 +694,7 @@ def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Co
             select(Message).where(Message.conversation_id == doc.conversation_id).order_by(Message.id)
         ).all()
         history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
-    result = _make_draft(doc_id, body.instruction, history)
+    result = _make_draft(doc_id, body.instruction, history, body.petition_type)
     if result is None:
         raise HTTPException(status_code=404, detail="Belge bulunamadı")
     return result
