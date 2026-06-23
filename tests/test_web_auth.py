@@ -54,7 +54,7 @@ def test_password_then_enroll_then_chat(client):
     assert r.status_code == 200 and r.json()["step"] == "enroll"
     # No full session before 2FA.
     assert client.get("/api/me").status_code == 401
-    assert client.post("/api/chat", json={"text": "selam"}).status_code == 401
+    assert client.get("/api/sessions").status_code == 401
 
     # Provision a secret, confirm with a live code → session + recovery codes.
     prov = client.get("/api/2fa/provision").json()
@@ -65,9 +65,16 @@ def test_password_then_enroll_then_chat(client):
     codes = r.json()["recovery_codes"]
     assert len(codes) == 10
 
-    # Now authenticated.
+    # Now authenticated — create a shared session and chat in it.
     assert client.get("/api/me").json()["full_name"] == "Av. Test"
-    assert "DRAFT" in client.post("/api/chat", json={"text": "soru"}).json()["reply"]
+    sid = client.post("/api/sessions").json()["id"]
+    r = client.post(f"/api/sessions/{sid}/chat", json={"text": "İşçilik alacağı zamanaşımı?"})
+    assert r.status_code == 200 and "DRAFT" in r.json()["reply"]
+    # The session is now listed (shared workspace) and auto-titled from the first message.
+    sessions = client.get("/api/sessions").json()
+    assert len(sessions) == 1 and sessions[0]["title"].startswith("İşçilik")
+    msgs = client.get(f"/api/sessions/{sid}").json()["messages"]
+    assert [m["role"] for m in msgs] == ["user", "assistant"]
 
 
 def test_second_login_requires_totp(client):
@@ -142,3 +149,28 @@ def test_logout_revokes_all_sessions(client):
     client.cookies.clear()
     client.cookies.set("korkut_session", cookie)
     assert client.get("/api/me").status_code == 401
+
+
+def _enroll(c, username, password="parola123"):
+    c.post("/api/login", json={"username": username, "password": password})
+    secret = c.get("/api/2fa/provision").json()["secret"]
+    c.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
+
+
+def test_sessions_are_shared_across_users(client):
+    from fastapi.testclient import TestClient
+
+    import web.adduser as adduser
+
+    # User 1 creates a session and chats in it.
+    _enroll(client, "avukat")
+    sid = client.post("/api/sessions").json()["id"]
+    client.post(f"/api/sessions/{sid}/chat", json={"text": "Ortak dava dosyası"})
+
+    # User 2 (a different account) logs in fresh and sees the SAME session (shared workspace).
+    adduser.main(["ortak", "--password", "parola123", "--name", "Av. İki"])
+    c2 = TestClient(client.app)
+    _enroll(c2, "ortak")
+    shared = c2.get("/api/sessions").json()
+    assert any(x["id"] == sid for x in shared), "session should be visible to all office users"
+    assert len(c2.get(f"/api/sessions/{sid}").json()["messages"]) == 2

@@ -3,7 +3,7 @@ import { api, type User } from "./api";
 import { Login } from "./components/Login";
 import { Enroll } from "./components/Enroll";
 import { Mfa } from "./components/Mfa";
-import { Chat } from "./components/Chat";
+import { Workspace } from "./components/Workspace";
 
 type Stage = "loading" | "login" | "enroll" | "mfa" | "chat";
 
@@ -46,6 +46,10 @@ export function App() {
     case "mfa":
       return <Mfa onDone={authed} />;
     case "chat":
-      return user ? <Chat user={user} onLogout={logout} /> : <Login onStep={(s) => setStage(s)} />;
+      return user ? (
+        <Workspace user={user} onLogout={logout} />
+      ) : (
+        <Login onStep={(s) => setStage(s)} />
+      );
   }
 }

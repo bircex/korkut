@@ -1,8 +1,11 @@
-"""Web-app data models — office users, their chat history, 2FA, and an auth audit trail.
+"""Web-app data models — office users, shared chat sessions, 2FA, and an auth audit trail.
 
 These share `core.db.Base`, so `core.db.init_db(engine)` creates them alongside the
 case/hearing/petition tables. There is deliberately NO self-service signup: accounts are
 created only by an administrator via `python -m web.adduser` (closed enrolment).
+
+Chat sessions are a SHARED office workspace: every logged-in user sees and can open every
+session (Conversation). Messages belong to a Conversation, not to a single user.
 """
 
 from __future__ import annotations
@@ -37,9 +40,6 @@ class User(Base):
 
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    messages: Mapped[list["Message"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
     recovery_codes: Mapped[list["RecoveryCode"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
@@ -59,15 +59,32 @@ class RecoveryCode(Base):
     user: Mapped[User] = relationship(back_populates="recovery_codes")
 
 
+class Conversation(Base):
+    """A chat session, shared across the whole office (any user can open any session)."""
+
+    __tablename__ = "conversations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(120), default="Yeni sohbet")
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation", cascade="all, delete-orphan", order_by="Message.id"
+    )
+
+
 class Message(Base):
     __tablename__ = "messages"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
     role: Mapped[str] = mapped_column(String(16))  # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    user: Mapped[User] = relationship(back_populates="messages")
+    conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
 class AuthEvent(Base):

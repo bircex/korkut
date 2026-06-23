@@ -1,6 +1,13 @@
 export type LoginStep = "mfa" | "enroll";
 export type User = { username: string; full_name: string | null };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
+export type SessionBrief = {
+  id: number;
+  title: string;
+  created_by_name: string | null;
+  updated_at: string | null;
+};
+export type SessionDetail = SessionBrief & { messages: ChatMessage[] };
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
 export type Coverage = {
@@ -58,9 +65,13 @@ export const api = {
       body: JSON.stringify({ code }),
     }),
   logout: () => request<{ ok: boolean }>("/api/logout", { method: "POST" }),
-  history: () => request<ChatMessage[]>("/api/history"),
-  chat: (text: string) =>
-    request<{ reply: string }>("/api/chat", {
+  sessions: () => request<SessionBrief[]>("/api/sessions"),
+  createSession: () => request<SessionBrief>("/api/sessions", { method: "POST" }),
+  getSession: (id: number) => request<SessionDetail>(`/api/sessions/${id}`),
+  deleteSession: (id: number) =>
+    request<{ ok: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
+  sessionChat: (id: number, text: string) =>
+    request<{ reply: string; title: string }>(`/api/sessions/${id}/chat`, {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
