@@ -251,6 +251,40 @@ def test_petition_types_requires_auth_and_lists_catalog(client):
     assert any(d["sik"] for d in aile["dilekceler"])  # picker highlights frequent types
 
 
+def test_contract_types_lists_catalog(client):
+    assert client.get("/api/contract-types").status_code == 401
+    _enroll(client, "avukat")
+    cats = client.get("/api/contract-types").json()
+    ids = {d["id"] for c in cats for d in c["dilekceler"]}
+    assert {"konut-kira", "gizlilik-nda", "belirsiz-sureli-is", "hisse-devri"} <= ids
+
+
+def test_chat_detects_contract_and_injects_contract_format(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    prompts: list[str] = []
+
+    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+        if handlers and "dilekce_canvas" in handlers:
+            handlers["dilekce_canvas"]({})
+            return "Kira sözleşmesini editörde hazırladım."
+        prompts.append(user_text)
+        return "KONUT KİRA SÖZLEŞMESİ"
+
+    with patch.object(appmod.agent, "answer", side_effect=fake_answer):
+        client.post(f"/api/sessions/{cid}/chat", json={"text": "konut kira sözleşmesi hazırla"})
+
+    assert prompts, "draft turn should have run"
+    p = prompts[0]
+    # Contract-specific format reached the model (not the petition court header).
+    assert "Konut kira sözleşmesi" in p and "MADDE 1 - TARAFLAR" in p
+    assert "MAHKEMESİ'NE" not in p
+
+
 def test_draft_with_petition_type_injects_format(client):
     from unittest.mock import patch
 
