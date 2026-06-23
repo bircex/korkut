@@ -240,6 +240,52 @@ def test_document_draft_accept_revert(client):
     assert "Dava Dilekçesi" in doc["content_md"] and doc["pending"] is None
 
 
+def test_petition_types_requires_auth_and_lists_catalog(client):
+    assert client.get("/api/petition-types").status_code == 401
+    _enroll(client, "avukat")
+    cats = client.get("/api/petition-types").json()
+    assert len(cats) >= 10
+    ids = {d["id"] for c in cats for d in c["dilekceler"]}
+    assert {"cekismeli-bosanma", "itirazin-iptali", "sikayet-dilekcesi"} <= ids
+    aile = next(c for c in cats if c["kategori"] == "Aile Hukuku")
+    assert any(d["sik"] for d in aile["dilekceler"])  # picker highlights frequent types
+
+
+def test_draft_with_petition_type_injects_format(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{cid}/document").json()["id"]
+
+    with patch.object(appmod.agent, "answer", return_value="# Dilekçe") as m:
+        r = client.post(
+            f"/api/documents/{did}/draft",
+            json={"instruction": "şiddetli geçimsizlik vurgula", "petition_type": "cekismeli-bosanma"},
+        )
+    assert r.status_code == 200
+    sent = m.call_args.args[0]
+    # The chosen type's name + court + HMK section discipline reach the model.
+    assert "Çekişmeli boşanma dava dilekçesi" in sent and "Aile Mahkemesi" in sent
+    assert "SONUÇ VE İSTEM" in sent and "MAHKEMESİ'NE" in sent
+    assert "şiddetli geçimsizlik vurgula" in sent  # free instruction is kept too
+
+
+def test_draft_with_unknown_petition_type_falls_back(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{cid}/document").json()["id"]
+    with patch.object(appmod.agent, "answer", return_value="# X"):
+        r = client.post(f"/api/documents/{did}/draft", json={"petition_type": "yok-boyle"})
+    assert r.status_code == 200  # unknown type is ignored, not an error
+
+
 def test_chat_auto_opens_canvas_for_document(client):
     from unittest.mock import patch
 
@@ -261,9 +307,35 @@ def test_chat_auto_opens_canvas_for_document(client):
     assert r.status_code == 200
     assert r.json()["open_document"] is not None  # Canvas auto-opens
 
+    # The draft is auto-applied into the editor (no pending box); a version is recorded.
     doc = client.get(f"/api/sessions/{cid}/document").json()
-    assert doc["pending"] is not None and "Tahliye" in doc["pending"]["content_md"]
+    assert doc["pending"] is None and "Tahliye" in doc["content_md"]
     assert doc["title"] == "Tahliye İhtarnamesi"  # titled from the first heading
+    assert len(doc["versions"]) == 1 and doc["versions"][0]["author"] == "korkut"
+
+
+def test_chat_auto_detects_petition_type_and_injects_format(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    draft_prompts: list[str] = []
+
+    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+        if handlers and "dilekce_canvas" in handlers:
+            handlers["dilekce_canvas"]({})
+            return "Boşanma dilekçesini editörde hazırladım."
+        draft_prompts.append(user_text)  # the draft turn carries the injected format
+        return "# Boşanma Dilekçesi"
+
+    with patch.object(appmod.agent, "answer", side_effect=fake_answer):
+        client.post(f"/api/sessions/{cid}/chat", json={"text": "boşanma dilekçesi hazırla"})
+
+    assert draft_prompts, "draft turn should have run"
+    p = draft_prompts[0]
+    assert "Çekişmeli boşanma dava dilekçesi" in p and "Aile Mahkemesi" in p
 
 
 def test_chat_no_canvas_for_plain_question(client):

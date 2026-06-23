@@ -18,6 +18,8 @@ export type DocumentData = {
   versions: DocVersion[];
   pending: PendingEdit | null;
 };
+export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik: boolean };
+export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
 export type Coverage = {
@@ -107,12 +109,13 @@ export const api = {
     }
     return (await res.json()) as { reply: string; title: string; user_display: string };
   },
+  petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),
   getDocument: (sessionId: number) =>
     request<DocumentData>(`/api/sessions/${sessionId}/document`),
-  draftDocument: (docId: number, instruction: string) =>
+  draftDocument: (docId: number, instruction: string, petitionType?: string | null) =>
     request<PendingEdit>(`/api/documents/${docId}/draft`, {
       method: "POST",
-      body: JSON.stringify({ instruction }),
+      body: JSON.stringify({ instruction, petition_type: petitionType ?? null }),
     }),
   acceptEdit: (docId: number) =>
     request<DocumentData>(`/api/documents/${docId}/accept`, { method: "POST" }),

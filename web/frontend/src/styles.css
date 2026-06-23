@@ -75,26 +75,36 @@ body {
 
 /* CKEditor — A4 document page on a light canvas. */
 .doc-canvas {
-  background: #ececee;
+  background: #ffffff;
 }
 .doc-canvas .ck.ck-editor__editable {
   background: #ffffff;
   width: 100%;
-  max-width: 794px; /* ~A4 at 96dpi */
+  max-width: none; /* fill the editor panel — no wasted side margins */
   min-height: 1000px;
-  margin: 16px auto;
-  padding: 56px 64px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  margin: 0;
+  padding: 40px clamp(24px, 6%, 64px);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 .doc-canvas .ck.ck-toolbar {
   border: none;
   border-bottom: 1px solid var(--border);
   border-radius: 0;
   background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-.doc-canvas .ck-editor__editable:focus { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); }
+.doc-canvas .ck-editor__editable:focus { box-shadow: none; }
+/* Document editor opens as a drawer sliding in from the left. */
+@keyframes drawerInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.drawer-left { animation: drawerInLeft 0.22s ease-out; }
+
 .ck-content h1 { font-size: 1.6em; }
 .ck-content h2 { font-size: 1.3em; }
 .ck-content h3 { font-size: 1.1em; }
