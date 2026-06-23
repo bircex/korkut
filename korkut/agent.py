@@ -1,4 +1,4 @@
-"""Korkut agent entry point — the single brain used by both the CLI and the Mattermost bridge.
+"""Korkut agent entry point — the single brain used by both the CLI and the web app.
 
 Wires the persona + the available tools + the model router into one `answer()` call. The
 router picks the backend (cloud=Claude for the trial), redacts cloud-bound text, runs the

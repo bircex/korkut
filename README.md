@@ -1,7 +1,7 @@
 # Korkut
 
 An assistant that runs a law firm's daily work (court hearing reminders, petition drafts, legal
-research) over **Mattermost**, **keeping the data in the office**. The user
+research) over a **self-hosted chat web app**, **keeping the data in the office**. The user
 talks to a single identity — **Korkut** — while specialized modules run in parallel under the hood.
 
 > ⚠️ This repo is private. Client data (`data/`), secrets (`.env`), and backups **never**
@@ -12,14 +12,14 @@ talks to a single identity — **Korkut** — while specialized modules run in p
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — technical design: process topology, message flow, core,
   data model, Korkut's internal structure, **tools layer (§12)**, approval flow
 - **[SOURCES.md](SOURCES.md)** — legal data sources and access (case law/legislation)
-- **[SECURITY.md](SECURITY.md)** — single-gate Mattermost, mobile, 2FA, network hardening
+- **[SECURITY.md](SECURITY.md)** — single gateway (the web app), mobile, 2FA, network hardening
 - **[CORPUS.md](CORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
 - **[COMPETITORS.md](COMPETITORS.md)** — competitor products (preliminary review); detailed research pending
 
 ## Architecture overview
-- **Interface:** self-hosted Mattermost (single gate, mobile, mandatory 2FA); channels + DMs
+- **Interface:** our own self-hosted chat web app (`web/`) — login + DM-style chat, mobile-responsive, no third-party platform
 - **Korkut:** single identity; specialized modules under the hood — routing, court hearing, petition, research (parallel)
-- **Model:** cloud = GPT (with redacted text); local model once the hardware arrives
+- **Model:** cloud = Claude for the trial, GPT later (with redacted text); local model once the hardware arrives
 - **Capabilities:** tools under `tools/`, run from the CLI, configured into Korkut
 - **Data:** Postgres + `data/files/`; all on the server
 
@@ -32,7 +32,10 @@ Design complete (PLAN/ARCHITECTURE/SOURCES/SECURITY/CORPUS/COMPETITORS).
   `core/providers/gpt.py` (OpenAI tool-calling loop), `core/db.py` (SQLAlchemy models:
   client/case/hearing/petition). 58 tests passing.
 
-Next: Mattermost bridge (Phase 2) + the Korkut agent loop, then hearing/petition/research modules.
+- **Web UI (done):** self-hosted FastAPI chat app under `web/` — closed-enrolment auth (no
+  signup), per-user history, single-page Turkish UI (black theme). See LOCAL_TRIAL.md.
+
+Next: hearing/petition/research modules, then production security hardening (HTTPS, 2FA — SECURITY.md).
 
 ## Quickstart (dev)
 ```bash
