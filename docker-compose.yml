@@ -33,6 +33,9 @@ services:
       MM_SERVICESETTINGS_SITEURL: http://localhost:8065
       MM_SERVICESETTINGS_ENABLEBOTACCOUNTCREATION: "true"
       MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
+      # White-label (Level 1, free on Team Edition): the office/brand name replaces
+      # "Mattermost" in the tab title, app header, and notification emails.
+      MM_TEAMSETTINGS_SITENAME: "${SITE_NAME:-Korkut}"
     volumes:
       - mm-config:/mattermost/config
       - mm-data:/mattermost/data
