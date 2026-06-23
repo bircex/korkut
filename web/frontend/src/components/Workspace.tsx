@@ -186,20 +186,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           ☰
         </button>
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-900 text-[12px] font-bold text-white">
-            {initials(user)}
-          </span>
-          <span className="hidden text-sm font-medium text-zinc-800 sm:inline">
-            {user.full_name ?? user.username}
-          </span>
-        </div>
-        <div className="ml-2 flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-[11px] font-extrabold text-white">
             CH
           </span>
           <span className="font-bold">Korkut</span>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           <button
             onClick={() => (docOpen ? setDocOpen(false) : openDoc())}
             className={
@@ -209,12 +201,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           >
             📄 Belge
           </button>
-          <button
-            onClick={onLogout}
-            className="rounded-md border border-zinc-300 px-2.5 py-1 text-[13px] text-zinc-600 hover:text-zinc-900"
-          >
-            Çıkış
-          </button>
+          <div className="flex items-center gap-2 border-l border-zinc-200 pl-3">
+            <span className="hidden text-sm font-medium text-zinc-800 sm:inline">
+              {user.full_name ?? user.username}
+            </span>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-900 text-[12px] font-bold text-white">
+              {initials(user)}
+            </span>
+            <button
+              onClick={onLogout}
+              className="rounded-md border border-zinc-300 px-2.5 py-1 text-[13px] text-zinc-600 hover:text-zinc-900"
+            >
+              Çıkış
+            </button>
+          </div>
         </div>
       </header>
 
