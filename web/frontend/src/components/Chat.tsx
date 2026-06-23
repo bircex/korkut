@@ -15,6 +15,7 @@ function greetingWithCoverage(total: number): string {
 
 export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [coverage, setCoverage] = useState(0);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -22,6 +23,13 @@ export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   useEffect(() => {
     async function load() {
+      let total = 0;
+      try {
+        total = (await api.coverage()).total_decisions;
+        setCoverage(total);
+      } catch {
+        /* coverage is best-effort */
+      }
       let rows: ChatMessage[] = [];
       try {
         rows = await api.history();
@@ -32,14 +40,9 @@ export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
         setMessages(rows);
         return;
       }
-      let content = BASE_GREETING;
-      try {
-        const cov = await api.coverage();
-        if (cov.total_decisions > 0) content = greetingWithCoverage(cov.total_decisions);
-      } catch {
-        /* keep base greeting */
-      }
-      setMessages([{ role: "assistant", content }]);
+      setMessages([
+        { role: "assistant", content: total > 0 ? greetingWithCoverage(total) : BASE_GREETING },
+      ]);
     }
     load();
   }, []);
@@ -91,6 +94,12 @@ export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
           </button>
         </div>
       </header>
+
+      {coverage > 0 && (
+        <div className="border-b border-zinc-900 bg-zinc-950 px-4 py-1.5 text-center text-[12px] text-zinc-500">
+          {coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim
+        </div>
+      )}
 
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
         {messages.map((m, i) => (
