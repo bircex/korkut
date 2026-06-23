@@ -27,6 +27,7 @@ dev = [
     "pytest-asyncio>=0.23",
     "respx>=0.21",
     "ruff>=0.6",
+    "SQLAlchemy>=2.0",
 ]
 
 [build-system]

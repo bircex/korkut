@@ -60,6 +60,43 @@ def available_tools() -> list[ToolSpec]:
     return [s for s in discover() if s.available]
 
 
+_JSON_TYPES = {
+    "string": "string",
+    "integer": "integer",
+    "number": "number",
+    "boolean": "boolean",
+}
+
+
+def to_openai_tools(specs: list[ToolSpec]) -> list[dict[str, Any]]:
+    """Convert ToolSpecs into OpenAI function-calling tool definitions."""
+    tools: list[dict[str, Any]] = []
+    for spec in specs:
+        properties: dict[str, Any] = {}
+        required: list[str] = []
+        for pname, p in (spec.parameters or {}).items():
+            p = p or {}
+            prop: dict[str, Any] = {"type": _JSON_TYPES.get(p.get("type", "string"), "string")}
+            if p.get("description"):
+                prop["description"] = p["description"]
+            if p.get("options"):
+                prop["enum"] = p["options"]
+            properties[pname] = prop
+            if p.get("required"):
+                required.append(pname)
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": spec.name,
+                    "description": spec.description,
+                    "parameters": {"type": "object", "properties": properties, "required": required},
+                },
+            }
+        )
+    return tools
+
+
 def run(name: str, params: dict[str, Any]) -> Any:
     """Run a tool by its declared name."""
     for spec in discover():
