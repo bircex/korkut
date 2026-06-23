@@ -1,7 +1,7 @@
 [project]
 name = "korkut"
 version = "0.1.0"
-description = "Korkut — AI assistant for a law office over Mattermost (single identity, specialty modules)"
+description = "Korkut — AI assistant for a law office over a self-hosted chat UI (single identity, specialty modules)"
 requires-python = ">=3.12"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -18,7 +18,8 @@ dependencies = [
 app = [
     "anthropic>=0.40",
     "openai>=1.40",
-    "mattermostdriver>=7.3",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
     "psycopg[binary]>=3.2",
     "python-docx>=1.1",
     "SQLAlchemy>=2.0",
@@ -36,7 +37,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "tools", "bridge", "korkut"]
+packages = ["core", "tools", "web", "korkut"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

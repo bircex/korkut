@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Cankar Hukuk</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main id="login-view" class="view hidden">
+    <form id="login-form" class="card" autocomplete="on">
+      <div class="brand">
+        <div class="brand-mark">CH</div>
+        <div class="brand-text">
+          <h1>Cankar Hukuk</h1>
+          <p>Korkut — hukuk asistanınız</p>
+        </div>
+      </div>
+      <label for="username">Kullanıcı adı</label>
+      <input id="username" name="username" type="text" autocomplete="username" required autofocus />
+      <label for="password">Parola</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+      <button id="login-btn" type="submit">Giriş yap</button>
+      <p id="login-error" class="error hidden"></p>
+    </form>
+  </main>
+
+  <main id="chat-view" class="view hidden">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <span class="brand-mark sm">CH</span>
+        <span class="topbar-title">Korkut</span>
+      </div>
+      <button id="logout-btn" class="ghost" title="Çıkış">Çıkış</button>
+    </header>
+    <section id="messages" class="messages"></section>
+    <form id="chat-form" class="composer">
+      <textarea id="chat-input" rows="1" placeholder="Korkut'a yazın…" autocomplete="off"></textarea>
+      <button id="send-btn" type="submit" title="Gönder">Gönder</button>
+    </form>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

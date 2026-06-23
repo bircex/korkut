@@ -1,6 +1,7 @@
-# Local trial stack: Mattermost (single gateway) + Postgres (Mattermost DB + Korkut app DB).
-# Bring up:  docker compose up -d   → Mattermost at http://localhost:8065
-# Data lives in named volumes (nothing in the repo).
+# Local trial stack: Korkut web app (self-hosted chat UI) + Postgres.
+# Bring up:  docker compose up -d   → Korkut at http://localhost:8080
+# Everything stays on this machine; only the redacted, cloud-bound traffic the router
+# chooses ever leaves (ARCHITECTURE.md §4, §13). Client data lives in named volumes.
 services:
   db:
     image: postgres:16-alpine
@@ -8,63 +9,31 @@ services:
     environment:
       POSTGRES_USER: korkut
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korkutdev}
-      POSTGRES_DB: mattermost
+      POSTGRES_DB: korkut
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U korkut"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  mattermost:
-    image: mattermost/mattermost-team-edition:latest
-    platform: linux/amd64    # no arm64 manifest; runs under emulation on Apple Silicon
+  korkut:
+    build: .
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    expose:
-      - "8065"        # internal only; the nginx proxy publishes 8065 to the host
-    environment:
-      MM_SQLSETTINGS_DRIVERNAME: postgres
-      MM_SQLSETTINGS_DATASOURCE: "postgres://korkut:${POSTGRES_PASSWORD:-korkutdev}@db:5432/mattermost?sslmode=disable&connect_timeout=10"
-      MM_SERVICESETTINGS_SITEURL: http://localhost:8065
-      MM_SERVICESETTINGS_ENABLEBOTACCOUNTCREATION: "true"
-      MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"
-      # White-label (free on Team Edition): the office/brand name replaces "Mattermost"
-      # in the tab title, app header, and notification emails.
-      MM_TEAMSETTINGS_SITENAME: "${SITE_NAME:-Cankar Hukuk}"
-      # NOTE: forcing an org-wide theme (DefaultTheme/EnableThemeSelection) is an ENTERPRISE
-      # feature — ignored on Team Edition. Free options: each user picks "Mattermost Dark"
-      # in Display settings, or inject custom CSS/logo (see branding/README.md).
-      MM_THEMESETTINGS_DEFAULTTHEME: "mattermostDark"
-      MM_THEMESETTINGS_ENABLETHEMESELECTION: "false"
-    volumes:
-      - mm-config:/mattermost/config
-      - mm-data:/mattermost/data
-      - mm-logs:/mattermost/logs
-      - mm-plugins:/mattermost/plugins
-      - mm-client-plugins:/mattermost/client/plugins
-
-  # Reverse proxy: injects the Cankar Hukuk brand CSS (free white-label) and is the
-  # TLS-termination point later (SECURITY.md §1). Users reach Mattermost through here.
-  proxy:
-    image: nginx:alpine
-    restart: unless-stopped
-    depends_on:
-      - mattermost
     ports:
-      - "8065:8065"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./branding/cankar-brand.css:/etc/nginx/branding/cankar-brand.css:ro
+      - "8080:8080"
+    environment:
+      KORKUT_DB_URL: "postgresql+psycopg://korkut:${POSTGRES_PASSWORD:-korkutdev}@db:5432/korkut"
+      KORKUT_HOST: "0.0.0.0"
+      KORKUT_PORT: "8080"
+      KORKUT_SECRET: "${KORKUT_SECRET:?set KORKUT_SECRET in .env}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}"
+      ANTHROPIC_MODEL: "${ANTHROPIC_MODEL:-claude-opus-4-8}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
 
 volumes:
   db-data:
-  mm-config:
-  mm-data:
-  mm-logs:
-  mm-plugins:
-  mm-client-plugins:
