@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, ApiError, type ChatMessage, type SessionBrief, type User } from "../api";
+import { DocumentPanel } from "./DocumentPanel";
 
 const BASE_GREETING =
   "Merhaba, ben Korkut. Cankar Hukuk asistanınız. Size nasıl yardımcı olabilirim?";
@@ -34,6 +35,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [attachment, setAttachment] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -78,6 +80,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     setCurrentId(null);
     setMessages([greeting(coverage)]);
     setSidebarOpen(false);
+    setDocOpen(false);
+  }
+
+  async function openDoc() {
+    let id = currentId;
+    if (id === null) {
+      const created = await api.createSession();
+      id = created.id;
+      setCurrentId(id);
+      setSessions((s) => [created, ...s]);
+    }
+    setDocOpen(true);
   }
 
   async function remove(id: number) {
@@ -214,18 +228,32 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="flex min-w-0 flex-1">
+        <div className={"min-w-0 flex-1 flex-col " + (docOpen ? "hidden sm:flex" : "flex")}>
         <header className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-4 py-3 sm:hidden">
           <button onClick={() => setSidebarOpen(true)} className="text-zinc-300" title="Sohbetler">
             ☰
           </button>
           <span className="font-bold">Korkut</span>
         </header>
-        {coverage > 0 && (
-          <div className="border-b border-zinc-900 bg-zinc-950 px-4 py-1.5 text-center text-[12px] text-zinc-500">
-            {coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim
-          </div>
-        )}
+        <div className="flex items-center gap-3 border-b border-zinc-900 bg-zinc-950 px-4 py-1.5 text-[12px] text-zinc-500">
+          <span className="min-w-0 flex-1 truncate text-center">
+            {coverage > 0
+              ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim`
+              : ""}
+          </span>
+          <button
+            onClick={() => (docOpen ? setDocOpen(false) : openDoc())}
+            className={
+              "shrink-0 rounded-md border px-2 py-1 " +
+              (docOpen
+                ? "border-white text-white"
+                : "border-zinc-700 text-zinc-300 hover:text-white")
+            }
+          >
+            📄 Belge
+          </button>
+        </div>
 
         <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
           {messages.map((m, i) => (
@@ -317,6 +345,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             Gönder
           </button>
         </form>
+        </div>
+        {docOpen && currentId !== null && (
+          <div className="flex w-full min-w-0 sm:w-1/2">
+            <DocumentPanel key={currentId} sessionId={currentId} onClose={() => setDocOpen(false)} />
+          </div>
+        )}
       </main>
     </div>
   );

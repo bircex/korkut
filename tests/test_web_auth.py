@@ -209,3 +209,76 @@ def test_upload_rejects_disallowed_type(client):
         files={"file": ("evil.exe", b"MZ\x90\x00 malicious", "application/octet-stream")},
     )
     assert r.status_code == 400
+
+
+def test_document_draft_accept_revert(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    doc = client.get(f"/api/sessions/{cid}/document").json()
+    assert doc["content_md"] == "" and doc["pending"] is None
+    did = doc["id"]
+
+    with patch.object(appmod.agent, "answer", return_value="# Dava Dilekçesi\n\n**Davacı:** X"):
+        r = client.post(f"/api/documents/{did}/draft", json={"instruction": "boşanma dilekçesi"})
+    assert r.status_code == 200 and "Dava Dilekçesi" in r.json()["content_md"]
+
+    # Proposed but NOT applied yet (approval invariant).
+    doc = client.get(f"/api/sessions/{cid}/document").json()
+    assert doc["pending"] is not None and doc["content_md"] == ""
+
+    doc = client.post(f"/api/documents/{did}/accept").json()
+    assert "Dava Dilekçesi" in doc["content_md"] and doc["pending"] is None
+    assert len(doc["versions"]) == 1 and doc["versions"][0]["author"] == "korkut"
+
+    with patch.object(appmod.agent, "answer", return_value="# Tamamen Değişti"):
+        client.post(f"/api/documents/{did}/draft", json={})
+    doc = client.post(f"/api/documents/{did}/revert").json()
+    assert "Dava Dilekçesi" in doc["content_md"] and doc["pending"] is None
+
+
+def test_document_strips_code_fences(client):
+    from unittest.mock import patch
+
+    import web.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{cid}/document").json()["id"]
+    with patch.object(appmod.agent, "answer", return_value="```markdown\n# Başlık\n```"):
+        r = client.post(f"/api/documents/{did}/draft", json={})
+    assert r.json()["content_md"] == "# Başlık"
+
+
+def test_document_manual_save_versions(client):
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{cid}/document").json()["id"]
+    doc = client.put(
+        f"/api/documents/{did}", json={"title": "Temyiz", "content_md": "## İçerik"}
+    ).json()
+    assert doc["title"] == "Temyiz"
+    assert len(doc["versions"]) == 1 and doc["versions"][0]["author"] == "avukat"
+
+
+def test_document_export_docx_and_udf(client):
+    import io
+    import zipfile
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{cid}/document").json()["id"]
+    client.put(
+        f"/api/documents/{did}",
+        json={"title": "Dilekçe", "content_md": "# Başlık\n\n**Kalın** metin\n\n- birinci madde"},
+    )
+    rd = client.get(f"/api/documents/{did}/export?format=docx")
+    assert rd.status_code == 200 and rd.content[:2] == b"PK"  # docx is a zip
+    ru = client.get(f"/api/documents/{did}/export?format=udf")
+    assert ru.status_code == 200
+    z = zipfile.ZipFile(io.BytesIO(ru.content))
+    assert "content.xml" in z.namelist()
+    assert b"Ba\xc5\x9fl\xc4\xb1k" in z.read("content.xml")  # "Başlık" in UTF-8

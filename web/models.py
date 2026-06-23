@@ -87,6 +87,53 @@ class Message(Base):
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
+class Document(Base):
+    """A legal document (petition draft) attached to a session — the Canvas content.
+
+    One document per session in v1. `content_md` is the current accepted markdown (source of
+    truth); WYSIWYG editing and UDF/DOCX export derive from it.
+    """
+
+    __tablename__ = "documents"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(200), default="Belge")
+    content_md: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(30), default="draft")
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+    versions: Mapped[list["DocumentVersion"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.id"
+    )
+
+
+class DocumentVersion(Base):
+    """An accepted snapshot of a document (history / undo / audit)."""
+
+    __tablename__ = "document_versions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
+    content_md: Mapped[str] = mapped_column(Text)
+    author: Mapped[str] = mapped_column(String(64))  # "korkut" | "<username>"
+    note: Mapped[str | None] = mapped_column(String(200), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    document: Mapped[Document] = relationship(back_populates="versions")
+
+
+class ProposedEdit(Base):
+    """Korkut's proposed new content, pending the lawyer's accept/revert (one pending at a time)."""
+
+    __tablename__ = "proposed_edits"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
+    content_md: Mapped[str] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(String(300), default=None)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|reverted
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
 class AuthEvent(Base):
     """Append-only audit trail for authentication events (KVKK / incident response)."""
 

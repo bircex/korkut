@@ -8,6 +8,16 @@ export type SessionBrief = {
   updated_at: string | null;
 };
 export type SessionDetail = SessionBrief & { messages: ChatMessage[] };
+export type DocVersion = { id: number; author: string; note: string | null; created_at: string | null };
+export type PendingEdit = { id: number; content_md: string; summary: string | null };
+export type DocumentData = {
+  id: number;
+  title: string;
+  content_md: string;
+  status: string;
+  versions: DocVersion[];
+  pending: PendingEdit | null;
+};
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
 export type Coverage = {
@@ -97,4 +107,22 @@ export const api = {
     }
     return (await res.json()) as { reply: string; title: string; user_display: string };
   },
+  getDocument: (sessionId: number) =>
+    request<DocumentData>(`/api/sessions/${sessionId}/document`),
+  draftDocument: (docId: number, instruction: string) =>
+    request<PendingEdit>(`/api/documents/${docId}/draft`, {
+      method: "POST",
+      body: JSON.stringify({ instruction }),
+    }),
+  acceptEdit: (docId: number) =>
+    request<DocumentData>(`/api/documents/${docId}/accept`, { method: "POST" }),
+  revertEdit: (docId: number) =>
+    request<DocumentData>(`/api/documents/${docId}/revert`, { method: "POST" }),
+  saveDocument: (docId: number, title: string, content_md: string) =>
+    request<DocumentData>(`/api/documents/${docId}`, {
+      method: "PUT",
+      body: JSON.stringify({ title, content_md }),
+    }),
+  exportUrl: (docId: number, format: "docx" | "udf") =>
+    `/api/documents/${docId}/export?format=${format}`,
 };

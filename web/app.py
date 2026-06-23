@@ -18,7 +18,9 @@ HttpOnly + SameSite=Strict (+ Secure behind TLS) cookies. See SECURITY.md.
 
 from __future__ import annotations
 
+import difflib
 import os
+import re
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -33,7 +35,16 @@ from sqlalchemy.orm import Session
 
 from korkut import agent
 from web import auth, extract, totp
-from web.models import AuthEvent, Conversation, Message, RecoveryCode, User
+from web.models import (
+    AuthEvent,
+    Conversation,
+    Document,
+    DocumentVersion,
+    Message,
+    ProposedEdit,
+    RecoveryCode,
+    User,
+)
 from web.store import session
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -476,6 +487,186 @@ def session_upload(
         s.commit()
         title = conv.title
     return {"reply": reply, "title": title, "user_display": display}
+
+
+# ---------------- document editor (petition Canvas) ----------------
+
+class DraftBody(BaseModel):
+    instruction: str = ""
+
+
+class DocSaveBody(BaseModel):
+    title: str | None = None
+    content_md: str
+
+
+def _pending(s: Session, doc_id: int):
+    return s.scalar(
+        select(ProposedEdit)
+        .where(ProposedEdit.document_id == doc_id, ProposedEdit.status == "pending")
+        .order_by(ProposedEdit.id.desc())
+    )
+
+
+def _doc_brief(doc: Document, pending: ProposedEdit | None) -> dict:
+    return {
+        "id": doc.id,
+        "title": doc.title,
+        "content_md": doc.content_md,
+        "status": doc.status,
+        "versions": [
+            {"id": v.id, "author": v.author, "note": v.note,
+             "created_at": v.created_at.isoformat() if v.created_at else None}
+            for v in doc.versions
+        ],
+        "pending": (
+            {"id": pending.id, "content_md": pending.content_md, "summary": pending.summary}
+            if pending else None
+        ),
+    }
+
+
+def _strip_fences(text: str) -> str:
+    t = (text or "").strip()
+    if t.startswith("```"):
+        lines = t.split("\n")
+        lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        t = "\n".join(lines).strip()
+    return t
+
+
+def _diffstat(a: str, b: str) -> tuple[int, int]:
+    added = removed = 0
+    for line in difflib.unified_diff(a.split("\n"), b.split("\n"), lineterm=""):
+        if line.startswith("+") and not line.startswith("+++"):
+            added += 1
+        elif line.startswith("-") and not line.startswith("---"):
+            removed += 1
+    return added, removed
+
+
+@app.get("/api/sessions/{cid}/document")
+def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        conv = s.get(Conversation, cid)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        doc = s.scalar(select(Document).where(Document.conversation_id == cid))
+        if not doc:
+            doc = Document(conversation_id=cid, title=(conv.title or "Belge")[:200], content_md="")
+            s.add(doc)
+            s.commit()
+        return _doc_brief(doc, _pending(s, doc.id))
+
+
+@app.post("/api/documents/{doc_id}/draft")
+def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Cookie(default=None)):
+    """Korkut drafts/edits the document; the result is a pending ProposedEdit (not yet applied)."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        current = doc.content_md
+        rows = s.scalars(
+            select(Message).where(Message.conversation_id == doc.conversation_id).order_by(Message.id)
+        ).all()
+        history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
+
+    instr = (body.instruction or "").strip() or "Bu belgeyi gözden geçir ve geliştir."
+    prompt = (
+        "[BELGE MODU] Bir hukuki belge (dilekçe) üzerinde çalışıyorsun.\n"
+        f"Talimat: {instr}\n\n"
+        "Mevcut belge (boşsa sıfırdan oluştur):\n"
+        f"<<<\n{current or '(boş)'}\n>>>\n\n"
+        "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
+        "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
+    )
+    proposed = _strip_fences(agent.answer(prompt, history=history))
+    added, removed = _diffstat(current, proposed)
+
+    with session() as s:
+        old = _pending(s, doc_id)
+        if old:
+            old.status = "superseded"
+        pe = ProposedEdit(document_id=doc_id, content_md=proposed, summary=f"+{added} / -{removed} satır")
+        s.add(pe)
+        s.commit()
+        return {"id": pe.id, "content_md": proposed, "summary": pe.summary}
+
+
+@app.post("/api/documents/{doc_id}/accept")
+def accept_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        pe = _pending(s, doc_id)
+        if not pe:
+            raise HTTPException(status_code=400, detail="Bekleyen değişiklik yok")
+        doc.content_md = pe.content_md
+        pe.status = "accepted"
+        s.add(DocumentVersion(document_id=doc_id, content_md=pe.content_md, author="korkut", note=pe.summary))
+        s.commit()
+        return _doc_brief(doc, None)
+
+
+@app.post("/api/documents/{doc_id}/revert")
+def revert_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        pe = _pending(s, doc_id)
+        if pe:
+            pe.status = "reverted"
+            s.commit()
+        return _doc_brief(doc, None)
+
+
+@app.put("/api/documents/{doc_id}")
+def save_document(doc_id: int, body: DocSaveBody, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        if body.title is not None:
+            doc.title = body.title[:200] or doc.title
+        if body.content_md != doc.content_md:
+            doc.content_md = body.content_md
+            s.add(DocumentVersion(document_id=doc_id, content_md=body.content_md,
+                                  author=user.username, note="elle düzenleme"))
+        s.commit()
+        return _doc_brief(doc, _pending(s, doc_id))
+
+
+@app.get("/api/documents/{doc_id}/export")
+def export_document(doc_id: int, format: str = "docx", korkut_session: str | None = Cookie(default=None)):
+    from web import docexport
+
+    if format not in docexport.RENDERERS:
+        raise HTTPException(status_code=400, detail="Desteklenmeyen biçim")
+    with session() as s:
+        _require_user(s, korkut_session)
+        doc = s.get(Document, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        title, md = doc.title, doc.content_md
+
+    mime, render = docexport.RENDERERS[format]
+    data = render(title, md)
+    # ASCII-only filename (HTTP headers are latin-1; Turkish chars would break the header).
+    safe = re.sub(r"[^A-Za-z0-9_\-]+", "_", title).strip("_")[:60] or "belge"
+    return Response(
+        content=data, media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{safe}.{format}"'},
+    )
 
 
 # ---------------- recovery codes / QR ----------------
