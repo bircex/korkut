@@ -65,9 +65,12 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
       </p>
       <div className="my-1 flex justify-center">
         {prov ? (
-          <div
-            className="h-48 w-48 rounded-lg bg-white p-2 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
-            dangerouslySetInnerHTML={{ __html: prov.qr_svg }}
+          <img
+            src={prov.qr}
+            alt="2FA QR kodu"
+            width={192}
+            height={192}
+            className="h-48 w-48 rounded-lg bg-white p-2 [image-rendering:pixelated]"
           />
         ) : (
           <div className="grid h-44 w-44 place-items-center text-sm text-zinc-500">
