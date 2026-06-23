@@ -115,3 +115,19 @@ body {
   border-top: 1px solid #27272a;
   margin: 1em 0;
 }
+
+/* TipTap editor surface */
+.doc-editor .ProseMirror {
+  outline: none;
+  min-height: 100%;
+}
+.doc-editor .ProseMirror:focus {
+  outline: none;
+}
+.doc-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: "Belgeyi buraya yazın ya da Korkut'a yaptırın…";
+  color: #52525b;
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
