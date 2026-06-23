@@ -38,11 +38,11 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
         <div className="mb-2">
           <Brand subtitle="Kurtarma kodları" />
         </div>
-        <p className="m-0 text-sm text-zinc-400">
+        <p className="m-0 text-sm text-zinc-600">
           Bu kodları güvenli bir yere kaydedin. Telefonunuzu kaybederseniz giriş için
-          gerekir. <strong className="text-zinc-200">Bir daha gösterilmeyecek.</strong>
+          gerekir. <strong className="text-zinc-900">Bir daha gösterilmeyecek.</strong>
         </p>
-        <div className="my-2 grid grid-cols-2 gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-4 font-mono text-sm">
+        <div className="my-2 grid grid-cols-2 gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm">
           {codes.map((c) => (
             <span key={c}>{c}</span>
           ))}
@@ -59,7 +59,7 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
       <div className="mb-2">
         <Brand subtitle="İki adımlı doğrulama kurulumu" />
       </div>
-      <p className="m-0 text-sm text-zinc-400">
+      <p className="m-0 text-sm text-zinc-600">
         Güvenlik için 2FA zorunludur. Authenticator uygulamanızla (Google Authenticator,
         Authy, 1Password…) QR kodu okutun, sonra çıkan 6 haneli kodu girin.
       </p>
@@ -80,7 +80,7 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
       </div>
       {prov && (
         <p className="m-0 break-all text-center text-[11px] text-zinc-500">
-          Elle giriş anahtarı: <span className="font-mono text-zinc-400">{prov.secret}</span>
+          Elle giriş anahtarı: <span className="font-mono text-zinc-600">{prov.secret}</span>
         </p>
       )}
       <form onSubmit={submit} className="mt-1 flex flex-col gap-3">

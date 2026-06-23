@@ -9,14 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tiptap/pm": "^3.27.1",
-    "@tiptap/react": "^3.27.1",
-    "@tiptap/starter-kit": "^3.27.1",
+    "@ckeditor/ckeditor5-react": "^11.2.0",
+    "ckeditor5": "^48.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "tiptap-markdown": "^0.9.0"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

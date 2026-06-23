@@ -27,7 +27,7 @@ export function Mfa({ onDone }: { onDone: (user: User) => void }) {
         <Brand subtitle="İki adımlı doğrulama" />
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3">
-        <p className="m-0 text-sm text-zinc-400">
+        <p className="m-0 text-sm text-zinc-600">
           {recovery
             ? "Kurtarma kodunuzu girin."
             : "Authenticator uygulamanızdaki 6 haneli kodu girin."}
@@ -51,7 +51,7 @@ export function Mfa({ onDone }: { onDone: (user: User) => void }) {
             setCode("");
             setError("");
           }}
-          className="mt-1 text-[13px] text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+          className="mt-1 text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
         >
           {recovery ? "Authenticator kodu kullan" : "Kurtarma kodu kullan"}
         </button>
