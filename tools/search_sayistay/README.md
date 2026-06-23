@@ -45,13 +45,21 @@ echo '{"query": "harcırah", "decision_type": "daire"}' | python -m tools.search
 ```
 
 ## Notes
-- The portal uses ASP.NET WebForms: the client first fetches the search page to
-  obtain a session cookie and the `__RequestVerificationToken` (CSRF) value, then
-  submits a form-urlencoded DataTables POST.
-- Each decision type returns a different row schema, so per-type field mappings
-  are applied to produce the shared output contract. **The exact form field names
-  and the full-text search field per type are best-effort and should be verified
-  against the live API** before relying on them in production.
-- An upstream WAF may answer the search POST with HTTP 418 / a Turkish block page;
-  this is surfaced as a clear error.
+- The portal is ASP.NET Core MVC with a server-side jQuery DataTables grid. The
+  client first GETs the search page to obtain the `.AspNetCore.Antiforgery.*`
+  cookie and the `__RequestVerificationToken`, then submits a form-urlencoded POST
+  to `.../DataTablesList`.
+- The POST body must include the **complete** server-side DataTables payload:
+  `draw`, `start`, `length`, `search[value]`, one `columns[i][...]` group per
+  declared column, and an `order[0][...]` group — plus the page's filter-model
+  fields (e.g. `KararlarGenelKurulAra.KARARTAMAMI` carries the full-text query).
+  Omitting the `columns[]`/`order[]` arrays makes the ASP.NET model binder fail
+  with **HTTP 500**; that was the original cause of this tool's failure.
+- Each decision type declares different columns and filter fields, so per-type
+  request payloads and row mappings are applied to produce the shared output
+  contract. The endpoints, column orders and field names below are verified live
+  against `www.sayistay.gov.tr`.
+- An upstream WAF may answer with a Turkish block page ("Bilgi Güvenliği
+  Politikaları Gereği Kısıtlanmıştır"); this is surfaced as a clear
+  `SayistayWafBlocked` error rather than returning empty results.
 - Citations should be verified by opening the decision's detail `url`.

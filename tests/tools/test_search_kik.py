@@ -1,140 +1,65 @@
-"""Unit tests for search_kik (KİK v2 API mocked with respx; no network)."""
-
-import json
+"""Unit tests for search_kik (legacy WebForms portal mocked with respx)."""
 
 import httpx
+import pytest
 import respx
 
-from tools.search_kik.client import run_tool
+from tools.search_kik.client import KikClient, run_tool
 
-BASE = "https://ekapv2.kik.gov.tr/b_ihalearaclari/api/KurulKararlari"
-UYUSMAZLIK_URL = f"{BASE}/GetKurulKararlari"
-DUZENLEYICI_URL = f"{BASE}/GetKurulKararlariDk"
-MAHKEME_URL = f"{BASE}/GetKurulKararlariMk"
+SEARCH_URL = "https://ekap.kik.gov.tr/EKAP/Vatandas/KurulKararSorgu.aspx"
 
+# Minimal seed page exposing the WebForms state fields the client replays.
+SEED_HTML = """
+<html><body><form>
+<input type="hidden" name="__VIEWSTATE" value="vs-token" />
+<input type="hidden" name="__VIEWSTATEGENERATOR" value="gen" />
+<input type="hidden" name="__EVENTVALIDATION" value="ev-token" />
+</form></body></html>
+"""
 
-def _response(wrapper: str, result: str, records: list[dict]) -> dict:
-    return {
-        wrapper: {
-            result: {
-                "hataKodu": "0",
-                "hataMesaji": "",
-                "KurulKararTutanakDetayListesi": [{"kurulKararTutanakDetayi": records}],
-            }
-        }
-    }
-
-
-RECORD = {
-    "kararNo": "2025/UH.II-1801",
-    "kararTarihi": "2025-01-15T00:00:00",
-    "basvuran": "ACME Ltd.",
-    "idareAdi": "Örnek Belediyesi",
-    "basvuruKonusu": "aşırı düşük teklif değerlendirmesi",
-    "gundemMaddesiId": "177280",
-}
-
-SAMPLE = _response(
-    "SorgulaKurulKararlariResponse", "SorgulaKurulKararlariResult", [RECORD]
-)
+# Minimal results grid: one row with the 6 cells the parser expects.
+GRID_HTML = """
+<html><body>
+<table id="grdKurulKararSorguSonuc">
+  <tr>
+    <td><a href="#" onclick="__doPostBack(&#39;ctl00$ContentPlaceHolder1$grd$ctl02$btnOnizle&#39;,&#39;&#39;)">onizle</a></td>
+    <td>2026/UY.I-1661</td>
+    <td>18.06.2026</td>
+    <td>Karayollari Genel Mudurlugu</td>
+    <td>ABC Insaat A.S.</td>
+    <td>Mini bakim onarim ihalesi</td>
+  </tr>
+</table>
+</body></html>
+"""
 
 
 @respx.mock
-def test_search_parses_results():
-    route = respx.post(UYUSMAZLIK_URL).mock(return_value=httpx.Response(200, json=SAMPLE))
-    out = run_tool(query="aşırı düşük", limit=5)
-    assert route.called
-    assert out["total"] == 1
+def test_search_parses_grid_row():
+    respx.get(SEARCH_URL).mock(return_value=httpx.Response(200, text=SEED_HTML))
+    respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, text=GRID_HTML))
+    with KikClient() as client:
+        out = client.search("uyusmazlik", "ihale", limit=2, resolve_urls=False)
     assert out["count"] == 1
-    assert out["page"] == 1
-    first = out["results"][0]
-    assert first["id"] == "177280"
-    assert first["title"] == "aşırı düşük teklif değerlendirmesi"
-    assert first["decisionType"] == "uyusmazlik"
-    assert first["date"] == "2025-01-15T00:00:00"
-    assert first["url"].endswith("KararId=177280")
+    row = out["results"][0]
+    assert row["id"] == "2026/UY.I-1661"
+    assert row["date"] == "2026-06-18"
+    assert row["decisionType"] == "uyusmazlik"
+    assert "ihale" in row["title"].lower()
 
 
 @respx.mock
-def test_default_karar_turu_hits_uyusmazlik_endpoint_with_query():
-    route = respx.post(UYUSMAZLIK_URL).mock(return_value=httpx.Response(200, json=SAMPLE))
-    run_tool(query="ihale", karar_no="2025/UH.II-1801")
-    body = json.loads(route.calls.last.request.content)
-    pairs = body["sorgulaKurulKararlari"]["keyValuePairs"]["keyValueOfstringanyType"]
-    by_key = {p["key"]: p["value"] for p in pairs}
-    assert by_key["KararMetni"] == "ihale"
-    assert by_key["KararNo"] == "2025/UH.II-1801"
-
-
-@respx.mock
-def test_duzenleyici_routes_to_dk_endpoint():
-    sample = _response(
-        "SorgulaKurulKararlariDkResponse", "SorgulaKurulKararlariDkResult", [RECORD]
+def test_empty_grid_returns_no_results():
+    respx.get(SEARCH_URL).mock(return_value=httpx.Response(200, text=SEED_HTML))
+    respx.post(SEARCH_URL).mock(
+        return_value=httpx.Response(200, text="<html><body>no grid here</body></html>")
     )
-    route = respx.post(DUZENLEYICI_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="x", decision_type="duzenleyici")
-    assert route.called
-    assert out["results"][0]["decisionType"] == "duzenleyici"
-
-
-@respx.mock
-def test_mahkeme_routes_to_mk_endpoint():
-    sample = _response(
-        "SorgulaKurulKararlariMkResponse", "SorgulaKurulKararlariMkResult", [RECORD]
-    )
-    route = respx.post(MAHKEME_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="x", decision_type="mahkeme")
-    assert route.called
-    assert out["results"][0]["decisionType"] == "mahkeme"
-
-
-@respx.mock
-def test_client_side_pagination():
-    records = [dict(RECORD, gundemMaddesiId=str(i)) for i in range(25)]
-    sample = _response(
-        "SorgulaKurulKararlariResponse", "SorgulaKurulKararlariResult", records
-    )
-    respx.post(UYUSMAZLIK_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="x", limit=10, page=2)
-    assert out["total"] == 25
-    assert out["count"] == 10
-    assert out["page"] == 2
-    assert out["results"][0]["id"] == "10"
-
-
-@respx.mock
-def test_empty_results():
-    sample = _response(
-        "SorgulaKurulKararlariResponse", "SorgulaKurulKararlariResult", []
-    )
-    respx.post(UYUSMAZLIK_URL).mock(return_value=httpx.Response(200, json=sample))
-    out = run_tool(query="zzz")
-    assert out["total"] == 0
+    with KikClient() as client:
+        out = client.search("duzenleyici", "zzz", resolve_urls=False)
+    assert out["count"] == 0
     assert out["results"] == []
 
 
-@respx.mock
-def test_api_error_raises():
-    sample = {
-        "SorgulaKurulKararlariResponse": {
-            "SorgulaKurulKararlariResult": {
-                "hataKodu": "5",
-                "hataMesaji": "geçersiz sorgu",
-                "KurulKararTutanakDetayListesi": [],
-            }
-        }
-    }
-    respx.post(UYUSMAZLIK_URL).mock(return_value=httpx.Response(200, json=sample))
-    try:
-        run_tool(query="x")
-        raise AssertionError("expected RuntimeError")
-    except RuntimeError as exc:
-        assert "5" in str(exc)
-
-
-def test_invalid_karar_turu_raises():
-    try:
-        run_tool(query="x", decision_type="bogus")
-        raise AssertionError("expected ValueError")
-    except ValueError as exc:
-        assert "decision_type" in str(exc)
+def test_invalid_decision_type_raises():
+    with pytest.raises(ValueError):
+        run_tool(query="ihale", decision_type="bogus")
