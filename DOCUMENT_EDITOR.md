@@ -1,8 +1,11 @@
 # Document Editor — Architecture (design)
 
-> Status: **design only** (not yet built). This is the agreed blueprint for the petition-drafting
-> editor. Build order is in §10. Decisions locked with the user: **Word-like WYSIWYG editor**,
-> **UDF export for UYAP** (plus DOCX/PDF), **propose → approve/revert** editing, full versioning.
+> Status: **Phases 1–2 + DOCX/UDF export BUILT** (commit 431573f). Working end-to-end: TipTap
+> WYSIWYG split-pane, Korkut drafts via `/draft` (full-document markdown, redaction round-trip),
+> propose→accept/revert with diff stat, manual-edit versioning, DOCX + UDF download.
+> **Remaining:** PDF export, dilekçe templates + petition workflow (link to `Petition`), inline
+> word-level diff (now whole-document preview), and **UDF schema validation against a real UYAP
+> sample** (§11). Decisions locked: Word-like WYSIWYG, UDF for UYAP, propose→approve, versioning.
 
 ## 1. Goal
 A "Canvas" workspace where Korkut **drafts and edits legal documents** (primarily petitions —
