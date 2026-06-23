@@ -7,8 +7,13 @@ The brain runs on **Claude** (Anthropic) for the trial; switch to OpenAI later b
 ## 0. One-time dev setup
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]" "anthropic>=0.40" "fastapi>=0.115" "uvicorn[standard]>=0.30"
+.venv/bin/pip install -e ".[dev]" "anthropic>=0.40" "fastapi>=0.115" "uvicorn[standard]>=0.30" "segno>=1.6"
 cp .env.example .env          # then edit .env (see below)
+
+# Build the SPA (React + Vite) into web/static/ — needed before `python -m web`:
+npm --prefix web/frontend install
+npm --prefix web/frontend run build
+# During UI work, `npm --prefix web/frontend run dev` runs Vite on :5173 and proxies /api to :8080.
 ```
 
 ## 1. Quickest check — talk to the brain in the terminal (no UI)
@@ -39,8 +44,13 @@ Start the server:
 ```bash
 .venv/bin/python -m web        # → http://localhost:8080
 ```
-Open **http://localhost:8080**, log in, and chat with Korkut. On a phone, use the machine's
-LAN address (e.g. `http://192.168.1.10:8080`) — it is a responsive web app, no install needed.
+Open **http://localhost:8080** and log in. **First login forces 2FA setup**: scan the QR with
+an authenticator app (Google Authenticator / Authy / 1Password), enter the 6-digit code, and
+save the recovery codes shown once. After that, login is password + 6-digit code. On a phone,
+use the machine's LAN address (e.g. `http://192.168.1.10:8080`) — responsive web app, no install.
+
+Admin commands: `python -m web.adduser <user> --reset-2fa` (re-enrol), `--unlock` (clear a
+lockout), `--disable` (deactivate + revoke sessions).
 
 ## 3. Run with Docker (web app + Postgres)
 ```bash

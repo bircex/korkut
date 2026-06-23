@@ -7,6 +7,12 @@ secrets/
 *.key
 *.pem
 
+# Frontend build artifacts (the SPA is built from web/frontend/ into web/static/)
+web/frontend/node_modules/
+web/frontend/dist/
+web/frontend/*.tsbuildinfo
+web/static/
+
 # Python
 __pycache__/
 *.py[cod]
