@@ -59,7 +59,7 @@ def test_password_then_enroll_then_chat(client):
     # Provision a secret, confirm with a live code → session + recovery codes.
     prov = client.get("/api/2fa/provision").json()
     secret = prov["secret"]
-    assert prov["otpauth_uri"].startswith("otpauth://") and prov["qr_svg"]
+    assert prov["otpauth_uri"].startswith("otpauth://") and prov["qr"].startswith("data:image/png")
     r = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
     assert r.status_code == 200, r.text
     codes = r.json()["recovery_codes"]

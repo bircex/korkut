@@ -1,8 +1,14 @@
 export type LoginStep = "mfa" | "enroll";
 export type User = { username: string; full_name: string | null };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
-export type Provision = { secret: string; otpauth_uri: string; qr_svg: string };
+export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
+export type Coverage = {
+  total_decisions: number;
+  by_court: { label: string; total: number }[];
+  decision_sources: string[];
+  legislation: string;
+};
 
 export class ApiError extends Error {
   status: number;
@@ -34,6 +40,7 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 
 export const api = {
   me: () => request<User>("/api/me"),
+  coverage: () => request<Coverage>("/api/coverage"),
   login: (username: string, password: string) =>
     request<{ step: LoginStep }>("/api/login", {
       method: "POST",

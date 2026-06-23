@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, type ChatMessage, type User } from "../api";
 
-const GREETING: ChatMessage = {
-  role: "assistant",
-  content: "Merhaba, ben Korkut. Cankar Hukuk asistanınız. Size nasıl yardımcı olabilirim?",
-};
+const BASE_GREETING =
+  "Merhaba, ben Korkut. Cankar Hukuk asistanınız. Size nasıl yardımcı olabilirim?";
+
+function greetingWithCoverage(total: number): string {
+  const n = total.toLocaleString("tr-TR");
+  return (
+    `Merhaba, ben Korkut — Cankar Hukuk asistanınız. Şu an ${n} yargı kararına ` +
+    "ve tüm yürürlükteki mevzuata (Yargıtay, Danıştay, AYM, UYAP Emsal, KİK, Rekabet, " +
+    "Sayıştay, GİB, mevzuat.gov.tr) canlı erişiyorum. Size nasıl yardımcı olabilirim?"
+  );
+}
 
 export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -14,10 +21,27 @@ export function Chat({ user, onLogout }: { user: User; onLogout: () => void }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    api
-      .history()
-      .then((rows) => setMessages(rows.length ? rows : [GREETING]))
-      .catch(() => setMessages([GREETING]));
+    async function load() {
+      let rows: ChatMessage[] = [];
+      try {
+        rows = await api.history();
+      } catch {
+        /* fall through to greeting */
+      }
+      if (rows.length) {
+        setMessages(rows);
+        return;
+      }
+      let content = BASE_GREETING;
+      try {
+        const cov = await api.coverage();
+        if (cov.total_decisions > 0) content = greetingWithCoverage(cov.total_decisions);
+      } catch {
+        /* keep base greeting */
+      }
+      setMessages([{ role: "assistant", content }]);
+    }
+    load();
   }, []);
 
   useEffect(() => {

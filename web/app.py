@@ -220,7 +220,7 @@ def provision(korkut_ticket: str | None = Cookie(default=None)):
         user.totp_secret = totp.new_secret()
         s.commit()
         uri = totp.provisioning_uri(user.totp_secret, user.username, _ISSUER)
-        return {"secret": user.totp_secret, "otpauth_uri": uri, "qr_svg": _qr_svg(uri)}
+        return {"secret": user.totp_secret, "otpauth_uri": uri, "qr": _qr_data_uri(uri)}
 
 
 @app.post("/api/2fa/enroll")
@@ -310,6 +310,15 @@ def me(korkut_session: str | None = Cookie(default=None)):
         return {"username": user.username, "full_name": user.full_name}
 
 
+@app.get("/api/coverage")
+def coverage_stats(korkut_session: str | None = Cookie(default=None)):
+    """How many judicial decisions Korkut can search + the source list (measured live)."""
+    with session() as s:
+        _require_user(s, korkut_session)
+    from web import coverage
+    return coverage.summary()
+
+
 # ---------------- chat endpoints ----------------
 
 @app.get("/api/history")
@@ -360,10 +369,13 @@ def _consume_recovery_code(s: Session, user: User, code: str) -> bool:
     return False
 
 
-def _qr_svg(data: str) -> str:
+def _qr_data_uri(data: str) -> str:
+    # PNG data URI (segno's pure-Python PNG writer). A raster scales crisply in an <img> and
+    # avoids SVG viewBox/scaling pitfalls that can crop the code and break scanning.
     try:
         import segno
-        return segno.make(data, error="m").svg_inline(scale=5, dark="#000000", light="#ffffff")
+        return segno.make(data, error="m").png_data_uri(scale=8, border=4,
+                                                         dark="#000000", light="#ffffff")
     except Exception:
         return ""  # the otpauth_uri + secret are always returned for manual entry
 
