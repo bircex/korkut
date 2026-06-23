@@ -1,39 +1,19 @@
-# Local trial stack: Korkut web app (self-hosted chat UI) + Postgres.
-# Bring up:  docker compose up -d   → Korkut at http://localhost:8080
-# Everything stays on this machine; only the redacted, cloud-bound traffic the router
-# chooses ever leaves (ARCHITECTURE.md §4, §13). Client data lives in named volumes.
+# Local trial: Korkut web app in one container (self-hosted chat UI + brain + local OCR).
+#   docker compose up -d --build   → http://localhost:8090
+# Data (SQLite DB, coverage cache, uploads-in-memory only) lives in ./data on the host, so it
+# survives container rebuilds — accounts and 2FA enrolments are preserved across restarts.
+# Everything stays on this machine; only the redacted, cloud-bound traffic ever leaves.
+# (Production: swap KORKUT_DB_URL for a Postgres instance.)
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: korkut
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korkutdev}
-      POSTGRES_DB: korkut
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U korkut"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   korkut:
     build: .
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
+    env_file: .env
     environment:
-      KORKUT_DB_URL: "postgresql+psycopg://korkut:${POSTGRES_PASSWORD:-korkutdev}@db:5432/korkut"
       KORKUT_HOST: "0.0.0.0"
-      KORKUT_PORT: "8080"
-      KORKUT_SECRET: "${KORKUT_SECRET:?set KORKUT_SECRET in .env}"
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:?set ANTHROPIC_API_KEY in .env}"
-      ANTHROPIC_MODEL: "${ANTHROPIC_MODEL:-claude-opus-4-8}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
-
-volumes:
-  db-data:
+      KORKUT_PORT: "8090"
+      KORKUT_DB_URL: "sqlite:////app/data/korkut.db"
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data:/app/data
