@@ -4,7 +4,13 @@ from core import tool_registry
 from core.providers.gpt import GptProvider
 from core.tool_registry import ToolSpec
 
-SPEC = ToolSpec("search_yargitay", "Search.", {"query": {"type": "string", "required": True}}, None, "tools.search_yargitay")
+SPEC = ToolSpec(
+    "search_yargitay",
+    "Search.",
+    {"query": {"type": "string", "required": True}},
+    None,
+    "tools.search_yargitay",
+)
 
 
 class _Fn:
@@ -38,7 +44,11 @@ class _Client:
 
 
 def test_step_parses_tool_calls():
-    provider = GptProvider(client=_Client(_Msg(content=None, tool_calls=[_TC("c1", "search_yargitay", '{"query": "kira"}')])))
+    provider = GptProvider(
+        client=_Client(
+            _Msg(content=None, tool_calls=[_TC("c1", "search_yargitay", '{"query": "kira"}')])
+        )
+    )
     result = provider.step([{"role": "user", "content": "q"}], [SPEC])
     assert result.tool_calls == [{"id": "c1", "name": "search_yargitay", "args": {"query": "kira"}}]
 
@@ -54,7 +64,11 @@ def test_to_wire_serializes_full_history():
     messages = [
         {"role": "system", "content": "persona"},
         {"role": "user", "content": "soru"},
-        {"role": "assistant", "content": "", "tool_calls": [{"id": "c1", "name": "search_yargitay", "args": {"query": "k"}}]},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"id": "c1", "name": "search_yargitay", "args": {"query": "k"}}],
+        },
         {"role": "tool", "tool_results": [{"id": "c1", "name": "search_yargitay", "output": "{}"}]},
     ]
     provider.step(messages, [SPEC])

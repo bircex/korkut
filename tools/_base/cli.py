@@ -65,7 +65,7 @@ def run(tool_fn: Callable[..., Any]) -> None:
     except TypeError as exc:  # bad/missing params
         print(json.dumps({"error": "bad_params", "detail": str(exc)}))
         sys.exit(2)
-    except Exception as exc:  # noqa: BLE001 — surface any tool error as JSON
+    except Exception as exc:
         print(json.dumps({"error": type(exc).__name__, "detail": str(exc)}))
         sys.exit(1)
     print(json.dumps(result, ensure_ascii=False, default=str))

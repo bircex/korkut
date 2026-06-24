@@ -14,7 +14,9 @@ PDF_URL = "https://kararlar.uyusmazlik.gov.tr/Uploads/2026-180.pdf"
 def test_fetch_pdf_decision(monkeypatch):
     monkeypatch.setattr(uyus_base, "pdf_to_markdown", lambda raw: "KARAR METNİ")
     respx.get(PDF_URL).mock(
-        return_value=httpx.Response(200, content=b"%PDF-1.4 fake", headers={"content-type": "application/pdf"})
+        return_value=httpx.Response(
+            200, content=b"%PDF-1.4 fake", headers={"content-type": "application/pdf"}
+        )
     )
     out = run_tool(document_url=PDF_URL)
     assert out["sourceUrl"] == PDF_URL

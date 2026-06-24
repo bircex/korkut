@@ -29,7 +29,8 @@ output contract separately. No API key is required.
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any, ClassVar
 
 from tools._base.client import BaseClient
 
@@ -107,9 +108,7 @@ _EMPTY_FIELDS = {
     ],
 }
 
-_CSRF_RE = re.compile(
-    r'name="__RequestVerificationToken"[^>]*value="([^"]+)"', re.IGNORECASE
-)
+_CSRF_RE = re.compile(r'name="__RequestVerificationToken"[^>]*value="([^"]+)"', re.IGNORECASE)
 
 # Some upstream WAF deployments answer with an HTTP 4xx and a Turkish block page
 # instead of JSON. Detect and surface it clearly.
@@ -129,7 +128,7 @@ class SayistaySearchError(RuntimeError):
 
 class SayistayClient(BaseClient):
     base_url = "https://www.sayistay.gov.tr"
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
@@ -210,9 +209,7 @@ class SayistayClient(BaseClient):
         start = max(0, (max(1, page) - 1) * length)
         token = self._csrf_token(decision_type)
 
-        fields = self._form_fields(
-            decision_type, query, start=start, length=length, token=token
-        )
+        fields = self._form_fields(decision_type, query, start=start, length=length, token=token)
         headers = {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "Referer": f"{self.base_url}{_PAGE[decision_type]}",

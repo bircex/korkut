@@ -13,21 +13,24 @@ from fastapi.testclient import TestClient
 from web import totp
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(tmp_path, monkeypatch):
-    monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path/'t.db'}")
+    monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
     monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable")
     # Reset cached singletons that read those envs at import time.
     import importlib
 
     import web.auth as auth_mod
     import web.store as store_mod
+
     importlib.reload(store_mod)
     auth_mod._secret_cache = None
     import web.app as app_mod
+
     importlib.reload(app_mod)
 
     import web.adduser as adduser
+
     adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
 
     with patch.object(app_mod.agent, "answer", return_value="DRAFT yanıt."):
@@ -46,10 +49,15 @@ def _totp_next(secret: str) -> str:
 
 def test_register_creates_office_and_owner(client):
     # Self-service: registering an office routes the new owner straight to 2FA enrolment.
-    r = client.post("/api/register", json={
-        "office_name": "Deniz Hukuk", "full_name": "Av. Deniz",
-        "username": "deniz", "password": "parola123",
-    })
+    r = client.post(
+        "/api/register",
+        json={
+            "office_name": "Deniz Hukuk",
+            "full_name": "Av. Deniz",
+            "username": "deniz",
+            "password": "parola123",
+        },
+    )
     assert r.status_code == 200 and r.json()["step"] == "enroll"
     secret = client.get("/api/2fa/provision").json()["secret"]
     enrolled = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()
@@ -57,14 +65,29 @@ def test_register_creates_office_and_owner(client):
     assert client.get("/api/me").json()["office"] == "Deniz Hukuk"
 
     # Username is globally unique → a second office cannot reuse it.
-    dup = client.post("/api/register", json={
-        "office_name": "Başka Büro", "full_name": "X", "username": "deniz", "password": "parola123",
-    })
+    dup = client.post(
+        "/api/register",
+        json={
+            "office_name": "Başka Büro",
+            "full_name": "X",
+            "username": "deniz",
+            "password": "parola123",
+        },
+    )
     assert dup.status_code == 409
     # Short password is rejected.
-    assert client.post("/api/register", json={
-        "office_name": "B", "full_name": "Y", "username": "yeni", "password": "kısa",
-    }).status_code == 400
+    assert (
+        client.post(
+            "/api/register",
+            json={
+                "office_name": "B",
+                "full_name": "Y",
+                "username": "yeni",
+                "password": "kısa",
+            },
+        ).status_code
+        == 400
+    )
 
 
 def test_password_then_enroll_then_chat(client):
@@ -115,7 +138,9 @@ def test_second_login_requires_totp(client):
 def test_recovery_code_single_use(client):
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
-    codes = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()["recovery_codes"]
+    codes = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()[
+        "recovery_codes"
+    ]
     client.post("/api/logout")
     client.cookies.clear()
 
@@ -149,7 +174,10 @@ def test_totp_replay_blocked(client):
 
 def test_bad_password_and_lockout(client):
     for _ in range(5):
-        assert client.post("/api/login", json={"username": "avukat", "password": "yanlis"}).status_code == 401
+        assert (
+            client.post("/api/login", json={"username": "avukat", "password": "yanlis"}).status_code
+            == 401
+        )
     # 6th attempt: locked even with the correct password.
     r = client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     assert r.status_code == 429
@@ -191,7 +219,9 @@ def test_sessions_are_shared_across_users(client):
     client.post(f"/api/sessions/{sid}/chat", json={"text": "Ortak dava dosyası"})
 
     # A second member of the SAME office logs in fresh and sees the shared session.
-    adduser.main(["ortak", "--office", "avukat ofisi", "--password", "parola123", "--name", "Av. İki"])
+    adduser.main(
+        ["ortak", "--office", "avukat ofisi", "--password", "parola123", "--name", "Av. İki"]
+    )
     c2 = TestClient(client.app)
     _enroll(c2, "ortak")
     shared = c2.get("/api/sessions").json()["items"]
@@ -225,7 +255,9 @@ def test_clone_copies_attached_document(client):
     _enroll(client, "avukat")
     sid = client.post("/api/sessions").json()["id"]
     doc = client.get(f"/api/sessions/{sid}/document").json()
-    client.put(f"/api/documents/{doc['id']}", json={"title": "Kira Sözleşmesi", "content_md": "# Kira"})
+    client.put(
+        f"/api/documents/{doc['id']}", json={"title": "Kira Sözleşmesi", "content_md": "# Kira"}
+    )
 
     clone = client.post(f"/api/sessions/{sid}/clone").json()
     cdoc = client.get(f"/api/sessions/{clone['id']}/document").json()
@@ -241,9 +273,14 @@ def test_owner_adds_member_shared_office(client):
     sid = client.post("/api/sessions").json()["id"]
     client.post(f"/api/sessions/{sid}/chat", json={"text": "Ofis dosyası"})
 
-    r = client.post("/api/members", json={
-        "username": "katip", "full_name": "Kâtip", "password": "parola123",
-    })
+    r = client.post(
+        "/api/members",
+        json={
+            "username": "katip",
+            "full_name": "Kâtip",
+            "password": "parola123",
+        },
+    )
     assert r.status_code == 200 and r.json()["role"] == "member" and r.json()["enrolled"] is False
     members = client.get("/api/members").json()
     assert {m["username"] for m in members} == {"avukat", "katip"}
@@ -253,9 +290,17 @@ def test_owner_adds_member_shared_office(client):
     _enroll(c2, "katip")
     assert any(x["id"] == sid for x in c2.get("/api/sessions").json()["items"])
     # A member is not an owner → cannot add further members.
-    assert c2.post("/api/members", json={
-        "username": "x", "full_name": "X", "password": "parola123",
-    }).status_code == 403
+    assert (
+        c2.post(
+            "/api/members",
+            json={
+                "username": "x",
+                "full_name": "X",
+                "password": "parola123",
+            },
+        ).status_code
+        == 403
+    )
 
 
 def test_cross_office_isolation(client):
@@ -264,7 +309,9 @@ def test_cross_office_isolation(client):
     _enroll(client, "avukat")
     sid = client.post("/api/sessions").json()["id"]
 
-    adduser.main(["rakip", "--office", "Rakip Büro", "--password", "parola123", "--name", "Av. Rakip"])
+    adduser.main(
+        ["rakip", "--office", "Rakip Büro", "--password", "parola123", "--name", "Av. Rakip"]
+    )
     c2 = TestClient(client.app)
     _enroll(c2, "rakip")
     assert c2.get("/api/sessions").json()["items"] == [], "another office must not see the session"
@@ -277,16 +324,24 @@ def test_cross_office_isolation(client):
 
 def test_owner_removes_member(client):
     _enroll(client, "avukat")
-    client.post("/api/members", json={
-        "username": "gidecek", "full_name": "G", "password": "parola123",
-    })
+    client.post(
+        "/api/members",
+        json={
+            "username": "gidecek",
+            "full_name": "G",
+            "password": "parola123",
+        },
+    )
     members = client.get("/api/members").json()
     mid = next(m["id"] for m in members if m["username"] == "gidecek")
     assert client.delete(f"/api/members/{mid}").status_code == 200
 
     # Deactivated member can no longer log in.
     c2 = TestClient(client.app)
-    assert c2.post("/api/login", json={"username": "gidecek", "password": "parola123"}).status_code == 401
+    assert (
+        c2.post("/api/login", json={"username": "gidecek", "password": "parola123"}).status_code
+        == 401
+    )
     # Owner cannot remove themselves.
     me_id = next(m["id"] for m in client.get("/api/members").json() if m["username"] == "avukat")
     assert client.delete(f"/api/members/{me_id}").status_code == 400
@@ -294,12 +349,24 @@ def test_owner_removes_member(client):
 
 def test_style_layers_and_deterministic_insertion(client):
     _enroll(client, "avukat")  # owner
-    client.put("/api/style/office", json={
-        "letterhead": "DEMİR HUKUK BÜROSU", "signature": "", "tone": "resmî", "boilerplate": "",
-    })
-    client.put("/api/style/user", json={
-        "letterhead": "", "signature": "Av. Demir — Baro 123", "tone": "kısa-öz", "boilerplate": "",
-    })
+    client.put(
+        "/api/style/office",
+        json={
+            "letterhead": "DEMİR HUKUK BÜROSU",
+            "signature": "",
+            "tone": "resmî",
+            "boilerplate": "",
+        },
+    )
+    client.put(
+        "/api/style/user",
+        json={
+            "letterhead": "",
+            "signature": "Av. Demir — Baro 123",
+            "tone": "kısa-öz",
+            "boilerplate": "",
+        },
+    )
     st = client.get("/api/style").json()
     assert st["can_edit_office"] is True
     assert st["effective"]["letterhead"] == "DEMİR HUKUK BÜROSU"  # office (lawyer empty)
@@ -309,9 +376,13 @@ def test_style_layers_and_deterministic_insertion(client):
     # A new petition draft wraps letterhead (top) + signature (bottom) around the model output.
     sid = client.post("/api/sessions").json()["id"]
     did = client.get(f"/api/sessions/{sid}/document").json()["id"]
-    body = client.post(f"/api/documents/{did}/draft", json={
-        "instruction": "boşanma dilekçesi", "petition_type": "cekismeli-bosanma",
-    }).json()["content_md"]
+    body = client.post(
+        f"/api/documents/{did}/draft",
+        json={
+            "instruction": "boşanma dilekçesi",
+            "petition_type": "cekismeli-bosanma",
+        },
+    ).json()["content_md"]
     assert body.startswith("DEMİR HUKUK BÜROSU")
     assert body.rstrip().endswith("Av. Demir — Baro 123")
     assert "DRAFT" in body
@@ -319,24 +390,45 @@ def test_style_layers_and_deterministic_insertion(client):
 
 def test_office_style_owner_only_and_contract_skips_signature(client):
     _enroll(client, "avukat")
-    client.put("/api/style/office", json={
-        "letterhead": "ANTET", "signature": "Av. X", "tone": "", "boilerplate": "",
-    })
-    client.post("/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"})
+    client.put(
+        "/api/style/office",
+        json={
+            "letterhead": "ANTET",
+            "signature": "Av. X",
+            "tone": "",
+            "boilerplate": "",
+        },
+    )
+    client.post(
+        "/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"}
+    )
     c2 = TestClient(client.app)
     _enroll(c2, "katip")
     # Members cannot edit office-level style.
-    assert c2.put("/api/style/office", json={
-        "letterhead": "x", "signature": "", "tone": "", "boilerplate": "",
-    }).status_code == 403
+    assert (
+        c2.put(
+            "/api/style/office",
+            json={
+                "letterhead": "x",
+                "signature": "",
+                "tone": "",
+                "boilerplate": "",
+            },
+        ).status_code
+        == 403
+    )
     assert c2.get("/api/style").json()["can_edit_office"] is False
 
     # Contracts keep the letterhead but skip the lawyer signature (they carry party signatures).
     sid = c2.post("/api/sessions").json()["id"]
     did = c2.get(f"/api/sessions/{sid}/document").json()["id"]
-    body = c2.post(f"/api/documents/{did}/draft", json={
-        "instruction": "kira sözleşmesi", "petition_type": "konut-kira",
-    }).json()["content_md"]
+    body = c2.post(
+        f"/api/documents/{did}/draft",
+        json={
+            "instruction": "kira sözleşmesi",
+            "petition_type": "konut-kira",
+        },
+    ).json()["content_md"]
     assert body.startswith("ANTET") and "Av. X" not in body
 
 
@@ -432,7 +524,9 @@ def test_chat_detects_contract_and_injects_contract_format(client):
     cid = client.post("/api/sessions").json()["id"]
     prompts: list[str] = []
 
-    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+    def fake_answer(
+        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+    ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
             return "Kira sözleşmesini editörde hazırladım."
@@ -461,7 +555,10 @@ def test_draft_with_petition_type_injects_format(client):
     with patch.object(appmod.agent, "answer", return_value="# Dilekçe") as m:
         r = client.post(
             f"/api/documents/{did}/draft",
-            json={"instruction": "şiddetli geçimsizlik vurgula", "petition_type": "cekismeli-bosanma"},
+            json={
+                "instruction": "şiddetli geçimsizlik vurgula",
+                "petition_type": "cekismeli-bosanma",
+            },
         )
     assert r.status_code == 200
     sent = m.call_args.args[0]
@@ -492,7 +589,9 @@ def test_chat_auto_opens_canvas_for_document(client):
     _enroll(client, "avukat")
     cid = client.post("/api/sessions").json()["id"]
 
-    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+    def fake_answer(
+        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+    ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -521,7 +620,9 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
     cid = client.post("/api/sessions").json()["id"]
     draft_prompts: list[str] = []
 
-    def fake_answer(user_text, *, specialty="research", history=None, extra_tools=None, handlers=None):
+    def fake_answer(
+        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+    ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
             return "Boşanma dilekçesini editörde hazırladım."

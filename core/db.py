@@ -37,7 +37,7 @@ class Client(Base):
     notes: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    cases: Mapped[list["Case"]] = relationship(back_populates="client", cascade="all, delete-orphan")
+    cases: Mapped[list[Case]] = relationship(back_populates="client", cascade="all, delete-orphan")
 
 
 class Case(Base):
@@ -53,8 +53,12 @@ class Case(Base):
     notes: Mapped[str | None] = mapped_column(default=None)
 
     client: Mapped[Client] = relationship(back_populates="cases")
-    hearings: Mapped[list["Hearing"]] = relationship(back_populates="case", cascade="all, delete-orphan")
-    petitions: Mapped[list["Petition"]] = relationship(back_populates="case", cascade="all, delete-orphan")
+    hearings: Mapped[list[Hearing]] = relationship(
+        back_populates="case", cascade="all, delete-orphan"
+    )
+    petitions: Mapped[list[Petition]] = relationship(
+        back_populates="case", cascade="all, delete-orphan"
+    )
 
 
 class Hearing(Base):

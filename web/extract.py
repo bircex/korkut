@@ -120,8 +120,8 @@ def _from_docx(data: bytes) -> str:
 
 
 def _from_image_ocr(data: bytes) -> str:
-    from PIL import Image  # Pillow guards decompression bombs by default
     import pytesseract
+    from PIL import Image  # Pillow guards decompression bombs by default
 
     try:
         img = Image.open(io.BytesIO(data))

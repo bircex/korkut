@@ -52,9 +52,7 @@ INDIVIDUAL_BODY = {
 
 @respx.mock
 def test_norm_parses_results():
-    route = respx.post(SEARCH_URL).mock(
-        return_value=httpx.Response(200, json=NORM_BODY)
-    )
+    route = respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=NORM_BODY))
     out = run_tool(query="ifade özgürlüğü", application_type="norm", limit=5)
     assert route.called
     assert out["total"] == 2
@@ -73,9 +71,7 @@ def test_norm_parses_results():
 
 @respx.mock
 def test_norm_sends_keyword_and_pagination():
-    route = respx.post(SEARCH_URL).mock(
-        return_value=httpx.Response(200, json=NORM_BODY)
-    )
+    route = respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=NORM_BODY))
     run_tool(query="mülkiyet", application_type="norm", limit=1, page=2)
     sent = json.loads(route.calls.last.request.content)
     assert sent["query"] == "mülkiyet"
@@ -86,9 +82,7 @@ def test_norm_sends_keyword_and_pagination():
 
 @respx.mock
 def test_individual_parses_results():
-    route = respx.post(SEARCH_URL).mock(
-        return_value=httpx.Response(200, json=INDIVIDUAL_BODY)
-    )
+    route = respx.post(SEARCH_URL).mock(return_value=httpx.Response(200, json=INDIVIDUAL_BODY))
     out = run_tool(query="adil yargılanma", application_type="individual", limit=5)
     sent = json.loads(route.calls.last.request.content)
     assert sent["kararTipi"] == "BireyselBasvuru"

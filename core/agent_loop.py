@@ -62,9 +62,7 @@ def run(
         result = provider.step(convo, tools)
         if not result.tool_calls:
             return result.text
-        convo.append(
-            {"role": "assistant", "content": result.text, "tool_calls": result.tool_calls}
-        )
+        convo.append({"role": "assistant", "content": result.text, "tool_calls": result.tool_calls})
         tool_results = []
         for call in result.tool_calls:
             try:
@@ -73,7 +71,7 @@ def run(
                     output = handlers[call["name"]](args)
                 else:
                     output = tool_registry.run(call["name"], args)
-            except Exception as exc:  # noqa: BLE001 — surface tool errors to the model
+            except Exception as exc:
                 output = {"error": type(exc).__name__, "detail": str(exc)}
             tool_results.append(
                 {

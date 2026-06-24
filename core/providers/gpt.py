@@ -44,7 +44,10 @@ class GptProvider:
                         {
                             "id": c["id"],
                             "type": "function",
-                            "function": {"name": c["name"], "arguments": json.dumps(c.get("args") or {})},
+                            "function": {
+                                "name": c["name"],
+                                "arguments": json.dumps(c.get("args") or {}),
+                            },
                         }
                         for c in m["tool_calls"]
                     ]
@@ -61,7 +64,11 @@ class GptProvider:
             kwargs["tools"] = tool_registry.to_openai_tools(tools)
         message = client.chat.completions.create(**kwargs).choices[0].message
         calls = [
-            {"id": tc.id, "name": tc.function.name, "args": json.loads(tc.function.arguments or "{}")}
+            {
+                "id": tc.id,
+                "name": tc.function.name,
+                "args": json.loads(tc.function.arguments or "{}"),
+            }
             for tc in (getattr(message, "tool_calls", None) or [])
         ]
         return StepResult(text=message.content or "", tool_calls=calls)

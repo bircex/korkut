@@ -21,7 +21,8 @@ from typing import Any
 
 import yaml
 
-from core import agent_loop, redactor as redaction
+from core import agent_loop
+from core import redactor as redaction
 from core.agent_loop import Provider
 
 logger = logging.getLogger("korkut.router")
@@ -55,7 +56,9 @@ class Router:
         tier = (self._specialties.get(specialty) or {}).get("model", "cloud")
         if tier == "local" and not self._local_available():
             if not self._fallback:
-                raise RuntimeError(f"local model unavailable for '{specialty}' and fallback disabled")
+                raise RuntimeError(
+                    f"local model unavailable for '{specialty}' and fallback disabled"
+                )
             logger.warning("local model down for '%s'; falling back to cloud", specialty)
             tier = "cloud"
         return tier
@@ -91,6 +94,6 @@ class Router:
         # tool outputs are public case-law/legislation, so no un-redacted PII reaches the model.
         contents = [str(m.get("content", "")) for m in messages]
         redacted, mapping = redaction.Redactor().redact_batch(contents)
-        safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted)]
+        safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted, strict=True)]
         reply = agent_loop.run(provider, safe_messages, all_tools, handlers=handlers)
         return redaction.restore(reply, mapping)

@@ -24,6 +24,8 @@ def run_tool(document_url: str) -> dict[str, Any]:
     if not document_url.startswith("http"):
         raise ValueError("document_url must be a full URL from a search_uyusmazlik result")
     if BASE_URL not in document_url:
-        raise ValueError(f"document_url must be a kararlar.uyusmazlik.gov.tr URL, got {document_url!r}")
+        raise ValueError(
+            f"document_url must be a kararlar.uyusmazlik.gov.tr URL, got {document_url!r}"
+        )
     with UyusmazlikClient() as client:
         return client.document_markdown(document_url)

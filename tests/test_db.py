@@ -45,7 +45,7 @@ def test_upcoming_hearings_window():
     s = _session()
     c = Client(full_name="Test")
     case = Case(file_no="1/1", client=c)
-    case.hearings.append(Hearing(date=date(2026, 7, 2)))   # in window
+    case.hearings.append(Hearing(date=date(2026, 7, 2)))  # in window
     case.hearings.append(Hearing(date=date(2026, 7, 20)))  # out of window
     s.add(c)
     s.commit()

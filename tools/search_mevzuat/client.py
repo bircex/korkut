@@ -9,7 +9,7 @@ English params onto that endpoint and normalises each hit to stable English keys
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from tools._base.client import BaseClient
 
@@ -34,7 +34,7 @@ class MevzuatClient(BaseClient):
     """Thin client over the Bedesten mevzuat search endpoint."""
 
     base_url = "https://bedesten.adalet.gov.tr"
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "AdaletApplicationName": "UyapMevzuat",
         "Content-Type": "application/json; charset=utf-8",

@@ -41,12 +41,16 @@ class StyleProfile(Base):
 
     __tablename__ = "style_profiles"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int | None] = mapped_column(ForeignKey("offices.id"), unique=True, default=None)
+    office_id: Mapped[int | None] = mapped_column(
+        ForeignKey("offices.id"), unique=True, default=None
+    )
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), unique=True, default=None)
     letterhead: Mapped[str] = mapped_column(Text, default="")  # antet (deterministik, üstte)
-    signature: Mapped[str] = mapped_column(Text, default="")   # imza bloğu (deterministik, dilekçe sonunda)
-    tone: Mapped[str] = mapped_column(Text, default="")        # serbest üslup talimatı (üretken)
-    boilerplate: Mapped[str] = mapped_column(Text, default="") # tercih edilen kalıplar (üretken)
+    signature: Mapped[str] = mapped_column(
+        Text, default=""
+    )  # imza bloğu (deterministik, dilekçe sonunda)
+    tone: Mapped[str] = mapped_column(Text, default="")  # serbest üslup talimatı (üretken)
+    boilerplate: Mapped[str] = mapped_column(Text, default="")  # tercih edilen kalıplar (üretken)
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
@@ -74,7 +78,7 @@ class User(Base):
 
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    recovery_codes: Mapped[list["RecoveryCode"]] = relationship(
+    recovery_codes: Mapped[list[RecoveryCode]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -105,7 +109,7 @@ class Conversation(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
-    messages: Mapped[list["Message"]] = relationship(
+    messages: Mapped[list[Message]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan", order_by="Message.id"
     )
 
@@ -131,14 +135,16 @@ class Document(Base):
 
     __tablename__ = "documents"
     id: Mapped[int] = mapped_column(primary_key=True)
-    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), unique=True, index=True)
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("conversations.id"), unique=True, index=True
+    )
     title: Mapped[str] = mapped_column(String(200), default="Belge")
     content_md: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(30), default="draft")
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
-    versions: Mapped[list["DocumentVersion"]] = relationship(
+    versions: Mapped[list[DocumentVersion]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.id"
     )
 

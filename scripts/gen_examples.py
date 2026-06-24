@@ -1,8 +1,8 @@
 """One-time: generate polished golden example .md per document type (few-shot for drafting).
 
 Works for both kinds — petitions (dilekçe) and contracts (sözleşme):
-    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_examples.py --kind sozlesme [id ...] [--force]
-    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_examples.py --kind dilekce  [id ...] [--force]
+    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_examples.py --kind sozlesme [--force]
+    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_examples.py --kind dilekce [--force]
 
 These are STATIC assets (few-shot exemplars) so the cheap runtime model mimics a professional
 layout; runtime drafting stays on whatever ANTHROPIC_MODEL the app uses. Output:
@@ -33,12 +33,14 @@ _SYS = {
         "Sen Türkiye'de kıdemli, titiz bir avukatsın. Görevin, belirtilen dilekçe tipi için gerçek "
         "bir avukatın hazırlayacağı kalitede, EKSİKSİZ ve PROFESYONEL bir MARKDOWN ŞABLON üretmek. "
         "Gerçek kişi/olay/karar UYDURMA; somut bilgiler için [köşeli parantez] yer tutucu kullan. "
-        "Mevzuat atıflarını (HMK, TMK, TBK, İİK, İYUK, TCK, CMK vb.) bu dava tipine uygun, DOĞRU ve "
+        "Mevzuat atıflarını (HMK, TMK, TBK, İİK, İYUK, TCK, CMK vb.) bu dava tipine uygun, "
+        "DOĞRU ve "
         "yerinde ver. ÇIKTI SADECE markdown belge olsun — açıklama/önsöz YOK, kod bloğu (```) YOK."
     ),
     "sozlesme": (
         "Sen Türkiye'de kıdemli, titiz bir sözleşmeler avukatısın. Görevin, belirtilen sözleşme "
-        "tipi için gerçek bir avukatın hazırlayacağı kalitede, EKSİKSİZ ve PROFESYONEL bir MARKDOWN "
+        "tipi için gerçek bir avukatın hazırlayacağı kalitede, EKSİKSİZ ve PROFESYONEL bir "
+        "MARKDOWN "
         "ŞABLON üretmek. Gerçek kişi/şirket UYDURMA; somut bilgiler için [köşeli parantez] yer "
         "tutucu kullan. Mevzuat atıflarını (TBK, TTK, İş K., KVKK vb.) bu sözleşme tipine uygun, "
         "DOĞRU ver. ÇIKTI SADECE markdown belge olsun — açıklama/önsöz YOK, kod bloğu (```) YOK."
@@ -54,8 +56,9 @@ def _user_prompt(kind: str, info: dict, format_md: str) -> str:
             "Aşağıdaki FORMAT ŞARTNAMESİNE BİREBİR uy:\n\n"
             f"{format_md}\n\n"
             "Eksiksiz bir sözleşme şablonu üret: başlık ORTALI + BÜYÜK HARF; MADDE 1'de tarafları "
-            "tam unvan + TCKN/VKN + adres ile yazıp kısa tanım ata (ör. \"... 'KİRAYA VEREN' olarak "
-            "anılacaktır\"); maddeleri numaralandır (MADDE 1, 2, 3…; alt bentler 4.1, 4.2); bedeli "
+            "tam unvan + TCKN/VKN + adres ile yazıp kısa tanım ata (ör. \"... 'KİRAYA VEREN' "
+            "olarak "
+            'anılacaktır"); maddeleri numaralandır (MADDE 1, 2, 3…; alt bentler 4.1, 4.2); bedeli '
             "rakam+yazı ve KDV ile; fesih/bildirim sürelerini, yetkili mahkeme/icra dairelerini, "
             "uygulanacak hukuku (Türk hukuku), mücbir sebep, gizlilik, tebligat ve nüsha adedini "
             "açıkça belirt. Tüm somut veriler [köşeli parantez] olsun; şekil şartı (noter/tapu) "
@@ -68,7 +71,8 @@ def _user_prompt(kind: str, info: dict, format_md: str) -> str:
         f"{format_md}\n\n"
         "Eksiksiz bir şablon üret: mahkeme başlığı (BÜYÜK HARF + datif + kesme), DAVACI/DAVALI (ve "
         "VEKİLİ), KONU, AÇIKLAMALAR (vakıaları 1., 2., 3. ile gerçekçi iskelet), HUKUKİ NEDENLER "
-        "(bu tipe ait DOĞRU kanun maddeleri), DELİLLER, SONUÇ VE İSTEM (numaralı + yargılama gideri "
+        "(bu tipe ait DOĞRU kanun maddeleri), DELİLLER, SONUÇ VE İSTEM (numaralı + yargılama "
+        "gideri "
         "ve vekâlet ücreti), tarih ve imza bloğu. Tüm somut veriler [köşeli parantez] olsun."
     )
 
@@ -124,7 +128,7 @@ def main(argv: list[str]) -> int:
                 print(f"[ok] {tid} ({len(md)} ch)")
             else:
                 print(f"[empty] {tid}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"[err] {tid}: {e}")
         time.sleep(1.0)
 

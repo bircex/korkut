@@ -33,10 +33,11 @@ client builds its own transport in ``__init__`` while reusing every other piece 
 
 from __future__ import annotations
 
+import contextlib
 import re
 import ssl
 from html import unescape
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 
@@ -73,15 +74,11 @@ _STATE_FIELDS = (
 # The portal renders a fixed 10 rows per grid page.
 _PAGE_SIZE = 10
 
-_GRID_RE = re.compile(
-    r'<table[^>]*id="grdKurulKararSorguSonuc".*?</table>', re.S | re.I
-)
+_GRID_RE = re.compile(r'<table[^>]*id="grdKurulKararSorguSonuc".*?</table>', re.S | re.I)
 _ROW_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.S | re.I)
 _CELL_RE = re.compile(r"<td[^>]*>(.*?)</td>", re.S | re.I)
 _PAGER_RE = re.compile(r"<tr[^>]*>(?:(?!</tr>).)*ctl14(?:(?!</tr>).)*</tr>", re.S | re.I)
-_PAGE_LINK_RE = re.compile(
-    r"__doPostBack\(&#39;([^&]+ctl14\$ctl\d+)&#39;,&#39;&#39;\)\">(\d+)<"
-)
+_PAGE_LINK_RE = re.compile(r"__doPostBack\(&#39;([^&]+ctl14\$ctl\d+)&#39;,&#39;&#39;\)\">(\d+)<")
 _PREVIEW_RE = re.compile(r"__doPostBack\(&#39;([^&]+btnOnizle)&#39;")
 _KARAR_ID_RE = re.compile(r"KararGoster\.aspx\?KararId=([0-9a-fA-F]+)")
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -100,10 +97,8 @@ def _legacy_ssl_context() -> ssl.SSLContext:
     ctx.verify_mode = ssl.CERT_NONE
     if hasattr(ssl, "OP_LEGACY_SERVER_CONNECT"):
         ctx.options |= ssl.OP_LEGACY_SERVER_CONNECT
-    try:
+    with contextlib.suppress(ssl.SSLError):
         ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
-    except ssl.SSLError:
-        pass
     return ctx
 
 
@@ -120,7 +115,7 @@ class KikClient(BaseClient):
     """Client for the kik.gov.tr legacy board-decision search portal."""
 
     base_url = BASE_URL
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "tr-TR,tr;q=0.9",
@@ -303,10 +298,7 @@ class KikClient(BaseClient):
         last_page = self._last_visible_page(current.text)
         total = last_page * _PAGE_SIZE
         rows = self._parse_rows(current.text)[:limit]
-        results = [
-            self._to_result(row, label, current.text, fields, resolve_urls)
-            for row in rows
-        ]
+        results = [self._to_result(row, label, current.text, fields, resolve_urls) for row in rows]
         return {
             "total": total,
             "page": page,

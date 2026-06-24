@@ -71,7 +71,6 @@ def provisioning_uri(secret_b32: str, account: str, issuer: str) -> str:
     """otpauth:// URI for QR enrolment in an authenticator app."""
     label = f"{quote(issuer)}:{quote(account)}"
     params = (
-        f"secret={secret_b32}&issuer={quote(issuer)}"
-        f"&algorithm=SHA1&digits={DIGITS}&period={PERIOD}"
+        f"secret={secret_b32}&issuer={quote(issuer)}&algorithm=SHA1&digits={DIGITS}&period={PERIOD}"
     )
     return f"otpauth://totp/{label}?{params}"

@@ -5,7 +5,7 @@ office (created if new); the first user of an office becomes its owner.
 
 Usage:
     python -m web.adduser <username> --office "Cankar Hukuk" --name "Ad Soyad"  # prompts for pw
-    python -m web.adduser <username> --password <pw> --name "Ad Soyad"         # office: "<user> ofisi"
+    python -m web.adduser <username> --password <pw> --name "Ad Soyad"  # office: "<user> ofisi"
     python -m web.adduser <username> --disable                # deactivate + revoke sessions
     python -m web.adduser <username> --reset-2fa              # force fresh 2FA enrolment
     python -m web.adduser <username> --unlock                 # clear a brute-force lockout
@@ -31,9 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("username")
     p.add_argument("--password", default=None, help="if omitted, you are prompted")
     p.add_argument("--name", default=None, help="full name shown in the UI")
-    p.add_argument("--office", default=None,
-                   help="office (tenant) name; reused if it exists, else created. "
-                        "Defaults to '<username> ofisi'. The first user of an office is its owner.")
+    p.add_argument(
+        "--office",
+        default=None,
+        help="office (tenant) name; reused if it exists, else created. "
+        "Defaults to '<username> ofisi'. The first user of an office is its owner.",
+    )
     p.add_argument("--disable", action="store_true", help="deactivate this user + revoke sessions")
     p.add_argument("--reset-2fa", action="store_true", help="clear 2FA so the user re-enrols")
     p.add_argument("--unlock", action="store_true", help="clear a brute-force lockout")
@@ -88,13 +91,15 @@ def main(argv: list[str] | None = None) -> int:
                 s.flush()
             # First user of an office owns it; later members join as "member".
             has_members = s.scalar(select(User).where(User.office_id == office.id)) is not None
-            s.add(User(
-                office_id=office.id,
-                role="member" if has_members else "owner",
-                username=username,
-                full_name=args.name,
-                password_hash=auth.hash_secret(password),
-            ))
+            s.add(
+                User(
+                    office_id=office.id,
+                    role="member" if has_members else "owner",
+                    username=username,
+                    full_name=args.name,
+                    password_hash=auth.hash_secret(password),
+                )
+            )
             action = "oluşturuldu"
         s.commit()
 

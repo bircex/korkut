@@ -15,7 +15,9 @@ URL2 = "https://www.bddk.org.tr/Mevzuat/Liste/310"
 def test_fetch_pdf(monkeypatch):
     monkeypatch.setattr(bddk_client, "pdf_to_markdown", lambda raw: "BDDK KARAR METNİ")
     respx.get(URL1).mock(
-        return_value=httpx.Response(200, content=b"%PDF-1.4 fake", headers={"content-type": "application/pdf"})
+        return_value=httpx.Response(
+            200, content=b"%PDF-1.4 fake", headers={"content-type": "application/pdf"}
+        )
     )
     out = run_tool(document_id="310")
     assert out["documentId"] == "310"
@@ -27,7 +29,11 @@ def test_fetch_pdf(monkeypatch):
 def test_falls_back_to_second_url_for_html():
     respx.get(URL1).mock(return_value=httpx.Response(404))
     respx.get(URL2).mock(
-        return_value=httpx.Response(200, text="<html><body><p>HTML karar</p></body></html>", headers={"content-type": "text/html"})
+        return_value=httpx.Response(
+            200,
+            text="<html><body><p>HTML karar</p></body></html>",
+            headers={"content-type": "text/html"},
+        )
     )
     out = run_tool(document_id="310")
     assert out["sourceUrl"] == URL2

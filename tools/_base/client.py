@@ -10,6 +10,7 @@ All sources accessed here are public Turkish government portals; no auth/token.
 
 from __future__ import annotations
 
+import contextlib
 import io
 import math
 import ssl
@@ -17,7 +18,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, ClassVar, Self
 
 import httpx
 
@@ -35,10 +36,8 @@ def legacy_ssl_context() -> ssl.SSLContext:
     ctx.verify_mode = ssl.CERT_NONE
     if hasattr(ssl, "OP_LEGACY_SERVER_CONNECT"):
         ctx.options |= ssl.OP_LEGACY_SERVER_CONNECT
-    try:
+    with contextlib.suppress(ssl.SSLError):
         ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
-    except ssl.SSLError:
-        pass
     return ctx
 
 
@@ -102,7 +101,7 @@ class BaseClient:
 
     base_url: str = ""
     # Browser-like headers; public portals expect them. No auth.
-    default_headers: dict[str, str] = {
+    default_headers: ClassVar[dict[str, str]] = {
         "Accept": "*/*",
         "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
         "User-Agent": (
@@ -137,12 +136,16 @@ class BaseClient:
         data: Any = None,
         headers: dict[str, str] | None = None,
     ) -> httpx.Response:
-        key = self._cache_key(method, endpoint, json if json is not None else (data if data is not None else params))
+        key = self._cache_key(
+            method, endpoint, json if json is not None else (data if data is not None else params)
+        )
         if self._cache is not None and key in self._cache:
             return self._cache[key]
         for attempt in range(3):
             self._bucket.acquire()
-            resp = self._client.request(method, endpoint, json=json, params=params, data=data, headers=headers)
+            resp = self._client.request(
+                method, endpoint, json=json, params=params, data=data, headers=headers
+            )
             if resp.status_code == 429:
                 retry_after = _parse_retry_after(resp.headers.get("Retry-After"))
                 self._bucket.penalize(retry_after)
@@ -158,7 +161,9 @@ class BaseClient:
     def post_json(self, endpoint: str, payload: Any) -> Any:
         return self._request("POST", endpoint, json=payload).json()
 
-    def post_form(self, endpoint: str, fields: Any, *, headers: dict[str, str] | None = None) -> httpx.Response:
+    def post_form(
+        self, endpoint: str, fields: Any, *, headers: dict[str, str] | None = None
+    ) -> httpx.Response:
         """POST application/x-www-form-urlencoded data; return the raw response."""
         return self._request("POST", endpoint, data=fields, headers=headers)
 
@@ -176,7 +181,7 @@ class BaseClient:
     def close(self) -> None:
         self._client.close()
 
-    def __enter__(self) -> "BaseClient":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

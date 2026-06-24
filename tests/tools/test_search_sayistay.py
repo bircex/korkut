@@ -11,8 +11,7 @@ from tools.search_sayistay.client import run_tool
 BASE = "https://www.sayistay.gov.tr"
 
 PAGE_HTML = (
-    '<form><input name="__RequestVerificationToken" type="hidden" '
-    'value="csrf-token-123" /></form>'
+    '<form><input name="__RequestVerificationToken" type="hidden" value="csrf-token-123" /></form>'
 )
 
 GENEL_KURUL_JSON = {
@@ -60,9 +59,7 @@ DAIRE_JSON = {
 
 
 def _mock(decision_path: str, search_json: dict):
-    respx.get(f"{BASE}{decision_path}").mock(
-        return_value=httpx.Response(200, text=PAGE_HTML)
-    )
+    respx.get(f"{BASE}{decision_path}").mock(return_value=httpx.Response(200, text=PAGE_HTML))
     return respx.post(f"{BASE}{decision_path}/DataTablesList").mock(
         return_value=httpx.Response(200, json=search_json)
     )
@@ -147,9 +144,7 @@ def test_request_uses_antiforgery_session_cookie():
         return_value=httpx.Response(200, json=GENEL_KURUL_JSON)
     )
     run_tool(query="ihale")
-    assert ".AspNetCore.Antiforgery.PL8" in route.calls.last.request.headers.get(
-        "cookie", ""
-    )
+    assert ".AspNetCore.Antiforgery.PL8" in route.calls.last.request.headers.get("cookie", "")
 
 
 @respx.mock

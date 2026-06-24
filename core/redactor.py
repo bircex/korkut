@@ -23,12 +23,58 @@ _CONFIG = Path(__file__).resolve().parent.parent / "config" / "redaction-rules.y
 # Seed of common Turkish given names; a name immediately followed by 1-2 capitalized
 # words is treated as a person. Extensible via config (`person.extra_names`); full NER later.
 _SEED_NAMES = {
-    "ahmet", "mehmet", "mustafa", "ali", "hüseyin", "hasan", "ibrahim", "ismail", "osman",
-    "yusuf", "murat", "ömer", "ramazan", "süleyman", "halil", "emre", "kadir", "fatih",
-    "cem", "burak", "kemal", "serkan", "tolga", "barış", "deniz", "can", "ozan",
-    "ayşe", "fatma", "emine", "hatice", "zeynep", "elif", "meryem", "şerife", "zehra",
-    "sultan", "hanife", "merve", "büşra", "esra", "derya", "selin", "ceren", "ebru",
-    "gül", "özlem", "pınar", "sevgi", "yağmur", "defne", "bilge",
+    "ahmet",
+    "mehmet",
+    "mustafa",
+    "ali",
+    "hüseyin",
+    "hasan",
+    "ibrahim",
+    "ismail",
+    "osman",
+    "yusuf",
+    "murat",
+    "ömer",
+    "ramazan",
+    "süleyman",
+    "halil",
+    "emre",
+    "kadir",
+    "fatih",
+    "cem",
+    "burak",
+    "kemal",
+    "serkan",
+    "tolga",
+    "barış",
+    "deniz",
+    "can",
+    "ozan",
+    "ayşe",
+    "fatma",
+    "emine",
+    "hatice",
+    "zeynep",
+    "elif",
+    "meryem",
+    "şerife",
+    "zehra",
+    "sultan",
+    "hanife",
+    "merve",
+    "büşra",
+    "esra",
+    "derya",
+    "selin",
+    "ceren",
+    "ebru",
+    "gül",
+    "özlem",
+    "pınar",
+    "sevgi",
+    "yağmur",
+    "defne",
+    "bilge",
 }
 
 _CAP = r"[A-ZÇĞİÖŞÜ][a-zçğıöşüâî]+"  # a Turkish capitalized word
@@ -55,7 +101,7 @@ def _valid_tckn(value: str) -> bool:
 class Redactor:
     def __init__(self, rules: dict | None = None) -> None:
         rules = rules if rules is not None else _load_rules()
-        detectors = (rules.get("detectors") or {})
+        detectors = rules.get("detectors") or {}
         self._regex: list[tuple[str, re.Pattern[str], bool]] = []
         for kind, spec in detectors.items():
             pattern = spec.get("pattern") if isinstance(spec, dict) else None
@@ -77,7 +123,7 @@ class Redactor:
             if words[i].group(0).lower() in self._names:
                 start, end = words[i].start(), words[i].end()
                 j = i + 1
-                while j < len(words) and j - i <= 2 and text[end:words[j].start()].strip() == "":
+                while j < len(words) and j - i <= 2 and text[end : words[j].start()].strip() == "":
                     end = words[j].end()
                     j += 1
                 spans.append((start, end, "PERSON", text[start:end]))

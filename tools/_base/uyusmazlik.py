@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import re
 from html import unescape
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urljoin
 
 import httpx
@@ -66,7 +66,7 @@ def _clean(html: str) -> str:
 
 class UyusmazlikClient(BaseClient):
     base_url = BASE_URL
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "tr-TR,tr;q=0.9",
