@@ -2,12 +2,14 @@
 
 from core.redactor import Redactor, redact, restore
 
-VALID_TCKN = "10000000146"     # passes the official checksum
-INVALID_TCKN = "12345678901"   # fails the checksum
+VALID_TCKN = "10000000146"  # passes the official checksum
+INVALID_TCKN = "12345678901"  # fails the checksum
 
 
 def test_redacts_tckn_phone_iban_and_person():
-    text = "Müvekkil Ahmet Yılmaz, TCKN 10000000146, tel 05321234567, IBAN TR330006100519786457841326"
+    text = (
+        "Müvekkil Ahmet Yılmaz, TCKN 10000000146, tel 05321234567, IBAN TR330006100519786457841326"
+    )
     out, mapping = redact(text)
     assert "10000000146" not in out
     assert "05321234567" not in out

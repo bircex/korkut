@@ -15,9 +15,7 @@ import httpx
 
 from tools._base.client import BaseClient, chunk_markdown, extract_div_html, html_to_markdown
 
-_TITLE_RE = re.compile(
-    r'<h3[^>]*class="[^"]*blog-post-title[^"]*"[^>]*>(.*?)</h3>', re.S | re.I
-)
+_TITLE_RE = re.compile(r'<h3[^>]*class="[^"]*blog-post-title[^"]*"[^>]*>(.*?)</h3>', re.S | re.I)
 _DOC_TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.S | re.I)
 _TAG_RE = re.compile(r"<[^>]+>")
 _DATE_RE = re.compile(r"Karar Tarih[ıi][^\n]*?(\d{1,2}[./]\d{1,2}[./]\d{4})", re.I)

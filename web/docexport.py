@@ -82,6 +82,7 @@ def _runs(mask: list[bool], text: str):
 
 # ---------------- DOCX ----------------
 
+
 def to_docx(title: str, md: str) -> bytes:
     import docx
 
@@ -110,10 +111,11 @@ def to_docx(title: str, md: str) -> bytes:
 
 # ---------------- UDF (UYAP) ----------------
 
+
 def to_udf(title: str, md: str) -> bytes:
     blocks = _blocks(md)
     if title:
-        blocks = [("h1", title)] + blocks
+        blocks = [("h1", title), *blocks]
 
     parsed = [(kind, *_inline(text)) for kind, text in blocks]
     full_text = "\n".join(clean for _, clean, _ in parsed)
@@ -152,7 +154,7 @@ def to_udf(title: str, md: str) -> bytes:
         "</template>"
     )
     # `escape` only the CDATA-unsafe sequence guard (CDATA already protects most); keep simple.
-    _ = escape  # noqa: F841 (kept for future per-attribute escaping)
+    _ = escape
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:

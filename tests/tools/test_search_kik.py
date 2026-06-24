@@ -22,7 +22,7 @@ GRID_HTML = """
 <html><body>
 <table id="grdKurulKararSorguSonuc">
   <tr>
-    <td><a href="#" onclick="__doPostBack(&#39;ctl00$ContentPlaceHolder1$grd$ctl02$btnOnizle&#39;,&#39;&#39;)">onizle</a></td>
+    <td><a href="#" onclick="__doPostBack(&#39;grd$ctl02$btnOnizle&#39;,&#39;&#39;)">onizle</a></td>
     <td>2026/UY.I-1661</td>
     <td>18.06.2026</td>
     <td>Karayollari Genel Mudurlugu</td>

@@ -22,7 +22,7 @@ The response is {"total", "page", "data": [...]} with one object per decision.
 from __future__ import annotations
 
 import base64
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlencode
 
 from tools._base.client import BaseClient
@@ -50,7 +50,7 @@ class AnayasaClient(BaseClient):
     """
 
     base_url = ""
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -152,6 +152,4 @@ def run_tool(
         raise ValueError("application_type must be 'norm' or 'individual'")
     karar_tipi, detail_segment = _KARAR_TIPI[mode]
     with AnayasaClient() as client:
-        return client.search(
-            query, karar_tipi, detail_segment, limit=limit, page=page
-        )
+        return client.search(query, karar_tipi, detail_segment, limit=limit, page=page)

@@ -4,7 +4,9 @@ from core import agent_loop, tool_registry
 from core.agent_loop import StepResult
 from core.tool_registry import ToolSpec
 
-SPEC = ToolSpec("search_yargitay", "d", {"query": {"type": "string"}}, None, "tools.search_yargitay")
+SPEC = ToolSpec(
+    "search_yargitay", "d", {"query": {"type": "string"}}, None, "tools.search_yargitay"
+)
 
 
 class ScriptedProvider:
@@ -20,10 +22,15 @@ class ScriptedProvider:
 
 
 def test_loop_runs_tool_then_returns_final(monkeypatch):
-    monkeypatch.setattr(tool_registry, "run", lambda name, args: {"count": 1, "q": args.get("query")})
+    monkeypatch.setattr(
+        tool_registry, "run", lambda name, args: {"count": 1, "q": args.get("query")}
+    )
     provider = ScriptedProvider(
         [
-            StepResult(text="", tool_calls=[{"id": "c1", "name": "search_yargitay", "args": {"query": "kira"}}]),
+            StepResult(
+                text="",
+                tool_calls=[{"id": "c1", "name": "search_yargitay", "args": {"query": "kira"}}],
+            ),
             StepResult(text="Buldum."),
         ]
     )

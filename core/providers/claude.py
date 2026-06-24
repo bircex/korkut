@@ -45,7 +45,12 @@ class ClaudeProvider:
                     blocks.append({"type": "text", "text": m["content"]})
                 for c in m.get("tool_calls", []):
                     blocks.append(
-                        {"type": "tool_use", "id": c["id"], "name": c["name"], "input": c.get("args") or {}}
+                        {
+                            "type": "tool_use",
+                            "id": c["id"],
+                            "name": c["name"],
+                            "input": c.get("args") or {},
+                        }
                     )
                 conv.append({"role": "assistant", "content": blocks})
             elif role == "tool":
@@ -72,7 +77,9 @@ class ClaudeProvider:
 
         if message.stop_reason == "refusal":
             return StepResult(text="Bu isteği güvenlik nedeniyle yanıtlayamıyorum.")
-        text = "".join(getattr(b, "text", "") for b in message.content if getattr(b, "type", None) == "text")
+        text = "".join(
+            getattr(b, "text", "") for b in message.content if getattr(b, "type", None) == "text"
+        )
         calls = [
             {"id": b.id, "name": b.name, "args": dict(b.input)}
             for b in message.content

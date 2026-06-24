@@ -10,7 +10,7 @@ appeals (KYB). Public; no auth. Shared by `search_yargitay`, `search_danistay`,
 from __future__ import annotations
 
 import base64
-from typing import Any
+from typing import Any, ClassVar
 
 from .client import BaseClient, html_to_markdown, pdf_to_markdown
 
@@ -26,7 +26,7 @@ def _iso(date: str | None, *, end: bool) -> str | None:
 
 class BedestenClient(BaseClient):
     base_url = "https://bedesten.adalet.gov.tr"
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "AdaletApplicationName": "UyapMevzuat",
         "Content-Type": "application/json; charset=utf-8",
@@ -62,7 +62,9 @@ class BedestenClient(BaseClient):
         if date_end:
             data["kararTarihiEnd"] = _iso(date_end, end=True)
 
-        body = self.post_json(self.SEARCH, {"data": data, "applicationName": "UyapMevzuat", "paging": True})
+        body = self.post_json(
+            self.SEARCH, {"data": data, "applicationName": "UyapMevzuat", "paging": True}
+        )
         payload = body.get("data") or {}
         entries = payload.get("emsalKararList") or []
         results = [
@@ -76,7 +78,12 @@ class BedestenClient(BaseClient):
             }
             for e in entries
         ]
-        return {"total": payload.get("total", 0), "page": page, "count": len(results), "results": results}
+        return {
+            "total": payload.get("total", 0),
+            "page": page,
+            "count": len(results),
+            "results": results,
+        }
 
     def document_markdown(self, document_id: str) -> dict[str, Any]:
         body = self.post_json(

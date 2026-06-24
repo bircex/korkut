@@ -4,7 +4,7 @@ These are STATIC assets used as few-shot exemplars so the (cheap) runtime model 
 professional layout. Generate them once with a strong model — runtime drafting stays on whatever
 ANTHROPIC_MODEL the app uses:
 
-    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_petition_examples.py [type_id ...] [--force]
+    ANTHROPIC_MODEL=claude-sonnet-4-6 python scripts/gen_petition_examples.py [type_id] [--force]
 
 Output: templates/petition/examples/<id>.md. Existing files are skipped unless --force.
 Templates are format skeletons with [köşeli parantez] placeholders — no fabricated facts.
@@ -86,7 +86,10 @@ def main(argv: list[str]) -> int:
             continue
         try:
             res = provider.step(
-                [{"role": "system", "content": SYS}, {"role": "user", "content": _user_prompt(info)}],
+                [
+                    {"role": "system", "content": SYS},
+                    {"role": "user", "content": _user_prompt(info)},
+                ],
                 [],
             )
             md = _strip_fences(res.text)
@@ -96,7 +99,7 @@ def main(argv: list[str]) -> int:
                 print(f"[ok] {tid} ({len(md)} ch)")
             else:
                 print(f"[empty] {tid}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"[err] {tid}: {e}")
         time.sleep(1.0)
 

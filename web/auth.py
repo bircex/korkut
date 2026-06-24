@@ -42,6 +42,7 @@ def _secret() -> bytes:
 
 # ---------- password / recovery-code hashing ----------
 
+
 def hash_secret(value: str) -> str:
     salt = secrets.token_bytes(16)
     dk = hashlib.pbkdf2_hmac("sha256", value.encode(), salt, _ITERATIONS)
@@ -66,6 +67,7 @@ verify_password = verify_secret
 
 # ---------- signing ----------
 
+
 def _sign(payload: str) -> str:
     sig = hmac.new(_secret(), payload.encode(), hashlib.sha256).digest()
     return base64.urlsafe_b64encode(sig).decode().rstrip("=")
@@ -76,6 +78,7 @@ def _verify(payload: str, sig: str) -> bool:
 
 
 # ---------- session cookie ----------
+
 
 def make_session_token(user_id: int, epoch: int, *, now: int) -> str:
     payload = f"{user_id}.{epoch}.{now}"
@@ -100,6 +103,7 @@ def read_session_token(token: str, *, now: int) -> tuple[int, int] | None:
 
 
 # ---------- step-up ticket (password done, 2FA pending) ----------
+
 
 def make_ticket(purpose: str, user_id: int, *, now: int) -> str:
     payload = f"{purpose}.{user_id}.{now}"

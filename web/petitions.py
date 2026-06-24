@@ -22,14 +22,45 @@ _DIRS = {"dilekce": _TPL / "petition", "sozlesme": _TPL / "contract"}
 # (e.g. "DİLEKÇESİ") fold correctly, while side-stepping the locale-specific "İ".lower() pitfall.
 _FOLD = str.maketrans("çğıİöşüâîûÇĞÖŞÜÂÎÛ", "cgiiosuaiucgosuaiu")
 _STOP = {
-    "dava", "dilekce", "dilekcesi", "talebi", "talep", "karsi", "dair", "hakkinda",
-    "nedeniyle", "nedenli", "ozgu", "yolu", "olmadigi", "kararina", "beyan", "yer",
-    "tesisi", "tedbir", "tedbiri", "veya", "iliskin", "sozlesme", "sozlesmesi", "noterde",
+    "dava",
+    "dilekce",
+    "dilekcesi",
+    "talebi",
+    "talep",
+    "karsi",
+    "dair",
+    "hakkinda",
+    "nedeniyle",
+    "nedenli",
+    "ozgu",
+    "yolu",
+    "olmadigi",
+    "kararina",
+    "beyan",
+    "yer",
+    "tesisi",
+    "tedbir",
+    "tedbiri",
+    "veya",
+    "iliskin",
+    "sozlesme",
+    "sozlesmesi",
+    "noterde",
 }
 
 # Words that signal which kind the user means, so an ambiguous root (e.g. "kira") routes right.
 _SIG_SOZLESME = ("sozlesme", "kontrat", "mukavele", "protokol", "nda", "ibraname", "taahhutname")
-_SIG_DILEKCE = ("dilekce", "dava", "sikayet", "mahkeme", "itiraz", "temyiz", "istinaf", "savci", "icra takib")
+_SIG_DILEKCE = (
+    "dilekce",
+    "dava",
+    "sikayet",
+    "mahkeme",
+    "itiraz",
+    "temyiz",
+    "istinaf",
+    "savci",
+    "icra takib",
+)
 
 # Curated high-precision patterns: ALL words (folded) must appear. Order matters — specific first.
 _PATTERNS: dict[str, list[tuple[tuple[str, ...], str]]] = {
@@ -188,7 +219,7 @@ def get(type_id: str) -> dict | None:
 
 
 def example(type_id: str) -> str | None:
-    """Curated golden example markdown for a type (few-shot), if one exists under <kind>/examples/."""
+    """Curated golden example markdown for a type (few-shot), if present under <kind>/examples/."""
     info = get(type_id)
     if not info:
         return None
@@ -230,7 +261,9 @@ def detect(text: str) -> str | None:
     for tid, info in _index().items():
         if info["tur"] not in pools:
             continue
-        words = {w for w in re.findall(r"[a-z]+", _fold(info["ad"])) if len(w) >= 4 and w not in _STOP}
+        words = {
+            w for w in re.findall(r"[a-z]+", _fold(info["ad"])) if len(w) >= 4 and w not in _STOP
+        }
         hits = sum(1 for w in words if w in t)
         if hits > best:
             best, best_id = hits, tid
@@ -264,7 +297,8 @@ def _sections(kind: str, fallback: dict[str, str]) -> str:
         if b.get("zorunlu"):
             hmk = b.get("hmk", "")
             critical = any(p.strip() in _PET_CRITICAL for p in str(hmk).split(","))
-            flag = f"  [ZORUNLU{(' ' + hmk) if hmk else ''}{' — KRİTİK, boş bırakma' if critical else ''}]"
+            kritik = " — KRİTİK, boş bırakma" if critical else ""
+            flag = f"  [ZORUNLU{(' ' + hmk) if hmk else ''}{kritik}]"
         note = f"  ({b['not']})" if b.get("not") else ""
         lines.append(f"- {etiket}{flag}{note}")
     return "\n".join(lines)
@@ -282,11 +316,15 @@ def draft_prompt(type_id: str) -> str | None:
             f"'{info['ad']}' başlıklı sözleşmeyi hazırla. Dayanak mevzuat: {info['ref']}.\n"
             "Türk sözleşme formatına uy. Madde dizilimi:\n"
             f"{sections}\n"
-            "Başlığı ORTALI ve büyük harf yaz. MADDE 1'de tarafları tam unvan + TCKN/VKN + adres ile "
+            "Başlığı ORTALI ve büyük harf yaz. MADDE 1'de tarafları tam unvan + TCKN/VKN + "
+            "adres ile "
             "yazıp kısa tanım ata (ör. \"... bundan böyle 'KİRAYA VEREN' olarak anılacaktır\"). "
-            "Maddeleri numaralandır (MADDE 1, 2, 3…; alt bentler 4.1, 4.2). Bedeli rakam+yazı ve KDV "
-            "ile, fesih bildirim süresini, yetkili mahkeme/icra dairelerini, uygulanacak hukuku (Türk "
-            "hukuku) ve nüsha adedini açıkça belirt. Bilgi eksikse köşeli parantezle yer tutucu bırak "
+            "Maddeleri numaralandır (MADDE 1, 2, 3…; alt bentler 4.1, 4.2). Bedeli rakam+yazı "
+            "ve KDV "
+            "ile, fesih bildirim süresini, yetkili mahkeme/icra dairelerini, uygulanacak "
+            "hukuku (Türk "
+            "hukuku) ve nüsha adedini açıkça belirt. Bilgi eksikse köşeli parantezle yer "
+            "tutucu bırak "
             "(ör. [Kiracı adı]). Geçerlilik için noter/tapu gibi şekil şartı gerekiyorsa sözleşme "
             "sonunda kısa bir not olarak uyar."
         )
@@ -297,8 +335,9 @@ def draft_prompt(type_id: str) -> str | None:
         "Türk hukuku dilekçe formatına BİREBİR uy. Bölüm dizilimi ve etiketler:\n"
         f"{sections}\n"
         "Mahkeme başlığını büyük harf + datif + kesme ile yaz (ör. "
-        "\"... NÖBETÇİ ASLİYE HUKUK MAHKEMESİ'NE\"). KRİTİK işaretli bölümler (HMK m.119/a,d,e,f,g) "
+        '"... NÖBETÇİ ASLİYE HUKUK MAHKEMESİ\'NE"). KRİTİK işaretli bölümler (HMK m.119/a,d,e,f,g) '
         "asla boş kalmamalı; bilgi eksikse köşeli parantezle yer tutucu bırak (ör. [Davalı adı]). "
         "AÇIKLAMALAR'da vakıaları sıra numarasıyla (1., 2., 3.) yaz; her vakıaya delil bağla. "
-        "SONUÇ VE İSTEM'de talepleri numaralandır ve yargılama gideri + vekâlet ücreti talebini ekle."
+        "SONUÇ VE İSTEM'de talepleri numaralandır ve yargılama gideri + vekâlet ücreti "
+        "talebini ekle."
     )

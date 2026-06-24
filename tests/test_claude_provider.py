@@ -4,7 +4,13 @@ from core import tool_registry
 from core.providers.claude import ClaudeProvider
 from core.tool_registry import ToolSpec
 
-SPEC = ToolSpec("search_yargitay", "Search.", {"query": {"type": "string", "required": True}}, None, "tools.search_yargitay")
+SPEC = ToolSpec(
+    "search_yargitay",
+    "Search.",
+    {"query": {"type": "string", "required": True}},
+    None,
+    "tools.search_yargitay",
+)
 
 
 class _Text:
@@ -41,7 +47,9 @@ class _Client:
 
 
 def test_step_parses_tool_use():
-    provider = ClaudeProvider(client=_Client(_Message("tool_use", [_ToolUse("t1", "search_yargitay", {"query": "kira"})])))
+    provider = ClaudeProvider(
+        client=_Client(_Message("tool_use", [_ToolUse("t1", "search_yargitay", {"query": "kira"})]))
+    )
     result = provider.step([{"role": "user", "content": "q"}], [SPEC])
     assert result.tool_calls == [{"id": "t1", "name": "search_yargitay", "args": {"query": "kira"}}]
 
@@ -56,7 +64,11 @@ def test_step_pulls_system_out_and_serializes_tools():
     messages = [
         {"role": "system", "content": "persona"},
         {"role": "user", "content": "soru"},
-        {"role": "assistant", "content": "", "tool_calls": [{"id": "t1", "name": "search_yargitay", "args": {"query": "k"}}]},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"id": "t1", "name": "search_yargitay", "args": {"query": "k"}}],
+        },
         {"role": "tool", "tool_results": [{"id": "t1", "name": "search_yargitay", "output": "{}"}]},
     ]
     provider.step(messages, [SPEC])

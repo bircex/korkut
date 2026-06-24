@@ -27,8 +27,14 @@ _COURTS = [
 
 # Every official database Korkut can search live (for "neye erişiyorsun?").
 DECISION_SOURCES = [
-    "Yargıtay", "Danıştay", "UYAP Emsal", "Anayasa Mahkemesi",
-    "KİK", "Rekabet Kurumu", "Sayıştay", "GİB özelgeleri",
+    "Yargıtay",
+    "Danıştay",
+    "UYAP Emsal",
+    "Anayasa Mahkemesi",
+    "KİK",
+    "Rekabet Kurumu",
+    "Sayıştay",
+    "GİB özelgeleri",
 ]
 LEGISLATION = "tüm yürürlükteki mevzuat (mevzuat.gov.tr): kanun, KHK, yönetmelik, CB kararnameleri"
 

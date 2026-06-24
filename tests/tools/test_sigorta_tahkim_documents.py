@@ -31,7 +31,8 @@ def _fake_download(monkeypatch):
     )
 
 
-def test_fetch_paginates(_fake_download):
+@pytest.mark.usefixtures("_fake_download")
+def test_fetch_paginates():
     out = fetch_run(issue_number="64", page=1, page_size=2000)
     assert out["issueNumber"] == "64"
     assert out["sourceUrl"] == PDF_URL
@@ -45,7 +46,8 @@ def test_fetch_requires_issue():
         fetch_run(issue_number="")
 
 
-def test_search_within_ranks_matches(_fake_download):
+@pytest.mark.usefixtures("_fake_download")
+def test_search_within_ranks_matches():
     out = within_run(issue_number="64", keyword="değer kaybı", max_results=5)
     assert out["totalDecisions"] == 2
     assert out["matchingDecisions"] == 1
@@ -55,7 +57,8 @@ def test_search_within_ranks_matches(_fake_download):
     assert "değer kaybı" in turkish_lower(top["excerpt"])
 
 
-def test_search_within_requires_keyword(_fake_download):
+@pytest.mark.usefixtures("_fake_download")
+def test_search_within_requires_keyword():
     with pytest.raises(ValueError):
         within_run(issue_number="64", keyword="")
 

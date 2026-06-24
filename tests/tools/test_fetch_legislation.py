@@ -43,9 +43,7 @@ def test_fetch_full_text_converts_html_to_markdown():
 @respx.mock
 def test_fetch_single_article_uses_madde_id():
     html = "<p>MADDE 27 - Ahlaka aykırı sözleşmeler</p>"
-    route = respx.post(DOC_URL).mock(
-        return_value=httpx.Response(200, json=_doc_response(html))
-    )
+    route = respx.post(DOC_URL).mock(return_value=httpx.Response(200, json=_doc_response(html)))
     out = run_tool(legislation_id="12345", article_id="67890")
     assert out["id"] == "67890"
     assert "MADDE 27" in out["markdown"]

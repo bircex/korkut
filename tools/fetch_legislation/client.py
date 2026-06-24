@@ -14,7 +14,7 @@ The `legislation_id` comes from a `search_mevzuat` result (its `id` field); a
 from __future__ import annotations
 
 import base64
-from typing import Any
+from typing import Any, ClassVar
 
 from tools._base.client import BaseClient, html_to_markdown, pdf_to_markdown
 
@@ -23,7 +23,7 @@ class LegislationClient(BaseClient):
     """Thin client over the Bedesten mevzuat document-content endpoint."""
 
     base_url = "https://bedesten.adalet.gov.tr"
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
         "AdaletApplicationName": "UyapMevzuat",
         "Content-Type": "application/json; charset=utf-8",

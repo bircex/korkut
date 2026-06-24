@@ -15,7 +15,7 @@ from __future__ import annotations
 import math
 import re
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from tools._base.client import BaseClient
@@ -40,11 +40,9 @@ class RekabetClient(BaseClient):
     """HTML-scraping client for the Competition Authority decisions portal."""
 
     base_url = "https://www.rekabet.gov.tr"
-    default_headers = {
+    default_headers: ClassVar[dict[str, str]] = {
         **BaseClient.default_headers,
-        "Accept": (
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-        ),
+        "Accept": ("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"),
     }
     SEARCH = "/tr/Kararlar"
     DECISION_PATH = "/Karar"
@@ -152,7 +150,11 @@ class _SearchHTMLParser(HTMLParser):
                 self._in_pagination = True
                 self._pagination_depth = self._depth
 
-        if tag == "table" and self._in_karar_list and "equalDivide" in attr.get("class", "").split():
+        if (
+            tag == "table"
+            and self._in_karar_list
+            and "equalDivide" in attr.get("class", "").split()
+        ):
             self._in_table = True
             self._row = -1
             self._current = {"rows": []}
@@ -236,9 +238,7 @@ def _parse_search_html(html_body: str, base_url: str) -> tuple[int, list[dict[st
             (link for link in links if link.get("href", "").startswith(decision_prefix)),
             None,
         )
-        any_link = next(
-            (link for link in links if "kararId=" in link.get("href", "")), None
-        )
+        any_link = next((link for link in links if "kararId=" in link.get("href", "")), None)
         chosen = main_link or any_link
         if not chosen:
             continue

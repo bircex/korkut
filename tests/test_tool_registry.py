@@ -38,7 +38,7 @@ KEY_GATED = {
 
 def test_discovers_all_tools():
     names = {s.name for s in tool_registry.discover()}
-    assert EXPECTED <= names, f"missing: {EXPECTED - names}"
+    assert names >= EXPECTED, f"missing: {EXPECTED - names}"
 
 
 def test_required_keys_match_documented_set():
