@@ -1,5 +1,11 @@
 # Architecture — Technical Design
 
+> ⚠️ **Historical design.** This document describes the original Mattermost-based design. The
+> gateway is now the self-hosted **FastAPI web app** (`backend/src/korkut/api`) with a React SPA;
+> references to "Mattermost" as the front door are superseded. See the repo
+> [README](../README.md) for the current layout and run instructions. The underlying principles
+> (separate application DB, single identity, redaction chokepoint, approval flow) still hold.
+
 > PLAN.md is the roadmap; this document is the detail of *how it works*. All structural
 > decisions to be clarified before starting setup are here.
 

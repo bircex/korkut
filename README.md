@@ -1,46 +1,78 @@
 # Korkut
 
-An assistant that runs a law firm's daily work (court hearing reminders, petition drafts, legal
-research) over a **self-hosted chat web app**, **keeping the data in the office**. The user
-talks to a single identity — **Korkut** — while specialized modules run in parallel under the hood.
+Korkut is an AI assistant for a Turkish law office — legal research (live case law +
+legislation), petition & contract drafting, and document workflow — delivered through a
+**self-hosted chat web app** that **keeps client data in the office**. It is multi-tenant:
+each office self-registers and Korkut answers under that office's own identity.
 
-> ⚠️ This repo is private. Client data (`data/`), secrets (`.env`), and backups **never**
-> go into the repo (see `.gitignore`).
+> ⚠️ Private repo. Client data (`data/`), secrets (`.env`), and backups **never** go into
+> the repo (see `.gitignore`).
 
-## Documents
-- **[PLAN.md](PLAN.md)** — roadmap, principles, phases, technology, scope decisions
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — technical design: process topology, message flow, core,
-  data model, Korkut's internal structure, **tools layer (§12)**, approval flow
-- **[SOURCES.md](SOURCES.md)** — legal data sources and access (case law/legislation)
-- **[SECURITY.md](SECURITY.md)** — single gateway (the web app), mobile, 2FA, network hardening
-- **[CORPUS.md](CORPUS.md)** — research/petition data strategy: RAG (now) → focused index → broad corpus
-- **[DOCUMENT_EDITOR.md](DOCUMENT_EDITOR.md)** — design for the petition-drafting Canvas editor (WYSIWYG, UDF/DOCX/PDF export, propose→approve, versioning)
-- **[COMPETITORS.md](COMPETITORS.md)** — competitor products (preliminary review); detailed research pending
+## Repository layout
 
-## Architecture overview
-- **Interface:** our own self-hosted chat web app (`web/`) — login + DM-style chat, mobile-responsive, no third-party platform
-- **Korkut:** single identity; specialized modules under the hood — routing, court hearing, petition, research (parallel)
-- **Model:** cloud = Claude for the trial, GPT later (with redacted text); local model once the hardware arrives
-- **Capabilities:** tools under `tools/`, run from the CLI, configured into Korkut
-- **Data:** Postgres + `data/files/`; all on the server
-
-## Status
-Design complete (PLAN/ARCHITECTURE/SOURCES/SECURITY/CORPUS/COMPETITORS).
-- **Tools layer (done):** 11 CLI tools under `tools/` (`search_*` + `fetch_*`), all verified
-  live against the real public APIs.
-- **Core / Phase 1 (done):** `core/redactor.py` (PII detection + tokenization + restore),
-  `core/router.py` (specialty→backend + local↔cloud fallback + redaction chokepoint),
-  `core/providers/gpt.py` (OpenAI tool-calling loop), `core/db.py` (SQLAlchemy models:
-  client/case/hearing/petition). 58 tests passing.
-
-- **Web UI (done):** self-hosted FastAPI chat app under `web/` — closed-enrolment auth (no
-  signup), per-user history, single-page Turkish UI (black theme). See LOCAL_TRIAL.md.
-
-Next: hearing/petition/research modules, then production security hardening (HTTPS, 2FA — SECURITY.md).
+```
+backend/            Python package + tests
+  pyproject.toml
+  src/korkut/
+    core/           model router, providers, redactor, DB, tool registry
+    tools/          live legal-database search & fetch tools (21)
+    brain/          agent entry point (answer) + per-office persona
+    api/            FastAPI app (auth, chat, documents) + built SPA (static/)
+  tests/
+frontend/           React + Vite single-page chat UI
+deploy/             Dockerfile, docker-compose.yml, cron
+docs/               design docs (architecture, security, sources, …)
+config/             model-routing, redaction-rules, tools tiers
+templates/          golden petition/contract examples + intake schemas
+```
 
 ## Quickstart (dev)
+
+Backend:
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest                       # offline tests (live tests deselected by default)
-.venv/bin/python -m tools.search_yargitay --query "kira tespiti" --limit 5
+python3 -m venv .venv
+.venv/bin/pip install -e "backend/[app,dev]"
+cd backend && ../.venv/bin/pytest          # offline tests (live tests deselected by default)
+../.venv/bin/python -m korkut.api          # serve the app on :8080 (needs ANTHROPIC_API_KEY)
 ```
+
+Frontend:
+```bash
+cd frontend && npm install
+npm run dev        # Vite dev server on :5173, proxies /api → :8080
+npm run build      # build the SPA into backend/src/korkut/api/static/
+```
+
+Run a single tool from the CLI:
+```bash
+.venv/bin/python -m korkut.tools.search_yargitay --query "kira tespiti" --limit 5
+```
+
+## Quality gates
+
+- **Backend:** `ruff check . && ruff format --check . && mypy && pytest --cov` (157 tests, ~85% coverage)
+- **Frontend:** `npm run lint && npm run build`
+- CI runs all of the above on every push/PR (`.github/workflows/ci.yml`); Dependabot keeps
+  pip/npm/actions current.
+
+## How it works
+
+- **Identity:** one assistant, **Korkut**, addressed per office — the office name comes from the
+  authenticated user's tenant and drives the system persona (`brain/persona.py`).
+- **Models:** cloud = Claude (GPT supported); PII is redacted before any cloud call and restored
+  in the reply (`core/redactor.py`, `core/router.py`).
+- **Tools:** 21 CLI-runnable search/fetch tools over live Turkish legal databases (Yargıtay,
+  Danıştay, UYAP Emsal, Anayasa, KİK, Rekabet, Sayıştay, GİB, mevzuat, Uyuşmazlık, KVKK, BDDK,
+  Sigorta Tahkim). See `backend/src/korkut/tools/README.md`.
+- **Data:** Postgres in production (SQLite for the trial); everything stays on the office server.
+
+## Docs
+
+- **[docs/PLAN.md](docs/PLAN.md)** — roadmap, principles, scope
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — process topology, message flow, data model, tools layer, approval flow
+- **[docs/SOURCES.md](docs/SOURCES.md)** — legal data sources and access
+- **[docs/SECURITY.md](docs/SECURITY.md)** — gateway, 2FA, network hardening
+- **[docs/CORPUS.md](docs/CORPUS.md)** — research/petition data strategy
+- **[docs/DOCUMENT_EDITOR.md](docs/DOCUMENT_EDITOR.md)** — petition-drafting Canvas editor
+- **[docs/COMPETITORS.md](docs/COMPETITORS.md)** — competitor review
+- **[docs/LOCAL_TRIAL.md](docs/LOCAL_TRIAL.md)** — running the office trial locally

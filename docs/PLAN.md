@@ -1,5 +1,9 @@
 # Korkut — Implementation Plan
 
+> ⚠️ **Historical roadmap.** Written when the front door was planned as Mattermost; the system
+> now ships as a self-hosted FastAPI web app + React SPA (see the repo [README](../README.md)).
+> Treat Mattermost references as the web app. Kept for the principles and scope decisions.
+
 > Status: Design approved, ready for setup. This document is the single source of truth for all decisions.
 
 ## 1. Purpose
