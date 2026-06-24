@@ -116,11 +116,13 @@ def test_recovery_code_single_use(client):
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
     codes = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()["recovery_codes"]
-    client.post("/api/logout"); client.cookies.clear()
+    client.post("/api/logout")
+    client.cookies.clear()
 
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     assert client.post("/api/2fa/verify", json={"code": codes[0]}).status_code == 200
-    client.post("/api/logout"); client.cookies.clear()
+    client.post("/api/logout")
+    client.cookies.clear()
 
     # The same recovery code cannot be reused.
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
@@ -131,12 +133,14 @@ def test_totp_replay_blocked(client):
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
     client.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
-    client.post("/api/logout"); client.cookies.clear()
+    client.post("/api/logout")
+    client.cookies.clear()
 
     code = _totp_next(secret)
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     assert client.post("/api/2fa/verify", json={"code": code}).status_code == 200
-    client.post("/api/logout"); client.cookies.clear()
+    client.post("/api/logout")
+    client.cookies.clear()
 
     # Same code, same period → replay rejected.
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
