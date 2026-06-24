@@ -1,37 +1,39 @@
 # Korkut web app image — builds the React SPA, then runs the FastAPI chat UI + brain.
 # Self-hosted; the office's data never leaves the machine.
+# Build context is the repository root (see deploy/docker-compose.yml: build.context = ..).
 
-# 1) Build the single-page app (outputs to /app/web/static via vite.config.ts).
+# 1) Build the single-page app. vite.config.ts emits to ../backend/src/korkut/api/static,
+#    so with WORKDIR /app/frontend the output lands at /app/backend/src/korkut/api/static.
 FROM node:22-alpine AS frontend
-WORKDIR /app/web/frontend
-COPY web/frontend/package.json web/frontend/package-lock.json* ./
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
-COPY web/frontend/ ./
+COPY frontend/ ./
 RUN npm run build
 
 # 2) Python runtime.
 FROM python:3.12-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    KORKUT_ROOT=/app
 
 # tesseract for local image OCR (Turkish + English) — keeps raw images out of the cloud.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-tur \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md LICENSE ./
-COPY core ./core
-COPY tools ./tools
-COPY korkut ./korkut
+# Runtime assets live at the project root; KORKUT_ROOT points paths.py here.
+COPY backend ./backend
 COPY config ./config
 COPY templates ./templates
-COPY web ./web
-# Built SPA from the frontend stage (overwrites the gitignored web/static).
-COPY --from=frontend /app/web/static ./web/static
+# Built SPA from the frontend stage (the gitignored static dir).
+COPY --from=frontend /app/backend/src/korkut/api/static ./backend/src/korkut/api/static
 
-RUN pip install --upgrade pip && pip install ".[app]"
+# Editable install keeps the package running from /app/backend/src so the built static dir and
+# root-level config/templates resolve without packaging them as wheel data.
+RUN pip install --upgrade pip && pip install -e "./backend[app]"
 
 EXPOSE 8080
 
-CMD ["python", "-m", "web"]
+CMD ["python", "-m", "korkut.api"]

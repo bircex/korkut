@@ -1,0 +1,30 @@
+# Build context is the repository root (deploy/docker-compose.yml sets build.context = ..).
+.git
+.github
+.venv
+venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+.coverage.*
+coverage.xml
+
+# Secrets and runtime data never go into the image.
+.env
+.env.*
+data
+*.db
+
+# Frontend deps and the local build output (the image builds the SPA in its own stage).
+frontend/node_modules
+frontend/dist
+backend/src/korkut/api/static
+**/*.egg-info
+**/*.tsbuildinfo
+
+# Not needed at runtime.
+docs
+landing
