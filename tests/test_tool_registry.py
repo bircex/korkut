@@ -7,14 +7,32 @@ EXPECTED = {
     "search_yargitay",
     "search_danistay",
     "search_emsal",
+    "search_kyb",
     "search_mevzuat",
     "search_anayasa",
+    "search_uyusmazlik",
     "search_kik",
     "search_rekabet",
     "search_sayistay",
     "search_gib",
+    "search_kvkk",
+    "search_bddk",
+    "search_sigorta_tahkim",
+    "search_within_sigorta_tahkim",
     "fetch_decision",
     "fetch_legislation",
+    "fetch_uyusmazlik",
+    "fetch_kvkk",
+    "fetch_bddk",
+    "fetch_sigorta_tahkim",
+}
+
+# Tools that go through the Tavily web-search provider (no real source API).
+# See tools/README.md "Sources & keys".
+KEY_GATED = {
+    "search_kvkk": "TAVILY_API_KEY",
+    "search_bddk": "TAVILY_API_KEY",
+    "search_sigorta_tahkim": "TAVILY_API_KEY",
 }
 
 
@@ -23,10 +41,14 @@ def test_discovers_all_tools():
     assert EXPECTED <= names, f"missing: {EXPECTED - names}"
 
 
-def test_core_tools_have_no_required_key():
+def test_required_keys_match_documented_set():
+    """Only the documented web-search-provider tools may declare a required key."""
     for spec in tool_registry.discover():
-        assert spec.requires_key is None
-        assert spec.available
+        if spec.name in KEY_GATED:
+            assert spec.requires_key == KEY_GATED[spec.name]
+        else:
+            assert spec.requires_key is None, f"{spec.name} unexpectedly requires a key"
+            assert spec.available
 
 
 def test_available_gating_when_key_missing():

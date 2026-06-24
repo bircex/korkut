@@ -1,0 +1,21 @@
+name: fetch_bddk
+description: >
+  Fetch the full text of a BDDK (Banking Regulation Authority) decision document as Markdown,
+  given the document id from a search_bddk result. Handles PDF and HTML documents; long documents
+  are paginated. Returns {documentId, sourceUrl, markdown, page, total_pages}. No API key.
+requires_key: null
+parameters:
+  document_id:
+    type: string
+    required: true
+    description: The document id from a search_bddk result's `id` field.
+  page:
+    type: integer
+    required: false
+    default: 1
+    description: 1-indexed page of the chunked Markdown.
+  page_size:
+    type: integer
+    required: false
+    default: 5000
+    description: Characters per page.

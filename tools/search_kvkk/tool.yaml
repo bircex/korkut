@@ -1,0 +1,23 @@
+name: search_kvkk
+description: >
+  Search KVKK (Kişisel Verileri Koruma Kurumu / Personal Data Protection Authority) board
+  decision summaries. KVKK publishes "karar özeti" pages on kvkk.gov.tr with no searchable API,
+  so discovery uses the Tavily Search API restricted to the KVKK domain. Returns decision
+  metadata (id, title, description, date, decision number, url); use fetch_kvkk for full text.
+  Requires a Tavily API key (TAVILY_API_KEY).
+requires_key: TAVILY_API_KEY
+parameters:
+  query:
+    type: string
+    required: true
+    description: Free-text keywords (Turkish).
+  limit:
+    type: integer
+    required: false
+    default: 10
+    description: Maximum results (1-20). Tavily has no real pagination; pages > 1 may be empty.
+  page:
+    type: integer
+    required: false
+    default: 1
+    description: 1-indexed page number (kept for envelope consistency).
