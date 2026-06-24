@@ -15,6 +15,9 @@ jobs:
   backend:
     name: Backend (lint + test)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +30,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: backend/pyproject.toml
 
       - name: Install dependencies
         run: |
@@ -51,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-xml
-          path: coverage.xml
+          path: backend/coverage.xml
           if-no-files-found: ignore
 
   frontend:
@@ -59,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web/frontend
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -68,7 +72,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: web/frontend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci

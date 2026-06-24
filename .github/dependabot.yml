@@ -1,8 +1,8 @@
 version: 2
 updates:
-  # Python dependencies (pyproject.toml)
+  # Python dependencies (backend/pyproject.toml)
   - package-ecosystem: pip
-    directory: /
+    directory: /backend
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -13,9 +13,9 @@ updates:
     commit-message:
       prefix: "pip"
 
-  # Frontend dependencies (web/frontend/package.json)
+  # Frontend dependencies (frontend/package.json)
   - package-ecosystem: npm
-    directory: /web/frontend
+    directory: /frontend
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
