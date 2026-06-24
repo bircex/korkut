@@ -1,11 +1,13 @@
 """Web-app data models — office users, shared chat sessions, 2FA, and an auth audit trail.
 
 These share `core.db.Base`, so `core.db.init_db(engine)` creates them alongside the
-case/hearing/petition tables. There is deliberately NO self-service signup: accounts are
-created only by an administrator via `python -m web.adduser` (closed enrolment).
+case/hearing/petition tables. The app is MULTI-TENANT: each `Office` is a tenant. A person
+self-registers an office (becoming its `owner`) and adds members; usernames stay globally
+unique so login is username+password.
 
-Chat sessions are a SHARED office workspace: every logged-in user sees and can open every
-session (Conversation). Messages belong to a Conversation, not to a single user.
+Chat sessions are shared WITHIN an office: every member sees and can open every session
+(Conversation) belonging to their `office_id`, but never another office's. Messages belong to
+a Conversation, not to a single user.
 """
 
 from __future__ import annotations
@@ -18,9 +20,41 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.db import Base
 
 
+class Office(Base):
+    """A law office — the tenant. Members share every session/document under their office."""
+
+    __tablename__ = "offices"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
+class StyleProfile(Base):
+    """A drafting-style profile for an office OR a single lawyer (exactly one of the FKs is set).
+
+    Two layers merge into a lawyer's effective style: deterministic blocks (`letterhead`,
+    `signature`) override (lawyer wins over office) and are inserted into the document directly —
+    never sent to the cloud, so names/addresses are exact and skip redaction. Generative text
+    (`tone`, `boilerplate`) is the office house-style + the lawyer's, both injected into the draft
+    prompt so Korkut writes in their voice.
+    """
+
+    __tablename__ = "style_profiles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int | None] = mapped_column(ForeignKey("offices.id"), unique=True, default=None)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), unique=True, default=None)
+    letterhead: Mapped[str] = mapped_column(Text, default="")  # antet (deterministik, üstte)
+    signature: Mapped[str] = mapped_column(Text, default="")   # imza bloğu (deterministik, dilekçe sonunda)
+    tone: Mapped[str] = mapped_column(Text, default="")        # serbest üslup talimatı (üretken)
+    boilerplate: Mapped[str] = mapped_column(Text, default="") # tercih edilen kalıplar (üretken)
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
     password_hash: Mapped[str] = mapped_column(String(255))
@@ -64,6 +98,7 @@ class Conversation(Base):
 
     __tablename__ = "conversations"
     id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     title: Mapped[str] = mapped_column(String(120), default="Yeni sohbet")
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)

@@ -44,8 +44,27 @@ def _totp_next(secret: str) -> str:
     return totp._hotp(secret, totp.counter_at(time.time()) + 1)
 
 
-def test_no_register_endpoint(client):
-    assert client.post("/api/register", json={}).status_code == 404
+def test_register_creates_office_and_owner(client):
+    # Self-service: registering an office routes the new owner straight to 2FA enrolment.
+    r = client.post("/api/register", json={
+        "office_name": "Deniz Hukuk", "full_name": "Av. Deniz",
+        "username": "deniz", "password": "parola123",
+    })
+    assert r.status_code == 200 and r.json()["step"] == "enroll"
+    secret = client.get("/api/2fa/provision").json()["secret"]
+    enrolled = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()
+    assert enrolled["office"] == "Deniz Hukuk" and enrolled["role"] == "owner"
+    assert client.get("/api/me").json()["office"] == "Deniz Hukuk"
+
+    # Username is globally unique → a second office cannot reuse it.
+    dup = client.post("/api/register", json={
+        "office_name": "Başka Büro", "full_name": "X", "username": "deniz", "password": "parola123",
+    })
+    assert dup.status_code == 409
+    # Short password is rejected.
+    assert client.post("/api/register", json={
+        "office_name": "B", "full_name": "Y", "username": "yeni", "password": "kısa",
+    }).status_code == 400
 
 
 def test_password_then_enroll_then_chat(client):
@@ -71,7 +90,7 @@ def test_password_then_enroll_then_chat(client):
     r = client.post(f"/api/sessions/{sid}/chat", json={"text": "İşçilik alacağı zamanaşımı?"})
     assert r.status_code == 200 and "DRAFT" in r.json()["reply"]
     # The session is now listed (shared workspace) and auto-titled from the first message.
-    sessions = client.get("/api/sessions").json()
+    sessions = client.get("/api/sessions").json()["items"]
     assert len(sessions) == 1 and sessions[0]["title"].startswith("İşçilik")
     msgs = client.get(f"/api/sessions/{sid}").json()["messages"]
     assert [m["role"] for m in msgs] == ["user", "assistant"]
@@ -167,13 +186,154 @@ def test_sessions_are_shared_across_users(client):
     sid = client.post("/api/sessions").json()["id"]
     client.post(f"/api/sessions/{sid}/chat", json={"text": "Ortak dava dosyası"})
 
-    # User 2 (a different account) logs in fresh and sees the SAME session (shared workspace).
-    adduser.main(["ortak", "--password", "parola123", "--name", "Av. İki"])
+    # A second member of the SAME office logs in fresh and sees the shared session.
+    adduser.main(["ortak", "--office", "avukat ofisi", "--password", "parola123", "--name", "Av. İki"])
     c2 = TestClient(client.app)
     _enroll(c2, "ortak")
-    shared = c2.get("/api/sessions").json()
-    assert any(x["id"] == sid for x in shared), "session should be visible to all office users"
+    shared = c2.get("/api/sessions").json()["items"]
+    assert any(x["id"] == sid for x in shared), "session should be visible to office members"
     assert len(c2.get(f"/api/sessions/{sid}").json()["messages"]) == 2
+
+
+def test_rename_and_clone_session(client):
+    _enroll(client, "avukat")
+    sid = client.post("/api/sessions").json()["id"]
+    client.post(f"/api/sessions/{sid}/chat", json={"text": "İlk mesaj"})
+
+    # Rename keeps the same session, swaps the title.
+    r = client.patch(f"/api/sessions/{sid}", json={"title": "Yeni Başlık"})
+    assert r.status_code == 200 and r.json()["title"] == "Yeni Başlık"
+    assert client.patch(f"/api/sessions/{sid}", json={"title": "  "}).status_code == 400
+
+    # Clone makes a fresh session that copies the messages and is labelled "(kopya)".
+    clone = client.post(f"/api/sessions/{sid}/clone").json()
+    assert clone["id"] != sid and clone["title"] == "Yeni Başlık (kopya)"
+    src_msgs = client.get(f"/api/sessions/{sid}").json()["messages"]
+    clone_msgs = client.get(f"/api/sessions/{clone['id']}").json()["messages"]
+    assert clone_msgs == src_msgs and len(clone_msgs) == 2
+
+    # Both sessions are now listed.
+    ids = {x["id"] for x in client.get("/api/sessions").json()["items"]}
+    assert {sid, clone["id"]} <= ids
+
+
+def test_clone_copies_attached_document(client):
+    _enroll(client, "avukat")
+    sid = client.post("/api/sessions").json()["id"]
+    doc = client.get(f"/api/sessions/{sid}/document").json()
+    client.put(f"/api/documents/{doc['id']}", json={"title": "Kira Sözleşmesi", "content_md": "# Kira"})
+
+    clone = client.post(f"/api/sessions/{sid}/clone").json()
+    cdoc = client.get(f"/api/sessions/{clone['id']}/document").json()
+    assert cdoc["title"] == "Kira Sözleşmesi" and cdoc["content_md"] == "# Kira"
+    assert cdoc["id"] != doc["id"]
+    # The cloned document shows up in the office-wide Belgeler listing.
+    titles = [d["title"] for d in client.get("/api/documents").json()]
+    assert titles.count("Kira Sözleşmesi") == 2
+
+
+def test_owner_adds_member_shared_office(client):
+    _enroll(client, "avukat")  # owner of "avukat ofisi"
+    sid = client.post("/api/sessions").json()["id"]
+    client.post(f"/api/sessions/{sid}/chat", json={"text": "Ofis dosyası"})
+
+    r = client.post("/api/members", json={
+        "username": "katip", "full_name": "Kâtip", "password": "parola123",
+    })
+    assert r.status_code == 200 and r.json()["role"] == "member" and r.json()["enrolled"] is False
+    members = client.get("/api/members").json()
+    assert {m["username"] for m in members} == {"avukat", "katip"}
+
+    # The member logs in fresh, enrols, and sees the shared office session.
+    c2 = TestClient(client.app)
+    _enroll(c2, "katip")
+    assert any(x["id"] == sid for x in c2.get("/api/sessions").json()["items"])
+    # A member is not an owner → cannot add further members.
+    assert c2.post("/api/members", json={
+        "username": "x", "full_name": "X", "password": "parola123",
+    }).status_code == 403
+
+
+def test_cross_office_isolation(client):
+    import web.adduser as adduser
+
+    _enroll(client, "avukat")
+    sid = client.post("/api/sessions").json()["id"]
+
+    adduser.main(["rakip", "--office", "Rakip Büro", "--password", "parola123", "--name", "Av. Rakip"])
+    c2 = TestClient(client.app)
+    _enroll(c2, "rakip")
+    assert c2.get("/api/sessions").json()["items"] == [], "another office must not see the session"
+    assert c2.get(f"/api/sessions/{sid}").status_code == 404
+    assert c2.patch(f"/api/sessions/{sid}", json={"title": "hack"}).status_code == 404
+    assert c2.post(f"/api/sessions/{sid}/clone").status_code == 404
+    assert c2.delete(f"/api/sessions/{sid}").json() == {"ok": True}  # no-op, not an error
+    assert client.get(f"/api/sessions/{sid}").status_code == 200, "owner's session is untouched"
+
+
+def test_owner_removes_member(client):
+    _enroll(client, "avukat")
+    client.post("/api/members", json={
+        "username": "gidecek", "full_name": "G", "password": "parola123",
+    })
+    members = client.get("/api/members").json()
+    mid = next(m["id"] for m in members if m["username"] == "gidecek")
+    assert client.delete(f"/api/members/{mid}").status_code == 200
+
+    # Deactivated member can no longer log in.
+    c2 = TestClient(client.app)
+    assert c2.post("/api/login", json={"username": "gidecek", "password": "parola123"}).status_code == 401
+    # Owner cannot remove themselves.
+    me_id = next(m["id"] for m in client.get("/api/members").json() if m["username"] == "avukat")
+    assert client.delete(f"/api/members/{me_id}").status_code == 400
+
+
+def test_style_layers_and_deterministic_insertion(client):
+    _enroll(client, "avukat")  # owner
+    client.put("/api/style/office", json={
+        "letterhead": "DEMİR HUKUK BÜROSU", "signature": "", "tone": "resmî", "boilerplate": "",
+    })
+    client.put("/api/style/user", json={
+        "letterhead": "", "signature": "Av. Demir — Baro 123", "tone": "kısa-öz", "boilerplate": "",
+    })
+    st = client.get("/api/style").json()
+    assert st["can_edit_office"] is True
+    assert st["effective"]["letterhead"] == "DEMİR HUKUK BÜROSU"  # office (lawyer empty)
+    assert st["effective"]["signature"] == "Av. Demir — Baro 123"  # lawyer's own
+    assert "resmî" in st["effective"]["tone"] and "kısa-öz" in st["effective"]["tone"]  # combined
+
+    # A new petition draft wraps letterhead (top) + signature (bottom) around the model output.
+    sid = client.post("/api/sessions").json()["id"]
+    did = client.get(f"/api/sessions/{sid}/document").json()["id"]
+    body = client.post(f"/api/documents/{did}/draft", json={
+        "instruction": "boşanma dilekçesi", "petition_type": "cekismeli-bosanma",
+    }).json()["content_md"]
+    assert body.startswith("DEMİR HUKUK BÜROSU")
+    assert body.rstrip().endswith("Av. Demir — Baro 123")
+    assert "DRAFT" in body
+
+
+def test_office_style_owner_only_and_contract_skips_signature(client):
+    _enroll(client, "avukat")
+    client.put("/api/style/office", json={
+        "letterhead": "ANTET", "signature": "Av. X", "tone": "", "boilerplate": "",
+    })
+    client.post("/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"})
+    c2 = TestClient(client.app)
+    _enroll(c2, "katip")
+    # Members cannot edit office-level style.
+    assert c2.put("/api/style/office", json={
+        "letterhead": "x", "signature": "", "tone": "", "boilerplate": "",
+    }).status_code == 403
+    assert c2.get("/api/style").json()["can_edit_office"] is False
+
+    # Contracts keep the letterhead but skip the lawyer signature (they carry party signatures).
+    sid = c2.post("/api/sessions").json()["id"]
+    did = c2.get(f"/api/sessions/{sid}/document").json()["id"]
+    body = c2.post(f"/api/documents/{did}/draft", json={
+        "instruction": "kira sözleşmesi", "petition_type": "konut-kira",
+    }).json()["content_md"]
+    assert body.startswith("ANTET") and "Av. X" not in body
 
 
 def test_upload_fences_untrusted_file_content(client):

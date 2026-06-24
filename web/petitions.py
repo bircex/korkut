@@ -18,7 +18,9 @@ _TPL = Path(__file__).resolve().parent.parent / "templates"
 _DIRS = {"dilekce": _TPL / "petition", "sozlesme": _TPL / "contract"}
 
 # Turkish fold for matching (diacritics → ascii), so "boşanma" matches "bosanma".
-_FOLD = str.maketrans("çğıİöşüâîû", "cgiiosuaiu")
+# Both cases are mapped explicitly: translating before .lower() means uppercase titles
+# (e.g. "DİLEKÇESİ") fold correctly, while side-stepping the locale-specific "İ".lower() pitfall.
+_FOLD = str.maketrans("çğıİöşüâîûÇĞÖŞÜÂÎÛ", "cgiiosuaiucgosuaiu")
 _STOP = {
     "dava", "dilekce", "dilekcesi", "talebi", "talep", "karsi", "dair", "hakkinda",
     "nedeniyle", "nedenli", "ozgu", "yolu", "olmadigi", "kararina", "beyan", "yer",
@@ -185,6 +187,18 @@ def get(type_id: str) -> dict | None:
     return _index().get(type_id)
 
 
+def example(type_id: str) -> str | None:
+    """Curated golden example markdown for a type (few-shot), if one exists under <kind>/examples/."""
+    info = get(type_id)
+    if not info:
+        return None
+    path = _DIRS[info["tur"]] / "examples" / f"{type_id}.md"
+    try:
+        return path.read_text(encoding="utf-8") if path.exists() else None
+    except OSError:
+        return None
+
+
 def _fold(s: str) -> str:
     return s.translate(_FOLD).lower()
 
@@ -221,6 +235,25 @@ def detect(text: str) -> str | None:
         if hits > best:
             best, best_id = hits, tid
     return best_id if best >= 2 else None
+
+
+def classify(text: str) -> str | None:
+    """Label an existing document as "dilekce" or "sozlesme" (or None) from its title/content.
+
+    Reuses the same catalog + signal words as `detect` so the Belgeler listing never drifts from
+    drafting. The curated detection wins; a bare signal word (e.g. "sözleşme") is the fallback.
+    """
+    tid = detect(text)
+    if tid:
+        info = get(tid)
+        if info:
+            return info["tur"]
+    t = _fold(text or "")
+    if any(sig in t for sig in _SIG_SOZLESME):
+        return "sozlesme"
+    if any(sig in t for sig in _SIG_DILEKCE):
+        return "dilekce"
+    return None
 
 
 def _sections(kind: str, fallback: dict[str, str]) -> str:

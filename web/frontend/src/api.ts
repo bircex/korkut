@@ -1,5 +1,19 @@
 export type LoginStep = "mfa" | "enroll";
-export type User = { username: string; full_name: string | null };
+export type User = {
+  username: string;
+  full_name: string | null;
+  role: "owner" | "member";
+  office: string | null;
+};
+export type Member = {
+  id: number;
+  username: string;
+  full_name: string | null;
+  role: "owner" | "member";
+  is_active: boolean;
+  enrolled: boolean;
+  is_self: boolean;
+};
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type SessionBrief = {
   id: number;
@@ -8,6 +22,7 @@ export type SessionBrief = {
   updated_at: string | null;
 };
 export type SessionDetail = SessionBrief & { messages: ChatMessage[] };
+export type SessionPage = { items: SessionBrief[]; total: number };
 export type DocVersion = { id: number; author: string; note: string | null; created_at: string | null };
 export type PendingEdit = { id: number; content_md: string; summary: string | null };
 export type DocumentData = {
@@ -17,6 +32,26 @@ export type DocumentData = {
   status: string;
   versions: DocVersion[];
   pending: PendingEdit | null;
+};
+export type DocKind = "dilekce" | "sozlesme" | null;
+export type DocBrief = {
+  id: number;
+  conversation_id: number;
+  title: string;
+  kind: DocKind;
+  updated_at: string | null;
+};
+export type StyleFields = {
+  letterhead: string;
+  signature: string;
+  tone: string;
+  boilerplate: string;
+};
+export type StyleData = {
+  office: StyleFields;
+  user: StyleFields;
+  effective: StyleFields;
+  can_edit_office: boolean;
 };
 export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik: boolean };
 export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
@@ -65,6 +100,24 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
+  register: (office_name: string, full_name: string, username: string, password: string) =>
+    request<{ step: LoginStep }>("/api/register", {
+      method: "POST",
+      body: JSON.stringify({ office_name, full_name, username, password }),
+    }),
+  members: () => request<Member[]>("/api/members"),
+  addMember: (username: string, full_name: string, password: string) =>
+    request<Member>("/api/members", {
+      method: "POST",
+      body: JSON.stringify({ username, full_name, password }),
+    }),
+  removeMember: (id: number) =>
+    request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
+  getStyle: () => request<StyleData>("/api/style"),
+  saveUserStyle: (fields: StyleFields) =>
+    request<StyleFields>("/api/style/user", { method: "PUT", body: JSON.stringify(fields) }),
+  saveOfficeStyle: (fields: StyleFields) =>
+    request<StyleFields>("/api/style/office", { method: "PUT", body: JSON.stringify(fields) }),
   provision: () => request<Provision>("/api/2fa/provision"),
   enroll: (code: string) =>
     request<EnrollResult>("/api/2fa/enroll", {
@@ -77,11 +130,19 @@ export const api = {
       body: JSON.stringify({ code }),
     }),
   logout: () => request<{ ok: boolean }>("/api/logout", { method: "POST" }),
-  sessions: () => request<SessionBrief[]>("/api/sessions"),
+  sessions: (limit = 20, offset = 0) =>
+    request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
   createSession: () => request<SessionBrief>("/api/sessions", { method: "POST" }),
   getSession: (id: number) => request<SessionDetail>(`/api/sessions/${id}`),
   deleteSession: (id: number) =>
     request<{ ok: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
+  renameSession: (id: number, title: string) =>
+    request<SessionBrief>(`/api/sessions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    }),
+  cloneSession: (id: number) =>
+    request<SessionBrief>(`/api/sessions/${id}/clone`, { method: "POST" }),
   sessionChat: (id: number, text: string) =>
     request<{ reply: string; title: string; open_document: number | null }>(
       `/api/sessions/${id}/chat`,
@@ -109,6 +170,7 @@ export const api = {
     }
     return (await res.json()) as { reply: string; title: string; user_display: string };
   },
+  documents: () => request<DocBrief[]>("/api/documents"),
   petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),
   getDocument: (sessionId: number) =>
     request<DocumentData>(`/api/sessions/${sessionId}/document`),
