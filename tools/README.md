@@ -29,14 +29,22 @@ echo '{"sorgu": "kira tespiti", "limit": 5}' | python -m tools.search_yargitay
   back-pressure (`Retry-After`) + in-process cache. Each source client only sets its
   endpoint and maps params/results.
 - `html_to_markdown` / `pdf_to_markdown` — document conversion for the `fetch_*` tools.
+- `chunk_markdown` — paginate a long document into fixed-size pages (PDF journals, long rulings).
+- `extract_div_html` — pull the inner HTML of a `<div class="…">` (stdlib parser; no bs4).
+- `bedesten.py` / `uyusmazlik.py` / `sigorta_tahkim.py` — per-source clients/helpers.
+- `search_providers.py` — `TavilyClient` for sources with no real API (KVKK, BDDK, Sigorta).
 - `tools._base.cli.run` — the CLI harness every `__main__.py` calls.
 
 ## Sources & keys
-- **No key (core):** `search_yargitay`, `search_danistay`, `search_emsal`, `search_anayasa`,
-  `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`, `search_mevzuat`,
-  `fetch_decision`, `fetch_legislation`.
-- **Needs a search-provider key (optional, deferred):** KVKK, BDDK, Sigorta Tahkim. Declared
-  with `requires_key` in `tool.yaml`; the registry hides a tool whose key is missing.
+- **No key (core):** `search_yargitay`, `search_danistay`, `search_emsal`, `search_kyb`,
+  `search_anayasa`, `search_uyusmazlik`, `fetch_uyusmazlik`, `search_kik`, `search_rekabet`,
+  `search_sayistay`, `search_gib`, `search_mevzuat`, `fetch_decision`, `fetch_legislation`,
+  `fetch_kvkk`, `fetch_bddk`, `fetch_sigorta_tahkim`, `search_within_sigorta_tahkim`.
+- **Needs a search-provider key (optional, deferred):** `search_kvkk`, `search_bddk`,
+  `search_sigorta_tahkim` — all use a single key, `TAVILY_API_KEY`. These authorities have no
+  searchable API, so discovery goes through the Tavily web-search provider restricted to their
+  domain; the matching `fetch_*` tool then downloads the document directly (no key). Declared with
+  `requires_key` in `tool.yaml`; the registry hides a tool whose key is missing.
 
 ## Registry
 `core/tool_registry.py` scans this folder, reads each `tool.yaml`, and exposes the tools to

@@ -1,0 +1,22 @@
+name: search_within_sigorta_tahkim
+description: >
+  Search for a keyword within a single Sigorta Tahkim Komisyonu (Insurance Arbitration Commission)
+  journal issue. Downloads the issue PDF (by number, from a search_sigorta_tahkim result), splits
+  it into individual arbitration decisions, and returns the decisions mentioning the keyword,
+  ranked by match count with a short excerpt. Returns {issueNumber, keyword, totalDecisions,
+  matchingDecisions, results}. No API key.
+requires_key: null
+parameters:
+  issue_number:
+    type: string
+    required: true
+    description: The journal issue number from a search_sigorta_tahkim result's `id` field.
+  keyword:
+    type: string
+    required: true
+    description: Keyword or phrase to find (Turkish; case-insensitive, İ/I-aware).
+  max_results:
+    type: integer
+    required: false
+    default: 10
+    description: Maximum matching decisions to return.

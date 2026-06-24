@@ -5,8 +5,10 @@
 # Tiered exposure: 'core' tools are always offered; 'niche' load on demand by domain.
 
 research:
-  core:  [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
-  niche: [search_anayasa, search_kik, search_rekabet, search_sayistay, search_gib]
+  core:  [search_yargitay, search_danistay, search_emsal, search_kyb, search_mevzuat, fetch_decision, fetch_legislation]
+  niche: [search_anayasa, search_uyusmazlik, fetch_uyusmazlik, search_kik, search_rekabet, search_sayistay, search_gib,
+          search_kvkk, fetch_kvkk, search_bddk, fetch_bddk,
+          search_sigorta_tahkim, fetch_sigorta_tahkim, search_within_sigorta_tahkim]
 
 petition:
   core:  [search_yargitay, search_mevzuat, fetch_decision, fetch_legislation]

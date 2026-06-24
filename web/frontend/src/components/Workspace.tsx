@@ -259,6 +259,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
+  if (view === "settings") {
+    return <Settings user={user} onClose={() => setView("chats")} />;
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
       <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
@@ -466,9 +470,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         )}
 
         <div className="relative flex min-w-0 flex-1">
-        {view === "settings" ? (
-          <Settings user={user} onClose={() => setView("chats")} />
-        ) : view === "docs" ? (
+        {view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
         ) : pane === "document" && currentId !== null ? (
           <div className="drawer-left flex min-w-0 flex-1">

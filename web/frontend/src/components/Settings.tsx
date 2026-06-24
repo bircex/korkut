@@ -230,7 +230,7 @@ function StyleForm({
           >
             {busy ? "Kaydediliyor…" : "Kaydet"}
           </button>
-          {saved && <span className="text-[12px] text-zinc-400">Kaydedildi ✓</span>}
+          {saved && <span className="text-[12px] text-zinc-400">Kaydedildi.</span>}
         </div>
       )}
     </div>
@@ -289,16 +289,40 @@ const TAB_TITLE: Record<Tab, string> = {
 
 export function Settings({ user, onClose }: { user: User; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("account");
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "account", label: "Hesap", icon: "👤" },
-    { id: "members", label: "Üyeler", icon: "👥" },
-    { id: "style", label: "Stil", icon: "✍️" },
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "account", label: "Hesap" },
+    { id: "members", label: "Üyeler" },
+    { id: "style", label: "Stil" },
   ];
 
   return (
-    <div className="flex min-w-0 flex-1">
-      <div className="min-w-0 flex-1 overflow-y-auto px-6 py-6">
-        <div className="mx-auto w-full max-w-2xl">
+    <div className="flex h-dvh bg-zinc-100 text-zinc-900">
+      <aside className="flex w-64 shrink-0 flex-col gap-1 border-r border-zinc-200 bg-white p-4">
+        <button
+          onClick={onClose}
+          className="mb-4 rounded-lg border border-zinc-300 px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:border-zinc-900"
+        >
+          Geri
+        </button>
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+          Ayarlar
+        </p>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={
+              "rounded-lg px-3 py-2.5 text-left text-[15px] font-medium " +
+              (tab === t.id ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100")
+            }
+          >
+            {t.label}
+          </button>
+        ))}
+      </aside>
+
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-2xl px-6 py-8">
           <h1 className="mb-5 text-lg font-bold text-zinc-900">{TAB_TITLE[tab]}</h1>
 
           {tab === "account" && (
@@ -318,31 +342,6 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
           {tab === "style" && <StyleTab />}
         </div>
       </div>
-
-      <aside className="flex w-52 shrink-0 flex-col border-l border-zinc-200 bg-white p-3">
-        <button
-          onClick={onClose}
-          className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100"
-        >
-          ← Geri
-        </button>
-        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-          Ayarlar
-        </p>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm " +
-              (tab === t.id ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100")
-            }
-          >
-            <span className="text-base leading-none">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
-      </aside>
     </div>
   );
 }

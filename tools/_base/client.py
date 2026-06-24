@@ -11,12 +11,35 @@ All sources accessed here are public Turkish government portals; no auth/token.
 from __future__ import annotations
 
 import io
+import math
+import ssl
 import threading
 import time
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from typing import Any
 
 import httpx
+
+
+def legacy_ssl_context() -> ssl.SSLContext:
+    """An SSL context tolerant of legacy Turkish government TLS stacks.
+
+    Several portals (KİK, Uyuşmazlık, BDDK, Sigorta Tahkim) serve certificates or
+    cipher suites that modern OpenSSL rejects. Clients for those hosts build their
+    httpx transport with this context (verification disabled, legacy renegotiation
+    and a relaxed security level enabled).
+    """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    if hasattr(ssl, "OP_LEGACY_SERVER_CONNECT"):
+        ctx.options |= ssl.OP_LEGACY_SERVER_CONNECT
+    try:
+        ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+    except ssl.SSLError:
+        pass
+    return ctx
 
 
 class RateLimited(Exception):
@@ -180,3 +203,87 @@ def pdf_to_markdown(data: bytes) -> str:
 
     reader = PdfReader(io.BytesIO(data))
     return "\n\n".join((page.extract_text() or "").strip() for page in reader.pages).strip()
+
+
+def chunk_markdown(markdown: str, page: int = 1, page_size: int = 5000) -> dict[str, Any]:
+    """Slice a long Markdown document into a fixed-size page.
+
+    Some sources (PDF journals, long HTML rulings) produce documents too large to
+    return whole. This returns one ``page_size``-character chunk plus pagination
+    metadata, mirroring the page model the search tools use:
+
+        {"markdown": <chunk>, "page": <clamped>, "total_pages": <n>}
+
+    `page` is 1-indexed and clamped into range.
+    """
+    text = markdown or ""
+    total_pages = max(1, math.ceil(len(text) / page_size)) if text else 1
+    page = max(1, min(page, total_pages))
+    start = (page - 1) * page_size
+    return {"markdown": text[start : start + page_size], "page": page, "total_pages": total_pages}
+
+
+class _DivExtractor(HTMLParser):
+    """Capture the inner HTML of the first ``<div>`` carrying ``target_class``.
+
+    Re-serialises the tags/text/entities it sees while inside the matched div so
+    the captured fragment can be handed straight to `html_to_markdown`. Nested
+    divs are tracked by depth so capture ends at the matching close tag.
+    """
+
+    def __init__(self, target_class: str) -> None:
+        super().__init__(convert_charrefs=False)
+        self._target = target_class
+        self._depth = 0
+        self._capture_depth: int | None = None
+        self.parts: list[str] = []
+
+    def _attrs(self, attrs: list[tuple[str, str | None]]) -> str:
+        return "".join(f' {k}="{v}"' if v is not None else f" {k}" for k, v in attrs)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._capture_depth is None and tag == "div":
+            classes = (dict(attrs).get("class") or "").split()
+            if self._target in classes:
+                self._capture_depth = self._depth
+                self._depth += 1
+                return
+        if self._capture_depth is not None:
+            self.parts.append(f"<{tag}{self._attrs(attrs)}>")
+        self._depth += 1
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._capture_depth is not None:
+            self.parts.append(f"<{tag}{self._attrs(attrs)}/>")
+
+    def handle_endtag(self, tag: str) -> None:
+        self._depth -= 1
+        if self._capture_depth is not None and self._depth == self._capture_depth:
+            self._capture_depth = None
+            return
+        if self._capture_depth is not None:
+            self.parts.append(f"</{tag}>")
+
+    def handle_data(self, data: str) -> None:
+        if self._capture_depth is not None:
+            self.parts.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        if self._capture_depth is not None:
+            self.parts.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        if self._capture_depth is not None:
+            self.parts.append(f"&#{name};")
+
+
+def extract_div_html(html: str, class_name: str) -> str:
+    """Return the inner HTML of the first ``<div class="… class_name …">``.
+
+    Falls back to the whole document when no matching div is found, so callers can
+    always hand the result to `html_to_markdown`.
+    """
+    parser = _DivExtractor(class_name)
+    parser.feed(html)
+    captured = "".join(parser.parts).strip()
+    return captured or html

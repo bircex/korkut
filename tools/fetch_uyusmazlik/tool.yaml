@@ -1,0 +1,13 @@
+name: fetch_uyusmazlik
+description: >
+  Fetch the full text of an Uyuşmazlık Mahkemesi (Court of Jurisdictional Disputes) decision as
+  Markdown, given the decision URL from a search_uyusmazlik result. Returns {sourceUrl, markdown}.
+  No API key.
+requires_key: null
+parameters:
+  document_url:
+    type: string
+    required: true
+    description: >
+      Full decision URL from a search_uyusmazlik result's `url` field
+      (a kararlar.uyusmazlik.gov.tr address).
