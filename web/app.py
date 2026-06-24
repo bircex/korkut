@@ -731,6 +731,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=text))
         s.commit()
         style = _effective_style(s, user)
+        office_name = _office_name(s, user)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -745,6 +746,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
 
     reply = agent.answer(
         text,
+        office_name=office_name,
         history=history_msgs,
         extra_tools=[_CANVAS_TOOL],
         handlers={"dilekce_canvas": _canvas},
@@ -862,8 +864,9 @@ def session_upload(
             conv.title = (prompt or name)[:60]
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=display))
         s.commit()
+        office_name = _office_name(s, user)
 
-    reply = agent.answer(model_input, history=history_msgs)
+    reply = agent.answer(model_input, office_name=office_name, history=history_msgs)
 
     with session() as s:
         conv = s.get(Conversation, cid)
@@ -1055,6 +1058,9 @@ def _make_draft(
         if not doc:
             return None
         current = doc.content_md
+        conv = s.get(Conversation, doc.conversation_id)
+        office = s.get(Office, conv.office_id) if conv else None
+        office_name = office.name if office else None
     instr = (instruction or "").strip()
     fmt = petitions.draft_prompt(petition_type) if petition_type else None
     if fmt:
@@ -1079,7 +1085,7 @@ def _make_draft(
         "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
-    proposed = _strip_fences(agent.answer(prompt, history=history))
+    proposed = _strip_fences(agent.answer(prompt, office_name=office_name, history=history))
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
     # after the cloud call (so they never leave the machine). Later edits keep them via the
     # redaction round-trip on `current`.

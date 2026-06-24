@@ -1,7 +1,6 @@
-# Korkut is a single Mattermost bot identity. Specialty modules run inside and all
-# surface as Korkut (see ARCHITECTURE.md §2, §7). DM is always open in addition to the channel.
-bot:
+# Korkut is a single AI assistant identity, served through the self-hosted web chat UI.
+# Each law office self-registers (becoming its own tenant); the office name is set at
+# registration and drives Korkut's persona at runtime (see docs/ARCHITECTURE.md §7).
+assistant:
   name: "Korkut"
-  channel: office            # primary channel; office name is set at install (Mattermost SiteName)
-persona_file: korkut/persona.py
-specialties: [dispatcher, hearing, petition, research]   # internal; not user-visible
+persona: backend/src/korkut/brain/persona.py   # build_persona(office_name) — identity is per-office

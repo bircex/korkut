@@ -22,6 +22,11 @@ export function App() {
       .catch(() => setStage("login"));
   }, []);
 
+  // Tab title follows the signed-in office; falls back to the product name.
+  useEffect(() => {
+    document.title = user?.office ? `${user.office} · Korkut` : "Korkut";
+  }, [user]);
+
   function authed(u: User) {
     setUser(u);
     setStage("chat");

@@ -11,7 +11,7 @@ from core import tool_registry
 from core.providers.claude import ClaudeProvider
 from core.providers.gpt import GptProvider
 from core.router import Router
-from korkut.persona import PERSONA
+from korkut.persona import build_persona
 
 _router: Router | None = None
 
@@ -30,17 +30,19 @@ def answer(
     user_text: str,
     *,
     specialty: str = "research",
+    office_name: str | None = None,
     history: list[dict] | None = None,
     extra_tools: list | None = None,
     handlers: dict | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured cloud model.
 
-    `extra_tools`/`handlers` let a caller add session-bound tools for this turn (e.g. the web
-    app's document-Canvas signal) without touching the global tool registry.
+    `office_name` sets Korkut's per-office identity in the system persona (the authenticated
+    user's tenant). `extra_tools`/`handlers` let a caller add session-bound tools for this turn
+    (e.g. the web app's document-Canvas signal) without touching the global tool registry.
     """
     tools = tool_registry.available_tools()
-    messages: list[dict] = [{"role": "system", "content": PERSONA}]
+    messages: list[dict] = [{"role": "system", "content": build_persona(office_name)}]
     if history:
         messages.extend(history)
     messages.append({"role": "user", "content": user_text})

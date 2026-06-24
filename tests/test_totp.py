@@ -41,6 +41,6 @@ def test_window_tolerates_skew():
 
 
 def test_provisioning_uri_shape():
-    uri = totp.provisioning_uri("ABC234", "avukat", "Cankar Hukuk")
-    assert uri.startswith("otpauth://totp/Cankar%20Hukuk:avukat?")
-    assert "secret=ABC234" in uri and "issuer=Cankar%20Hukuk" in uri
+    uri = totp.provisioning_uri("ABC234", "avukat", "Demo Hukuk")
+    assert uri.startswith("otpauth://totp/Demo%20Hukuk:avukat?")
+    assert "secret=ABC234" in uri and "issuer=Demo%20Hukuk" in uri

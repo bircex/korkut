@@ -1,0 +1,49 @@
+{
+  "tip": "mirasin-reddi",
+  "ad": "Mirasın reddi (reddi miras) talebi",
+  "dayanak": ["TMK m.605-606", "TMK m.609", "HMK m.382/2-c"],
+
+  "sorular": [
+    { "id": "muris_ad", "soru": "Muris (vefat eden) ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Tereke kimliği; dilekçe konusu (HMK m.119/d)." },
+    { "id": "olum_tarihi", "soru": "Ölüm tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mirasın açıldığı an (TMK m.575)." },
+    { "id": "ogrenme_tarihi", "soru": "Mirasçı, mirasçı olduğunu / murisin ölümünü ne zaman öğrendi?", "tip": "tarih",
+      "zorunlu": true, "neden": "3 aylık ret süresi BU tarihten işler (TMK m.606)." },
+    { "id": "talep_eden_ad", "soru": "Reddi yapan mirasçının ad-soyadı, T.C. no ve murise yakınlığı?", "tip": "metin",
+      "zorunlu": true, "neden": "Davacı kimliği + sıfatı (HMK m.119/b-c)." },
+    { "id": "ret_turu", "soru": "Gerçek ret mi, hükmen (mirasın borca batık olması) ret mi talep ediliyor?", "tip": "secim",
+      "secenekler": ["gerçek ret (süresinde beyan)", "hükmen ret (terekenin borca batıklığının tespiti)"],
+      "zorunlu": true, "neden": "Hükmen rette süre koşulu yoktur (TMK m.605/2); usul farklıdır." },
+    { "id": "tereke_borca_batik", "soru": "Tereke açıkça borca batık mı (ödemeden aczi belli mi)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Hükmen ret değerlendirmesi için (TMK m.605/2)." },
+    { "id": "kucuk_kisitli", "soru": "Reddeden mirasçı küçük/kısıtlı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yasal temsil + vesayet/izin gerekebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "ret_turu == gerçek ret (süresinde beyan)",
+      "uyari": "Gerçek ret 3 AYLIK HAK DÜŞÜRÜCÜ süreye tabidir (TMK m.606): süre öğrenme tarihinden işler. Süreyi mutlaka teyit et." },
+    { "eger": "gun_farki(ogrenme_tarihi) > 90",
+      "uyari": "KRİTİK: öğrenme tarihinden bu yana 90 günü aşmış görünüyor — gerçek ret süresi geçmiş olabilir. Hükmen ret (TMK m.605/2) yolunu değerlendir ve kullanıcıyı uyar." },
+    { "eger": "tereke_borca_batik == evet",
+      "ekle": "Terekenin ödemeden aciz / borca batık olduğunu somut verilerle (borç-alacak tablosu) açıklayan bir bölüm ekle (TMK m.605/2 hükmen ret).",
+      "uyari": "Borca batıklık halinde hükmen ret süreye bağlı değildir; tespit davası niteliğindedir." },
+    { "eger": "kucuk_kisitli == evet",
+      "uyari": "Küçük/kısıtlı adına ret için yasal temsil ve gerekiyorsa vesayet makamı izni aranır." }
+  ],
+
+  "kontroller": [
+    "Görevli mahkeme: Sulh Hukuk Mahkemesi (TMK m.609 — beyan bu mahkemeye yapılır / tutanağa geçer).",
+    "Yetki: murisin son yerleşim yeri sulh hukuk mahkemesi.",
+    "Gerçek retse: 3 aylık süre (öğrenme tarihinden) hesaplandı ve dilekçede gösterildi mi?",
+    "Ret kayıtsız-şartsız mı? (kısmi/şarta bağlı ret geçersizdir — TMK m.609/son).",
+    "Birden çok mirasçı varsa her birinin ayrı beyanı/temsili sağlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.605", "TMK m.606", "TMK m.609", "HMK m.382"],
+    "emsal_ara": "mirasın reddi 3 aylık süre hak düşürücü hükmen ret borca batık",
+    "vurgula": ["ret süresinin başlangıcı (öğrenme tarihi)", "gerçek ret ile hükmen ret ayrımı", "görevli sulh hukuk mahkemesi"]
+  }
+}
