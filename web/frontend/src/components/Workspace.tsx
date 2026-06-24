@@ -1,23 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { api, ApiError, type ChatMessage, type SessionBrief, type User } from "../api";
+import { api, ApiError, type ChatMessage, type DocBrief, type SessionBrief, type User } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
+import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
 
-const BASE_GREETING =
-  "Merhaba, ben Korkut. Cankar Hukuk asistanınız. Size nasıl yardımcı olabilirim?";
+const SESSION_PAGE = 20;
 
 const MAX_UPLOAD = 15 * 1024 * 1024;
 const ACCEPT = ".pdf,.docx,.txt,.png,.jpg,.jpeg";
 
-function greeting(total: number): ChatMessage {
+function greeting(total: number, office: string | null): ChatMessage {
+  const who = office ? `${office} hukuk asistanınız` : "hukuk asistanınız";
   const content =
     total > 0
-      ? `Merhaba, ben Korkut — Cankar Hukuk asistanınız. Şu an ${total.toLocaleString(
+      ? `Merhaba, ben Korkut — ${who}. Şu an ${total.toLocaleString(
           "tr-TR",
         )} yargı kararına ve tüm yürürlükteki mevzuata canlı erişiyorum. Size nasıl yardımcı olabilirim?`
-      : BASE_GREETING;
+      : `Merhaba, ben Korkut. ${who}. Size nasıl yardımcı olabilirim?`;
   return { role: "assistant", content };
 }
 
@@ -30,8 +31,14 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
+type SidebarView = "chats" | "docs" | "settings";
+
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
+  const [sessionsTotal, setSessionsTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [docs, setDocs] = useState<DocBrief[]>([]);
+  const [view, setView] = useState<SidebarView>("chats");
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
@@ -41,10 +48,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
-  const [docOpen, setDocOpen] = useState(false);
+  const [pane, setPane] = useState<"chat" | "document">("chat");
   const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [rowMenuId, setRowMenuId] = useState<number | null>(null);
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameText, setRenameText] = useState("");
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -57,10 +66,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       } catch {
         /* best effort */
       }
+      loadDocs();
       try {
-        const list = await api.sessions();
-        setSessions(list);
-        if (list.length) await openSession(list[0].id);
+        const page = await api.sessions(SESSION_PAGE, 0);
+        setSessions(page.items);
+        setSessionsTotal(page.total);
+        if (page.items.length) await openSession(page.items[0].id);
         else newChat();
       } catch {
         newChat();
@@ -77,36 +88,101 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
   }
 
+  async function loadOlder() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await api.sessions(SESSION_PAGE, sessions.length);
+      setSessionsTotal(page.total);
+      setSessions((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...page.items.filter((x) => !seen.has(x.id))];
+      });
+    } catch {
+      /* best effort */
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   async function openSession(id: number) {
     setCurrentId(id);
+    setView("chats");
+    setPane("chat");
     closeSidebarOnMobile();
     try {
       const detail = await api.getSession(id);
-      setMessages(detail.messages.length ? detail.messages : [greeting(coverage)]);
+      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
     } catch {
-      setMessages([greeting(coverage)]);
+      setMessages([greeting(coverage, user.office)]);
     }
   }
 
   function newChat() {
     setCurrentId(null);
-    setMessages([greeting(coverage)]);
-    setDocOpen(false);
+    setMessages([greeting(coverage, user.office)]);
+    setView("chats");
+    setPane("chat");
     closeSidebarOnMobile();
   }
 
-  async function openDoc() {
-    let id = currentId;
-    if (id === null) {
-      const created = await api.createSession();
-      id = created.id;
-      setCurrentId(id);
-      setSessions((s) => [created, ...s]);
+  async function loadDocs() {
+    try {
+      setDocs(await api.documents());
+    } catch {
+      /* best effort */
     }
-    setDocOpen(true);
+  }
+
+  async function openDocFromList(d: DocBrief) {
+    setCurrentId(d.conversation_id);
+    setView("chats");
+    setPane("document");
+    closeSidebarOnMobile();
+    try {
+      const detail = await api.getSession(d.conversation_id);
+      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
+    } catch {
+      setMessages([greeting(coverage, user.office)]);
+    }
+  }
+
+  async function cloneChat(id: number) {
+    setRowMenuId(null);
+    try {
+      const created = await api.cloneSession(id);
+      setSessions((s) => [created, ...s]);
+      setSessionsTotal((t) => t + 1);
+      loadDocs();
+      await openSession(created.id);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function startRename(s: SessionBrief) {
+    setRowMenuId(null);
+    setRenamingId(s.id);
+    setRenameText(s.title);
+  }
+
+  async function commitRename() {
+    const id = renamingId;
+    const title = renameText.trim();
+    setRenamingId(null);
+    if (id === null) return;
+    const current = sessions.find((x) => x.id === id);
+    if (!title || !current || title === current.title) return;
+    setSessions((s) => s.map((x) => (x.id === id ? { ...x, title } : x)));
+    try {
+      await api.renameSession(id, title);
+    } catch {
+      /* ignore — local title stays optimistic */
+    }
   }
 
   async function remove(id: number) {
+    setRowMenuId(null);
     try {
       await api.deleteSession(id);
     } catch {
@@ -114,6 +190,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
     const rest = sessions.filter((s) => s.id !== id);
     setSessions(rest);
+    setSessionsTotal((t) => Math.max(rest.length, t - 1));
     if (id === currentId) {
       if (rest.length) openSession(rest[0].id);
       else newChat();
@@ -151,12 +228,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         id = created.id;
         setCurrentId(id);
         setSessions((s) => [created, ...s]);
+        setSessionsTotal((tot) => tot + 1);
       }
       const res = file ? await api.uploadToSession(id, file, t) : await api.sessionChat(id, t);
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
       if (!file && (res as { open_document?: number | null }).open_document) {
-        setDocOpen(true);
+        setPane("document");
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
+        loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
       const fixedId = id;
       setSessions((s) => [
@@ -182,7 +261,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
-      <header className="flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
+      <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
         <button
           onClick={() => setSidebarOpen((o) => !o)}
           className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100"
@@ -192,20 +271,38 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </button>
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-[11px] font-extrabold text-white">
-            CH
+            K
           </span>
           <span className="font-bold">Korkut</span>
+          {user.office && (
+            <span className="hidden border-l border-zinc-200 pl-2 text-sm text-zinc-500 sm:inline">
+              {user.office}
+            </span>
+          )}
         </div>
+        {view === "chats" && currentId !== null && (
+          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg bg-zinc-100 p-1 text-[13px] font-medium">
+            <button
+              onClick={() => setPane("chat")}
+              className={
+                "rounded-md px-4 py-1 " +
+                (pane === "chat" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
+              }
+            >
+              Sohbet
+            </button>
+            <button
+              onClick={() => setPane("document")}
+              className={
+                "rounded-md px-4 py-1 " +
+                (pane === "document" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
+              }
+            >
+              Editör
+            </button>
+          </div>
+        )}
         <div className="ml-auto flex items-center gap-3">
-          <button
-            onClick={() => (docOpen ? setDocOpen(false) : openDoc())}
-            className={
-              "rounded-md border px-2.5 py-1 text-[13px] " +
-              (docOpen ? "border-zinc-900 text-zinc-900" : "border-zinc-300 text-zinc-700 hover:border-zinc-900")
-            }
-          >
-            📝 Editör
-          </button>
           <div className="relative border-l border-zinc-200 pl-3">
             <button
               onClick={() => setMenuOpen((o) => !o)}
@@ -223,13 +320,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
                 <div className="absolute right-0 z-40 mt-2 w-48 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                  <div className="border-b border-zinc-100 px-3 py-2 text-[13px] text-zinc-500">
-                    {user.full_name ?? user.username}
+                  <div className="border-b border-zinc-100 px-3 py-2">
+                    <div className="text-[13px] font-medium text-zinc-800">
+                      {user.full_name ?? user.username}
+                    </div>
+                    <div className="text-[12px] text-zinc-400">
+                      {[user.office, user.role === "owner" ? "Sahip" : "Üye"].filter(Boolean).join(" · ")}
+                    </div>
                   </div>
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      setSettingsOpen(true);
+                      setView("settings");
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
@@ -253,9 +355,32 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <>
             <div className="fixed inset-0 z-10 bg-black/30 sm:hidden" onClick={() => setSidebarOpen(false)} />
             <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-zinc-200 bg-white sm:static sm:z-auto">
+              <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 m-3 mb-2 text-[13px] font-medium">
+                <button
+                  onClick={() => setView("chats")}
+                  className={
+                    "flex-1 rounded-md py-1.5 " +
+                    (view === "chats" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800")
+                  }
+                >
+                  Sohbetler
+                </button>
+                <button
+                  onClick={() => {
+                    setView("docs");
+                    loadDocs();
+                  }}
+                  className={
+                    "flex-1 rounded-md py-1.5 " +
+                    (view === "docs" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800")
+                  }
+                >
+                  Belgeler
+                </button>
+              </div>
               <button
                 onClick={newChat}
-                className="m-3 rounded-lg bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                className="mx-3 mb-2 rounded-lg bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white hover:opacity-90"
               >
                 + Yeni sohbet
               </button>
@@ -264,32 +389,97 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   <div
                     key={s.id}
                     className={
-                      "group flex items-center gap-1 rounded-lg px-2 py-2 text-sm " +
-                      (s.id === currentId ? "bg-zinc-100" : "hover:bg-zinc-50")
+                      "group relative flex items-center gap-1 rounded-lg px-2 py-2 text-sm " +
+                      (view === "chats" && s.id === currentId ? "bg-zinc-100" : "hover:bg-zinc-50")
                     }
                   >
-                    <button onClick={() => openSession(s.id)} className="min-w-0 flex-1 text-left" title={s.title}>
-                      <div className="truncate text-zinc-800">{s.title}</div>
-                      <div className="truncate text-[11px] text-zinc-400">
-                        {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
-                      </div>
-                    </button>
+                    {renamingId === s.id ? (
+                      <input
+                        autoFocus
+                        value={renameText}
+                        onChange={(e) => setRenameText(e.target.value)}
+                        onBlur={commitRename}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitRename();
+                          if (e.key === "Escape") setRenamingId(null);
+                        }}
+                        className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+                      />
+                    ) : (
+                      <button onClick={() => openSession(s.id)} className="min-w-0 flex-1 text-left" title={s.title}>
+                        <div className="truncate text-zinc-800">{s.title}</div>
+                        <div className="truncate text-[11px] text-zinc-400">
+                          {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
+                        </div>
+                      </button>
+                    )}
                     <button
-                      onClick={() => remove(s.id)}
-                      className="shrink-0 px-1.5 text-zinc-400 opacity-0 hover:text-red-500 group-hover:opacity-100"
-                      title="Sil"
+                      onClick={() => setRowMenuId((id) => (id === s.id ? null : s.id))}
+                      className={
+                        "shrink-0 rounded-md px-1.5 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 " +
+                        (rowMenuId === s.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")
+                      }
+                      title="Seçenekler"
                     >
-                      ✕
+                      ⋯
                     </button>
+                    {rowMenuId === s.id && (
+                      <>
+                        <div className="fixed inset-0 z-30" onClick={() => setRowMenuId(null)} />
+                        <div className="absolute right-2 top-9 z-40 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                          <button
+                            onClick={() => startRename(s)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                          >
+                            ✎ Yeniden adlandır
+                          </button>
+                          <button
+                            onClick={() => cloneChat(s.id)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                          >
+                            ⧉ Klonla
+                          </button>
+                          <button
+                            onClick={() => remove(s.id)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                          >
+                            🗑 Sil
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
                 {sessions.length === 0 && <p className="px-2 py-3 text-[13px] text-zinc-400">Henüz sohbet yok.</p>}
+                {sessions.length < sessionsTotal && (
+                  <button
+                    onClick={loadOlder}
+                    disabled={loadingMore}
+                    className="mt-1 w-full rounded-lg px-2 py-2 text-center text-[13px] text-zinc-500 hover:bg-zinc-50 disabled:opacity-50"
+                  >
+                    {loadingMore ? "Yükleniyor…" : `Daha eski sohbetler · ${sessionsTotal - sessions.length}`}
+                  </button>
+                )}
               </nav>
             </aside>
           </>
         )}
 
         <div className="relative flex min-w-0 flex-1">
+        {view === "settings" ? (
+          <Settings user={user} onClose={() => setView("chats")} />
+        ) : view === "docs" ? (
+          <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
+        ) : pane === "document" && currentId !== null ? (
+          <div className="drawer-left flex min-w-0 flex-1">
+            <DocumentPanel
+              key={currentId}
+              sessionId={currentId}
+              refreshKey={docRefresh}
+              onClose={() => setPane("chat")}
+            />
+          </div>
+        ) : (
         <div className="flex min-w-0 flex-1 flex-col">
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
             {messages.map((m, i) => (
@@ -366,16 +556,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </button>
           </form>
         </div>
-
-        {docOpen && currentId !== null && (
-          <div className="drawer-left absolute inset-0 z-30 bg-white shadow-xl">
-            <DocumentPanel
-              key={currentId}
-              sessionId={currentId}
-              refreshKey={docRefresh}
-              onClose={() => setDocOpen(false)}
-            />
-          </div>
         )}
         </div>
       </div>
@@ -384,10 +564,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         {coverage > 0
           ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
           : ""}
-        © Cankar Hukuk
+        © {user.office ?? "Korkut"}
       </footer>
-
-      {settingsOpen && <Settings user={user} onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

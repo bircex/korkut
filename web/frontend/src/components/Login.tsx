@@ -2,7 +2,13 @@ import { useState } from "react";
 import { api, ApiError, type LoginStep } from "../api";
 import { AuthShell, Brand, Button, ErrorText, Field } from "../ui";
 
-export function Login({ onStep }: { onStep: (step: LoginStep) => void }) {
+export function Login({
+  onStep,
+  onRegister,
+}: {
+  onStep: (step: LoginStep) => void;
+  onRegister: () => void;
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +31,7 @@ export function Login({ onStep }: { onStep: (step: LoginStep) => void }) {
   return (
     <AuthShell>
       <div className="mb-4">
-        <Brand subtitle="Korkut — hukuk asistanınız" />
+        <Brand subtitle="Hukuk asistanınız" />
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <Field
@@ -46,6 +52,13 @@ export function Login({ onStep }: { onStep: (step: LoginStep) => void }) {
           {busy ? "Kontrol ediliyor…" : "Giriş yap"}
         </Button>
         <ErrorText>{error}</ErrorText>
+        <button
+          type="button"
+          onClick={onRegister}
+          className="mt-1 text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Hesabınız yok mu? Hukuk büronuzu oluşturun
+        </button>
       </form>
     </AuthShell>
   );

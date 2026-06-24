@@ -24,7 +24,7 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
     try {
       const result = await api.enroll(code.trim());
       setCodes(result.recovery_codes);
-      setUser({ username: result.username, full_name: result.full_name });
+      setUser(result);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Kod doğrulanamadı");
     } finally {

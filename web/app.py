@@ -30,7 +30,7 @@ from fastapi import Cookie, FastAPI, File, Form, HTTPException, Request, Respons
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from core.tool_registry import ToolSpec
@@ -42,15 +42,17 @@ from web.models import (
     Document,
     DocumentVersion,
     Message,
+    Office,
     ProposedEdit,
     RecoveryCode,
+    StyleProfile,
     User,
 )
 from web.store import session
 
 _STATIC = Path(__file__).resolve().parent / "static"
 _HISTORY_TURNS = 20
-_ISSUER = os.getenv("KORKUT_ISSUER", "Cankar Hukuk")
+_ISSUER = os.getenv("KORKUT_ISSUER", "Korkut")
 
 # Lockout policy.
 _MAX_FAILED = 5
@@ -63,7 +65,7 @@ _TICKET_COOKIE = "korkut_ticket"
 # Pre-computed so a login for a non-existent user does the same PBKDF2 work as a real one.
 _DUMMY_HASH = auth.hash_secret("x" * 24)
 
-app = FastAPI(title="Korkut — Cankar Hukuk", docs_url=None, redoc_url=None)
+app = FastAPI(title="Korkut", docs_url=None, redoc_url=None)
 
 _ip_hits: dict[str, list[float]] = defaultdict(list)
 
@@ -81,6 +83,30 @@ class CodeBody(BaseModel):
 
 class ChatBody(BaseModel):
     text: str
+
+
+class RenameBody(BaseModel):
+    title: str
+
+
+class RegisterBody(BaseModel):
+    office_name: str
+    full_name: str
+    username: str
+    password: str
+
+
+class MemberBody(BaseModel):
+    username: str
+    full_name: str
+    password: str
+
+
+class StyleBody(BaseModel):
+    letterhead: str = ""
+    signature: str = ""
+    tone: str = ""
+    boilerplate: str = ""
 
 
 # ---------------- helpers ----------------
@@ -174,6 +200,73 @@ def _require_user(s: Session, token: str | None) -> User:
     return user
 
 
+def _require_owner(s: Session, token: str | None) -> User:
+    user = _require_user(s, token)
+    if user.role != "owner":
+        raise HTTPException(status_code=403, detail="Bu işlem yalnızca ofis sahibine açık")
+    return user
+
+
+def _office_name(s: Session, user: User) -> str | None:
+    office = s.get(Office, user.office_id)
+    return office.name if office else None
+
+
+def _user_public(s: Session, user: User) -> dict:
+    """The user payload the SPA gets — identity plus their office + role for tenant-aware UI."""
+    return {
+        "username": user.username,
+        "full_name": user.full_name,
+        "role": user.role,
+        "office": _office_name(s, user),
+    }
+
+
+_STYLE_FIELDS = ("letterhead", "signature", "tone", "boilerplate")
+
+
+def _style_dict(p: StyleProfile | None) -> dict:
+    return {f: (getattr(p, f, "") or "") for f in _STYLE_FIELDS}
+
+
+def _effective_style(s: Session, user: User) -> dict:
+    """Merge office + lawyer style: deterministic blocks override, generative text combines."""
+    op = s.scalar(select(StyleProfile).where(StyleProfile.office_id == user.office_id))
+    up = s.scalar(select(StyleProfile).where(StyleProfile.user_id == user.id))
+    office, mine = _style_dict(op), _style_dict(up)
+
+    def override(field: str) -> str:  # lawyer wins, else office
+        return (mine[field].strip() or office[field].strip())
+
+    def combine(field: str) -> str:  # office house-style first, then the lawyer's
+        return "\n".join(x for x in (office[field].strip(), mine[field].strip()) if x)
+
+    return {
+        "letterhead": override("letterhead"),
+        "signature": override("signature"),
+        "tone": combine("tone"),
+        "boilerplate": combine("boilerplate"),
+    }
+
+
+def _require_conv(s: Session, user: User, cid: int) -> Conversation:
+    """Fetch a conversation, enforcing it belongs to the caller's office (else 404, not 403)."""
+    conv = s.get(Conversation, cid)
+    if not conv or conv.office_id != user.office_id:
+        raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+    return conv
+
+
+def _require_doc(s: Session, user: User, doc_id: int) -> Document:
+    """Fetch a document, enforcing its conversation belongs to the caller's office."""
+    doc = s.get(Document, doc_id)
+    if doc is not None:
+        conv = s.get(Conversation, doc.conversation_id)
+        if conv is not None and conv.office_id == user.office_id:
+            return doc
+    raise HTTPException(status_code=404, detail="Belge bulunamadı")
+
+
 def _ticket_user(s: Session, ticket: str | None, purpose: str) -> User:
     if not ticket:
         raise HTTPException(status_code=401, detail="Doğrulama oturumu yok, baştan giriş yapın")
@@ -187,6 +280,153 @@ def _ticket_user(s: Session, ticket: str | None, purpose: str) -> User:
 
 
 # ---------------- auth endpoints ----------------
+
+@app.post("/api/register")
+def register(body: RegisterBody, request: Request, response: Response):
+    """Self-service: create a new office + its first user (owner), then go to 2FA enrolment."""
+    ip = _client_ip(request)
+    if not _ip_allowed(ip):
+        raise HTTPException(status_code=429, detail="Çok fazla deneme. Biraz sonra tekrar deneyin.")
+
+    office_name = body.office_name.strip()
+    full_name = body.full_name.strip()
+    username = body.username.strip().lower()
+    if not office_name or not full_name or not username:
+        raise HTTPException(status_code=400, detail="Tüm alanlar zorunlu")
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalı")
+
+    with session() as s:
+        if s.scalar(select(User).where(User.username == username)):
+            raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
+        office = Office(name=office_name[:200])
+        s.add(office)
+        s.flush()
+        user = User(
+            office_id=office.id,
+            role="owner",
+            username=username,
+            full_name=full_name[:200],
+            password_hash=auth.hash_secret(body.password),
+        )
+        s.add(user)
+        s.commit()
+        _set_ticket_cookie(response, auth.PURPOSE_ENROLL, user)
+        _audit(s, "register", username=username, ip=ip, detail=office_name[:100])
+        return {"step": "enroll"}
+
+
+@app.get("/api/members")
+def list_members(korkut_session: str | None = Cookie(default=None)):
+    """Members of the caller's office (any member may view the roster)."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        rows = s.scalars(
+            select(User).where(User.office_id == user.office_id).order_by(User.id)
+        ).all()
+        return [
+            {
+                "id": u.id,
+                "username": u.username,
+                "full_name": u.full_name,
+                "role": u.role,
+                "is_active": u.is_active,
+                "enrolled": u.has_2fa,
+                "is_self": u.id == user.id,
+            }
+            for u in rows
+        ]
+
+
+@app.post("/api/members")
+def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=None)):
+    """Owner adds a member to their office (username + temp password; member enrols 2FA on login)."""
+    full_name = body.full_name.strip()
+    username = body.username.strip().lower()
+    if not full_name or not username:
+        raise HTTPException(status_code=400, detail="Ad ve kullanıcı adı zorunlu")
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalı")
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        if s.scalar(select(User).where(User.username == username)):
+            raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
+        member = User(
+            office_id=owner.office_id,
+            role="member",
+            username=username,
+            full_name=full_name[:200],
+            password_hash=auth.hash_secret(body.password),
+        )
+        s.add(member)
+        s.commit()
+        return {
+            "id": member.id,
+            "username": member.username,
+            "full_name": member.full_name,
+            "role": member.role,
+            "is_active": True,
+            "enrolled": False,
+            "is_self": False,
+        }
+
+
+@app.delete("/api/members/{uid}")
+def remove_member(uid: int, korkut_session: str | None = Cookie(default=None)):
+    """Owner deactivates a member of their office (revokes sessions). Owner cannot remove self."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        target = s.get(User, uid)
+        if not target or target.office_id != owner.office_id:
+            raise HTTPException(status_code=404, detail="Üye bulunamadı")
+        if target.id == owner.id:
+            raise HTTPException(status_code=400, detail="Kendinizi çıkaramazsınız")
+        target.is_active = False
+        target.token_epoch += 1  # revoke any outstanding session
+        s.commit()
+        return {"ok": True}
+
+
+def _upsert_style(s: Session, *, office_id: int | None, user_id: int | None, body: StyleBody) -> dict:
+    where = StyleProfile.office_id == office_id if office_id else StyleProfile.user_id == user_id
+    p = s.scalar(select(StyleProfile).where(where))
+    if p is None:
+        p = StyleProfile(office_id=office_id, user_id=user_id)
+        s.add(p)
+    for f in _STYLE_FIELDS:
+        setattr(p, f, getattr(body, f) or "")
+    s.commit()
+    return _style_dict(p)
+
+
+@app.get("/api/style")
+def get_style(korkut_session: str | None = Cookie(default=None)):
+    """Both layers (office + my own) plus the merged result Korkut will actually apply."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        op = s.scalar(select(StyleProfile).where(StyleProfile.office_id == user.office_id))
+        up = s.scalar(select(StyleProfile).where(StyleProfile.user_id == user.id))
+        return {
+            "office": _style_dict(op),
+            "user": _style_dict(up),
+            "effective": _effective_style(s, user),
+            "can_edit_office": user.role == "owner",
+        }
+
+
+@app.put("/api/style/user")
+def save_user_style(body: StyleBody, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        return _upsert_style(s, office_id=None, user_id=user.id, body=body)
+
+
+@app.put("/api/style/office")
+def save_office_style(body: StyleBody, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        return _upsert_style(s, office_id=owner.office_id, user_id=None, body=body)
+
 
 @app.post("/api/login")
 def login(body: LoginBody, request: Request, response: Response):
@@ -263,7 +503,7 @@ def enroll(body: CodeBody, request: Request, response: Response,
         _audit(s, "enroll_ok", username=user.username, ip=ip)
         _clear_ticket(response)
         _set_session_cookie(response, user)
-        return {"username": user.username, "full_name": user.full_name, "recovery_codes": codes}
+        return {**_user_public(s, user), "recovery_codes": codes}
 
 
 @app.post("/api/2fa/verify")
@@ -299,8 +539,7 @@ def verify_2fa(body: CodeBody, request: Request, response: Response,
                detail="recovery" if used_recovery else "totp")
         _clear_ticket(response)
         _set_session_cookie(response, user)
-        return {"username": user.username, "full_name": user.full_name,
-                "used_recovery": used_recovery}
+        return {**_user_public(s, user), "used_recovery": used_recovery}
 
 
 @app.post("/api/logout")
@@ -319,7 +558,7 @@ def logout(response: Response, korkut_session: str | None = Cookie(default=None)
 def me(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        return {"username": user.username, "full_name": user.full_name}
+        return _user_public(s, user)
 
 
 @app.get("/api/coverage")
@@ -343,21 +582,35 @@ def _conv_brief(c: Conversation) -> dict:
 
 
 @app.get("/api/sessions")
-def list_sessions(korkut_session: str | None = Cookie(default=None)):
-    """Every session in the office (shared) — newest activity first."""
+def list_sessions(
+    limit: int = 20, offset: int = 0, korkut_session: str | None = Cookie(default=None)
+):
+    """Office-scoped sessions, newest activity first — paginated for lazy "load older" in the UI."""
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
     with session() as s:
-        _require_user(s, korkut_session)
+        user = _require_user(s, korkut_session)
+        scope = Conversation.office_id == user.office_id
+        total = s.scalar(select(func.count()).select_from(Conversation).where(scope)) or 0
         rows = s.scalars(
-            select(Conversation).order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+            select(Conversation)
+            .where(scope)
+            .order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+            .limit(limit)
+            .offset(offset)
         ).all()
-        return [_conv_brief(c) for c in rows]
+        return {"items": [_conv_brief(c) for c in rows], "total": total}
 
 
 @app.post("/api/sessions")
 def create_session(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        conv = Conversation(created_by=user.id, created_by_name=user.full_name or user.username)
+        conv = Conversation(
+            office_id=user.office_id,
+            created_by=user.id,
+            created_by_name=user.full_name or user.username,
+        )
         s.add(conv)
         s.commit()
         return _conv_brief(conv)
@@ -366,20 +619,59 @@ def create_session(korkut_session: str | None = Cookie(default=None)):
 @app.get("/api/sessions/{cid}")
 def get_session(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        _require_user(s, korkut_session)
-        conv = s.get(Conversation, cid)
-        if not conv:
-            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        user = _require_user(s, korkut_session)
+        conv = _require_conv(s, user, cid)
         return {**_conv_brief(conv),
                 "messages": [{"role": m.role, "content": m.content} for m in conv.messages]}
+
+
+@app.patch("/api/sessions/{cid}")
+def rename_session(cid: int, body: RenameBody, korkut_session: str | None = Cookie(default=None)):
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Başlık boş olamaz")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        conv = _require_conv(s, user, cid)
+        conv.title = title[:120]
+        s.commit()
+        return _conv_brief(conv)
+
+
+@app.post("/api/sessions/{cid}/clone")
+def clone_session(cid: int, korkut_session: str | None = Cookie(default=None)):
+    """Duplicate a session — its messages and any attached document — as a fresh conversation."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        src = _require_conv(s, user, cid)
+        clone = Conversation(
+            office_id=user.office_id,
+            title=f"{src.title} (kopya)"[:120],
+            created_by=user.id,
+            created_by_name=user.full_name or user.username,
+        )
+        s.add(clone)
+        s.flush()
+        for m in src.messages:
+            s.add(Message(conversation_id=clone.id, user_id=m.user_id, role=m.role, content=m.content))
+        src_doc = s.scalar(select(Document).where(Document.conversation_id == cid))
+        if src_doc:
+            s.add(Document(
+                conversation_id=clone.id,
+                title=src_doc.title,
+                content_md=src_doc.content_md,
+                status=src_doc.status,
+            ))
+        s.commit()
+        return _conv_brief(clone)
 
 
 @app.delete("/api/sessions/{cid}")
 def delete_session(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        _require_user(s, korkut_session)
+        user = _require_user(s, korkut_session)
         conv = s.get(Conversation, cid)
-        if conv:
+        if conv and conv.office_id == user.office_id:
             s.delete(conv)
             s.commit()
         return {"ok": True}
@@ -392,9 +684,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         raise HTTPException(status_code=400, detail="Boş mesaj")
     with session() as s:
         user = _require_user(s, korkut_session)
-        conv = s.get(Conversation, cid)
-        if not conv:
-            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        conv = _require_conv(s, user, cid)
         history_msgs = [
             {"role": m.role, "content": m.content} for m in conv.messages[-_HISTORY_TURNS:]
         ]
@@ -402,6 +692,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             conv.title = text[:60] + ("…" if len(text) > 60 else "")
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=text))
         s.commit()
+        style = _effective_style(s, user)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -436,7 +727,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             doc_id = doc.id
         # Korkut infers the petition type itself, then drafts in the standard format and the
         # result lands straight in the editor (the editor is the lawyer's review surface).
-        _make_draft(doc_id, text, history_msgs, petitions.detect(text))
+        _make_draft(doc_id, text, history_msgs, petitions.detect(text), style=style)
         _accept_pending(doc_id)
         open_document = doc_id
 
@@ -486,9 +777,7 @@ def session_upload(
     """
     with session() as s:
         user = _require_user(s, korkut_session)
-        conv = s.get(Conversation, cid)
-        if not conv:
-            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        _require_conv(s, user, cid)
 
     data = file.file.read(extract.MAX_BYTES + 1)
     try:
@@ -510,9 +799,8 @@ def session_upload(
         display = (f"{prompt}\n\n" if prompt else "") + f"📎 {name} — {result.note}"
 
     with session() as s:
-        conv = s.get(Conversation, cid)
-        if not conv:
-            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        user = _require_user(s, korkut_session)
+        conv = _require_conv(s, user, cid)
         history_msgs = [
             {"role": m.role, "content": m.content} for m in conv.messages[-_HISTORY_TURNS:]
         ]
@@ -605,13 +893,34 @@ def contract_types(korkut_session: str | None = Cookie(default=None)):
     return petitions.contract_categories()
 
 
+@app.get("/api/documents")
+def list_documents(korkut_session: str | None = Cookie(default=None)):
+    """Every drafted petition/contract in the office — newest first, labelled dilekçe vs sözleşme."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        rows = s.scalars(
+            select(Document)
+            .join(Conversation, Conversation.id == Document.conversation_id)
+            .where(Document.content_md != "", Conversation.office_id == user.office_id)
+            .order_by(Document.updated_at.desc(), Document.id.desc())
+        ).all()
+        return [
+            {
+                "id": doc.id,
+                "conversation_id": doc.conversation_id,
+                "title": doc.title,
+                "kind": petitions.classify(f"{doc.title}\n{doc.content_md[:400]}"),
+                "updated_at": doc.updated_at.isoformat() if doc.updated_at else None,
+            }
+            for doc in rows
+        ]
+
+
 @app.get("/api/sessions/{cid}/document")
 def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        _require_user(s, korkut_session)
-        conv = s.get(Conversation, cid)
-        if not conv:
-            raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
+        user = _require_user(s, korkut_session)
+        conv = _require_conv(s, user, cid)
         doc = s.scalar(select(Document).where(Document.conversation_id == cid))
         if not doc:
             doc = Document(conversation_id=cid, title=(conv.title or "Belge")[:200], content_md="")
@@ -643,8 +952,39 @@ def _first_heading(md: str) -> str | None:
     return None
 
 
+def _style_prompt_block(style: dict | None) -> str:
+    """The generative half of a lawyer's style (tone + boilerplate) as a prompt section."""
+    if not style:
+        return ""
+    parts = []
+    if style.get("tone"):
+        parts.append(f"ÜSLUP — bu yazım tercihlerine uy:\n{style['tone']}")
+    if style.get("boilerplate"):
+        parts.append(
+            "TERCİH EDİLEN KALIPLAR — uygun bölümlerde bu hazır metinleri/ifadeleri kullan "
+            f"(olaya uyarla):\n{style['boilerplate']}"
+        )
+    return ("\n\n" + "\n\n".join(parts)) if parts else ""
+
+
+def _apply_deterministic_style(content: str, style: dict | None, petition_type: str | None) -> str:
+    """Prepend the letterhead and (for petitions) append the signature — never via the model."""
+    if not style or not content:
+        return content
+    head = style.get("letterhead", "").strip()
+    sig = style.get("signature", "").strip()
+    if head:
+        content = f"{head}\n\n{content}"
+    info = petitions.get(petition_type) if petition_type else None
+    is_contract = bool(info and info.get("tur") == "sozlesme")
+    if sig and not is_contract:
+        content = f"{content}\n\n{sig}"
+    return content
+
+
 def _make_draft(
-    doc_id: int, instruction: str, history: list[dict], petition_type: str | None = None
+    doc_id: int, instruction: str, history: list[dict], petition_type: str | None = None,
+    style: dict | None = None,
 ) -> dict | None:
     """Generate a full-document draft as a pending ProposedEdit (redaction round-trips in answer())."""
     with session() as s:
@@ -658,15 +998,29 @@ def _make_draft(
         instr = f"{fmt}\n\nEk talimat: {instr}" if instr else fmt
     elif not instr:
         instr = "Bu belgeyi gözden geçir ve geliştir."
+    example = petitions.example(petition_type) if petition_type else None
+    example_block = (
+        "\n\nÖRNEK FORMAT (bu profesyonel şablonun BÖLÜM DÜZENİNE, BAŞLIKLARINA ve ÜSLUBUNA "
+        "birebir uy; içeriği kullanıcının olayına uyarla, doldurulacak yerleri [köşeli parantez] "
+        f"olarak bırak):\n<<<\n{example}\n>>>"
+        if example else ""
+    )
     prompt = (
         "[BELGE MODU] Bir hukuki belge (dilekçe) üzerinde çalışıyorsun.\n"
         f"Talimat: {instr}\n\n"
         "Mevcut belge (boşsa sıfırdan oluştur):\n"
-        f"<<<\n{current or '(boş)'}\n>>>\n\n"
+        f"<<<\n{current or '(boş)'}\n>>>"
+        f"{example_block}"
+        f"{_style_prompt_block(style)}\n\n"
         "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
     proposed = _strip_fences(agent.answer(prompt, history=history))
+    # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
+    # after the cloud call (so they never leave the machine). Later edits keep them via the
+    # redaction round-trip on `current`.
+    if not current:
+        proposed = _apply_deterministic_style(proposed, style, petition_type)
     added, removed = _diffstat(current, proposed)
     with session() as s:
         old = _pending(s, doc_id)
@@ -686,15 +1040,14 @@ def _make_draft(
 def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Cookie(default=None)):
     """Korkut drafts/edits the document; the result is a pending ProposedEdit (not yet applied)."""
     with session() as s:
-        _require_user(s, korkut_session)
-        doc = s.get(Document, doc_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        user = _require_user(s, korkut_session)
+        doc = _require_doc(s, user, doc_id)
         rows = s.scalars(
             select(Message).where(Message.conversation_id == doc.conversation_id).order_by(Message.id)
         ).all()
         history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
-    result = _make_draft(doc_id, body.instruction, history, body.petition_type)
+        style = _effective_style(s, user)
+    result = _make_draft(doc_id, body.instruction, history, body.petition_type, style=style)
     if result is None:
         raise HTTPException(status_code=404, detail="Belge bulunamadı")
     return result
@@ -703,10 +1056,8 @@ def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Co
 @app.post("/api/documents/{doc_id}/accept")
 def accept_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        _require_user(s, korkut_session)
-        doc = s.get(Document, doc_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        user = _require_user(s, korkut_session)
+        doc = _require_doc(s, user, doc_id)
         pe = _pending(s, doc_id)
         if not pe:
             raise HTTPException(status_code=400, detail="Bekleyen değişiklik yok")
@@ -720,10 +1071,8 @@ def accept_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
 @app.post("/api/documents/{doc_id}/revert")
 def revert_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        _require_user(s, korkut_session)
-        doc = s.get(Document, doc_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        user = _require_user(s, korkut_session)
+        doc = _require_doc(s, user, doc_id)
         pe = _pending(s, doc_id)
         if pe:
             pe.status = "reverted"
@@ -735,9 +1084,7 @@ def revert_edit(doc_id: int, korkut_session: str | None = Cookie(default=None)):
 def save_document(doc_id: int, body: DocSaveBody, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        doc = s.get(Document, doc_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        doc = _require_doc(s, user, doc_id)
         if body.title is not None:
             doc.title = body.title[:200] or doc.title
         if body.content_md != doc.content_md:
@@ -755,10 +1102,8 @@ def export_document(doc_id: int, format: str = "docx", korkut_session: str | Non
     if format not in docexport.RENDERERS:
         raise HTTPException(status_code=400, detail="Desteklenmeyen biçim")
     with session() as s:
-        _require_user(s, korkut_session)
-        doc = s.get(Document, doc_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Belge bulunamadı")
+        user = _require_user(s, korkut_session)
+        doc = _require_doc(s, user, doc_id)
         title, md = doc.title, doc.content_md
 
     mime, render = docexport.RENDERERS[format]
