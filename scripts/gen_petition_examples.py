@@ -16,14 +16,14 @@ import pathlib
 import sys
 import time
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "backend" / "src"))
 
-from core.env import load_dotenv
+from korkut.core.env import load_dotenv
 
 load_dotenv()
 
-from core.providers.claude import ClaudeProvider  # noqa: E402
-from web import petitions  # noqa: E402
+from korkut.core.providers.claude import ClaudeProvider  # noqa: E402
+from korkut.api import petitions  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 EX_DIR = ROOT / "templates" / "petition" / "examples"

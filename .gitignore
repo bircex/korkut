@@ -7,11 +7,14 @@ secrets/
 *.key
 *.pem
 
-# Frontend build artifacts (the SPA is built from web/frontend/ into web/static/)
-web/frontend/node_modules/
-web/frontend/dist/
-web/frontend/*.tsbuildinfo
-web/static/
+# Frontend build artifacts (the SPA is built from frontend/ into the API's static dir)
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+backend/src/korkut/api/static/
+
+# Runtime data (SQLite DB, generated coverage snapshots)
+data/
 
 # Python
 __pycache__/
