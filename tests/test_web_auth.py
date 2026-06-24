@@ -525,7 +525,13 @@ def test_chat_detects_contract_and_injects_contract_format(client):
     prompts: list[str] = []
 
     def fake_answer(
-        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+        user_text,
+        *,
+        specialty="research",
+        office_name=None,
+        history=None,
+        extra_tools=None,
+        handlers=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -590,7 +596,13 @@ def test_chat_auto_opens_canvas_for_document(client):
     cid = client.post("/api/sessions").json()["id"]
 
     def fake_answer(
-        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+        user_text,
+        *,
+        specialty="research",
+        office_name=None,
+        history=None,
+        extra_tools=None,
+        handlers=None,
     ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
@@ -621,7 +633,13 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
     draft_prompts: list[str] = []
 
     def fake_answer(
-        user_text, *, specialty="research", history=None, extra_tools=None, handlers=None
+        user_text,
+        *,
+        specialty="research",
+        office_name=None,
+        history=None,
+        extra_tools=None,
+        handlers=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})

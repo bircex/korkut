@@ -1,0 +1,54 @@
+{
+  "tip": "veraset-ilami",
+  "ad": "Veraset ilamı (mirasçılık belgesi) talebi",
+  "dayanak": ["TMK m.495-501", "TMK m.598", "HMK m.382/2-c"],
+
+  "sorular": [
+    { "id": "muris_ad", "soru": "Muris (vefat eden) ad-soyadı?", "tip": "metin",
+      "zorunlu": true, "neden": "Tereke kimliği + dilekçe konusu (HMK m.119/d)." },
+    { "id": "muris_tckn", "soru": "Murisin T.C. kimlik numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Nüfus kaydı eşleştirmesi; mahkeme MERNIS'ten doğrular." },
+    { "id": "olum_tarihi", "soru": "Ölüm tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mirasın açıldığı an (TMK m.575); paylar bu ana göre belirlenir." },
+    { "id": "talep_eden_ad", "soru": "Talep eden ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Davacı/talep eden (HMK m.119/b-c)." },
+    { "id": "talep_eden_sifat", "soru": "Talep edenin murise yakınlığı?", "tip": "secim",
+      "secenekler": ["sağ kalan eş", "altsoy (çocuk/torun)", "ana-baba", "kardeş", "diğer mirasçı", "menfaati olan üçüncü kişi"],
+      "zorunlu": true, "neden": "Zümre ve pay hesabını belirler (TMK m.495-501)." },
+    { "id": "sag_kalan_es", "soru": "Murisin sağ kalan eşi var mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Eşin payı zümreyle birlikte değişir (TMK m.499)." },
+    { "id": "altsoy_var", "soru": "Murisin çocuğu/altsoyu var mı? (varsa sayısı)", "tip": "metin",
+      "zorunlu": true, "neden": "Birinci zümre; pay paydasını belirler." },
+    { "id": "vasiyetname_var", "soru": "Vasiyetname veya ölüme bağlı tasarruf var mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Varsa ilam ölüme bağlı tasarrufu saklı tutar (TMK m.598/son)." },
+    { "id": "yabanci_unsur", "soru": "Muris yabancı uyruklu mu veya yurtdışında mal varlığı var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Görevli merci/uygulanacak hukuk değişebilir (MÖHUK)." }
+  ],
+
+  "kosullar": [
+    { "eger": "vasiyetname_var == evet",
+      "sor": ["vasiyet_acildi_mi"],
+      "ekle": "Vasiyetnamenin açılıp açılmadığını ve veraset ilamının ölüme bağlı tasarrufu saklı tuttuğunu belirten bir paragraf ekle.",
+      "uyari": "Vasiyetname varsa veraset ilamı yasal mirasçılığı tespit eder; tenkis/iptal davaları saklıdır (TMK m.598/son)." },
+    { "eger": "sag_kalan_es == evet",
+      "ekle": "Sağ kalan eşin ilgili zümreyle birlikteki pay oranını (TMK m.499) açıkça hesapla ve sonuç-istemde belirt." },
+    { "eger": "altsoy_var == hayir",
+      "uyari": "Altsoy yoksa ikinci zümreye (ana-baba ve onların altsoyu) geçilir (TMK m.496); zümreyi doğru kur." },
+    { "eger": "yabanci_unsur == evet",
+      "uyari": "Yabancı unsur varsa görevli mahkeme ve uygulanacak hukuk MÖHUK'a göre değişebilir; Sulh Hukuk görevini ve yetkiyi teyit et." }
+  ],
+
+  "kontroller": [
+    "Görevli mahkeme: Sulh Hukuk Mahkemesi (çekişmesiz yargı işi — HMK m.382/2-c).",
+    "Yetki: talep edenin yerleşim yeri sulh hukuk mahkemesi (TMK m.598).",
+    "Deliller: vukuatlı nüfus kayıt örneği, ölüm belgesi/MERNIS kaydı eklendi mi?",
+    "Zümre ve pay oranları paydasıyla tutarlı mı? (toplam = 1/1).",
+    "Vasiyetname varsa 'saklı tutulur' kaydı sonuç-istemde yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.495", "TMK m.496", "TMK m.499", "TMK m.575", "TMK m.598", "HMK m.382"],
+    "emsal_ara": "veraset ilamı mirasçılık belgesi sulh hukuk görevli zümre pay",
+    "vurgula": ["yasal mirasçı zümre sistemi", "sağ kalan eşin pay oranı", "payların paydası ve toplamı"]
+  }
+}

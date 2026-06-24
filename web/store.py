@@ -72,11 +72,11 @@ def _migrate_tenant(engine) -> None:
     with engine.begin() as conn:
         oid = conn.execute(text("SELECT id FROM offices ORDER BY id LIMIT 1")).scalar()
         if oid is None:
+            # Backfill a single office for pre-multitenant data; name is configurable.
+            default_office = os.getenv("KORKUT_DEFAULT_OFFICE", "Hukuk Ofisi")
             conn.execute(
-                text(
-                    "INSERT INTO offices (name, created_at) "
-                    "VALUES ('Cankar Hukuk', CURRENT_TIMESTAMP)"
-                )
+                text("INSERT INTO offices (name, created_at) VALUES (:name, CURRENT_TIMESTAMP)"),
+                {"name": default_office},
             )
             oid = conn.execute(text("SELECT id FROM offices ORDER BY id LIMIT 1")).scalar()
         conn.execute(text("ALTER TABLE users ADD COLUMN office_id INTEGER"))

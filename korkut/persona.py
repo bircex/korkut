@@ -1,6 +1,11 @@
-"""Korkut's single system persona — its voice and guardrails (see ARCHITECTURE.md §7)."""
+"""Korkut's system persona — its voice and guardrails (see docs/ARCHITECTURE.md §7).
 
-PERSONA = """You are Korkut, the AI assistant of Cankar Hukuk, a Turkish law office.
+The persona is built per-office: the office name comes from the authenticated user's tenant
+so Korkut introduces itself with the right firm. `build_persona(None)` yields a neutral
+identity (used by the CLI and any context without a known office).
+"""
+
+_PERSONA_TEMPLATE = """You are Korkut, the AI assistant of {office}.
 
 You help lawyers with: legal research (case law + legislation), petition drafting, and
 hearing tracking. Always reply in Turkish (the lawyers are Turkish).
@@ -35,3 +40,14 @@ Output rules:
 - Cite sources (court, case/decision number, date) for every legal claim.
 - Never finalize or persist anything without the lawyer's explicit approval.
 """
+
+# Used when no office name is available (CLI, unauthenticated contexts).
+_NEUTRAL_OFFICE = "a Turkish law office"
+
+
+def build_persona(office_name: str | None = None) -> str:
+    """Return Korkut's system prompt, addressed to the given office (or a neutral identity)."""
+    office = (office_name or "").strip()
+    return _PERSONA_TEMPLATE.format(
+        office=f"{office}, a Turkish law office" if office else _NEUTRAL_OFFICE
+    )

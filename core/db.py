@@ -1,8 +1,8 @@
 """Application database (Postgres in production; ARCHITECTURE.md §6).
 
 SQLAlchemy 2.0 models for the office's structured data: client, case, hearing, petition.
-A separate database from Mattermost's. Engine/session helpers are URL-driven so tests run
-against in-memory SQLite while production uses Postgres.
+Engine/session helpers are URL-driven so tests run against in-memory SQLite while production
+uses Postgres.
 
 Approval invariant (ARCHITECTURE.md §9): a petition is created as `draft`, becomes
 `pending_approval`, and only `approved` after the lawyer confirms — never written as final

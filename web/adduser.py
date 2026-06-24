@@ -4,7 +4,7 @@ Multi-tenant: a user belongs to an Office (tenant). Pass --office to place them 
 office (created if new); the first user of an office becomes its owner.
 
 Usage:
-    python -m web.adduser <username> --office "Cankar Hukuk" --name "Ad Soyad"  # prompts for pw
+    python -m web.adduser <username> --office "Örnek Hukuk" --name "Ad Soyad"  # prompts for pw
     python -m web.adduser <username> --password <pw> --name "Ad Soyad"  # office: "<user> ofisi"
     python -m web.adduser <username> --disable                # deactivate + revoke sessions
     python -m web.adduser <username> --reset-2fa              # force fresh 2FA enrolment

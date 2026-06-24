@@ -170,6 +170,22 @@ def _base(kind: str) -> dict:
     return json.loads((_DIRS[kind] / "_base.json").read_text(encoding="utf-8"))
 
 
+_INTAKE = _TPL / "intake"
+
+
+@lru_cache(maxsize=128)
+def intake(type_id: str) -> dict | None:
+    """The intake schema (sorular/koşullar/kontroller/zenginleştir) for a type, or None.
+
+    See templates/intake/FORMAT.md. Missing file → None (Korkut falls back to one-shot drafting).
+    """
+    path = _INTAKE / f"{type_id}.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 @lru_cache(maxsize=1)
 def _index() -> dict[str, dict]:
     """type id -> {ad, ref, kategori, tur}. ref = mahkeme (dilekçe) | mevzuat (sözleşme)."""
