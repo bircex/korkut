@@ -1,6 +1,11 @@
 # Security Design
 
-> Goal: **single gateway Mattermost** into the system, access from mobile, **2FA mandatory**, no
+> ⚠️ **Historical framing.** The "single gateway" is now the self-hosted **FastAPI web app**
+> (which already enforces TOTP 2FA in code — `backend/src/korkut/api/totp.py`), not Mattermost.
+> Read "Mattermost" below as "the Korkut web app"; the security model (one TLS gateway behind a
+> reverse proxy, 2FA mandatory, locked-down ports, in-office data) is unchanged.
+
+> Goal: **single TLS gateway** into the system, access from mobile, **2FA mandatory**, no
 > access from anywhere else. Client data stays in the office (see PLAN.md principles, ARCHITECTURE.md §5).
 
 ## 1. Principle: Single gateway = Mattermost

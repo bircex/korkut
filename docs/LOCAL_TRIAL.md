@@ -7,13 +7,13 @@ The brain runs on **Claude** (Anthropic) for the trial; switch to OpenAI later b
 ## 0. One-time dev setup
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]" "anthropic>=0.40" "fastapi>=0.115" "uvicorn[standard]>=0.30" "segno>=1.6"
+.venv/bin/pip install -e "backend/[app,dev]"
 cp .env.example .env          # then edit .env (see below)
 
-# Build the SPA (React + Vite) into web/static/ — needed before `python -m web`:
-npm --prefix web/frontend install
-npm --prefix web/frontend run build
-# During UI work, `npm --prefix web/frontend run dev` runs Vite on :5173 and proxies /api to :8080.
+# Build the SPA (React + Vite) into the API's static dir — needed before `python -m korkut.api`:
+npm --prefix frontend install
+npm --prefix frontend run build
+# During UI work, `npm --prefix frontend run dev` runs Vite on :5173 and proxies /api to :8080.
 ```
 
 ## 1. Quickest check — talk to the brain in the terminal (no UI)
@@ -37,33 +37,33 @@ KORKUT_SECRET=<run: python -c "import secrets; print(secrets.token_hex(32))">
 ```
 Create at least one user (there is **no self-service signup** — accounts are admin-only):
 ```bash
-.venv/bin/python -m web.adduser avukat --name "Av. Ad Soyad"
+.venv/bin/python -m korkut.api.adduser avukat --name "Av. Ad Soyad"
 # prompts for a password (min 8 chars)
 ```
 Start the server:
 ```bash
-.venv/bin/python -m web        # → http://localhost:8080
+.venv/bin/python -m korkut.api        # → http://localhost:8080
 ```
 Open **http://localhost:8080** and log in. **First login forces 2FA setup**: scan the QR with
 an authenticator app (Google Authenticator / Authy / 1Password), enter the 6-digit code, and
 save the recovery codes shown once. After that, login is password + 6-digit code. On a phone,
 use the machine's LAN address (e.g. `http://192.168.1.10:8080`) — responsive web app, no install.
 
-Admin commands: `python -m web.adduser <user> --reset-2fa` (re-enrol), `--unlock` (clear a
+Admin commands: `python -m korkut.api.adduser <user> --reset-2fa` (re-enrol), `--unlock` (clear a
 lockout), `--disable` (deactivate + revoke sessions).
 
 ## 3. Run with Docker (web app + Postgres)
 ```bash
 # .env must contain ANTHROPIC_API_KEY and KORKUT_SECRET
-docker compose up -d --build        # → http://localhost:8080
+docker compose -f deploy/docker-compose.yml up -d --build   # → http://localhost:8080
 # create a user inside the container:
-docker compose exec korkut python -m web.adduser avukat --name "Av. Ad Soyad"
+docker compose -f deploy/docker-compose.yml exec korkut python -m korkut.api.adduser avukat --name "Av. Ad Soyad"
 ```
-`docker compose logs -f korkut` for logs; `docker compose down` to stop (`-v` also wipes the DB).
+`docker compose -f deploy/docker-compose.yml logs -f korkut` for logs; `… down` to stop (`-v` also wipes the DB).
 
 ## Notes
 - `.env` is gitignored — your keys never get committed.
-- Accounts: create more with `python -m web.adduser <user>`, disable with `--disable <user>`.
+- Accounts: create more with `python -m korkut.api.adduser <user>`, disable with `--disable <user>`.
 - `KORKUT_SECRET` must stay stable across restarts, or everyone is logged out on restart.
 - Cost: every Claude call bills your Anthropic account. Opus 4.8 is the default; set
   `ANTHROPIC_MODEL=claude-haiku-4-5` in `.env` for a cheaper trial.
