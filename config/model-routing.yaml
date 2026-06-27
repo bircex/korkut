@@ -1,6 +1,6 @@
 # Which backend each specialty uses. Provider is swappable; see ARCHITECTURE.md §13.
 backends:
-  cloud: claude       # Claude for the trial; switch to gpt (OpenAI) later — one line
+  cloud: groq         # provider key: claude | gpt | groq (swappable in one line)
   local: ollama       # active once the hardware (GPU) arrives
 
 # If a "local" specialty is requested but Ollama is down, fall back to cloud + log.

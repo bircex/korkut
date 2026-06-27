@@ -11,6 +11,7 @@ from korkut.brain.persona import build_persona
 from korkut.core import tool_registry
 from korkut.core.providers.claude import ClaudeProvider
 from korkut.core.providers.gpt import GptProvider
+from korkut.core.providers.groq import GroqProvider
 from korkut.core.router import Router
 
 _router: Router | None = None
@@ -20,7 +21,7 @@ def get_router() -> Router:
     global _router
     if _router is None:
         _router = Router(
-            {"claude": ClaudeProvider(), "gpt": GptProvider()},
+            {"claude": ClaudeProvider(), "gpt": GptProvider(), "groq": GroqProvider()},
             local_available=lambda: False,  # no local model yet → cloud
         )
     return _router
