@@ -1,0 +1,46 @@
+{
+  "tip": "temyiz-basvuru",
+  "ad": "Temyiz başvuru dilekçesi",
+  "dayanak": ["HMK m.361-362", "HMK m.369-371", "İYUK m.46-48", "CMK m.291-294"],
+
+  "sorular": [
+    { "id": "yargilama_turu", "soru": "Karar hangi yargı kolundan? (süre buna göre değişir)", "tip": "secim",
+      "secenekler": ["hukuk (HMK)", "idari (İYUK)", "ceza (CMK)"],
+      "zorunlu": true, "neden": "Temyiz süresi yargı koluna göre farklıdır: hukuk 2 hafta, idari 30 gün, ceza 15 gün." },
+    { "id": "bam_karar", "soru": "Kararı veren Bölge Adliye/İdare Mahkemesi dairesi ve esas/karar numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Temyize konu istinaf kararının kimliği (HMK m.119/d)." },
+    { "id": "teblig_tarihi", "soru": "İstinaf (BAM/BİM) kararının tebliğ tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Temyiz süresi bu tarihten işler (HMK m.361 / İYUK m.46 / CMK m.291)." },
+    { "id": "temyiz_sebepleri", "soru": "Temyiz sebepleri (hukukun/usulün yanlış uygulanması) nelerdir?", "tip": "metin",
+      "zorunlu": true, "neden": "Temyiz hukuki denetimdir; sebepler somut gösterilmeli (HMK m.369)." },
+    { "id": "temyiz_siniri", "soru": "Karar miktar/konu itibarıyla temyiz edilebilir kesinlik sınırının üzerinde mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Belirli sınırın altındaki kararlar kesindir; temyiz yolu kapalı olabilir (HMK m.362)." },
+    { "id": "vakia_denetimi_yok", "soru": "Talep, vakıa incelemesi değil, hukuka aykırılığın denetimi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Temyizde maddi vakıa yeniden incelenmez; sebep buna göre kurulmalı." }
+  ],
+
+  "kosullar": [
+    { "eger": "yargilama_turu == hukuk (HMK)",
+      "uyari": "Hukukta temyiz süresi BAM kararının tebliğinden itibaren 2 HAFTADIR (HMK m.361). Süreyi tebliğden hesapla." },
+    { "eger": "yargilama_turu == idari (İYUK)",
+      "uyari": "İdari yargıda temyiz süresi kararın tebliğinden itibaren 30 GÜNDÜR (İYUK m.46)." },
+    { "eger": "yargilama_turu == ceza (CMK)",
+      "uyari": "Ceza yargılamasında temyiz süresi hükmün tefhim/tebliğinden itibaren 15 GÜNDÜR (CMK m.291)." },
+    { "eger": "temyiz_siniri == hayir",
+      "uyari": "KRİTİK: karar kesinlik sınırının altında olabilir ve temyize KAPALI olabilir (HMK m.362). Temyiz edilebilirliği mutlaka teyit et." }
+  ],
+
+  "kontroller": [
+    "SÜRE: hukuk 2 hafta / idari 30 gün / ceza 15 gün — tebliğden temyiz süresi içinde mi? (bu kategori dava-workflow'da süre mirası ALMAZ).",
+    "USUL: temyiz dilekçesi kararı veren BAM/BİM'e mi veriliyor? (HMK m.364).",
+    "Karar temyiz edilebilir mi (kesinlik sınırı/temyize kapalı haller)? (HMK m.362).",
+    "Temyiz sebepleri hukuki denetim çerçevesinde (vakıa değil) somut gösterildi mi? (HMK m.369).",
+    "Temyiz harcı ve giderleri yatırıldı mı? (eksiklik temyizden vazgeçilmiş sayılma riski)."
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.361", "HMK m.362", "HMK m.369", "İYUK m.46", "İYUK m.48", "CMK m.291"],
+    "emsal_ara": "temyiz süre tebliğ tarihi kesinlik sınırı Yargıtay hukuki denetim",
+    "vurgula": ["yargı koluna göre temyiz süresi", "temyiz kesinlik sınırı", "temyizin hukuki denetimle sınırlı olması"]
+  }
+}

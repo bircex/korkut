@@ -1,0 +1,47 @@
+{
+  "tip": "imar-iptal",
+  "ad": "İmar işlemi / ruhsat iptali dava dilekçesi",
+  "dayanak": ["İYUK m.2", "İYUK m.7", "3194 s.K. m.8", "3194 s.K. m.32", "İYUK m.27"],
+
+  "sorular": [
+    { "id": "islem_turu", "soru": "İptali istenen imar işlemi nedir (imar planı, yapı ruhsatı, yapı tatil/yıkım kararı, plan değişikliği, encümen kararı)?", "tip": "secim",
+      "secenekler": ["imar planı / plan değişikliği", "yapı ruhsatı", "yapı tatil tutanağı / yıkım kararı", "imar para cezası", "ifraz/tevhit/parselasyon işlemi", "diğer imar işlemi"],
+      "zorunlu": true, "neden": "İşlem türü süre başlangıcını (askı ilanı vb.) ve denetim ölçütlerini belirler." },
+    { "id": "askilanmi", "soru": "İşlem askı/ilan yoluyla mı duyuruldu (imar planları)? Askı tarihleri nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "İmar planlarında dava süresi askı ilanına ve itiraza göre işler (3194 s.K. m.8/b, İYUK m.7)." },
+    { "id": "teblig_tarihi", "soru": "İşlem size ne zaman tebliğ edildi / askı süresi ne zaman bitti?", "tip": "tarih",
+      "zorunlu": true, "neden": "60 günlük dava süresi tebliğ/askı bitiminden işler (İYUK m.7)." },
+    { "id": "menfaat", "soru": "İşlemle aranızdaki menfaat ilişkisi nedir (taşınmaz maliki/komşu/bölge sakini)?", "tip": "metin",
+      "zorunlu": true, "neden": "İmar davalarında menfaat/dava ehliyeti (taşınmaza/çevreye etki) aranır (İYUK m.2)." },
+    { "id": "hukuka_aykirilik", "soru": "İşlemin imar mevzuatına/plana/şehircilik ilkelerine aykırılığı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Plan ve ruhsat denetimi planlama esasları-kamu yararı-şehircilik ilkelerine göre yapılır." },
+    { "id": "yurutme_durdurma", "soru": "İnşaat/yıkım sürdüğü için yürütmenin durdurulmasını talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Telafisi güç zarar (yapılaşma/yıkım) nedeniyle YD önemlidir (İYUK m.27)." }
+  ],
+
+  "kosullar": [
+    { "eger": "islem_turu == imar planı / plan değişikliği",
+      "ekle": "Planın askı ilanı, askı süresinde yapılan itiraz ve dava süresinin nasıl işlediğini açıklayan; planın şehircilik ilkeleri, planlama esasları ve kamu yararına aykırılığını somutlaştıran bir bölüm ekle.",
+      "uyari": "İmar planlarında dava süresi askı ilanı/itiraz rejimine göre işler (3194 s.K. m.8/b); tarihleri dikkatle hesapla." },
+    { "eger": "yurutme_durdurma == evet",
+      "ekle": "Devam eden yapılaşma/yıkım nedeniyle telafisi güç-imkânsız zararı ve işlemin açık hukuka aykırılığını vurgulayan YD istem bölümü ekle (İYUK m.27)." },
+    { "eger": "gun_farki(teblig_tarihi) > 60",
+      "uyari": "KRİTİK: tebliğ/askı bitiminden 60 günü aşmış görünüyor — dava süresi (İYUK m.7) geçmiş olabilir; askı-itiraz tarihlerini yeniden değerlendir." },
+    { "eger": "islem_turu == yapı tatil tutanağı / yıkım kararı",
+      "uyari": "Yıkım/tatil kararlarında uygulamanın aciliyeti nedeniyle YD istemi öne çıkar; 3194 s.K. m.32 usulü teyit edilmeli." }
+  ],
+
+  "kontroller": [
+    "Dava süresi: tebliğ/askı bitiminden 60 gün (İYUK m.7, 3194 s.K. m.8) doğru hesaplandı mı?",
+    "Menfaat ilişkisi (taşınmaz/komşuluk/çevresel etki) ile dava ehliyeti ortaya konuldu mu?",
+    "İşlemin plana, imar mevzuatına ve şehircilik ilkelerine aykırılığı somutlaştırıldı mı?",
+    "Plan davasında askı-itiraz süreci dilekçede gösterildi mi (3194 s.K. m.8/b)?",
+    "YD istemi varsa telafisi güç zarar (yapılaşma/yıkım) ve açık hukuka aykırılık (İYUK m.27) belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["3194 s.K. m.8", "3194 s.K. m.32", "İYUK m.7", "İYUK m.27"],
+    "emsal_ara": "imar planı iptal askı ilanı ruhsat şehircilik ilkeleri yürütmenin durdurulması",
+    "vurgula": ["imar planında askı-itiraz ve dava süresi", "şehircilik ilkeleri ve kamu yararı denetimi", "yapılaşma/yıkımda YD önemi"]
+  }
+}

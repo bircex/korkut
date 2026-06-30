@@ -1,0 +1,41 @@
+{
+  "tip": "mazeret",
+  "ad": "Mazeret (duruşmaya katılamama) dilekçesi",
+  "dayanak": ["HMK m.150", "HMK m.147", "HMK m.320"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Mazeret belirli bir dosyadaki duruşmaya ilişkindir; dosya kimliği zorunludur." },
+    { "id": "durusma_tarihi", "soru": "Katılamayacağınız duruşmanın tarihi ve saati nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mazeret, ilgili duruşma gününden önce/uygun zamanda sunulmalıdır." },
+    { "id": "mazeret_sebebi", "soru": "Mazeret sebebi nedir? (sağlık, çakışan duruşma, mücbir sebep vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Mazeretin haklı ve belgeli olması, kabulü için gereklidir." },
+    { "id": "belge_var", "soru": "Mazereti belgeleyen evrak (rapor, çakışan duruşma UYAP kaydı vb.) var mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Belgesiz mazeret kural olarak kabul edilmez; somut dayanak aranır." },
+    { "id": "talep", "soru": "Talebiniz nedir? (duruşmanın ertelenmesi / yokluğunuzda işlem yapılmaması)", "tip": "metin",
+      "zorunlu": false, "neden": "Mazeretin sonucuna ilişkin talep açıkça yazılmalıdır (erteleme talebi)." },
+    { "id": "gider_avansi", "soru": "Erteleme talep ediliyorsa erteleme/tebligat gideri yatırılacak mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mazeret kabul edilse de erteleme gideri talep edilebilir; eksiklik mazeretin reddine yol açabilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "belge_var == hayir",
+      "uyari": "KRİTİK: belgeye dayanmayan mazeret kural olarak reddedilir; sağlık raporu/çakışan duruşma kaydı gibi somut bir delil ekle." },
+    { "eger": "gider_avansi == hayir",
+      "uyari": "Erteleme talep ediliyorsa erteleme/tebligat gideri yatırılmazsa mazeret reddedilebilir; gideri yatırmayı planla." }
+  ],
+
+  "kontroller": [
+    "Dosya esas no ve duruşma tarihi doğru gösterildi mi?",
+    "Mazeret duruşma gününden önce/zamanında sunuluyor mu?",
+    "Mazeret somut belgeyle (rapor, çakışan duruşma) destekleniyor mu?",
+    "Yokluğunda taraf teşkili/işlemlerin sonuçları (HMK m.150 dosyanın işlemden kalkması) gözetildi mi?",
+    "Erteleme gideri yatırma yükümlülüğü değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.147", "HMK m.150", "HMK m.320"],
+    "emsal_ara": "mazeret dilekçesi duruşma erteleme haklı sebep belgelendirme",
+    "vurgula": ["mazeretin belgelendirilmesi", "zamanında sunma", "yokluğun usuli sonuçları"]
+  }
+}

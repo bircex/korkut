@@ -1,0 +1,44 @@
+{
+  "tip": "soybagi-ret",
+  "ad": "Soybağının reddi dava dilekçesi",
+  "dayanak": ["TMK m.286", "TMK m.287", "TMK m.289", "HMK m.119"],
+
+  "sorular": [
+    { "id": "davaci_sifat", "soru": "Davayı kim açıyor? (koca, çocuk, sonradan baba olduğunu iddia eden, ilgili)", "tip": "secim",
+      "secenekler": ["koca (baba)", "çocuk", "kayyım / yasal temsilci"],
+      "zorunlu": true, "neden": "Soybağının reddi davasını koca ve çocuk açabilir (TMK m.286)." },
+    { "id": "cocuk_dogum", "soru": "Çocuğun doğum tarihi ve doğduğu evlilik/eş bilgisi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Babalık karinesi evlilik içinde doğan çocuğa uygulanır (TMK m.285); süreler buradan işler." },
+    { "id": "ogrenme_tarihi", "soru": "Davacı, baba olmadığını ve doğumu ne zaman öğrendi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Ret davası, doğumu ve baba olmadığını öğrenmeden itibaren 1 yıl içinde açılır (TMK m.289)." },
+    { "id": "ret_dayanagi", "soru": "Soybağının reddini gerektiren olgular neler? (biyolojik baba olmama, ayrı yaşama, gebe kalma döneminde ilişki imkânsızlığı)", "tip": "metin",
+      "zorunlu": true, "neden": "Koca, baba olmadığını ispatla yükümlüdür (TMK m.287); gebe kalma dönemi karinesi çürütülmelidir." },
+    { "id": "dna_var", "soru": "Biyolojik babalığı dışlayan bir DNA/tıbbi bulgu var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "DNA, babalık karinesini çürütmede belirleyicidir; talep edilir." },
+    { "id": "gecikme_sebebi", "soru": "Bir yıllık süre geçtiyse gecikmeyi haklı kılan bir sebep var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Haklı sebeple süre kaçırılmışsa sebebin ortadan kalkmasından sonra 1 ay içinde dava açılabilir (TMK m.289/son)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(ogrenme_tarihi) > 365",
+      "uyari": "KRİTİK: Öğrenmeden bu yana 1 yılı aşmış görünüyor (TMK m.289). Hak düşürücü süre geçmiş olabilir; haklı sebep / TMK m.289/son istisnasını değerlendir." },
+    { "eger": "ret_dayanagi != hayir",
+      "ekle": "Gebe kalma döneminde (doğumdan önceki 300-180 gün) koca ile cinsel ilişki/birlikte yaşama bulunmadığını veya babalığın imkânsızlığını somut olgu ve DNA ile ortaya koyan bir bölüm ekle (TMK m.287/288)." },
+    { "eger": "gecikme_sebebi != hayir",
+      "ekle": "Haklı sebebin ne olduğunu ve sebebin ortadan kalkmasından sonra 1 ay içinde dava açıldığını gerekçelendir (TMK m.289/son)." }
+  ],
+
+  "kontroller": [
+    "Davacı sıfatı (koca/çocuk) ve dava ehliyeti doğru mu (TMK m.286)?",
+    "1 yıllık hak düşürücü süre (öğrenmeden itibaren) kontrol edildi mi (TMK m.289)?",
+    "Babalık karinesini çürüten olgular ve ispat (DNA) gösterildi mi (TMK m.287)?",
+    "Süre geçmişse haklı sebep / 1 aylık istisna değerlendirildi mi (TMK m.289/son)?",
+    "Çocuğa kayyım atanması gerekiyorsa bu husus dile getirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.285", "TMK m.286", "TMK m.287", "TMK m.289"],
+    "emsal_ara": "soybağının reddi babalık karinesi bir yıl hak düşürücü DNA",
+    "vurgula": ["babalık karinesini çürütme ve ispat yükü", "1 yıllık hak düşürücü süre", "haklı sebep istisnası (TMK m.289/son)"]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "tip": "aihm-basvuru",
+  "ad": "AİHM başvuru dilekçesi",
+  "dayanak": ["AİHS m.34", "AİHS m.35", "AİHM İçtüzüğü m.47"],
+
+  "sorular": [
+    { "id": "ihlal_madde", "soru": "AİHS'in hangi maddesi/hakkı ihlal edildi? (ör. m.6 adil yargılanma, m.8 özel hayat)", "tip": "metin",
+      "zorunlu": true, "neden": "Başvuru yalnızca Sözleşme ve protokollerdeki haklarla sınırlıdır (AİHS m.34)." },
+    { "id": "ic_hukuk_tukenme_tarihi", "soru": "İç hukuk yolları (AYM bireysel başvuru dahil) ne zaman nihai olarak tükendi?", "tip": "tarih",
+      "zorunlu": true, "neden": "4 AYLIK başvuru süresi nihai iç karardan itibaren işler (AİHS m.35/1)." },
+    { "id": "aym_basvuru_yapildi", "soru": "Türkiye'de AYM bireysel başvurusu yapıldı ve sonuçlandı mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "AYM bireysel başvuru etkili bir iç hukuk yolu sayılır; tüketilmemişse başvuru reddedilir (AİHS m.35/1)." },
+    { "id": "nihai_karar", "soru": "Nihai iç hukuk kararı hangi merci, hangi tarihli (esas/karar no)?", "tip": "metin",
+      "zorunlu": true, "neden": "Sürenin ve tüketmenin dayandığı nihai karar (AİHS m.35)." },
+    { "id": "ihlal_acikla", "soru": "İhlali ve devletin sorumluluğunu somut olarak açıklayın.", "tip": "metin",
+      "zorunlu": true, "neden": "Başvurunun esası; mağduriyetin ve Sözleşme ihlalinin ortaya konulması (AİHS m.34)." },
+    { "id": "magdur_sifat", "soru": "Başvurucu, ihlalden doğrudan etkilenen mağdur mu?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Yalnızca mağdur statüsündeki kişiler başvurabilir (AİHS m.34)." },
+    { "id": "baska_uluslararasi", "soru": "Aynı konu başka bir uluslararası soruşturma/çözüm merciine sunuldu mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Aynı konu başka mercide ise başvuru kabul edilemez (AİHS m.35/2-b)." }
+  ],
+
+  "kosullar": [
+    { "eger": "aym_basvuru_yapildi == hayir",
+      "uyari": "KRİTİK: Türkiye'de AYM bireysel başvurusu etkili iç hukuk yolu kabul edilir; tüketilmeden yapılan AİHM başvurusu iç hukuk yollarının tüketilmemesi nedeniyle KABUL EDİLEMEZ bulunur (AİHS m.35/1)." },
+    { "eger": "gun_farki(ic_hukuk_tukenme_tarihi) > 120",
+      "uyari": "KRİTİK: nihai iç karardan bu yana yaklaşık 4 ayı (≈120 gün) aşmış görünüyor — AİHM başvuru SÜRESİ geçmiş olabilir (AİHS m.35/1, güncel 4 aylık süre). Süreyi mutlaka teyit et." },
+    { "eger": "baska_uluslararasi == evet",
+      "uyari": "Aynı konu başka bir uluslararası mercie sunulmuşsa başvuru kabul edilemez bulunur (AİHS m.35/2-b)." },
+    { "eger": "magdur_sifat == hayir",
+      "uyari": "Doğrudan mağdur sıfatı yoksa başvuru kişi bakımından bağdaşmaz/kabul edilemez bulunur (AİHS m.34)." }
+  ],
+
+  "kontroller": [
+    "SÜRE: başvuru, nihai iç hukuk kararından itibaren 4 AY içinde mi? (AİHS m.35/1, güncel süre) — (bu kategori dava-workflow'da süre mirası ALMAZ).",
+    "USUL: AYM bireysel başvuru dahil tüm etkili iç hukuk yolları tüketildi mi? (AİHS m.35/1).",
+    "İhlal Sözleşme/protokol kapsamındaki bir hakka ilişkin mi? (AİHS m.34).",
+    "Başvurucunun mağdur sıfatı ve önemli bir zarara uğradığı ortaya konuldu mu? (AİHS m.34-35).",
+    "Resmî başvuru formu, nihai karar ve belgelerin tam ve İçtüzük m.47'ye uygun sunumu sağlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["AİHS m.34", "AİHS m.35", "AİHM İçtüzüğü m.47"],
+    "emsal_ara": "AİHM başvuru iç hukuk yolları tüketme dört ay kabul edilebilirlik AYM",
+    "vurgula": ["AYM bireysel başvurunun iç hukuk yolu olması", "4 aylık başvuru süresi", "mağdur statüsü ve aynı konu yasağı"]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "tip": "maas-haczi-itiraz",
+  "ad": "Maaş/emekli maaşı haczine itiraz dilekçesi",
+  "dayanak": ["İİK m.16", "İİK m.83", "İİK m.83a", "İİK m.83c"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraz/şikâyet belirli takip dosyasındaki maaş haczine ilişkindir; dosya numarasıyla işlenir." },
+    { "id": "maas_turu", "soru": "Haczedilen gelir nedir? (çalışan maaşı, emekli maaşı, SGK aylığı, nafaka geliri vb.)", "tip": "secim",
+      "secenekler": ["çalışan ücreti/maaşı", "emekli maaşı / SGK aylığı", "diğer periyodik gelir"],
+      "zorunlu": true, "neden": "Emekli maaşı kural olarak haczedilemez (5510 sayılı Kanun m.93); çalışan maaşının ancak 1/4'ü haczedilebilir (İİK m.83)." },
+    { "id": "haciz_ogrenme_tarihi", "soru": "Maaş haczini/kesintiyi ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "Haczedilmezlik şikâyeti, öğrenmeden itibaren 7 GÜN içinde icra mahkemesine yapılır (İİK m.16); süre hak düşürücüdür." },
+    { "id": "kesinti_orani", "soru": "Maaştan ne oranda/tutarda kesinti yapılıyor?", "tip": "metin",
+      "zorunlu": true, "neden": "Çalışan maaşında kesinti 1/4'ü aşamaz (İİK m.83); aşan kesinti hukuka aykırıdır." },
+    { "id": "feragat_var_mi", "soru": "Haciz öncesi/sırasında haczedilmezlikten feragate dair muvafakatiniz var mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Haczedilmezlikten feragat ancak haciz sırasında/sonrasında geçerlidir; takipten önceki feragat geçersizdir (İİK m.83a)." },
+    { "id": "nafaka_haczi", "soru": "Haciz bir nafaka alacağı için mi yapılıyor?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Nafaka alacakları için maaş haczinde özel sınırlamalar ve öncelik kuralları uygulanır (İİK m.83/son)." }
+  ],
+
+  "kosullar": [
+    { "eger": "maas_turu == emekli maaşı / SGK aylığı",
+      "ekle": "Emekli/SGK aylığının kural olarak haczedilemez olduğunu (5510 m.93) ve geçerli bir muvafakat bulunmadığını açıklayan bölüm ekle.",
+      "uyari": "Emekli maaşı kural olarak haczedilemez; ancak borçlunun haciz sırasında/sonrasında verdiği geçerli muvafakat istisnadır (5510 m.93, İİK m.83a)." },
+    { "eger": "feragat_var_mi == hayir",
+      "uyari": "Geçerli feragat yoksa haczedilmezlik ileri sürülebilir; takipten ÖNCEKİ feragat geçersizdir (İİK m.83a)." },
+    { "eger": "gun_farki(haciz_ogrenme_tarihi) > 7",
+      "uyari": "KRİTİK: kesintiyi öğrenmenizden bu yana 7 günü aşmış görünüyor — haczedilmezlik şikâyeti süresi (İİK m.16) geçmiş olabilir; her dönem kesintisinin ayrı şikâyete konu olabileceğini değerlendir." },
+    { "eger": "nafaka_haczi == evet",
+      "uyari": "Nafaka alacağı için maaş haczinde haczedilmezlik istisnaları ve sıra/öncelik farklıdır (İİK m.83/son); bunu gözeterek itirazı sınırla." }
+  ],
+
+  "kontroller": [
+    "Emekli maaşıysa haczedilmezlik (5510 m.93) ve geçerli feragatin olup olmadığı denetlendi mi?",
+    "Çalışan maaşında kesinti 1/4 sınırını (İİK m.83) aşıyor mu — aşan kısmın kaldırılması talep edildi mi?",
+    "Haczedilmezlik şikâyeti 7 günlük süre içinde icra mahkemesine yöneltildi mi (İİK m.16)?",
+    "Feragat varsa haciz sırasında/sonrasında mı verilmiş, geçerli mi (İİK m.83a)?",
+    "Nafaka haczi söz konusuysa özel kurallar gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.16", "İİK m.83", "İİK m.83a", "İİK m.83c"],
+    "emsal_ara": "emekli maaşı haczi haczedilmezlik dörtte bir muvafakat 5510 93 şikayet",
+    "vurgula": ["emekli maaşının haczedilemezliği (5510 m.93)", "çalışan maaşında 1/4 sınırı (İİK m.83)", "feragatin geçerlilik koşulu ve 7 günlük şikâyet süresi"]
+  }
+}

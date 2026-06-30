@@ -1,0 +1,44 @@
+{
+  "tip": "6284-koruma",
+  "ad": "6284 sayılı Kanun — koruyucu/önleyici tedbir (uzaklaştırma) talebi",
+  "dayanak": ["6284 SK m.1", "6284 SK m.4", "6284 SK m.5", "6284 SK m.8"],
+
+  "sorular": [
+    { "id": "magdur_iliski", "soru": "Korunma talep edenin, şiddet uygulayan ile ilişkisi nedir (eş, eski eş, aile bireyi, birlikte yaşanan)?", "tip": "metin",
+      "zorunlu": true, "neden": "6284 kapsamı (aile/kadın/çocuk şiddeti) ve uygulanacak tedbirler ilişki türüne göre belirlenir (6284 SK m.1)." },
+    { "id": "siddet_turu", "soru": "Maruz kalınan şiddet/tehdit türü nedir? (fiziksel, psikolojik, sözlü, ekonomik, cinsel, ısrarlı takip)", "tip": "metin",
+      "zorunlu": true, "neden": "Talep edilen koruyucu/önleyici tedbirler şiddet türüne göre şekillenir." },
+    { "id": "son_olay", "soru": "En son şiddet/tehdit olayı ne zaman ve nasıl gerçekleşti?", "tip": "metin",
+      "zorunlu": true, "neden": "Tedbirin ivediliği ve sürmekte olan tehlike son olayla ortaya konur." },
+    { "id": "istenen_tedbir", "soru": "Hangi tedbirler isteniyor? (uzaklaştırma, iletişim kurmama, konuta yaklaşmama, işyeri/okul çevresine yaklaşmama, silah teslimi)", "tip": "metin",
+      "zorunlu": true, "neden": "Önleyici tedbirler (6284 SK m.5) açık ve somut talep edilmelidir." },
+    { "id": "cocuk_var", "soru": "Korunması gereken çocuk/çocuklar var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Çocuklar için de koruyucu tedbir ve geçici barınma/velayet önlemi alınabilir (6284 SK m.3-5)." },
+    { "id": "aciliyet_gizlilik", "soru": "Gecikmesinde sakınca olan acil bir durum ve/veya kimlik/adres gizliliği talebi var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Gecikmesinde sakınca bulunan hâlde tedbir derhal alınır; gizlilik kararı istenebilir (6284 SK m.8)." }
+  ],
+
+  "kosullar": [
+    { "eger": "aciliyet_gizlilik == evet",
+      "ekle": "Gecikmesinde sakınca bulunduğunu belirterek tedbirin DELİL ARANMAKSIZIN ve derhal verilmesini, ayrıca kimlik ve adres bilgilerinin gizlenmesini talep et (6284 SK m.8).",
+      "uyari": "6284 tedbirleri için olayın varlığına ilişkin beyan esas alınır; ayrıca delil/belge şartı aranmaz (6284 SK m.8)." },
+    { "eger": "cocuk_var == evet",
+      "ekle": "Çocuklar bakımından da konuta/okula yaklaşmama, kişisel ilişkinin refakatli/sınırlı sürdürülmesi ve gerekirse geçici velayet/barınma tedbirini talep et." },
+    { "eger": "istenen_tedbir != hayir",
+      "ekle": "Talep edilen her bir önleyici tedbiri (uzaklaştırma süresi, mesafe, iletişim yasağı, silah teslimi) ayrı kalemler hâlinde ve süreli olarak sonuç-isteme yaz (6284 SK m.5)." }
+  ],
+
+  "kontroller": [
+    "Talep edenin 6284 koruma kapsamında olduğu (ilişki türü) gösterildi mi (6284 SK m.1)?",
+    "İstenen koruyucu/önleyici tedbirler somut ve süreli olarak belirtildi mi (6284 SK m.4-5)?",
+    "Gecikmesinde sakınca varsa derhal/delilsiz tedbir talebi vurgulandı mı (6284 SK m.8)?",
+    "Çocuk varsa onlara yönelik tedbirler ayrıca istendi mi?",
+    "Kimlik/adres gizliliği gerekiyorsa açıkça talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["6284 SK m.1", "6284 SK m.4", "6284 SK m.5", "6284 SK m.8"],
+    "emsal_ara": "6284 koruyucu önleyici tedbir uzaklaştırma delil aranmaksızın gecikmesinde sakınca",
+    "vurgula": ["beyan esaslı / delil aranmaksızın tedbir", "gecikmesinde sakınca ve ivedilik", "önleyici tedbirlerin somut ve süreli istenmesi"]
+  }
+}

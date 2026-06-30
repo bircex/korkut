@@ -1,0 +1,48 @@
+{
+  "tip": "dilekce-hakki-an74",
+  "ad": "Anayasa m.74 dilekçe hakkı kapsamında başvuru",
+  "dayanak": ["Anayasa m.74", "3071 s.K. m.3", "3071 s.K. m.4", "3071 s.K. m.7"],
+
+  "sorular": [
+    { "id": "muhatap_merci", "soru": "Başvurunun muhatabı kimdir (TBMM, Cumhurbaşkanlığı, ilgili kamu kurumu)?", "tip": "secim",
+      "secenekler": ["TBMM (Dilekçe Komisyonu)", "ilgili bakanlık/kamu kurumu", "yerel yönetim (belediye/il özel idaresi)", "diğer kamu makamı"],
+      "zorunlu": true, "neden": "Dilekçe hakkı yetkili makama yönelir; muhatabın doğru seçimi işleme alınma şartıdır (3071 s.K. m.3)." },
+    { "id": "konu", "soru": "Başvurunuzun konusu nedir (kendisiyle veya kamuyu ilgilendiren istek/şikâyet)?", "tip": "metin",
+      "zorunlu": true, "neden": "Dilekçe hakkı hem bireysel hem kamuyu ilgilendiren konularda kullanılabilir (Anayasa m.74)." },
+    { "id": "talep", "soru": "Muhataptan somut olarak ne talep ediyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin açık olması cevap yükümlülüğünün (3071 s.K. m.7) işlemesi için gereklidir." },
+    { "id": "kimlik_iletisim", "soru": "Başvuru sahibinin ad-soyad, adres ve imza bilgileri tam mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Kimlik/adres/imza bulunmayan (anonim) dilekçeler incelenmez (3071 s.K. m.6)." },
+    { "id": "vatandaslik", "soru": "Başvuran Türk vatandaşı mı, yoksa Türkiye'de oturan yabancı mı?", "tip": "secim",
+      "secenekler": ["Türk vatandaşı", "Türkiye'de ikamet eden yabancı (karşılıklılık)"],
+      "zorunlu": false, "neden": "Yabancılar için karşılıklılık esası aranır (Anayasa m.74/3)." },
+    { "id": "onceki_basvuru", "soru": "Aynı konuda daha önce başvuru yaptınız mı / cevap aldınız mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tekrar başvurularda ve cevap takibinde süreç yönetimi için gereklidir (3071 s.K. m.7)." }
+  ],
+
+  "kosullar": [
+    { "eger": "muhatap_merci == TBMM (Dilekçe Komisyonu)",
+      "ekle": "TBMM Dilekçe Komisyonu'na yönelik başvuru olduğunu ve komisyonun inceleme/sonuçlandırma usulünü dikkate alan bir giriş ekle (3071 s.K. ek hükümler).",
+      "uyari": "TBMM'ye yapılan dilekçelerin sonucu Dilekçe Komisyonu usulüne tabidir; bireysel kamu kurumu başvurularından farklı işler." },
+    { "eger": "kimlik_iletisim == hayir",
+      "uyari": "KRİTİK: ad-soyad, adres ve imza bulunmayan dilekçeler incelemeye alınmaz (3071 s.K. m.6); başvuru reddedilmeden önce bu bilgileri tamamla." },
+    { "eger": "vatandaslik == Türkiye'de ikamet eden yabancı (karşılıklılık)",
+      "uyari": "Yabancıların dilekçe hakkı karşılıklılık esasına bağlıdır (Anayasa m.74/3); kapsam buna göre değerlendirilmeli." },
+    { "eger": "onceki_basvuru == evet",
+      "ekle": "Önceki başvuru tarihini, alınan cevabı veya cevapsızlığı belirten ve bu başvurunun onu tamamlayıcı niteliğini açıklayan bir not ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap yetkili makam doğru seçildi mi (3071 s.K. m.3)?",
+    "Dilekçede ad-soyad, adres ve imza (3071 s.K. m.4-6) eksiksiz mi? (anonim dilekçe incelenmez)",
+    "Talep açık ve cevaplanabilir biçimde mi (3071 s.K. m.7 — sonucun bildirilmesi)?",
+    "Konu dilekçe hakkı kapsamında mı (dava/idari itiraz gibi ayrı bir usule tabi değilse)?",
+    "Yabancı başvuran varsa karşılıklılık esası (Anayasa m.74/3) gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["Anayasa m.74", "3071 s.K. m.3", "3071 s.K. m.4", "3071 s.K. m.7"],
+    "emsal_ara": "dilekçe hakkı Anayasa 74 3071 sayılı kanun başvuru cevap süresi",
+    "vurgula": ["dilekçe hakkının kapsamı (birey + kamu)", "kimlik-adres-imza zorunluluğu", "cevap/sonuç bildirme yükümlülüğü"]
+  }
+}

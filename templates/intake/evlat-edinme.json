@@ -1,0 +1,44 @@
+{
+  "tip": "evlat-edinme",
+  "ad": "Evlat edinme talepli dilekçe",
+  "dayanak": ["TMK m.305-320", "TMK m.308", "TMK m.309", "HMK m.119"],
+
+  "sorular": [
+    { "id": "edinme_turu", "soru": "Evlat edinme türü nedir?", "tip": "secim",
+      "secenekler": ["küçüğün evlat edinilmesi", "eşin çocuğunun (üvey çocuk) evlat edinilmesi", "erginin/kısıtlının evlat edinilmesi (TMK m.313)"],
+      "zorunlu": true, "neden": "Şartlar (bakım süresi, yaş farkı, rıza) türüne göre değişir (TMK m.305-313)." },
+    { "id": "evlat_edinen_durum", "soru": "Evlat edinen evli mi, bekâr mı; yaşı kaç?", "tip": "metin",
+      "zorunlu": true, "neden": "Birlikte evlat edinmede 5 yıl evlilik/30 yaş; tek başına edinmede 30 yaş koşulu vardır (TMK m.306-307)." },
+    { "id": "kucuk_bilgi", "soru": "Evlat edinilecek küçüğün/kişinin adı, doğum tarihi ve mevcut durumu?", "tip": "tarih",
+      "zorunlu": true, "neden": "Evlat edinen ile arasında en az 18 yaş fark ve diğer koşullar yaşa bağlıdır (TMK m.308)." },
+    { "id": "bakim_suresi", "soru": "Küçük, evlat edinen tarafından en az 1 yıldır bakılıp eğitiliyor mu?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Küçüğün evlat edinilmesi 1 yıllık bakım-eğitim koşuluna bağlıdır (TMK m.305)." },
+    { "id": "ana_baba_riza", "soru": "Küçüğün ana-babasının rızası alındı mı / rıza aranmayan hâl var mı?", "tip": "metin",
+      "zorunlu": true, "neden": "Kural olarak ana-babanın rızası şarttır; istisnaları (TMK m.311) gösterilmelidir (TMK m.309)." },
+    { "id": "cocuk_gorusu", "soru": "Ayırt etme gücüne sahip küçüğün rızası/görüşü alındı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Ayırt etme gücüne sahip küçük rıza vermedikçe evlat edinilemez (TMK m.308/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "edinme_turu == eşin çocuğunun (üvey çocuk) evlat edinilmesi",
+      "ekle": "Eşin en az 2 yıldır evli olunduğu veya 30 yaşın doldurulduğu koşulunu ve eşin çocuğunun evlat edinilme şartlarını gerekçelendir (TMK m.306/2)." },
+    { "eger": "bakim_suresi == hayir",
+      "uyari": "KRİTİK: Küçüğün 1 yıl bakım-eğitim koşulu (TMK m.305) sağlanmıyorsa evlat edinme talebi reddedilebilir." },
+    { "eger": "ana_baba_riza == yok",
+      "ekle": "Ana-baba rızasının aranmadığı hâlleri (kim olduğu bilinmiyorsa, uzun süre ilgilenmeme, ayırt etme gücünden sürekli yoksunluk) TMK m.311'e dayanarak açıkla." }
+  ],
+
+  "kontroller": [
+    "Evlat edinme türü ve buna bağlı yaş/evlilik/bakım koşulları sağlandı mı (TMK m.305-307)?",
+    "Evlat edinen ile küçük arasında en az 18 yaş fark var mı (TMK m.308)?",
+    "Ana-baba rızası alındı mı veya aranmayan hâl (TMK m.311) gösterildi mi?",
+    "Ayırt etme gücündeki küçüğün rızası alındı mı (TMK m.308/2)?",
+    "Evlat edinmenin küçüğün yararına olduğu sosyal inceleme ile destekleniyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.305", "TMK m.306", "TMK m.308", "TMK m.309", "TMK m.311"],
+    "emsal_ara": "evlat edinme küçük bir yıl bakım rıza yaş farkı üstün yarar",
+    "vurgula": ["bir yıllık bakım-eğitim koşulu", "ana-baba rızası ve istisnaları", "küçüğün üstün yararı ve sosyal inceleme"]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "tip": "disiplin-cezasi-iptal",
+  "ad": "Disiplin cezasının iptali dava dilekçesi",
+  "dayanak": ["İYUK m.2", "İYUK m.7", "657 s.K. m.125", "657 s.K. m.135", "Anayasa m.129"],
+
+  "sorular": [
+    { "id": "ceza_turu", "soru": "Verilen disiplin cezasının türü nedir (uyarma, kınama, aylıktan kesme, kademe ilerlemesinin durdurulması, devlet memurluğundan çıkarma)?", "tip": "secim",
+      "secenekler": ["uyarma", "kınama", "aylıktan kesme", "kademe ilerlemesinin durdurulması", "devlet memurluğundan çıkarma", "diğer mevzuata göre ceza"],
+      "zorunlu": true, "neden": "Ceza türü itiraz mercii ve usulü etkiler (657 s.K. m.135-136)." },
+    { "id": "teblig_tarihi", "soru": "Disiplin cezası kararı size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "60 günlük dava süresi tebliğden işler (İYUK m.7); itiraz süreyi etkiler." },
+    { "id": "isnat_fiil", "soru": "Size isnat edilen fiil/eylem nedir ve cezaya esas alınan sebep nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Fiil-ceza orantısı ve sebep unsuru denetimi için (657 s.K. m.125)." },
+    { "id": "savunma_alindi", "soru": "Ceza verilmeden önce yazılı savunmanız usulüne uygun alındı mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Savunma alınmadan disiplin cezası verilemez (657 s.K. m.130, Anayasa m.129/2) — şekil unsuru." },
+    { "id": "zamanasimi", "soru": "Fiilin işlenmesinden/öğrenilmesinden cezaya kadar geçen süre nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Disiplin soruşturması ve ceza zamanaşımı süreleri aşılmış olabilir (657 s.K. m.127)." },
+    { "id": "itiraz_yapildi", "soru": "Disiplin amiri/kuruluna itiraz ettiniz mi? (tarih ve sonuç)", "tip": "metin",
+      "zorunlu": false, "neden": "İdari itiraz yolu ve sonucu dava süresini ve konuyu etkiler (657 s.K. m.135)." }
+  ],
+
+  "kosullar": [
+    { "eger": "savunma_alindi == hayir",
+      "ekle": "Savunma hakkı tanınmadan ceza verildiğini ve bunun esaslı şekil sakatlığı (Anayasa m.129/2, 657 s.K. m.130) oluşturduğunu açıklayan bir bölüm ekle.",
+      "uyari": "Savunma alınmadan verilen disiplin cezası tek başına iptal sebebidir; bu hususu öne çıkar." },
+    { "eger": "gun_farki(teblig_tarihi) > 60",
+      "uyari": "KRİTİK: tebliğden 60 günü aşmış görünüyor — dava süresi (İYUK m.7) geçmiş olabilir; itiraz yapıldıysa süreyi yeniden hesapla." },
+    { "eger": "ceza_turu == devlet memurluğundan çıkarma",
+      "ekle": "Yüksek disiplin kurulu kararının usulüne, fiilin ağırlığı ile cezanın orantısına ve maddi gerçeğe ilişkin denetimi açıklayan bir bölüm ekle." },
+    { "eger": "isnat_fiil != ",
+      "ekle": "İsnat edilen fiilin sübuta ermediğini veya fiil ile ceza arasında ölçülülük bulunmadığını (orantılılık) açıklayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Dava süresi: tebliğden 60 gün (İYUK m.7); itiraz yapıldıysa süre etkisi doğru hesaplandı mı?",
+    "Savunma hakkı (Anayasa m.129/2, 657 s.K. m.130) usulüne uygun kullandırıldı mı?",
+    "Disiplin soruşturması/ceza zamanaşımı (657 s.K. m.127) aşılmış mı?",
+    "Fiil-ceza orantısı (ölçülülük) ve sebebin sübutu denetlendi mi?",
+    "Cezayı veren makamın yetkisi ve cezanın türüne göre usul (m.125-136) doğru mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["657 s.K. m.125", "657 s.K. m.127", "657 s.K. m.130", "657 s.K. m.135", "Anayasa m.129"],
+    "emsal_ara": "disiplin cezası iptal savunma hakkı zamanaşımı ölçülülük memur",
+    "vurgula": ["savunma hakkı şart", "disiplin zamanaşımı", "fiil-ceza orantılılığı"]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "tip": "vesayet-kayyim",
+  "ad": "Vesayet / kayyım atanması talebi",
+  "dayanak": ["TMK m.404-408", "TMK m.405", "TMK m.426-427", "TMK m.462", "HMK m.382/2"],
+
+  "sorular": [
+    { "id": "talep_turu", "soru": "Talep vesayet (vasi atanması) mı, kayyım atanması mı?", "tip": "secim",
+      "secenekler": ["vasi atanması (kısıtlama/küçük)", "temsil kayyımı (TMK m.426)", "yönetim kayyımı (TMK m.427)"],
+      "zorunlu": true, "neden": "Vesayet sürekli koruma, kayyımlık belirli iş/malvarlığı için geçici temsildir; usul farklıdır." },
+    { "id": "korunan_kisi", "soru": "Korunması gereken kişinin adı, yaşı ve durumu (akıl hastalığı/zayıflığı, savurganlık, alkol/madde bağımlılığı, fiili yokluk vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Kısıtlama/vesayet sebepleri (akıl hastalığı, savurganlık vb.) ortaya konmalıdır (TMK m.405-408)." },
+    { "id": "kisitlama_sebebi", "soru": "Vesayet/kayyımlık hangi sebebe dayanıyor?", "tip": "secim",
+      "secenekler": ["akıl hastalığı/zayıflığı (TMK m.405)", "savurganlık-alkol/uyuşturucu-kötü yaşam (TMK m.406)", "özgürlüğü bağlayıcı ceza (TMK m.407)", "kişinin kendi isteği (TMK m.408)", "fiili imkânsızlık/menfaat çatışması (kayyım)"],
+      "zorunlu": true, "neden": "Atama kararının dayanağı sebebe göre değişir (TMK m.405-408, 426-427)." },
+    { "id": "onerilen_vasi", "soru": "Vasi/kayyım olarak önerilen kişi var mı (yakınlık ve uygunluğu)?", "tip": "metin",
+      "zorunlu": false, "neden": "Vesayet makamı uygun bir kişiyi atar; eş/yakınlar öncelikli olabilir (TMK m.413-414)." },
+    { "id": "saglik_raporu", "soru": "Akıl hastalığı/zayıflığı söz konusu ise resmî sağlık kurulu raporu var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Akıl hastalığı/zayıflığı nedeniyle kısıtlamada resmî sağlık kurulu raporu zorunludur (TMK m.409/2)." },
+    { "id": "acil_islem", "soru": "Korunan kişi adına yapılması gereken acil bir işlem (miras, dava, satış vb.) var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Acil ve belirli bir iş için temsil kayyımı atanması gerekebilir (TMK m.426)." }
+  ],
+
+  "kosullar": [
+    { "eger": "kisitlama_sebebi == akıl hastalığı/zayıflığı (TMK m.405)",
+      "ekle": "Kısıtlama için resmî sağlık kurulu raporu temin edilmesini ve gerekirse kişinin dinlenmesini talep et (TMK m.409).",
+      "uyari": "Akıl hastalığı/zayıflığında resmî sağlık kurulu raporu olmadan kısıtlama kararı verilemez (TMK m.409/2)." },
+    { "eger": "talep_turu == temsil kayyımı (TMK m.426)",
+      "ekle": "Kayyımlığın yalnızca belirli iş/işlem için (menfaat çatışması, hukuki işlemde temsil) istendiğini ve kapsamını açıkça sınırlandır (TMK m.426)." },
+    { "eger": "saglik_raporu == hayir",
+      "uyari": "Akıl hastalığı/zayıflığına dayalı talepte sağlık kurulu raporu eksikse mahkeme bunu temin ettirecektir; süreci öngör." }
+  ],
+
+  "kontroller": [
+    "Talep (vesayet mi kayyımlık mı) ve dayanağı sebep doğru belirlendi mi (TMK m.405-408/426-427)?",
+    "Akıl hastalığı/zayıflığı sebebinde resmî sağlık kurulu raporu öngörüldü mü (TMK m.409)?",
+    "Korunacak kişinin dinlenmesi gerektiği hâller değerlendirildi mi?",
+    "Önerilen vasi/kayyımın uygunluğu (yakınlık, çıkar çatışmasızlık) açıklandı mı?",
+    "Kayyımlıkta görev/yetki kapsamı belirli iş ile sınırlandırıldı mı (TMK m.426-427)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.405", "TMK m.406", "TMK m.408", "TMK m.409", "TMK m.426", "TMK m.427"],
+    "emsal_ara": "vesayet vasi atanması kısıtlama sağlık kurulu raporu kayyım temsil",
+    "vurgula": ["kısıtlama sebepleri (TMK m.405-408)", "sağlık kurulu raporu zorunluluğu", "kayyımlıkta sınırlı görev kapsamı"]
+  }
+}

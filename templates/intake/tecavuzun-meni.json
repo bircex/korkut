@@ -1,0 +1,53 @@
+{
+  "tip": "tecavuzun-meni",
+  "ad": "Fikri-sınai hakka tecavüzün men'i/tespiti dilekçesi",
+  "dayanak": ["SMK m.149", "SMK m.29", "SMK m.150", "SMK m.151"],
+
+  "sorular": [
+    { "id": "hak_turu", "soru": "Tecavüze uğrayan hak nedir: marka mı, patent/faydalı model mi, tasarım mı?", "tip": "secim",
+      "secenekler": ["marka", "patent/faydalı model", "tasarım", "birden fazla hak"],
+      "zorunlu": true, "neden": "Tecavüz fiilleri ve dayanak (SMK m.29/m.141/m.81) hak türüne göre belirlenir." },
+    { "id": "tescil_no", "soru": "Tecavüze uğrayan hakkın TÜRKPATENT tescil numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Davacının korunan hakkının ve husumetin (SMK m.149) belirlenmesi için." },
+    { "id": "tecavuz_fiili", "soru": "Tecavüz fiilini somut olarak açıklayın (taklit ürün satışı, izinsiz kullanım, ithalat vb.).", "tip": "metin",
+      "zorunlu": true, "neden": "Tecavüz sayılan fiilin (SMK m.29/m.141) ortaya konması davanın esasıdır." },
+    { "id": "ogrenme_tarihi", "soru": "Tecavüzü ve failini ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "Tazminat talebinde zamanaşımı (SMK m.157 atfıyla TBK) bu tarihten işler." },
+    { "id": "talepler", "soru": "Hangi talepleri ileri sürüyorsunuz?", "tip": "secim",
+      "secenekler": ["tecavüzün tespiti", "tecavüzün men'i (durdurulması)", "tecavüzün ref'i (sonuçlarının ortadan kaldırılması)", "maddi-manevi tazminat", "el koyma/imha", "hepsi"],
+      "zorunlu": true, "neden": "Sonuç-istem ve SMK m.149'daki talep türlerinin belirlenmesi için." },
+    { "id": "tazminat_turu", "soru": "Tazminat istiyorsanız yoksun kalınan kazancı hangi yönteme göre hesaplıyorsunuz (SMK m.151)?", "tip": "secim",
+      "secenekler": ["lisans bedeli yöntemi", "tecavüz edenin elde ettiği kazanç", "hak sahibinin yoksun kaldığı kazanç", "tazminat istemiyorum"],
+      "zorunlu": false, "neden": "Yoksun kalınan kazancın hesabı SMK m.151'deki seçimlik yöntemlere bağlıdır." },
+    { "id": "ihtiyati_tedbir", "soru": "İhtiyati tedbir (satışın/üretimin durdurulması, el koyma) talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "SMK m.159 uyarınca tecavüzün önlenmesi için ihtiyati tedbir istenebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "talepler == maddi-manevi tazminat",
+      "sor": ["tazminat_turu"],
+      "ekle": "Yoksun kalınan kazancın SMK m.151'deki hangi yönteme göre hesaplandığını ve manevi tazminat istemini ayrı ayrı gerekçelendiren bir bölüm ekle." },
+    { "eger": "ihtiyati_tedbir == evet",
+      "ekle": "İhtiyati tedbir istemini, yaklaşık ispat ve telafisi güç zarar koşullarıyla (HMK m.389, SMK m.159) ayrı başlıkta gerekçelendir.",
+      "uyari": "İhtiyati tedbir kararı uygulanmazsa veya esas dava süresinde açılmazsa tedbir kalkar; süreleri takip et." },
+    { "eger": "hak_turu == patent/faydalı model",
+      "uyari": "Patente tecavüzde, tecavüz iddiasına karşı hükümsüzlük def'i sıkça ileri sürülür; patentin geçerliliğini ve istem kapsamını teyit et." },
+    { "eger": "talepler == hepsi",
+      "ekle": "Tespit + men' + ref' + tazminat + el koyma/imha taleplerini SMK m.149'a göre ayrı ayrı sonuç-istemde sırala." }
+  ],
+
+  "kontroller": [
+    "Bu davanın tecavüzün men'i/tespiti olduğu, hükümsüzlük davasından ayrı tutulduğu açık mı?",
+    "Tecavüze uğrayan hak tescil numarasıyla ve geçerliliğiyle birlikte ortaya konuldu mu?",
+    "Tecavüz fiili SMK'daki tanımlı fiillerden hangisine girdiği belirtilerek somutlaştırıldı mı?",
+    "Talepler (tespit/men'/ref'/tazminat/imha — SMK m.149) sonuç-istemde eksiksiz mi?",
+    "Tazminat varsa yoksun kalınan kazanç yöntemi (SMK m.151) seçildi ve gerekçelendirildi mi?",
+    "İhtiyati tedbir istenmişse koşulları ve esas dava süresi gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["SMK m.29", "SMK m.149", "SMK m.150", "SMK m.151", "SMK m.159"],
+    "emsal_ara": "marka tecavüz men ref yoksun kalınan kazanç ihtiyati tedbir",
+    "vurgula": ["tecavüz fiilinin somutlaştırılması", "tecavüz davası ile hükümsüzlük davası ayrımı", "yoksun kalınan kazanç hesabı (SMK m.151)"]
+  }
+}

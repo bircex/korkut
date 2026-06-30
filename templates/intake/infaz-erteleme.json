@@ -1,0 +1,43 @@
+{
+  "tip": "infaz-erteleme",
+  "ad": "Cezanın infazının ertelenmesi / denetimli serbestlik talebi",
+  "dayanak": ["CGTİHK m.16", "CGTİHK m.17", "CGTİHK m.105/A"],
+
+  "sorular": [
+    { "id": "ilam_no", "soru": "İnfaza konu mahkûmiyet ilamı / esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin sunulacağı infaz dosyasının belirlenmesi (CGTİHK m.16)." },
+    { "id": "ceza_miktari", "soru": "Hükmedilen ceza türü ve miktarı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Erteleme/denetimli serbestlik sınırlarının değerlendirilmesi (CGTİHK m.17, m.105/A)." },
+    { "id": "talep_turu", "soru": "Hangi talepte bulunuyorsunuz?", "tip": "secim",
+      "secenekler": ["infazın ertelenmesi — hastalık (CGTİHK m.16)", "infazın geri bırakılması — belirli süre (CGTİHK m.17)", "denetimli serbestlik (CGTİHK m.105/A)", "açık ceza infaz kurumuna ayrılma"],
+      "zorunlu": true, "neden": "Talebin hukuki dayanağının ve mercinin belirlenmesi." },
+    { "id": "gerekce", "soru": "Talebinizin somut gerekçesi nedir? (sağlık durumu, ailevi/ekonomik mazeret, eğitim/iş vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Erteleme/geri bırakma somut mazerete dayanmalıdır (CGTİHK m.16-17)." },
+    { "id": "saglik_durumu", "soru": "Sağlığa dayalı erteleme talep ediliyorsa hastalık/rapor durumu nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Hastalık nedeniyle erteleme için resmi sağlık kurulu raporu aranır (CGTİHK m.16)." },
+    { "id": "infaz_basladi", "soru": "Cezanın infazına başlandı mı, henüz çağrı/tebligat aşamasında mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Geri bırakma talebinin (CGTİHK m.17) infaza başlamadan önce mümkün olması." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == infazın ertelenmesi — hastalık (CGTİHK m.16)",
+      "ekle": "Hükümlünün hastalığının cezasını infaza elverişsiz kıldığını, resmi sağlık kurulu raporuna dayanarak açıklayan bir bölüm ekle (CGTİHK m.16)." },
+    { "eger": "talep_turu == denetimli serbestlik (CGTİHK m.105/A)",
+      "uyari": "Denetimli serbestlik için cezaevinde geçirilmesi gereken asgari süre ve kalan süre koşulları (CGTİHK m.105/A) somut olayda hesaplanmalıdır." },
+    { "eger": "infaz_basladi == hayir",
+      "ekle": "İnfaza henüz başlanmadığını ve geri bırakma (CGTİHK m.17) koşullarının bu aşamada uygulanabilir olduğunu belirten bir paragraf ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: talep, infazı izleyen Cumhuriyet Başsavcılığı (infaz) / gerektiğinde infaz hâkimliğine hitaben mi yazıldı? (CGTİHK m.16)",
+    "Talebin türüne göre dayanak madde (CGTİHK m.16 / m.17 / m.105/A) doğru seçildi mi?",
+    "Sağlığa dayalı talepte resmi sağlık kurulu raporu koşulu (CGTİHK m.16) gözetildi mi?",
+    "Denetimli serbestlik/koşullu salıverilme için süre ve iyi hal koşulları somut hesaplandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CGTİHK m.16", "CGTİHK m.17", "CGTİHK m.105/A"],
+    "emsal_ara": "infazın ertelenmesi geri bırakma denetimli serbestlik hastalık sağlık kurulu",
+    "vurgula": ["talep türüne göre doğru dayanak (CGTİHK m.16/17/105-A)", "hastalıkta resmi sağlık kurulu raporu", "denetimli serbestlik süre koşulları"]
+  }
+}

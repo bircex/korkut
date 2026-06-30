@@ -1,0 +1,44 @@
+{
+  "tip": "arabuluculuk-basvuru",
+  "ad": "Arabuluculuğa başvuru / dava şartı tutanağı ekli dilekçe",
+  "dayanak": ["7036 s.K. m.3", "6325 s.K. m.18/A", "İş K. m.20"],
+
+  "sorular": [
+    { "id": "uyusmazlik_konusu", "soru": "Arabuluculuğa konu uyuşmazlık nedir? (işçilik alacakları / işe iade / tazminat)", "tip": "secim",
+      "secenekler": ["işçilik alacakları (kıdem/ihbar/fazla mesai vb.)", "işe iade", "iş kazası tazminatı", "diğer iş uyuşmazlığı"],
+      "zorunlu": true, "neden": "Bireysel iş uyuşmazlıklarında arabuluculuk dava şartıdır; konu, başvuru ve süreleri belirler (7036 s.K. m.3)." },
+    { "id": "fesih_tarihi", "soru": "İş sözleşmesinin sona erdiği / uyuşmazlığın doğduğu tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "Özellikle işe iadede arabuluculuk başvurusu fesih bildiriminden itibaren 1 ay içinde yapılmalıdır (İş K. m.20)." },
+    { "id": "karsi_taraf", "soru": "Karşı taraf (işveren) unvanı, adresi ve varsa diğer sorumlular?", "tip": "metin",
+      "zorunlu": true, "neden": "Başvuruda taraf bilgileri ve yetkili arabuluculuk bürosunun belirlenmesi için gereklidir." },
+    { "id": "talep_kalemleri", "soru": "Talep edilen alacak/tazminat kalemleri ve yaklaşık tutarları?", "tip": "metin",
+      "zorunlu": true, "neden": "Müzakere konusu taleplerin somutlaştırılması; anlaşma/anlaşamama tutanağına yansır." },
+    { "id": "yetkili_buro", "soru": "Başvurunun yapılacağı yetkili arabuluculuk bürosu (genellikle karşı tarafın yerleşim yeri/işin yapıldığı yer) belirlendi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yetkisiz büroya başvuru itiraza açıktır; yetkili büro doğru belirlenmelidir (6325 s.K. m.18/A)." }
+  ],
+
+  "kosullar": [
+    { "eger": "uyusmazlik_konusu == işe iade",
+      "uyari": "KRİTİK: İşe iadede arabuluculuğa başvuru fesih bildiriminden itibaren 1 ay içinde yapılmalı; anlaşamama tutanağından itibaren 2 hafta içinde dava açılmalıdır (İş K. m.20)." },
+    { "eger": "gun_farki(fesih_tarihi) > 30",
+      "uyari": "DİKKAT: İşe iade söz konusuysa fesihten bu yana 1 ayı aşmış görünüyor — arabuluculuk başvuru süresi kaçmış olabilir; süreyi teyit et." },
+    { "eger": "yetkili_buro == hayir",
+      "uyari": "Yetkili büro karşı tarafın yerleşim yeri veya işin yapıldığı yer arabuluculuk bürosudur (6325 s.K. m.18/A); yanlış büro yetki itirazına yol açar." },
+    { "eger": "talep_kalemleri != ",
+      "ekle": "Talep edilen her kalemi ve dayanağını özetleyen, müzakerede esas alınacak bir talep dökümü ekle; anlaşma sağlanırsa ilam niteliğindeki anlaşma belgesinin icra edilebilirliğini belirt." }
+  ],
+
+  "kontroller": [
+    "Uyuşmazlık konusunun zorunlu arabuluculuk kapsamında olduğu doğrulandı mı (7036 s.K. m.3)?",
+    "İşe iadede 1 aylık başvuru ve 2 haftalık dava süreleri gözetildi mi (İş K. m.20)?",
+    "Yetkili arabuluculuk bürosu doğru belirlendi mi (6325 s.K. m.18/A)?",
+    "Anlaşma sağlanırsa belgenin ilam niteliği ve icra edilebilirliği değerlendirildi mi?",
+    "Anlaşamama halinde son tutanağın dava şartı olarak dava dilekçesine ekleneceği not edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["7036 s.K. m.3", "6325 s.K. m.18/A", "İş K. m.20"],
+    "emsal_ara": "iş hukuku zorunlu arabuluculuk dava şartı yetkili büro son tutanak",
+    "vurgula": ["zorunlu arabuluculuk dava şartı", "işe iadede 1 ay başvuru / 2 hafta dava süresi", "yetkili büro tespiti", "anlaşma belgesinin ilam niteliği"]
+  }
+}

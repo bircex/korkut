@@ -1,0 +1,41 @@
+{
+  "tip": "sure-tutum",
+  "ad": "Süre tutum dilekçesi",
+  "dayanak": ["HMK m.297", "HMK m.321", "HMK m.345"],
+
+  "sorular": [
+    { "id": "karar_bilgisi", "soru": "Hangi kararın mahkemesi, esas/karar no ve tarihi için süre tutuluyor?", "tip": "metin",
+      "zorunlu": true, "neden": "Süre tutum belirli bir karara karşı kanun yolu süresini korur; kararın kimliği zorunludur." },
+    { "id": "ogrenme_durumu", "soru": "Karar tefhim mi edildi, yoksa gerekçeli karar tebliğ mi edildi?", "tip": "secim",
+      "secenekler": ["sadece kısa karar tefhim edildi (gerekçe yok)", "gerekçeli karar tebliğ edildi"],
+      "zorunlu": true, "neden": "Süre tutum, gerekçeli karar henüz tebliğ edilmeden başvuru hakkını korumak için verilir." },
+    { "id": "tefhim_tarihi", "soru": "Kısa kararın tefhim/tebliğ tarihi nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Kanun yolu süresi (istinaf 2 hafta — HMK m.345) buradan işler; süre tutum bu süreyi korur." },
+    { "id": "kanun_yolu", "soru": "Hangi kanun yolu için süre tutuluyor?", "tip": "secim",
+      "secenekler": ["istinaf", "temyiz"],
+      "zorunlu": true, "neden": "Süre ve gerekçeli dilekçenin verileceği merci kanun yoluna göre değişir." },
+    { "id": "gerekce_taahhut", "soru": "Gerekçeli karar tebliğ edilince gerekçeli başvuru dilekçesini sunacağınızı beyan ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Süre tutum geçici bir beyandır; gerekçeli dilekçe ayrıca ve süresinde verilmelidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "ogrenme_durumu == gerekçeli karar tebliğ edildi",
+      "uyari": "Gerekçeli karar zaten tebliğ edilmişse süre tutum yerine doğrudan gerekçeli kanun yolu dilekçesi verilmelidir; süre tutumla yetinilmemeli." },
+    { "eger": "gun_farki(tefhim_tarihi) > 14",
+      "uyari": "KRİTİK: tefhim/tebliğden bu yana 2 haftayı aşmış olabilir — istinaf süresi (HMK m.345) geçmiş olabilir; süreyi mutlaka teyit et." }
+  ],
+
+  "kontroller": [
+    "Süre tutum dilekçesi, kanun yolu süresi (istinaf 2 hafta — HMK m.345) içinde mi verildi?",
+    "Karar kimliği (esas/karar no, tarih) doğru gösterildi mi?",
+    "Hangi kanun yolu (istinaf/temyiz) için süre tutulduğu açık mı?",
+    "Gerekçeli karar tebliğinden sonra gerekçeli dilekçenin süresinde verileceği planlandı mı?",
+    "Harç/başvuru gideri eksiğinin sonradan tamamlanma usulü gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.297", "HMK m.321", "HMK m.345"],
+    "emsal_ara": "süre tutum dilekçesi istinaf süresi gerekçeli karar tebliği kanun yolu",
+    "vurgula": ["süre tutumun geçici niteliği", "kanun yolu süresinin başlangıcı", "gerekçeli dilekçenin ayrıca verilmesi"]
+  }
+}

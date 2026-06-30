@@ -1,0 +1,44 @@
+{
+  "tip": "sozlesmeye-aykirilik",
+  "ad": "Sözleşmeye aykırılık / fesih ve tazminat dilekçesi",
+  "dayanak": ["TBK m.112", "TBK m.117", "TBK m.123", "TBK m.125", "TBK m.146"],
+
+  "sorular": [
+    { "id": "sozlesme_konusu", "soru": "Sözleşmenin türü, tarihi ve karşılıklı edimler nelerdir?", "tip": "metin",
+      "zorunlu": true, "neden": "Borç ilişkisinin ve ihlal edilen edimin belirlenmesi (TBK m.112)." },
+    { "id": "aykirilik_turu", "soru": "Karşı taraf borcunu nasıl ihlal etti?", "tip": "secim",
+      "secenekler": ["hiç ifa etmedi", "geç ifa (temerrüt)", "ayıplı/eksik ifa", "ifa imkânsızlığına yol açtı"],
+      "zorunlu": true, "neden": "İhlal türü hak ve talepleri (aynen ifa/fesih/tazminat) belirler (TBK m.112-126)." },
+    { "id": "ifa_tarihi", "soru": "Edim ne zaman ifa edilmeliydi ve ihlal ne zaman ortaya çıktı?", "tip": "tarih",
+      "zorunlu": true, "neden": "Temerrüt, faiz ve zamanaşımı başlangıcı (TBK m.117)." },
+    { "id": "ihtar_sure", "soru": "Karşı tarafa ifa için süre verilerek temerrüt ihtarı çekildi mi? Tarihi?", "tip": "metin",
+      "zorunlu": true, "neden": "Karşılıklı sözleşmede fesih için kural olarak süre verme/ihtar gerekir (TBK m.123-125)." },
+    { "id": "talep", "soru": "Talebiniz nedir (aynen ifa, sözleşmeden dönme/fesih, müspet/menfi zarar)?", "tip": "secim",
+      "secenekler": ["aynen ifa + gecikme tazminatı", "sözleşmeden dönme + menfi zarar", "fesih + müspet zarar", "sadece tazminat"],
+      "zorunlu": true, "neden": "Seçimlik haklar ve tazminatın türünü (müspet/menfi) belirler (TBK m.125)." }
+  ],
+
+  "kosullar": [
+    { "eger": "aykirilik_turu == geç ifa (temerrüt)",
+      "ekle": "Borçluyu temerrüde düşüren ihtarı/süreyi ve TBK m.125 seçimlik haklarını (aynen ifa+gecikme zararı / dönme+menfi zarar / ifadan vazgeçip müspet zarar) gösteren bir bölüm ekle.",
+      "uyari": "Karşılıklı borç yükleyen sözleşmede seçimlik hak için önce uygun süre/ihtar şartı aranır (TBK m.123)." },
+    { "eger": "talep == sözleşmeden dönme + menfi zarar",
+      "ekle": "Dönme halinde verilen edimlerin iadesi ve menfi (güven) zararının kapsamını açıklayan paragraf ekle (TBK m.125/son)." },
+    { "eger": "ihtar_sure == yok",
+      "uyari": "Süre verme/ihtar yapılmamışsa fesih/dönme hakkı doğmamış olabilir; TBK m.124 süre verilmesini gerektirmeyen istisnaları değerlendir." }
+  ],
+
+  "kontroller": [
+    "İhlal türü (ifa etmeme/temerrüt/ayıplı ifa) ve buna bağlı seçimlik hak doğru kuruldu mu (TBK m.112/125)?",
+    "Fesih/dönme için süre verme ve ihtar şartı (TBK m.123-124) karşılandı mı?",
+    "Talep edilen zarar müspet/menfi ayrımına göre hesaplandı mı (TBK m.125)?",
+    "Faiz ve temerrüt başlangıcı (TBK m.117) doğru gösterildi mi?",
+    "Zamanaşımı (kural 10 yıl TBK m.146; satım/eser vb. özel süreler) değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.112", "TBK m.117", "TBK m.123", "TBK m.124", "TBK m.125"],
+    "emsal_ara": "sözleşmeye aykırılık temerrüt seçimlik hak dönme müspet menfi zarar",
+    "vurgula": ["TBK m.125 seçimlik haklar", "müspet/menfi zarar ayrımı", "fesih için süre verme/ihtar şartı"]
+  }
+}

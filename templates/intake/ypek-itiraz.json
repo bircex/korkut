@@ -1,0 +1,50 @@
+{
+  "tip": "ypek-itiraz",
+  "ad": "TÜRKPATENT YİDK kararına itiraz/iptal dilekçesi",
+  "dayanak": ["SMK m.20", "SMK m.21", "SMK m.22", "SMK m.149"],
+
+  "sorular": [
+    { "id": "asama", "soru": "Hangi aşamadasınız: TÜRKPATENT'e (YİDK'ya) idari itiraz mı, yoksa YİDK kararının iptali için dava mı?", "tip": "secim",
+      "secenekler": ["Kuruma itiraz (karara/yayıma — SMK m.20/m.21)", "YİDK kararının iptali davası (mahkeme)"],
+      "zorunlu": true, "neden": "Kuruma itiraz idari süreçtir; YİDK kararı kesinleşince iptali için 2 ay içinde dava açılır (SMK m.21/8)." },
+    { "id": "hak_turu", "soru": "Hangi sınai hak söz konusu (marka, patent/faydalı model, tasarım)?", "tip": "secim",
+      "secenekler": ["marka", "patent/faydalı model", "tasarım"],
+      "zorunlu": true, "neden": "İtiraz/dava dayanağı ve süreler hak türüne göre değişir." },
+    { "id": "basvuru_no", "soru": "İlgili başvurunun/tescilin TÜRKPATENT başvuru veya tescil numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraza/davaya konu işlemin sicil kaydıyla tek tek belirlenmesi için." },
+    { "id": "karar_tebliğ", "soru": "İtiraz edilen YİDK/Kurum kararı size hangi tarihte tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Kuruma itiraz 2 ay, YİDK kararı iptali davası kararın tebliğinden 2 ay içinde açılır (SMK m.20, m.21/8)." },
+    { "id": "itiraz_sebebi", "soru": "İtiraz/iptal sebebiniz nedir (mutlak ret — SMK m.5, nispi ret — SMK m.6, usule aykırılık vb.)?", "tip": "secim",
+      "secenekler": ["mutlak ret sebebi (SMK m.5)", "nispi ret sebebi / önceki hak (SMK m.6)", "kararın gerekçesiz/usule aykırı olması", "diğer"],
+      "zorunlu": true, "neden": "İleri sürülebilecek sebepler ve ispat yükü buna bağlıdır." },
+    { "id": "onceki_hak", "soru": "Nispi sebep ileri sürülüyorsa dayandığınız önceki marka/hak nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "SMK m.6 nispi sebepte önceki ve üstün hakkın gösterilmesi gerekir." }
+  ],
+
+  "kosullar": [
+    { "eger": "asama == YİDK kararının iptali davası (mahkeme)",
+      "uyari": "KRİTİK: YİDK kararının iptali davası, kararın tebliğinden itibaren 2 AY içinde açılmalıdır (SMK m.21/8 atfıyla m.20); davalı TÜRKPATENT'tir, süre hak düşürücüdür." },
+    { "eger": "gun_farki(karar_tebliğ) > 60",
+      "uyari": "DİKKAT: kararın tebliğinden bu yana 2 ayı (yaklaşık 60 gün) aşmış görünüyor — itiraz/dava süresi geçmiş olabilir; süreyi kesin olarak teyit et." },
+    { "eger": "itiraz_sebebi == nispi ret sebebi / önceki hak (SMK m.6)",
+      "sor": ["onceki_hak"],
+      "ekle": "Önceki hakkın üstünlüğünü, mal/hizmet benzerliğini ve karıştırılma ihtimalini (SMK m.6) somut karşılaştırmayla açıklayan bir bölüm ekle." },
+    { "eger": "asama == Kuruma itiraz (karara/yayıma — SMK m.20/m.21)",
+      "ekle": "İtirazın YİDK incelemesi öncesi idari aşamada olduğunu ve Kurum nezdinde ileri sürülen sebepleri özetleyen bir paragraf ekle.",
+      "uyari": "İdari itiraz yolu tüketilmeden YİDK kararı iptali davası açılamaz; aşamayı doğru kur." }
+  ],
+
+  "kontroller": [
+    "Aşama (Kuruma idari itiraz / mahkemede YİDK iptali davası) doğru belirlendi mi?",
+    "Karar tebliğ tarihi ve 2 aylık süre (itiraz/dava) hesaplanıp gösterildi mi?",
+    "Dava ise davalının TÜRKPATENT olduğu ve idari itiraz yolunun tüketildiği belirtildi mi?",
+    "İtiraz/iptal sebepleri (mutlak/nispi/usul) dayanaklarıyla ayrı ayrı ileri sürüldü mü?",
+    "İlgili başvuru/tescil numarası ve YİDK karar numarası dilekçede yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["SMK m.5", "SMK m.6", "SMK m.20", "SMK m.21", "SMK m.22"],
+    "emsal_ara": "YİDK kararı iptali dava süre 2 ay TÜRKPATENT itiraz",
+    "vurgula": ["idari itiraz ile YİDK iptal davası ayrımı", "2 aylık hak düşürücü süre", "davalının TÜRKPATENT olması ve idari yol tüketme"]
+  }
+}

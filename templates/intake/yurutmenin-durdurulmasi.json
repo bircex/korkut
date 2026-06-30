@@ -1,0 +1,43 @@
+{
+  "tip": "yurutmenin-durdurulmasi",
+  "ad": "Yürütmenin durdurulması talepli dilekçe",
+  "dayanak": ["İYUK m.27", "İYUK m.2", "İYUK m.7", "Anayasa m.125"],
+
+  "sorular": [
+    { "id": "islem", "soru": "Yürütmesinin durdurulması istenen idari işlem nedir (adı, sayısı, konusu)?", "tip": "metin",
+      "zorunlu": true, "neden": "YD istemi yürütülebilir bir idari işleme bağlıdır (İYUK m.27); konu (İYUK m.3)." },
+    { "id": "teblig_tarihi", "soru": "İşlem ne zaman tebliğ edildi / öğrenildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "YD ancak süresinde açılmış/açılacak dava ile istenebilir; 60 günlük süre (İYUK m.7)." },
+    { "id": "telafisi_guc_zarar", "soru": "İşlemin uygulanması hâlinde doğacak telafisi güç veya imkânsız zarar nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "YD'nin iki kümülatif koşulundan biri telafisi güç/imkânsız zarardır (İYUK m.27/2)." },
+    { "id": "acik_hukuka_aykirilik", "soru": "İşlemin açıkça hukuka aykırı olduğunu gösteren en güçlü sebep nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İkinci kümülatif koşul işlemin açıkça hukuka aykırılığıdır (İYUK m.27/2)." },
+    { "id": "uygulanmis_mi", "soru": "İşlem fiilen uygulanmaya başlandı mı / icrası yakın mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Aciliyet ve zararın güncelliği YD değerlendirmesini etkiler." },
+    { "id": "teminat_durumu", "soru": "Teminat aranmasını gerektirebilecek bir durum (mali yükümlülük vb.) var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mahkeme YD'yi teminat karşılığında verebilir; bazı hallerde teminat aranmaz (İYUK m.27/6-7)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(teblig_tarihi) > 60",
+      "uyari": "KRİTİK: tebliğden 60 günü aşmış görünüyor — YD ancak süresinde açılan dava ile istenebilir (İYUK m.7, m.27); süreyi ve m.11 etkisini yeniden hesapla." },
+    { "eger": "uygulanmis_mi == evet",
+      "ekle": "İşlemin uygulanmaya başladığını ve devam eden uygulamanın yaratacağı güncel/telafisi güç zararı somutlaştıran bir bölüm ekle; aciliyeti vurgula." },
+    { "eger": "teminat_durumu == evet",
+      "uyari": "Mahkeme YD kararını teminat karşılığında verebilir (İYUK m.27/6); kamu görevlileri/özel kanun istisnaları (m.27/7) gözetilmeli." }
+  ],
+
+  "kontroller": [
+    "YD'nin iki kümülatif koşulu (telafisi güç/imkânsız zarar VE açık hukuka aykırılık — İYUK m.27/2) birlikte gösterildi mi?",
+    "İstem süresinde açılmış/açılacak bir esas dava ile birlikte mi ileri sürülüyor (İYUK m.7, m.27)?",
+    "İşlemin yürütülebilir/icrai nitelik taşıdığı belirtildi mi?",
+    "Gerekçe açık (somut zarar + hukuka aykırılık) ve karar verilebilir nitelikte mi (İYUK m.27/2)?",
+    "Teminat ve istisna halleri (m.27/6-7) değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İYUK m.27", "İYUK m.7", "İYUK m.2"],
+    "emsal_ara": "yürütmenin durdurulması telafisi güç zarar açıkça hukuka aykırılık teminat",
+    "vurgula": ["iki kümülatif koşul (zarar + açık hukuka aykırılık)", "gerekçeli karar şartı", "teminat ve istisnalar"]
+  }
+}

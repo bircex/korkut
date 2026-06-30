@@ -1,0 +1,47 @@
+{
+  "tip": "ihtarname",
+  "ad": "İhtarname (noter)",
+  "dayanak": ["TBK m.117", "TBK m.123", "Noterlik Kanunu m.60", "TBK m.315"],
+
+  "sorular": [
+    { "id": "ihtar_amaci", "soru": "İhtarın amacı nedir (temerrüde düşürme, ödeme/edim talebi, sözleşme feshi ihtarı, tahliye, hakkın kullanımı bildirimi)?", "tip": "secim",
+      "secenekler": ["borçluyu temerrüde düşürme", "ödeme/edim talebi (süre verme)", "sözleşmeden dönme/fesih ihtarı", "kira/tahliye ihtarı", "hakkın kullanımı/irade beyanı bildirimi"],
+      "zorunlu": true, "neden": "İhtarın hukuki sonucu (temerrüt, ek süre, fesih) amaca göre değişir (TBK m.117, m.123)." },
+    { "id": "muhatap", "soru": "İhtar muhatabı kimdir (ad-soyad/unvan ve tebligat adresi)?", "tip": "metin",
+      "zorunlu": true, "neden": "İhtarname noter aracılığıyla muhataba tebliğ edilir; doğru adres tebligatın geçerliliği içindir." },
+    { "id": "talep_ozeti", "soru": "Muhataptan ne talep ediyorsunuz ve dayandığınız ilişki/sözleşme nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin ve hukuki ilişkinin açıkça belirtilmesi ihtarın işlevi ve ispatı için gereklidir." },
+    { "id": "sure_verme", "soru": "Muhataba edimi yerine getirmesi için süre veriyor musunuz? (kaç gün)", "tip": "metin",
+      "zorunlu": false, "neden": "Bazı fesih/dönme hakları için uygun/münasip süre verilmesi şarttır (TBK m.123-126)." },
+    { "id": "sonuc_uyarisi", "soru": "Süreye uyulmazsa başvurulacak hukuki yol nedir (dava/icra/fesih)?", "tip": "metin",
+      "zorunlu": false, "neden": "İhtarda muhtemel sonucun bildirilmesi caydırıcılık ve iyiniyet açısından önemlidir." },
+    { "id": "tahliye_ihtari", "soru": "Kira ilişkisinde iki haklı ihtar / temerrüt ihtarı mı söz konusu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Kira hukukunda tahliye sebepleri için ihtarın şekli ve sayısı önemlidir (TBK m.315, m.352)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ihtar_amaci == borçluyu temerrüde düşürme",
+      "ekle": "Borcun muaccel olduğunu, ödeme yapılmaması hâlinde temerrüt faizi ve hukuki yollara başvurulacağını açıkça belirten ifade ekle (TBK m.117).",
+      "uyari": "Vadesi belirli borçlarda temerrüt ihtarsız doğabilir (TBK m.117/2); ihtarın gerekip gerekmediğini ilişkiye göre teyit et." },
+    { "eger": "ihtar_amaci == sözleşmeden dönme/fesih ihtarı",
+      "ekle": "Karşı tarafa edimi ifa için uygun bir süre verildiğini ve süre sonunda sözleşmeden dönüleceği/feshedileceğini bildiren ifade ekle (TBK m.123-126)." },
+    { "eger": "tahliye_ihtari == evet",
+      "uyari": "Kira temerrüdünde tahliye için yazılı ihtar ve TBK m.315'teki süre; iki haklı ihtar (TBK m.352/2) sebebinde ihtarların ayrı dönemlere ait olması aranır." },
+    { "eger": "sure_verme != ",
+      "ekle": "Verilen sürenin başlangıç ve bitişini, sürenin tebliğden itibaren işleyeceğini açıkça yazan bir ifade ekle." }
+  ],
+
+  "kontroller": [
+    "İhtarın amacı (temerrüt/fesih/tahliye) ile içeriği ve hukuki sonuç birbiriyle tutarlı mı?",
+    "Muhatabın kimliği ve geçerli tebligat adresi doğru belirtildi mi (noter tebliği için)?",
+    "Fesih/dönme amacı varsa uygun/münasip süre verildi mi (TBK m.123-126)?",
+    "Talep ve dayanılan hukuki ilişki ihtarda açık ve ispatlanabilir biçimde yer alıyor mu?",
+    "Kira/tahliye ihtarıysa şekil ve süre koşulları (TBK m.315/m.352) sağlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.117", "TBK m.123", "TBK m.315", "TBK m.352"],
+    "emsal_ara": "noter ihtarname temerrüt münasip süre fesih kira tahliye ihtarı",
+    "vurgula": ["temerrüt ve ihtar şartı", "fesih/dönmede süre verme", "kira tahliye ihtarının şekli"]
+  }
+}

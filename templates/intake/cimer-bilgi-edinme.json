@@ -1,0 +1,48 @@
+{
+  "tip": "cimer-bilgi-edinme",
+  "ad": "CİMER / Bilgi Edinme başvuru dilekçesi",
+  "dayanak": ["4982 s.K. m.4", "4982 s.K. m.11", "4982 s.K. m.12", "3071 s.K. m.4", "Anayasa m.74"],
+
+  "sorular": [
+    { "id": "basvuru_turu", "soru": "Başvuru türünüz nedir (bilgi/belge edinme, şikâyet, ihbar, talep/öneri)?", "tip": "secim",
+      "secenekler": ["bilgi/belge edinme (4982 s.K.)", "şikâyet", "ihbar", "talep/istek", "görüş/öneri"],
+      "zorunlu": true, "neden": "Başvuru türü uygulanacak rejimi (4982 s.K. bilgi edinme vs. genel başvuru) ve süreyi belirler." },
+    { "id": "muhatap_kurum", "soru": "Başvurunun muhatabı hangi kamu kurum/kuruluşudur?", "tip": "metin",
+      "zorunlu": true, "neden": "Bilgi edinme başvurusu ilgili kurma yapılır; doğru muhatap cevap süresini başlatır (4982 s.K. m.11)." },
+    { "id": "talep_konusu", "soru": "Tam olarak hangi bilgi/belgeyi veya işlemi talep ediyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin açık ve belirli olması gerekir; muğlak talep eksiklik/ret sebebidir (4982 s.K. m.6)." },
+    { "id": "kisisel_iliski", "soru": "Talep ettiğiniz bilgi/belge sizinle ilgili kişisel bir kayda mı yönelik?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Kişiye ilişkin kayıtlara erişim ayrı düzenlenmiştir (4982 s.K. m.13)." },
+    { "id": "iletisim_yolu", "soru": "Cevabın size hangi yolla iletilmesini istiyorsunuz (e-posta/posta/e-Devlet)?", "tip": "secim",
+      "secenekler": ["e-Devlet/CİMER üzerinden", "e-posta", "posta", "elden"],
+      "zorunlu": false, "neden": "Tebligat/cevap yöntemi ve süre takibi için gereklidir." },
+    { "id": "istisna_kapsami", "soru": "Talep, devlet sırrı/ticari sır/özel hayat gibi bir istisna kapsamına girebilir mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Bilgi edinme hakkının sınırları/istisnaları (4982 s.K. m.15-28) ret gerekçesi olabilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "basvuru_turu == bilgi/belge edinme (4982 s.K.)",
+      "ekle": "4982 sayılı Kanun kapsamında bilgi edinme talebi olduğunu, kurumun 15 iş günü (başka birime/kişiye danışma gerekirse 30 iş günü) içinde cevap verme yükümlülüğünü belirten bir paragraf ekle.",
+      "uyari": "Kurum 15 iş günü (gerekirse 30 iş günü) içinde cevap vermezse veya ret verirse Bilgi Edinme Değerlendirme Kurulu'na (BEDK) 15 gün içinde itiraz edilebilir (4982 s.K. m.13)." },
+    { "eger": "kisisel_iliski == evet",
+      "ekle": "Talebin kişinin kendisine ait kayıtlara erişim olduğunu ve kimlik doğrulamasıyla bu kayıtları öğrenme hakkını açıklayan bir not ekle (4982 s.K. m.13)." },
+    { "eger": "istisna_kapsami == evet",
+      "uyari": "Talep istisna kapsamına girebilir (4982 s.K. m.15-28); bu hâlde kurumun ret gerekçesini ve BEDK itiraz yolunu önceden değerlendir." },
+    { "eger": "basvuru_turu == şikâyet",
+      "ekle": "Şikâyet konusu işlem/eylemi, ilgili kurumu ve talep edilen idari işlemi (düzeltme/inceleme) açık biçimde belirten bir bölüm ekle (Anayasa m.74, 3071 s.K.)." }
+  ],
+
+  "kontroller": [
+    "Muhatap kurum doğru belirlendi ve talep açık/belirli mi (4982 s.K. m.6)?",
+    "Bilgi edinme ise cevap süresi (15/30 iş günü) ve BEDK itiraz yolu (m.13) ilgiliye açıklandı mı?",
+    "Başvuru sahibinin kimlik/iletişim bilgileri ve imza yer alıyor mu (3071 s.K. m.4 — anonim başvuru işleme alınmaz)?",
+    "Talep bir mahkeme/dava niteliğinde değil; idari başvuru sınırları içinde mi kalıyor?",
+    "İstisna kapsamı varsa ret riski ve itiraz stratejisi değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["4982 s.K. m.11", "4982 s.K. m.12", "4982 s.K. m.13", "3071 s.K. m.4"],
+    "emsal_ara": "bilgi edinme başvuru 15 iş günü BEDK itiraz istisna dilekçe hakkı",
+    "vurgula": ["15/30 iş günü cevap süresi", "BEDK'ya itiraz yolu", "talebin açık ve belirli olması"]
+  }
+}

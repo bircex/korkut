@@ -47,6 +47,48 @@ def test_intake_file_is_well_formed(path):
     z = data.get("zenginlestir", {})
     assert isinstance(z.get("mevzuat_dogrula", []), list)
 
+    # Thin-intake invariant: evidence/jurisdiction/time-limits are INHERITED from the
+    # dava-workflow archetype (see docs/DRAFTING_FLOW.md) and must not be duplicated here.
+    forbidden = {"deliller", "gorevli_mahkeme", "yetki", "dava_sarti", "kritik_sureler"}
+    dup = forbidden & set(data)
+    assert not dup, f"{type_id}: miras alanını tekrarlıyor {dup}"
+
+
+def test_full_catalog_coverage():
+    # Every dilekçe type in the catalog has an intake schema.
+    catalog_ids = {d["id"] for c in petitions.categories() for d in c["dilekceler"]}
+    have = {p.stem for p in _EXISTING}
+    assert not (catalog_ids - have), f"intake eksik: {sorted(catalog_ids - have)}"
+
+
+@pytest.mark.parametrize(
+    ("type_id", "expected"),
+    [
+        ("cekismeli-bosanma", "bosanma"),
+        ("ise-iade", "is-davasi"),
+        ("tahliye-temerrut", "kira-tahliye"),
+        ("vergi-iptal", "vergi-davasi"),
+        ("ilamsiz-takip-talebi", "icra-takibi"),
+    ],
+)
+def test_dava_turu_resolves_via_category(type_id, expected):
+    turu = petitions.dava_turu(type_id)
+    assert turu is not None and turu["id"] == expected
+
+
+def test_dava_turu_null_category_returns_none():
+    # Kanun Yolları / AYM categories inherit nothing (null in kategori_eslesme).
+    assert petitions.dava_turu("istinaf-basvuru") is None
+    assert petitions.dava_turu("aym-bireysel-basvuru") is None
+
+
+def test_draft_prompt_injects_inherited_and_intake():
+    # ise-iade has both an archetype (evidence/yetki) and a type-specific intake file.
+    dp = petitions.draft_prompt("ise-iade")
+    assert dp and "— OLAYA ÖZGÜ YÖNERGE —" in dp
+    assert "YETKİ:" in dp and "DELİLLER" in dp  # inherited from dava-workflow
+    assert "USUL KONTROL" in dp  # from the intake file
+
 
 def test_inheritance_examples_present():
     # The "miras" pilot ships with two intake schemas.

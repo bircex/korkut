@@ -1,0 +1,47 @@
+{
+  "tip": "aym-bireysel-basvuru",
+  "ad": "AYM bireysel başvuru formu/dilekçesi",
+  "dayanak": ["Anayasa m.148/3-4", "6216 sayılı Kanun m.45-47", "AYM İçtüzüğü m.59"],
+
+  "sorular": [
+    { "id": "ihlal_edilen_hak", "soru": "İhlal edildiği iddia edilen temel hak/özgürlük nedir? (Anayasa + AİHS ortak kapsamında)", "tip": "metin",
+      "zorunlu": true, "neden": "Bireysel başvuru yalnızca Anayasa ve AİHS'in ortak koruma alanındaki haklar için açıktır (6216 m.45)." },
+    { "id": "nihai_karar", "soru": "İhlale yol açan nihai işlem/karar nedir ve hangi merci verdi (esas/karar no)?", "tip": "metin",
+      "zorunlu": true, "neden": "Başvurunun konusu olan kamu gücü işlemi (6216 m.45/1)." },
+    { "id": "ic_hukuk_tukenme_tarihi", "soru": "İç hukuk yolları ne zaman tükendi? (nihai kararın tebliğ/öğrenme tarihi)", "tip": "tarih",
+      "zorunlu": true, "neden": "30 GÜNLÜK başvuru süresi bu tarihten işler (6216 m.47/5)." },
+    { "id": "ic_hukuk_tukendi_mi", "soru": "Olağan kanun yolları (istinaf/temyiz) tüketildi mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Bireysel başvuru ancak iç hukuk yolları tüketildikten sonra yapılabilir (6216 m.45/2)." },
+    { "id": "ihlal_acikla", "soru": "Hakkın nasıl ihlal edildiğini ve uğranılan zararı somut açıklayın.", "tip": "metin",
+      "zorunlu": true, "neden": "İhlal iddiasının ve kişisel/güncel mağduriyetin dayanağı (6216 m.46)." },
+    { "id": "magdur_sifat", "soru": "Başvurucu, ihlalden kişisel ve güncel olarak doğrudan etkilenen mağdur mu?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Yalnızca güncel ve kişisel hakkı etkilenenler başvurabilir (6216 m.46)." },
+    { "id": "ihlal_aihm_kapsam", "soru": "İddia, AİHS ve ek protokollerle de güvence altında mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Anayasa-AİHS ortak alan koşulunun teyidi (6216 m.45/1)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ic_hukuk_tukendi_mi == hayir",
+      "uyari": "KRİTİK: iç hukuk yolları tüketilmeden yapılan bireysel başvuru KABUL EDİLEMEZ bulunur (6216 m.45/2). Önce olağan kanun yollarını tüket." },
+    { "eger": "gun_farki(ic_hukuk_tukenme_tarihi) > 30",
+      "uyari": "KRİTİK: nihai kararın tebliğinden/öğrenilmesinden bu yana 30 günü aşmış görünüyor — başvuru SÜRESİ geçmiş olabilir (6216 m.47/5). Mücbir sebep yoksa süre aşımı kabul edilemezlik nedenidir." },
+    { "eger": "magdur_sifat == hayir",
+      "uyari": "Güncel ve kişisel mağduriyet yoksa başvuru kişi bakımından kabul edilemez bulunur (6216 m.46)." },
+    { "eger": "ihlal_aihm_kapsam == hayir",
+      "uyari": "Hak Anayasa-AİHS ortak alanında değilse bireysel başvuru konu bakımından kabul edilemez (6216 m.45/1)." }
+  ],
+
+  "kontroller": [
+    "SÜRE: başvuru, iç hukuk yollarının tükendiğinin tebliğ/öğrenilmesinden itibaren 30 GÜN içinde mi? (6216 m.47/5) — (bu kategori dava-workflow'da süre mirası ALMAZ).",
+    "USUL: tüm olağan kanun yolları (istinaf/temyiz) tüketildi mi? (6216 m.45/2).",
+    "İhlal edilen hak Anayasa VE AİHS ortak koruma alanında mı? (6216 m.45/1).",
+    "Başvurucunun güncel ve kişisel mağdur sıfatı ortaya konuldu mu? (6216 m.46).",
+    "Anayasal önem/önemli zarar ölçütü ve başvuru formu eklerinin (kararlar, belgeler) tamlığı sağlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["Anayasa m.148", "6216 sayılı Kanun m.45", "6216 sayılı Kanun m.46", "6216 sayılı Kanun m.47"],
+    "emsal_ara": "AYM bireysel başvuru iç hukuk yolları tüketme 30 gün kabul edilebilirlik",
+    "vurgula": ["iç hukuk yollarının tüketilmesi şartı", "30 günlük başvuru süresi", "güncel ve kişisel mağdur sıfatı"]
+  }
+}

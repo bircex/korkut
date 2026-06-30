@@ -1,0 +1,46 @@
+{
+  "tip": "temyize-cevap",
+  "ad": "Temyiz dilekçesine cevap",
+  "dayanak": ["HMK m.366", "HMK m.347", "İYUK m.48", "CMK m.297"],
+
+  "sorular": [
+    { "id": "yargilama_turu", "soru": "Dava hangi yargı kolundan? (cevap süresi buna göre)", "tip": "secim",
+      "secenekler": ["hukuk (HMK)", "idari (İYUK)", "ceza (CMK)"],
+      "zorunlu": true, "neden": "Temyize cevap süresi yargı koluna göre değişir (HMK m.366→347 / İYUK m.48 / CMK m.297)." },
+    { "id": "temyiz_eden", "soru": "Temyiz eden taraf kim ve dosya esas numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Cevabın yöneltileceği başvuru ve dosya kimliği (HMK m.119/d)." },
+    { "id": "temyiz_teblig_tarihi", "soru": "Temyiz dilekçesi size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Cevap (2 haftalık) süresi bu tarihten işler (HMK m.366→347)." },
+    { "id": "karsi_argumanlar", "soru": "Temyiz sebeplerinden hangilerine, neden karşı çıkıyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Cevabın esası; istinaf/karar hukuka uygunluğunun savunulması." },
+    { "id": "kesinlik_itirazi", "soru": "Kararın temyize kapalı/kesin olduğu yönünde bir itirazınız var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Temyiz dilekçesinin reddi/usulden incelenmemesi gerekçesi olabilir (HMK m.362)." },
+    { "id": "onama_istemi", "soru": "Kararın onanmasını mı, başka sonucu mu istiyorsunuz?", "tip": "metin",
+      "zorunlu": false, "neden": "Cevabın sonuç-istemini netleştirir." }
+  ],
+
+  "kosullar": [
+    { "eger": "yargilama_turu == hukuk (HMK)",
+      "uyari": "Hukukta temyize cevap süresi, temyiz dilekçesinin tebliğinden itibaren 2 HAFTADIR (HMK m.366 atfıyla m.347)." },
+    { "eger": "yargilama_turu == idari (İYUK)",
+      "uyari": "İdari yargıda temyize cevap süresi tebliğden itibaren 30 GÜNDÜR (İYUK m.48)." },
+    { "eger": "yargilama_turu == ceza (CMK)",
+      "uyari": "Ceza yargılamasında temyiz dilekçesine/tebliğnamesine cevap süresi tebliğden itibaren 7 GÜNDÜR (CMK m.297)." },
+    { "eger": "kesinlik_itirazi == evet",
+      "ekle": "Kararın kesinlik sınırı/temyize kapalı olması nedeniyle temyiz isteminin usulden reddi gerektiğini gerekçelendiren bir bölüm ekle (HMK m.362)." }
+  ],
+
+  "kontroller": [
+    "SÜRE: cevap, temyiz dilekçesinin tebliğinden itibaren hukuk 2 hafta / idari 30 gün / ceza 7 gün içinde mi? (bu kategori süre mirası ALMAZ).",
+    "USUL: cevap dilekçesi kararı veren BAM/BİM veya ilgili mahkemeye mi veriliyor? (HMK m.366).",
+    "Temyiz sebeplerinin her birine ayrı ayrı karşılık verildi mi?",
+    "Kesinlik/temyize kapalılık itirazı varsa gerekçelendirildi mi? (HMK m.362).",
+    "Onama (kararın korunması) istemi sonuç kısmında açık mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.366", "HMK m.347", "HMK m.362", "İYUK m.48", "CMK m.297"],
+    "emsal_ara": "temyize cevap süre onama kesinlik sınırı Yargıtay",
+    "vurgula": ["yargı koluna göre cevap süresi", "kesinlik/temyize kapalılık itirazı", "kararın onanması istemi"]
+  }
+}

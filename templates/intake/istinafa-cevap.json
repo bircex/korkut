@@ -1,0 +1,47 @@
+{
+  "tip": "istinafa-cevap",
+  "ad": "İstinaf dilekçesine cevap",
+  "dayanak": ["HMK m.347", "İYUK m.45", "CMK m.277"],
+
+  "sorular": [
+    { "id": "yargilama_turu", "soru": "Dava hangi yargı kolundan? (cevap süresi buna göre)", "tip": "secim",
+      "secenekler": ["hukuk (HMK)", "idari (İYUK)", "ceza (CMK)"],
+      "zorunlu": true, "neden": "İstinafa cevap süresi yargı koluna göre değişir (HMK m.347 / İYUK m.45 / CMK m.277)." },
+    { "id": "istinaf_eden", "soru": "İstinafa başvuran taraf kim ve dosya BAM esas numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Cevabın yöneltileceği başvuru ve dosya kimliği (HMK m.119/d)." },
+    { "id": "istinaf_teblig_tarihi", "soru": "İstinaf dilekçesi size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Cevap (2 haftalık) süresi bu tarihten işler (HMK m.347)." },
+    { "id": "karsi_sebepler", "soru": "İstinaf sebeplerinden hangilerine, neden karşı çıkıyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Cevabın esası; ilk derece kararının doğruluğunun savunulması." },
+    { "id": "katilma_yoluyla_istinaf", "soru": "Cevapla birlikte katılma yoluyla istinaf talebiniz var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Cevap dilekçesiyle katılma yoluyla istinaf mümkündür (HMK m.348)." },
+    { "id": "karar_lehe", "soru": "İlk derece kararının hangi yönleri lehinize ve korunmasını istiyorsunuz?", "tip": "metin",
+      "zorunlu": false, "neden": "Kaldırma/değiştirme istemine karşı korunacak hüküm fıkralarının belirlenmesi." }
+  ],
+
+  "kosullar": [
+    { "eger": "yargilama_turu == hukuk (HMK)",
+      "uyari": "Hukukta istinafa cevap süresi, istinaf dilekçesinin tebliğinden itibaren 2 HAFTADIR (HMK m.347)." },
+    { "eger": "yargilama_turu == idari (İYUK)",
+      "uyari": "İdari yargıda istinafa cevap süresi tebliğden itibaren 30 GÜNDÜR (İYUK m.45 atfıyla)." },
+    { "eger": "yargilama_turu == ceza (CMK)",
+      "uyari": "Ceza yargılamasında istinaf tebliğnamesine/dilekçesine cevap süresi 7 GÜNDÜR (CMK m.277)." },
+    { "eger": "katilma_yoluyla_istinaf == evet",
+      "ekle": "Cevap dilekçesi içinde katılma yoluyla istinaf talebini, hangi hüküm fıkralarına yönelik olduğunu açıkça belirterek ekle (HMK m.348).",
+      "uyari": "Katılma yoluyla istinaf, asıl istinaf geri alınırsa/ reddedilirse hükümsüz kalabilir; riski belirt." }
+  ],
+
+  "kontroller": [
+    "SÜRE: cevap, istinaf dilekçesinin tebliğinden itibaren hukuk 2 hafta / idari 30 gün / ceza 7 gün içinde mi? (bu kategori süre mirası ALMAZ).",
+    "USUL: cevap dilekçesi kararı veren ilk derece mahkemesine mi veriliyor? (HMK m.347).",
+    "İstinaf sebeplerinin her birine ayrı ayrı karşılık verildi mi?",
+    "Katılma yoluyla istinaf talebi varsa hüküm fıkrası bazında belirtildi mi? (HMK m.348).",
+    "İlk derece kararının lehe yönlerinin onanması (korunması) istemi yazıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.347", "HMK m.348", "İYUK m.45", "CMK m.277"],
+    "emsal_ara": "istinafa cevap süre katılma yoluyla istinaf bölge adliye mahkemesi",
+    "vurgula": ["yargı koluna göre cevap süresi", "katılma yoluyla istinaf imkânı", "lehe hükümlerin korunması"]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "tip": "ara-karar-yerine-getirme",
+  "ad": "Ara kararın yerine getirilmesi / dosyaya beyan dilekçesi",
+  "dayanak": ["HMK m.94", "HMK m.31", "HMK m.27"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Beyan/yerine getirme mevcut dosyadaki ara karara ilişkindir; dosya kimliği zorunludur." },
+    { "id": "ara_karar_icerigi", "soru": "Yerine getirilmesi istenen ara karar/verilen kesin süre nedir? (hangi duruşma/tarih)", "tip": "metin",
+      "zorunlu": true, "neden": "Hangi ara kararın gereğinin yapıldığı somut olarak gösterilmelidir." },
+    { "id": "kesin_sure", "soru": "Ara kararla kesin süre verildi mi ve süre ne zaman doluyor?", "tip": "tarih",
+      "zorunlu": false, "neden": "Kesin sürenin sonuçları ağırdır (HMK m.94/3); süre içinde gereğin yapılması kritiktir." },
+    { "id": "yerine_getirilen", "soru": "Bu dilekçeyle ara kararın hangi gereğini yerine getiriyorsunuz? (gider yatırma, belge sunma, adres bildirme, beyan vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Yapılan işlemin ara kararla birebir karşılığı gösterilmelidir." },
+    { "id": "ek_belge", "soru": "Beyana eklenecek belge/dekont/evrak var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yerine getirmenin belgeyle ispatı, sürenin korunması için önemlidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "ek_belge == evet",
+      "ekle": "Ara karar gereğini ispatlayan belgelerin (dekont, yazı, evrak) dosyaya sunulduğunu belirten bir kayıt ekle." },
+    { "eger": "gun_farki(kesin_sure) > 0",
+      "uyari": "KRİTİK: ara kararla verilen kesin süre dolmuş görünüyor; kesin sürenin kaçırılması hak kaybı doğurur (HMK m.94/3) — süreyi mutlaka teyit et ve gerekiyorsa eski hâle getirme yolunu değerlendir." }
+  ],
+
+  "kontroller": [
+    "Hangi ara kararın gereğinin yerine getirildiği açıkça eşleştirildi mi?",
+    "Kesin süre verilmişse süre içinde mi sunuluyor (HMK m.94)?",
+    "Yerine getirme, belge/dekontla ispatlandı mı?",
+    "Beyan, dosyadaki diğer iddialarla çelişmeyecek biçimde mi kaleme alındı?",
+    "Eksik kalan başka ara karar gereği varsa ayrıca giderildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.27", "HMK m.31", "HMK m.94"],
+    "emsal_ara": "ara kararın yerine getirilmesi kesin süre hak kaybı dosyaya beyan",
+    "vurgula": ["kesin sürenin sonuçları", "ara karar-işlem eşleşmesi", "yerine getirmenin belgelenmesi"]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "tip": "idareye-basvuru-iyuk11",
+  "ad": "İdareye başvuru / itiraz dilekçesi (İYUK m.11)",
+  "dayanak": ["İYUK m.11", "İYUK m.7", "İYUK m.10", "Anayasa m.74"],
+
+  "sorular": [
+    { "id": "muhatap_idare", "soru": "Başvurunun muhatabı hangi idari makamdır (işlemi yapan makam ve/veya üst makam)?", "tip": "metin",
+      "zorunlu": true, "neden": "m.11 başvurusu işlemi yapan makama veya üst makama yapılır; doğru muhatap esastır." },
+    { "id": "islem", "soru": "Hakkında başvuru yapılan idari işlem nedir (adı, sayısı, konusu)?", "tip": "metin",
+      "zorunlu": true, "neden": "Başvurunun konusu (kaldırma/geri alma/değiştirme/yeni işlem) bu işleme bağlıdır (İYUK m.11)." },
+    { "id": "teblig_tarihi", "soru": "İşlem size ne zaman tebliğ edildi / öğrenildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "m.11 başvurusu dava süresi (60 gün) içinde yapılmalıdır; başvuru süreyi durdurur (İYUK m.11)." },
+    { "id": "talep_turu", "soru": "İdareden ne talep ediyorsunuz (işlemin kaldırılması, geri alınması, değiştirilmesi, yeni işlem tesisi)?", "tip": "secim",
+      "secenekler": ["işlemin kaldırılması", "işlemin geri alınması", "işlemin değiştirilmesi", "yeni bir işlem tesisi"],
+      "zorunlu": true, "neden": "m.11 başvurusunda istenebilecek talepler sınırlıdır (İYUK m.11/1)." },
+    { "id": "gerekce", "soru": "İşlemin hukuka aykırılığına ilişkin temel gerekçeniz nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İdarenin değerlendirme yapabilmesi için somut gerekçe gerekir; sonraki davaya da temel olur." },
+    { "id": "dava_niyeti", "soru": "Başvuru reddedilirse iptal davası açmayı planlıyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "m.11'in süreyi durdurma etkisi ve kalan dava süresinin hesabı için (İYUK m.11/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(teblig_tarihi) > 60",
+      "uyari": "KRİTİK: tebliğden 60 günü aşmış görünüyor — m.11 başvurusu dava açma süresi içinde yapılmalıdır (İYUK m.11); süre geçmişse başvuru süreyi diriltmez." },
+    { "eger": "dava_niyeti == evet",
+      "ekle": "Başvuruya idarece verilecek cevap (veya 30/60 gün içinde cevap verilmemesi hâlinde zımni ret) sonrası kalan dava süresinin nasıl işleyeceğini açıklayan bir not ekle (İYUK m.11/2).",
+      "uyari": "Başvuru, işlemeye başlamış dava süresini durdurur; cevap veya zımni ret üzerine durmuş süre kaldığı yerden işler (İYUK m.11/2)." },
+    { "eger": "talep_turu == işlemin geri alınması",
+      "uyari": "Geri alma idarenin hukuka aykırı işlemi geçmişe etkili kaldırmasıdır; kazanılmış hak ve süre sınırları (genel olarak makul süre) gözetilmeli." }
+  ],
+
+  "kontroller": [
+    "Başvuru dava açma süresi (60 gün — İYUK m.7) içinde yapılıyor mu?",
+    "Muhatap makam (işlemi yapan veya üst makam) doğru belirlendi mi (İYUK m.11)?",
+    "Talep türü m.11/1'deki seçeneklerden (kaldırma/geri alma/değiştirme/yeni işlem) biriyle örtüşüyor mu?",
+    "Başvurunun süreyi durduran etkisi ve kalan dava süresi hesabı (m.11/2) ilgiliye açıklandı mı?",
+    "Gerekçe, olası iptal davasına temel oluşturacak biçimde somut mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İYUK m.11", "İYUK m.7", "İYUK m.10"],
+    "emsal_ara": "İYUK 11 idareye başvuru süre durması zımni ret iptal davası",
+    "vurgula": ["m.11 başvurusunun süreyi durdurma etkisi", "zımni ret ve kalan dava süresi", "talep türleri sınırı"]
+  }
+}

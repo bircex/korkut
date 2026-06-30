@@ -1,0 +1,42 @@
+{
+  "tip": "adli-yardim",
+  "ad": "Adli yardım talebi",
+  "dayanak": ["HMK m.334", "HMK m.335", "HMK m.336", "HMK m.337"],
+
+  "sorular": [
+    { "id": "talep_eden_durum", "soru": "Adli yardım talep eden gerçek kişi mi, dernek/vakıf gibi tüzel kişi mi?", "tip": "secim",
+      "secenekler": ["gerçek kişi", "kamuya yararlı dernek/vakıf"],
+      "zorunlu": true, "neden": "Adli yardımdan gerçek kişiler ve kamuya yararlı dernek/vakıflar yararlanabilir (HMK m.334)." },
+    { "id": "mali_durum", "soru": "Yargılama giderlerini kısmen/tamamen ödeyememe durumunuzu açıklar mısınız? (gelir, mal varlığı)", "tip": "metin",
+      "zorunlu": true, "neden": "Kendisi ve ailesinin geçimini önemli ölçüde zora sokmadan gideri karşılayamama koşulu aranır (HMK m.334/1)." },
+    { "id": "haklilik", "soru": "Talep/savunmanızın açıkça dayanaktan yoksun olmadığını gösteren olgular neler?", "tip": "metin",
+      "zorunlu": true, "neden": "Adli yardım için talebin açıkça dayanaktan yoksun olmaması (haklılık) şartı vardır (HMK m.334/1)." },
+    { "id": "hangi_giderler", "soru": "Hangi giderler için adli yardım isteniyor? (harç, gider avansı, vekil ücreti vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Adli yardımın kapsamı (harç, gider, teminat, vekil) talepte gösterilmelidir (HMK m.335)." },
+    { "id": "asama", "soru": "Talep, dava açılırken mi yoksa derdest dava sırasında mı yapılıyor?", "tip": "secim",
+      "secenekler": ["dava açılışında (asıl talebe bağlı)", "derdest dava sırasında (ayrı talep)"],
+      "zorunlu": true, "neden": "Talep, asıl talep yapılan mahkemeye veya yargılamanın yapılacağı mahkemeye sunulur (HMK m.336)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_eden_durum == kamuya yararlı dernek/vakıf",
+      "ekle": "Derneğin/vakfın kamuya yararlı olduğunu ve giderleri karşılayamayacağını gösteren bir bölüm ekle (HMK m.334/2).",
+      "uyari": "Tüzel kişide adli yardım yalnız kamuya yararlı dernek/vakıflarla sınırlıdır." },
+    { "eger": "asama == derdest dava sırasında (ayrı talep)",
+      "ekle": "Adli yardım talebinin yargılamayı yürüten mahkemeye sunulduğunu ve hangi giderleri kapsadığını belirten bir kayıt ekle (HMK m.336)." }
+  ],
+
+  "kontroller": [
+    "Yoksulluk (gideri karşılayamama) durumu somut gelir/mal verisiyle açıklandı mı (HMK m.334)?",
+    "Talep/savunmanın açıkça dayanaktan yoksun olmadığı (haklılık) gösterildi mi?",
+    "Adli yardımın kapsadığı giderler (harç, avans, vekil) belirtildi mi (HMK m.335)?",
+    "Talep doğru mahkemeye yöneltildi mi (HMK m.336)?",
+    "Adli yardım kararının geçici olduğu ve sonradan geri alınabileceği (HMK m.337) hususu gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.334", "HMK m.335", "HMK m.336", "HMK m.337"],
+    "emsal_ara": "adli yardım yoksulluk haklılık yargılama gideri harç muafiyet",
+    "vurgula": ["yoksulluk + haklılık çifte koşulu", "adli yardımın kapsamı", "kararın geçiciliği ve geri alınması"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "tip": "hizmet-tespiti",
+  "ad": "Hizmet tespiti dava dilekçesi",
+  "dayanak": ["5510 s.K. m.86/9", "İş K. m.8"],
+
+  "sorular": [
+    { "id": "calisma_donemi", "soru": "Tespiti istenen çalışma dönemi (başlangıç-bitiş tarihleri)?", "tip": "metin",
+      "zorunlu": true, "neden": "SGK'ya bildirilmeyen/eksik bildirilen sürenin tespiti davanın konusudur (5510 s.K. m.86/9)." },
+    { "id": "isveren", "soru": "Çalışılan işyeri/işveren ve yapılan iş nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Hizmet akdiyle çalışmanın varlığı ve işverenin tespiti için gereklidir." },
+    { "id": "sgk_bildirim", "soru": "Bu döneme ilişkin SGK'ya hiç bildirim yapıldı mı yoksa eksik mi bildirildi?", "tip": "secim",
+      "secenekler": ["hiç bildirilmedi", "eksik gün/ücretle bildirildi", "bilinmiyor"],
+      "zorunlu": true, "neden": "Tespitin kapsamı (sürenin tamamı / eksik kısım) buna göre belirlenir." },
+    { "id": "ayni_yil_kayit", "soru": "Çalışmaya ait aynı yıla ilişkin resmi/yazılı kayıt var mı (ücret bordrosu, SGK işe giriş, müfettiş tutanağı vb.)?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Tanık beyanının kabulü için çalışmayı doğrulayan o döneme ait yazılı/resmi başlangıç delili aranır (Yargıtay uygulaması)." },
+    { "id": "ispat_delili", "soru": "Çalışmayı ispatlayacak belge/tanık var mı? (işyeri kayıtları, banka ödemesi, tanık)", "tip": "metin",
+      "zorunlu": false, "neden": "Hizmet tespiti kamu düzenine ilişkindir; mahkeme resen araştırır, ancak başlangıç delili önemlidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "ayni_yil_kayit == hayir",
+      "uyari": "DİKKAT: Çalışmaya ait o döneme ilişkin yazılı/resmi bir başlangıç delili bulunmadan salt tanıkla tespit zorlaşır; mahkeme işyeri kayıtlarını ve SGK belgelerini resen araştırır." },
+    { "eger": "sgk_bildirim == eksik gün/ücretle bildirildi",
+      "ekle": "Bildirilen gün sayısı/ücret ile fiili çalışma arasındaki farkı dönem ve tutar bazında gösteren, eksik kısmın tespitine yönelik bir bölüm ekle." },
+    { "eger": "calisma_donemi != ",
+      "uyari": "Hizmet tespiti davaları kamu düzenindendir; hâkim taraflarca getirilen delillerle bağlı olmaksızın resen araştırma yapar (5510 s.K. m.86/9)." }
+  ],
+
+  "kontroller": [
+    "Tespiti istenen dönem, işyeri ve çalışma biçimi açıkça gösterildi mi (5510 s.K. m.86/9)?",
+    "Çalışmaya ait aynı döneme ilişkin başlangıç (yazılı/resmi) delili sunuldu mu?",
+    "SGK'nın davaya katılması (zorunlu dava arkadaşlığı/ihbar) sağlandı mı?",
+    "Tanık beyanlarının resmi kayıtlarla desteklenmesi gözetildi mi?",
+    "Davanın kamu düzeni niteliği ve resen araştırma ilkesi vurgulandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["5510 s.K. m.86", "İş K. m.8"],
+    "emsal_ara": "hizmet tespiti SGK bildirim eksik gün başlangıç delili tanık resen araştırma",
+    "vurgula": ["o döneme ait yazılı başlangıç delili şartı", "kamu düzeni ve resen araştırma", "SGK'nın davaya dahli", "eksik gün/ücret tespiti"]
+  }
+}

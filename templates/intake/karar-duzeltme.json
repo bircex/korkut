@@ -1,0 +1,43 @@
+{
+  "tip": "karar-duzeltme",
+  "ad": "Karar düzeltme dilekçesi (öngörülen hâllerde)",
+  "dayanak": ["İYUK m.54", "HMK m.304", "CMK m.308"],
+
+  "sorular": [
+    { "id": "yargilama_turu", "soru": "Hangi yargı kolunda ve hangi karar düzeltme yolu öngörülüyor?", "tip": "secim",
+      "secenekler": ["idari yargı — karar düzeltme (İYUK m.54)", "hukuk — hüküm tavzihi/maddi hata düzeltme (HMK m.304-305a)", "ceza — kanun yararına bozma / olağanüstü itiraz"],
+      "zorunlu": true, "neden": "Karar düzeltme, genel istinaf/temyizden ayrı; öngörülen sınırlı hallerde mümkündür." },
+    { "id": "karar_merci", "soru": "Düzeltilmesi istenen kararı veren merci ve esas/karar numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltmeye konu kararın kimliği (HMK m.119/d)." },
+    { "id": "teblig_tarihi", "soru": "Kararın tebliğ tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Süre bu tarihten işler (İYUK m.54: 15 gün)." },
+    { "id": "duzeltme_sebebi", "soru": "Karar düzeltme/düzeltme sebebi nedir?", "tip": "secim",
+      "secenekler": ["kararda esasa etkili çelişki/usul hatası (İYUK m.54/1)", "maddi/hesap/yazım hatası (HMK m.304)", "hükümde belirsizlik — tavzih (HMK m.305a)"],
+      "zorunlu": true, "neden": "İYUK m.54 sebeplerle sınırlıdır; hukukta düzeltme yalnız maddi hata/tavzihtir." },
+    { "id": "sebep_aciklama", "soru": "Düzeltme sebebini somut olarak açıklayın (hangi husus, neresi).", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltme talebinin olgusal/hukuki dayanağı." }
+  ],
+
+  "kosullar": [
+    { "eger": "yargilama_turu == idari yargı — karar düzeltme (İYUK m.54)",
+      "uyari": "İdari yargıda karar düzeltme süresi kararın tebliğinden itibaren 15 GÜNDÜR ve yalnızca İYUK m.54'te SAYILAN sebeplerle mümkündür. (Not: karar düzeltme yolu mevzuat değişiklikleriyle daralmıştır; güncel uygulanabilirliği teyit et.)" },
+    { "eger": "yargilama_turu == hukuk — hüküm tavzihi/maddi hata düzeltme (HMK m.304-305a)",
+      "uyari": "Hukuk yargılamasında klasik 'karar düzeltme' kaldırılmıştır; yalnız maddi hata düzeltme (HMK m.304) ve tavzih (HMK m.305a) mümkündür; bunlar süreye değil hükmün icrasına kadar olan döneme tabidir." },
+    { "eger": "duzeltme_sebebi == maddi/hesap/yazım hatası (HMK m.304)",
+      "ekle": "Talebin yargılamanın esasını değiştirmeyen, salt maddi/hesap/yazım hatasının düzeltilmesine yönelik olduğunu açıkça belirten bir bölüm ekle (HMK m.304)." }
+  ],
+
+  "kontroller": [
+    "USUL/KAPSAM: bu yargı kolunda karar düzeltme yolu hâlâ ÖNGÖRÜLÜYOR mu? (hukukta klasik karar düzeltme kaldırıldı; idari yargıda İYUK m.54 daraldı). (bu kategori süre mirası ALMAZ).",
+    "SÜRE: idari karar düzeltmede tebliğden 15 gün içinde mi? (İYUK m.54).",
+    "Düzeltme sebebi, ilgili maddede sayılan/izin verilen sebeplerden biri mi?",
+    "Talep, esası yeniden incelettiren bir başvuru olmayıp sınırlı düzeltme niteliğinde mi?",
+    "Maddi hata/tavzih talebi hükmün anlamını değiştirmiyor mu? (HMK m.304-305a)."
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İYUK m.54", "HMK m.304", "HMK m.305a", "CMK m.308"],
+    "emsal_ara": "karar düzeltme İYUK 54 maddi hata düzeltme tavzih süre",
+    "vurgula": ["karar düzeltme yolunun sınırlı/daralmış kapsamı", "maddi hata düzeltme ile tavzih ayrımı", "idari yargıda 15 günlük süre"]
+  }
+}

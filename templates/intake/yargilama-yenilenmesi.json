@@ -1,0 +1,43 @@
+{
+  "tip": "yargilama-yenilenmesi",
+  "ad": "Yargılamanın yenilenmesi dilekçesi",
+  "dayanak": ["HMK m.374", "HMK m.375", "HMK m.376", "HMK m.377"],
+
+  "sorular": [
+    { "id": "karar_bilgisi", "soru": "Yenilenmesi istenen kesinleşmiş kararın mahkemesi, esas/karar no ve tarihi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Yargılamanın yenilenmesi, kararı veren mahkemeden istenir ve karar kesinleşmiş olmalıdır (HMK m.374)." },
+    { "id": "yenileme_sebebi", "soru": "Hangi yenileme sebebine dayanıyorsunuz?", "tip": "secim",
+      "secenekler": ["sahte belge", "yalan tanıklık/bilirkişi", "sonradan ele geçen belge", "hükme etkili sahtelik/suç", "AYM/AİHM ihlal kararı", "diğer (HMK m.375)"],
+      "zorunlu": true, "neden": "Yenileme sebepleri sınırlı sayıdadır (HMK m.375); dayanılan bent açıkça gösterilmelidir." },
+    { "id": "ogrenme_tarihi", "soru": "Yenileme sebebini (ör. sahteliği, yeni belgeyi) ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "Süre kural olarak öğrenmeden itibaren 3 ay ve kesinleşmeden itibaren 10 yıldır (HMK m.376)." },
+    { "id": "yeni_delil", "soru": "Dayanağı oluşturan yeni belge/karar/olgu nedir ve neden zamanında sunulamadı?", "tip": "metin",
+      "zorunlu": true, "neden": "Sonradan ele geçen belgede mücbir sebeple sunulamama koşulu aranır (HMK m.375/1-c)." },
+    { "id": "kesinlesme_tarihi", "soru": "Karar ne zaman kesinleşti?", "tip": "tarih",
+      "zorunlu": false, "neden": "10 yıllık üst sınır (HMK m.376/2) bu tarihten hesaplanır." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(ogrenme_tarihi) > 90",
+      "uyari": "KRİTİK: yenileme sebebini öğrenmeden itibaren 3 aylık süre (HMK m.376/1) aşılmış olabilir; süreyi mutlaka teyit et." },
+    { "eger": "yenileme_sebebi == AYM/AİHM ihlal kararı",
+      "ekle": "İhlal kararının esas/başvuru numarasını, ihlalin yargılamaya etkisini ve karardan itibaren işleyen süreyi gösteren bir bölüm ekle.",
+      "uyari": "AYM/AİHM kararına dayalı yenilemede süre, ihlal kararının kesinleşmesi/tebliğinden başlar; özel süre rejimini teyit et." },
+    { "eger": "yenileme_sebebi == sonradan ele geçen belge",
+      "ekle": "Belgenin yargılama sırasında elde bulunmadığını ve mücbir sebeple sunulamadığını somutlaştıran bir bölüm ekle (HMK m.375/1-c)." }
+  ],
+
+  "kontroller": [
+    "Karar kesinleşmiş mi (yenileme yalnız kesinleşmiş kararlara karşı — HMK m.374)?",
+    "Dayanılan sebep HMK m.375'teki sınırlı sayıdaki sebeplerden biri mi?",
+    "3 aylık öğrenme süresi ve 10 yıllık üst sınır (HMK m.376) hesaplandı mı?",
+    "Sonradan ele geçen belgede mücbir sebep koşulu karşılandı mı?",
+    "Talep, kararı veren mahkemeye yöneltildi mi (HMK m.377)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.374", "HMK m.375", "HMK m.376", "HMK m.377"],
+    "emsal_ara": "yargılamanın yenilenmesi sahte belge yeni delil üç ay süre AYM ihlal kararı",
+    "vurgula": ["sınırlı sayıdaki yenileme sebepleri", "3 ay / 10 yıl süreler", "sonradan ele geçen belgede mücbir sebep"]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "tip": "istinaf-temyiz-sure-tutum",
+  "ad": "İstinaf/temyiz süre tutum dilekçesi",
+  "dayanak": ["HMK m.342", "HMK m.345", "İYUK m.45", "CMK m.273"],
+
+  "sorular": [
+    { "id": "kanun_yolu", "soru": "Süre tutum hangi kanun yolu için? (istinaf mı, temyiz mi)", "tip": "secim",
+      "secenekler": ["istinaf", "temyiz"],
+      "zorunlu": true, "neden": "Süre tutum, gerekçeli karar tebliğ edilmeden önce kanun yolu hakkını korumak için verilir." },
+    { "id": "yargilama_turu", "soru": "Karar hangi yargı kolundan?", "tip": "secim",
+      "secenekler": ["hukuk (HMK)", "idari (İYUK)", "ceza (CMK)"],
+      "zorunlu": true, "neden": "Asıl başvuru süresi yargı koluna göre değişir; süre tutum bu süreyi korur." },
+    { "id": "karar_mahkeme", "soru": "Kararı veren mahkeme ve dosya esas/karar numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "Süre tutumun bağlandığı kararın kimliği (HMK m.119/d)." },
+    { "id": "tefhim_tarihi", "soru": "Kısa kararın (hüküm) tefhim/açıklanma tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Tefhimle başlayan sürede gerekçeli karar beklenirken hak korunur." },
+    { "id": "gerekceli_bekleniyor", "soru": "Gerekçeli karar henüz tebliğ edilmedi mi? (süre tutumun amacı)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Süre tutum, gerekçeli karar tebliğ edilmeden kanun yolu süresini korumak içindir." }
+  ],
+
+  "kosullar": [
+    { "eger": "kanun_yolu == istinaf",
+      "uyari": "Süre tutum yalnızca süreyi korur; gerekçeli karar tebliğ edilince SÜRESİ İÇİNDE (hukuk 2 hafta / idari 30 gün / ceza 7 gün) GEREKÇELİ istinaf dilekçesi verilmelidir, aksi halde başvuru reddedilir." },
+    { "eger": "kanun_yolu == temyiz",
+      "uyari": "Süre tutumdan sonra gerekçeli karar tebliğ edilince SÜRESİ İÇİNDE (hukuk 2 hafta / idari 30 gün / ceza 15 gün) GEREKÇELİ temyiz dilekçesi verilmelidir." },
+    { "eger": "gerekceli_bekleniyor == hayir",
+      "uyari": "Gerekçeli karar zaten tebliğ edilmişse süre tutuma gerek yoktur; doğrudan gerekçeli kanun yolu dilekçesi ver ve süreyi tebliğden hesapla." }
+  ],
+
+  "kontroller": [
+    "AMAÇ/USUL: süre tutum tek başına yeterli DEĞİLDİR — gerekçeli karar tebliğinden sonra süresinde GEREKÇELİ dilekçe verilmelidir (bu kategori süre mirası ALMAZ).",
+    "SÜRE: süre tutum, kanun yolu süresi (hukuk 2 hafta / idari 30 gün / ceza istinaf 7 gün, temyiz 15 gün) içinde verildi mi?",
+    "Süre tutum dilekçesi kararı veren mahkemeye mi sunuldu?",
+    "Gerekçeli kararın tebliğ tarihinin takip edileceği ve sürenin yeniden hesaplanacağı not edildi mi?",
+    "Başvuru harcı/giderleri yönünden gerekçeli dilekçe aşamasında tamamlanacak hususlar belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.342", "HMK m.345", "İYUK m.45", "CMK m.273", "CMK m.291"],
+    "emsal_ara": "süre tutum dilekçesi gerekçeli karar tebliğ istinaf temyiz süre koruma",
+    "vurgula": ["süre tutumun yalnızca süreyi koruduğu", "gerekçeli dilekçe verme zorunluluğu", "yargı koluna göre süreler"]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "tip": "is-kazasi-tazminat",
+  "ad": "İş kazası / meslek hastalığı tazminat dilekçesi",
+  "dayanak": ["İş K. m.77", "TBK m.417", "TBK m.49", "TBK m.56", "6331 s.K. m.4"],
+
+  "sorular": [
+    { "id": "kaza_tarihi", "soru": "İş kazasının / meslek hastalığının tespit tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Zamanaşımının başlangıcı ve olayın iş kazası niteliğinin belirlenmesi için esastır." },
+    { "id": "kaza_olusumu", "soru": "Kaza nasıl meydana geldi; işverenin iş sağlığı-güvenliği tedbirlerindeki kusuru neydi?", "tip": "metin",
+      "zorunlu": true, "neden": "İşverenin gözetme borcu (TBK m.417) ve İSG yükümlülüğü (6331 s.K. m.4) kapsamında kusurun ortaya konması gerekir." },
+    { "id": "surekli_iskaybi", "soru": "SGK/sağlık kurulu raporuna göre sürekli iş göremezlik oranı belirlendi mi? (oran)", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi tazminat (iş göremezlik) hesabı bu orana dayanır; rapor maluliyet oranını gösterir." },
+    { "id": "talep_turu", "soru": "Hangi tazminatlar talep ediliyor? (maddi/iş göremezlik, manevi, destekten yoksun kalma)", "tip": "secim",
+      "secenekler": ["maddi (iş göremezlik) tazminat", "manevi tazminat", "her ikisi", "destekten yoksun kalma (ölümlü kaza)"],
+      "zorunlu": true, "neden": "Talep türü davanın konusunu ve hesap yöntemini belirler (TBK m.49, m.56)." },
+    { "id": "olumlu_kaza", "soru": "Kaza ölümle mi sonuçlandı? (destekten yoksun kalanlar var mı)", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Ölümlü kazada destekten yoksun kalma tazminatı (TBK m.53) ve hak sahipleri gündeme gelir." },
+    { "id": "sgk_geliri", "soru": "SGK tarafından gelir/ödenek bağlandı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "SGK'nın karşıladığı kısım maddi tazminattan rücuen düşülür; mükerrer ödeme önlenir." }
+  ],
+
+  "kosullar": [
+    { "eger": "olumlu_kaza == evet",
+      "sor": ["talep_turu"],
+      "ekle": "Ölümlü iş kazasında destekten yoksun kalan hak sahiplerini ve her biri için destekten yoksun kalma tazminatı hesabını açıklayan bir bölüm ekle (TBK m.53).",
+      "uyari": "Ölümlü kazada hak sahipleri (eş, çocuk, ana-baba) destekten yoksun kalma tazminatı isteyebilir; manevi tazminat yakınlar için ayrıca değerlendirilir (TBK m.56)." },
+    { "eger": "sgk_geliri == evet",
+      "uyari": "SGK'nın bağladığı gelirin ilk peşin sermaye değeri maddi tazminattan tenzil edilir; mükerrer tahsil önlenmeli." },
+    { "eger": "surekli_iskaybi == ",
+      "uyari": "Maluliyet/iş göremezlik oranı belirlenmeden maddi tazminat hesabı sağlıklı yapılamaz; rapor temini gerekebilir." },
+    { "eger": "kaza_olusumu != ",
+      "ekle": "İşverenin İSG önlemlerini almadığını, gözetme borcunu (TBK m.417) ihlal ettiğini somut olgu ve mevzuata atıfla ortaya koyan bir kusur bölümü ekle." }
+  ],
+
+  "kontroller": [
+    "Olayın iş kazası/meslek hastalığı niteliği ve işverenin İSG kusuru somutlaştırıldı mı (6331 s.K., TBK m.417)?",
+    "Maddi tazminat sürekli iş göremezlik oranı ve bilirkişi hesabıyla desteklendi mi?",
+    "SGK gelir/ödeneklerinin maddi tazminattan tenzili (rücu) gözetildi mi?",
+    "Ölümlü kazada destekten yoksun kalanlar ve payları belirlendi mi (TBK m.53)?",
+    "Manevi tazminat talebi olay ve ağırlıkla orantılı kuruldu mu (TBK m.56)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.417", "TBK m.49", "TBK m.53", "TBK m.56", "6331 s.K. m.4"],
+    "emsal_ara": "iş kazası işveren kusur iş göremezlik maddi manevi tazminat SGK rücu",
+    "vurgula": ["işverenin gözetme borcu ve İSG kusuru", "iş göremezlik oranına dayalı maddi hesap", "SGK gelirinin tenzili", "destekten yoksun kalma ve manevi tazminat"]
+  }
+}

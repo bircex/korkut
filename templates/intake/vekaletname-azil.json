@@ -1,0 +1,48 @@
+{
+  "tip": "vekaletname-azil",
+  "ad": "Vekâletname / azilname dilekçesi",
+  "dayanak": ["TBK m.502", "TBK m.512", "TBK m.514", "HMK m.74", "HMK m.81"],
+
+  "sorular": [
+    { "id": "islem_turu", "soru": "Talebiniz nedir (vekâlet verme, vekilin azli, vekâletten istifa bildirimi)?", "tip": "secim",
+      "secenekler": ["vekâletname (vekil tayini)", "azilname (vekilin azli)", "istifa (vekilin çekilmesi)"],
+      "zorunlu": true, "neden": "İşlem türü usulü ve sonucu belirler (TBK m.512 azil/istifa)." },
+    { "id": "vekil_bilgi", "soru": "Vekilin/azledilecek vekilin ad-soyadı, varsa baro/sicil bilgisi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Vekilin kimliği işlemin muhatabı; mahkemeye bildirimde gereklidir (HMK m.81)." },
+    { "id": "yetki_kapsami", "soru": "Vekâletse, verilen yetkinin kapsamı nedir (genel dava vekâleti, özel yetkiler — sulh, feragat, kabul, tahkim)?", "tip": "metin",
+      "zorunlu": false, "neden": "Bazı işlemler özel yetki gerektirir (HMK m.74); kapsam açıkça belirtilmeli." },
+    { "id": "dosya_bilgi", "soru": "İlgili dava/dosya var mı? (mahkeme ve esas no)", "tip": "metin",
+      "zorunlu": false, "neden": "Azil/istifa derdest dosyaya bildirilmeli; sürelerin işlemesini etkiler (HMK m.81-83)." },
+    { "id": "azil_sebebi", "soru": "Azil/istifa söz konusuysa sebebi ve yürürlük tarihi nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Azil her zaman mümkündür; uygunsuz zamanda azil/istifa tazminat doğurabilir (TBK m.512/2)." },
+    { "id": "noter_gerek", "soru": "İşlem için noter onayı gerekiyor mu (dava vekâletnameleri noterce düzenlenir)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Dava vekâletnameleri kural olarak noterce düzenlenir/onaylanır (HMK m.76)." }
+  ],
+
+  "kosullar": [
+    { "eger": "islem_turu == azilname (vekilin azli)",
+      "ekle": "Vekilin azledildiğini, azlin derdest dosyaya ve karşı tarafa bildirileceğini ve azil tarihinden sonra vekilin işlem yapamayacağını belirten ifade ekle (TBK m.512, HMK m.81).",
+      "uyari": "Azil her zaman mümkündür; ancak uygun olmayan zamanda azil halinde diğer tarafın zararı tazmin edilebilir (TBK m.512/2). Azil mahkemeye bildirilene kadar vekilin işlemleri geçerli sayılabilir." },
+    { "eger": "islem_turu == istifa (vekilin çekilmesi)",
+      "ekle": "İstifanın müvekkile bildirildiğini ve HMK m.81 uyarınca istifadan sonra 2 hafta süreyle vekilin görevinin devam edeceğini belirten ifade ekle.",
+      "uyari": "Vekilin istifası, müvekkile bildirimden itibaren 2 hafta süreyle vekâlet görevinin devamı sonucunu doğurur (HMK m.81)." },
+    { "eger": "islem_turu == vekâletname (vekil tayini)",
+      "ekle": "Verilen yetkinin kapsamını ve özel yetki gerektiren işlemleri (sulh, feragat, davadan vazgeçme, tahkim) açıkça sayan bir bölüm ekle (HMK m.74)." },
+    { "eger": "noter_gerek == evet",
+      "uyari": "Dava vekâletnamesi noterce düzenlenmeli/onaylanmalıdır (HMK m.76); aksi halde vekilin temsil yetkisi tartışmalı olur." }
+  ],
+
+  "kontroller": [
+    "İşlem türü (vekâlet/azil/istifa) doğru dayanağa (TBK m.512, HMK m.74-83) bağlandı mı?",
+    "Vekâlette özel yetki gerektiren işlemler ayrıca ve açıkça sayıldı mı (HMK m.74)?",
+    "Azil/istifa derdest dosyaya ve karşı tarafa bildirim yükümlülüğü (HMK m.81) gözetildi mi?",
+    "İstifada 2 haftalık geçiş süresi; azilde uygunsuz zaman tazminatı (TBK m.512/2) değerlendirildi mi?",
+    "Vekâletnamede noter onayı şartı (HMK m.76) sağlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.512", "HMK m.74", "HMK m.76", "HMK m.81"],
+    "emsal_ara": "vekil azil istifa özel yetki vekaletname uygunsuz zaman tazminat",
+    "vurgula": ["azil/istifanın her zaman mümkün olması ve tazminat", "istifada 2 haftalık devam süresi", "özel yetki gerektiren işlemler"]
+  }
+}

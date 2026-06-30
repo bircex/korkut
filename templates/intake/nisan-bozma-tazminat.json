@@ -1,0 +1,44 @@
+{
+  "tip": "nisan-bozma-tazminat",
+  "ad": "Nişanın bozulması nedeniyle tazminat/iade dilekçesi",
+  "dayanak": ["TMK m.118", "TMK m.120", "TMK m.121", "TMK m.122", "HMK m.119"],
+
+  "sorular": [
+    { "id": "nisan_tarihi", "soru": "Nişanlanma ne zaman ve nasıl gerçekleşti?", "tip": "tarih",
+      "zorunlu": true, "neden": "Geçerli bir nişanlılığın varlığı tazminat ve iade taleplerinin ön koşuludur (TMK m.118)." },
+    { "id": "bozma_durumu", "soru": "Nişanı kim, ne zaman ve hangi sebeple bozdu?", "tip": "metin",
+      "zorunlu": true, "neden": "Tazminat, nişanı haklı sebep olmaksızın bozan veya kusuruyla bozulmasına yol açan taraftan istenir (TMK m.120-121)." },
+    { "id": "talep_turu", "soru": "Hangi talepler ileri sürülüyor?", "tip": "secim",
+      "secenekler": ["maddi tazminat (TMK m.120)", "manevi tazminat (TMK m.121)", "hediyelerin iadesi (TMK m.122)", "maddi+manevi+iade birlikte"],
+      "zorunlu": true, "neden": "Her talebin koşulu ve hesap yöntemi farklıdır (TMK m.120-122)." },
+    { "id": "maddi_giderler", "soru": "Evlenme amacıyla yapılan ve dürüstlükle yapılmış harcamalar neler? (düğün hazırlığı, çeyiz, ev vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Maddi tazminat, evlenme amacıyla iyiniyetle yapılan masrafları kapsar (TMK m.120)." },
+    { "id": "hediyeler", "soru": "Verilen alışılmışın dışındaki nişan hediyeleri neler? (yüzük, ziynet, değerli eşya)", "tip": "metin",
+      "zorunlu": false, "neden": "Alışılmışın dışındaki hediyeler aynen veya bedel olarak geri istenebilir (TMK m.122)." },
+    { "id": "kisisel_zarar", "soru": "Nişanın bozulması kişilik haklarınıza zarar verdi mi (sağlık/itibar)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Kişilik hakkı ihlali manevi tazminat koşuludur (TMK m.121)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == hediyelerin iadesi (TMK m.122)",
+      "ekle": "Alışılmışın dışındaki nişan hediyelerinin aynen, mevcut değilse karşılığının (bedelinin) iadesini somut liste ile talep et (TMK m.122)." },
+    { "eger": "kisisel_zarar == evet",
+      "ekle": "Nişanın bozulmasının kişilik hakkını ihlal ettiğini ve manevi tazminat koşullarının oluştuğunu somut olgularla gerekçelendir (TMK m.121)." },
+    { "eger": "gun_farki(nisan_tarihi) > 365",
+      "uyari": "Nişanın bozulmasından doğan dava hakları 1 yıllık zamanaşımına tabidir (TMK m.123); bozma tarihinden itibaren süreyi teyit et." }
+  ],
+
+  "kontroller": [
+    "Geçerli bir nişanlılık ilişkisinin varlığı ortaya konuldu mu (TMK m.118)?",
+    "Nişanı haksız/kusurlu bozan tarafın tespiti ve gerekçesi yapıldı mı (TMK m.120-121)?",
+    "Maddi tazminatta iyiniyetle yapılan masraflar belgelendirildi mi (TMK m.120)?",
+    "Hediye iadesinde 'alışılmışın dışında' hediyeler ve değeri gösterildi mi (TMK m.122)?",
+    "1 yıllık zamanaşımı (TMK m.123) bozma tarihine göre kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.118", "TMK m.120", "TMK m.121", "TMK m.122", "TMK m.123"],
+    "emsal_ara": "nişanın bozulması maddi manevi tazminat hediye iadesi zamanaşımı",
+    "vurgula": ["haksız/kusurlu bozma şartı", "alışılmışın dışındaki hediyelerin iadesi", "1 yıllık zamanaşımı (TMK m.123)"]
+  }
+}

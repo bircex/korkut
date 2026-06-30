@@ -1,0 +1,43 @@
+{
+  "tip": "aile-konutu-serhi",
+  "ad": "Aile konutu şerhi talebi",
+  "dayanak": ["TMK m.194", "TMK m.193", "HMK m.119"],
+
+  "sorular": [
+    { "id": "konut_bilgi", "soru": "Aile konutu olarak kullanılan taşınmazın açık adresi ve tapu bilgileri (ada/parsel)?", "tip": "metin",
+      "zorunlu": true, "neden": "Şerh tapu kütüğüne işlenir; taşınmazın kimliği belirli olmalıdır (TMK m.194/3)." },
+    { "id": "malik_es", "soru": "Tapu maliki hangi eş; talep eden malik olmayan eş mi?", "tip": "metin",
+      "zorunlu": true, "neden": "Şerhi, konutla ilgili tasarrufu sınırlamak isteyen malik olmayan eş talep eder (TMK m.194)." },
+    { "id": "fiili_kullanim", "soru": "Taşınmaz fiilen aile konutu olarak kullanılıyor mu (ne zamandan beri)?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Şerh için taşınmazın fiilen aile konutu olması gerekir (TMK m.194)." },
+    { "id": "tasarruf_riski", "soru": "Malik eşin konutu satma/ipotek etme/devretme riski var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Şerhin amacı, diğer eşin rızası olmadan konut üzerinde tasarrufu önlemektir (TMK m.194/1)." },
+    { "id": "kira_durumu", "soru": "Konut kiralık ise kira sözleşmesinde taraf olan eş hangisi?", "tip": "metin",
+      "zorunlu": false, "neden": "Kiralık aile konutunda da malik olmayan eş kiralayana bildirimle sözleşmeye taraf olabilir (TMK m.194/4)." },
+    { "id": "bosanma_var", "soru": "Eşler arasında derdest bir boşanma davası var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Boşanma sürecinde konutun korunması için şerh ivedi önem taşır." }
+  ],
+
+  "kosullar": [
+    { "eger": "tasarruf_riski == evet",
+      "ekle": "Malik eşin diğer eşin açık rızası olmadan konutu devredemeyeceği/sınırlayamayacağı (TMK m.194/1) vurgulanarak şerhin ivedilikle işlenmesi talep edilsin." },
+    { "eger": "kira_durumu != hayir",
+      "ekle": "Kiralık aile konutunda malik/kiracı olmayan eşin kiralayana yapacağı bildirimle sözleşmeye taraf olacağını TMK m.194/4'e dayanarak belirt." },
+    { "eger": "fiili_kullanim == hayir",
+      "uyari": "Taşınmaz fiilen aile konutu olarak kullanılmıyorsa şerh koşulu oluşmaz; fiilî kullanımı somutlaştır." }
+  ],
+
+  "kontroller": [
+    "Taşınmazın fiilen aile konutu olduğu olgularla gösterildi mi (TMK m.194)?",
+    "Tapu ada/parsel ve malik bilgisi şerhin işlenebilmesi için tam mı?",
+    "Talep, malik olmayan eş tarafından mı ileri sürülüyor?",
+    "Tasarruf sınırlamasının (rıza şartı) hukuki sonucu dilekçede açıklandı mı (TMK m.194/1)?",
+    "Kiralık konutta TMK m.194/4 yolu değerlendirilip belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.193", "TMK m.194"],
+    "emsal_ara": "aile konutu şerhi tapu rıza malik olmayan eş tasarruf sınırlaması",
+    "vurgula": ["fiilen aile konutu olma koşulu", "diğer eşin rızası olmadan tasarruf yasağı", "kiralık konutta TMK m.194/4 yolu"]
+  }
+}

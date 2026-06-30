@@ -1,0 +1,44 @@
+{
+  "tip": "sgk-itiraz",
+  "ad": "SGK işlemine karşı dava/itiraz dilekçesi",
+  "dayanak": ["5510 s.K. m.101", "7036 s.K. m.4", "İYUK m.11"],
+
+  "sorular": [
+    { "id": "islem_turu", "soru": "İtiraz edilen SGK işlemi nedir? (prim borcu/tahakkuk, idari para cezası, sigortalılık reddi, gelir/aylık reddi vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İşlemin niteliği görevli mercii (iş mahkemesi / SGK itiraz komisyonu) ve süreyi belirler (5510 s.K. m.101)." },
+    { "id": "teblig_tarihi", "soru": "SGK işleminin/kararının tarafınıza tebliğ tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz ve dava süreleri tebliğden işler; süre hak düşürücü olabilir." },
+    { "id": "kurum_itiraz", "soru": "İdari para cezası vb. işlemde önce SGK'ya idari itiraz yapıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Bazı işlemlerde (örn. idari para cezası) dava açmadan önce 15 gün içinde Kuruma itiraz gerekir (5510 s.K. m.102)." },
+    { "id": "itiraz_gerekce", "soru": "İşlemin hukuka aykırılık gerekçesi nedir? (maddi/hukuki hata, eksik inceleme)", "tip": "metin",
+      "zorunlu": true, "neden": "İşlemin iptali/kaldırılması talebinin hukuki ve olgusal temeli." },
+    { "id": "uyusmazlik_alani", "soru": "Uyuşmazlık sigortalılık/prim/gelir-aylık (özel hukuk) mı yoksa idari işlem niteliğinde mi?", "tip": "secim",
+      "secenekler": ["sigortalılık/prim/gelir-aylık (iş mahkemesi)", "idari işlem (idari yargı)", "emin değilim"],
+      "zorunlu": true, "neden": "Görevli yargı kolu (adli/iş mahkemesi veya idari yargı) bu ayrıma göre belirlenir (7036 s.K. m.4)." }
+  ],
+
+  "kosullar": [
+    { "eger": "kurum_itiraz == hayir",
+      "uyari": "DİKKAT: İdari para cezası gibi işlemlerde dava açmadan önce süresinde (15 gün) Kuruma itiraz zorunlu olabilir (5510 s.K. m.102); zorunlu itiraz yolu tüketilmeli." },
+    { "eger": "uyusmazlik_alani == idari işlem (idari yargı)",
+      "uyari": "İşlem idari nitelikteyse görev idari yargıdadır; İYUK süreleri (60 gün) ve m.11 idari başvuru imkânı değerlendirilmeli." },
+    { "eger": "uyusmazlik_alani == sigortalılık/prim/gelir-aylık (iş mahkemesi)",
+      "ekle": "Sigortalılık/prim/gelir uyuşmazlığının iş mahkemesinin görevine girdiğini, Kurum işleminin hukuka aykırılığını somutlaştıran bir bölüm ekle (7036 s.K. m.4)." },
+    { "eger": "itiraz_gerekce != ",
+      "ekle": "İşlemin dayandığı maddi vakıaların hatalı/eksik olduğunu, doğru durumu belgelerle ortaya koyan ve işlemin kaldırılması/iptali sonucunu hazırlayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "İtiraz edilen SGK işleminin türü ve niteliği (idari/özel hukuk) doğru belirlendi mi (7036 s.K. m.4)?",
+    "Tebliğden itibaren işleyen itiraz/dava süresi hesaplandı mı?",
+    "Zorunlu idari itiraz yolu (örn. 5510 s.K. m.102) tüketildi mi?",
+    "Görevli yargı kolu (iş mahkemesi / idari yargı) doğru tespit edildi mi?",
+    "İşlemin hukuka aykırılığı belgelerle desteklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["5510 s.K. m.101", "5510 s.K. m.102", "7036 s.K. m.4"],
+    "emsal_ara": "SGK işlemine itiraz iş mahkemesi görev idari para cezası süre",
+    "vurgula": ["görevli yargı kolu ayrımı (adli/idari)", "zorunlu idari itiraz yolunun tüketilmesi", "tebliğden işleyen süreler", "işlemin hukuka aykırılık gerekçesi"]
+  }
+}

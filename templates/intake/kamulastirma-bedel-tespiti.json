@@ -1,0 +1,43 @@
+{
+  "tip": "kamulastirma-bedel-tespiti",
+  "ad": "Kamulaştırma bedel tespiti / bedelsiz el atma dilekçesi",
+  "dayanak": ["Anayasa m.46", "2942 s.K. m.4", "2942 s.K. m.10", "2942 s.K. m.11"],
+
+  "sorular": [
+    { "id": "tasinmaz_bilgisi", "soru": "Kamulaştırmaya/el atmaya konu taşınmazın ada/parsel ve tapu bilgisi, yüzölçümü?", "tip": "metin",
+      "zorunlu": true, "neden": "Bedel tespitinin konusu ve kapsamı (2942 m.10)." },
+    { "id": "talep_turu", "soru": "Talebiniz idarenin açtığı bedel tespiti/tescile cevap mı, yoksa fiili (bedelsiz/kamulaştırmasız) el atma tazminatı mı?", "tip": "secim",
+      "secenekler": ["idarenin bedel tespiti/tescil davasına karşı (2942 m.10)", "kamulaştırmasız fiili el atma tazminatı", "hukuki el atma (imar kısıtlaması) tazminatı"],
+      "zorunlu": true, "neden": "Usul, görevli yargı ve dayanak buna göre tümüyle değişir." },
+    { "id": "el_atma_tarihi", "soru": "İdarenin taşınmaza fiilen el attığı / kamulaştırma kararı tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Bedelin değerlendirme tarihi ve faiz başlangıcı (2942 m.10/son)." },
+    { "id": "idare_teklifi", "soru": "İdarenin teklif ettiği/belirlediği bedel nedir? Uzlaşma görüşmesi yapıldı mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Satın alma/uzlaşma usulü ve teklif edilen bedelle fark (2942 m.8)." },
+    { "id": "tasinmaz_nitelik", "soru": "Taşınmazın niteliği (arsa/arazi), imar durumu ve üzerindeki yapı/ağaç gibi muhdesat?", "tip": "metin",
+      "zorunlu": true, "neden": "Bedel, arsa/arazi ayrımı ve muhdesata göre hesaplanır (2942 m.11)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == kamulaştırmasız fiili el atma tazminatı",
+      "ekle": "İdarenin usulüne uygun kamulaştırma yapmadan fiilen el attığını, mülkiyetin halen davacıda olduğunu ve el atmanın önlenmesi/bedel talebini açıklayan bölüm ekle.",
+      "uyari": "Kamulaştırmasız el atmada uzlaşma ön şartı ve görevli yargı (adli yargı) ayrımına dikkat et." },
+    { "eger": "talep_turu == hukuki el atma (imar kısıtlaması) tazminatı",
+      "uyari": "İmar planıyla kısıtlamada (hukuki el atma) görevli yargı ve dava şartı tartışmalıdır; güncel içtihatla teyit et." },
+    { "eger": "tasinmaz_nitelik != arsa",
+      "ekle": "Arazi ise net gelir/kapitalizasyon yöntemiyle; arsa ise emsal karşılaştırmasıyla bedel hesabını açıklayan paragraf ekle (2942 m.11)." }
+  ],
+
+  "kontroller": [
+    "Talep türüne göre doğru usul ve dayanak (2942 m.10 / kamulaştırmasız el atma) seçildi mi?",
+    "Bedel tespitinde arsa/arazi ayrımı ve değerlendirme tarihi (2942 m.11/10) doğru mu?",
+    "Muhdesat (yapı/ağaç) ayrıca değerlendirildi mi?",
+    "Faiz/değer artışı başlangıcı el atma tarihine bağlandı mı?",
+    "Kamulaştırmasız el atmada uzlaşma ön şartı/görevli yargı gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["2942 s.K. m.8", "2942 s.K. m.10", "2942 s.K. m.11", "Anayasa m.46"],
+    "emsal_ara": "kamulaştırma bedel tespiti kamulaştırmasız el atma arsa arazi emsal değerlendirme",
+    "vurgula": ["bedel tespitinde arsa/arazi yöntemi", "kamulaştırmasız el atmada görevli yargı", "değerlendirme tarihi ve muhdesat"]
+  }
+}
