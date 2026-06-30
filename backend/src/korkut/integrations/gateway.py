@@ -102,9 +102,7 @@ def handle(inbound: InboundMessage) -> str | None:
             return None
 
         conv = _conversation_for(s, inbound, user)
-        history = [
-            {"role": m.role, "content": m.content} for m in conv.messages[-_HISTORY_TURNS:]
-        ]
+        history = [{"role": m.role, "content": m.content} for m in conv.messages[-_HISTORY_TURNS:]]
         if not conv.messages and conv.title.startswith("["):
             conv.title = (text[:60] + ("…" if len(text) > 60 else "")) or conv.title
         s.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=text))
@@ -113,9 +111,7 @@ def handle(inbound: InboundMessage) -> str | None:
         office_name = _office_name(s, inbound.office_id)
         model_cfg = store.office_model_cfg(s, inbound.office_id)
 
-    reply = agent.answer(
-        text, office_name=office_name, history=history, model_cfg=model_cfg
-    )
+    reply = agent.answer(text, office_name=office_name, history=history, model_cfg=model_cfg)
 
     with store.session() as s:
         conv = s.get(Conversation, conv_id)

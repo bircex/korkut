@@ -57,7 +57,12 @@ def _new_office(app_mod, office: str, username: str) -> TestClient:
     c = TestClient(app_mod.app)
     c.post(
         "/api/register",
-        json={"office_name": office, "full_name": username, "username": username, "password": "parola123"},
+        json={
+            "office_name": office,
+            "full_name": username,
+            "username": username,
+            "password": "parola123",
+        },
     )
     secret = c.get("/api/2fa/provision").json()["secret"]
     c.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
@@ -69,7 +74,11 @@ def test_matter_crud(app_mod):
     # create (auto-creates + links the client)
     m = c.post(
         "/api/matters",
-        json={"title": "Ahmet Y. – Boşanma", "client_name": "Ahmet Yılmaz", "court": "İstanbul 3. Aile"},
+        json={
+            "title": "Ahmet Y. – Boşanma",
+            "client_name": "Ahmet Yılmaz",
+            "court": "İstanbul 3. Aile",
+        },
     ).json()
     mid = m["id"]
     assert m["title"].startswith("Ahmet") and m["client"]["full_name"] == "Ahmet Yılmaz"
@@ -85,12 +94,16 @@ def test_matter_crud(app_mod):
 
     # hearing (near future so it lands in the calendar window)
     fdate = (date.today() + timedelta(days=5)).isoformat()
-    h = c.post(f"/api/matters/{mid}/hearings", json={"date": fdate, "time": "10:30", "type": "ön inceleme"})
+    h = c.post(
+        f"/api/matters/{mid}/hearings", json={"date": fdate, "time": "10:30", "type": "ön inceleme"}
+    )
     assert h.status_code == 200 and h.json()["date"] == fdate and h.json()["time"] == "10:30"
 
     # detail includes the hearing; calendar surfaces it
     assert len(c.get(f"/api/matters/{mid}").json()["hearings"]) == 1
-    assert any(x["matter_id"] == mid for x in c.get("/api/calendar/upcoming?days=14").json()["items"])
+    assert any(
+        x["matter_id"] == mid for x in c.get("/api/calendar/upcoming?days=14").json()["items"]
+    )
 
     # delete → gone
     assert c.delete(f"/api/matters/{mid}").json()["ok"] is True
@@ -123,6 +136,55 @@ def test_office_isolation(app_mod):
     assert b.patch(f"/api/matters/{mid}", json={"status": "closed"}).status_code == 404
     assert b.post(f"/api/matters/{mid}/hearings", json={"date": "2099-01-01"}).status_code == 404
     assert b.delete(f"/api/matters/{mid}").status_code == 404
+
+
+def test_deadlines_and_unified_agenda(app_mod):
+    c = _existing(app_mod)
+    mid = c.post("/api/matters", json={"title": "Dosya"}).json()["id"]
+    soon = (date.today() + timedelta(days=3)).isoformat()
+
+    d = c.post(
+        f"/api/matters/{mid}/deadlines",
+        json={"due_date": soon, "title": "Cevap süresi", "type": "cevap"},
+    )
+    assert d.status_code == 200 and d.json()["status"] == "pending"
+    did = d.json()["id"]
+    c.post(f"/api/matters/{mid}/hearings", json={"date": soon, "time": "09:30"})
+
+    # The calendar is unified: a hearing AND a deadline, each tagged with `kind`.
+    items = c.get("/api/calendar/upcoming?days=14").json()["items"]
+    assert sorted(i["kind"] for i in items) == ["deadline", "hearing"]
+    # Matter detail carries its deadlines (the file's timeline).
+    assert len(c.get(f"/api/matters/{mid}").json()["deadlines"]) == 1
+
+    # Completing a deadline drops it from the agenda.
+    assert c.post(f"/api/deadlines/{did}/complete").json()["status"] == "done"
+    assert all(
+        i["kind"] != "deadline" for i in c.get("/api/calendar/upcoming?days=14").json()["items"]
+    )
+
+
+def test_deadline_office_isolation(app_mod):
+    a = _existing(app_mod)
+    b = _new_office(app_mod, "Ofis B", "bavukat")
+    mid = a.post("/api/matters", json={"title": "X"}).json()["id"]
+    did = a.post(
+        f"/api/matters/{mid}/deadlines", json={"due_date": "2099-01-01", "title": "Süre"}
+    ).json()["id"]
+    assert (
+        b.post(
+            f"/api/matters/{mid}/deadlines", json={"due_date": "2099-01-01", "title": "X"}
+        ).status_code
+        == 404
+    )
+    assert b.post(f"/api/deadlines/{did}/complete").status_code == 404
+
+
+def test_matter_detail_includes_documents(app_mod):
+    c = _existing(app_mod)
+    mid = c.post("/api/matters", json={"title": "X"}).json()["id"]
+    # The full matter view always carries a documents list (empty until drafts are filed here).
+    assert c.get(f"/api/matters/{mid}").json()["documents"] == []
 
 
 def test_requires_auth(app_mod):

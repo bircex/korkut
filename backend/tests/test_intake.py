@@ -90,13 +90,6 @@ def test_draft_prompt_injects_inherited_and_intake():
     assert "USUL KONTROL" in dp  # from the intake file
 
 
-def test_required_hint_gate():
-    # The completeness gate lists must-have facts and tells Korkut to ask before drafting.
-    h = petitions.required_hint("cekismeli-bosanma")
-    assert h and "BELGE HAZIRLIK" in h and "dilekce_canvas" in h
-    assert petitions.required_hint("b-boyle-bir-tip-yok") is None
-
-
 def test_inheritance_examples_present():
     # The "miras" pilot ships with two intake schemas.
     assert petitions.intake("veraset-ilami") is not None

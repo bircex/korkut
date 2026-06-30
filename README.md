@@ -4,79 +4,64 @@
 
 <h1 align="center">Korkut</h1>
 
-Korkut is an AI assistant for a Turkish law office — legal research (live case law +
-legislation), petition & contract drafting, and document workflow — delivered through a
-**self-hosted chat web app** that **keeps client data in the office**. It is multi-tenant:
-each office self-registers and Korkut answers under that office's own identity.
+<p align="center">
+  <a href="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml"><img src="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python 3.12+" />
+  <img src="https://img.shields.io/badge/version-CalVer-blue.svg" alt="CalVer" />
+</p>
 
-> ⚠️ Private repo. Client data (`data/`), secrets (`.env`), and backups **never** go into
-> the repo (see `.gitignore`).
+Korkut is a **self-hosted, multi-tenant AI assistant for Turkish law offices**. It manages case
+files, does live legal research, drafts petitions, and handles correspondence — through a chat web
+app that **keeps client data on the office's own machine**. Each office self-registers and Korkut
+answers under that office's identity.
 
-## Repository layout
+## Features
 
-```
-backend/            Python package + tests
-  pyproject.toml
-  src/korkut/
-    core/           model router, providers, redactor, DB, tool registry
-    tools/          live legal-database search & fetch tools (21)
-    brain/          agent entry point (answer) + per-office persona
-    api/            FastAPI app (auth, chat, documents) + built SPA (static/)
-  tests/
-frontend/           React + Vite single-page chat UI
-deploy/             Dockerfile, docker-compose.yml, cron
-docs/               design docs (architecture, security, sources, …)
-config/             model-routing, redaction-rules, tools tiers
-templates/          golden petition/contract examples + intake schemas
-```
+- **Case files (matters)** — clients, hearings, and procedural deadlines, with a unified, proactive
+  **agenda** of what's coming up.
+- **Legal research** — live search and fetch over Turkish public legal databases (Yargıtay,
+  Danıştay, UYAP Emsal, mevzuat, KİK, Rekabet, Sayıştay, GİB, Uyuşmazlık, KVKK, BDDK, insurance
+  arbitration).
+- **Drafting** — petition/contract drafting in a Canvas editor with DOCX/UDF export.
+- **Correspondence** — propose-and-confirm e-mail; two-way Telegram/WhatsApp/e-mail integrations.
+- **Privacy by design** — cloud-bound text is redacted first; point Korkut at a local
+  OpenAI-compatible model (e.g. LM Studio) and nothing leaves the machine.
+- **Secure & multi-tenant** — mandatory TOTP 2FA, strict per-office isolation.
 
-## Quickstart (dev)
+## Quick start
 
-Backend:
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e "backend/[app,dev]"
-cd backend && ../.venv/bin/pytest          # offline tests (live tests deselected by default)
-../.venv/bin/python -m korkut.api          # serve the app on :8080 (needs ANTHROPIC_API_KEY)
+# macOS / Linux
+./scripts/install.sh
+
+# Windows (PowerShell)
+./scripts/install.ps1
+
+# …or Docker (no local Python/Node needed)
+./scripts/install.sh --docker          # http://localhost:8090
 ```
 
-Frontend:
-```bash
-cd frontend && npm install
-npm run dev        # Vite dev server on :5173, proxies /api → :8080
-npm run build      # build the SPA into backend/src/korkut/api/static/
-```
+Then create a user and start the server — full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
-Run a single tool from the CLI:
-```bash
-.venv/bin/python -m korkut.tools.search_yargitay --query "kira tespiti" --limit 5
-```
+## Documentation
 
-## Quality gates
+Start with the **[documentation index](docs/README.md)**:
 
-- **Backend:** `ruff check . && ruff format --check . && mypy && pytest --cov` (157 tests, ~85% coverage)
-- **Frontend:** `npm run lint && npm run build`
-- CI runs all of the above on every push/PR (`.github/workflows/ci.yml`); Dependabot keeps
-  pip/npm/actions current.
+| Page | What it covers |
+|---|---|
+| [INSTALL](docs/INSTALL.md) | Native (macOS / Linux / Windows) and Docker installation |
+| [DEVELOPMENT](docs/DEVELOPMENT.md) | Dev loop: run, test, lint, build, CLIs, adding a tool |
+| [ARCHITECTURE](docs/ARCHITECTURE.md) | Multi-tenancy, the matter domain, and the agentic core |
+| [DEPLOYMENT](docs/DEPLOYMENT.md) | Production: Docker + Postgres behind a reverse proxy |
+| [GLOSSARY](docs/GLOSSARY.md) | Turkish legal & product terms in English |
 
-## How it works
+## Contributing
 
-- **Identity:** one assistant, **Korkut**, addressed per office — the office name comes from the
-  authenticated user's tenant and drives the system persona (`brain/persona.py`).
-- **Models:** cloud = Claude (GPT supported); PII is redacted before any cloud call and restored
-  in the reply (`core/redactor.py`, `core/router.py`).
-- **Tools:** 21 CLI-runnable search/fetch tools over live Turkish legal databases (Yargıtay,
-  Danıştay, UYAP Emsal, Anayasa, KİK, Rekabet, Sayıştay, GİB, mevzuat, Uyuşmazlık, KVKK, BDDK,
-  Sigorta Tahkim). See `backend/src/korkut/tools/README.md`.
-- **Data:** Postgres in production (SQLite for the trial); everything stays on the office server.
+Contributions are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** and our
+**[Code of Conduct](CODE_OF_CONDUCT.md)**. Report security issues privately via
+**[SECURITY.md](SECURITY.md)**.
 
-## Docs
+## License
 
-- **[docs/PLAN.md](docs/PLAN.md)** — roadmap, principles, scope
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — process topology, message flow, data model, tools layer, approval flow
-- **[docs/SOURCES.md](docs/SOURCES.md)** — legal data sources and access
-- **[docs/SECURITY.md](docs/SECURITY.md)** — gateway, 2FA, network hardening
-- **[docs/CORPUS.md](docs/CORPUS.md)** — research/petition data strategy
-- **[docs/DOCUMENT_EDITOR.md](docs/DOCUMENT_EDITOR.md)** — petition-drafting Canvas editor
-- **[docs/COMPETITORS.md](docs/COMPETITORS.md)** — competitor review
-- **[docs/LOCAL_TRIAL.md](docs/LOCAL_TRIAL.md)** — running the office trial locally
+[MIT](LICENSE) © Recep Kızılarslan

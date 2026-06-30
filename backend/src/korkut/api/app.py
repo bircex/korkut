@@ -34,8 +34,8 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api import auth, extract, petitions, totp
-from korkut.api import matter_tools, matters_store as mstore
+from korkut.api import auth, extract, matter_tools, petitions, totp
+from korkut.api import matters_store as mstore
 from korkut.api.models import (
     AuthEvent,
     Client,
@@ -102,7 +102,7 @@ def _safe_answer(*args, **kwargs) -> str:
         raise
     except Exception as exc:
         logger.exception("model call failed")
-        raise HTTPException(status_code=503, detail=_model_error_detail(exc))
+        raise HTTPException(status_code=503, detail=_model_error_detail(exc)) from exc
 
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -233,6 +233,13 @@ class HearingBody(BaseModel):
     date: str  # YYYY-MM-DD
     time: str | None = None  # HH:MM
     location: str | None = None
+    type: str | None = None
+    notes: str | None = None
+
+
+class DeadlineBody(BaseModel):
+    due_date: str  # YYYY-MM-DD
+    title: str
     type: str | None = None
     notes: str | None = None
 
@@ -849,9 +856,7 @@ def list_sessions(
 
 
 @app.post("/api/sessions")
-def create_session(
-    matter_id: int | None = None, korkut_session: str | None = Cookie(default=None)
-):
+def create_session(matter_id: int | None = None, korkut_session: str | None = Cookie(default=None)):
     """Create a chat session, optionally filed under a matter (`?matter_id=`)."""
     with session() as s:
         user = _require_user(s, korkut_session)
@@ -966,15 +971,15 @@ def create_matter_ep(body: MatterBody, korkut_session: str | None = Cookie(defau
             case_type=body.case_type,
             counterparty=body.counterparty,
         )
-        return mstore.matter_detail(m)
+        return mstore.matter_full(s, user.office_id, m.id)
 
 
 @app.get("/api/matters/{mid}")
 def get_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        m = _require_matter(s, user, mid)
-        return mstore.matter_detail(m)
+        _require_matter(s, user, mid)
+        return mstore.matter_full(s, user.office_id, mid)
 
 
 @app.patch("/api/matters/{mid}")
@@ -984,8 +989,8 @@ def update_matter_ep(
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
-        m = mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
-        return mstore.matter_detail(m)
+        mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
+        return mstore.matter_full(s, user.office_id, mid)
 
 
 @app.delete("/api/matters/{mid}")
@@ -999,9 +1004,7 @@ def delete_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)
 
 
 @app.post("/api/matters/{mid}/hearings")
-def add_hearing_ep(
-    mid: int, body: HearingBody, korkut_session: str | None = Cookie(default=None)
-):
+def add_hearing_ep(mid: int, body: HearingBody, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
@@ -1017,17 +1020,49 @@ def add_hearing_ep(
                 notes=body.notes,
             )
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}")
+            raise HTTPException(status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}") from exc
         return mstore.hearing_brief(h)
 
 
 @app.get("/api/calendar/upcoming")
 def upcoming_ep(days: int = 14, korkut_session: str | None = Cookie(default=None)):
+    """Unified office agenda: upcoming hearings + pending deadlines, soonest first."""
     days = max(1, min(days, 365))
     with session() as s:
         user = _require_user(s, korkut_session)
-        hs = mstore.upcoming_hearings(s, user.office_id, days=days)
-        return {"items": [mstore.hearing_brief(h) for h in hs], "days": days}
+        return {"items": mstore.upcoming_agenda(s, user.office_id, days=days), "days": days}
+
+
+@app.post("/api/matters/{mid}/deadlines")
+def add_deadline_ep(
+    mid: int, body: DeadlineBody, korkut_session: str | None = Cookie(default=None)
+):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        _require_matter(s, user, mid)
+        try:
+            d = mstore.add_deadline(
+                s,
+                user.office_id,
+                mid,
+                due_date=body.due_date,
+                title=body.title,
+                type=body.type,
+                notes=body.notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
+        return mstore.deadline_brief(d)
+
+
+@app.post("/api/deadlines/{did}/complete")
+def complete_deadline_ep(did: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        d = mstore.complete_deadline(s, user.office_id, did)
+        if d is None:
+            raise HTTPException(status_code=404, detail="Süre bulunamadı")
+        return mstore.deadline_brief(d)
 
 
 @app.get("/api/clients")
@@ -1097,9 +1132,18 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         if not to:
             return {"ok": False, "note": "Alıcı e-posta adresi gerekli."}
         with session() as s:
+            # Optionally file the correspondence under a matter (only if it's this office's).
+            matter_id = None
+            try:
+                mid = int(args.get("matter_id")) if args.get("matter_id") else None
+            except (TypeError, ValueError):
+                mid = None
+            if mid and mstore.get_matter(s, user.office_id, mid) is not None:
+                matter_id = mid
             msg = OutboundMessage(
                 office_id=user.office_id,
                 user_id=user.id,
+                matter_id=matter_id,
                 kind="email",
                 to_addr=to,
                 subject=(args.get("subject") or "").strip(),
@@ -1116,9 +1160,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             "cümlelik kısa bir bilgilendirme yaz (içeriği tekrar yazma).",
         }
 
-    # Detect the document type once: it gates the chat turn (ask for missing essentials before
-    # drafting) and is reused as the petition type when the draft actually happens.
-    detected = petitions.detect(text)
+    # Intent is the model's call, not a keyword gate: whether to draft (and thus whether to ask for
+    # missing essentials first) is decided by the model via the dilekce_canvas tool contract — see
+    # _CANVAS_TOOL. The document type is only inferred later, once a draft is actually chosen.
     # Office-scoped matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
     m_tools, m_handlers = matter_tools.build_matter_tools(user)
     reply = _safe_answer(
@@ -1128,7 +1172,6 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, *m_tools],
         handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
         model_cfg=model_cfg,
-        extra_system=petitions.required_hint(detected) if detected else None,
     )
 
     with session() as s:
@@ -1151,8 +1194,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
                 s.add(doc)
                 s.commit()
             doc_id = doc.id
-        # Korkut infers the petition type itself, then drafts in the standard format and the
-        # result lands straight in the editor (the editor is the lawyer's review surface).
+        # The model committed to drafting → infer the petition type now (for the standard
+        # format/style) and draft straight into the editor (the lawyer's review surface).
+        detected = petitions.detect(text)
         _make_draft(doc_id, text, history_msgs, detected, style=style, user_id=user.id)
         _accept_pending(doc_id)
         open_document = doc_id
@@ -1579,7 +1623,7 @@ def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(de
 
 # ---------------- two-way integrations (Telegram / WhatsApp / e-mail chat) ----------------
 # Owners configure each channel's connector; any member links their own account to a channel with
-# a one-time code, then chats with Korkut. See korkut.integrations + docs/INTEGRATIONS.md.
+# a one-time code, then chats with Korkut. See korkut.integrations and docs/ARCHITECTURE.md.
 
 _INTEGRATION_KINDS = ("telegram", "whatsapp", "email")
 
@@ -1826,6 +1870,11 @@ _SEND_EMAIL_TOOL = ToolSpec(
             "required": False,
             "description": "İsteğe bağlı gönderim zamanı (ISO 8601). Boşsa onayla hemen gider.",
         },
+        "matter_id": {
+            "type": "integer",
+            "required": False,
+            "description": "İlgili dosya no (id) — yazışmayı dosyaya bağlamak için (varsa).",
+        },
     },
     requires_key=None,
     module="",
@@ -1838,7 +1887,12 @@ _CANVAS_TOOL = ToolSpec(
         "Avukat bir hukuki BELGE (dilekçe, ihtarname, sözleşme, başvuru, temyiz/istinaf vb.) "
         "yazmanı ya da mevcut belgeyi DÜZENLEMENI istediğinde bu aracı çağır. Belgenin metnini "
         "sohbete YAZMA — belge sağdaki Canvas editöründe hazırlanacak. Sıradan soru-cevap veya "
-        "araştırma için bu aracı ÇAĞIRMA."
+        "araştırma için bu aracı ÇAĞIRMA. "
+        "İNTAKE KURALI: Bu aracı yalnızca belgeyi sağlam hazırlamaya yetecek temel bilgiye "
+        "(taraflar, konu/talep, kritik tarih ve tutarlar) sahipken çağır. Bu bilgiler sohbette "
+        "henüz YOKSA aracı ÇAĞIRMA; bunun yerine eksikleri TEK ve kısa bir mesajda sor. "
+        "Bir konuyu AÇIKLAMAK (ör. 'boşanma davası nasıl açılır?') belge yazma talebi DEĞİLDİR — "
+        "yalnızca cevap ver."
     ),
     parameters={},
     requires_key=None,

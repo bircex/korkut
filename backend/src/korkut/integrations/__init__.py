@@ -16,7 +16,7 @@ Layout (clawbot's gateway + pluggable-channel shape, in Korkut's Python stack):
     runner.py      `python -m korkut.integrations.runner` — polls every enabled office connector
     sidecar/       the Node/Baileys WhatsApp Web service (separate process)
 
-See docs/INTEGRATIONS.md.
+See docs/ARCHITECTURE.md.
 """
 
 from korkut.integrations.base import Connector, InboundMessage, OutboundReply, SendResult

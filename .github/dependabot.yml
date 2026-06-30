@@ -34,3 +34,25 @@ updates:
     labels: [dependencies, ci]
     commit-message:
       prefix: "ci"
+
+  # Base images in the deploy Dockerfile
+  - package-ecosystem: docker
+    directory: /deploy
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: "docker"
+
+  # WhatsApp Web (Baileys) sidecar dependencies
+  - package-ecosystem: npm
+    directory: /backend/src/korkut/integrations/sidecar
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      sidecar-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, integrations]
+    commit-message:
+      prefix: "npm"

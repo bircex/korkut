@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type MatterBrief, type MatterDetail, type User } from "../api";
+import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
 
 // Minimal "Dosyalar" (matters) workspace: browse the office's case files, open one to see its
 // details + hearings, create a matter, add a hearing, and start a chat filed under the matter.
@@ -20,6 +20,7 @@ export function MattersPanel({
   onOpenSession: (sessionId: number) => void;
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
+  const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [detail, setDetail] = useState<MatterDetail | null>(null); // null → list view
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,12 +28,15 @@ export function MattersPanel({
 
   // New-matter form.
   const [nm, setNm] = useState({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
-  // Add-hearing form (within a detail).
+  // Add-hearing / add-deadline forms (within a detail).
   const [nh, setNh] = useState({ date: "", time: "", type: "", location: "" });
+  const [nd, setNd] = useState({ due_date: "", title: "", type: "" });
 
   async function refresh() {
     try {
-      setMatters((await api.matters()).items);
+      const [m, a] = await Promise.all([api.matters(), api.agenda(30)]);
+      setMatters(m.items);
+      setAgenda(a.items);
     } catch {
       setError("Dosyalar yüklenemedi.");
     }
@@ -99,6 +103,32 @@ export function MattersPanel({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function addDeadline() {
+    if (!detail || !nd.due_date.trim() || !nd.title.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.addDeadline(detail.id, {
+        due_date: nd.due_date.trim(),
+        title: nd.title.trim(),
+        type: nd.type.trim() || null,
+      });
+      setNd({ due_date: "", title: "", type: "" });
+      setDetail(await api.getMatter(detail.id));
+      refresh();
+    } catch {
+      setError("Süre eklenemedi (tarih biçimi YYYY-AA-GG olmalı).");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function completeDeadline(did: number) {
+    await api.completeDeadline(did);
+    if (detail) setDetail(await api.getMatter(detail.id));
+    refresh();
   }
 
   async function removeMatter() {
@@ -207,6 +237,72 @@ export function MattersPanel({
                 Duruşma ekle
               </button>
             </div>
+
+            <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Süreler</h2>
+            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+              {detail.deadlines.length === 0 && (
+                <div className="px-4 py-3 text-sm text-zinc-400">Henüz süre yok.</div>
+              )}
+              {detail.deadlines.map((d) => (
+                <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <span
+                    className={`font-medium ${
+                      d.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
+                    }`}
+                  >
+                    {d.due_date}
+                  </span>
+                  <span className="text-zinc-600">{d.title}</span>
+                  <span className="text-xs text-zinc-400">{d.type ?? ""}</span>
+                  {d.status !== "done" && (
+                    <button
+                      onClick={() => completeDeadline(d.id)}
+                      className="ml-auto rounded-md border border-zinc-200 px-2 py-0.5 text-xs text-zinc-600 hover:bg-zinc-50"
+                    >
+                      Tamamlandı
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 p-3">
+              <Labeled label="Son tarih (YYYY-AA-GG)">
+                <input className={input} value={nd.due_date} placeholder="2026-07-20" onChange={(e) => setNd({ ...nd, due_date: e.target.value })} />
+              </Labeled>
+              <Labeled label="Süre adı">
+                <input className={input} value={nd.title} placeholder="Cevap süresi" onChange={(e) => setNd({ ...nd, title: e.target.value })} />
+              </Labeled>
+              <Labeled label="Tür">
+                <input className={input} value={nd.type} placeholder="cevap" onChange={(e) => setNd({ ...nd, type: e.target.value })} />
+              </Labeled>
+              <button
+                onClick={addDeadline}
+                disabled={busy || !nd.due_date.trim() || !nd.title.trim()}
+                className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-40"
+              >
+                Süre ekle
+              </button>
+            </div>
+
+            <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Belgeler</h2>
+            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+              {detail.documents.length === 0 && (
+                <div className="px-4 py-3 text-sm text-zinc-400">Bu dosyaya bağlı belge yok.</div>
+              )}
+              {detail.documents.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => onOpenSession(d.conversation_id)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50"
+                >
+                  <span className="text-xs">📄</span>
+                  <span className="min-w-0 flex-1 truncate text-zinc-800">{d.title}</span>
+                  <span className="shrink-0 text-xs text-zinc-400">{d.status}</span>
+                  <span className="shrink-0 text-zinc-300">›</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -220,6 +316,32 @@ export function MattersPanel({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-4">
           {error && <div className="mb-3 text-xs text-red-600">{error}</div>}
+
+          {agenda.length > 0 && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                Yaklaşan ({agenda.length})
+              </div>
+              <div className="space-y-0.5">
+                {agenda.slice(0, 6).map((a) => (
+                  <button
+                    key={`${a.kind}-${a.id}`}
+                    onClick={() => openMatter(a.matter_id)}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-amber-100/60"
+                  >
+                    <span className="text-xs">{a.kind === "hearing" ? "⚖️" : "⏰"}</span>
+                    <span className="font-medium text-amber-900">
+                      {a.date}
+                      {a.time ? ` ${a.time}` : ""}
+                    </span>
+                    <span className="truncate text-amber-800">
+                      {a.kind === "deadline" ? a.title : a.type ?? "Duruşma"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!creating ? (
             <button

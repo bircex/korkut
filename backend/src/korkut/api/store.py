@@ -45,10 +45,12 @@ def engine():
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
         _migrate_legacy(_engine)  # pre-init: drop obsolete chat tables so init_db rebuilds them
-        _migrate_matter_domain(_engine)  # pre-init: drop dormant case tables → rebuilt office-scoped
+        _migrate_matter_domain(
+            _engine
+        )  # pre-init: drop dormant case tables → rebuilt office-scoped
         db.init_db(_engine)  # create any missing tables (offices, documents, matters, …)
         _migrate_tenant(_engine)  # post-init: add multi-tenant columns to existing tables
-        _migrate_conversation_matter(_engine)  # post-init: link chats to a matter (matter_id)
+        _migrate_matter_links(_engine)  # post-init: link chats + correspondence to a matter
         _Session = sessionmaker(_engine, expire_on_commit=False)
         sync_template_defaults(
             _engine
@@ -225,19 +227,18 @@ def _migrate_matter_domain(engine) -> None:
                 conn.execute(text(f"DROP TABLE {t}"))
 
 
-def _migrate_conversation_matter(engine) -> None:
-    """Add `conversations.matter_id` to an existing DB so a chat can be filed under a matter.
+def _migrate_matter_links(engine) -> None:
+    """Add the optional `matter_id` link column to existing tables (chats, correspondence).
 
     Kept separate from `_migrate_tenant` (which early-returns on already-tenant DBs). Idempotent:
-    skipped once the column exists; a fresh DB already has it from init_db.
+    each table is skipped once it has the column; a fresh DB already has it from init_db.
     """
     insp = inspect(engine)
-    if "conversations" not in insp.get_table_names():
-        return
-    if "matter_id" in {c["name"] for c in insp.get_columns("conversations")}:
-        return
+    tables = set(insp.get_table_names())
     with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE conversations ADD COLUMN matter_id INTEGER"))
+        for table in ("conversations", "outbound_messages"):
+            if table in tables and "matter_id" not in {c["name"] for c in insp.get_columns(table)}:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN matter_id INTEGER"))
 
 
 def _migrate_tenant(engine) -> None:

@@ -95,8 +95,13 @@ def test_whatsapp_poll_and_cursor():
     api = FakeWhatsAppApi(
         {
             "messages": [
-                {"id": 4, "from": "905001@s.whatsapp.net", "chat": "905001@s.whatsapp.net",
-                 "text": "selam", "name": "Müvekkil"},
+                {
+                    "id": 4,
+                    "from": "905001@s.whatsapp.net",
+                    "chat": "905001@s.whatsapp.net",
+                    "text": "selam",
+                    "name": "Müvekkil",
+                },
             ],
             "cursor": 4,
         }
