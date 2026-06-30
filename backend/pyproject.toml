@@ -100,7 +100,7 @@ ignore = [
 [tool.mypy]
 python_version = "3.12"
 mypy_path = "src"
-files = ["src/korkut/core", "src/korkut/tools", "src/korkut/brain"]
+files = ["src/korkut/core", "src/korkut/tools", "src/korkut/brain", "src/korkut/messaging"]
 ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true

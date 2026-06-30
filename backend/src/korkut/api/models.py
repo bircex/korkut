@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Index, String, Text, func, text
+from sqlalchemy import JSON, ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from korkut.core.db import Base
@@ -248,6 +248,49 @@ class TemplateOverride(Base):
     type_id: Mapped[str] = mapped_column(String(80), index=True)
     content: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
+class OfficeChannel(Base):
+    """An office's credentials for one outbound channel (email now; Telegram/SMTP/… later).
+
+    Generic by design: `config` is a JSON blob whose keys are channel-specific (e.g. email:
+    from_address, from_name, app_password, host, port), so new integrations need no schema change.
+    See `korkut.messaging`. Stored on the office's own DB (self-hosted), like `OfficeModel`.
+    """
+
+    __tablename__ = "office_channels"
+    __table_args__ = (UniqueConstraint("office_id", "kind", name="uq_office_channel"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(32))  # "email", "telegram", …
+    enabled: Mapped[bool] = mapped_column(default=False)
+    config: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
+class OutboundMessage(Base):
+    """A message Korkut proposed to send — the channel-agnostic outbox + schedule queue.
+
+    Lifecycle: ``draft`` (proposed, awaiting the lawyer's confirm) → ``queued`` (confirmed,
+    waiting for ``send_at``) → ``sent`` | ``failed``; or ``cancelled``. ``send_at`` null/past means
+    send on confirm; a future value schedules it (the dispatcher sends due ones). The same row
+    serves email, Telegram and reminders — only `kind`/`to_addr` differ.
+    """
+
+    __tablename__ = "outbound_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
+    kind: Mapped[str] = mapped_column(String(32), default="email")
+    to_addr: Mapped[str] = mapped_column(String(320))
+    subject: Mapped[str] = mapped_column(String(500), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    send_at: Mapped[datetime | None] = mapped_column(default=None, index=True)
+    status: Mapped[str] = mapped_column(String(16), default="draft", index=True)
+    error: Mapped[str | None] = mapped_column(Text, default=None)
+    attempts: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    sent_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
 class AuthEvent(Base):
