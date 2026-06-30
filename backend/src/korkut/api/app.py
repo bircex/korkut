@@ -1370,6 +1370,13 @@ def list_outbox(korkut_session: str | None = Cookie(default=None)):
         return [_outbox_public(m) for m in rows]
 
 
+@app.get("/api/outbox/{mid}")
+def get_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        return _outbox_public(_require_outbox(s, user, mid))
+
+
 @app.put("/api/outbox/{mid}")
 def edit_outbox(mid: int, body: OutboxBody, korkut_session: str | None = Cookie(default=None)):
     """Edit a draft before confirming (recipient / subject / body / schedule)."""

@@ -6,6 +6,7 @@ import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
 import { Customize } from "./Customize";
+import { MailConfirm } from "./MailConfirm";
 
 const SESSION_PAGE = 20;
 
@@ -50,6 +51,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
   const [pane, setPane] = useState<"chat" | "document">("chat");
+  const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
@@ -238,6 +240,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
+      if (!file && (res as { pending_email?: number | null }).pending_email) {
+        // Korkut proposed an e-mail → surface the confirmation card (it never sends on its own).
+        setPendingEmailId((res as { pending_email: number }).pending_email);
+      }
       const fixedId = id;
       setSessions((s) => [
         {
@@ -282,6 +288,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
+      {pendingEmailId !== null && (
+        <MailConfirm id={pendingEmailId} onClose={() => setPendingEmailId(null)} />
+      )}
       <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
         <button
           onClick={() => setSidebarOpen((o) => !o)}
