@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type Member, type StyleFields, type User } from "../api";
+import { ModelSettings } from "./ModelSettings";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -279,12 +280,13 @@ function StyleTab() {
   );
 }
 
-type Tab = "account" | "members" | "style";
+type Tab = "account" | "members" | "style" | "model";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
   members: "Ofis üyeleri",
   style: "Yazım stili",
+  model: "Model",
 };
 
 export function Settings({ user, onClose }: { user: User; onClose: () => void }) {
@@ -293,6 +295,8 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
     { id: "account", label: "Hesap" },
     { id: "members", label: "Üyeler" },
     { id: "style", label: "Stil" },
+    // Model selection is an office-wide setting — owner only.
+    ...(user.role === "owner" ? [{ id: "model" as Tab, label: "Model" }] : []),
   ];
 
   return (
@@ -340,6 +344,7 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
           )}
           {tab === "members" && <Members isOwner={user.role === "owner"} />}
           {tab === "style" && <StyleTab />}
+          {tab === "model" && user.role === "owner" && <ModelSettings />}
         </div>
       </div>
     </div>

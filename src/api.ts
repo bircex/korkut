@@ -57,6 +57,7 @@ export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik
 export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
 export type TemplateKind = "dilekce" | "sozlesme";
 export type TemplateScope = "user" | "office";
+export type ExportFormat = "udf" | "docx";
 export type TemplateTypeRow = {
   id: string;
   ad: string;
@@ -74,6 +75,21 @@ export type TemplateDetail = {
   officeOverride: string | null;
   userOverride: string | null;
   effective: string | null;
+};
+export type ModelData = {
+  enabled: boolean;
+  is_local: boolean;
+  model: string;
+  base_url: string;
+  hasApiKey: boolean;
+  can_edit: boolean;
+};
+export type ModelInput = {
+  enabled: boolean;
+  is_local: boolean;
+  model: string;
+  base_url: string;
+  api_key: string | null; // null → keep stored key; "" → clear it
 };
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
@@ -150,6 +166,20 @@ export const api = {
     request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}?scope=${scope}`, {
       method: "DELETE",
     }),
+  getModel: () => request<ModelData>("/api/model"),
+  saveModel: (input: ModelInput) =>
+    request<ModelData>("/api/model", { method: "PUT", body: JSON.stringify(input) }),
+  deleteModel: () => request<{ ok: boolean }>("/api/model", { method: "DELETE" }),
+  exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
+    const res = await fetch("/api/export", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ format, title, markdown }),
+    });
+    if (!res.ok) throw new ApiError(res.status, "Dışa aktarma başarısız");
+    return res.blob();
+  },
   provision: () => request<Provision>("/api/2fa/provision"),
   enroll: (code: string) =>
     request<EnrollResult>("/api/2fa/enroll", {
