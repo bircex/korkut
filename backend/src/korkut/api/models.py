@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text, func
+from sqlalchemy import ForeignKey, Index, String, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from korkut.core.db import Base
@@ -173,6 +173,61 @@ class ProposedEdit(Base):
     summary: Mapped[str | None] = mapped_column(String(300), default=None)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|reverted
     created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
+class TemplateDefault(Base):
+    """The built-in theme (example markdown) for a petition/contract type.
+
+    Synced from the `templates/*/examples/*.md` files on every startup (keyed by `source_hash`
+    so unchanged files are skipped). The LLM draws inspiration from this theme when drafting —
+    there is no placeholder substitution. An office or lawyer can shadow it with a
+    `TemplateOverride`.
+    """
+
+    __tablename__ = "template_defaults"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    kind: Mapped[str] = mapped_column(String(16))  # "dilekce" | "sozlesme"
+    content: Mapped[str] = mapped_column(Text, default="")  # theme markdown
+    source_hash: Mapped[str] = mapped_column(String(64), default="")  # skip unchanged files
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
+class TemplateOverride(Base):
+    """An office- or lawyer-customized theme for one type. Never touched by the file sync.
+
+    Exactly one scope FK is set: `user_id` → personal override, `office_id` (with `user_id` NULL)
+    → office-wide override. Resolution order is user > office > default (see `effective_theme`).
+    """
+
+    __tablename__ = "template_overrides"
+    __table_args__ = (
+        # One personal override per (user, type); one office override per (office, type).
+        Index(
+            "uq_tpl_override_user",
+            "user_id",
+            "type_id",
+            unique=True,
+            sqlite_where=text("user_id IS NOT NULL"),
+            postgresql_where=text("user_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_tpl_override_office",
+            "office_id",
+            "type_id",
+            unique=True,
+            sqlite_where=text("user_id IS NULL"),
+            postgresql_where=text("user_id IS NULL"),
+        ),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int | None] = mapped_column(
+        ForeignKey("offices.id"), index=True, default=None
+    )
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    type_id: Mapped[str] = mapped_column(String(80), index=True)
+    content: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
 class AuthEvent(Base):

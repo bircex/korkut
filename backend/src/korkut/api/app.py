@@ -46,7 +46,7 @@ from korkut.api.models import (
     StyleProfile,
     User,
 )
-from korkut.api.store import session
+from korkut.api.store import effective_theme, session
 from korkut.brain import agent
 from korkut.core.tool_registry import ToolSpec
 
@@ -774,7 +774,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             doc_id = doc.id
         # Korkut infers the petition type itself, then drafts in the standard format and the
         # result lands straight in the editor (the editor is the lawyer's review surface).
-        _make_draft(doc_id, text, history_msgs, petitions.detect(text), style=style)
+        _make_draft(
+            doc_id, text, history_msgs, petitions.detect(text), style=style, user_id=user.id
+        )
         _accept_pending(doc_id)
         open_document = doc_id
 
@@ -1051,6 +1053,8 @@ def _make_draft(
     history: list[dict],
     petition_type: str | None = None,
     style: dict | None = None,
+    *,
+    user_id: int | None = None,
 ) -> dict | None:
     """Generate a full-document draft as a pending ProposedEdit (redaction round-trips here)."""
     with session() as s:
@@ -1061,18 +1065,23 @@ def _make_draft(
         conv = s.get(Conversation, doc.conversation_id)
         office = s.get(Office, conv.office_id) if conv else None
         office_name = office.name if office else None
+        # Effective theme: lawyer override > office override > built-in default.
+        theme = (
+            effective_theme(s, conv.office_id, user_id, petition_type)
+            if petition_type and conv
+            else None
+        )
     instr = (instruction or "").strip()
     fmt = petitions.draft_prompt(petition_type) if petition_type else None
     if fmt:
         instr = f"{fmt}\n\nEk talimat: {instr}" if instr else fmt
     elif not instr:
         instr = "Bu belgeyi gözden geçir ve geliştir."
-    example = petitions.example(petition_type) if petition_type else None
-    example_block = (
-        "\n\nÖRNEK FORMAT (bu profesyonel şablonun BÖLÜM DÜZENİNE, BAŞLIKLARINA ve ÜSLUBUNA "
-        "birebir uy; içeriği kullanıcının olayına uyarla, doldurulacak yerleri [köşeli parantez] "
-        f"olarak bırak):\n<<<\n{example}\n>>>"
-        if example
+    theme_block = (
+        "\n\nİLHAM TEMASI (bu profesyonel örnekten YAPI, bölüm dizilimi, başlık biçimi ve ÜSLUP "
+        "açısından ilham al; belgeyi TAMAMEN kullanıcının olayına göre SIFIRDAN yaz — temadaki "
+        f"metni ya da yer tutucuları KOPYALAMA):\n<<<\n{theme}\n>>>"
+        if theme
         else ""
     )
     prompt = (
@@ -1080,7 +1089,7 @@ def _make_draft(
         f"Talimat: {instr}\n\n"
         "Mevcut belge (boşsa sıfırdan oluştur):\n"
         f"<<<\n{current or '(boş)'}\n>>>"
-        f"{example_block}"
+        f"{theme_block}"
         f"{_style_prompt_block(style)}\n\n"
         "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
@@ -1121,7 +1130,9 @@ def draft_document(doc_id: int, body: DraftBody, korkut_session: str | None = Co
         ).all()
         history = [{"role": m.role, "content": m.content} for m in rows[-_HISTORY_TURNS:]]
         style = _effective_style(s, user)
-    result = _make_draft(doc_id, body.instruction, history, body.petition_type, style=style)
+    result = _make_draft(
+        doc_id, body.instruction, history, body.petition_type, style=style, user_id=user.id
+    )
     if result is None:
         raise HTTPException(status_code=404, detail="Belge bulunamadı")
     return result

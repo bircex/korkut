@@ -7,14 +7,16 @@ tables are registered on `Base.metadata` before `init_db` runs.
 
 from __future__ import annotations
 
+import hashlib
 import os
 
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
+from korkut.api.models import TemplateDefault, TemplateOverride
 from korkut.core import db
-from korkut.paths import DATA_DIR
+from korkut.paths import DATA_DIR, TEMPLATES_DIR
 
 _DEFAULT_URL = f"sqlite+pysqlite:///{DATA_DIR / 'korkut.db'}"
 
@@ -37,7 +39,68 @@ def engine():
         db.init_db(_engine)  # create any missing tables (offices, documents, …)
         _migrate_tenant(_engine)  # post-init: add multi-tenant columns to existing tables
         _Session = sessionmaker(_engine, expire_on_commit=False)
+        sync_template_defaults(
+            _engine
+        )  # refresh built-in themes from files (never touches overrides)
     return _engine
+
+
+# Folder (under templates/) → catalog `kind`. Example files are named "<type_id>.md".
+_THEME_DIRS = {"petition": "dilekce", "contract": "sozlesme"}
+
+
+def effective_theme(s: Session, office_id: int, user_id: int | None, type_id: str) -> str | None:
+    """Resolve a type's theme: lawyer override > office override > built-in default.
+
+    Returns the theme markdown the LLM should draw inspiration from, or None if the type has no
+    default and no override. `user_id` None skips the personal layer (e.g. system-initiated drafts).
+    """
+    if user_id is not None:
+        personal = s.scalar(
+            select(TemplateOverride).where(
+                TemplateOverride.user_id == user_id, TemplateOverride.type_id == type_id
+            )
+        )
+        if personal is not None:
+            return personal.content
+    office = s.scalar(
+        select(TemplateOverride).where(
+            TemplateOverride.office_id == office_id,
+            TemplateOverride.user_id.is_(None),
+            TemplateOverride.type_id == type_id,
+        )
+    )
+    if office is not None:
+        return office.content
+    default = s.scalar(select(TemplateDefault).where(TemplateDefault.type_id == type_id))
+    return default.content if default is not None else None
+
+
+def sync_template_defaults(engine) -> None:
+    """Upsert the built-in themes (templates/*/examples/*.md) into `template_defaults`.
+
+    Idempotent and cheap on reboots: a file whose content hash is unchanged is skipped.
+    `template_overrides` (office/lawyer customizations) are never read or modified here.
+    """
+    with Session(engine) as s:
+        existing = {d.type_id: d for d in s.scalars(select(TemplateDefault)).all()}
+        for folder, kind in _THEME_DIRS.items():
+            ex_dir = TEMPLATES_DIR / folder / "examples"
+            if not ex_dir.is_dir():
+                continue
+            for md in sorted(ex_dir.glob("*.md")):
+                content = md.read_text(encoding="utf-8")
+                digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+                row = existing.get(md.stem)
+                if row is None:
+                    s.add(
+                        TemplateDefault(
+                            type_id=md.stem, kind=kind, content=content, source_hash=digest
+                        )
+                    )
+                elif row.source_hash != digest or row.kind != kind:
+                    row.content, row.source_hash, row.kind = content, digest, kind
+        s.commit()
 
 
 def _migrate_legacy(engine) -> None:
