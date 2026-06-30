@@ -18,6 +18,7 @@ export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type SessionBrief = {
   id: number;
   title: string;
+  matter_id: number | null;
   created_by_name: string | null;
   updated_at: string | null;
 };
@@ -90,6 +91,25 @@ export type EmailChannelInput = {
   from_name: string;
   app_password: string | null; // null → keep stored password; "" → clear
 };
+export type IntegrationKind = "telegram" | "whatsapp" | "email";
+export type IntegrationChannel = {
+  kind: IntegrationKind;
+  enabled: boolean;
+  configured: boolean;
+  base_url: string;
+  linked: boolean;
+  linked_id: string;
+  can_edit: boolean;
+};
+export type TelegramChannelInput = {
+  enabled: boolean;
+  bot_token: string | null; // null → keep stored token; "" → clear
+};
+export type WhatsAppChannelInput = {
+  enabled: boolean;
+  base_url: string;
+  token: string | null; // null → keep stored secret; "" → clear
+};
 export type OutboxStatus = "draft" | "queued" | "sent" | "failed" | "cancelled";
 export type OutboxMessage = {
   id: number;
@@ -123,6 +143,60 @@ export type ModelInput = {
   model: string;
   base_url: string;
   api_key: string | null; // null → keep stored key; "" → clear it
+};
+export type ModelHealth = { connected: boolean; configured: boolean; detail: string };
+
+// ---- matter domain (dosya / müvekkil / duruşma) ----
+export type Hearing = {
+  id: number;
+  matter_id: number;
+  date: string | null;
+  time: string | null;
+  location: string | null;
+  type: string | null;
+  result: string | null;
+  reminder_status: string;
+  notes: string | null;
+};
+export type ClientBrief = {
+  id: number;
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  national_id: string | null;
+};
+export type MatterBrief = {
+  id: number;
+  title: string;
+  client_name: string | null;
+  file_no: string | null;
+  court: string | null;
+  case_type: string | null;
+  counterparty: string | null;
+  status: string;
+  opened_at: string | null;
+  updated_at: string | null;
+};
+export type MatterDetail = MatterBrief & {
+  client: ClientBrief | null;
+  notes: string | null;
+  hearings: Hearing[];
+};
+export type MatterInput = {
+  title: string;
+  client_name?: string | null;
+  file_no?: string | null;
+  court?: string | null;
+  case_type?: string | null;
+  counterparty?: string | null;
+};
+export type MatterPatch = Partial<Omit<MatterInput, "client_name">> & { status?: string; notes?: string };
+export type HearingInput = {
+  date: string;
+  time?: string | null;
+  location?: string | null;
+  type?: string | null;
+  notes?: string | null;
 };
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
@@ -203,6 +277,23 @@ export const api = {
   saveModel: (input: ModelInput) =>
     request<ModelData>("/api/model", { method: "PUT", body: JSON.stringify(input) }),
   deleteModel: () => request<{ ok: boolean }>("/api/model", { method: "DELETE" }),
+  modelHealth: () => request<ModelHealth>("/api/model/health"),
+  matters: (status?: string) =>
+    request<{ items: MatterBrief[]; total: number }>(
+      `/api/matters${status ? `?status=${encodeURIComponent(status)}` : ""}`,
+    ),
+  getMatter: (id: number) => request<MatterDetail>(`/api/matters/${id}`),
+  createMatter: (input: MatterInput) =>
+    request<MatterDetail>("/api/matters", { method: "POST", body: JSON.stringify(input) }),
+  updateMatter: (id: number, patch: MatterPatch) =>
+    request<MatterDetail>(`/api/matters/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteMatter: (id: number) =>
+    request<{ ok: boolean }>(`/api/matters/${id}`, { method: "DELETE" }),
+  addHearing: (id: number, input: HearingInput) =>
+    request<Hearing>(`/api/matters/${id}/hearings`, { method: "POST", body: JSON.stringify(input) }),
+  upcomingHearings: (days = 14) =>
+    request<{ items: Hearing[]; days: number }>(`/api/calendar/upcoming?days=${days}`),
+  clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
@@ -227,7 +318,11 @@ export const api = {
   logout: () => request<{ ok: boolean }>("/api/logout", { method: "POST" }),
   sessions: (limit = 20, offset = 0) =>
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
-  createSession: () => request<SessionBrief>("/api/sessions", { method: "POST" }),
+  createSession: (matterId?: number) =>
+    request<SessionBrief>(
+      `/api/sessions${matterId ? `?matter_id=${matterId}` : ""}`,
+      { method: "POST" },
+    ),
   getSession: (id: number) => request<SessionDetail>(`/api/sessions/${id}`),
   deleteSession: (id: number) =>
     request<{ ok: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
@@ -241,6 +336,21 @@ export const api = {
   getEmailChannel: () => request<EmailChannel>("/api/channels/email"),
   saveEmailChannel: (input: EmailChannelInput) =>
     request<EmailChannel>("/api/channels/email", { method: "PUT", body: JSON.stringify(input) }),
+  listIntegrations: () => request<{ channels: IntegrationChannel[] }>("/api/integrations"),
+  saveTelegramChannel: (input: TelegramChannelInput) =>
+    request<{ ok: boolean; configured: boolean }>("/api/channels/telegram", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }),
+  saveWhatsAppChannel: (input: WhatsAppChannelInput) =>
+    request<{ ok: boolean; configured: boolean }>("/api/channels/whatsapp", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }),
+  createIntegrationLink: (kind: IntegrationKind) =>
+    request<{ code: string; kind: string }>(`/api/integrations/${kind}/link`, { method: "POST" }),
+  deleteIntegrationLink: (kind: IntegrationKind) =>
+    request<{ ok: boolean }>(`/api/integrations/${kind}/link`, { method: "DELETE" }),
   getOutbox: (id: number) => request<OutboxMessage>(`/api/outbox/${id}`),
   listOutbox: () => request<OutboxMessage[]>("/api/outbox"),
   editOutbox: (id: number, fields: OutboxEdit) =>

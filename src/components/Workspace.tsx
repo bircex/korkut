@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { api, ApiError, type ChatMessage, type DocBrief, type SessionBrief, type User } from "../api";
+import {
+  api,
+  ApiError,
+  type ChatMessage,
+  type DocBrief,
+  type ModelHealth,
+  type SessionBrief,
+  type User,
+} from "../api";
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
 import { Customize } from "./Customize";
+import { MattersPanel } from "./MattersPanel";
 import { MailConfirm } from "./MailConfirm";
 
 const SESSION_PAGE = 20;
@@ -33,7 +42,7 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-type SidebarView = "chats" | "docs" | "settings" | "customize";
+type SidebarView = "chats" | "docs" | "settings" | "customize" | "matters";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -57,6 +66,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameText, setRenameText] = useState("");
+  const [health, setHealth] = useState<ModelHealth | null>(null);
+
+  // Best-effort model-reachability check → drives the warning banner. Never throws.
+  async function checkHealth() {
+    try {
+      setHealth(await api.modelHealth());
+    } catch {
+      /* leave the banner as-is on a transient failure */
+    }
+  }
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -69,6 +88,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       } catch {
         /* best effort */
       }
+      checkHealth();
       loadDocs();
       try {
         const page = await api.sessions(SESSION_PAGE, 0);
@@ -260,6 +280,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       }
       const detail = err instanceof ApiError ? err.message : "yanıt alınamadı";
       setMessages((m) => [...m, { role: "assistant", content: `Hata: ${detail}` }]);
+      if (err instanceof ApiError && err.status === 503) checkHealth(); // model down → refresh banner
     } finally {
       setSending(false);
       taRef.current?.focus();
@@ -272,6 +293,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   if (view === "customize") {
     return <Customize user={user} onClose={() => setView("chats")} />;
+  }
+
+  if (view === "matters") {
+    return (
+      <MattersPanel
+        user={user}
+        onClose={() => setView("chats")}
+        onOpenSession={(id) => openSession(id)}
+      />
+    );
   }
 
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
@@ -363,6 +394,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   <button
                     onClick={() => {
                       setMenuOpen(false);
+                      setView("matters");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    📁 Dosyalar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
                       setView("settings");
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
@@ -390,6 +430,26 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </div>
         </div>
       </header>
+
+      {health && !health.connected && (
+        <div className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-[13px] text-amber-800">
+          <span className="text-base leading-none">⚠️</span>
+          <span className="min-w-0 flex-1">{health.detail}</span>
+          <button
+            onClick={() => setView("settings")}
+            className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+          >
+            Ayarlar → Model
+          </button>
+          <button
+            onClick={checkHealth}
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+            title="Yeniden dene"
+          >
+            ↻
+          </button>
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         {sidebarOpen && (
