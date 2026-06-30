@@ -2,6 +2,7 @@
 name = "korkut"
 version = "0.1.0"
 description = "Korkut — AI assistant for a law office over a self-hosted chat UI"
+license = "MIT"
 requires-python = ">=3.12"
 # README and LICENSE live at the repository root (one level up from this backend package).
 
@@ -39,7 +40,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
