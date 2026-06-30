@@ -709,3 +709,51 @@ def test_document_export_docx_and_udf(client):
     z = zipfile.ZipFile(io.BytesIO(ru.content))
     assert "content.xml" in z.namelist()
     assert b"Ba\xc5\x9fl\xc4\xb1k" in z.read("content.xml")  # "Başlık" in UTF-8
+
+
+def test_templates_list_and_personal_override_roundtrip(client):
+    _enroll(client, "avukat")
+    listing = client.get("/api/templates?kind=dilekce")
+    assert listing.status_code == 200
+    data = listing.json()
+    assert data["kind"] == "dilekce" and data["kategoriler"]
+    tid = data["kategoriler"][0]["tipler"][0]["id"]
+
+    g = client.get(f"/api/templates/{tid}").json()
+    assert g["default"] is not None
+    assert g["userOverride"] is None and g["officeOverride"] is None
+    assert g["effective"] == g["default"]
+
+    client.put(f"/api/templates/{tid}", json={"scope": "user", "content": "BENIM TEMAM"})
+    g2 = client.get(f"/api/templates/{tid}").json()
+    assert g2["userOverride"] == "BENIM TEMAM"
+    assert g2["effective"] == "BENIM TEMAM"
+
+    lst = client.get("/api/templates?kind=dilekce").json()
+    flagged = next(t for c in lst["kategoriler"] for t in c["tipler"] if t["id"] == tid)
+    assert flagged["hasUserOverride"] is True
+
+    client.delete(f"/api/templates/{tid}?scope=user")
+    g3 = client.get(f"/api/templates/{tid}").json()
+    assert g3["userOverride"] is None
+    assert g3["effective"] == g3["default"]
+
+
+def test_templates_office_override_and_errors(client):
+    _enroll(client, "avukat")
+    tid = client.get("/api/templates?kind=sozlesme").json()["kategoriler"][0]["tipler"][0]["id"]
+
+    client.put(f"/api/templates/{tid}", json={"scope": "office", "content": "OFIS TEMASI"})
+    g = client.get(f"/api/templates/{tid}").json()
+    assert g["officeOverride"] == "OFIS TEMASI"
+    assert g["effective"] == "OFIS TEMASI"
+
+    assert client.get("/api/templates/yok-tip").status_code == 404
+    assert (
+        client.put("/api/templates/yok-tip", json={"scope": "user", "content": "x"}).status_code
+        == 404
+    )
+    assert (
+        client.put(f"/api/templates/{tid}", json={"scope": "bogus", "content": "x"}).status_code
+        == 400
+    )

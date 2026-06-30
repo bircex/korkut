@@ -44,6 +44,8 @@ from korkut.api.models import (
     ProposedEdit,
     RecoveryCode,
     StyleProfile,
+    TemplateDefault,
+    TemplateOverride,
     User,
 )
 from korkut.api.store import effective_theme, session
@@ -108,6 +110,11 @@ class StyleBody(BaseModel):
     signature: str = ""
     tone: str = ""
     boilerplate: str = ""
+
+
+class TemplateBody(BaseModel):
+    scope: str  # "user" | "office"
+    content: str
 
 
 # ---------------- helpers ----------------
@@ -956,6 +963,137 @@ def contract_types(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         _require_user(s, korkut_session)
     return petitions.contract_categories()
+
+
+# ---------------- template themes (Özelleştir) ----------------
+# Each petition/contract type has a built-in theme the LLM draws inspiration from. An office or
+# lawyer can shadow it; resolution is lawyer > office > default. Any member may edit either scope.
+
+
+@app.get("/api/templates")
+def list_templates(kind: str = "dilekce", korkut_session: str | None = Cookie(default=None)):
+    """Catalog of a kind ("dilekce"|"sozlesme") with per-type override flags."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        cats = petitions.contract_categories() if kind == "sozlesme" else petitions.categories()
+        office_overridden = set(
+            s.scalars(
+                select(TemplateOverride.type_id).where(
+                    TemplateOverride.office_id == user.office_id,
+                    TemplateOverride.user_id.is_(None),
+                )
+            ).all()
+        )
+        user_overridden = set(
+            s.scalars(
+                select(TemplateOverride.type_id).where(TemplateOverride.user_id == user.id)
+            ).all()
+        )
+        kategoriler = [
+            {
+                "kategori": cat["kategori"],
+                "tipler": [
+                    {
+                        "id": d["id"],
+                        "ad": d["ad"],
+                        "ref": d["ref"],
+                        "hasOfficeOverride": d["id"] in office_overridden,
+                        "hasUserOverride": d["id"] in user_overridden,
+                    }
+                    for d in cat["dilekceler"]
+                ],
+            }
+            for cat in cats
+        ]
+        return {"kind": kind, "kategoriler": kategoriler}
+
+
+@app.get("/api/templates/{type_id}")
+def get_template(type_id: str, korkut_session: str | None = Cookie(default=None)):
+    """The default theme + this office's and this lawyer's overrides + the effective result."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        info = petitions.get(type_id)
+        if info is None:
+            raise HTTPException(status_code=404, detail="Bilinmeyen tip")
+        default = s.scalar(select(TemplateDefault).where(TemplateDefault.type_id == type_id))
+        office = s.scalar(
+            select(TemplateOverride).where(
+                TemplateOverride.office_id == user.office_id,
+                TemplateOverride.user_id.is_(None),
+                TemplateOverride.type_id == type_id,
+            )
+        )
+        mine = s.scalar(
+            select(TemplateOverride).where(
+                TemplateOverride.user_id == user.id, TemplateOverride.type_id == type_id
+            )
+        )
+        return {
+            "id": type_id,
+            "ad": info["ad"],
+            "kind": info["tur"],
+            "default": default.content if default else None,
+            "officeOverride": office.content if office else None,
+            "userOverride": mine.content if mine else None,
+            "effective": effective_theme(s, user.office_id, user.id, type_id),
+        }
+
+
+@app.put("/api/templates/{type_id}")
+def save_template(
+    type_id: str, body: TemplateBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Upsert a personal ("user") or office-wide ("office") theme override for a type."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        if petitions.get(type_id) is None:
+            raise HTTPException(status_code=404, detail="Bilinmeyen tip")
+        office_id, user_id = _scope_ids(body.scope, user)
+        row = s.scalar(_override_query(type_id, office_id, user_id))
+        if row is None:
+            s.add(
+                TemplateOverride(
+                    office_id=office_id, user_id=user_id, type_id=type_id, content=body.content
+                )
+            )
+        else:
+            row.content = body.content
+        s.commit()
+        return {"ok": True}
+
+
+@app.delete("/api/templates/{type_id}")
+def delete_template(
+    type_id: str, scope: str = "user", korkut_session: str | None = Cookie(default=None)
+):
+    """Remove a personal or office override → the type falls back to the lower layer."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        office_id, user_id = _scope_ids(scope, user)
+        row = s.scalar(_override_query(type_id, office_id, user_id))
+        if row is not None:
+            s.delete(row)
+            s.commit()
+        return {"ok": True}
+
+
+def _scope_ids(scope: str, user: User) -> tuple[int | None, int | None]:
+    """Map a scope string to (office_id, user_id) for a TemplateOverride row."""
+    if scope == "user":
+        return None, user.id
+    if scope == "office":
+        return user.office_id, None
+    raise HTTPException(status_code=400, detail="scope 'user' veya 'office' olmalı")
+
+
+def _override_query(type_id: str, office_id: int | None, user_id: int | None):
+    cond = (
+        TemplateOverride.user_id == user_id
+        if user_id is not None
+        else (TemplateOverride.office_id == office_id) & TemplateOverride.user_id.is_(None)
+    )
+    return select(TemplateOverride).where(TemplateOverride.type_id == type_id, cond)
 
 
 @app.get("/api/documents")
