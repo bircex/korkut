@@ -46,15 +46,28 @@ Then:
 
 ## Docker
 
-The all-in-one local trial (web app + scheduled-send worker + integrations poller) builds from
-source:
+No local Python or Node needed. The install script has a Docker mode that builds and starts the
+all-in-one stack (web app + scheduled-send worker + integrations poller):
+
+```bash
+# macOS / Linux
+./scripts/install.sh --docker         # http://localhost:8090
+# Windows (PowerShell)
+./scripts/install.ps1 -Docker
+```
+
+It writes `.env` (with a generated `KORKUT_SECRET`) and runs `docker compose up -d --build`. Then
+create the first user inside the container:
+
+```bash
+docker compose -f deploy/docker-compose.yml exec korkut \
+  python -m korkut.api.adduser avukat --name "Av. Name"
+```
+
+Equivalently, without the script:
 
 ```bash
 docker compose -f deploy/docker-compose.yml up -d --build      # http://localhost:8090
-
-# create the first user inside the container
-docker compose -f deploy/docker-compose.yml exec korkut \
-  python -m korkut.api.adduser avukat --name "Av. Name"
 ```
 
 The SQLite database lives in `./data` and survives rebuilds. To stop: `docker compose -f

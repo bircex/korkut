@@ -38,8 +38,8 @@ answers under that office's identity.
 # Windows (PowerShell)
 ./scripts/install.ps1
 
-# …or Docker
-docker compose -f deploy/docker-compose.yml up -d --build   # http://localhost:8090
+# …or Docker (no local Python/Node needed)
+./scripts/install.sh --docker          # http://localhost:8090
 ```
 
 Then create a user and start the server — full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
