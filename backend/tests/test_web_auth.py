@@ -825,3 +825,67 @@ def test_templates_office_override_and_errors(client):
         client.put(f"/api/templates/{tid}", json={"scope": "bogus", "content": "x"}).status_code
         == 400
     )
+
+
+def _draft_email(client, cid, **fields):
+    """Drive a chat turn whose mocked answer calls the send_email handler; return the draft id."""
+    import korkut.api.app as appmod
+
+    args = {"to": "muvekkil@example.com", "subject": "Bilgi", "body": "Merhaba", **fields}
+
+    def fake_answer(user_text, **kwargs):
+        kwargs["handlers"]["send_email"](args)
+        return "E-posta taslağı hazır."
+
+    with patch.object(appmod.agent, "answer", side_effect=fake_answer):
+        return client.post(f"/api/sessions/{cid}/chat", json={"text": "mail at"}).json()
+
+
+def test_email_channel_config_roundtrip(client):
+    _enroll(client, "avukat")  # owner
+    r = client.put(
+        "/api/channels/email",
+        json={
+            "enabled": True,
+            "from_address": "ofis@gmail.com",
+            "from_name": "Örnek Hukuk",
+            "app_password": "app-pw",
+        },
+    )
+    assert r.status_code == 200
+    g = client.get("/api/channels/email").json()
+    assert g["enabled"] and g["from_address"] == "ofis@gmail.com" and g["hasPassword"] is True
+    assert "app_password" not in g and "config" not in g  # secret never exposed
+
+
+def test_email_draft_schedule_then_cancel(client):
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    resp = _draft_email(client, cid)
+    mid = resp["pending_email"]
+    assert mid is not None
+
+    box = client.get("/api/outbox").json()
+    assert any(m["id"] == mid and m["status"] == "draft" for m in box)
+
+    # Schedule to the future, confirm → queued (no send attempt).
+    client.put(
+        f"/api/outbox/{mid}",
+        json={
+            "to_addr": "muvekkil@example.com",
+            "subject": "Bilgi",
+            "body": "Merhaba",
+            "send_at": "2999-01-01T10:00:00",
+        },
+    )
+    assert client.post(f"/api/outbox/{mid}/confirm").json()["status"] == "queued"
+    assert client.post(f"/api/outbox/{mid}/cancel").json()["status"] == "cancelled"
+
+
+def test_email_confirm_without_config_fails(client):
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    mid = _draft_email(client, cid)["pending_email"]
+    # No email channel configured → immediate confirm cannot send.
+    out = client.post(f"/api/outbox/{mid}/confirm").json()
+    assert out["status"] == "failed" and out["error"]

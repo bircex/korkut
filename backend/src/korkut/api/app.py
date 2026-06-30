@@ -41,7 +41,9 @@ from korkut.api.models import (
     DocumentVersion,
     Message,
     Office,
+    OfficeChannel,
     OfficeModel,
+    OutboundMessage,
     ProposedEdit,
     RecoveryCode,
     StyleProfile,
@@ -49,9 +51,15 @@ from korkut.api.models import (
     TemplateOverride,
     User,
 )
-from korkut.api.store import effective_theme, office_model_cfg, session
+from korkut.api.store import (
+    effective_theme,
+    office_channel_config,
+    office_model_cfg,
+    session,
+)
 from korkut.brain import agent
 from korkut.core.tool_registry import ToolSpec
+from korkut.messaging import OutboundDraft, SendResult, build_channel
 
 _STATIC = Path(__file__).resolve().parent / "static"
 _HISTORY_TURNS = 20
@@ -131,6 +139,20 @@ class ExportBody(BaseModel):
     format: str  # "udf" | "docx"
     title: str = "belge"
     markdown: str
+
+
+class ChannelBody(BaseModel):
+    enabled: bool = False
+    from_address: str = ""
+    from_name: str = ""
+    app_password: str | None = None  # None → keep stored password; "" → clear it
+
+
+class OutboxBody(BaseModel):
+    to_addr: str
+    subject: str = ""
+    body: str = ""
+    send_at: str | None = None  # ISO 8601; null/past → send on confirm
 
 
 # ---------------- helpers ----------------
@@ -827,6 +849,34 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             "sohbete yalnızca tek cümlelik kısa bir bilgilendirme yaz.",
         }
 
+    # Korkut may propose an email; we persist it as a DRAFT and surface a confirmation card.
+    # Nothing is ever sent here — the lawyer approves via /api/outbox/{id}/confirm.
+    pending_email = {"id": None}
+
+    def _send_email(args: dict):
+        to = (args.get("to") or "").strip()
+        if not to:
+            return {"ok": False, "note": "Alıcı e-posta adresi gerekli."}
+        with session() as s:
+            msg = OutboundMessage(
+                office_id=user.office_id,
+                user_id=user.id,
+                kind="email",
+                to_addr=to,
+                subject=(args.get("subject") or "").strip(),
+                body=args.get("body") or "",
+                send_at=_parse_dt(args.get("send_at")),
+                status="draft",
+            )
+            s.add(msg)
+            s.commit()
+            pending_email["id"] = msg.id
+        return {
+            "ok": True,
+            "note": "E-posta taslağı hazırlandı; avukatın onayını bekliyor. Sohbete tek "
+            "cümlelik kısa bir bilgilendirme yaz (içeriği tekrar yazma).",
+        }
+
     # Detect the document type once: it gates the chat turn (ask for missing essentials before
     # drafting) and is reused as the petition type when the draft actually happens.
     detected = petitions.detect(text)
@@ -834,8 +884,8 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         text,
         office_name=office_name,
         history=history_msgs,
-        extra_tools=[_CANVAS_TOOL],
-        handlers={"dilekce_canvas": _canvas},
+        extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL],
+        handlers={"dilekce_canvas": _canvas, "send_email": _send_email},
         model_cfg=model_cfg,
         extra_system=petitions.required_hint(detected) if detected else None,
     )
@@ -866,7 +916,12 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         _accept_pending(doc_id)
         open_document = doc_id
 
-    return {"reply": reply, "title": title, "open_document": open_document}
+    return {
+        "reply": reply,
+        "title": title,
+        "open_document": open_document,
+        "pending_email": pending_email["id"],
+    }
 
 
 def _accept_pending(doc_id: int) -> None:
@@ -1212,6 +1267,199 @@ def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default
             s.add(doc)
             s.commit()
         return _doc_brief(doc, _pending(s, doc.id))
+
+
+# ---------------- messaging (outbound channels) ----------------
+
+
+def _parse_dt(raw: str | None) -> datetime | None:
+    """Parse an ISO 8601 string to naive UTC, or None if empty/invalid."""
+    if not raw or not raw.strip():
+        return None
+    try:
+        dt = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC).replace(tzinfo=None)
+    return dt
+
+
+def _channel_public(row: OfficeChannel | None, *, can_edit: bool) -> dict:
+    cfg = (row.config if row else None) or {}
+    return {
+        "kind": "email",
+        "enabled": bool(row and row.enabled),
+        "from_address": cfg.get("from_address", ""),
+        "from_name": cfg.get("from_name", ""),
+        "hasPassword": bool(cfg.get("app_password")),
+        "can_edit": can_edit,
+    }
+
+
+@app.get("/api/channels/email")
+def get_email_channel(korkut_session: str | None = Cookie(default=None)):
+    """The office's Gmail config (password hidden). Any member views; only the owner edits."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        row = s.scalar(
+            select(OfficeChannel).where(
+                OfficeChannel.office_id == user.office_id, OfficeChannel.kind == "email"
+            )
+        )
+        return _channel_public(row, can_edit=user.role == "owner")
+
+
+@app.put("/api/channels/email")
+def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(default=None)):
+    """Owner-only Gmail (SMTP) config upsert. `app_password` None keeps the stored one."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        if body.enabled and not body.from_address.strip():
+            raise HTTPException(status_code=400, detail="Gönderen e-posta adresi zorunludur.")
+        row = s.scalar(
+            select(OfficeChannel).where(
+                OfficeChannel.office_id == owner.office_id, OfficeChannel.kind == "email"
+            )
+        )
+        if row is None:
+            row = OfficeChannel(office_id=owner.office_id, kind="email", config={})
+            s.add(row)
+        cfg = dict(row.config or {})
+        cfg["from_address"] = body.from_address.strip()
+        cfg["from_name"] = body.from_name.strip()
+        if body.app_password is not None:
+            cfg["app_password"] = body.app_password.strip()
+        row.config = cfg
+        row.enabled = body.enabled
+        s.commit()
+        return _channel_public(row, can_edit=True)
+
+
+def _outbox_public(m: OutboundMessage) -> dict:
+    return {
+        "id": m.id,
+        "kind": m.kind,
+        "to": m.to_addr,
+        "subject": m.subject,
+        "body": m.body,
+        "send_at": m.send_at.isoformat() if m.send_at else None,
+        "status": m.status,
+        "error": m.error,
+        "created_at": m.created_at.isoformat() if m.created_at else None,
+        "sent_at": m.sent_at.isoformat() if m.sent_at else None,
+    }
+
+
+def _send_outbound(s: Session, msg: OutboundMessage) -> SendResult:
+    """Send one message now via its office's channel config; updates `msg` status in place."""
+    cfg = office_channel_config(s, msg.office_id, msg.kind)
+    msg.attempts += 1
+    if cfg is None:
+        msg.status = "failed"
+        msg.error = "Kanal yapılandırılmamış veya kapalı"
+        return SendResult(ok=False, detail=msg.error)
+    result = build_channel(msg.kind, cfg).send(
+        OutboundDraft(to_addr=msg.to_addr, subject=msg.subject, body=msg.body)
+    )
+    if result.ok:
+        msg.status = "sent"
+        msg.sent_at = _utcnow()
+        msg.error = None
+    else:
+        msg.status = "failed"
+        msg.error = result.detail
+    return result
+
+
+def _require_outbox(s: Session, user: User, mid: int) -> OutboundMessage:
+    msg = s.get(OutboundMessage, mid)
+    if msg is None or msg.office_id != user.office_id:
+        raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
+    return msg
+
+
+@app.get("/api/outbox")
+def list_outbox(korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        rows = s.scalars(
+            select(OutboundMessage)
+            .where(OutboundMessage.office_id == user.office_id)
+            .order_by(OutboundMessage.id.desc())
+            .limit(50)
+        ).all()
+        return [_outbox_public(m) for m in rows]
+
+
+@app.put("/api/outbox/{mid}")
+def edit_outbox(mid: int, body: OutboxBody, korkut_session: str | None = Cookie(default=None)):
+    """Edit a draft before confirming (recipient / subject / body / schedule)."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        msg = _require_outbox(s, user, mid)
+        if msg.status != "draft":
+            raise HTTPException(status_code=400, detail="Yalnızca taslak düzenlenebilir.")
+        msg.to_addr = body.to_addr.strip()
+        msg.subject = body.subject
+        msg.body = body.body
+        msg.send_at = _parse_dt(body.send_at)
+        s.commit()
+        return _outbox_public(msg)
+
+
+@app.post("/api/outbox/{mid}/confirm")
+def confirm_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
+    """Approve a draft: send now (immediate) or queue it (future send_at)."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        msg = _require_outbox(s, user, mid)
+        if msg.status != "draft":
+            raise HTTPException(status_code=400, detail="Bu mesaj zaten işlenmiş.")
+        if not msg.to_addr.strip():
+            raise HTTPException(status_code=400, detail="Alıcı adresi gerekli.")
+        if msg.send_at and msg.send_at > _utcnow():
+            msg.status = "queued"
+            s.commit()
+            return _outbox_public(msg)
+        _send_outbound(s, msg)
+        s.commit()
+        return _outbox_public(msg)
+
+
+@app.post("/api/outbox/{mid}/cancel")
+def cancel_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        msg = _require_outbox(s, user, mid)
+        if msg.status in ("draft", "queued"):
+            msg.status = "cancelled"
+            s.commit()
+        return _outbox_public(msg)
+
+
+_SEND_EMAIL_TOOL = ToolSpec(
+    name="send_email",
+    description=(
+        "Avukat bir E-POSTA göndermeni istediğinde bu aracı çağır (ör. 'şu müvekkile mail at', "
+        "'karşı tarafa ihtar gönder'). E-postayı SEN göndermezsin: taslağı hazırlarsın, avukat "
+        "gözden geçirip onaylar ve gönderir. Alıcı (to), konu (subject) ve gövdeyi (body) net "
+        "doldur. Avukat 'X tarihinde/saatinde gönder' derse send_at'a ISO 8601 yaz; demezse boş "
+        "bırak. Çağırdıktan sonra sohbete yalnızca tek cümlelik kısa bilgilendirme yaz."
+    ),
+    parameters={
+        "to": {"type": "string", "required": True, "description": "Alıcı e-posta adresi"},
+        "subject": {"type": "string", "required": True, "description": "E-posta konusu"},
+        "body": {"type": "string", "required": True, "description": "E-posta gövdesi (düz metin)"},
+        "send_at": {
+            "type": "string",
+            "required": False,
+            "description": "İsteğe bağlı gönderim zamanı (ISO 8601). Boşsa onayla hemen gider.",
+        },
+    },
+    requires_key=None,
+    module="",
+)
 
 
 _CANVAS_TOOL = ToolSpec(

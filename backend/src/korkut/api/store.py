@@ -14,7 +14,7 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
-from korkut.api.models import OfficeModel, TemplateDefault, TemplateOverride
+from korkut.api.models import OfficeChannel, OfficeModel, TemplateDefault, TemplateOverride
 from korkut.core import db
 from korkut.core.router import ModelCfg
 from korkut.paths import DATA_DIR, TEMPLATES_DIR
@@ -88,6 +88,18 @@ def office_model_cfg(s: Session, office_id: int) -> ModelCfg | None:
         api_key=row.api_key or None,
         local=row.is_local,
     )
+
+
+def office_channel_config(s: Session, office_id: int, kind: str) -> dict | None:
+    """The office's config dict for an enabled outbound channel (`kind`), or None if unset/off."""
+    row = s.scalar(
+        select(OfficeChannel).where(
+            OfficeChannel.office_id == office_id, OfficeChannel.kind == kind
+        )
+    )
+    if row is None or not row.enabled:
+        return None
+    return dict(row.config or {})
 
 
 def sync_template_defaults(engine) -> None:
