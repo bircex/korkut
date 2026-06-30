@@ -1,0 +1,100 @@
+# Gold corpus for measuring the redactor's recall (missed PII = privacy leak) and
+# precision (over-masking that degrades answer quality). See measure.py.
+#
+# Each case:
+#   text       — a realistic Turkish legal-context sentence sent toward a cloud model.
+#   must_mask  — PII values that MUST be absent from the redacted output (a leak if present).
+#   must_keep  — non-PII values that MUST remain (a false positive if masked away).
+#   tags       — categories used to break recall/precision down per PII type.
+#
+# Valid TCKNs below pass the official checksum; "12345678901" intentionally fails it.
+
+cases:
+  # ---- Deterministic detectors: expected at (or near) 100% recall ----
+  - id: tckn_valid
+    text: "Müvekkil Ahmet Yılmaz, TCKN 10000000146 ile başvurdu."
+    must_mask: ["10000000146"]
+    tags: [tckn]
+
+  - id: phone_gsm
+    text: "İletişim için cep telefonu 05321234567 numarasını verdi."
+    must_mask: ["05321234567"]
+    tags: [phone]
+
+  - id: iban
+    text: "Ödeme TR330006100519786457841326 IBAN numarasına yapılacak."
+    must_mask: ["TR330006100519786457841326"]
+    tags: [iban]
+
+  - id: plate
+    text: "Kazaya karışan araç 34 ABC 1234 plakalı taşıttır."
+    must_mask: ["34 ABC 1234"]
+    tags: [plate]
+
+  - id: case_no
+    text: "Dosya 2023/1542 esas numarası ile görülmektedir."
+    must_mask: ["2023/1542"]
+    tags: [case_no]
+
+  # ---- Person names: seed-list strength vs. its blind spot ----
+  - id: name_in_seed
+    text: "Davacı Mehmet Demir vekili ile duruşmaya katıldı."
+    must_mask: ["Mehmet Demir"]
+    tags: [person_in_seed]
+
+  - id: name_out_of_seed_1
+    text: "Müvekkilim Oğuzhan Karaca aleyhine icra takibi başlatılmış."
+    must_mask: ["Oğuzhan Karaca"]
+    tags: [person_out_of_seed]
+
+  - id: name_out_of_seed_2
+    text: "Tanık Cengiz Aktürk beyanında olayları doğruladı."
+    must_mask: ["Cengiz Aktürk"]
+    tags: [person_out_of_seed]
+
+  - id: name_out_of_seed_3
+    text: "Karşı taraf Yağız Bozkurt sözleşmeyi imzalamaktan kaçındı."
+    must_mask: ["Yağız Bozkurt"]
+    tags: [person_out_of_seed]
+
+  # ---- PII types with no detector today: expected leaks ----
+  - id: address
+    text: "Tebligat adresi Bağdat Caddesi No:12 Kadıköy/İstanbul olarak bildirildi."
+    must_mask: ["Bağdat Caddesi No:12 Kadıköy/İstanbul"]
+    tags: [address]
+
+  - id: email
+    text: "Bildirimler ahmet.yilmaz@example.com adresine gönderilsin."
+    must_mask: ["ahmet.yilmaz@example.com"]
+    tags: [email]
+
+  - id: company
+    text: "Sözleşme ABC İnşaat Sanayi A.Ş. ile akdedilmiştir."
+    must_mask: ["ABC İnşaat Sanayi A.Ş."]
+    tags: [company]
+
+  - id: dob
+    text: "Müvekkil 01.01.1980 doğumlu olup ehliyet sahibidir."
+    must_mask: ["01.01.1980"]
+    tags: [dob]
+
+  # ---- Precision controls: these MUST survive untouched ----
+  - id: invalid_tckn
+    text: "Sistemde 12345678901 numarası geçersiz olarak işaretlendi."
+    must_keep: ["12345678901"]
+    tags: [precision, tckn]
+
+  - id: court_names
+    text: "Yargıtay Hukuk Genel Kurulu ve Danıştay kararları emsal alınmıştır."
+    must_keep: ["Yargıtay", "Danıştay"]
+    tags: [precision, court]
+
+  - id: statute_ref
+    text: "6098 sayılı Türk Borçlar Kanunu m. 49 hükmü uygulanır."
+    must_keep: ["6098", "Türk Borçlar Kanunu"]
+    tags: [precision, statute]
+
+  - id: legal_term_collision
+    text: "Uyuşmazlık Deniz Ticaret Hukuku kapsamında değerlendirilmelidir."
+    must_keep: ["Deniz Ticaret Hukuku"]
+    tags: [precision, term_collision]
