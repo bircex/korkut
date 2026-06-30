@@ -45,7 +45,9 @@ def engine():
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
         _migrate_legacy(_engine)  # pre-init: drop obsolete chat tables so init_db rebuilds them
-        _migrate_matter_domain(_engine)  # pre-init: drop dormant case tables → rebuilt office-scoped
+        _migrate_matter_domain(
+            _engine
+        )  # pre-init: drop dormant case tables → rebuilt office-scoped
         db.init_db(_engine)  # create any missing tables (offices, documents, matters, …)
         _migrate_tenant(_engine)  # post-init: add multi-tenant columns to existing tables
         _migrate_matter_links(_engine)  # post-init: link chats + correspondence to a matter

@@ -19,7 +19,18 @@ from datetime import date as _date
 from datetime import datetime
 from datetime import time as _time
 
-from sqlalchemy import JSON, Date, ForeignKey, Index, String, Text, Time, UniqueConstraint, func, text
+from sqlalchemy import (
+    JSON,
+    Date,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from korkut.core.db import Base
@@ -129,7 +140,9 @@ class Conversation(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     # Optional link to a matter (dosya): a chat can belong to a case file. Null = unfiled.
-    matter_id: Mapped[int | None] = mapped_column(ForeignKey("matters.id"), default=None, index=True)
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
     title: Mapped[str] = mapped_column(String(120), default="Yeni sohbet")
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
@@ -289,7 +302,9 @@ class OutboundMessage(Base):
     office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
     # Optional link to a matter (dosya): correspondence filed under a case file. Null = unfiled.
-    matter_id: Mapped[int | None] = mapped_column(ForeignKey("matters.id"), default=None, index=True)
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
     kind: Mapped[str] = mapped_column(String(32), default="email")
     to_addr: Mapped[str] = mapped_column(String(320))
     subject: Mapped[str] = mapped_column(String(500), default="")

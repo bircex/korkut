@@ -53,7 +53,9 @@ def test_create_list_get_hearing(seeded):
     assert [m["title"] for m in h["list_matters"]({})["matters"]] == ["Ahmet Y. – Boşanma"]
     assert h["list_clients"]({})["count"] == 1
 
-    add = h["add_hearing"]({"matter_id": mid, "date": "2099-07-12", "time": "10:30", "type": "ön inceleme"})
+    add = h["add_hearing"](
+        {"matter_id": mid, "date": "2099-07-12", "time": "10:30", "type": "ön inceleme"}
+    )
     assert add["ok"] is True and add["hearing"]["time"] == "10:30"
 
     detail = h["get_matter"]({"matter_id": mid})["matter"]
@@ -77,7 +79,10 @@ def test_office_isolation(seeded):
     mid = ha["create_matter"]({"title": "Gizli"})["matter"]["id"]
 
     assert hb["list_matters"]({})["count"] == 0
-    assert hb["get_matter"]({"matter_id": mid}) == {"error": "not_found", "detail": "Dosya bulunamadı."}
+    assert hb["get_matter"]({"matter_id": mid}) == {
+        "error": "not_found",
+        "detail": "Dosya bulunamadı.",
+    }
     assert hb["add_hearing"]({"matter_id": mid, "date": "2099-01-01"})["ok"] is False
     assert hb["update_matter"]({"matter_id": mid, "status": "closed"})["ok"] is False
 
@@ -100,7 +105,9 @@ def test_upcoming_agenda_merges_hearings_and_deadlines(seeded):
     soon = (date.today() + timedelta(days=3)).isoformat()
     far = (date.today() + timedelta(days=100)).isoformat()
     h["add_hearing"]({"matter_id": mid, "date": soon})
-    assert h["add_deadline"]({"matter_id": mid, "due_date": soon, "title": "Cevap", "type": "cevap"})["ok"]
+    assert h["add_deadline"](
+        {"matter_id": mid, "due_date": soon, "title": "Cevap", "type": "cevap"}
+    )["ok"]
     h["add_deadline"]({"matter_id": mid, "due_date": far, "title": "Temyiz"})
 
     ag = h["upcoming_deadlines"]({"days": 14})
@@ -108,17 +115,72 @@ def test_upcoming_agenda_merges_hearings_and_deadlines(seeded):
     assert h["upcoming_deadlines"]({"days": 200})["count"] == 3  # far deadline now in window
 
     # Completing the near deadline removes it from the 14-day agenda (hearing stays).
-    did = h["list_deadlines"]({"matter_id": mid})["deadlines"][0]["id"]  # ordered by due_date → near
+    did = h["list_deadlines"]({"matter_id": mid})["deadlines"][0][
+        "id"
+    ]  # ordered by due_date → near
     assert h["complete_deadline"]({"deadline_id": did})["ok"]
     assert h["upcoming_deadlines"]({"days": 14})["count"] == 1
+
+
+def test_documents_linked_and_prepare_hearing(seeded):
+    from datetime import date, timedelta
+
+    store_mod, user_a, _ = seeded
+    from korkut.api.models import Conversation, Document
+
+    h = _tools(user_a)
+    mid = h["create_matter"]({"title": "Dosya"})["matter"]["id"]
+    # A draft in a conversation filed under the matter → should surface as the matter's document.
+    with store_mod.session() as s:
+        conv = Conversation(office_id=user_a.office_id, matter_id=mid, title="Sohbet")
+        s.add(conv)
+        s.flush()
+        s.add(
+            Document(
+                conversation_id=conv.id, title="Dava Dilekçesi", content_md="...", status="draft"
+            )
+        )
+        s.commit()
+
+    full = h["get_matter"]({"matter_id": mid})["matter"]
+    assert [d["title"] for d in full["documents"]] == ["Dava Dilekçesi"]
+
+    # prepare_hearing bundles matter + upcoming agenda + linked documents + a brief instruction.
+    h["add_hearing"]({"matter_id": mid, "date": (date.today() + timedelta(days=2)).isoformat()})
+    pack = h["prepare_hearing"]({"matter_id": mid})
+    assert pack["matter"]["title"] == "Dosya"
+    assert len(pack["agenda"]) == 1 and pack["agenda"][0]["kind"] == "hearing"
+    assert "DURUŞMA HAZIRLIK" in pack["note"]
+    assert [d["title"] for d in pack["matter"]["documents"]] == ["Dava Dilekçesi"]
+
+
+def test_prepare_hearing_isolation(seeded):
+    _, user_a, user_b = seeded
+    ha, hb = _tools(user_a), _tools(user_b)
+    mid = ha["create_matter"]({"title": "G"})["matter"]["id"]
+    assert hb["prepare_hearing"]({"matter_id": mid}) == {
+        "error": "not_found",
+        "detail": "Dosya bulunamadı.",
+    }
 
 
 def test_deadline_isolation_and_errors(seeded):
     _, user_a, user_b = seeded
     ha, hb = _tools(user_a), _tools(user_b)
     mid = ha["create_matter"]({"title": "G"})["matter"]["id"]
-    did = ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "S"})["deadline"]["id"]
-    assert hb["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "X"})["ok"] is False
+    did = ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "S"})[
+        "deadline"
+    ]["id"]
+    assert (
+        hb["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "X"})["ok"]
+        is False
+    )
     assert hb["complete_deadline"]({"deadline_id": did})["ok"] is False
-    assert ha["add_deadline"]({"matter_id": mid, "due_date": "kötü tarih", "title": "S"})["ok"] is False
-    assert ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "  "})["ok"] is False
+    assert (
+        ha["add_deadline"]({"matter_id": mid, "due_date": "kötü tarih", "title": "S"})["ok"]
+        is False
+    )
+    assert (
+        ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "  "})["ok"]
+        is False
+    )

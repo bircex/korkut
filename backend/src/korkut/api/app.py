@@ -34,8 +34,8 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api import auth, extract, petitions, totp
-from korkut.api import matter_tools, matters_store as mstore
+from korkut.api import auth, extract, matter_tools, petitions, totp
+from korkut.api import matters_store as mstore
 from korkut.api.models import (
     AuthEvent,
     Client,
@@ -102,7 +102,7 @@ def _safe_answer(*args, **kwargs) -> str:
         raise
     except Exception as exc:
         logger.exception("model call failed")
-        raise HTTPException(status_code=503, detail=_model_error_detail(exc))
+        raise HTTPException(status_code=503, detail=_model_error_detail(exc)) from exc
 
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -856,9 +856,7 @@ def list_sessions(
 
 
 @app.post("/api/sessions")
-def create_session(
-    matter_id: int | None = None, korkut_session: str | None = Cookie(default=None)
-):
+def create_session(matter_id: int | None = None, korkut_session: str | None = Cookie(default=None)):
     """Create a chat session, optionally filed under a matter (`?matter_id=`)."""
     with session() as s:
         user = _require_user(s, korkut_session)
@@ -973,15 +971,15 @@ def create_matter_ep(body: MatterBody, korkut_session: str | None = Cookie(defau
             case_type=body.case_type,
             counterparty=body.counterparty,
         )
-        return mstore.matter_detail(m)
+        return mstore.matter_full(s, user.office_id, m.id)
 
 
 @app.get("/api/matters/{mid}")
 def get_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        m = _require_matter(s, user, mid)
-        return mstore.matter_detail(m)
+        _require_matter(s, user, mid)
+        return mstore.matter_full(s, user.office_id, mid)
 
 
 @app.patch("/api/matters/{mid}")
@@ -991,8 +989,8 @@ def update_matter_ep(
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
-        m = mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
-        return mstore.matter_detail(m)
+        mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
+        return mstore.matter_full(s, user.office_id, mid)
 
 
 @app.delete("/api/matters/{mid}")
@@ -1006,9 +1004,7 @@ def delete_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)
 
 
 @app.post("/api/matters/{mid}/hearings")
-def add_hearing_ep(
-    mid: int, body: HearingBody, korkut_session: str | None = Cookie(default=None)
-):
+def add_hearing_ep(mid: int, body: HearingBody, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
@@ -1024,7 +1020,9 @@ def add_hearing_ep(
                 notes=body.notes,
             )
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}")
+            raise HTTPException(
+                status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}"
+            ) from exc
         return mstore.hearing_brief(h)
 
 
@@ -1038,17 +1036,24 @@ def upcoming_ep(days: int = 14, korkut_session: str | None = Cookie(default=None
 
 
 @app.post("/api/matters/{mid}/deadlines")
-def add_deadline_ep(mid: int, body: DeadlineBody, korkut_session: str | None = Cookie(default=None)):
+def add_deadline_ep(
+    mid: int, body: DeadlineBody, korkut_session: str | None = Cookie(default=None)
+):
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
         try:
             d = mstore.add_deadline(
-                s, user.office_id, mid, due_date=body.due_date, title=body.title,
-                type=body.type, notes=body.notes,
+                s,
+                user.office_id,
+                mid,
+                due_date=body.due_date,
+                title=body.title,
+                type=body.type,
+                notes=body.notes,
             )
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}")
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
         return mstore.deadline_brief(d)
 
 

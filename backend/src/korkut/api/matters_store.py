@@ -9,14 +9,13 @@ helper style.
 from __future__ import annotations
 
 from datetime import date as _date
-from datetime import datetime
+from datetime import datetime, timedelta
 from datetime import time as _time
-from datetime import timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api.models import Client, Deadline, Hearing, Matter
+from korkut.api.models import Client, Conversation, Deadline, Document, Hearing, Matter
 
 # Fields a caller may set on create/update (whitelist guards against arbitrary attribute writes).
 _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "status", "notes")
@@ -125,11 +124,37 @@ def get_matter(s: Session, office_id: int, matter_id: int) -> Matter | None:
     return m if m and m.office_id == office_id else None
 
 
+def matter_documents(s: Session, office_id: int, matter_id: int) -> list[dict]:
+    """Documents (drafts) of conversations filed under this matter — the matter's work product."""
+    rows = s.scalars(
+        select(Document)
+        .join(Conversation, Document.conversation_id == Conversation.id)
+        .where(Conversation.matter_id == matter_id, Conversation.office_id == office_id)
+        .order_by(Document.updated_at.desc())
+    )
+    return [
+        {
+            "id": d.id,
+            "conversation_id": d.conversation_id,
+            "title": d.title,
+            "status": d.status,
+            "updated_at": d.updated_at.isoformat() if d.updated_at else None,
+        }
+        for d in rows
+    ]
+
+
+def matter_full(s: Session, office_id: int, matter_id: int) -> dict | None:
+    """Full matter view (UI + agent): detail (hearings + deadlines) + linked documents."""
+    m = get_matter(s, office_id, matter_id)
+    if m is None:
+        return None
+    return {**matter_detail(m), "documents": matter_documents(s, office_id, matter_id)}
+
+
 def list_clients(s: Session, office_id: int) -> list[Client]:
     return list(
-        s.scalars(
-            select(Client).where(Client.office_id == office_id).order_by(Client.full_name)
-        )
+        s.scalars(select(Client).where(Client.office_id == office_id).order_by(Client.full_name))
     )
 
 

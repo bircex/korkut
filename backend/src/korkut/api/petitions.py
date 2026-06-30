@@ -218,36 +218,6 @@ def dava_turu(type_id: str) -> dict | None:
     return _dava_turleri().get(turu) if turu else None
 
 
-def required_hint(type_id: str) -> str | None:
-    """Completeness gate for the chat turn: the must-have facts/evidence for a draft, or None.
-
-    Fed to agent.answer(extra_system=...) so Korkut asks for missing essentials in one message
-    BEFORE opening the Canvas, instead of drafting a placeholder-riddled document. Built from the
-    intake's required questions + the archetype's mandatory evidence (see docs/DRAFTING_FLOW.md).
-    """
-    info = get(type_id)
-    if not info or info["tur"] != "dilekce":
-        return None
-    items: list[str] = []
-    ik = intake(type_id)
-    if ik:
-        items += [s["soru"] for s in (ik.get("sorular") or []) if s.get("zorunlu")]
-    turu = dava_turu(type_id)
-    if turu:
-        zorunlu = [d["ad"] for d in (turu.get("deliller") or []) if d.get("zorunlu") is True]
-        if zorunlu:
-            items.append("Zorunlu belge/delil: " + ", ".join(zorunlu))
-    if not items:
-        return None
-    bullet = "\n".join(f"- {x}" for x in items)
-    return (
-        f"BELGE HAZIRLIK KONTROLÜ — '{info['ad']}' için sağlam bir taslak şu bilgileri gerektirir:"
-        f"\n{bullet}\n"
-        "Kullanıcı bunların çoğunu sohbette HENÜZ vermediyse: dilekce_canvas aracını ÇAĞIRMA; "
-        "bunun yerine eksik bilgileri TEK ve kısa bir mesajda sor. Bilgiler yeterliyse aracı çağır."
-    )
-
-
 @lru_cache(maxsize=1)
 def _index() -> dict[str, dict]:
     """type id -> {ad, ref, kategori, tur}. ref = mahkeme (dilekçe) | mevzuat (sözleşme)."""

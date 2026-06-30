@@ -27,7 +27,9 @@ def test_parse_time():
 
 
 def test_shapers_never_leak_office_id():
-    c = Client(office_id=1, full_name="Ahmet Yılmaz", phone="555", email="a@x.tr", national_id="123")
+    c = Client(
+        office_id=1, full_name="Ahmet Yılmaz", phone="555", email="a@x.tr", national_id="123"
+    )
     assert ms.client_brief(c) == {
         "id": None,
         "full_name": "Ahmet Yılmaz",
@@ -37,7 +39,9 @@ def test_shapers_never_leak_office_id():
     }
     assert "office_id" not in ms.client_brief(c)
 
-    h = Hearing(office_id=1, matter_id=2, date=date(2026, 7, 12), time=time(10, 30), type="ön inceleme")
+    h = Hearing(
+        office_id=1, matter_id=2, date=date(2026, 7, 12), time=time(10, 30), type="ön inceleme"
+    )
     hb = ms.hearing_brief(h)
     assert hb["date"] == "2026-07-12" and hb["time"] == "10:30" and hb["type"] == "ön inceleme"
     assert "office_id" not in hb
