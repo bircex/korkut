@@ -1116,9 +1116,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             "cümlelik kısa bir bilgilendirme yaz (içeriği tekrar yazma).",
         }
 
-    # Detect the document type once: it gates the chat turn (ask for missing essentials before
-    # drafting) and is reused as the petition type when the draft actually happens.
-    detected = petitions.detect(text)
+    # Intent is the model's call, not a keyword gate: whether to draft (and thus whether to ask for
+    # missing essentials first) is decided by the model via the dilekce_canvas tool contract — see
+    # _CANVAS_TOOL. The document type is only inferred later, once a draft is actually chosen.
     # Office-scoped matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
     m_tools, m_handlers = matter_tools.build_matter_tools(user)
     reply = _safe_answer(
@@ -1128,7 +1128,6 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, *m_tools],
         handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
         model_cfg=model_cfg,
-        extra_system=petitions.required_hint(detected) if detected else None,
     )
 
     with session() as s:
@@ -1151,8 +1150,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
                 s.add(doc)
                 s.commit()
             doc_id = doc.id
-        # Korkut infers the petition type itself, then drafts in the standard format and the
-        # result lands straight in the editor (the editor is the lawyer's review surface).
+        # The model committed to drafting → infer the petition type now (for the standard
+        # format/style) and draft straight into the editor (the lawyer's review surface).
+        detected = petitions.detect(text)
         _make_draft(doc_id, text, history_msgs, detected, style=style, user_id=user.id)
         _accept_pending(doc_id)
         open_document = doc_id
@@ -1838,7 +1838,12 @@ _CANVAS_TOOL = ToolSpec(
         "Avukat bir hukuki BELGE (dilekçe, ihtarname, sözleşme, başvuru, temyiz/istinaf vb.) "
         "yazmanı ya da mevcut belgeyi DÜZENLEMENI istediğinde bu aracı çağır. Belgenin metnini "
         "sohbete YAZMA — belge sağdaki Canvas editöründe hazırlanacak. Sıradan soru-cevap veya "
-        "araştırma için bu aracı ÇAĞIRMA."
+        "araştırma için bu aracı ÇAĞIRMA. "
+        "İNTAKE KURALI: Bu aracı yalnızca belgeyi sağlam hazırlamaya yetecek temel bilgiye "
+        "(taraflar, konu/talep, kritik tarih ve tutarlar) sahipken çağır. Bu bilgiler sohbette "
+        "henüz YOKSA aracı ÇAĞIRMA; bunun yerine eksikleri TEK ve kısa bir mesajda sor. "
+        "Bir konuyu AÇIKLAMAK (ör. 'boşanma davası nasıl açılır?') belge yazma talebi DEĞİLDİR — "
+        "yalnızca cevap ver."
     ),
     parameters={},
     requires_key=None,
