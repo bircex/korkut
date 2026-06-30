@@ -284,6 +284,25 @@ export function MattersPanel({
                 Süre ekle
               </button>
             </div>
+
+            <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Belgeler</h2>
+            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+              {detail.documents.length === 0 && (
+                <div className="px-4 py-3 text-sm text-zinc-400">Bu dosyaya bağlı belge yok.</div>
+              )}
+              {detail.documents.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => onOpenSession(d.conversation_id)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50"
+                >
+                  <span className="text-xs">📄</span>
+                  <span className="min-w-0 flex-1 truncate text-zinc-800">{d.title}</span>
+                  <span className="shrink-0 text-xs text-zinc-400">{d.status}</span>
+                  <span className="shrink-0 text-zinc-300">›</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

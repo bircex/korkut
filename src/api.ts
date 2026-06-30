@@ -198,11 +198,19 @@ export type AgendaItem = {
   location?: string | null; // hearing
   status?: string; // deadline
 };
+export type MatterDocument = {
+  id: number;
+  conversation_id: number;
+  title: string;
+  status: string;
+  updated_at: string | null;
+};
 export type MatterDetail = MatterBrief & {
   client: ClientBrief | null;
   notes: string | null;
   hearings: Hearing[];
   deadlines: Deadline[];
+  documents: MatterDocument[];
 };
 export type MatterInput = {
   title: string;
