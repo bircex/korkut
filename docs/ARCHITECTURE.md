@@ -78,8 +78,8 @@ Two kinds:
    `tool.yaml` schemas. The search/fetch surface is **consolidated**: a single
    `search_decisions(source=...)` and `fetch_document(source=...)` route to per-source backends
    (Yargıtay, Danıştay, UYAP Emsal, mevzuat, KİK, Rekabet, Sayıştay, GİB, Uyuşmazlık, KVKK, BDDK,
-   insurance arbitration). This keeps the per-request token footprint small — important for weak
-   local models.
+   insurance arbitration; see [SOURCES.md](SOURCES.md) for the full list and how they're accessed).
+   This keeps the per-request token footprint small — important for weak local models.
 2. **Per-request handler tools** built in the chat endpoint (`api/matter_tools.py`,
    `_CANVAS_TOOL`, `_SEND_EMAIL_TOOL`). These close over the authenticated user, enforce `office_id`,
    and act on the office's own data (matters, hearings, deadlines, drafting Canvas signal, e-mail
