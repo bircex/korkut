@@ -45,8 +45,10 @@ def engine():
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
         _migrate_legacy(_engine)  # pre-init: drop obsolete chat tables so init_db rebuilds them
-        db.init_db(_engine)  # create any missing tables (offices, documents, …)
+        _migrate_matter_domain(_engine)  # pre-init: drop dormant case tables → rebuilt office-scoped
+        db.init_db(_engine)  # create any missing tables (offices, documents, matters, …)
         _migrate_tenant(_engine)  # post-init: add multi-tenant columns to existing tables
+        _migrate_conversation_matter(_engine)  # post-init: link chats to a matter (matter_id)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         sync_template_defaults(
             _engine
@@ -204,6 +206,38 @@ def _migrate_legacy(engine) -> None:
             conn.execute(text("DROP TABLE messages"))
             if "conversations" in tables:
                 conn.execute(text("DROP TABLE conversations"))
+
+
+def _migrate_matter_domain(engine) -> None:
+    """Retire the dormant pre-tenant case/client/hearing/petition tables → init_db rebuilds them.
+
+    An earlier `create_all` created clients/cases/hearings/petitions from `core.db`, but they had no
+    `office_id`, no endpoints and 0 rows. Phase 1 replaces them with office-scoped Matter/Client/
+    Hearing models. Any of those tables LACKING `office_id` is the old dead schema → drop it (child
+    tables first for FK safety); init_db then recreates the new ones. Idempotent: a table that
+    already has `office_id` (new schema) is left untouched; a fresh DB has none of them.
+    """
+    insp = inspect(engine)
+    tables = set(insp.get_table_names())
+    with engine.begin() as conn:
+        for t in ("hearings", "petitions", "cases", "clients"):
+            if t in tables and "office_id" not in {c["name"] for c in insp.get_columns(t)}:
+                conn.execute(text(f"DROP TABLE {t}"))
+
+
+def _migrate_conversation_matter(engine) -> None:
+    """Add `conversations.matter_id` to an existing DB so a chat can be filed under a matter.
+
+    Kept separate from `_migrate_tenant` (which early-returns on already-tenant DBs). Idempotent:
+    skipped once the column exists; a fresh DB already has it from init_db.
+    """
+    insp = inspect(engine)
+    if "conversations" not in insp.get_table_names():
+        return
+    if "matter_id" in {c["name"] for c in insp.get_columns("conversations")}:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE conversations ADD COLUMN matter_id INTEGER"))
 
 
 def _migrate_tenant(engine) -> None:

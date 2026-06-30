@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type Member, type StyleFields, type User } from "../api";
 import { EmailSettings } from "./EmailSettings";
+import { IntegrationsSettings } from "./IntegrationsSettings";
 import { ModelSettings } from "./ModelSettings";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -281,12 +282,13 @@ function StyleTab() {
   );
 }
 
-type Tab = "account" | "members" | "style" | "model" | "email";
+type Tab = "account" | "members" | "style" | "integrations" | "model" | "email";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
   members: "Ofis üyeleri",
   style: "Yazım stili",
+  integrations: "Entegrasyonlar",
   model: "Model",
   email: "E-posta",
 };
@@ -297,6 +299,8 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
     { id: "account", label: "Hesap" },
     { id: "members", label: "Üyeler" },
     { id: "style", label: "Stil" },
+    // Every member can link their own account; channel config inside is owner-gated.
+    { id: "integrations", label: "Entegrasyonlar" },
     // Model + e-posta are office-wide settings — owner only.
     ...(user.role === "owner"
       ? [
@@ -351,6 +355,7 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
           )}
           {tab === "members" && <Members isOwner={user.role === "owner"} />}
           {tab === "style" && <StyleTab />}
+          {tab === "integrations" && <IntegrationsSettings />}
           {tab === "model" && user.role === "owner" && <ModelSettings />}
           {tab === "email" && user.role === "owner" && <EmailSettings />}
         </div>

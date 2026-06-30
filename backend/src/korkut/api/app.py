@@ -19,6 +19,7 @@ HttpOnly + SameSite=Strict (+ Secure behind TLS) cookies. See SECURITY.md.
 from __future__ import annotations
 
 import difflib
+import logging
 import os
 import re
 import time
@@ -34,11 +35,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from korkut.api import auth, extract, petitions, totp
+from korkut.api import matter_tools, matters_store as mstore
 from korkut.api.models import (
     AuthEvent,
+    Client,
     Conversation,
     Document,
     DocumentVersion,
+    IntegrationLink,
+    Matter,
     Message,
     Office,
     OfficeChannel,
@@ -59,6 +64,46 @@ from korkut.api.store import (
 )
 from korkut.brain import agent
 from korkut.core.tool_registry import ToolSpec
+
+logger = logging.getLogger("korkut.api")
+
+# Shown when a model call fails (endpoint down, wrong URL, no key) instead of a raw 500, so the
+# user is pointed at the fix rather than a stack trace.
+_MODEL_DOWN_DETAIL = (
+    "Yapay zeka modeline ulaşılamadı. Modelin (örn. yerel sunucunuz) çalıştığından emin olun "
+    "veya Ayarlar → Model'den bağlantıyı kontrol edin."
+)
+_MODEL_CONTEXT_DETAIL = (
+    "İstek, modelin context penceresinden uzun. Modeli daha büyük 'Context Length' "
+    "(örn. 16384 veya üzeri) ile yeniden yükleyin."
+)
+
+
+def _model_error_detail(exc: Exception) -> str:
+    """Map a provider failure to an actionable Turkish message — connection vs. context vs. other.
+
+    The probe (`/api/model/health`) only proves the endpoint answers; a chat can still fail because
+    the prompt overflows the model's loaded context, so these cases must read differently.
+    """
+    name = type(exc).__name__.lower()
+    text = str(exc).lower()
+    if "connection" in name or "timeout" in name:
+        return _MODEL_DOWN_DETAIL
+    if "context length" in text or "context window" in text or "tokens to keep" in text:
+        return _MODEL_CONTEXT_DETAIL
+    return f"Yapay zeka modeli isteği yanıtlayamadı. Ayrıntı: {str(exc)[:200]}"
+
+
+def _safe_answer(*args, **kwargs) -> str:
+    """`agent.answer` wrapper that turns provider failures into a friendly, actionable 503."""
+    try:
+        return agent.answer(*args, **kwargs)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("model call failed")
+        raise HTTPException(status_code=503, detail=_model_error_detail(exc))
+
 
 _STATIC = Path(__file__).resolve().parent / "static"
 _HISTORY_TURNS = 20
@@ -147,11 +192,57 @@ class ChannelBody(BaseModel):
     app_password: str | None = None  # None → keep stored password; "" → clear it
 
 
+class TelegramChannelBody(BaseModel):
+    enabled: bool = False
+    bot_token: str | None = None  # None → keep stored token; "" → clear it
+
+
+class WhatsAppChannelBody(BaseModel):
+    enabled: bool = False
+    base_url: str = ""
+    token: str | None = None  # shared secret with the sidecar; None → keep stored
+
+
 class OutboxBody(BaseModel):
     to_addr: str
     subject: str = ""
     body: str = ""
     send_at: str | None = None  # ISO 8601; null/past → send on confirm
+
+
+class MatterBody(BaseModel):
+    title: str
+    client_name: str | None = None
+    file_no: str | None = None
+    court: str | None = None
+    case_type: str | None = None
+    counterparty: str | None = None
+
+
+class MatterUpdateBody(BaseModel):
+    title: str | None = None
+    status: str | None = None
+    file_no: str | None = None
+    court: str | None = None
+    case_type: str | None = None
+    counterparty: str | None = None
+    notes: str | None = None
+
+
+class HearingBody(BaseModel):
+    date: str  # YYYY-MM-DD
+    time: str | None = None  # HH:MM
+    location: str | None = None
+    type: str | None = None
+    notes: str | None = None
+
+
+class ClientBody(BaseModel):
+    full_name: str
+    national_id: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -311,6 +402,14 @@ def _require_conv(s: Session, user: User, cid: int) -> Conversation:
     if not conv or conv.office_id != user.office_id:
         raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
     return conv
+
+
+def _require_matter(s: Session, user: User, mid: int) -> Matter:
+    """Fetch a matter, enforcing it belongs to the caller's office (else 404, not 403)."""
+    m = s.get(Matter, mid)
+    if not m or m.office_id != user.office_id:
+        raise HTTPException(status_code=404, detail="Dosya bulunamadı")
+    return m
 
 
 def _require_doc(s: Session, user: User, doc_id: int) -> Document:
@@ -513,6 +612,17 @@ def get_model(korkut_session: str | None = Cookie(default=None)):
         return _model_public(row, can_edit=user.role == "owner")
 
 
+@app.get("/api/model/health")
+def model_health(korkut_session: str | None = Cookie(default=None)):
+    """Is the office's effective model reachable? Drives the chat warning banner + test button."""
+    from korkut.core.health import model_status
+
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        cfg = office_model_cfg(s, user.office_id)
+    return model_status(cfg)
+
+
 @app.put("/api/model")
 def save_model(body: ModelBody, korkut_session: str | None = Cookie(default=None)):
     """Owner-only upsert. `api_key` None keeps the stored key; "" clears it."""
@@ -711,6 +821,7 @@ def _conv_brief(c: Conversation) -> dict:
     return {
         "id": c.id,
         "title": c.title,
+        "matter_id": c.matter_id,
         "created_by_name": c.created_by_name,
         "updated_at": c.updated_at.isoformat() if c.updated_at else None,
     }
@@ -738,11 +849,17 @@ def list_sessions(
 
 
 @app.post("/api/sessions")
-def create_session(korkut_session: str | None = Cookie(default=None)):
+def create_session(
+    matter_id: int | None = None, korkut_session: str | None = Cookie(default=None)
+):
+    """Create a chat session, optionally filed under a matter (`?matter_id=`)."""
     with session() as s:
         user = _require_user(s, korkut_session)
+        if matter_id is not None:
+            _require_matter(s, user, matter_id)  # 404 if not this office's matter
         conv = Conversation(
             office_id=user.office_id,
+            matter_id=matter_id,
             created_by=user.id,
             created_by_name=user.full_name or user.username,
         )
@@ -818,6 +935,129 @@ def delete_session(cid: int, korkut_session: str | None = Cookie(default=None)):
         return {"ok": True}
 
 
+# ---------------- matter domain (dosya / müvekkil / duruşma) ----------------
+# CRUD over the office's case files. The same logic backs the agent's matter_tools (via
+# matters_store), so the UI and Korkut act on one shared, office-scoped data layer.
+
+
+@app.get("/api/matters")
+def list_matters_ep(status: str | None = None, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        rows = mstore.list_matters(s, user.office_id, status=status)
+        return {"items": [mstore.matter_brief(m) for m in rows], "total": len(rows)}
+
+
+@app.post("/api/matters")
+def create_matter_ep(body: MatterBody, korkut_session: str | None = Cookie(default=None)):
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Dosya başlığı zorunludur.")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        m = mstore.create_matter(
+            s,
+            user.office_id,
+            user.id,
+            title=title,
+            client_name=body.client_name,
+            file_no=body.file_no,
+            court=body.court,
+            case_type=body.case_type,
+            counterparty=body.counterparty,
+        )
+        return mstore.matter_detail(m)
+
+
+@app.get("/api/matters/{mid}")
+def get_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        m = _require_matter(s, user, mid)
+        return mstore.matter_detail(m)
+
+
+@app.patch("/api/matters/{mid}")
+def update_matter_ep(
+    mid: int, body: MatterUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        _require_matter(s, user, mid)
+        m = mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
+        return mstore.matter_detail(m)
+
+
+@app.delete("/api/matters/{mid}")
+def delete_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        m = _require_matter(s, user, mid)
+        s.delete(m)
+        s.commit()
+        return {"ok": True}
+
+
+@app.post("/api/matters/{mid}/hearings")
+def add_hearing_ep(
+    mid: int, body: HearingBody, korkut_session: str | None = Cookie(default=None)
+):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        _require_matter(s, user, mid)
+        try:
+            h = mstore.add_hearing(
+                s,
+                user.office_id,
+                mid,
+                date=body.date,
+                time=body.time,
+                location=body.location,
+                type=body.type,
+                notes=body.notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}")
+        return mstore.hearing_brief(h)
+
+
+@app.get("/api/calendar/upcoming")
+def upcoming_ep(days: int = 14, korkut_session: str | None = Cookie(default=None)):
+    days = max(1, min(days, 365))
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        hs = mstore.upcoming_hearings(s, user.office_id, days=days)
+        return {"items": [mstore.hearing_brief(h) for h in hs], "days": days}
+
+
+@app.get("/api/clients")
+def list_clients_ep(korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        rows = mstore.list_clients(s, user.office_id)
+        return {"items": [mstore.client_brief(c) for c in rows]}
+
+
+@app.post("/api/clients")
+def create_client_ep(body: ClientBody, korkut_session: str | None = Cookie(default=None)):
+    name = body.full_name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Müvekkil adı zorunludur.")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        c = Client(
+            office_id=user.office_id,
+            full_name=name,
+            national_id=body.national_id,
+            phone=body.phone,
+            email=body.email,
+            address=body.address,
+        )
+        s.add(c)
+        s.commit()
+        return mstore.client_brief(c)
+
+
 @app.post("/api/sessions/{cid}/chat")
 def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(default=None)):
     text = body.text.strip()
@@ -879,12 +1119,14 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
     # Detect the document type once: it gates the chat turn (ask for missing essentials before
     # drafting) and is reused as the petition type when the draft actually happens.
     detected = petitions.detect(text)
-    reply = agent.answer(
+    # Office-scoped matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
+    m_tools, m_handlers = matter_tools.build_matter_tools(user)
+    reply = _safe_answer(
         text,
         office_name=office_name,
         history=history_msgs,
-        extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL],
-        handlers={"dilekce_canvas": _canvas, "send_email": _send_email},
+        extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, *m_tools],
+        handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
         model_cfg=model_cfg,
         extra_system=petitions.required_hint(detected) if detected else None,
     )
@@ -1009,7 +1251,7 @@ def session_upload(
         office_name = _office_name(s, user)
         model_cfg = office_model_cfg(s, user.office_id)
 
-    reply = agent.answer(
+    reply = _safe_answer(
         model_input, office_name=office_name, history=history_msgs, model_cfg=model_cfg
     )
 
@@ -1335,6 +1577,149 @@ def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(de
         return _channel_public(row, can_edit=True)
 
 
+# ---------------- two-way integrations (Telegram / WhatsApp / e-mail chat) ----------------
+# Owners configure each channel's connector; any member links their own account to a channel with
+# a one-time code, then chats with Korkut. See korkut.integrations + docs/INTEGRATIONS.md.
+
+_INTEGRATION_KINDS = ("telegram", "whatsapp", "email")
+
+
+def _office_channel(s: Session, office_id: int, kind: str) -> OfficeChannel | None:
+    return s.scalar(
+        select(OfficeChannel).where(
+            OfficeChannel.office_id == office_id, OfficeChannel.kind == kind
+        )
+    )
+
+
+def _channel_configured(kind: str, cfg: dict) -> bool:
+    """Does this channel have the minimum config to actually run?"""
+    if kind == "telegram":
+        return bool(cfg.get("bot_token"))
+    if kind == "whatsapp":
+        return bool(cfg.get("token"))
+    if kind == "email":  # two-way e-mail reuses the Gmail SMTP creds for IMAP
+        return bool(cfg.get("from_address") and cfg.get("app_password"))
+    return False
+
+
+def _my_link(s: Session, user: User, kind: str) -> IntegrationLink | None:
+    return s.scalar(
+        select(IntegrationLink).where(
+            IntegrationLink.user_id == user.id,
+            IntegrationLink.channel == kind,
+            IntegrationLink.status == "active",
+        )
+    )
+
+
+def _mask(external_id: str | None) -> str:
+    if not external_id:
+        return ""
+    return external_id if len(external_id) <= 6 else f"{external_id[:3]}…{external_id[-2:]}"
+
+
+@app.get("/api/integrations")
+def list_integrations(korkut_session: str | None = Cookie(default=None)):
+    """Per-channel connector status (owner-configurable) + the caller's own link state."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        can_edit = user.role == "owner"
+        out = []
+        for kind in _INTEGRATION_KINDS:
+            row = _office_channel(s, user.office_id, kind)
+            cfg = (row.config if row else None) or {}
+            link = _my_link(s, user, kind)
+            out.append(
+                {
+                    "kind": kind,
+                    "enabled": bool(row and row.enabled),
+                    "configured": _channel_configured(kind, cfg),
+                    "base_url": cfg.get("base_url", "") if kind == "whatsapp" else "",
+                    "linked": link is not None,
+                    "linked_id": _mask(link.external_id) if link else "",
+                    "can_edit": can_edit,
+                }
+            )
+        return {"channels": out}
+
+
+@app.put("/api/channels/telegram")
+def save_telegram_channel(
+    body: TelegramChannelBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Owner-only Telegram bot config. `bot_token` None keeps the stored token; "" clears it."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        row = _office_channel(s, owner.office_id, "telegram")
+        if row is None:
+            row = OfficeChannel(office_id=owner.office_id, kind="telegram", config={})
+            s.add(row)
+        cfg = dict(row.config or {})
+        if body.bot_token is not None:
+            cfg["bot_token"] = body.bot_token.strip()
+        if body.enabled and not cfg.get("bot_token"):
+            raise HTTPException(status_code=400, detail="Telegram bot token zorunludur.")
+        row.config = cfg
+        row.enabled = body.enabled
+        s.commit()
+        return {"ok": True, "configured": _channel_configured("telegram", cfg)}
+
+
+@app.put("/api/channels/whatsapp")
+def save_whatsapp_channel(
+    body: WhatsAppChannelBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Owner-only WhatsApp sidecar config. `token` None keeps the stored secret; "" clears it."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        row = _office_channel(s, owner.office_id, "whatsapp")
+        if row is None:
+            row = OfficeChannel(office_id=owner.office_id, kind="whatsapp", config={})
+            s.add(row)
+        cfg = dict(row.config or {})
+        cfg["base_url"] = body.base_url.strip() or "http://127.0.0.1:8099"
+        if body.token is not None:
+            cfg["token"] = body.token.strip()
+        if body.enabled and not cfg.get("token"):
+            raise HTTPException(status_code=400, detail="Sidecar paylaşılan anahtarı zorunludur.")
+        row.config = cfg
+        row.enabled = body.enabled
+        s.commit()
+        return {"ok": True, "configured": _channel_configured("whatsapp", cfg)}
+
+
+@app.post("/api/integrations/{kind}/link")
+def create_integration_link(kind: str, korkut_session: str | None = Cookie(default=None)):
+    """Generate a one-time code; the caller sends it from the channel to bind their account."""
+    if kind not in _INTEGRATION_KINDS:
+        raise HTTPException(status_code=404, detail="Bilinmeyen kanal")
+    from korkut.integrations import identity
+
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        code = identity.generate_code(s, user.office_id, user.id, kind)
+    return {"code": code, "kind": kind}
+
+
+@app.delete("/api/integrations/{kind}/link")
+def delete_integration_link(kind: str, korkut_session: str | None = Cookie(default=None)):
+    """Unlink the caller's account from a channel (removes their active + pending links)."""
+    if kind not in _INTEGRATION_KINDS:
+        raise HTTPException(status_code=404, detail="Bilinmeyen kanal")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        links = s.scalars(
+            select(IntegrationLink).where(
+                IntegrationLink.user_id == user.id, IntegrationLink.channel == kind
+            )
+        ).all()
+        for link in links:
+            s.delete(link)
+        s.commit()
+        return {"ok": True}
+
+
 def _outbox_public(m: OutboundMessage) -> dict:
     return {
         "id": m.id,
@@ -1549,7 +1934,7 @@ def _make_draft(
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
     proposed = _strip_fences(
-        agent.answer(prompt, office_name=office_name, history=history, model_cfg=model_cfg)
+        _safe_answer(prompt, office_name=office_name, history=history, model_cfg=model_cfg)
     )
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
     # after the cloud call (so they never leave the machine). Later edits keep them via the

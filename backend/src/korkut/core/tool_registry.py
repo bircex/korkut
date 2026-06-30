@@ -29,6 +29,10 @@ class ToolSpec:
     parameters: dict[str, Any]
     requires_key: str | None
     module: str  # e.g. "korkut.tools.search_yargitay"
+    # Names this (composite) tool replaces in the *offered* set. The superseded tools stay
+    # discoverable and runnable — a composite dispatches to them — but are hidden from the model so
+    # one compact schema stands in for many near-identical ones (keeps the prompt small).
+    supersedes: tuple[str, ...] = ()
 
     @property
     def available(self) -> bool:
@@ -50,14 +54,17 @@ def discover() -> list[ToolSpec]:
                 parameters=meta.get("parameters") or {},
                 requires_key=meta.get("requires_key") or None,
                 module=f"korkut.tools.{folder}",
+                supersedes=tuple(meta.get("supersedes") or ()),
             )
         )
     return specs
 
 
 def available_tools() -> list[ToolSpec]:
-    """Tools whose required key (if any) is present — i.e. offerable to the model."""
-    return [s for s in discover() if s.available]
+    """Tools offerable to the model: key present, minus any superseded by a composite tool."""
+    specs = [s for s in discover() if s.available]
+    superseded = {name for s in specs for name in s.supersedes}
+    return [s for s in specs if s.name not in superseded]
 
 
 _JSON_TYPES = {

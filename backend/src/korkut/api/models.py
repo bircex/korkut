@@ -1,9 +1,12 @@
-"""Web-app data models — office users, shared chat sessions, 2FA, and an auth audit trail.
+"""Web-app data models — office users, shared chat sessions, 2FA, the matter domain, and audit.
 
-These share `core.db.Base`, so `core.db.init_db(engine)` creates them alongside the
-case/hearing/petition tables. The app is MULTI-TENANT: each `Office` is a tenant. A person
-self-registers an office (becoming its `owner`) and adds members; usernames stay globally
-unique so login is username+password.
+All models share `core.db.Base`, so `core.db.init_db(engine)` creates them in one metadata. The
+app is MULTI-TENANT: each `Office` is a tenant. A person self-registers an office (becoming its
+`owner`) and adds members; usernames stay globally unique so login is username+password.
+
+The matter domain (`Client`, `Matter`, `Hearing`) is the spine of the lawyer's work — research,
+drafts and hearings hang off a matter. It is office-scoped like every other table here and is
+exposed to the agent via `korkut.api.matter_tools`.
 
 Chat sessions are shared WITHIN an office: every member sees and can open every session
 (Conversation) belonging to their `office_id`, but never another office's. Messages belong to
@@ -12,9 +15,11 @@ a Conversation, not to a single user.
 
 from __future__ import annotations
 
+from datetime import date as _date
 from datetime import datetime
+from datetime import time as _time
 
-from sqlalchemy import JSON, ForeignKey, Index, String, Text, UniqueConstraint, func, text
+from sqlalchemy import JSON, Date, ForeignKey, Index, String, Text, Time, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from korkut.core.db import Base
@@ -123,6 +128,8 @@ class Conversation(Base):
     __tablename__ = "conversations"
     id: Mapped[int] = mapped_column(primary_key=True)
     office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    # Optional link to a matter (dosya): a chat can belong to a case file. Null = unfiled.
+    matter_id: Mapped[int | None] = mapped_column(ForeignKey("matters.id"), default=None, index=True)
     title: Mapped[str] = mapped_column(String(120), default="Yeni sohbet")
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
@@ -291,6 +298,120 @@ class OutboundMessage(Base):
     attempts: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     sent_at: Mapped[datetime | None] = mapped_column(default=None)
+
+
+class IntegrationLink(Base):
+    """Binds a messaging-channel sender to a korkut `User`, so two-way integrations know which
+    lawyer is talking (`korkut.integrations`).
+
+    A lawyer cannot just message the bot and be trusted — Telegram/WhatsApp/email all hand us only
+    an opaque sender id, never korkut credentials. So linking is an explicit proof-of-ownership:
+    the lawyer generates a one-time `code` in the web UI (a `pending` row), then sends that code
+    FROM the channel; the gateway captures the sender's `external_id` and flips the row to
+    `active`. Inbound auth is then a lookup by (channel, external_id) among active links.
+
+    `external_id` is channel-specific: Telegram numeric user id, WhatsApp jid, or the sender's
+    e-mail address (lower-cased). One external identity maps to at most one user.
+    """
+
+    __tablename__ = "integration_links"
+    __table_args__ = (UniqueConstraint("channel", "external_id", name="uq_integration_external"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    channel: Mapped[str] = mapped_column(String(32))  # "telegram" | "whatsapp" | "email"
+    external_id: Mapped[str | None] = mapped_column(String(320), default=None, index=True)
+    code: Mapped[str | None] = mapped_column(String(16), default=None)  # one-time, while pending
+    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending | active
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    linked_at: Mapped[datetime | None] = mapped_column(default=None)
+
+
+class IntegrationThread(Base):
+    """Maps one channel conversation (a Telegram/WhatsApp chat, or an e-mail correspondent) to a
+    korkut `Conversation`, so an incoming chat keeps its history and shows up in the web UI like
+    any other session. Keyed by (channel, thread_id) — the channel's own chat identifier.
+    """
+
+    __tablename__ = "integration_threads"
+    __table_args__ = (UniqueConstraint("channel", "thread_id", name="uq_integration_thread"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    channel: Mapped[str] = mapped_column(String(32))
+    thread_id: Mapped[str] = mapped_column(String(190))
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
+# ---------------- matter domain (dosya/dava omurgası) ----------------
+# The case file is the spine of a lawyer's work: research, drafts, hearings and correspondence
+# all hang off a Matter. Office-scoped like every other tenant table. Exposed to the agent via
+# korkut.api.matter_tools and to the UI via /api/matters.
+
+
+class Client(Base):
+    """A client (müvekkil) of the office."""
+
+    __tablename__ = "clients"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    full_name: Mapped[str] = mapped_column(String(200))
+    national_id: Mapped[str | None] = mapped_column(String(11), default=None)
+    phone: Mapped[str | None] = mapped_column(String(20), default=None)
+    email: Mapped[str | None] = mapped_column(String(200), default=None)
+    address: Mapped[str | None] = mapped_column(String(500), default=None)
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
+class Matter(Base):
+    """A legal matter/file (dava/dosya). The office's work attaches here.
+
+    `client_id` optionally links the müvekkil; `status` is open|closed (free text for now).
+    Court/file-number/case-type/counterparty mirror the fields a lawyer tracks per dosya.
+    """
+
+    __tablename__ = "matters"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    title: Mapped[str] = mapped_column(String(200))
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id"), default=None, index=True
+    )
+    file_no: Mapped[str | None] = mapped_column(String(50), default=None)  # esas no
+    court: Mapped[str | None] = mapped_column(String(200), default=None)  # mahkeme
+    case_type: Mapped[str | None] = mapped_column(String(100), default=None)  # dava türü
+    counterparty: Mapped[str | None] = mapped_column(String(200), default=None)  # karşı taraf
+    status: Mapped[str] = mapped_column(String(30), default="open")
+    opened_at: Mapped[_date | None] = mapped_column(Date, default=None)
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+    client: Mapped[Client | None] = relationship()
+    hearings: Mapped[list[Hearing]] = relationship(
+        back_populates="matter", cascade="all, delete-orphan", order_by="Hearing.date"
+    )
+
+
+class Hearing(Base):
+    """A hearing (duruşma) on a matter's calendar — the Phase-1 deadline primitive."""
+
+    __tablename__ = "hearings"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
+    date: Mapped[_date] = mapped_column(Date, index=True)
+    time: Mapped[_time | None] = mapped_column(Time, default=None)  # fixed: was Date in old schema
+    location: Mapped[str | None] = mapped_column(String(200), default=None)
+    type: Mapped[str | None] = mapped_column(String(100), default=None)
+    result: Mapped[str | None] = mapped_column(Text, default=None)
+    reminder_status: Mapped[str] = mapped_column(String(30), default="pending")
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    matter: Mapped[Matter] = relationship(back_populates="hearings")
 
 
 class AuthEvent(Base):

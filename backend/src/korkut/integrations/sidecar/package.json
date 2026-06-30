@@ -1,0 +1,18 @@
+{
+  "name": "korkut-whatsapp-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WhatsApp Web (Baileys) sidecar for Korkut — exposes a tiny local HTTP API the Python whatsapp connector polls.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

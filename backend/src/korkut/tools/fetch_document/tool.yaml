@@ -1,0 +1,47 @@
+name: fetch_document
+description: >
+  Fetch the full text of a legal document returned by search_decisions. Choose `source` and pass
+  the `id` that the search result gave for that source. One tool for every corpus's full-text fetch.
+requires_key: null
+# Replaces the per-source fetch_* tools in the model's offered set; they remain runnable and this
+# tool dispatches to them by `source`.
+supersedes:
+  - fetch_decision
+  - fetch_legislation
+  - fetch_bddk
+  - fetch_kvkk
+  - fetch_sigorta_tahkim
+  - fetch_uyusmazlik
+parameters:
+  source:
+    type: string
+    required: true
+    options:
+      - decision
+      - legislation
+      - bddk
+      - kvkk
+      - sigorta_tahkim
+      - uyusmazlik
+    description: >
+      Which fetch: decision (Bedesten documentId — covers yargitay, danistay, emsal, kyb),
+      legislation (mevzuat id), bddk (banking documentId), kvkk (decision URL),
+      sigorta_tahkim (issue number), uyusmazlik (document URL).
+  id:
+    type: string
+    required: true
+    description: >
+      The identifier the search returned for this source — a documentId (decision, bddk), a URL
+      (kvkk, uyusmazlik), an issue number (sigorta_tahkim), or a legislation id (legislation).
+  article_id:
+    type: string
+    required: false
+    description: Specific article id. Applies to legislation only.
+  page:
+    type: integer
+    required: false
+    description: Page for long, paginated documents. Applies to bddk, kvkk, sigorta_tahkim.
+  page_size:
+    type: integer
+    required: false
+    description: Characters per page. Applies to bddk, kvkk, sigorta_tahkim.

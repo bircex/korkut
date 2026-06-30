@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, ApiError, type ModelData } from "../api";
+import { api, ApiError, type ModelData, type ModelHealth } from "../api";
 
 // Office model picker (Ayarlar → Model, owner-only). Fully on-prem: every endpoint is local, so
 // there is no cloud/redaction choice — the server just talks to the chosen OpenAI-compatible
@@ -32,6 +32,8 @@ export function ModelSettings() {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [health, setHealth] = useState<ModelHealth | null>(null);
 
   function hydrate(d: ModelData) {
     setData(d);
@@ -96,6 +98,20 @@ export function ModelSettings() {
       hydrate(await api.getModel());
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Tests the *saved* config (the server probes the stored endpoint), so a dirty form is checked
+  // against what's persisted — the hint below tells the owner to save first.
+  async function test() {
+    setTesting(true);
+    setHealth(null);
+    try {
+      setHealth(await api.modelHealth());
+    } catch {
+      setHealth({ connected: false, configured: false, detail: "Test başarısız oldu." });
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -233,6 +249,27 @@ export function ModelSettings() {
       </fieldset>
 
       {error && <div className="mt-4 text-xs text-red-600">{error}</div>}
+
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          onClick={test}
+          disabled={testing}
+          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+        >
+          {testing ? "Test ediliyor…" : "Bağlantıyı test et"}
+        </button>
+        {health && (
+          <span className={`text-xs ${health.connected ? "text-emerald-600" : "text-red-600"}`}>
+            {health.connected ? "✓ " : "✗ "}
+            {health.detail}
+          </span>
+        )}
+      </div>
+      {!saved && (
+        <p className="mt-1 text-[11px] text-zinc-400">
+          Test, en son kaydedilmiş ayarı dener — değişiklik yaptıysanız önce kaydedin.
+        </p>
+      )}
 
       {canEdit && (
         <div className="mt-5 flex items-center gap-3">
