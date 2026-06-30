@@ -1,0 +1,48 @@
+{
+  "tip": "odeme-emrine-itiraz",
+  "ad": "Ödeme emrine (borca/imzaya/faize) itiraz dilekçesi",
+  "dayanak": ["İİK m.62", "İİK m.63", "İİK m.66", "İİK m.168"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraz, takibin yapıldığı icra dairesine ve doğru dosyaya yöneltilir (İİK m.62)." },
+    { "id": "odeme_emri_teblig_tarihi", "soru": "Ödeme emri size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz süresi tebliğden itibaren işler; ilamsız takipte 7 gün, kambiyoda 5 gündür (İİK m.62, m.168/4)." },
+    { "id": "takip_turu", "soru": "Takip türü nedir? (ilamsız genel haciz / kambiyo senetlerine özgü)", "tip": "secim",
+      "secenekler": ["ilamsız (genel haciz yolu)", "kambiyo senetlerine özgü"],
+      "zorunlu": true, "neden": "İtiraz mercii ve süre değişir: ilamsızda icra dairesine 7 gün, kambiyoda icra mahkemesine 5 gün (İİK m.168)." },
+    { "id": "itiraz_turu", "soru": "İtirazın türü nedir? (borcun tamamına/bir kısmına itiraz, imzaya itiraz, faize/yetkiye itiraz)", "tip": "secim",
+      "secenekler": ["borca itiraz (tamamı)", "borca kısmi itiraz", "imzaya itiraz", "faize/ferilere itiraz", "yetkiye itiraz"],
+      "zorunlu": true, "neden": "İmzaya itiraz açıkça/ayrıca yapılmazsa imza ikrar edilmiş sayılır (İİK m.62/5, m.170); kısmi itirazda kabul edilen kısım belirtilir." },
+    { "id": "itiraz_sebebi", "soru": "Borca/imzaya itirazın somut sebebi nedir? (ödeme, takas, zamanaşımı, borç ilişkisinin yokluğu, imzanın inkârı vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın dayanağı dilekçede açıklanır; itirazın iptali/kaldırılması aşamasında ileri sürülecek savunmayı sınırlandırabilir." },
+    { "id": "kismi_kabul_tutar", "soru": "Borcun bir kısmını kabul ediyorsanız kabul edilen tutar nedir?", "tip": "sayi",
+      "zorunlu": false, "neden": "Kısmi itirazda itiraz edilen miktarın açıkça gösterilmesi gerekir; aksi halde itiraz geçersiz sayılabilir (İİK m.62/4)." }
+  ],
+
+  "kosullar": [
+    { "eger": "takip_turu == kambiyo senetlerine özgü",
+      "uyari": "KAMBİYO takibinde itiraz İCRA MAHKEMESİNE ve tebliğden itibaren 5 GÜN içinde yapılır (İİK m.168/4); itiraz takibi kendiliğinden durdurmaz (İİK m.169a)." },
+    { "eger": "takip_turu == ilamsız (genel haciz yolu)",
+      "uyari": "İlamsız takipte itiraz İCRA DAİRESİNE ve tebliğden itibaren 7 GÜN içinde yapılır (İİK m.62); süresinde itiraz takibi kendiliğinden DURDURUR (İİK m.66)." },
+    { "eger": "itiraz_turu == imzaya itiraz",
+      "ekle": "İmzanın borçluya ait olmadığını açıkça ve ayrıca beyan eden bir bölüm ekle; imza incelemesi talebini belirt.",
+      "uyari": "İmzaya itiraz AYRICA ve AÇIKÇA yapılmazsa imza ikrar edilmiş sayılır (İİK m.62/5; kambiyoda m.170)." },
+    { "eger": "gun_farki(odeme_emri_teblig_tarihi) > 7",
+      "uyari": "KRİTİK: tebliğden bu yana 7 günü aşmış görünüyor — ilamsız takipte itiraz süresi geçmiş olabilir. Gecikmiş itiraz (İİK m.65) şartlarını değerlendir." }
+  ],
+
+  "kontroller": [
+    "İtiraz doğru mercie yapıldı mı? (ilamsız → icra dairesi 7 gün; kambiyo → icra mahkemesi 5 gün).",
+    "Tebliğ tarihi ile itiraz tarihi arasındaki süre hesaplandı ve süresinde mi (İİK m.62/m.168)?",
+    "İmzaya itiraz varsa ayrıca ve açıkça belirtildi mi (yoksa imza ikrar sayılır)?",
+    "Kısmi itirazda kabul/itiraz edilen tutarlar ayrı ayrı net mi?",
+    "Süre kaçtıysa gecikmiş itiraz (İİK m.65) mazeret koşulları araştırıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.62", "İİK m.63", "İİK m.65", "İİK m.66", "İİK m.168"],
+    "emsal_ara": "ödeme emrine itiraz 7 gün borca imzaya itiraz takibin durması",
+    "vurgula": ["itiraz süresi ve mercii (7 gün/5 gün ayrımı)", "imzaya itirazın açıkça yapılması zorunluluğu", "itirazın takibi durdurması"]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "tip": "tahliye-talebi",
+  "ad": "Tahliye talebi dilekçesi",
+  "dayanak": ["CMK m.100", "CMK m.104", "CMK m.109"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosya esas numarası (..../..... E.) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin sunulacağı dosyanın belirlenmesi (CMK m.104)." },
+    { "id": "sanik_bilgisi", "soru": "Tutuklu sanığın ad-soyadı ve tutuklanma tarihi?", "tip": "metin",
+      "zorunlu": true, "neden": "Tutukluluk süresinin ve tahliye talebinin değerlendirilmesi (CMK m.102)." },
+    { "id": "tutuklama_tarihi", "soru": "Tutuklama kararının tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Tutukluluk süresinin (CMK m.102) hesaplanması." },
+    { "id": "tahliye_gerekce", "soru": "Tahliye gerekçeniz nedir?", "tip": "secim",
+      "secenekler": ["tutuklama nedenleri ortadan kalktı (CMK m.100)", "delillerin tamamı toplandı (delil karartma riski yok)", "kuvvetli suç şüphesi bulunmuyor", "ölçülülük — adli kontrol yeterli (CMK m.109)", "tutukluluk süresi aşıldı (CMK m.102)"],
+      "zorunlu": true, "neden": "Tutuklamanın koşullarının kalkıp kalkmadığının değerlendirilmesi (CMK m.100)." },
+    { "id": "adli_kontrol_teklif", "soru": "Adli kontrol tedbirine razı mısınız? (imza, yurt dışı yasağı vb.)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Tutuklamaya alternatif ölçülü tedbir önerisi (CMK m.109)." },
+    { "id": "kisisel_durum", "soru": "Sabit ikamet, sağlık, kaçma şüphesini zayıflatan kişisel durum var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Kaçma şüphesinin ve ölçülülüğün değerlendirilmesi (CMK m.100/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "tahliye_gerekce == ölçülülük — adli kontrol yeterli (CMK m.109)",
+      "ekle": "Adli kontrol tedbirlerinin (CMK m.109) somut olayda tutuklama yerine yeterli olduğunu, ölçülülük ilkesi (CMK m.100/1) çerçevesinde açıklayan bir bölüm ekle." },
+    { "eger": "tahliye_gerekce == tutukluluk süresi aşıldı (CMK m.102)",
+      "uyari": "Azami tutukluluk süreleri (CMK m.102) somut suç ve evre bakımından hesaplanmalı; süre aşımı varsa öncelikle vurgulanmalıdır." },
+    { "eger": "adli_kontrol_teklif == evet",
+      "ekle": "Sanığın adli kontrol tedbirlerine razı olduğunu ve hangi tedbirlerin uygulanabileceğini belirten bir talep ekle (CMK m.109)." }
+  ],
+
+  "kontroller": [
+    "Muhatap: talep, davanın görüldüğü ilgili Ceza Mahkemesine (kovuşturma evresinde) hitaben mi yazıldı? (CMK m.104)",
+    "Tutuklama nedenlerinin (kaçma/delil karartma şüphesi — CMK m.100) ortadan kalktığı somut gerekçeyle ortaya konuldu mu?",
+    "Ölçülülük ve adli kontrolün yeterliliği (CMK m.109) tartışıldı mı?",
+    "Azami tutukluluk süresi (CMK m.102) bakımından bir aşım olup olmadığı kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.100", "CMK m.102", "CMK m.104", "CMK m.109"],
+    "emsal_ara": "tahliye talebi tutuklama nedenleri ölçülülük adli kontrol süre",
+    "vurgula": ["tutuklama nedenlerinin (CMK m.100) kalkması", "ölçülülük ve adli kontrol alternatifi (CMK m.109)", "azami tutukluluk süresi (CMK m.102)"]
+  }
+}

@@ -58,10 +58,31 @@ Tarihlerde `gun_farki(<soru_id>) > 90` gibi yardımcılar kullanılabilir (runti
 }
 ```
 
+## Miras: deliller / görev / yetki / süre (`dava-workflow.json`)
+
+Bu dosyaya **delilleri, görevli mahkemeyi, yetkiyi veya süreleri YAZMA.** Bunlar arketip
+düzeyinde `templates/dava-workflow.json` içinde bir kez tanımlıdır ve tipe **miras** kalır.
+Çözüm zinciri:
+
+```
+type_id → catalog.json'daki kategori → dava-workflow.kategori_eslesme → dava_turu
+        → dava_turleri[dava_turu].{deliller, gorevli_mahkeme, yetki, dava_sarti, kritik_sureler}
+```
+
+Yani `intake/<id>.json` **ince** kalır: yalnızca o tipe **özel** `sorular` / `kosullar` /
+`kontroller` / `zenginlestir`. Delil soruları (`deliller[].soru`) ve görev/süre uyarıları
+runtime'da arketipten otomatik eklenir. Tipe özgü ek bir delil varsa (ör. FSH'de tescil
+belgesi) onu yine de bu dosyada `sorular`'a ekleyebilirsin; çakışma olursa intake önceliklidir.
+
+> `kategori_eslesme`'de `null` olan kategoriler (Kanun Yolları, AYM/AİHM) miras almaz —
+> o tiplerde delil/süre tamamen tipe özel intake'te tanımlanmalıdır.
+
 ## Akış (hedeflenen davranış)
 
-1. Tip tespit edilir → `intake(<type_id>)` yüklenir.
-2. Konuşmadan **eksik `sorular`** çıkarılır; varsa Korkut **tek mesajda** sorar (belgeyi yazmaz).
-3. Cevaplar toplanınca `kosullar` değerlendirilir → ek sorular/bölümler/uyarılar devreye girer.
+1. Tip tespit edilir → `intake(<type_id>)` yüklenir; arketip mirası (deliller/görev/süre) çözülür.
+2. Konuşmadan **eksik `sorular` + miras `deliller[].soru`** çıkarılır; Korkut **tek mesajda** sorar
+   (belgeyi yazmaz). `zorunlu` deliller önce; yoksa `celp=true` ise mahkemeden istenebileceği belirtilir.
+3. Cevaplar + delil envanteri toplanınca `kosullar` değerlendirilir → ek soru/bölüm/uyarı devreye girer.
 4. `zenginlestir` yönergeleriyle canlı mevzuat/emsal çekilir, atıflar **teyit** edilir.
-5. Belge yazılır; `kontroller` bir son-checklist olarak editörde gösterilir.
+5. Belge yazılır; her vakıa bir delile bağlanır (`deliller[].ispat`); `kontroller` + HMK m.119
+   kritik bent taraması son-checklist olarak editörde gösterilir.

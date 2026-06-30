@@ -73,20 +73,32 @@ body {
 .md th { background: #f4f4f5; font-weight: 600; }
 .md hr { border: none; border-top: 1px solid #e4e4e7; margin: 1em 0; }
 
-/* CKEditor — A4 document page on a light canvas. */
+/* CKEditor — UYAP/Word-like A4 document page floating on a gray canvas. */
 .doc-canvas {
-  background: #ffffff;
+  background: #e9eaed;
+}
+.doc-canvas .ck.ck-editor {
+  background: #e9eaed;
+}
+.doc-canvas .ck-editor__main {
+  background: #e9eaed;
+  padding: 28px 0;
 }
 .doc-canvas .ck.ck-editor__editable {
+  width: 21cm; /* A4 width — the page; scrolls horizontally in narrow panels */
+  max-width: none;
+  min-height: 29.7cm; /* A4 height */
+  margin: 0 auto;
+  padding: 2.5cm 2.2cm; /* document margins */
   background: #ffffff;
-  width: 100%;
-  max-width: none; /* fill the editor panel — no wasted side margins */
-  min-height: 1000px;
-  margin: 0;
-  padding: 40px clamp(24px, 6%, 64px);
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
+  border: 1px solid #d4d4d8;
+  border-radius: 2px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+  font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  text-align: justify; /* justified body, like legal documents */
+  color: #111111;
 }
 .doc-canvas .ck.ck-toolbar {
   border: none;
@@ -97,14 +109,16 @@ body {
   top: 0;
   z-index: 1;
 }
-.doc-canvas .ck-editor__editable:focus { box-shadow: none; }
-/* Document editor opens as a drawer sliding in from the left. */
-@keyframes drawerInLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+.doc-canvas .ck-editor__editable:focus {
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
 }
-.drawer-left { animation: drawerInLeft 0.22s ease-out; }
-
+/* Centered headings give the centered court-header / title look of legal documents. */
+.doc-canvas .ck-content h1,
+.doc-canvas .ck-content h2,
+.doc-canvas .ck-content h3 {
+  text-align: center;
+  font-weight: 700;
+}
 .ck-content h1 { font-size: 1.6em; }
 .ck-content h2 { font-size: 1.3em; }
 .ck-content h3 { font-size: 1.1em; }

@@ -3,7 +3,7 @@
 import pytest
 
 from korkut.core.agent_loop import StepResult
-from korkut.core.router import Router
+from korkut.core.router import ModelCfg, Router, single_model_router
 
 CFG = {
     "backends": {"cloud": "gpt", "local": "ollama"},
@@ -61,3 +61,32 @@ def test_fallback_disabled_raises():
     )
     with pytest.raises(RuntimeError):
         router.respond("hearing", "add", [{"role": "user", "content": "x"}])
+
+
+def test_default_tier_routes_unlisted_specialty():
+    # An unlisted specialty resolves to default_tier (here: local → no redaction).
+    local = FakeProvider()
+    cfg = {"backends": {"local": "x"}, "default_tier": "local"}
+    router = Router({"x": local}, config=cfg, local_available=lambda: True)
+    router.respond("anything", "qa", [{"role": "user", "content": "Ahmet Yılmaz"}])
+    assert local.seen[0]["content"] == "Ahmet Yılmaz"
+
+
+def test_single_model_router_local_skips_redaction():
+    cfg = ModelCfg(model="m", base_url="http://localhost:11434/v1", local=True)
+    router = single_model_router(cfg)
+    fake = FakeProvider()
+    router._providers["custom"] = fake  # swap the real OpenAI-compat client out
+    raw = [{"role": "user", "content": "Ahmet Yılmaz TCKN 10000000146"}]
+    router.respond("research", "qa", raw)
+    assert fake.seen[0]["content"] == "Ahmet Yılmaz TCKN 10000000146"
+
+
+def test_single_model_router_cloud_redacts():
+    cfg = ModelCfg(model="m", base_url="https://api.example.com/v1", local=False)
+    router = single_model_router(cfg)
+    fake = FakeProvider(reply="ok")
+    router._providers["custom"] = fake
+    router.respond("research", "qa", [{"role": "user", "content": "Ahmet Yılmaz TCKN 10000000146"}])
+    assert "Ahmet Yılmaz" not in fake.seen[0]["content"]
+    assert "10000000146" not in fake.seen[0]["content"]

@@ -1,0 +1,50 @@
+{
+  "tip": "duzeltme-sikayet",
+  "ad": "Düzeltme-şikâyet başvurusu dilekçesi",
+  "dayanak": ["VUK m.116", "VUK m.117", "VUK m.122", "VUK m.124"],
+
+  "sorular": [
+    { "id": "hata_turu", "soru": "Hangi tür vergi hatası söz konusu: hesap hatası mı, vergilendirme hatası mı?", "tip": "secim",
+      "secenekler": ["hesap hatası (matrah/miktar/mükerrerlik)", "vergilendirme hatası (mükellefiyet/mevzu/dönem)", "her ikisi"],
+      "zorunlu": true, "neden": "Düzeltme yolu yalnızca VUK m.117-118'deki açık vergi hataları için açıktır; hukuki uyuşmazlık düzeltme konusu olamaz." },
+    { "id": "hata_aciklama", "soru": "Hatayı somut olarak açıklayın (ör. mükerrer tarh, yanlış dönem, vergiye tabi olmayan konu).", "tip": "metin",
+      "zorunlu": true, "neden": "Hatanın 'açık ve tereddütsüz' olduğunun gösterilmesi gerekir (VUK m.116)." },
+    { "id": "vergi_turu", "soru": "Hangi vergi türü ve hangi tarh işlemi söz konusu?", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltmeye konu işlemin belirlenmesi için." },
+    { "id": "vergi_donemi", "soru": "İlgili vergilendirme dönemi/yılı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltme zamanaşımı (VUK m.126) değerlendirmesi için." },
+    { "id": "idareye_basvuru", "soru": "Vergi dairesine düzeltme talebinde bulundunuz mu, sonucu ne oldu?", "tip": "secim",
+      "secenekler": ["henüz başvurulmadı", "başvuruldu-bekliyor", "reddedildi (açık)", "zımnen reddedildi (cevap yok)"],
+      "zorunlu": true, "neden": "Maliye Bakanlığına şikâyet yolu ancak düzeltme reddinden sonra açılır (VUK m.124)." },
+    { "id": "ret_tarihi", "soru": "Düzeltme talebi reddedildiyse ret kararı size hangi tarihte tebliğ edildi?", "tip": "tarih",
+      "zorunlu": false, "neden": "Şikâyet başvurusu ve sonraki dava süresi bu tarihe bağlanır (VUK m.124, İYUK m.11)." },
+    { "id": "dava_suresi_durumu", "soru": "İşleme karşı genel 30 günlük dava açma süresi geçti mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Düzeltme-şikâyet, dava süresi geçtikten sonra başvurulabilen istisnai bir yoldur (VUK m.124)." }
+  ],
+
+  "kosullar": [
+    { "eger": "hata_turu == vergilendirme hatası (mükellefiyet/mevzu/dönem)",
+      "ekle": "Hatanın VUK m.118'deki vergilendirme hatası türlerinden hangisine girdiğini (mükellefin şahsında, mükellefiyette, mevzuda veya dönemde) açıkça niteleyen bir paragraf ekle." },
+    { "eger": "idareye_basvuru == reddedildi (açık)",
+      "ekle": "Vergi dairesince düzeltme talebinin reddedildiğini ve VUK m.124 uyarınca Hazine ve Maliye Bakanlığına şikâyet yoluyla başvurulduğunu belirten bir bölüm ekle.",
+      "uyari": "Şikâyet, düzeltme reddinin tebliğinden sonra Bakanlığa yapılır; Bakanlık ret/zımni rettinden sonra İYUK m.11'e göre dava açılır." },
+    { "eger": "idareye_basvuru == henüz başvurulmadı",
+      "uyari": "Önce vergi dairesine düzeltme talebi yapılmalıdır; doğrudan şikâyet başvurusu reddedilir (VUK m.122, m.124)." },
+    { "eger": "dava_suresi_durumu == evet",
+      "uyari": "Genel dava süresi geçmişse yalnızca açık vergi hatası varsa düzeltme-şikâyet yolu işler; hukuki ihtilaf bu yolla giderilemez." }
+  ],
+
+  "kontroller": [
+    "İleri sürülen husus gerçekten VUK m.117-118 kapsamında 'açık vergi hatası' mı (hukuki ihtilaf değil)?",
+    "Önce vergi dairesine düzeltme (VUK m.122), sonra Bakanlığa şikâyet (VUK m.124) sırası gözetildi mi?",
+    "Düzeltme zamanaşımı (VUK m.126) süresi içinde başvuru yapıldığı gösterildi mi?",
+    "Şikâyet reddi/zımni ret sonrası dava süresinin İYUK m.11'e göre işlediği belirtildi mi?",
+    "Hatanın somut tutar/dönem/işlem atfıyla tereddütsüz biçimde ortaya konulduğu doğrulandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["VUK m.116", "VUK m.117", "VUK m.118", "VUK m.122", "VUK m.124", "VUK m.126", "İYUK m.11"],
+    "emsal_ara": "vergi hatası düzeltme şikayet açık hata Maliye Bakanlığı",
+    "vurgula": ["vergi hatası ile hukuki ihtilaf ayrımı", "düzeltme-şikâyet sıralaması", "düzeltme zamanaşımı"]
+  }
+}

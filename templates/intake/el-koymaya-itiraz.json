@@ -1,0 +1,44 @@
+{
+  "tip": "el-koymaya-itiraz",
+  "ad": "Arama/el koyma kararına itiraz dilekçesi",
+  "dayanak": ["CMK m.116", "CMK m.123", "CMK m.127"],
+
+  "sorular": [
+    { "id": "sorusturma_no", "soru": "İtiraza konu soruşturma/dosya numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın yöneltileceği dosyanın belirlenmesi (CMK m.127)." },
+    { "id": "tedbir_turu", "soru": "İtiraz edilen işlem hangisi?", "tip": "secim",
+      "secenekler": ["arama", "el koyma", "el koymanın devamı"],
+      "zorunlu": true, "neden": "İşlemin hukuki rejiminin belirlenmesi (CMK m.116, m.123)." },
+    { "id": "karar_tarihi", "soru": "Arama/el koyma kararının veya işleminin tarihi (ya da öğrenme tarihi)?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz süresi (öğrenmeden itibaren 7 gün) bu tarihten işler (CMK m.268/1)." },
+    { "id": "el_konulan", "soru": "Neye el konuldu / nerede arama yapıldı?", "tip": "metin",
+      "zorunlu": true, "neden": "Tedbirin konusu ve orantılılığının değerlendirilmesi (CMK m.123)." },
+    { "id": "itiraz_gerekce", "soru": "İtiraz gerekçeniz nedir?", "tip": "secim",
+      "secenekler": ["hâkim kararı/onayı yok — usule aykırı (CMK m.119)", "makul şüphe/ölçülülük yok", "el konulan eşya suçla ilgili/delil değil", "üçüncü kişiye ait — iade gerekir"],
+      "zorunlu": true, "neden": "Tedbirin hukuka uygunluğunun denetimi (CMK m.116, m.119)." },
+    { "id": "iade_talebi", "soru": "El konulan eşyanın iadesini mi talep ediyorsunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Delil/müsadereye konu olmayan eşyanın iadesi (CMK m.131)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(karar_tarihi) > 7",
+      "uyari": "KRİTİK: işlemin öğrenilmesinden bu yana 7 günü aşmış görünüyor — itiraz süresi geçmiş olabilir (CMK m.268/1). Eşyanın iadesi (CMK m.131) talebinin ayrıca her zaman ileri sürülebileceğini değerlendirin." },
+    { "eger": "itiraz_gerekce == hâkim kararı/onayı yok — usule aykırı (CMK m.119)",
+      "ekle": "Aramanın/el koymanın hâkim kararı veya gecikmesinde sakınca bulunan hallerde sonradan hâkim onayı koşulunu (CMK m.119, m.127) karşılamadığını ve elde edilen delilin hukuka aykırı olduğunu açıklayan bir bölüm ekle." },
+    { "eger": "iade_talebi == evet",
+      "ekle": "El konulan eşyanın delil veya müsadere kapsamında olmadığını ve sahibine iadesini (CMK m.131) talep eden bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: itiraz, işlemi denetleyecek Sulh Ceza Hâkimliğine hitaben mi yazıldı? (CMK m.127/4, m.268)",
+    "Öğrenmeden itibaren 7 günlük itiraz süresi hesaplandı ve gösterildi mi? (CMK m.268/1)",
+    "Hâkim kararı/onayı, makul şüphe ve ölçülülük (CMK m.116, m.119) yönünden işlem denetlendi mi?",
+    "Hukuka aykırı el koyma halinde delilin değerlendirme dışı bırakılması (CMK m.206/2-a, m.217/2) ileri sürüldü mü?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.116", "CMK m.119", "CMK m.123", "CMK m.127", "CMK m.131"],
+    "emsal_ara": "el koyma arama itiraz hâkim onayı hukuka aykırı delil iade",
+    "vurgula": ["7 günlük itiraz süresi", "hâkim kararı/onayı ve ölçülülük (CMK m.119)", "hukuka aykırı delilin değerlendirme dışılığı ve eşya iadesi (CMK m.131)"]
+  }
+}

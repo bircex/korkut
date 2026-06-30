@@ -1,0 +1,42 @@
+{
+  "tip": "istirdat",
+  "ad": "İstirdat dava dilekçesi",
+  "dayanak": ["İİK m.72/6", "İİK m.72/7", "TBK m.77"],
+
+  "sorular": [
+    { "id": "odenen_borc", "soru": "Hangi borç için, ne kadar ve hangi takip kapsamında ödeme yapıldı?", "tip": "metin",
+      "zorunlu": true, "neden": "İstirdadı istenen miktar ve takip dayanağı (İİK m.72/6)." },
+    { "id": "odeme_tarihi", "soru": "Ödeme/cebri tahsil ne zaman gerçekleşti?", "tip": "tarih",
+      "zorunlu": true, "neden": "1 yıllık istirdat süresi ödeme tarihinden işler (İİK m.72/7)." },
+    { "id": "odeme_sekli", "soru": "Ödeme cebri icra yoluyla mı yapıldı yoksa takip tehdidi altında rızaen mi?", "tip": "secim",
+      "secenekler": ["icra baskısı/cebri tahsil ile", "takip tehdidi altında ödeme", "ihtirazi kayıtla ödeme"],
+      "zorunlu": true, "neden": "İstirdat, paranın cebri icra/takip baskısıyla alınmış olmasını gerektirir (İİK m.72/6)." },
+    { "id": "borcsuzluk_nedeni", "soru": "Gerçekte borçlu olmadığınızı neden ileri sürüyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "İstirdadın esası: borcun bulunmadığının ispatı (İİK m.72/6)." },
+    { "id": "onceki_menfi_tespit", "soru": "Daha önce menfi tespit davası açılmış mıydı? Sonucu?", "tip": "metin",
+      "zorunlu": false, "neden": "Derdest menfi tespit istirdata dönüşebilir; mükerrerlik/derdestlik kontrolü." }
+  ],
+
+  "kosullar": [
+    { "eger": "odeme_sekli == ihtirazi kayıtla ödeme",
+      "ekle": "Ödemenin ihtirazi kayıtla ve baskı altında yapıldığını, borcu kabul anlamına gelmediğini vurgulayan bir paragraf ekle." },
+    { "eger": "gun_farki(odeme_tarihi) > 365",
+      "uyari": "KRİTİK: Ödeme üzerinden 1 yıl geçmiş olabilir (İİK m.72/7); istirdat süresini teyit et, geçmişse sebepsiz zenginleşme (TBK m.77) yolunu değerlendir." },
+    { "eger": "onceki_menfi_tespit != yok",
+      "uyari": "Derdest menfi tespit varsa istirdata çevrilebilir; ayrı dava açmak yerine ıslah/talep değişikliği olanağını değerlendir." }
+  ],
+
+  "kontroller": [
+    "İstirdat şartları (icra baskısıyla ödeme + gerçekte borçlu olmama) gösterildi mi (İİK m.72/6)?",
+    "1 yıllık istirdat süresi (İİK m.72/7) ödeme tarihinden hesaplandı mı?",
+    "Süre geçmişse sebepsiz zenginleşme (TBK m.77) alternatifine geçildi mi?",
+    "Faiz, ödeme/tahsil tarihinden itibaren talep edildi mi?",
+    "Aynı konuda derdest menfi tespit/dava bulunmadığı (derdestlik) kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.72", "TBK m.77"],
+    "emsal_ara": "istirdat davası icra ödeme 1 yıllık süre cebri tahsil borçsuzluk",
+    "vurgula": ["icra baskısıyla ödeme şartı", "1 yıllık istirdat süresi", "menfi tespitin istirdata dönüşmesi"]
+  }
+}

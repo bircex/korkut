@@ -187,6 +187,37 @@ def intake(type_id: str) -> dict | None:
         return None
 
 
+_WORKFLOW = _TPL / "dava-workflow.json"
+
+
+@lru_cache(maxsize=1)
+def _workflow() -> dict:
+    try:
+        return json.loads(_WORKFLOW.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+@lru_cache(maxsize=1)
+def _dava_turleri() -> dict[str, dict]:
+    return {d["id"]: d for d in _workflow().get("dava_turleri", [])}
+
+
+def dava_turu(type_id: str) -> dict | None:
+    """Archetype inherited by a petition type (deliller/görev/yetki/süre), or None.
+
+    Resolution chain (see docs/DRAFTING_FLOW.md): type_id → catalog kategori →
+    dava-workflow.kategori_eslesme → dava_turleri[dava_turu]. Lets the 126 types inherit
+    evidence/jurisdiction from 11 archetypes so intake/<id>.json stays thin.
+    """
+    info = get(type_id)
+    if not info or info["tur"] != "dilekce":
+        return None
+    tablo = _workflow().get("kategori_eslesme", {}).get("tablo", {})
+    turu = tablo.get(info["kategori"])
+    return _dava_turleri().get(turu) if turu else None
+
+
 @lru_cache(maxsize=1)
 def _index() -> dict[str, dict]:
     """type id -> {ad, ref, kategori, tur}. ref = mahkeme (dilekçe) | mevzuat (sözleşme)."""
@@ -357,4 +388,58 @@ def draft_prompt(type_id: str) -> str | None:
         "AÇIKLAMALAR'da vakıaları sıra numarasıyla (1., 2., 3.) yaz; her vakıaya delil bağla. "
         "SONUÇ VE İSTEM'de talepleri numaralandır ve yargılama gideri + vekâlet ücreti "
         "talebini ekle."
+        f"{_intake_block(type_id)}"
     )
+
+
+def _intake_block(type_id: str) -> str:
+    """Append intake (type-specific questions) + inherited evidence/jurisdiction guidance.
+
+    Activates templates/intake/<id>.json and the dava-workflow archetype so drafting is
+    fact-aware: missing critical fields are asked/placeheld and the DELİLLER section is built
+    from the archetype's evidence list. See docs/DRAFTING_FLOW.md.
+    """
+    parts: list[str] = []
+
+    turu = dava_turu(type_id)
+    if turu:
+        yetki = turu.get("yetki")
+        if yetki:
+            parts.append(f"YETKİ: {yetki}")
+        sarti = turu.get("dava_sarti")
+        if sarti:
+            parts.append(f"DAVA ŞARTI: {sarti}")
+        sureler = turu.get("kritik_sureler") or []
+        if sureler:
+            parts.append("KRİTİK SÜRELER: " + " | ".join(sureler))
+        deliller = turu.get("deliller") or []
+        if deliller:
+            lines = []
+            for d in deliller:
+                z = d.get("zorunlu")
+                tag = "ZORUNLU" if z is True else ("KOŞULLU" if z == "kosullu" else "destek")
+                celp = " (yoksa: mahkemece celbi talep olunur)" if d.get("celp") else ""
+                lines.append(f"  • [{tag}] {d.get('ad')} — {d.get('ispat', '')}{celp}")
+            parts.append(
+                "DELİLLER — bu listeye göre DELİLLER bölümünü kur; mevcut olanları EK no'lu "
+                "yaz, olmayan ama celbe uygun olanlar için 'mahkemece celbi talep olunur' ekle:\n"
+                + "\n".join(lines)
+            )
+
+    ik = intake(type_id)
+    if ik:
+        sorular = ik.get("sorular") or []
+        eksik = [s for s in sorular if s.get("zorunlu")]
+        if eksik:
+            qs = "; ".join(s.get("soru", "") for s in eksik)
+            parts.append(
+                "ZORUNLU BİLGİLER — sohbette verilmemişse köşeli parantezle yer tutucu bırak "
+                f"(uydurma): {qs}"
+            )
+        kontroller = ik.get("kontroller") or []
+        if kontroller:
+            parts.append("USUL KONTROL (yazarken gözet): " + " | ".join(kontroller))
+
+    if not parts:
+        return ""
+    return "\n\n— OLAYA ÖZGÜ YÖNERGE —\n" + "\n".join(parts)

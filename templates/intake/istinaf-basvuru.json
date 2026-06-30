@@ -1,0 +1,49 @@
+{
+  "tip": "istinaf-basvuru",
+  "ad": "İstinaf başvuru dilekçesi",
+  "dayanak": ["HMK m.341-345", "HMK m.355", "İYUK m.45", "CMK m.272-273"],
+
+  "sorular": [
+    { "id": "yargilama_turu", "soru": "Karar hangi yargı kolundan? (süre buna göre değişir)", "tip": "secim",
+      "secenekler": ["hukuk (HMK)", "idari (İYUK)", "ceza (CMK)"],
+      "zorunlu": true, "neden": "İstinaf süresi yargı koluna göre farklıdır: hukuk 2 hafta, idari 30 gün, ceza 7 gün." },
+    { "id": "karar_mahkeme", "soru": "Kararı veren ilk derece mahkemesi ve dosya esas/karar numarası?", "tip": "metin",
+      "zorunlu": true, "neden": "İstinafa konu kararın kimliği; BAM dosyası bu bilgiyle açılır (HMK m.342)." },
+    { "id": "teblig_tarihi", "soru": "Gerekçeli kararın tebliğ/tefhim tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İstinaf süresi bu tarihten işler (HMK m.345 / İYUK m.45 / CMK m.273)." },
+    { "id": "istinaf_sebepleri", "soru": "İstinaf sebepleri nelerdir? (maddi vakıa/hukuki hata/usul aykırılığı/eksik inceleme)", "tip": "metin",
+      "zorunlu": true, "neden": "İstinaf dilekçesinde sebeplerin gösterilmesi zorunludur (HMK m.342/2)." },
+    { "id": "yeniden_inceleme_talep", "soru": "Hangi sonuç isteniyor? (kararın kaldırılması/düzeltilerek esastan karar/yeniden yargılama)", "tip": "secim",
+      "secenekler": ["kaldırma ve esastan yeniden karar", "düzelterek karar", "bozma ve gönderme"],
+      "zorunlu": true, "neden": "İstem türü BAM'ın inceleme kapsamını yönlendirir (HMK m.353)." },
+    { "id": "yeni_delil", "soru": "İlk derecede ileri sürülemeyen yeni vakıa/delil var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İstinafta yeni delil kural olarak sınırlıdır (HMK m.357)." },
+    { "id": "durusma_talep", "soru": "İstinafta duruşma talep ediliyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "BAM duruşma açıp açmayacağını belirler (HMK m.356-358)." }
+  ],
+
+  "kosullar": [
+    { "eger": "yargilama_turu == hukuk (HMK)",
+      "uyari": "Hukuk davalarında istinaf süresi gerekçeli kararın tebliğinden itibaren 2 HAFTADIR (HMK m.345). Süreyi tebliğ tarihinden hesapla." },
+    { "eger": "yargilama_turu == idari (İYUK)",
+      "uyari": "İdari yargıda istinaf süresi kararın tebliğinden itibaren 30 GÜNDÜR (İYUK m.45)." },
+    { "eger": "yargilama_turu == ceza (CMK)",
+      "uyari": "Ceza yargılamasında istinaf (CMK 'istinaf') süresi hükmün tefhim/tebliğinden itibaren 7 GÜNDÜR (CMK m.273)." },
+    { "eger": "yeni_delil == evet",
+      "uyari": "İstinafta yeni delil ileri sürme kural olarak yasaktır; istisna (m.357) koşullarını gerekçelendir." }
+  ],
+
+  "kontroller": [
+    "SÜRE: hukuk 2 hafta / idari 30 gün / ceza 7 gün — tebliğ tarihinden başvuru süresi içinde mi? (bu kategori dava-workflow'da süre mirası ALMAZ).",
+    "USUL: dilekçe kararı veren ilk derece mahkemesine mi veriliyor? (HMK m.343 — başka mahkemeye verme ek usule tabidir).",
+    "İstinaf sebepleri (vakıa/hukuk/usul) somut ve gerekçeli yazıldı mı? (HMK m.342/2).",
+    "İstinaf başvuru harcı ve gider avansı yatırıldı mı? (aksi halde başvurudan vazgeçmiş sayılma riski).",
+    "İstem (kaldırma/düzeltme/gönderme) sonuç kısmında açık mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.341", "HMK m.342", "HMK m.345", "HMK m.353", "HMK m.357", "İYUK m.45", "CMK m.273"],
+    "emsal_ara": "istinaf başvuru süre tebliğ tarihi sebep bölge adliye mahkemesi",
+    "vurgula": ["yargı koluna göre süre farkı (2 hafta/30 gün/7 gün)", "istinaf sebeplerinin gösterilmesi zorunluluğu", "yeni delil yasağı ve istisnaları"]
+  }
+}

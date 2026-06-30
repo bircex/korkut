@@ -1,0 +1,42 @@
+{
+  "tip": "kyok-itiraz",
+  "ad": "Kovuşturmaya yer olmadığı kararına (KYOK) itiraz",
+  "dayanak": ["CMK m.171", "CMK m.172", "CMK m.173"],
+
+  "sorular": [
+    { "id": "sorusturma_no", "soru": "İtiraza konu soruşturma numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Karara konu dosyanın belirlenmesi (CMK m.172)." },
+    { "id": "kyok_tarihi", "soru": "KYOK kararının size tebliğ edildiği tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz süresi (tebliğden itibaren 15 gün) bu tarihten işler (CMK m.173/1)." },
+    { "id": "veren_savcilik", "soru": "KYOK kararını veren Cumhuriyet Başsavcılığı hangisi?", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın yöneltileceği yetkili Sulh Ceza Hâkimliğinin belirlenmesi (CMK m.173)." },
+    { "id": "suc_tipi", "soru": "Soruşturmaya konu suç tipi neydi?", "tip": "metin",
+      "zorunlu": true, "neden": "Yeterli şüphe değerlendirmesinin yapılabilmesi (CMK m.170)." },
+    { "id": "eksik_sorusturma", "soru": "Toplanmayan delil / yapılmayan soruşturma işlemi var mı? (varsa belirtin)", "tip": "metin",
+      "zorunlu": true, "neden": "Eksik soruşturma itirazın temel gerekçesidir (CMK m.173/3)." },
+    { "id": "yeni_delil", "soru": "Karardan sonra ortaya çıkan yeni delil var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yeni delil itiraz/yeniden soruşturma açısından önemlidir (CMK m.172/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(kyok_tarihi) > 15",
+      "uyari": "KRİTİK: KYOK tebliğinden bu yana 15 günü aşmış görünüyor — itiraz süresi geçmiş olabilir (CMK m.173/1). Süreyi mutlaka teyit edin." },
+    { "eger": "yeni_delil == evet",
+      "ekle": "Karardan sonra ortaya çıkan yeni delili ve bunun yeterli şüphe oluşturduğunu açıklayan bir bölüm ekle (CMK m.172/2)." },
+    { "eger": "eksik_sorusturma != ",
+      "ekle": "Toplanmayan delillere ve yapılmayan soruşturma işlemlerine ayrıntılı atıf yapan, eksik soruşturma nedeniyle kovuşturmaya yer olmadığı kararının hatalı olduğunu vurgulayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: itiraz, kararı veren savcılığın yargı çevresindeki Sulh Ceza Hâkimliğine hitaben mi yazıldı? (CMK m.173)",
+    "Tebliğden itibaren 15 günlük itiraz süresi hesaplandı ve dilekçede gösterildi mi? (CMK m.173/1)",
+    "Yeterli şüphe (CMK m.170) bulunduğu, hangi delillerle desteklendiği somut olarak gerekçelendirildi mi?",
+    "Eksik kalan soruşturma işlemleri tek tek belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.171", "CMK m.172", "CMK m.173"],
+    "emsal_ara": "kovuşturmaya yer olmadığı kararı itiraz sulh ceza hâkimliği yeterli şüphe",
+    "vurgula": ["15 günlük itiraz süresi", "yeterli şüphe ölçütü (CMK m.170)", "eksik soruşturma gerekçesi"]
+  }
+}

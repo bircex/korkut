@@ -1,0 +1,45 @@
+{
+  "tip": "itirazin-iptali",
+  "ad": "İtirazın iptali dava dilekçesi",
+  "dayanak": ["İİK m.67", "İİK m.68", "TBK m.146"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın iptali davası belirli bir icra takibine bağlıdır; takip dosyası dava dilekçesinde gösterilir (İİK m.67)." },
+    { "id": "itiraz_tarihi", "soru": "Borçlunun ödeme emrine itiraz tarihi (itirazın size tebliğ/öğrenilme tarihi) nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtirazın iptali davası itirazın tebliğinden itibaren 1 YIL içinde açılır (İİK m.67/1); süre hak düşürücüdür." },
+    { "id": "alacak_dayanagi", "soru": "Alacağın dayanağı ve niteliği nedir? (sözleşme, fatura, cari hesap, ödünç vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın iptali genel ispat kurallarına tabi bir alacak davasıdır; alacağın kaynağı ispat yükünü belirler." },
+    { "id": "itiraz_kapsami", "soru": "Borçlu borcun tamamına mı bir kısmına mı itiraz etti? İtiraz edilen tutar nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Dava, itiraz edilen ve böylece duran kısımla sınırlıdır; talep miktarı buna göre belirlenir." },
+    { "id": "icra_inkar_talebi", "soru": "İcra inkâr tazminatı talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İtirazın haksızlığı halinde alacağın en az %20'si oranında icra inkâr tazminatına hükmedilebilir (İİK m.67/2); talep edilmezse hükmedilemez." },
+    { "id": "alacak_likit", "soru": "Alacak likit (belirli/hesaplanabilir) mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İcra inkâr tazminatı için alacağın likit olması aranır; likit değilse tazminata hükmedilmeyebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(itiraz_tarihi) > 365",
+      "uyari": "KRİTİK: itirazın tebliğinden bu yana 1 yılı aşmış görünüyor — itirazın iptali davası süresi (İİK m.67/1) geçmiş olabilir; alacak davası/itirazın kaldırılması yolunu değerlendir." },
+    { "eger": "icra_inkar_talebi == evet",
+      "ekle": "İtirazın haksız olduğunu ve alacağın likit niteliğini ortaya koyarak en az %20 icra inkâr tazminatı talebini sonuç kısmına ekle (İİK m.67/2).",
+      "uyari": "İcra inkâr tazminatı için alacağın likit olması ve talebin açıkça yapılması gerekir." },
+    { "eger": "alacak_likit == hayir",
+      "uyari": "Alacak likit değilse icra inkâr tazminatına hükmedilmeyebilir; tazminat talebini buna göre değerlendir." },
+    { "eger": "itiraz_kapsami != tamamı",
+      "uyari": "Dava yalnızca itiraz edilip duran kısımla sınırlıdır; itiraz edilmeyen kısım zaten kesinleşmiştir, talep miktarını ona göre belirle." }
+  ],
+
+  "kontroller": [
+    "İtirazın iptali davası, itirazın tebliğinden itibaren 1 yıllık süre içinde mi açılıyor (İİK m.67/1)?",
+    "Talep, itiraz edilip duran kısımla sınırlı tutuldu mu?",
+    "İcra inkâr tazminatı isteniyorsa sonuç-istemde açıkça ve oranıyla gösterildi mi (en az %20)?",
+    "Dava kabul edilirse takibe kaldığı yerden devam edileceği talebe yansıtıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.67", "İİK m.68", "TBK m.146"],
+    "emsal_ara": "itirazın iptali bir yıllık süre icra inkar tazminatı likit alacak",
+    "vurgula": ["1 yıllık dava açma süresi (İİK m.67)", "icra inkâr tazminatı ve likitlik şartı", "davanın itiraz edilen kısımla sınırlılığı"]
+  }
+}

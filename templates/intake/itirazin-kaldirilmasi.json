@@ -1,0 +1,47 @@
+{
+  "tip": "itirazin-kaldirilmasi",
+  "ad": "İtirazın kaldırılması talebi",
+  "dayanak": ["İİK m.68", "İİK m.68a", "İİK m.68b"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın kaldırılması belirli bir takibe bağlıdır; icra mahkemesi dosyayı bu numarayla inceler (İİK m.68)." },
+    { "id": "itiraz_teblig_tarihi", "soru": "Borçlunun itirazı size ne zaman tebliğ edildi / öğrenildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtirazın kaldırılması, itirazın tebliğinden itibaren 6 AY içinde istenir (İİK m.68/son); süre hak düşürücüdür." },
+    { "id": "kaldirma_turu", "soru": "Kesin kaldırma mı geçici kaldırma mı talep ediliyor?", "tip": "secim",
+      "secenekler": ["kesin kaldırma (İİK m.68 — belgeye dayalı)", "geçici kaldırma (İİK m.68a — adi senet/imza)"],
+      "zorunlu": true, "neden": "Kesin kaldırma İİK m.68'deki nitelikli belgelere; geçici kaldırma imzası ikrar/kabul edilen adi senede dayanır (İİK m.68a)." },
+    { "id": "belge_niteligi", "soru": "Elinizdeki belge nedir? (imzası ikrar/noter onaylı senet, resmi dairece verilen belge, kayıtlar, kambiyo senedi vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazın kaldırılması ancak İİK m.68/68a'da sayılan belgelerden biriyle istenebilir; aksi halde talep reddedilir." },
+    { "id": "borclu_itiraz_sebebi", "soru": "Borçlu itirazında hangi sebebe dayandı? (ödeme, takas, zamanaşımı, imza inkârı vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "İcra mahkemesi sınırlı/belgeye dayalı inceleme yapar; borçlunun itiraz sebebi de belgeyle çürütülmelidir." },
+    { "id": "inkar_tazminat_talebi", "soru": "Borçlunun haksız itirazı nedeniyle tazminat talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Talep halinde %20'den az olmamak üzere tazminata hükmedilebilir (İİK m.68/7)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(itiraz_teblig_tarihi) > 180",
+      "uyari": "KRİTİK: itirazın tebliğinden bu yana 6 ayı aşmış görünüyor — itirazın kaldırılması süresi (İİK m.68/son) geçmiş olabilir; itirazın iptali davası (İİK m.67, 1 yıl) yolunu değerlendir." },
+    { "eger": "kaldirma_turu == geçici kaldırma (İİK m.68a — adi senet/imza)",
+      "ekle": "İmzası borçluya ait adi senede dayanıldığını ve geçici kaldırma istendiğini belirt; borçlunun 7 gün içinde borçtan kurtulma davası açabileceğine değin (İİK m.68a/son).",
+      "uyari": "Geçici kaldırmada borçlu, kararın tebliğinden 7 gün içinde borçtan kurtulma davası (İİK m.69) açabilir." },
+    { "eger": "kaldirma_turu == kesin kaldırma (İİK m.68 — belgeye dayalı)",
+      "uyari": "Kesin kaldırma yalnızca İİK m.68/1'de sayılan nitelikli belgelerle istenebilir; belge bu kapsamda değilse itirazın iptali davasına yönel." },
+    { "eger": "inkar_tazminat_talebi == evet",
+      "ekle": "Haksız itiraz nedeniyle %20'den az olmamak üzere tazminat talebini sonuç kısmına ekle (İİK m.68/7)." }
+  ],
+
+  "kontroller": [
+    "Talep, itirazın tebliğinden itibaren 6 ay içinde icra mahkemesine yapılıyor mu (İİK m.68/son)?",
+    "Dayanılan belge İİK m.68/68a kapsamında nitelikli bir belge mi? (aksi halde itirazın iptali davası gerekir).",
+    "Kesin/geçici kaldırma türü belgeye uygun seçildi mi?",
+    "Tazminat isteniyorsa oranıyla (en az %20) sonuç-istemde gösterildi mi?",
+    "İcra mahkemesinin yargılaması belgeye dayalı/sınırlıdır; iddialar belgeyle desteklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.68", "İİK m.68a", "İİK m.69"],
+    "emsal_ara": "itirazın kaldırılması 6 ay icra mahkemesi belge geçici kesin kaldırma",
+    "vurgula": ["6 aylık başvuru süresi (İİK m.68/son)", "İİK m.68'deki nitelikli belge şartı", "kesin/geçici kaldırma ayrımı ve m.69 borçtan kurtulma davası"]
+  }
+}

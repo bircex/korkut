@@ -1,0 +1,44 @@
+{
+  "tip": "anlasmali-bosanma",
+  "ad": "Anlaşmalı boşanma dava dilekçesi",
+  "dayanak": ["TMK m.166/3", "TMK m.184", "HMK m.119"],
+
+  "sorular": [
+    { "id": "evlilik_tarihi", "soru": "Evlilik (resmî nikâh) tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Anlaşmalı boşanma için evliliğin en az 1 yıl sürmüş olması şarttır (TMK m.166/3)." },
+    { "id": "ortak_cocuk", "soru": "Ortak (müşterek) çocuk var mı? Varsa sayısı ve doğum tarihleri?", "tip": "metin",
+      "zorunlu": true, "neden": "Velayet, iştirak nafakası ve kişisel ilişki düzenlemesi protokolde yer almalıdır (TMK m.166/3)." },
+    { "id": "protokol_var", "soru": "Taraflar arasında imzalı boşanma protokolü hazır mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Hâkimin onaylayacağı, tüm hususları kapsayan yazılı anlaşma zorunludur (TMK m.166/3)." },
+    { "id": "velayet_anlasma", "soru": "Çocuk varsa velayet kimde olacak ve kişisel ilişki nasıl düzenlenecek?", "tip": "metin",
+      "zorunlu": false, "neden": "Hâkim çocuğun menfaatine aykırı velayet/kişisel ilişki düzenlemesini onaylamaz (TMK m.166/3)." },
+    { "id": "nafaka_anlasma", "soru": "Yoksulluk ve/veya iştirak nafakası konusunda anlaşma ne yönde (miktar, taraf)?", "tip": "metin",
+      "zorunlu": false, "neden": "Nafaka tutar ve yönü protokolde açıkça belirtilmelidir." },
+    { "id": "tazminat_mal", "soru": "Maddi/manevi tazminat ve mal paylaşımı konusunda anlaşma var mı (varsa özeti)?", "tip": "metin",
+      "zorunlu": false, "neden": "Tarafların karşılıklı feragat veya ödeme iradesi protokolde gösterilmelidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(evlilik_tarihi) < 365",
+      "uyari": "KRİTİK: Evlilik 1 yıldan kısa görünüyor; anlaşmalı boşanma şartı (TMK m.166/3) oluşmamış olabilir. Çekişmeli boşanmayı değerlendirin." },
+    { "eger": "protokol_var == hayir",
+      "ekle": "Tüm hususları (velayet, nafaka, tazminat, mal paylaşımı, kişisel ilişki) kapsayan tarafların imzaladığı bir boşanma protokolü hazırla ve dilekçe ekine bağla.",
+      "uyari": "Yazılı ve imzalı protokol olmadan anlaşmalı boşanma kurulamaz." },
+    { "eger": "ortak_cocuk != hayir",
+      "ekle": "Velayet, iştirak nafakası ve kişisel ilişki düzenlemesini çocuğun üstün yararı ölçütüyle protokole ve sonuç-isteme açıkça yaz." }
+  ],
+
+  "kontroller": [
+    "Evliliğin en az 1 yıl sürdüğü dilekçede açıkça gösterildi mi (TMK m.166/3)?",
+    "Tarafların duruşmada bizzat hazır bulunup beyanlarının teyit edileceği belirtildi mi?",
+    "Protokol tüm hususları (velayet/nafaka/tazminat/mal/kişisel ilişki) eksiksiz kapsıyor mu?",
+    "Çocuk varsa velayet ve kişisel ilişki düzenlemesi çocuğun menfaatine uygun mu?",
+    "Sonuç-istemde protokolün onaylanarak boşanmaya karar verilmesi talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.166/3", "TMK m.184"],
+    "emsal_ara": "anlaşmalı boşanma protokol bir yıl hakim onayı velayet",
+    "vurgula": ["bir yıllık evlilik süresi şartı", "hâkimin protokolü onaylama denetimi", "tarafların bizzat dinlenmesi zorunluluğu"]
+  }
+}

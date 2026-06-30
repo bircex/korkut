@@ -1,0 +1,49 @@
+{
+  "tip": "iflas-konkordato",
+  "ad": "İflas / konkordato talebi dilekçesi",
+  "dayanak": ["İİK m.285", "İİK m.286", "İİK m.287", "İİK m.177", "İİK m.179"],
+
+  "sorular": [
+    { "id": "talep_turu", "soru": "Talebiniz nedir (konkordato / doğrudan iflas / iflasın ertelenmesi yerine konkordato)?", "tip": "secim",
+      "secenekler": ["konkordato (borçlu talebi)", "konkordato (alacaklı talebi)", "doğrudan iflas talebi", "sermaye şirketi borca batıklık bildirimi"],
+      "zorunlu": true, "neden": "Süreç ve dayanak (İİK m.285 vd. / m.177-179) talep türüne göre belirlenir; konu (HMK m.119/d)." },
+    { "id": "borclu_sifati", "soru": "Borçlu kimdir (tacir/sermaye şirketi/gerçek kişi) ve unvanı?", "tip": "secim",
+      "secenekler": ["sermaye şirketi (AŞ/LŞ)", "diğer tacir/ticari işletme", "gerçek kişi (tacir değil)"],
+      "zorunlu": true, "neden": "İflasa tabi olma ve borca batıklık bildirimi yükümlülüğü borçlunun sıfatına bağlıdır (TTK m.376, İİK m.177)." },
+    { "id": "mali_durum", "soru": "Borçlunun mali durumu nedir (borç toplamı, ödeme güçlüğü/aczin niteliği)?", "tip": "metin",
+      "zorunlu": true, "neden": "Konkordatoda 'borçların ödenememesi tehlikesi/güçlüğü', iflasta aczin varlığı aranır (İİK m.285)." },
+    { "id": "konkordato_projesi", "soru": "Konkordato talebinde ön proje ve belgeler (mali tablolar, denetim raporu) hazır mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Konkordato talebine ön proje ve İİK m.286'daki belgelerin eklenmesi zorunludur." },
+    { "id": "gecici_muhlet", "soru": "Geçici mühlet / muhafaza tedbiri talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mahkeme belgeler tamsa geçici mühlet kararı ve geçici komiser atar (İİK m.287)." },
+    { "id": "alacak_belgesi", "soru": "(Alacaklı talebiyse) alacağın varlığı ve borçlunun aczini gösteren belge nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Alacaklının iflas/konkordato talebinde alacak ve aciz hâli ortaya konmalıdır (İİK m.285/2, m.177)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == konkordato (borçlu talebi)",
+      "ekle": "Konkordato ön projesini, makul sürede borçların ödeneceğine ilişkin öngörüyü ve İİK m.286 ekli belgeleri özetleyen bir bölüm ekle.",
+      "uyari": "Talebe ön proje + İİK m.286 belgeleri eksiksiz eklenmeli; eksik belge ret/iadeye yol açar." },
+    { "eger": "gecici_muhlet == evet",
+      "ekle": "Geçici mühlet ve borçlunun mal varlığının korunmasına yönelik muhafaza tedbirleri istemini açıklayan bir paragraf ekle (İİK m.287).",
+      "uyari": "Geçici mühlet 3 ay (1 ay uzatılabilir); bu sürede geçici komiser atanır ve takipler durur (İİK m.288)." },
+    { "eger": "borclu_sifati == sermaye şirketi (AŞ/LŞ)",
+      "uyari": "Sermaye şirketinde borca batıklık halinde yönetim organının mahkemeye bildirim yükümlülüğü (TTK m.376, İİK m.179) gözetilmeli." },
+    { "eger": "talep_turu == doğrudan iflas talebi",
+      "uyari": "Doğrudan iflas sebeplerinin (İİK m.177) hangisine dayanıldığı açıkça gösterilmeli; görevli Asliye Ticaret Mahkemesi teyit edilmeli." }
+  ],
+
+  "kontroller": [
+    "Talep türü (konkordato/iflas) doğru dayanağa (İİK m.285 vd. / m.177) bağlandı mı?",
+    "Konkordatoda ön proje ve İİK m.286 zorunlu belgeleri eksiksiz mi?",
+    "Borçlunun iflasa tabi olup olmadığı (tacir/sermaye şirketi) doğru tespit edildi mi?",
+    "Geçici mühlet/muhafaza tedbiri istemi varsa gerekçesi ve süresi (İİK m.287-288) belirtildi mi?",
+    "Yetkili-görevli merci (borçlunun muamele merkezi Asliye Ticaret Mahkemesi) gösterildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.285", "İİK m.286", "İİK m.287", "İİK m.288", "İİK m.177"],
+    "emsal_ara": "konkordato geçici mühlet ön proje borca batıklık iflas asliye ticaret",
+    "vurgula": ["konkordato ön projesi ve zorunlu belgeler", "geçici/kesin mühlet ve komiser", "borca batıklık bildirimi"]
+  }
+}

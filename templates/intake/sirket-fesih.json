@@ -1,0 +1,49 @@
+{
+  "tip": "sirket-fesih",
+  "ad": "Şirketin feshi / ortaklıktan çıkma-çıkarılma dilekçesi",
+  "dayanak": ["TTK m.531", "TTK m.636", "TTK m.638", "TTK m.640", "HMK m.119"],
+
+  "sorular": [
+    { "id": "sirket_turu", "soru": "Şirketin türü ve unvanı nedir (anonim/limited)?", "tip": "secim",
+      "secenekler": ["anonim şirket", "limited şirket"],
+      "zorunlu": true, "neden": "Haklı sebeple fesih AŞ'de TTK m.531, LŞ'de TTK m.636/3'e dayanır; çıkma/çıkarma LŞ'ye özgüdür." },
+    { "id": "talep_turu", "soru": "Talebiniz nedir (haklı sebeple şirketin feshi, ortaklıktan çıkma, ortağın çıkarılması)?", "tip": "secim",
+      "secenekler": ["haklı sebeple şirketin feshi", "ortaklıktan çıkma (kendi)", "ortağın şirketten çıkarılması", "fesih yerine alternatif çözüm (pay bedeli ile çıkarılma)"],
+      "zorunlu": true, "neden": "Dava türü ve dayanak (TTK m.531 / m.638 / m.640) buna göre belirlenir." },
+    { "id": "pay_orani", "soru": "Davacının sermaye payı / pay oranı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "AŞ'de fesih için sermayenin onda biri (halka açıkta yirmide biri) eşiği aranır (TTK m.531)." },
+    { "id": "hakli_sebep", "soru": "Haklı sebep oluşturan olgular nelerdir (kilitlenme, azınlığın ezilmesi, güven ilişkisinin sona ermesi, ortak amacın gerçekleşememesi)?", "tip": "metin",
+      "zorunlu": true, "neden": "Haklı sebebin somut olgularla ortaya konması davanın esasıdır (TTK m.531/m.636)." },
+    { "id": "esas_sozlesme_cikma", "soru": "Esas sözleşmede çıkma/çıkarma hakkı veya şartı öngörülmüş mü (LŞ)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "LŞ'de esas sözleşmesel çıkma hakkı ayrı dayanaktır (TTK m.638)." },
+    { "id": "alternatif_cozum", "soru": "Fesih yerine alternatif çözüm (payın gerçek değeriyle alınması vb.) talebine açık mısınız?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "AŞ'de mahkeme fesih yerine duruma uygun başka çözüme karar verebilir (TTK m.531)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == haklı sebeple şirketin feshi",
+      "ekle": "Haklı sebebi (ortaklar arası kilitlenme, azınlık haklarının ihlali, güven ilişkisinin çökmesi) somut olgularla açıklayan ve fesih yerine alternatif çözüm ihtimaline değinen bir bölüm ekle.",
+      "uyari": "AŞ'de fesih son çaredir; mahkeme TTK m.531 uyarınca fesih yerine duruma uygun ve kabul edilebilir başka bir çözüme hükmedebilir." },
+    { "eger": "sirket_turu == anonim şirket",
+      "uyari": "AŞ'de fesih davası için sermayenin en az onda birini (halka açık AŞ'de yirmide birini) temsil eden pay sahipliği aranır (TTK m.531); pay eşiğini teyit et." },
+    { "eger": "talep_turu == ortağın şirketten çıkarılması",
+      "ekle": "LŞ'de ortağın haklı sebeple çıkarılması için ortaklar genel kurulu kararı/dava sürecini ve haklı sebebi açıklayan bölüm ekle (TTK m.640).",
+      "uyari": "LŞ'de çıkarma için TTK m.640'taki usul (genel kurul kararı + mahkeme) izlenmeli." },
+    { "eger": "alternatif_cozum == evet",
+      "ekle": "Fesih yerine payın gerçek değeri üzerinden çıkma/çıkarılma talebini terditli istem olarak sonuç-isteme ekle." }
+  ],
+
+  "kontroller": [
+    "Talep türü (fesih / çıkma / çıkarma) doğru dayanağa (TTK m.531 / m.636 / m.638 / m.640) bağlandı mı?",
+    "AŞ feshinde pay eşiği (onda bir / yirmide bir — TTK m.531) sağlanıyor mu?",
+    "Haklı sebep somut olgularla ve süreklilik unsuruyla ortaya konuldu mu?",
+    "Fesih son çare ilkesi gözetilip alternatif çözüm/terditli istem değerlendirildi mi?",
+    "Şirket tüzel kişiliği (gerektiğinde ilgili ortaklar) doğru taraf olarak gösterildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TTK m.531", "TTK m.636", "TTK m.638", "TTK m.640"],
+    "emsal_ara": "anonim şirket haklı sebeple fesih son çare alternatif çözüm ortaklıktan çıkma",
+    "vurgula": ["haklı sebep ve fesih son çare ilkesi", "AŞ pay eşiği (onda bir)", "fesih yerine alternatif çözüm"]
+  }
+}

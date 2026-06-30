@@ -1,0 +1,45 @@
+{
+  "tip": "trafik-kazasi-tazminat",
+  "ad": "Trafik kazası kaynaklı tazminat dava dilekçesi",
+  "dayanak": ["KTK m.85", "KTK m.91", "KTK m.97", "TBK m.49", "TBK m.56"],
+
+  "sorular": [
+    { "id": "kaza_tarihi", "soru": "Trafik kazası ne zaman ve nerede meydana geldi?", "tip": "metin",
+      "zorunlu": true, "neden": "Olay yeri/zamanı; zamanaşımı ve yetki vakıası (KTK m.109)." },
+    { "id": "kaza_turu", "soru": "Kazada hangi zarar oluştu?", "tip": "secim",
+      "secenekler": ["sadece maddi hasar", "yaralanma (bedensel zarar)", "ölüm (destekten yoksun kalma)"],
+      "zorunlu": true, "neden": "Tazminat türü ve hesap yöntemini belirler (KTK m.90, TBK m.53-54)." },
+    { "id": "kusur_orani", "soru": "Kusur durumu nedir (kaza tespit tutanağı/bilirkişiye göre tarafların kusur oranı)?", "tip": "metin",
+      "zorunlu": true, "neden": "İşletenin/sürücünün sorumluluğu ve indirim (KTK m.85, TBK m.52)." },
+    { "id": "davalilar", "soru": "Kim/kimlere dava açılacak (sürücü, araç işleteni/maliki, sigorta şirketi)?", "tip": "metin",
+      "zorunlu": true, "neden": "İşleten ve ZMSS sigortacısı müteselsil sorumludur (KTK m.85, m.91)." },
+    { "id": "zmss_sigorta", "soru": "Karşı aracın zorunlu mali sorumluluk (trafik) sigortası ve poliçe bilgisi?", "tip": "metin",
+      "zorunlu": false, "neden": "Sigortacıya doğrudan başvuru ve dava şartı değerlendirmesi (KTK m.97)." },
+    { "id": "zarar_kalemleri", "soru": "Talep edilen zarar kalemleri ve tutarları (araç değer kaybı, tedavi, iş göremezlik, destek kaybı, manevi)?", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi/manevi tazminat kapsamı ve müddeabih." }
+  ],
+
+  "kosullar": [
+    { "eger": "kaza_turu == ölüm (destekten yoksun kalma)",
+      "ekle": "Destekten yoksun kalanların (eş, çocuk, ana-baba) destek paylarını ve süresini gösteren bir hesap bölümü ekle (TBK m.53).",
+      "uyari": "Destekten yoksun kalma tazminatı miras değil bağımsız bir haktır; davacıları destek ilişkisine göre belirle." },
+    { "eger": "kaza_turu == yaralanma (bedensel zarar)",
+      "ekle": "Geçici/sürekli iş göremezlik, tedavi gideri ve maluliyet oranına bağlı kazanç kaybı hesabını içeren bölüm ekle (TBK m.54)." },
+    { "eger": "zmss_sigorta != yok",
+      "uyari": "Sigortacıya karşı davadan önce yazılı başvuru ve sonucun beklenmesi dava şartıdır (KTK m.97); başvuru tarihini teyit et." }
+  ],
+
+  "kontroller": [
+    "Sigorta şirketine karşı talepte KTK m.97 ön başvuru (dava şartı) tamamlandı mı?",
+    "İşleten + sürücü + sigortacı arasındaki müteselsil sorumluluk doğru kuruldu mu (KTK m.85/91)?",
+    "Bedensel zarar/ölüm halinde zamanaşımı KTK m.109 (kural 2 yıl; suç ise uzamış) değerlendirildi mi?",
+    "Kusur oranı kaza tespit tutanağı/bilirkişiyle desteklendi mi?",
+    "Sigortacıya karşı faiz başlangıcı başvuru/temerrüt tarihiyle uyumlu mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["KTK m.85", "KTK m.91", "KTK m.97", "KTK m.109", "TBK m.53", "TBK m.54"],
+    "emsal_ara": "trafik kazası tazminat işleten sorumluluğu destekten yoksun kalma KTK 97 başvuru",
+    "vurgula": ["işleten ve sigortacının müteselsil sorumluluğu", "destekten yoksun kalma tazminatı", "KTK m.97 dava şartı başvuru"]
+  }
+}

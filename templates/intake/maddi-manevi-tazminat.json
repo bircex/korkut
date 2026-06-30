@@ -1,0 +1,43 @@
+{
+  "tip": "maddi-manevi-tazminat",
+  "ad": "Maddi ve manevi tazminat dava dilekçesi",
+  "dayanak": ["TBK m.49", "TBK m.50", "TBK m.51", "TBK m.56", "TBK m.72"],
+
+  "sorular": [
+    { "id": "olay_tarihi", "soru": "Zarara yol açan olay/eylem ne zaman gerçekleşti?", "tip": "tarih",
+      "zorunlu": true, "neden": "Haksız fiil zamanaşımı bu tarih ve öğrenme tarihinden işler (TBK m.72)." },
+    { "id": "olay_aciklamasi", "soru": "Olayı ve davalının kusurlu eylemini kısaca anlatın.", "tip": "metin",
+      "zorunlu": true, "neden": "Hukuka aykırı fiil + kusur + illiyet bağı vakıaları (TBK m.49)." },
+    { "id": "maddi_zarar_kalemleri", "soru": "Maddi zarar kalemleri nelerdir (tedavi gideri, kazanç kaybı, eşya hasarı vb.) ve tutarları?", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi tazminatın kapsamı ve hesabı (TBK m.50)." },
+    { "id": "manevi_zarar", "soru": "Manevi zarar nedir (acı, elem, kişilik hakkı ihlali) ve talep edilen manevi tazminat tutarı?", "tip": "metin",
+      "zorunlu": true, "neden": "Manevi tazminat takdiri için somut dayanak (TBK m.56)." },
+    { "id": "kusur_durumu", "soru": "Davalının kusur durumu ve varsa zarar görenin müterafik kusuru?", "tip": "metin",
+      "zorunlu": true, "neden": "Tazminatın indirimi/belirlenmesi (TBK m.51-52)." },
+    { "id": "ogrenme_tarihi", "soru": "Zararı ve faili ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": false, "neden": "2 yıllık zamanaşımı öğrenmeden işler (TBK m.72)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(olay_tarihi) > 730",
+      "uyari": "DİKKAT: olaydan bu yana 2 yıl aşılmış olabilir; öğrenme tarihini ve 10 yıllık üst sınırı (TBK m.72) değerlendir. Fiil suç ise daha uzun ceza zamanaşımı uygulanabilir." },
+    { "eger": "kusur_durumu != yok",
+      "ekle": "Müterafik/ortak kusur varsa indirim oranını ve tazminata etkisini açıklayan bir paragraf ekle (TBK m.52)." },
+    { "eger": "manevi_zarar != yok",
+      "ekle": "Manevi tazminatta hâkimin takdir ölçütlerini (olayın ağırlığı, tarafların durumu) gösteren gerekçeli bir paragraf ekle (TBK m.56)." }
+  ],
+
+  "kontroller": [
+    "Haksız fiilin dört unsuru (fiil, hukuka aykırılık, kusur, illiyet, zarar) dilekçede kuruldu mu?",
+    "Maddi tazminat kalemleri kalem kalem ve toplamıyla gösterildi mi?",
+    "Manevi tazminat talebi belirli bir tutar olarak istendi mi?",
+    "Zamanaşımı (TBK m.72: 2 yıl/10 yıl; suç ise ceza zamanaşımı) değerlendirildi mi?",
+    "Faiz başlangıcı haksız fiil tarihi olarak istendi mi (TBK m.49 — haksız fiilde temerrüt olay anında)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.49", "TBK m.50", "TBK m.51", "TBK m.52", "TBK m.56", "TBK m.72"],
+    "emsal_ara": "maddi manevi tazminat haksız fiil müterafik kusur takdir zamanaşımı",
+    "vurgula": ["illiyet bağı ve kusur", "manevi tazminat takdir ölçütleri", "haksız fiilde faiz başlangıcı"]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "tip": "ihtiyati-haciz",
+  "ad": "İhtiyati haciz talebi",
+  "dayanak": ["İİK m.257", "İİK m.258", "İİK m.259", "İİK m.261", "İİK m.264"],
+
+  "sorular": [
+    { "id": "alacak_miktari", "soru": "İhtiyati hacze konu alacak miktarı ve dayanağı nedir?", "tip": "sayi",
+      "zorunlu": true, "neden": "İhtiyati haciz para borcuna ilişkindir; alacağın miktarı ve sebebi gösterilmelidir (İİK m.257)." },
+    { "id": "alacak_vadesi", "soru": "Alacak muaccel (vadesi gelmiş) mi, yoksa vadesi gelmemiş mi?", "tip": "secim",
+      "secenekler": ["muaccel (vadesi gelmiş)", "vadesi gelmemiş — istisnai sebep var"],
+      "zorunlu": true, "neden": "Kural muaccel alacaktır; vadesi gelmemiş alacakta yalnız İİK m.257/2 sebepleri (kaçma, mal kaçırma) ile istenebilir." },
+    { "id": "rehin_durumu", "soru": "Alacak bir rehinle teminat altına alınmış mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Rehinle temin edilmiş alacakta kural olarak ihtiyati haciz istenemez (İİK m.257/1)." },
+    { "id": "haciz_sebebi", "soru": "İhtiyati haczi gerektiren olgu nedir? (borçlunun mal kaçırma/kaçma şüphesi, belirsiz ikametgâh vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Vadesi gelmemiş alacakta İİK m.257/2 sebepleri zorunludur; muaccelde de tehlike gerekçesi güçlendirir." },
+    { "id": "haczedilecek_mal", "soru": "Borçlunun haczi istenen malları/hakları neler? (taşınmaz, banka, araç vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Hangi malların haczedileceğinin belirtilmesi uygulamayı hızlandırır." },
+    { "id": "teminat_hazir", "soru": "Teminat yatırmaya hazır mısınız?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İhtiyati haciz kural olarak teminata bağlanır (İİK m.259); ilama dayalı alacakta teminat istenmeyebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "rehin_durumu == evet",
+      "uyari": "KRİTİK: rehinle temin edilmiş alacakta kural olarak ihtiyati haciz istenemez (İİK m.257/1); önce rehnin paraya çevrilmesi yolunu değerlendir." },
+    { "eger": "alacak_vadesi == vadesi gelmemiş — istisnai sebep var",
+      "ekle": "Borçlunun belirli ikametgâhı bulunmadığını veya taahhütlerinden kurtulmak için mal kaçırdığını/kaçma hazırlığında olduğunu somutlaştıran bir bölüm ekle (İİK m.257/2)." },
+    { "eger": "teminat_hazir == hayir",
+      "uyari": "İhtiyati haciz kararı kural olarak teminata bağlıdır (İİK m.259); ilam/ilam niteliğinde belge yoksa teminatsız karar beklenmemeli." }
+  ],
+
+  "kontroller": [
+    "Alacağın para borcu, miktarı ve sebebi açıkça gösterildi mi (İİK m.257)?",
+    "Alacak muaccel mi; değilse İİK m.257/2 sebepleri var mı?",
+    "Rehinle temin edilmiş alacak engeli (İİK m.257/1) denetlendi mi?",
+    "Teminat (İİK m.259) ve kararın 10 gün içinde infazı (İİK m.261) gözetildi mi?",
+    "Takip/dava açma süresi: ihtiyati haciz kesinleştikten sonra 7 gün içinde takip/dava (İİK m.264) not edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.257", "İİK m.258", "İİK m.259", "İİK m.261", "İİK m.264"],
+    "emsal_ara": "ihtiyati haciz muaccel alacak teminat rehin mal kaçırma yedi gün",
+    "vurgula": ["muaccel alacak kuralı ve istisnaları", "teminat", "İİK m.264 takip/dava süreleri"]
+  }
+}

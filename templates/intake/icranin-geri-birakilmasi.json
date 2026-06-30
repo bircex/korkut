@@ -1,0 +1,47 @@
+{
+  "tip": "icranin-geri-birakilmasi",
+  "ad": "İcranın geri bırakılması (tehir-i icra) talebi",
+  "dayanak": ["İİK m.33", "İİK m.36", "İİK m.71"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Geri bırakma belirli bir takibe ilişkindir; dosya numarasıyla işlem yapılır." },
+    { "id": "geri_birakma_sebebi", "soru": "İcranın geri bırakılma sebebi nedir?", "tip": "secim",
+      "secenekler": ["kanun yoluna başvuru + teminat (İİK m.36 — tehir-i icra)", "borcun itfası/imhal (ödendi/mehil verildi - İİK m.33/71)", "zamanaşımı (İİK m.33/a, m.71)", "icra emrine itiraz (ilamlı - İİK m.33)"],
+      "zorunlu": true, "neden": "Geri bırakma yolu ve mercii sebebe göre değişir (m.36 tehir-i icra ile m.33/71 itfa-zamanaşımı ayrıdır)." },
+    { "id": "ilam_teblig_tarihi", "soru": "İcra emrinin/ilamın tebliğ tarihi nedir? (m.36 için karar/tebliğ tarihleri)", "tip": "tarih",
+      "zorunlu": true, "neden": "Tehir-i icra ve itfa/imhal/zamanaşımı itirazlarında süreler tebliğden işler (İİK m.33, m.36)." },
+    { "id": "kanun_yolu_durumu", "soru": "İlama karşı istinaf/temyiz yoluna başvuruldu mu? (BAM/Yargıtay aşaması)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İİK m.36 tehir-i icra, kanun yoluna başvurmuş borçlunun teminat göstererek icranın durdurulmasını istemesine dayanır." },
+    { "id": "teminat", "soru": "Teminat gösterilecek mi / gösterildi mi? Türü ve tutarı nedir? (nakit, banka teminat mektubu)", "tip": "metin",
+      "zorunlu": false, "neden": "Tehir-i icrada kural olarak alacağı karşılayacak teminat gösterilmesi gerekir (İİK m.36)." },
+    { "id": "itfa_imhal_belgesi", "soru": "Borcun ödendiğine/mehil verildiğine/zamanaşımına ilişkin belge var mı? (makbuz, ibraname, imzası ikrar belge)", "tip": "metin",
+      "zorunlu": false, "neden": "İtfa, imhal veya zamanaşımı ancak yetkili mercide düzenlenmiş veya imzası ikrar edilmiş belge ile ispatlanırsa icra geri bırakılır (İİK m.33, m.71)." }
+  ],
+
+  "kosullar": [
+    { "eger": "geri_birakma_sebebi == kanun yoluna başvuru + teminat (İİK m.36 — tehir-i icra)",
+      "ekle": "İstinaf/temyiz başvurusunun yapıldığını, teminatın türü-tutarını ve icranın geri bırakılması (tehir-i icra) talebini açıklayan bölüm ekle (İİK m.36).",
+      "uyari": "Tehir-i icra kararı kanun yolu merciinden alınacak süre içinde icra dairesine ibraz edilmezse satış durmaz; süreyi izle (İİK m.36)." },
+    { "eger": "geri_birakma_sebebi == borcun itfası/imhal (ödendi/mehil verildi - İİK m.33/71)",
+      "ekle": "İtfa/imhalin yetkili merci belgesi veya imzası ikrar edilmiş belge ile ispatlandığını gösteren bölüm ekle (İİK m.33).",
+      "uyari": "İtfa/imhal ancak resmî/imzası ikrar belge ile ispatlanırsa icra geri bırakılır; sözlü beyan yetmez (İİK m.33)." },
+    { "eger": "geri_birakma_sebebi == zamanaşımı (İİK m.33/a, m.71)",
+      "uyari": "İlamların zamanaşımı ve takipten sonraki zamanaşımı icranın geri bırakılması sebebidir (İİK m.33/a, m.71); zamanaşımı süresinin dolduğunu hesapla ve göster." },
+    { "eger": "kanun_yolu_durumu == hayir",
+      "uyari": "İİK m.36 tehir-i icra için kanun yoluna (istinaf/temyiz) başvurulmuş olması gerekir; başvuru yoksa m.33/71 yollarını değerlendir." }
+  ],
+
+  "kontroller": [
+    "Geri bırakma sebebine uygun yol/merci seçildi mi? (m.36 tehir-i icra ↔ m.33/71 itfa-imhal-zamanaşımı).",
+    "Tehir-i icrada teminat gösterildi ve kanun yolu merciinden alınan karar süresinde icra dairesine ibraz edildi mi (İİK m.36)?",
+    "İtfa/imhal/zamanaşımı ileri sürülüyorsa dayanak belge nitelikli (resmî veya imzası ikrar) mı (İİK m.33)?",
+    "Talep icra mahkemesine mi (m.33/71) yoksa kanun yolu merciine mi (m.36) yöneltildi, doğru mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.33", "İİK m.36", "İİK m.71"],
+    "emsal_ara": "icranın geri bırakılması tehir-i icra teminat itfa imhal zamanaşımı",
+    "vurgula": ["tehir-i icra (İİK m.36) ve teminat şartı", "itfa/imhal/zamanaşımının belgeyle ispatı (İİK m.33)", "takip sonrası zamanaşımı (İİK m.71)"]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "tip": "fazla-mesai",
+  "ad": "Fazla mesai / yıllık izin alacağı dilekçesi",
+  "dayanak": ["İş K. m.41", "İş K. m.53", "İş K. m.59", "7036 s.K. m.3"],
+
+  "sorular": [
+    { "id": "calisma_donemi", "soru": "Çalışma dönemi (işe giriş - çıkış tarihleri)?", "tip": "metin",
+      "zorunlu": true, "neden": "Fazla mesai ve yıllık izin hesabının yapılacağı dönemi belirler (İş K. m.41, m.53)." },
+    { "id": "haftalik_calisma", "soru": "Haftalık fiili çalışma süresi kaç saatti (45 saati aşan kısım)?", "tip": "metin",
+      "zorunlu": true, "neden": "Haftalık 45 saati aşan çalışma fazla mesaidir; %50 zamlı ücrete tabidir (İş K. m.41)." },
+    { "id": "fazla_mesai_odendi", "soru": "Fazla mesai ücreti ödendi mi / serbest zaman kullandırıldı mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Ödenmiş/serbest zamanla karşılanmış fazla mesai yeniden talep edilemez (İş K. m.41/4)." },
+    { "id": "yillik_izin_kullandirildi", "soru": "Hak edilen yıllık ücretli izinler kullandırıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Kullandırılmayan yıllık izin, fesihte ücret olarak ödenir (İş K. m.59)." },
+    { "id": "ispat_belgesi", "soru": "Fazla çalışmayı gösteren kayıt var mı (puantaj, mesai çizelgesi, giriş-çıkış kaydı, tanık)?", "tip": "metin",
+      "zorunlu": false, "neden": "Fazla mesai iddiasının ispatı işçidedir; yazılı belge yoksa tanık/takdiri indirim gündeme gelir." },
+    { "id": "arabulucu_basvuru", "soru": "Bu alacaklar için arabuluculuğa başvuruldu mu (dava şartı)?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İşçilik alacaklarında arabuluculuk zorunlu DAVA ŞARTIDIR (7036 s.K. m.3)." }
+  ],
+
+  "kosullar": [
+    { "eger": "arabulucu_basvuru == hayir",
+      "uyari": "KRİTİK: Fazla mesai/yıllık izin alacağında arabuluculuk dava şartıdır (7036 s.K. m.3); başvuru olmadan dava açılamaz." },
+    { "eger": "fazla_mesai_odendi == evet",
+      "uyari": "Fazla mesai ödenmiş veya serbest zamanla karşılanmışsa yeniden talep edilemez; ödeme kapsamı ve dönemi netleştirilmeli (İş K. m.41)." },
+    { "eger": "ispat_belgesi == ",
+      "uyari": "Yazılı kayıt yoksa fazla mesai tanıkla ispatlanabilir; uzun süreli/sürekli fazla mesaide hâkimin takdiri indirim (hakkaniyet indirimi) uygulayabileceği göz önünde tutulmalı." },
+    { "eger": "yillik_izin_kullandirildi == hayir",
+      "ekle": "Kullandırılmayan yıllık izin sürelerini yıl-yıl gösteren ve fesihte son ücret üzerinden izin ücreti talebini açıklayan bir bölüm ekle (İş K. m.59)." }
+  ],
+
+  "kontroller": [
+    "Arabuluculuk dava şartı yerine getirildi mi (7036 s.K. m.3)?",
+    "Haftalık 45 saati aşan çalışma ve %50 zamlı ücret hesabı doğru kuruldu mu (İş K. m.41)?",
+    "Fazla mesai ispatı (puantaj/tanık) ve gerekirse hakkaniyet indirimi değerlendirildi mi?",
+    "Kullandırılmayan yıllık izin son ücret üzerinden hesaplandı mı (İş K. m.59)?",
+    "Alacakların 5 yıllık zamanaşımı ve faiz başlangıcı kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İş K. m.41", "İş K. m.53", "İş K. m.59", "7036 s.K. m.3"],
+    "emsal_ara": "fazla mesai 45 saat yüzde elli zam yıllık izin tanık hakkaniyet indirimi",
+    "vurgula": ["45 saat eşiği ve %50 zam", "fazla mesai ispat yükü ve takdiri indirim", "kullandırılmayan yıllık izin ücreti", "arabuluculuk dava şartı"]
+  }
+}

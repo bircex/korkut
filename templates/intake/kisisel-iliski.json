@@ -1,0 +1,46 @@
+{
+  "tip": "kisisel-iliski",
+  "ad": "Kişisel ilişki (çocukla görüş) tesisi dilekçesi",
+  "dayanak": ["TMK m.323", "TMK m.324", "TMK m.325", "HMK m.119"],
+
+  "sorular": [
+    { "id": "talep_eden_sifat", "soru": "Kişisel ilişki talep eden kim? (velayeti olmayan ana/baba, büyükanne/büyükbaba, üçüncü kişi)", "tip": "secim",
+      "secenekler": ["velayeti bulunmayan ana/baba", "büyükanne-büyükbaba / üçüncü kişi (TMK m.325)"],
+      "zorunlu": true, "neden": "Üçüncü kişilerin talebi olağanüstü hâl ve çocuğun yararı koşuluna tabidir (TMK m.325)." },
+    { "id": "cocuk_bilgi", "soru": "Çocuğun adı, doğum tarihi ve velayetin kimde olduğu?", "tip": "metin",
+      "zorunlu": true, "neden": "Kişisel ilişki düzeni çocuğun yaşına ve fiilî durumuna göre kurulur." },
+    { "id": "istenen_duzen", "soru": "Talep edilen kişisel ilişki düzeni nedir? (hafta sonu/bayram/yarıyıl/yaz dönemi günleri)", "tip": "metin",
+      "zorunlu": true, "neden": "Mahkemenin hükmedeceği somut görüşme takvimi için talep netleşmelidir." },
+    { "id": "mevcut_engel", "soru": "Diğer ebeveyn çocukla görüşmeyi engelliyor mu / mevcut bir kişisel ilişki kararı var mı?", "tip": "metin",
+      "zorunlu": true, "neden": "Engelleme veya mevcut kararın değiştirilmesi ihtiyacı talebin dayanağıdır (TMK m.324)." },
+    { "id": "risk_durumu", "soru": "Çocuğun güvenliği açısından bir risk (şiddet, alkol/madde, kaçırma) var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Çocuğun huzuru tehlikedeyse kişisel ilişki sınırlanabilir/refakatli olabilir (TMK m.324)." },
+    { "id": "yurtdisi_mesafe", "soru": "Taraflar farklı şehir/ülkede mi yaşıyor (uzaklık)?", "tip": "metin",
+      "zorunlu": false, "neden": "Mesafe, görüşme günlerinin sıklığı ve teslim-iade yöntemini etkiler." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_eden_sifat == büyükanne-büyükbaba / üçüncü kişi (TMK m.325)",
+      "ekle": "Olağanüstü hâlin ve çocuğun yararının bulunduğunu somutlaştıran bir bölüm ekle (TMK m.325).",
+      "uyari": "Üçüncü kişinin kişisel ilişki talebi istisnaî olup çocuğun yararı ölçütüne tabidir." },
+    { "eger": "risk_durumu == evet",
+      "ekle": "Çocuğun güvenliği için refakatli/denetimli kişisel ilişki veya uygun koşul talebini gerekçelendir (TMK m.324).",
+      "uyari": "Risk varsa kişisel ilişki çocuğun huzurunu tehlikeye düşürmeyecek biçimde sınırlanmalıdır." },
+    { "eger": "yurtdisi_mesafe != hayir",
+      "ekle": "Mesafeyi gözeterek yarıyıl/yaz dönemi yoğunlaştırılmış görüşme ve teslim-iade noktası düzenini sonuç-isteme yaz." }
+  ],
+
+  "kontroller": [
+    "İstenen görüşme takvimi (gün/saat/bayram/tatil) somut ve uygulanabilir mi?",
+    "Talep çocuğun yüksek yararı ölçütüyle gerekçelendirildi mi (TMK m.324)?",
+    "Üçüncü kişi talebinde olağanüstü hâl koşulu gösterildi mi (TMK m.325)?",
+    "Risk varsa refakatli/denetimli ilişki ve koruyucu koşullar düzenlendi mi?",
+    "Teslim-iade yöntemi ve yeri (mesafe/uyuşmazlık gözetilerek) belirlendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.323", "TMK m.324", "TMK m.325"],
+    "emsal_ara": "kişisel ilişki tesisi çocukla görüş büyükanne refakatli düzen",
+    "vurgula": ["çocuğun yararı ve huzuru", "üçüncü kişide olağanüstü hâl koşulu", "görüşme takviminin somutluğu"]
+  }
+}

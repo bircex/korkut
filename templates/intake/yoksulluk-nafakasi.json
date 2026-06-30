@@ -1,0 +1,45 @@
+{
+  "tip": "yoksulluk-nafakasi",
+  "ad": "Yoksulluk nafakası dava dilekçesi",
+  "dayanak": ["TMK m.175", "TMK m.176", "HMK m.119"],
+
+  "sorular": [
+    { "id": "bosanma_durumu", "soru": "Yoksulluk nafakası devam eden boşanma davasında mı, boşanma sonrası ayrı dava ile mi isteniyor?", "tip": "secim",
+      "secenekler": ["devam eden boşanma davası içinde fer'i talep", "boşanma kesinleştikten sonra ayrı dava (1 yıl içinde)"],
+      "zorunlu": true, "neden": "Boşanmadan sonra açılacak dava 1 yıllık süreye tabidir (TMK m.178)." },
+    { "id": "bosanma_kesinlesme", "soru": "Boşanma sonrası talep ise boşanma kararı ne zaman kesinleşti?", "tip": "tarih",
+      "zorunlu": false, "neden": "Boşanma sonrası yoksulluk nafakası 1 yıllık zamanaşımına tabidir (TMK m.178)." },
+    { "id": "kusur_durumu", "soru": "Boşanmada talep edenin kusuru, diğer eşten daha ağır mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Yoksulluğa düşecek taraf, kusuru daha ağır olmamak şartıyla nafaka isteyebilir (TMK m.175)." },
+    { "id": "yoksulluga_dusme", "soru": "Boşanma yüzünden yoksulluğa düşeceğinizi gösteren mali durumunuz nedir (gelir, mal, çalışma durumu)?", "tip": "metin",
+      "zorunlu": true, "neden": "Yoksulluğa düşme koşulu somut mali verilerle ispatlanmalıdır (TMK m.175)." },
+    { "id": "yukumlu_gelir", "soru": "Nafaka yükümlüsü eşin geliri ve mali gücü nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Nafaka, yükümlünün mali gücüyle orantılı takdir edilir (TMK m.176)." },
+    { "id": "talep_sekli", "soru": "Nafaka süresiz aylık mı yoksa toplu (irat/maktu) olarak mı isteniyor?", "tip": "secim",
+      "secenekler": ["süresiz aylık irat", "toplu (maktu) ödeme"],
+      "zorunlu": false, "neden": "Yoksulluk nafakası süresiz olup irat veya toptan ödenebilir (TMK m.176)." }
+  ],
+
+  "kosullar": [
+    { "eger": "kusur_durumu == evet",
+      "uyari": "KRİTİK: Talep edenin kusuru daha ağırsa yoksulluk nafakası istenemez (TMK m.175). Kusur dengesini yeniden değerlendir." },
+    { "eger": "bosanma_durumu == boşanma kesinleştikten sonra ayrı dava (1 yıl içinde)",
+      "uyari": "Boşanmanın kesinleşmesinden itibaren 1 yıllık zamanaşımı süresine dikkat (TMK m.178)." },
+    { "eger": "gun_farki(bosanma_kesinlesme) > 365",
+      "uyari": "KRİTİK: Boşanmanın kesinleşmesinden bu yana 1 yılı aşmış görünüyor; yoksulluk nafakası talebi zamanaşımına uğramış olabilir (TMK m.178)." }
+  ],
+
+  "kontroller": [
+    "Talep edenin kusurunun daha ağır olmadığı dilekçede ortaya konuldu mu (TMK m.175)?",
+    "Boşanma nedeniyle yoksulluğa düşme koşulu mali verilerle gösterildi mi?",
+    "Nafaka yükümlüsünün mali gücüyle orantı (TMK m.176) gerekçelendirildi mi?",
+    "Boşanma sonrası dava ise 1 yıllık zamanaşımı (TMK m.178) kontrol edildi mi?",
+    "Talep (aylık irat / toplu ödeme) ve miktar sonuç-istemde açıkça belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.175", "TMK m.176", "TMK m.178"],
+    "emsal_ara": "yoksulluk nafakası kusur ağırlığı yoksulluğa düşme süresiz",
+    "vurgula": ["kusurun daha ağır olmaması şartı", "yoksulluğa düşme koşulu", "boşanma sonrası 1 yıllık zamanaşımı"]
+  }
+}

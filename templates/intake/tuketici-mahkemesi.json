@@ -1,0 +1,44 @@
+{
+  "tip": "tuketici-mahkemesi",
+  "ad": "Tüketici mahkemesi dava dilekçesi",
+  "dayanak": ["TKHK m.73", "TKHK m.68", "HMK m.119"],
+
+  "sorular": [
+    { "id": "uyusmazlik_konusu", "soru": "Uyuşmazlık neye ilişkin (ayıplı mal/hizmet, haksız şart, kredi/banka ücreti, abonelik, mesafeli/devre tatil sözleşmesi vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin hukuki nitelendirmesi ve TKHK dayanağı için." },
+    { "id": "talep_tutari", "soru": "Dava değeri / talep edilen tutar nedir (TL)?", "tip": "sayi",
+      "zorunlu": true, "neden": "Hakem heyeti parasal sınırının ÜSTÜNDE olması tüketici mahkemesinin görevini doğrular (TKHK m.68/73)." },
+    { "id": "hakem_heyeti_gerekli_mi", "soru": "Tutar hakem heyeti parasal sınırının altında mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Sınır altı uyuşmazlıklarda hakem heyetine başvuru zorunludur; doğrudan dava reddedilir (TKHK m.68)." },
+    { "id": "sozlesme_tarihi", "soru": "Sözleşme/satın alma tarihi nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Zamanaşımı ve olayın kronolojisi için." },
+    { "id": "talep_turu", "soru": "Talebiniz nedir: bedel/ücret iadesi, değişim/onarım, sözleşmeden dönme, tazminat?", "tip": "secim",
+      "secenekler": ["bedel/ücret iadesi", "ayıpsız ile değişim/ücretsiz onarım", "sözleşmeden dönme/fesih", "tazminat", "diğer"],
+      "zorunlu": true, "neden": "Sonuç-istem ve seçimlik hak (TKHK m.11) belirlemesi için." },
+    { "id": "haksiz_sart_iddiasi", "soru": "Sözleşmede haksız şart (tek taraflı dayatılmış, dengesiz hüküm) iddiası var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Haksız şartlar tüketiciyi bağlamaz (TKHK m.5); ayrı bir talep dayanağı oluşturur." }
+  ],
+
+  "kosullar": [
+    { "eger": "hakem_heyeti_gerekli_mi == evet",
+      "uyari": "KRİTİK: tutar hakem heyeti parasal sınırının altındaysa önce Tüketici Hakem Heyetine başvuru ZORUNLUDUR (TKHK m.68); dava dava şartı yokluğundan reddedilebilir." },
+    { "eger": "haksiz_sart_iddiasi == evet",
+      "ekle": "Sözleşmedeki haksız şartı somut olarak gösterip TKHK m.5 ve ilgili Yönetmelik uyarınca tüketiciyi bağlamadığını açıklayan bir bölüm ekle." },
+    { "eger": "uyusmazlik_konusu == ayıplı mal",
+      "ekle": "Ayıbı, ayıp ihbarını ve TKHK m.11 seçimlik haklarından hangisinin kullanıldığını açıklayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Dava değeri hakem heyeti parasal sınırının ÜSTÜNDE mi (altındaysa hakem heyeti dava şartı)?",
+    "Görevli mahkeme tüketici mahkemesi (yoksa tüketici sıfatıyla asliye hukuk) olarak doğru mu?",
+    "Talep türü ve dayanağı (TKHK m.11 / m.5) açık mı?",
+    "Harçtan muafiyet (TKHK m.73/2) ve nispi vekalet ücreti hususları gözetildi mi?",
+    "Tüketici sıfatının (TKHK m.3) somut olayda gerçekleştiği ortaya konuldu mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TKHK m.3", "TKHK m.5", "TKHK m.11", "TKHK m.68", "TKHK m.73"],
+    "emsal_ara": "tüketici mahkemesi görev parasal sınır hakem heyeti dava şartı",
+    "vurgula": ["hakem heyeti dava şartı (parasal sınır altı)", "tüketici sıfatı", "haksız şartların bağlamaması"]
+  }
+}

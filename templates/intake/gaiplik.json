@@ -1,0 +1,45 @@
+{
+  "tip": "gaiplik",
+  "ad": "Gaiplik kararı talebi",
+  "dayanak": ["TMK m.32-33", "TMK m.34-35", "HMK m.382/2-ç"],
+
+  "sorular": [
+    { "id": "gaip_ad", "soru": "Hakkında gaiplik istenen kişinin ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin konusu olan kişinin kimliği (HMK m.119/d)." },
+    { "id": "gaiplik_sebebi", "soru": "Gaiplik hangi sebebe dayanıyor?", "tip": "secim",
+      "secenekler": ["ölüm tehlikesi içinde kaybolma (TMK m.32)", "uzun süre haber alınamama (TMK m.32)"],
+      "zorunlu": true, "neden": "Bekleme süresi sebebe göre değişir: tehlikede 1 yıl, haber alınamamada 5 yıl." },
+    { "id": "son_haber_tarihi", "soru": "Kişiden alınan son haber / kaybolma tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Yasal bekleme süresi bu tarihten işler (TMK m.32)." },
+    { "id": "talep_eden_menfaat", "soru": "Talep edenin gaiplikte hukuki menfaati (mirasçı, eş vb.) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Gaiplik talebi hakkı, hakları bu ölüme bağlı olanlara aittir (TMK m.32/2)." },
+    { "id": "olay_aciklamasi", "soru": "Kaybolma/ölüm tehlikesi olayını ve sonrasındaki araştırmaları açıklayın.", "tip": "metin",
+      "zorunlu": true, "neden": "Olgusal dayanak ve kişinin sağ olduğuna dair delil bulunmadığının ortaya konulması." },
+    { "id": "miras_islem", "soru": "Gaip kişinin terekesi/mirası için işlem (paylaşım, sigorta) gerekiyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Gaiplik kararının mirasa ve teminat verme yükümüne etkisi (TMK m.35)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gaiplik_sebebi == ölüm tehlikesi içinde kaybolma (TMK m.32)",
+      "uyari": "Ölüm tehlikesi içinde kaybolmada en az 1 YIL geçmeli (TMK m.32). Son haber tarihinden süreyi teyit et." },
+    { "eger": "gaiplik_sebebi == uzun süre haber alınamama (TMK m.32)",
+      "uyari": "Uzun süre haber alınamamada en az 5 YIL geçmeli (TMK m.32). Süre dolmadan talep reddedilir." },
+    { "eger": "miras_islem == evet",
+      "ekle": "Gaiplik kararıyla mirasçıların terekeyi teslim alabilmesi için TMK m.35 uyarınca teminat gösterilmesi gerektiğine değinen bir bölüm ekle.",
+      "uyari": "Gaibin malları teslim edilirken mirasçılardan teminat alınır (TMK m.35); süreye dikkat." }
+  ],
+
+  "kontroller": [
+    "Gaiplik sebebine göre bekleme süresi (tehlikede 1 yıl / haber alınamamada 5 yıl) doldu mu? (TMK m.32).",
+    "Talep edenin hukuki menfaati/sıfatı ortaya konuldu mu? (TMK m.32/2).",
+    "Mahkemece yapılacak ilan ve araştırma çağrısı usulü (TMK m.33) gözetildi mi?",
+    "Gaibin sağ olduğuna dair bilgi/delil bulunmadığı somutlaştırıldı mı?",
+    "Mirasa etki ediyorsa teminat (TMK m.35) ve nüfusa tescil sonucu not edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.32", "TMK m.33", "TMK m.35", "HMK m.382"],
+    "emsal_ara": "gaiplik kararı bekleme süresi ölüm tehlikesi haber alınamama ilan",
+    "vurgula": ["bekleme süreleri (1 yıl / 5 yıl)", "ilan ve araştırma usulü", "gaiplikte teminat ve mirasa etki"]
+  }
+}

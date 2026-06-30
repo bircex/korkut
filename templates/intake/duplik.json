@@ -1,0 +1,40 @@
+{
+  "tip": "duplik",
+  "ad": "İkinci cevap (düplik) dilekçesi",
+  "dayanak": ["HMK m.136", "HMK m.141"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Düplik mevcut esasa, davacının replikine karşı verilir; dosya kimliği zorunludur." },
+    { "id": "replik_teblig_tarihi", "soru": "Davacının cevaba cevap (replik) dilekçesi size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Düplik süresi (2 hafta — HMK m.136/1) replikin tebliğinden işler." },
+    { "id": "yanit_basliklar", "soru": "Replikte ileri sürülen hangi yeni iddialara/vakıalara karşı çıkacaksınız?", "tip": "metin",
+      "zorunlu": true, "neden": "Düplikin işlevi replikteki yeni hususlara yanıt vermek ve savunmayı pekiştirmektir." },
+    { "id": "savunma_pekistirme", "soru": "İlk cevaptaki savunmanızdan hangilerini somutlaştırıp pekiştireceksiniz?", "tip": "metin",
+      "zorunlu": true, "neden": "Düplik, savunmanın delil ve hukuki gerekçeyle güçlendirildiği son dilekçedir." },
+    { "id": "yeni_def", "soru": "Replike karşı ileri sürmeniz gereken yeni bir def'i/itiraz doğdu mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Savunmayı genişletme yasağı dilekçeler aşamasından sonra başlar (HMK m.141); bu aşama son fırsattır." }
+  ],
+
+  "kosullar": [
+    { "eger": "yeni_def == evet",
+      "ekle": "Replikteki yeni iddiaya karşı doğan def'i/itirazı, dilekçeler aşamasının henüz kapanmadığına dayanarak gerekçeli biçimde ileri sür.",
+      "uyari": "Savunmayı genişletme/değiştirme dilekçeler aşamasından sonra karşı tarafın muvafakatine bağlıdır (HMK m.141)." },
+    { "eger": "gun_farki(replik_teblig_tarihi) > 14",
+      "uyari": "KRİTİK: replikin tebliğinden bu yana 2 haftayı aşmış olabilir — düplik süresi (HMK m.136) geçmiş olabilir; süreyi teyit et." }
+  ],
+
+  "kontroller": [
+    "Esas no ve taraf bilgileri dosyayla tutarlı mı?",
+    "Düplik süresi (replikin tebliğinden 2 hafta — HMK m.136) içinde mi?",
+    "Düplik, replikteki yeni hususlara yanıt veriyor; yeni dava niteliği taşımıyor mu?",
+    "Savunmayı genişletme dilekçeler aşaması sınırı (HMK m.141) içinde tutuldu mu?",
+    "Bu, dilekçeler aşamasının son dilekçesi — savunma eksiksiz somutlaştırıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.136", "HMK m.141"],
+    "emsal_ara": "ikinci cevap düplik dilekçeler aşaması savunmanın genişletilmesi yasağı",
+    "vurgula": ["düplik süresi", "dilekçeler aşamasının kapanması", "savunmayı somutlaştırma son fırsatı"]
+  }
+}

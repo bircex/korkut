@@ -1,0 +1,46 @@
+{
+  "tip": "bilirkisi-itiraz",
+  "ad": "Bilirkişi raporuna itiraz dilekçesi",
+  "dayanak": ["HMK m.281", "HMK m.282", "HMK m.279", "HMK m.266"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraz mevcut esastaki rapora yöneliktir; dosya kimliği zorunludur." },
+    { "id": "rapor_teblig_tarihi", "soru": "Bilirkişi raporu size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz süresi (kural 2 hafta — HMK m.281/1) raporun tebliğinden işler." },
+    { "id": "itiraz_noktalari", "soru": "Rapora hangi noktalarda itiraz ediyorsunuz? (eksik inceleme, hatalı hesap, dosyaya aykırılık vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraz somut ve gerekçeli olmalı; mahkeme buna göre ek rapor/yeni bilirkişi değerlendirir (HMK m.281/2)." },
+    { "id": "talep_turu", "soru": "Talebiniz nedir?", "tip": "secim",
+      "secenekler": ["ek rapor alınması", "yeni/heyet bilirkişiden rapor alınması", "bilirkişinin sözlü açıklaması (duruşmada dinlenmesi)", "raporun hükme esas alınmaması"],
+      "zorunlu": true, "neden": "Talep türü mahkemenin izleyeceği usulü belirler (HMK m.281/2-3, m.279)." },
+    { "id": "uzmanlik_uyumu", "soru": "Bilirkişinin uzmanlık alanı çözülmesi gereken teknik konuyla uyumlu mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Bilirkişi yalnız özel/teknik bilgi gerektiren konuda görevlendirilebilir (HMK m.266); uzmanlık uyumsuzluğu itiraz sebebidir." },
+    { "id": "ozel_uzman", "soru": "İtirazı desteklemek için uzman görüşü (özel bilirkişi mütalaası) sunulacak mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Taraf, bilimsel mütalaa (uzman görüşü) sunabilir (HMK m.293); itirazı güçlendirir." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == bilirkişinin sözlü açıklaması (duruşmada dinlenmesi)",
+      "ekle": "Bilirkişinin duruşmada dinlenerek açıklama yapmasını ve sorulacak hususları gösteren bir bölüm ekle (HMK m.279)." },
+    { "eger": "ozel_uzman == evet",
+      "ekle": "Sunulan uzman görüşünün rapordaki hangi tespiti çürüttüğünü madde madde karşılaştıran bir bölüm ekle (HMK m.293)." },
+    { "eger": "uzmanlik_uyumu == hayir",
+      "uyari": "Bilirkişinin uzmanlık alanı uyuşmazlık konusuyla örtüşmüyorsa rapor hükme esas alınamaz; bunu itirazda öne çıkar (HMK m.266)." },
+    { "eger": "gun_farki(rapor_teblig_tarihi) > 14",
+      "uyari": "KRİTİK: raporun tebliğinden bu yana 2 haftayı aşmış olabilir — itiraz süresi (HMK m.281/1) geçmiş olabilir; süreyi teyit et." }
+  ],
+
+  "kontroller": [
+    "İtiraz süresi (raporun tebliğinden 2 hafta — HMK m.281) içinde mi?",
+    "İtiraz somut, gerekçeli ve dosyadaki delillere dayanıyor mu?",
+    "Talep (ek rapor/yeni bilirkişi/sözlü açıklama) açıkça gösterildi mi?",
+    "Bilirkişinin uzmanlık-konu uyumu ve hukuki konuda görüş verip vermediği denetlendi mi (HMK m.266/1)?",
+    "Varsa uzman görüşü, rapordaki tespitlerle nokta nokta karşılaştırıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.266", "HMK m.279", "HMK m.281", "HMK m.293"],
+    "emsal_ara": "bilirkişi raporuna itiraz ek rapor yeni bilirkişi uzman görüşü hukuki konu",
+    "vurgula": ["itiraz süresi", "bilirkişinin hukuki konuda görüş verememesi", "uzman görüşüyle çürütme"]
+  }
+}

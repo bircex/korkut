@@ -1,0 +1,48 @@
+{
+  "tip": "alacak-davasi",
+  "ad": "Alacak (itirazın iptali dışı) dava dilekçesi",
+  "dayanak": ["TBK m.83", "TBK m.117", "TBK m.146", "HMK m.119"],
+
+  "sorular": [
+    { "id": "alacak_kaynagi", "soru": "Alacağın hukuki kaynağı nedir?", "tip": "secim",
+      "secenekler": ["sözleşme (satış/hizmet vb.)", "ödünç/karz", "fatura/cari hesap", "senet/çek dışı yazılı belge", "diğer"],
+      "zorunlu": true, "neden": "Alacağın sebebi ve ispat rejimini belirler (TBK m.1 vd.)." },
+    { "id": "alacak_miktari", "soru": "Talep edilen alacak miktarı (TL)?", "tip": "sayi",
+      "zorunlu": true, "neden": "Müddeabihin değeri; dava değeri ve harç (HMK m.119/1-d)." },
+    { "id": "muacceliyet_tarihi", "soru": "Alacak ne zaman muaccel oldu (ödenmesi gereken tarih)?", "tip": "tarih",
+      "zorunlu": true, "neden": "Temerrüt ve faiz başlangıcı ile zamanaşımı buradan işler (TBK m.117)." },
+    { "id": "temerrut_ihtari", "soru": "Borçluya ödeme/temerrüt ihtarı çekildi mi? Tarihi?", "tip": "metin",
+      "zorunlu": true, "neden": "Vadesi belli değilse temerrüt ihtarla doğar (TBK m.117/1)." },
+    { "id": "kismi_odeme", "soru": "Borçlu kısmi ödeme yaptı mı? Yaptıysa kalan bakiye?", "tip": "metin",
+      "zorunlu": false, "neden": "Bakiye alacağı ve faiz matrahını netleştirir." },
+    { "id": "faiz_turu", "soru": "Talep edilen faiz türü nedir?", "tip": "secim",
+      "secenekler": ["yasal faiz", "avans faizi/ticari faiz", "sözleşmesel faiz", "faiz talep edilmiyor"],
+      "zorunlu": true, "neden": "Faiz türü ve oranı sözleşme/ticari niteliğe göre değişir (3095 s.K.)." }
+  ],
+
+  "kosullar": [
+    { "eger": "temerrut_ihtari == yok",
+      "ekle": "Dava tarihinden itibaren faiz talebini ve temerrüdün dava ile oluştuğunu açıklayan bir paragraf ekle.",
+      "uyari": "Vadesi belirli değilse ihtar olmadan temerrüt doğmaz; faiz başlangıcı dava/ihtar tarihidir (TBK m.117)." },
+    { "eger": "faiz_turu == sözleşmesel faiz",
+      "ekle": "Sözleşmedeki faiz oranını ve dayanağını gösteren, oranın yasal sınırı aşmadığını belirten bir paragraf ekle." },
+    { "eger": "alacak_kaynagi == ödünç/karz",
+      "uyari": "Ödünç alacağında miktar/teslim ispatı senetle yapılmalıdır (HMK m.200 senetle ispat sınırı)." },
+    { "eger": "kismi_odeme != hayir",
+      "uyari": "Kısmi ödeme önce işlemiş faize, sonra anaparaya mahsup edilir (TBK m.100); bakiyeyi buna göre kur." }
+  ],
+
+  "kontroller": [
+    "Müddeabih (alacak miktarı) ve faiz başlangıç tarihi sonuç-istemde açıkça gösterildi mi?",
+    "Zamanaşımı süresi (kural 10 yıl, TBK m.146; istisnalar TBK m.147) işlememiş mi?",
+    "Temerrüt/ihtar olgusu ve faiz türü dilekçede tutarlı mı?",
+    "Senetle ispat sınırı aşılıyorsa yazılı delil mevcut mu (HMK m.200)?",
+    "Belirsiz alacak/kısmi dava tercihi (HMK m.107/109) bilinçli yapıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.117", "TBK m.100", "TBK m.146", "TBK m.147", "HMK m.107"],
+    "emsal_ara": "alacak davası temerrüt faiz başlangıcı zamanaşımı muacceliyet",
+    "vurgula": ["temerrüt ve faiz başlangıç tarihi", "zamanaşımı süresi", "belirsiz alacak/kısmi dava ayrımı"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "tip": "tapu-iptal-tescil",
+  "ad": "Tapu iptal ve tescil dava dilekçesi",
+  "dayanak": ["TMK m.705", "TMK m.1024", "TMK m.1025", "TBK m.19"],
+
+  "sorular": [
+    { "id": "tasinmaz_bilgisi", "soru": "Dava konusu taşınmazın il/ilçe, ada/parsel, bağımsız bölüm ve tapu bilgileri?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabihin belirlenmesi ve tescil hükmünün infazı için zorunlu." },
+    { "id": "iptal_sebebi", "soru": "Tapu kaydının iptalini hangi sebebe dayandırıyorsunuz?", "tip": "secim",
+      "secenekler": ["muvazaa", "hata/hile/ikrah (irade sakatlığı)", "geçersiz/yolsuz tescil", "yetkisiz temsil/sahtecilik", "vekâlet görevinin kötüye kullanılması", "diğer"],
+      "zorunlu": true, "neden": "İptal sebebi yargılamanın hukuki temelini ve ispat konusunu belirler." },
+    { "id": "tescil_tarihi_sekli", "soru": "Mevcut malik kaydı ne zaman ve nasıl (satış, bağış, miras vb.) oluştu?", "tip": "metin",
+      "zorunlu": true, "neden": "İşlemin geçerliliği ve zamanaşımı/hak düşürücü süre değerlendirmesi." },
+    { "id": "ucuncu_kisi", "soru": "Taşınmaz dava dışı üçüncü kişilere devredildi mi? Devralan iyiniyetli mi?", "tip": "metin",
+      "zorunlu": true, "neden": "İyiniyetli üçüncü kişinin kazanımı korunabilir (TMK m.1023-1024)." },
+    { "id": "talep_turu", "soru": "Talebiniz tapu iptali + adınıza tescil mi, yoksa terekeye/miras payına iade mi?", "tip": "metin",
+      "zorunlu": true, "neden": "Sonuç-istemin (tescil yönü) ve davacı sıfatının belirlenmesi." }
+  ],
+
+  "kosullar": [
+    { "eger": "iptal_sebebi == muvazaa",
+      "ekle": "Muvazaalı işlemin görünürdeki ve gizli iradesini, tarafların gerçek amacını ve muvazaa karinelerini (bedel uyumsuzluğu, akrabalık, kullanım) açıklayan bir bölüm ekle (TBK m.19)." },
+    { "eger": "ucuncu_kisi != yok",
+      "uyari": "TMK m.1023 iyiniyetli üçüncü kişinin kazanımını korur; davalıyı buna göre belirle, kötüniyeti somut delille ortaya koy (TMK m.1024)." },
+    { "eger": "iptal_sebebi == hata/hile/ikrah (irade sakatlığı)",
+      "uyari": "İrade sakatlığında iptal beyanının 1 yıllık süresi (TBK m.39) ve öğrenme tarihi kritiktir; süreyi teyit et." }
+  ],
+
+  "kontroller": [
+    "Taşınmazın ada/parsel ve tapu kaydı tescile elverişli biçimde belirlendi mi?",
+    "İptal sebebi (muvazaa/irade sakatlığı/yolsuz tescil) hukuki olarak doğru kuruldu mu?",
+    "İyiniyetli üçüncü kişi koruması (TMK m.1023) bertaraf edildi mi / davalı doğru mu?",
+    "Sonuç-istemde 'tapu iptali + tescil' yönü açıkça gösterildi mi?",
+    "Tescilin yolsuzluğu/ayni hak ihlali (TMK m.705/1024) somutlaştırıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.705", "TMK m.1023", "TMK m.1024", "TMK m.1025", "TBK m.19"],
+    "emsal_ara": "tapu iptal tescil muvazaa yolsuz tescil iyiniyetli üçüncü kişi TMK 1023",
+    "vurgula": ["muvazaa ve gizli irade", "iyiniyetli üçüncü kişi koruması", "yolsuz tescilin düzeltilmesi"]
+  }
+}

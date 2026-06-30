@@ -1,0 +1,41 @@
+{
+  "tip": "ecrimisil",
+  "ad": "Ecrimisil (haksız işgal tazminatı) dava dilekçesi",
+  "dayanak": ["TMK m.683", "TMK m.995", "TBK m.146"],
+
+  "sorular": [
+    { "id": "tasinmaz_bilgisi", "soru": "İşgal edilen taşınmazın ada/parsel ve niteliği (arsa, tarla, işyeri, mesken)?", "tip": "metin",
+      "zorunlu": true, "neden": "Ecrimisil hesabı taşınmazın nitelik ve getirisine bağlıdır." },
+    { "id": "isgal_donemi", "soru": "Haksız işgal hangi tarihler arasında sürdü (başlangıç-bitiş)?", "tip": "metin",
+      "zorunlu": true, "neden": "Ecrimisil dönemi ve geriye dönük 5 yıllık talep sınırı (TBK m.146) buradan hesaplanır." },
+    { "id": "isgalci_iyiniyet", "soru": "İşgalci (davalı) iyiniyetli mi, kötüniyetli mi? (Kullanım izni/sözleşme var mıydı?)", "tip": "secim",
+      "secenekler": ["kötüniyetli (haksız işgalci)", "iyiniyetli zilyet", "eski kiracı/sözleşmesi sona ermiş"],
+      "zorunlu": true, "neden": "İade kapsamı ve ecrimisil sorumluluğu iyi/kötüniyete göre değişir (TMK m.995-996)." },
+    { "id": "intifa_engeli", "soru": "İşgal nedeniyle taşınmazdan yararlanamadığınızı (intifadan men) bildirdiniz mi? Tarih?", "tip": "metin",
+      "zorunlu": false, "neden": "İyiniyetli zilyette ecrimisil için intifadan men koşulu aranabilir (Yargıtay uygulaması)." },
+    { "id": "ecrimisil_miktari", "soru": "Talep ettiğiniz ecrimisil tutarı ve dayanağı (rayiç kira, getiri)?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabih; bilirkişi rayiç kira/getiri üzerinden hesaplanır." }
+  ],
+
+  "kosullar": [
+    { "eger": "isgalci_iyiniyet == iyiniyetli zilyet",
+      "ekle": "İyiniyetli zilyetten ecrimisil için intifadan men ihtarının yapıldığını ve tarihini gösteren bir paragraf ekle.",
+      "uyari": "İyiniyetli zilyette ecrimisil talebi genellikle intifadan men koşuluna bağlıdır; ihtar yoksa dönemi buna göre sınırla." },
+    { "eger": "isgal_donemi != güncel",
+      "uyari": "Ecrimisil geriye dönük en fazla 5 yıllık dönem için istenebilir (TBK m.146 zamanaşımı); dönemi buna göre düzelt." }
+  ],
+
+  "kontroller": [
+    "Davacının mülkiyet/zilyetlik sıfatı ve işgalin haksızlığı gösterildi mi (TMK m.683/995)?",
+    "Ecrimisil dönemi 5 yıllık zamanaşımı (TBK m.146) sınırında mı?",
+    "İyiniyetli zilyette intifadan men koşulu karşılandı mı?",
+    "Ecrimisil miktarı rayiç kira/getiri esasına dayandırıldı mı (bilirkişi gereği)?",
+    "Aynı dönemde men/tahliye talebiyle çakışma ve mükerrerlik önlendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.683", "TMK m.995", "TMK m.996", "TBK m.146"],
+    "emsal_ara": "ecrimisil haksız işgal tazminatı intifadan men 5 yıl zamanaşımı rayiç kira",
+    "vurgula": ["ecrimisilin haksız işgale dayalı niteliği", "intifadan men koşulu", "5 yıllık geriye dönük talep sınırı"]
+  }
+}

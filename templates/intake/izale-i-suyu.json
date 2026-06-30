@@ -1,0 +1,44 @@
+{
+  "tip": "izale-i-suyu",
+  "ad": "Ortaklığın giderilmesi (izale-i şüyu) dava dilekçesi",
+  "dayanak": ["TMK m.698", "TMK m.699", "TMK m.700", "HMK m.382"],
+
+  "sorular": [
+    { "id": "ortak_mal", "soru": "Ortaklığın giderilmesi istenen mal nedir (taşınmaz ada/parsel veya taşınır)?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabihin ve infaz konusunun belirlenmesi (TMK m.698)." },
+    { "id": "ortaklik_turu", "soru": "Mülkiyet paylı mülkiyet mi, elbirliği (iştirak) mülkiyeti mi?", "tip": "secim",
+      "secenekler": ["paylı mülkiyet", "elbirliği (miras ortaklığı)", "bilmiyorum"],
+      "zorunlu": true, "neden": "Elbirliği mülkiyetinde önce ortaklığın paya çevrilmesi/tüm ortakların yer alması gerekir (TMK m.701-702)." },
+    { "id": "paydaslar", "soru": "Tüm paydaşların/mirasçıların ad-soyad ve pay oranları nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tüm paydaşlar davada yer almalıdır (zorunlu dava arkadaşlığı)." },
+    { "id": "giderim_sekli", "soru": "Aynen taksim mi, satış suretiyle mi ortaklığın giderilmesini istiyorsunuz?", "tip": "secim",
+      "secenekler": ["aynen taksim (paylaştırma)", "satış suretiyle (açık artırma)", "fark etmez"],
+      "zorunlu": true, "neden": "Aynen taksim mümkün değilse satış yoluna gidilir (TMK m.699)." },
+    { "id": "muhdesat", "soru": "Mal üzerinde paydaşlardan birine ait muhdesat (yapı/ağaç vb.) var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Muhdesat aidiyeti satış/paylaşım bedelini ve usulü etkiler." }
+  ],
+
+  "kosullar": [
+    { "eger": "ortaklik_turu == elbirliği (miras ortaklığı)",
+      "ekle": "Elbirliği mülkiyetinin önce paylı mülkiyete çevrilmesi veya tüm mirasçıların terekede yer almasıyla ilgili usulü açıklayan paragraf ekle (TMK m.701-702).",
+      "uyari": "Elbirliği mülkiyetinde tüm ortaklar davada yer almazsa dava usulden reddedilir; mirasçılık belgesi gerekebilir." },
+    { "eger": "giderim_sekli == aynen taksim (paylaştırma)",
+      "uyari": "Aynen taksim ancak malın bölünebilir olması ve paydaşların yararına ise mümkündür; aksi halde satışa karar verilir (TMK m.699)." },
+    { "eger": "muhdesat == evet",
+      "ekle": "Muhdesatın kime ait olduğunu ve satış bedelinden nasıl ayrılacağını (muhdesat aidiyetinin tespiti) açıklayan bir paragraf ekle." }
+  ],
+
+  "kontroller": [
+    "Tüm paydaşlar/mirasçılar davalı olarak gösterildi mi (zorunlu dava arkadaşlığı)?",
+    "Elbirliği mülkiyetinde mirasçılık belgesi/ortaklığın paya çevrilmesi sağlandı mı (TMK m.701)?",
+    "Aynen taksim/satış tercihi malın niteliğine göre gerekçelendirildi mi (TMK m.699)?",
+    "Muhdesat aidiyeti varsa ayrıca ileri sürüldü mü?",
+    "Görevsiz/yetkisiz merciye yöneltme riski (Sulh Hukuk) gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.698", "TMK m.699", "TMK m.701", "TMK m.702"],
+    "emsal_ara": "ortaklığın giderilmesi izale-i şüyu aynen taksim satış elbirliği muhdesat",
+    "vurgula": ["tüm paydaşların zorunlu dava arkadaşlığı", "aynen taksim/satış tercihi", "elbirliği mülkiyetinin paya çevrilmesi"]
+  }
+}

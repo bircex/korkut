@@ -1,0 +1,51 @@
+{
+  "tip": "ayipli-mal-iade",
+  "ad": "Ayıplı mal/hizmet — bedel iadesi/ayıp dilekçesi",
+  "dayanak": ["TKHK m.8", "TKHK m.11", "TKHK m.12", "TKHK m.15"],
+
+  "sorular": [
+    { "id": "mal_hizmet", "soru": "Uyuşmazlık ayıplı mal mı, ayıplı hizmet mi?", "tip": "secim",
+      "secenekler": ["ayıplı mal (TKHK m.8)", "ayıplı hizmet (TKHK m.13)"],
+      "zorunlu": true, "neden": "Mal ve hizmet ayıbında dayanak ve seçimlik haklar farklı düzenlenir (TKHK m.8-12 / m.13-15)." },
+    { "id": "ayip_turu", "soru": "Ayıbın türü nedir (açık ayıp, gizli ayıp; maddi/hukuki/ekonomik ayıp)?", "tip": "secim",
+      "secenekler": ["açık ayıp", "gizli ayıp", "ayıbın türünden emin değilim"],
+      "zorunlu": true, "neden": "Açık ayıpta muayene-ihbar yükü, gizli ayıpta ortaya çıkma anı belirleyicidir (TKHK m.8/3)." },
+    { "id": "ayip_aciklama", "soru": "Maldaki/hizmetteki ayıbı somut olarak açıklayın (ne, nasıl, ne zaman ortaya çıktı).", "tip": "metin",
+      "zorunlu": true, "neden": "Ayıbın varlığının ve sözleşmeye aykırılığın ortaya konması için." },
+    { "id": "teslim_tarihi", "soru": "Mal/hizmet size hangi tarihte teslim edildi/ifa edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "2 yıllık zamanaşımı (TKHK m.12) ve ayıp ihbarı süresi bu tarihten işler." },
+    { "id": "ayip_bildirimi", "soru": "Ayıbı satıcıya bildirdiniz mi, ne zaman?", "tip": "tarih",
+      "zorunlu": false, "neden": "Açık ayıpta makul süre içinde ihbar; aksi halde malın ayıpsız kabul edilmesi riski." },
+    { "id": "secimlik_hak", "soru": "TKHK m.11 seçimlik haklarından hangisini kullanıyorsunuz?", "tip": "secim",
+      "secenekler": ["sözleşmeden dönme (bedel iadesi)", "ayıp oranında bedel indirimi", "ücretsiz onarım", "ayıpsız misli ile değişim"],
+      "zorunlu": true, "neden": "Sonuç-istem doğrudan seçilen hakka bağlanır (TKHK m.11)." },
+    { "id": "agir_ayip", "soru": "Ayıp, malın kullanımını engelleyecek/tehlike doğuracak ağırlıkta mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Ağır ayıpta tüketici onarım/değişim yerine doğrudan dönme veya indirim seçebilir (TKHK m.11)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ayip_turu == gizli ayıp",
+      "ekle": "Gizli ayıbın teslim anında mevcut olup sonradan ortaya çıktığını ve TKHK m.12'deki zamanaşımının ağırlatılmış kusur halinde işlemediğini açıklayan bir bölüm ekle.",
+      "uyari": "Satıcının ağır kusuru/hile varsa zamanaşımı def'i ileri sürülemez (TKHK m.12/3)." },
+    { "eger": "gun_farki(teslim_tarihi) > 730",
+      "uyari": "DİKKAT: teslimden bu yana 2 yılı (TKHK m.12) aşmış görünüyor; gizli ayıp veya satıcının ağır kusuru yoksa zamanaşımı def'i ile karşılaşabilirsin." },
+    { "eger": "secimlik_hak == sözleşmeden dönme (bedel iadesi)",
+      "ekle": "Sözleşmeden dönme halinde ödenen bedelin iadesi ve varsa zararın tazminini içeren sonuç-istem yaz (TKHK m.11)." },
+    { "eger": "mal_hizmet == ayıplı hizmet (TKHK m.13)",
+      "uyari": "Ayıplı hizmette dayanak TKHK m.13-15'tir; seçimlik haklar ve süreler hizmet ayıbına göre yeniden değerlendirilmelidir." }
+  ],
+
+  "kontroller": [
+    "Ayıbın türü (açık/gizli) ve ihbar süresine uygunluk değerlendirildi mi?",
+    "Teslim tarihinden 2 yıllık zamanaşımı (TKHK m.12) içinde mi, istisna var mı?",
+    "Kullanılan seçimlik hak (TKHK m.11) ile sonuç-istem birbirini karşılıyor mu?",
+    "Parasal sınır gözetilerek görevli merci (hakem heyeti / tüketici mahkemesi) doğru mu?",
+    "Malın ayıplı teslim edildiği karinesi (TKHK m.10) ve ispat yükü doğru dağıtıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TKHK m.8", "TKHK m.10", "TKHK m.11", "TKHK m.12", "TKHK m.13", "TKHK m.15"],
+    "emsal_ara": "ayıplı mal seçimlik hak bedel iadesi gizli ayıp zamanaşımı",
+    "vurgula": ["açık/gizli ayıp ayrımı ve ihbar süresi", "seçimlik haklar (TKHK m.11)", "2 yıllık zamanaşımı ve istisnaları"]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "tip": "haksiz-rekabet",
+  "ad": "Haksız rekabetin tespiti/men'i dava dilekçesi",
+  "dayanak": ["TTK m.54", "TTK m.55", "TTK m.56", "TTK m.60", "HMK m.119"],
+
+  "sorular": [
+    { "id": "fiil_turu", "soru": "Haksız rekabet teşkil eden fiil nedir (kötüleme, yanıltıcı reklam, iltibas/karıştırma, sır ifşası, sözleşme ihlaline yöneltme)?", "tip": "secim",
+      "secenekler": ["kötüleme/yanıltıcı beyan", "aldatıcı reklam/tanıtım", "iltibas (karıştırılma)", "iş sırrının ifşası/kullanımı", "çalışanları/iş ilişkisini ayartma", "diğer dürüstlüğe aykırı davranış"],
+      "zorunlu": true, "neden": "Fiil tipi TTK m.55'teki hallerle eşleştirilir; konu (HMK m.119/d)." },
+    { "id": "fiil_tarihi", "soru": "Fiilin öğrenildiği tarih ve hâlen sürüp sürmediği?", "tip": "metin",
+      "zorunlu": true, "neden": "1 yıl/3 yıllık zamanaşımı ve men talebinin koşulu (TTK m.60)." },
+    { "id": "taraflar_rakip", "soru": "Taraflar aynı veya benzer piyasada faaliyet gösteren rakip/ekonomik aktörler mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Haksız rekabet ekonomik rekabetin dürüstlük kuralına aykırı bozulmasını gerektirir (TTK m.54/2)." },
+    { "id": "talep_turu", "soru": "Hangi talepleri istiyorsunuz (tespit, men, sonuçların ortadan kaldırılması, maddi/manevi tazminat)?", "tip": "secim",
+      "secenekler": ["tespit", "men (durdurma)", "sonuçların ortadan kaldırılması/düzeltme", "maddi tazminat", "manevi tazminat", "birden fazlası"],
+      "zorunlu": true, "neden": "TTK m.56'daki talep türlerini ve sonuç-istemi belirler." },
+    { "id": "zarar_var", "soru": "Fiil nedeniyle uğranılan/ uğranılması muhtemel zarar var mı? (varsa niteliği)", "tip": "metin",
+      "zorunlu": false, "neden": "Tazminat talebi kusur ve zararı gerektirir; men/tespit için zarar şart değildir (TTK m.56)." },
+    { "id": "iltibas_unsur", "soru": "İltibas iddiası varsa karıştırılan işaret/marka/ürün/ambalaj nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Karıştırılma ihtimali ve tanınmışlık değerlendirmesi için (TTK m.55/1-a-4)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == maddi tazminat",
+      "uyari": "Tazminat için kusur ve zarar ispatı gerekir; men ve tespit için kusur aranmaz (TTK m.56)." },
+    { "eger": "fiil_turu == iltibas (karıştırılma)",
+      "ekle": "Karıştırılma ihtimalini (işaret/ürün/ambalaj benzerliği, ortalama tüketici algısı) somutlaştıran bir bölüm ekle (TTK m.55/1-a-4).",
+      "uyari": "Tescilli marka da varsa SMK kapsamında ayrı/birlikte talep değerlendirilmeli; FSHHM görevini teyit et." },
+    { "eger": "fiil_turu == iş sırrının ifşası/kullanımı",
+      "ekle": "İş/ticari sırrın niteliğini, gizlilik tedbirlerini ve haksız edinim/ifşa biçimini açıklayan bir bölüm ekle (TTK m.55/1-d)." },
+    { "eger": "taraflar_rakip == hayir",
+      "uyari": "Haksız rekabet için doğrudan rakip olma şart değildir; ancak ekonomik rekabetin dürüstlüğe aykırı etkilenmesi (TTK m.54/2) somutlaştırılmalı." }
+  ],
+
+  "kontroller": [
+    "Fiil TTK m.55'teki hallerden hangisine girdiği açıkça nitelendirildi mi?",
+    "Zamanaşımı: fiili ve faili öğrenmeden 1 yıl, her hâlde 3 yıl (TTK m.60) içinde mi?",
+    "Talep türleri (tespit/men/giderim/tazminat) ile ispat yükü (kusur-zarar) tutarlı mı (TTK m.56)?",
+    "Tescilli sınai hak da varsa SMK ile ilişki ve görevli mahkeme (FSHHM) değerlendirildi mi?",
+    "Men talebinde fiilin sürdüğü veya tekrar tehlikesi gösterildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TTK m.54", "TTK m.55", "TTK m.56", "TTK m.60"],
+    "emsal_ara": "haksız rekabet tespit men iltibas karıştırılma tazminat zamanaşımı",
+    "vurgula": ["TTK m.55 örnek haller", "men/tespit ile tazminat için ispat farkı", "zamanaşımı 1/3 yıl"]
+  }
+}

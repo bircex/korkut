@@ -388,6 +388,68 @@ def test_style_layers_and_deterministic_insertion(client):
     assert "DRAFT" in body
 
 
+def test_custom_model_owner_only_and_key_hidden(client):
+    _enroll(client, "avukat")
+    # Default: no custom model.
+    assert client.get("/api/model").json() == {
+        "enabled": False,
+        "is_local": False,
+        "model": "",
+        "base_url": "",
+        "hasApiKey": False,
+        "can_edit": True,
+    }
+    # Owner configures a local Ollama model with a key.
+    saved = client.put(
+        "/api/model",
+        json={
+            "enabled": True,
+            "is_local": True,
+            "model": "llama-3.3-70b-versatile",
+            "base_url": "http://localhost:11434/v1",
+            "api_key": "secret-key",
+        },
+    ).json()
+    assert saved["enabled"] and saved["is_local"] and saved["hasApiKey"]
+    assert "api_key" not in saved and "secret-key" not in str(saved)  # key never returned
+
+    # api_key None on a later save keeps the stored key.
+    again = client.put(
+        "/api/model",
+        json={
+            "enabled": True,
+            "is_local": True,
+            "model": "qwen2.5",
+            "base_url": "http://localhost:11434/v1",
+            "api_key": None,
+        },
+    ).json()
+    assert again["hasApiKey"] and again["model"] == "qwen2.5"
+
+    # Members can view but not edit.
+    client.post(
+        "/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"}
+    )
+    c2 = TestClient(client.app)
+    _enroll(c2, "katip")
+    view = c2.get("/api/model").json()
+    assert view["enabled"] and view["can_edit"] is False
+    assert c2.put("/api/model", json={"enabled": False}).status_code == 403
+
+    # enabled=True with a blank model/base_url is rejected.
+    assert (
+        client.put(
+            "/api/model",
+            json={"enabled": True, "is_local": False, "model": "", "base_url": ""},
+        ).status_code
+        == 400
+    )
+
+    # Owner removes it → back to default.
+    assert client.delete("/api/model").status_code == 200
+    assert client.get("/api/model").json()["enabled"] is False
+
+
 def test_office_style_owner_only_and_contract_skips_signature(client):
     _enroll(client, "avukat")
     client.put(
@@ -532,6 +594,7 @@ def test_chat_detects_contract_and_injects_contract_format(client):
         history=None,
         extra_tools=None,
         handlers=None,
+        model_cfg=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -603,6 +666,7 @@ def test_chat_auto_opens_canvas_for_document(client):
         history=None,
         extra_tools=None,
         handlers=None,
+        model_cfg=None,
     ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
@@ -640,6 +704,7 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
         history=None,
         extra_tools=None,
         handlers=None,
+        model_cfg=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})

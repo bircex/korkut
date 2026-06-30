@@ -1,0 +1,46 @@
+{
+  "tip": "tahliye-temerrut",
+  "ad": "Temerrüt nedeniyle tahliye dava dilekçesi",
+  "dayanak": ["TBK m.315", "TBK m.299", "HMK m.119"],
+
+  "sorular": [
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin tarihi ve süresi (belirli/belirsiz)?", "tip": "metin",
+      "zorunlu": true, "neden": "Kira ilişkisinin varlığı ve niteliği; tahliyenin dayanağı (TBK m.299)." },
+    { "id": "aylik_kira", "soru": "Aylık kira bedeli ve ödeme şekli (peşin/dönem başı)?", "tip": "metin",
+      "zorunlu": true, "neden": "Temerrüde düşülen borcun miktarı; tahliye ve alacak istemi için esastır." },
+    { "id": "odenmeyen_donem", "soru": "Hangi ay(lar)ın kirası ödenmedi? (toplam tutar)", "tip": "metin",
+      "zorunlu": true, "neden": "Temerrüdün konusu ve birikmiş borç (TBK m.315)." },
+    { "id": "ihtar_cekildi", "soru": "Kiracıya yazılı ihtar (en az 30 günlük süre tanıyan) gönderildi mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Konut/çatılı işyerinde temerrüt tahliyesi için 30 günlük ihtarlı süre ŞARTTIR (TBK m.315)." },
+    { "id": "ihtar_tarihi", "soru": "İhtarın kiracıya tebliğ tarihi?", "tip": "tarih",
+      "zorunlu": false, "neden": "30 günlük ödeme süresi bu tarihten işler; sürenin dolması dava şartıdır." },
+    { "id": "tasinmaz_nitelik", "soru": "Kiralanan konut/çatılı işyeri mi yoksa başka bir taşınmaz mı?", "tip": "secim",
+      "secenekler": ["konut", "çatılı işyeri", "diğer (üstü açık/arsa vb.)"],
+      "zorunlu": true, "neden": "30 günlük ihtarlı süre yalnızca konut ve çatılı işyeri kiralarında uygulanır (TBK m.315)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ihtar_cekildi == hayir",
+      "uyari": "KRİTİK: Konut/çatılı işyeri kirasında 30 günlük süre içeren yazılı ihtar olmadan temerrüt tahliyesi açılamaz (TBK m.315). Önce usulüne uygun ihtar gönderilmeli." },
+    { "eger": "gun_farki(ihtar_tarihi) < 30",
+      "uyari": "DİKKAT: İhtarın tebliğinden bu yana 30 günlük ödeme süresi henüz dolmamış görünüyor; süre dolmadan açılan dava reddedilebilir (TBK m.315)." },
+    { "eger": "tasinmaz_nitelik == diğer (üstü açık/arsa vb.)",
+      "uyari": "Konut/çatılı işyeri dışındaki kiralarda TBK m.315 rejimi farklı işler; temerrüt hükümlerini ve fesih usulünü ayrıca değerlendir." },
+    { "eger": "odenmeyen_donem != ",
+      "ekle": "Birikmiş kira alacağının ay-ay dökümünü ve toplam tutarını gösteren, tahliye ile birlikte alacak istemini de içeren bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "30 günlük süre içeren yazılı ihtar tebliğ edildi mi ve süre doldu mu (TBK m.315)?",
+    "İhtarda ödenmeyen kira açıkça gösterildi ve tahliye ihtarı yapıldı mı?",
+    "Tahliye ile birlikte birikmiş kira alacağı talebi sonuç-istemde yer alıyor mu?",
+    "Kiralananın konut/çatılı işyeri niteliği dilekçede belirtildi mi?",
+    "Kira sözleşmesi ve ödeme belgeleri (banka dekontu/ihtarname) dosyaya eklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.315", "TBK m.299", "TBK m.347"],
+    "emsal_ara": "temerrüt nedeniyle tahliye 30 günlük ihtar konut çatılı işyeri",
+    "vurgula": ["30 günlük ihtarlı süre şartı", "temerrüdün ihtarla muacceliyeti", "tahliye ile alacak isteminin birlikteliği"]
+  }
+}

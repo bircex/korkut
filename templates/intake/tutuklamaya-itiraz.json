@@ -1,0 +1,44 @@
+{
+  "tip": "tutuklamaya-itiraz",
+  "ad": "Tutuklama/adli kontrol kararına itiraz",
+  "dayanak": ["CMK m.101", "CMK m.267", "CMK m.268"],
+
+  "sorular": [
+    { "id": "karar_tarihi", "soru": "İtiraza konu tutuklama / adli kontrol kararının tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "İtiraz süresi (kararın öğrenilmesinden itibaren 7 gün) bu tarihten işler (CMK m.268/1)." },
+    { "id": "karar_turu", "soru": "İtiraz edilen karar hangisi?", "tip": "secim",
+      "secenekler": ["tutuklama kararı", "adli kontrol kararı", "tutukluluğun devamı kararı"],
+      "zorunlu": true, "neden": "İtirazın hukuki çerçevesinin belirlenmesi (CMK m.101, m.109)." },
+    { "id": "veren_makam", "soru": "Kararı veren hâkimlik/mahkeme hangisi?", "tip": "metin",
+      "zorunlu": true, "neden": "İtirazı inceleyecek merciin belirlenmesi (CMK m.268/3)." },
+    { "id": "supheli_bilgisi", "soru": "Şüpheli/sanığın ad-soyadı ve mevcut durumu (tutuklu/serbest)?", "tip": "metin",
+      "zorunlu": true, "neden": "İtiraz edenin kimliği ve menfaatinin belirlenmesi." },
+    { "id": "itiraz_gerekce", "soru": "İtiraz gerekçeniz nedir?", "tip": "secim",
+      "secenekler": ["kuvvetli suç şüphesi yok (CMK m.100/1)", "tutuklama nedeni yok — kaçma/delil karartma şüphesi yok", "ölçülü değil — adli kontrol yeterli (CMK m.109)", "kararda yeterli gerekçe yok (CMK m.101/2)"],
+      "zorunlu": true, "neden": "Tutuklama koşullarının (CMK m.100) somut denetimi." },
+    { "id": "gerekce_eksikligi", "soru": "Kararda somut gerekçe gösterilmiş mi, yoksa matbu/kalıp ifade mi kullanılmış?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Gerekçesiz/kalıp tutuklama kararı hukuka aykırıdır (CMK m.101/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(karar_tarihi) > 7",
+      "uyari": "KRİTİK: kararın öğrenilmesinden bu yana 7 günü aşmış görünüyor — itiraz süresi geçmiş olabilir (CMK m.268/1). Tutuklunun her zaman tahliye talep edebileceğini (CMK m.104) hatırlatın." },
+    { "eger": "itiraz_gerekce == ölçülü değil — adli kontrol yeterli (CMK m.109)",
+      "ekle": "Tutuklama yerine adli kontrol tedbirlerinin (CMK m.109) yeterli olduğunu, ölçülülük ilkesi çerçevesinde açıklayan bir bölüm ekle." },
+    { "eger": "gerekce_eksikligi == evet",
+      "ekle": "Tutuklama kararının somut olgulara dayanmadığını, kalıp/matbu gerekçeyle verildiğini ve CMK m.101/2 gerekçe zorunluluğunun ihlal edildiğini vurgulayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: itiraz, kararı veren makamın bağlı olduğu (bir sonraki) Sulh Ceza Hâkimliğine hitaben mi yazıldı? (CMK m.268/3)",
+    "Kararın öğrenilmesinden itibaren 7 günlük itiraz süresi hesaplandı ve gösterildi mi? (CMK m.268/1)",
+    "Kuvvetli suç şüphesi ve tutuklama nedenlerinin (CMK m.100) bulunmadığı somut gerekçeyle ortaya konuldu mu?",
+    "Kararın gerekçe zorunluluğuna (CMK m.101/2) uygunluğu denetlendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.100", "CMK m.101", "CMK m.109", "CMK m.267", "CMK m.268"],
+    "emsal_ara": "tutuklamaya itiraz kuvvetli suç şüphesi ölçülülük gerekçe kalıp",
+    "vurgula": ["7 günlük itiraz süresi", "tutuklama nedenleri ve ölçülülük (CMK m.100, m.109)", "gerekçe zorunluluğu (CMK m.101/2)"]
+  }
+}

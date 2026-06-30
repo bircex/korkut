@@ -1,0 +1,47 @@
+{
+  "tip": "isim-soyisim-degisikligi",
+  "ad": "İsim/soyisim değişikliği dava dilekçesi",
+  "dayanak": ["TMK m.27", "Nüfus Hizmetleri Kanunu m.36", "TMK m.39"],
+
+  "sorular": [
+    { "id": "mevcut_ad", "soru": "Nüfusta kayıtlı mevcut ad/soyad?", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltilecek kütük kaydının kimliği (HMK m.119/d)." },
+    { "id": "istenen_ad", "soru": "Talep edilen yeni ad/soyad?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin konusu; hüküm fıkrasına geçecek isim (TMK m.27)." },
+    { "id": "degisiklik_kapsami", "soru": "Değişiklik isim mi, soyisim mi, her ikisi mi?", "tip": "secim",
+      "secenekler": ["yalnız isim", "yalnız soyisim", "her ikisi"],
+      "zorunlu": true, "neden": "Dayanak ve gerekçe (TMK m.27 isim / soyadı mevzuatı) buna göre kurulur." },
+    { "id": "hakli_neden", "soru": "Değişikliği gerektiren haklı neden nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "TMK m.27 'haklı sebep' şartının olgusal dayanağıdır (alay/çevrede tanınma/manevi vb.)." },
+    { "id": "fiilen_kullanim", "soru": "Talep edilen isim çevrede/fiilen kullanılıyor mu? (örnekler)", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Fiili kullanım haklı nedeni güçlendirir (yerleşik içtihat)." },
+    { "id": "onceki_degisiklik", "soru": "Daha önce ad/soyad değişikliği yapıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mükerrer talep ve hakkın kötüye kullanımı değerlendirmesi." },
+    { "id": "adli_sicil_temiz", "soru": "Talep, alacaklılardan kaçma/sicil gizleme amacı taşımadığını destekler mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Kötüniyet/üçüncü kişi menfaati değerlendirmesi için." }
+  ],
+
+  "kosullar": [
+    { "eger": "degisiklik_kapsami == yalnız soyisim",
+      "ekle": "Soyadı değişikliğinin Soyadı mevzuatı ve TMK çerçevesinde haklı sebebe dayandığını; alay/aşağılayıcı ya da çağrışım nedenini somutlaştıran bir bölüm ekle." },
+    { "eger": "fiilen_kullanim == evet",
+      "ekle": "Talep edilen ismin sosyal/iş çevresinde fiilen kullanıldığını tanık ve belge ile (okul, iş, sağlık kayıtları) ortaya koyan bir bölüm ekle.",
+      "uyari": "Fiili kullanım tek başına yeterli görülmeyebilir; haklı sebep ayrıca gerekçelendirilmeli." },
+    { "eger": "onceki_degisiklik == evet",
+      "uyari": "Önceki değişiklik varsa talebin hakkın kötüye kullanımı oluşturmadığı (TMK m.2) ayrıca gerekçelendirilmeli." }
+  ],
+
+  "kontroller": [
+    "Haklı sebep (TMK m.27) somut olgularla ortaya konuldu mu?",
+    "Talep edilen yeni ad/soyad hüküm fıkrasına uygun, açık ve tek biçimde yazıldı mı?",
+    "Nüfus Müdürlüğünün davalı/ilgili olarak gösterilmesi gerekliliği gözetildi mi?",
+    "Karar kesinleşince kütüğe tescil ve ilan usulü (Nüfus Hizmetleri K.) not edildi mi?",
+    "Talep alacaklı/üçüncü kişi haklarını ihlal amacı taşımıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.27", "TMK m.39", "Nüfus Hizmetleri Kanunu m.35", "Nüfus Hizmetleri Kanunu m.36"],
+    "emsal_ara": "isim soyisim değişikliği haklı sebep fiili kullanım asliye hukuk",
+    "vurgula": ["haklı sebep ölçütü", "fiili kullanımın etkisi", "kötüniyet/üçüncü kişi sınırı"]
+  }
+}

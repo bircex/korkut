@@ -1,0 +1,46 @@
+{
+  "tip": "tahliye-taahhut",
+  "ad": "Tahliye taahhüdüne dayalı tahliye dilekçesi",
+  "dayanak": ["TBK m.352/1", "TBK m.299", "İİK m.272"],
+
+  "sorular": [
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Taahhüdün, kiralananın tesliminden SONRA verilmiş olması şarttır (TBK m.352/1)." },
+    { "id": "taahhut_tarihi", "soru": "Tahliye taahhütnamesinin düzenlenme (imza) tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Taahhüt teslimden sonra ve serbest iradeyle verilmiş olmalı; teslimle aynı/önceki tarih geçersizliğe yol açar." },
+    { "id": "tahliye_taahhut_tarihi", "soru": "Taahhütte belirtilen tahliye (boşaltma) tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Bu tarih geçtikten sonra 1 ay içinde dava/icra takibi yapılmalıdır (TBK m.352/1)." },
+    { "id": "taahhut_yazili", "soru": "Taahhüt yazılı mı ve kiracı tarafından mı imzalandı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Tahliye taahhüdü yazılı şekil şartına tabidir; kiracının (veya yetkili temsilcisinin) imzası gerekir (TBK m.352/1)." },
+    { "id": "taahhut_sonradan", "soru": "Taahhüt, taşınmaz kiracıya teslim edildikten SONRA mı verildi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Teslimden önce/teslimle birlikte alınan taahhüt geçersizdir; bu husus Yargıtay uygulamasında belirleyicidir." },
+    { "id": "takip_yolu", "soru": "Tahliye dava yoluyla mı, icra (İİK m.272) yoluyla mı talep ediliyor?", "tip": "secim",
+      "secenekler": ["sulh hukuk mahkemesinde tahliye davası", "icra dairesinde ilamsız tahliye takibi"],
+      "zorunlu": true, "neden": "Taahhüde dayalı tahliye hem dava hem icra yoluyla istenebilir; usul ve merci farklıdır (İİK m.272)." }
+  ],
+
+  "kosullar": [
+    { "eger": "taahhut_sonradan == hayir",
+      "uyari": "KRİTİK: Teslimden önce veya teslimle birlikte alınan tahliye taahhüdü geçersiz sayılır (TBK m.352/1). Taahhüdün teslimden sonra serbest iradeyle verildiği ispatlanmalı." },
+    { "eger": "taahhut_yazili == hayir",
+      "uyari": "KRİTİK: Tahliye taahhüdü yazılı olmak zorundadır; sözlü/imzasız taahhüt tahliye dayanağı olamaz." },
+    { "eger": "gun_farki(tahliye_taahhut_tarihi) > 30",
+      "uyari": "DİKKAT: Taahhütteki tahliye tarihinden itibaren 1 aylık süre dolmuş görünüyor — taahhüde dayalı dava/takip bu 1 ay içinde başlatılmalıdır (TBK m.352/1)." },
+    { "eger": "takip_yolu == icra dairesinde ilamsız tahliye takibi",
+      "ekle": "İİK m.272 uyarınca taahhütnameye dayalı ilamsız tahliye takibi yolunun seçildiğini, itiraz halinde icra mahkemesinde tahliye istenebileceğini açıklayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Taahhüt yazılı ve kiracı imzalı mı (TBK m.352/1)?",
+    "Taahhüt kiralananın tesliminden sonra mı verilmiş (geçerlilik şartı)?",
+    "Taahhütteki tahliye tarihinden itibaren 1 aylık dava/takip süresi gözetildi mi?",
+    "Tahliye tarihi, düzenleme tarihi ve teslim tarihi dilekçede açıkça gösterildi mi?",
+    "İcra yolu seçildiyse İİK m.272 usulüne uygun takip talebi hazırlandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.352", "İİK m.272", "TBK m.299"],
+    "emsal_ara": "tahliye taahhüdü teslimden sonra yazılı bir ay süre geçerlilik",
+    "vurgula": ["taahhüdün teslimden sonra verilmesi şartı", "yazılı şekil ve imza", "tahliye tarihinden itibaren 1 aylık dava/takip süresi"]
+  }
+}

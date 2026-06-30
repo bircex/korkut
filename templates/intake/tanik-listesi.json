@@ -1,0 +1,44 @@
+{
+  "tip": "tanik-listesi",
+  "ad": "Tanık listesi dilekçesi",
+  "dayanak": ["HMK m.240", "HMK m.241", "HMK m.243", "HMK m.145"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tanık listesi mevcut esasa sunulur; dosya kimliği zorunludur." },
+    { "id": "taniklar", "soru": "Tanıkların ad-soyadı ve adreslerini sayar mısınız?", "tip": "metin",
+      "zorunlu": true, "neden": "Tanığın kimliği ve adresi gösterilmezse davetiye çıkarılamaz (HMK m.240/2)." },
+    { "id": "ispat_vakialari", "soru": "Her tanık hangi vakıa(lar) hakkında dinlenecek?", "tip": "metin",
+      "zorunlu": true, "neden": "Hangi tanığın hangi vakıa için dinleneceği belirtilmelidir (HMK m.240/2)." },
+    { "id": "sure_durumu", "soru": "Liste, mahkemece tanık bildirimi için verilen kesin süre içinde mi sunuluyor?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Süresinde bildirilmeyen tanık dinlenmez (HMK m.145, m.243)." },
+    { "id": "gider_avansi", "soru": "Tanık için gider avansı/davet masrafı yatırıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tanık masrafı süresinde yatırılmazsa o tanıktan vazgeçilmiş sayılabilir (HMK m.324)." },
+    { "id": "yazili_beyan", "soru": "Bir tanığın yazılı beyanına başvurulması talep edilecek mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mahkeme uygun görürse tanığın yazılı beyanı alınabilir (HMK m.246)." }
+  ],
+
+  "kosullar": [
+    { "eger": "sure_durumu == hayir",
+      "uyari": "KRİTİK: kesin süreden sonra bildirilen tanık dinlenmez (HMK m.145, m.243); haklı neden/ek süre imkânını değerlendir." },
+    { "eger": "gider_avansi == hayir",
+      "ekle": "Tanık davet giderinin yatırılacağını/yatırıldığını belirten bir kayıt ekle.",
+      "uyari": "Tanık gider avansı verilen sürede yatırılmazsa ilgili tanıktan vazgeçilmiş sayılabilir (HMK m.324)." },
+    { "eger": "yazili_beyan == evet",
+      "ekle": "İlgili tanık için yazılı beyan talebini ve gerekçesini ayrı bir bölüm olarak ekle (HMK m.246)." }
+  ],
+
+  "kontroller": [
+    "Her tanığın ad-soyad ve adres bilgisi tam mı (HMK m.240/2)?",
+    "Her tanığın hangi vakıa için dinleneceği gösterildi mi?",
+    "Liste, tanık bildirimi için verilen kesin süre içinde mi (HMK m.243)?",
+    "Tanık sayısı ve dinletilecek vakıa, davanın gereğiyle orantılı mı?",
+    "Tanık gider avansı/davet masrafı (HMK m.324) yatırıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.240", "HMK m.243", "HMK m.246", "HMK m.324"],
+    "emsal_ara": "tanık listesi kesin süre tanık delili hangi vakıa gider avansı",
+    "vurgula": ["tanık-vakıa eşleştirmesi", "süresinde bildirme zorunluluğu", "gider avansının yatırılması"]
+  }
+}

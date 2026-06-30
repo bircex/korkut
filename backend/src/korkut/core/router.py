@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 import yaml
@@ -29,6 +30,21 @@ from korkut.paths import CONFIG_DIR
 logger = logging.getLogger("korkut.router")
 
 _CONFIG = CONFIG_DIR / "model-routing.yaml"
+
+
+@dataclass(frozen=True)
+class ModelCfg:
+    """An office's custom model (defined in the Özelleştir UI).
+
+    `local` True means the endpoint runs on-prem (Ollama etc.) → the router skips redaction
+    because the text never leaves the machine; False means an external endpoint, so cloud-bound
+    text is still redacted before the call.
+    """
+
+    model: str
+    base_url: str
+    api_key: str | None = None
+    local: bool = False
 
 
 def _load_config() -> dict:
@@ -50,11 +66,14 @@ class Router:
         self._local_available = local_available
         self._backends: dict[str, str] = self._cfg.get("backends") or {}
         self._specialties: dict[str, dict] = self._cfg.get("specialties") or {}
+        # Tier used when a specialty is not listed (default "cloud" preserves prior behavior; a
+        # single-model router sets this so every specialty resolves to its one tier).
+        self._default_tier: str = self._cfg.get("default_tier", "cloud")
         self._fallback = bool(self._cfg.get("fallback_to_cloud_if_no_local", True))
 
     def _resolve_tier(self, specialty: str) -> str:
         """Return 'cloud' or 'local' for a specialty, applying the fallback rule."""
-        tier = (self._specialties.get(specialty) or {}).get("model", "cloud")
+        tier = (self._specialties.get(specialty) or {}).get("model", self._default_tier)
         if tier == "local" and not self._local_available():
             if not self._fallback:
                 raise RuntimeError(
@@ -98,3 +117,23 @@ class Router:
         safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted, strict=True)]
         reply = agent_loop.run(provider, safe_messages, all_tools, handlers=handlers)
         return redaction.restore(reply, mapping)
+
+
+def single_model_router(cfg: ModelCfg) -> Router:
+    """A router that sends every specialty to one custom model (an office's own model).
+
+    Redaction follows `cfg.local`: a local (on-prem) endpoint runs un-redacted because text never
+    leaves the machine; an external endpoint is treated as the cloud tier and redacted. No
+    fallback — the office picked this model, so a failure surfaces rather than silently routing
+    elsewhere.
+    """
+    from korkut.core.providers.openai_compat import OpenAICompatProvider
+
+    provider = OpenAICompatProvider(model=cfg.model, base_url=cfg.base_url, api_key=cfg.api_key)
+    tier = "local" if cfg.local else "cloud"
+    config = {
+        "backends": {tier: "custom"},
+        "default_tier": tier,
+        "fallback_to_cloud_if_no_local": False,
+    }
+    return Router({"custom": provider}, config=config, local_available=lambda: cfg.local)

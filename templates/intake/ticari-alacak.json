@@ -1,0 +1,50 @@
+{
+  "tip": "ticari-alacak",
+  "ad": "Ticari alacak dava dilekçesi",
+  "dayanak": ["TTK m.4", "TTK m.18", "TTK m.19", "TBK m.117", "HMK m.119"],
+
+  "sorular": [
+    { "id": "alacak_kaynagi", "soru": "Alacağın kaynağı nedir (mal/hizmet satışı, cari hesap, fatura, sözleşme)?", "tip": "secim",
+      "secenekler": ["mal satışı/teslim", "hizmet ifası", "cari hesap bakiyesi", "yazılı sözleşme", "fatura/sipariş", "diğer"],
+      "zorunlu": true, "neden": "İlişkinin ticari nitelik (TTK m.19) ve ispat şeklini belirler; konu (HMK m.119/d)." },
+    { "id": "taraf_tacir", "soru": "Her iki taraf da tacir mi / iş ticari işletmeyle ilgili mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Ticari dava ve ticari faiz/temerrüt sonuçları buna bağlı (TTK m.3-4, m.19)." },
+    { "id": "alacak_tutari", "soru": "Talep edilen anapara alacak tutarı (TL)?", "tip": "sayi",
+      "zorunlu": true, "neden": "Müddeabihin değeri; harç ve faiz hesabının matrahı (HMK m.119/ğ)." },
+    { "id": "muacceliyet_tarihi", "soru": "Alacak ne zaman muaccel oldu / temerrüt ne zaman doğdu?", "tip": "tarih",
+      "zorunlu": true, "neden": "Faiz başlangıcı ve zamanaşımı başlangıcı (TBK m.117, TTK m.18/2)." },
+    { "id": "fatura_kabul", "soru": "Fatura tebliğ edildi mi ve 8 gün içinde itiraz edilmedi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İtiraz edilmeyen fatura içeriği kabul edilmiş sayılır (TTK m.21/2)." },
+    { "id": "ticari_defter", "soru": "Alacağı destekleyen ticari defter kayıtları / cari hesap ekstresi var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Ticari defterler taraflar arası ispat aracıdır (HMK m.222)." },
+    { "id": "faiz_turu", "soru": "Talep edilen faiz türü (avans/ticari/yasal)?", "tip": "secim",
+      "secenekler": ["ticari işlerde temerrüt faizi", "avans faizi", "yasal faiz", "sözleşmesel faiz"],
+      "zorunlu": false, "neden": "Tacirler arası işlerde ticari/avans faizi uygulanır (3095 s.K. m.2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "taraf_tacir == evet",
+      "ekle": "Tarafların tacir sıfatını ve işin ticari işletmeyle ilgisini açıklayan, ticari faiz talebini gerekçelendiren bir paragraf ekle.",
+      "uyari": "İki tarafın ticari işletmesiyle ilgili dava ticari dava sayılır (TTK m.4); ticari faiz ve dava şartı arabuluculuk gündeme gelir." },
+    { "eger": "fatura_kabul == evet",
+      "ekle": "Faturanın tebliğinden itibaren 8 gün içinde itiraz edilmediğini ve içeriğinin kabul edilmiş sayıldığını belirten açıklama ekle (TTK m.21/2)." },
+    { "eger": "ticari_defter == evet",
+      "ekle": "Ticari defter ve cari hesap kayıtlarına dayanan bir delil değerlendirmesi ekle; bilirkişi incelemesi istemini sonuç-isteme yansıt." },
+    { "eger": "alacak_kaynagi == cari hesap bakiyesi",
+      "uyari": "Cari hesapta bakiye alacağı ve faizin başlangıcı için TTK m.89-101 hükümlerini ve hesap kesimini kontrol et." }
+  ],
+
+  "kontroller": [
+    "Ticari dava şartı arabuluculuk (TTK m.5/A) tüketildi mi? Son tutanak ekli mi?",
+    "Tacir sıfatı ve işin ticari işletmeyle ilgisi açıklamalarda gerekçelendirildi mi?",
+    "Faiz türü (ticari/avans) ve başlangıç tarihi anaparayla tutarlı mı (TBK m.117)?",
+    "Müddeabih, harç ve faiz hesabı sonuç-istemde sayısal olarak tutarlı mı?",
+    "Zamanaşımı (kural 5 yıl, TBK m.146; özel hükümler saklı) kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TTK m.4", "TTK m.5/A", "TTK m.19", "TTK m.21", "TBK m.117", "TBK m.146"],
+    "emsal_ara": "ticari alacak dava şartı arabuluculuk ticari faiz fatura itiraz",
+    "vurgula": ["ticari dava ve ticari faiz koşulları", "fatura içeriğinin kabul sayılması (8 gün)", "dava şartı arabuluculuk"]
+  }
+}

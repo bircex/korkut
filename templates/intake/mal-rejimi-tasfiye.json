@@ -1,0 +1,45 @@
+{
+  "tip": "mal-rejimi-tasfiye",
+  "ad": "Mal rejiminin tasfiyesi / katkı-değer artış payı dava dilekçesi",
+  "dayanak": ["TMK m.202", "TMK m.218-241", "TMK m.225", "TMK m.227-236", "HMK m.119"],
+
+  "sorular": [
+    { "id": "rejim_turu", "soru": "Eşler arasında geçerli mal rejimi nedir?", "tip": "secim",
+      "secenekler": ["edinilmiş mallara katılma (yasal rejim - TMK m.202)", "mal ayrılığı (sözleşmeyle)", "paylaşmalı mal ayrılığı", "mal ortaklığı"],
+      "zorunlu": true, "neden": "Tasfiye usulü ve talep (katılma/değer artış payı) seçilen rejime göre değişir." },
+    { "id": "rejim_sona_tarihi", "soru": "Mal rejimi ne zaman/hangi sebeple sona erdi? (boşanma davası tarihi/ölüm/sözleşme)", "tip": "tarih",
+      "zorunlu": true, "neden": "Edinilmiş mallar rejimin sona erdiği (boşanmada dava açıldığı) ana göre belirlenir (TMK m.225/235)." },
+    { "id": "tasfiye_konusu_mallar", "soru": "Tasfiyeye konu mal varlığı nedir? (taşınmaz, araç, banka/birikim, şirket payı; edinme tarihleriyle)", "tip": "metin",
+      "zorunlu": true, "neden": "Katılma alacağı ve değer artış payı hesabı için mal envanteri ve edinme tarihleri şarttır." },
+    { "id": "talep_turu", "soru": "Hangi talep ileri sürülüyor?", "tip": "secim",
+      "secenekler": ["katılma alacağı (artık değerin yarısı)", "değer artış payı (TMK m.227)", "katkı payı alacağı", "katılma + değer artış payı birlikte"],
+      "zorunlu": true, "neden": "Talep türü, ispat konusu vakıaları ve hesap yöntemini belirler." },
+    { "id": "kisisel_mal_iddiasi", "soru": "Kişisel mal (miras, bağış, evlilik öncesi mal) iddiası veya katkı belgesi var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Kişisel mallar tasfiye dışıdır; aksi ispatlanmadıkça mallar edinilmiş sayılır (TMK m.222)." },
+    { "id": "deger_artisi", "soru": "Bir eşin diğerinin malına parasal/emek katkısı ve malın değer artışı söz konusu mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Değer artış payı için katkı ve malın değerlenmesi ispatlanmalıdır (TMK m.227)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_turu == değer artış payı (TMK m.227)",
+      "ekle": "Eşin diğerinin malına katkısını ve malın tasfiye anındaki değer artışından düşen payı somut verilerle hesaplayan bir bölüm ekle (TMK m.227)." },
+    { "eger": "kisisel_mal_iddiasi != hayir",
+      "ekle": "Kişisel mal olduğu iddia edilen kalemleri (miras/bağış/evlilik öncesi) belgelendir; aksi hâlde edinilmiş mal karinesi uygulanır (TMK m.222)." },
+    { "eger": "rejim_turu == edinilmiş mallara katılma (yasal rejim - TMK m.202)",
+      "ekle": "Her eşin artık değerini (edinilmiş mallar - borçlar + eklenecek değerler) hesaplayıp katılma alacağını yarı oran üzerinden sonuç-isteme bağla (TMK m.231-236)." }
+  ],
+
+  "kontroller": [
+    "Geçerli mal rejimi ve sona erme tarihi doğru tespit edildi mi (TMK m.225/235)?",
+    "Tasfiyeye konu mallar ve edinme tarihleri envanterlendi mi?",
+    "Edinilmiş mal / kişisel mal ayrımı karine ve belgelerle kuruldu mu (TMK m.222)?",
+    "Katılma alacağı ve/veya değer artış payı hesabı (artık değer) gösterildi mi?",
+    "Değer tespiti için bilirkişi incelemesi talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.202", "TMK m.222", "TMK m.227", "TMK m.231", "TMK m.235", "TMK m.236"],
+    "emsal_ara": "mal rejimi tasfiyesi katılma alacağı değer artış payı edinilmiş mal",
+    "vurgula": ["edinilmiş mal karinesi (TMK m.222)", "artık değerin yarısı üzerinden katılma alacağı", "değer artış payının hesabı"]
+  }
+}

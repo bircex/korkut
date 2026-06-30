@@ -1,0 +1,56 @@
+{
+  "tip": "vergi-iptal",
+  "ad": "Vergi/ceza ihbarnamesinin iptali dava dilekçesi",
+  "dayanak": ["VUK m.377", "İYUK m.7", "VUK m.34", "2577 s. İYUK m.27"],
+
+  "sorular": [
+    { "id": "tarhiyat_turu", "soru": "Dava konusu işlem nedir: vergi/ceza ihbarnamesi mi, ödeme emri mi, başka bir tarh/tahsil işlemi mi?", "tip": "secim",
+      "secenekler": ["ihbarname (tarhiyat)", "ödeme emri (tahsilat)", "ceza kesme işlemi", "diğer idari işlem"],
+      "zorunlu": true, "neden": "İhbarname iptalinde dava VUK m.377/İYUK m.7'ye, ödeme emrinde 6183 m.58'e tabidir; süre ve mahkeme farklılaşır." },
+    { "id": "teblig_tarihi", "soru": "İhbarname/ödeme emri size hangi tarihte tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "30 günlük dava açma süresi tebliğden işler (İYUK m.7); süre tutarı belirleyici." },
+    { "id": "vergi_turu", "soru": "Hangi vergi türü söz konusu (KDV, gelir, kurumlar, ÖTV, MTV, emlak vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi hukuk dayanağı ve görevli idare/mahkeme bakımından belirleyici." },
+    { "id": "vergi_donemi", "soru": "Tarhiyatın ilişkin olduğu vergilendirme dönemi/yılı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Zamanaşımı (VUK m.114) ve dönem matrahı değerlendirmesi için." },
+    { "id": "matrah_tutar", "soru": "Tarh edilen vergi aslı, ceza ve matrah tutarları nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Dava değeri, harç ve tek/heyet hâkim ayrımı (İYUK m.7) için." },
+    { "id": "ceza_turu", "soru": "Kesilen ceza türü nedir (vergi ziyaı, usulsüzlük, özel usulsüzlük)?", "tip": "secim",
+      "secenekler": ["vergi ziyaı cezası", "usulsüzlük", "özel usulsüzlük", "ceza yok"],
+      "zorunlu": false, "neden": "Ceza türü iptal sebeplerini ve indirim/uzlaşma yolunu değiştirir (VUK m.341 vd.)." },
+    { "id": "uzlasma_durumu", "soru": "Tarhiyat öncesi/sonrası uzlaşma yoluna başvurdunuz mu, sonucu ne oldu?", "tip": "secim",
+      "secenekler": ["başvurulmadı", "uzlaşma talep edildi-bekliyor", "uzlaşma sağlanamadı (vaki olmadı)", "uzlaşma sağlandı"],
+      "zorunlu": true, "neden": "Uzlaşma sağlanamazsa dava süresi yeniden işler (VUK ek m.7); uzlaşma sağlandıysa dava açılamaz." },
+    { "id": "yurutmenin_durdurulmasi", "soru": "Yürütmenin durdurulması talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İhbarnamede tahsilat İYUK m.27/4 gereği davayla durmaz; YD ayrıca istenmelidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(teblig_tarihi) > 30",
+      "uyari": "KRİTİK: tebliğden bu yana 30 günü aşmış görünüyor — dava açma süresi (İYUK m.7) geçmiş olabilir; uzlaşmanın süreyi uzatıp uzatmadığını teyit et." },
+    { "eger": "uzlasma_durumu == uzlaşma sağlandı",
+      "uyari": "Uzlaşma sağlanan tutar için dava açılamaz ve dava konusu yapılamaz (VUK ek m.6); yalnızca uzlaşma dışı kalan kısım dava edilebilir." },
+    { "eger": "uzlasma_durumu == uzlaşma sağlanamadı (vaki olmadı)",
+      "ekle": "Uzlaşmanın vaki olmadığına dair tutanak tarihini ve dava süresinin bu tarihten yeniden işlediğini belirten bir paragraf ekle.",
+      "uyari": "Uzlaşma vaki olmazsa dava açma süresi, tutanağın tebliğinden itibaren 15 günden az kalmışsa 15 güne tamamlanır (VUK ek m.7)." },
+    { "eger": "tarhiyat_turu == ödeme emri (tahsilat)",
+      "uyari": "Ödeme emrine karşı dava 6183 s.K. m.58 uyarınca 15 GÜN içinde açılır ve sebepler sınırlıdır (borcum yok/kısmen var/zamanaşımı); bu intake tarhiyat iptaline göre kuruludur, süre/sebebi yeniden değerlendir." },
+    { "eger": "yurutmenin_durdurulmasi == evet",
+      "ekle": "Yürütmenin durdurulması istemini ve telafisi güç zarar + açık hukuka aykırılık gerekçesini (İYUK m.27/2) ayrı başlıkta açıkça yaz." }
+  ],
+
+  "kontroller": [
+    "Dava konusu işlem (ihbarname/ödeme emri) ve dayanağı dilekçede açıkça belirtildi mi?",
+    "Tebliğ tarihi ve 30 günlük süre (uzlaşma uzaması dâhil) hesaplanıp gösterildi mi?",
+    "Vergi türü-dönem-matrah-ceza tutarları tablo halinde net mi?",
+    "İptal sebepleri (usul + esas) hukuki dayanaklarıyla ayrı ayrı ileri sürüldü mü?",
+    "Uzlaşma süreci sonucu (vaki olmadı/sağlandı) ve dava edilebilir kısım netleştirildi mi?",
+    "Yürütmenin durdurulması istenmişse ayrı gerekçe ve talep yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["VUK m.377", "VUK ek m.6", "VUK ek m.7", "İYUK m.7", "İYUK m.27", "VUK m.114"],
+    "emsal_ara": "vergi ihbarnamesi iptali dava süresi uzlaşma tebliğ",
+    "vurgula": ["30 günlük dava süresi ve uzlaşmanın süreye etkisi", "tarhiyat ile tahsilat (ödeme emri) ayrımı", "vergi türü-dönem-matrah belirliliği"]
+  }
+}

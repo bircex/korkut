@@ -1,0 +1,50 @@
+{
+  "tip": "tenkis",
+  "ad": "Tenkis dava dilekçesi",
+  "dayanak": ["TMK m.560-561", "TMK m.505-506", "TMK m.563", "TMK m.565"],
+
+  "sorular": [
+    { "id": "muris_ad", "soru": "Muris (vefat eden) ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Tereke kimliği; dilekçe konusu (HMK m.119/d)." },
+    { "id": "olum_tarihi", "soru": "Ölüm tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mirasın açıldığı an; saklı pay bu ana göre hesaplanır (TMK m.575)." },
+    { "id": "davaci_sifat", "soru": "Davacı saklı paylı mirasçı olarak murise yakınlığı?", "tip": "secim",
+      "secenekler": ["altsoy (çocuk/torun)", "ana-baba", "sağ kalan eş"],
+      "zorunlu": true, "neden": "Saklı pay oranını ve tenkis hakkını belirler (TMK m.506)." },
+    { "id": "tasarruf_turu", "soru": "Saklı payı ihlal eden tasarruf hangisi?", "tip": "secim",
+      "secenekler": ["vasiyetname / ölüme bağlı tasarruf", "sağlararası bağışlama/karşılıksız kazandırma", "her ikisi"],
+      "zorunlu": true, "neden": "Tenkis sırası ve usulü değişir (TMK m.560, m.561)." },
+    { "id": "tasarruf_tarihi", "soru": "Tenkise konu tasarrufun/bağışın tarihi?", "tip": "tarih",
+      "zorunlu": false, "neden": "Geri verme yükümlülüğü ve iyiniyet değerlendirmesi için (TMK m.565)." },
+    { "id": "ogrenme_tarihi", "soru": "Davacı saklı payının zedelendiğini ne zaman öğrendi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Tenkis 1 yıllık (öğrenme) / 10 yıllık (vasiyette açılma) süreye tabidir (TMK m.571)." },
+    { "id": "tereke_degeri", "soru": "Terekenin yaklaşık net değeri ve ihlal edilen tutar biliniyor mu?", "tip": "metin",
+      "zorunlu": false, "neden": "Saklı pay hesabı ve harca esas değer için (TMK m.564)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(ogrenme_tarihi) > 365",
+      "uyari": "KRİTİK: öğrenmeden bu yana 1 yılı aşmış görünüyor — tenkis hakkı zamanaşımına/hak düşümüne uğramış olabilir (TMK m.571). Süreyi mutlaka teyit et." },
+    { "eger": "tasarruf_turu == sağlararası bağışlama/karşılıksız kazandırma",
+      "ekle": "Sağlararası kazandırmanın TMK m.565 kapsamında tenkise tabi olduğunu (denkleştirme/iade dahil) açıklayan bir bölüm ekle.",
+      "uyari": "Sağlararası kazandırmalarda tenkis ancak ölüme bağlı tasarruflar yetmezse ve tarih sırasıyla yapılır (TMK m.570)." },
+    { "eger": "davaci_sifat == sağ kalan eş",
+      "ekle": "Sağ kalan eşin saklı payı (yasal pay oranına göre) ve ihlal miktarını ayrıca hesapla (TMK m.506)." },
+    { "eger": "tereke_degeri == ",
+      "uyari": "Tereke net değeri belirsizse bilirkişi incelemesi/keşif gerekebilir; saklı pay hesabı için terekenin tespitini talep et." }
+  ],
+
+  "kontroller": [
+    "Saklı pay oranı davacının sıfatına göre doğru hesaplandı mı? (TMK m.506).",
+    "Tenkis sırası gözetildi mi? (önce ölüme bağlı, sonra sağlararası — TMK m.570).",
+    "1 yıllık öğrenme / 10 yıllık süre dilekçede gerekçelendirildi mi? (TMK m.571).",
+    "Terekeye iade edilecek/eklenecek kazandırmalar (denkleştirme) hesaba katıldı mı? (TMK m.565).",
+    "Harca esas değer (ihlal edilen saklı pay tutarı) sonuç-istemde gösterildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.505", "TMK m.506", "TMK m.560", "TMK m.561", "TMK m.565", "TMK m.570", "TMK m.571"],
+    "emsal_ara": "tenkis davası saklı pay sıra zamanaşımı sağlararası kazandırma",
+    "vurgula": ["saklı pay oranları", "tenkis sırası ve sınırı", "1 yıllık öğrenme süresi"]
+  }
+}

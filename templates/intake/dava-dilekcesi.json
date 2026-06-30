@@ -1,0 +1,48 @@
+{
+  "tip": "dava-dilekcesi",
+  "ad": "Dava dilekçesi (HMK m.119)",
+  "dayanak": ["HMK m.119", "HMK m.120", "HMK m.114", "HMK m.24-25"],
+
+  "sorular": [
+    { "id": "dava_konusu", "soru": "Dava konusu nedir? (talebin özü — alacak, tespit, iptal, men vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Açık ve somut talep sonucu zorunludur (HMK m.119/1-ğ); taleple bağlılık ilkesi (HMK m.26)." },
+    { "id": "dava_turu", "soru": "Talebin niteliği nedir?", "tip": "secim",
+      "secenekler": ["eda davası", "tespit davası", "inşai (yenilik doğuran) dava", "belirsiz alacak davası", "kısmi dava"],
+      "zorunlu": true, "neden": "Dava türü harç, ıslah ve faiz başlangıcını etkiler (HMK m.105-109)." },
+    { "id": "vakialar", "soru": "Davaya esas maddi vakıaları kronolojik özetler misiniz?", "tip": "metin",
+      "zorunlu": true, "neden": "Vakıaların açık şekilde sırayla yazılması zorunludur (HMK m.119/1-e)." },
+    { "id": "talep_miktari", "soru": "Talep para alacağı ise miktarı/değeri nedir? (belirsizse belirtin)", "tip": "sayi",
+      "zorunlu": false, "neden": "Müddeabihin değeri görev ve harca esastır (HMK m.119/1-d); belirsiz alacakta HMK m.107." },
+    { "id": "faiz_talebi", "soru": "Faiz talep ediliyor mu? (türü ve başlangıç tarihi)", "tip": "metin",
+      "zorunlu": false, "neden": "Faiz türü ve başlangıcı talep sonucunda açıkça gösterilmelidir (HMK m.119/1-ğ)." },
+    { "id": "onceki_basvuru", "soru": "Dava öncesi ihtar/temerrüt veya zorunlu başvuru yapıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Temerrüt faizin ve bazı hâllerde dava şartının başlangıcını belirler (TBK m.117)." }
+  ],
+
+  "kosullar": [
+    { "eger": "dava_turu == belirsiz alacak davası",
+      "ekle": "Alacağın dava açılırken miktarının tam ve kesin belirlenememesinin nedenini açıklayan bir paragraf ekle; asgari bir miktar göster (HMK m.107).",
+      "uyari": "Belirsiz alacakta koşullar yoksa kısmi dava/eksik harç riski doğar; belirlenebilirlik kriterini teyit et." },
+    { "eger": "dava_turu == kısmi dava",
+      "ekle": "Alacağın geri kalanının saklı tutulduğunu açıkça belirten bir kayıt ekle (HMK m.109).",
+      "uyari": "Kısmi davada fazlaya ilişkin haklar saklı tutulmalı; zamanaşımı yalnız talep edilen kısım için kesilir." },
+    { "eger": "faiz_talebi != ",
+      "ekle": "Faizin türünü (yasal/avans/ticari temerrüt) ve başlangıç tarihini sonuç-istemde ayrı bir bent olarak göster." },
+    { "eger": "onceki_basvuru == hayir",
+      "uyari": "Temerrüt için ihtar gerekiyorsa (TBK m.117) faiz başlangıcı dava/ihtar tarihine kayabilir; temerrüt anını teyit et." }
+  ],
+
+  "kontroller": [
+    "HMK m.119/1'deki zorunlu bentlerin (a-ğ) tamamı dilekçede karşılandı mı?",
+    "Talep sonucu açık, çelişkisiz ve infaza elverişli mi? (taleple bağlılık — HMK m.26).",
+    "Müddeabihin değeri/harç doğru hesaplanıp gösterildi mi?",
+    "Eksik bilgi varsa HMK m.119/2 uyarınca giderilebilir; eksik tamamlama davetine açık mı?",
+    "Dava şartları (HMK m.114) ön incelemede sorun yaratmayacak şekilde gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.119", "HMK m.107", "HMK m.109", "HMK m.114", "HMK m.26"],
+    "emsal_ara": "dava dilekçesi zorunlu unsurlar belirsiz alacak kısmi dava talep sonucu",
+    "vurgula": ["talep sonucunun açıklığı ve taleple bağlılık", "belirsiz/kısmi dava ayrımı", "müddeabih değeri ve harç"]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "tip": "delil-listesi",
+  "ad": "Delil listesi dilekçesi",
+  "dayanak": ["HMK m.140/5", "HMK m.145", "HMK m.194", "HMK m.219-220"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Delil listesi mevcut esasa sunulur; dosya kimliği zorunludur." },
+    { "id": "sunan_taraf", "soru": "Delil listesini davacı mı, davalı mı sunuyor?", "tip": "secim",
+      "secenekler": ["davacı", "davalı"],
+      "zorunlu": true, "neden": "İspat yükü ve hangi vakıaların hangi delille ispatlanacağı tarafa göre kurulur (HMK m.190)." },
+    { "id": "deliller_listesi", "soru": "Dayanılan delilleri sayar mısınız? (belge, tanık, bilirkişi, keşif, yemin, isticvap vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Her delilin hangi vakıayı ispatladığı somutlaştırılmalıdır (HMK m.194 somutlaştırma yükü)." },
+    { "id": "celp_belge", "soru": "Karşı tarafta veya üçüncü kişide/kurumda olup celbi istenecek belge var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Belgenin ibrazı/celbi ayrıca talep edilmelidir (HMK m.219-221)." },
+    { "id": "tanik_var", "soru": "Tanık deliline dayanılıyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tanık bildirimi ve hangi vakıa için dinleneceği ayrıca gösterilir (HMK m.240)." },
+    { "id": "sure_durumu", "soru": "Bu liste, ön inceleme/tahkikat için verilen kesin süre içinde mi sunuluyor?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Süresinde gösterilmeyen delil, sonradan dayanma yasağına (HMK m.145) takılabilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "celp_belge == evet",
+      "ekle": "Celbi istenen belgenin nerede/kimde olduğunu, içeriğini ve hangi vakıayı ispatlayacağını belirten ayrı bir talep bölümü ekle (HMK m.219-220).",
+      "uyari": "Belge başka yerde ise açık adresi ve celbi için gereken bilgiler verilmelidir; aksi halde talep sonuçsuz kalır." },
+    { "eger": "tanik_var == evet",
+      "ekle": "Tanıkların ad-adres bilgisini ve her tanığın hangi vakıa hakkında dinleneceğini gösteren bir bölüm ekle.",
+      "uyari": "Tanık listesi süresinde ve hangi vakıaya ilişkin olduğu belirtilerek verilmezse tanık dinlenmeyebilir (HMK m.240/2)." },
+    { "eger": "sure_durumu == hayir",
+      "uyari": "KRİTİK: kesin süreden sonra sunulan delil dikkate alınmayabilir (HMK m.145, m.140/5); ıslah/muvafakat veya gecikmenin haklı nedenini değerlendir." }
+  ],
+
+  "kontroller": [
+    "Her delilin hangi vakıayı ispatladığı somutlaştırıldı mı (HMK m.194)?",
+    "Deliller, tarafa düşen ispat yükü (HMK m.190) ile uyumlu mu?",
+    "Belge celbi/ibrazı talebi gerekli bilgilerle (yer, içerik) yapıldı mı?",
+    "Liste, ön inceleme/verilen kesin süre içinde mi sunuluyor (HMK m.140/5)?",
+    "Delilden vazgeçme/karşı tarafın muvafakati (HMK m.196) hususu gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.140", "HMK m.145", "HMK m.190", "HMK m.194", "HMK m.219"],
+    "emsal_ara": "delil listesi somutlaştırma yükü kesin süre belge celbi ispat yükü",
+    "vurgula": ["delil-vakıa bağı (somutlaştırma)", "süresinde bildirme zorunluluğu", "belge ibrazı/celbi talebi"]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "tip": "nufus-kayit-duzeltme",
+  "ad": "Nüfus kaydı düzeltme (cinsiyet, kütük vb.) dilekçesi",
+  "dayanak": ["Nüfus Hizmetleri Kanunu m.35-36", "TMK m.39", "TMK m.40"],
+
+  "sorular": [
+    { "id": "duzeltilecek_kayit", "soru": "Hangi nüfus kaydı düzeltilecek?", "tip": "secim",
+      "secenekler": ["cinsiyet", "ana/baba adı", "doğum yeri", "medeni hâl/kütük bilgisi", "nüfus kayıt maddi hatası", "diğer"],
+      "zorunlu": true, "neden": "Düzeltmenin türü dayanağı ve usulü belirler (NHK m.35 / TMK m.40)." },
+    { "id": "mevcut_kayit", "soru": "Mevcut (hatalı) kayıt nasıl yazılı?", "tip": "metin",
+      "zorunlu": true, "neden": "Düzeltilecek mevcut durumun tespiti (HMK m.119/d)." },
+    { "id": "istenen_kayit", "soru": "Talep edilen düzeltilmiş kayıt nasıl olmalı?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin konusu; hüküm fıkrasına geçecek ibare." },
+    { "id": "neden_olgular", "soru": "Mevcut kaydın gerçeği yansıtmadığını gösteren olgular?", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi hata/gerçeğe aykırılık dayanağı (NHK m.35)." },
+    { "id": "cinsiyet_islem", "soru": "Cinsiyet düzeltmesi için TMK m.40 prosedürü (mahkeme izni + operasyon + rapor) tamamlandı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Cinsiyet değişikliğinde TMK m.40 koşulları ön şarttır." },
+    { "id": "mahkeme_izni", "soru": "Cinsiyet değişikliği için önceden mahkeme izni alındı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "TMK m.40 iki aşamalıdır: önce izin, sonra kayıt düzeltme." }
+  ],
+
+  "kosullar": [
+    { "eger": "duzeltilecek_kayit == cinsiyet",
+      "sor": ["cinsiyet_islem", "mahkeme_izni"],
+      "ekle": "TMK m.40 uyarınca önceden alınan mahkeme izni, cinsiyet değiştirme ameliyatının gerçekleştiğine ve üreme yeteneğinden yoksunluğa ilişkin resmî sağlık kurulu raporuna dayanan bir bölüm ekle.",
+      "uyari": "Cinsiyet düzeltmesi TMK m.40 koşullarına bağlıdır: önce mahkeme izni, ardından resmî sağlık kurulu raporu ile kütük düzeltmesi." },
+    { "eger": "mahkeme_izni == hayir",
+      "uyari": "Cinsiyet değişikliği için mahkeme izni alınmamışsa, doğrudan kütük düzeltme talebi reddedilebilir; önce TMK m.40 izni gerekir." },
+    { "eger": "duzeltilecek_kayit == nüfus kayıt maddi hatası",
+      "uyari": "Salt maddi hatalar idari yoldan (Nüfus Müdürlüğü) düzeltilebilir; yargı yoluna gitmeden önce idari başvuru imkânını değerlendir." }
+  ],
+
+  "kontroller": [
+    "Düzeltme türüne göre doğru dayanak seçildi mi? (maddi hata NHK m.35 / cinsiyet TMK m.40).",
+    "Cinsiyet düzeltmesinde TMK m.40'ın iki aşaması (izin + rapor) belgelendi mi?",
+    "Talep edilen düzeltilmiş kayıt hüküm fıkrasına uygun ve açık yazıldı mı?",
+    "Nüfus Müdürlüğünün ilgili/davalı gösterilmesi gözetildi mi?",
+    "İdari yoldan düzeltilebilecek maddi hata için yargı yolunun gerekliliği değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["Nüfus Hizmetleri Kanunu m.35", "Nüfus Hizmetleri Kanunu m.36", "TMK m.39", "TMK m.40"],
+    "emsal_ara": "nüfus kayıt düzeltme cinsiyet TMK 40 maddi hata asliye hukuk",
+    "vurgula": ["maddi hata ile esaslı düzeltme ayrımı", "cinsiyet düzeltmesinde TMK m.40 iki aşaması", "idari yol/yargı yolu ayrımı"]
+  }
+}

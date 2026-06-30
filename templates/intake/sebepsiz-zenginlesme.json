@@ -1,0 +1,45 @@
+{
+  "tip": "sebepsiz-zenginlesme",
+  "ad": "Sebepsiz zenginleşme (istirdat) dava dilekçesi",
+  "dayanak": ["TBK m.77", "TBK m.78", "TBK m.79", "TBK m.81", "TBK m.82"],
+
+  "sorular": [
+    { "id": "kazandirma_konusu", "soru": "Davalıya geçen (zenginleşme) nedir ve değeri ne kadardır?", "tip": "metin",
+      "zorunlu": true, "neden": "Malvarlığı kaymasının konusu ve iade kapsamı (TBK m.77)." },
+    { "id": "haklı_sebep_yoklugu", "soru": "Bu kazandırma neden geçerli/haklı bir sebebe dayanmıyor?", "tip": "secim",
+      "secenekler": ["geçerli sebep hiç doğmadı", "sonradan ortadan kalktı", "gerçekleşmeyen sebep için verildi", "borç olmadığı halde ödendi (yanlış ödeme)"],
+      "zorunlu": true, "neden": "Sebepsizliğin türü iade rejimini belirler (TBK m.77/2)." },
+    { "id": "odeme_tarihi", "soru": "Kazandırma/ödeme ne zaman yapıldı?", "tip": "tarih",
+      "zorunlu": true, "neden": "Zamanaşımı öğrenmeden 2, her halde 10 yıl (TBK m.82)." },
+    { "id": "ogrenme_tarihi", "soru": "İade hakkını ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": false, "neden": "2 yıllık sürenin başlangıcı (TBK m.82)." },
+    { "id": "borcu_olmadigini_bilme", "soru": "Ödeme yapılırken borçlu olunmadığı biliniyor muydu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Bilerek ifa edilen borç olmayan ödeme kural olarak geri istenemez (TBK m.78/2)." },
+    { "id": "iade_kapsami", "soru": "Davalı iyiniyetli mi, kötüniyetli mi (zenginleşmeyi elinde tutuyor mu)?", "tip": "secim",
+      "secenekler": ["bilmiyorum", "iyiniyetli", "kötüniyetli"],
+      "zorunlu": false, "neden": "İade kapsamı iyi/kötüniyete göre değişir (TBK m.79-80)." }
+  ],
+
+  "kosullar": [
+    { "eger": "borcu_olmadigini_bilme == evet",
+      "uyari": "KRİTİK: Borçlu olmadığını bilerek ödeyen kural olarak iade isteyemez (TBK m.78/2). İstisna hâllerini (ahlaki ödev, zorunluluk) somutlaştır." },
+    { "eger": "iade_kapsami == kötüniyetli",
+      "ekle": "Kötüniyetli zenginleşenin elden çıkardığı şeyleri ve elde edilmesi gereken semereleri de iadeyle yükümlü olduğunu açıklayan bir paragraf ekle (TBK m.80)." },
+    { "eger": "gun_farki(odeme_tarihi) > 3650",
+      "uyari": "Ödeme üzerinden 10 yıllık üst süre aşılmış olabilir (TBK m.82); zamanaşımını teyit et." }
+  ],
+
+  "kontroller": [
+    "Sebepsiz zenginleşmenin tamamlayıcılığı (öncelikli bir sözleşme/haksız fiil yolunun bulunmadığı) gösterildi mi?",
+    "Zenginleşme + fakirleşme + illiyet ve haklı sebep yokluğu kuruldu mu (TBK m.77)?",
+    "Zamanaşımı (TBK m.82: 2 yıl/10 yıl) değerlendirildi mi?",
+    "TBK m.78/2 (borç olmadığını bilerek ödeme) istisnası kapsam dışı mı?",
+    "İade kapsamı davalının iyi/kötüniyetine göre talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.77", "TBK m.78", "TBK m.79", "TBK m.80", "TBK m.82"],
+    "emsal_ara": "sebepsiz zenginleşme istirdat haklı sebep yokluğu zamanaşımı tamamlayıcı dava",
+    "vurgula": ["sebepsiz zenginleşmenin tamamlayıcı niteliği", "borç olmadığını bilerek ödeme istisnası", "iyi/kötüniyete göre iade kapsamı"]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "tip": "istirak-nafakasi",
+  "ad": "İştirak nafakası dava dilekçesi",
+  "dayanak": ["TMK m.182", "TMK m.327-331", "HMK m.119"],
+
+  "sorular": [
+    { "id": "cocuk_bilgi", "soru": "Nafaka istenen çocuğun/çocukların adı, doğum tarihi ve velayet durumu?", "tip": "metin",
+      "zorunlu": true, "neden": "İştirak nafakası velayet kendisinde olan/çocuğa fiilen bakan tarafça çocuk için istenir (TMK m.182)." },
+    { "id": "velayet_kimde", "soru": "Çocuğun velayeti kimde / fiilen kimin yanında kalıyor?", "tip": "metin",
+      "zorunlu": true, "neden": "Nafaka, çocuğun bakımını üstlenmeyen ebeveynden istenir." },
+    { "id": "cocuk_ihtiyac", "soru": "Çocuğun aylık bakım, eğitim ve sağlık giderleri yaklaşık ne kadar?", "tip": "metin",
+      "zorunlu": true, "neden": "Nafaka çocuğun ihtiyaçları ölçüsünde belirlenir (TMK m.330)." },
+    { "id": "yukumlu_gelir", "soru": "Nafaka yükümlüsü ebeveynin geliri ve mali durumu nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Nafaka, yükümlünün ödeme gücüyle orantılı takdir edilir (TMK m.330)." },
+    { "id": "ergin_egitim", "soru": "Çocuk ergin (18+) ise eğitimi devam ediyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Eğitimi süren ergin çocuk için nafaka istisnaen sürebilir (TMK m.328/2)." },
+    { "id": "mevcut_nafaka", "soru": "Boşanma kararıyla daha önce belirlenmiş bir iştirak nafakası var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mevcut nafaka varsa talep, artırım davası niteliğine dönüşebilir (TMK m.331)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ergin_egitim == evet",
+      "ekle": "Ergin ama eğitimi süren çocuk için nafakanın kendisine ödenmesi ve eğitimin makul süresince devamı talebini, TMK m.328/2'ye dayanarak gerekçelendir." },
+    { "eger": "mevcut_nafaka == evet",
+      "uyari": "Daha önce hükmedilmiş nafaka varsa bu, yeni nafaka değil 'nafaka artırım' davasıdır (TMK m.331); doğru dava türünü seç." },
+    { "eger": "ergin_egitim == hayir",
+      "ekle": "Nafakanın çocuk adına, velayet/fiilî bakım sahibi ebeveyne ödenmesi gerektiğini belirt ve çocuğun ihtiyaç kalemlerini açıkça say." }
+  ],
+
+  "kontroller": [
+    "Nafakanın çocuk için ve fiilî bakım sahibi lehine istendiği açık mı (TMK m.182)?",
+    "Çocuğun ihtiyaç kalemleri ile yükümlünün geliri arasında orantı kuruldu mu (TMK m.330)?",
+    "Ergin çocuk söz konusuysa eğitimin devamı koşulu gösterildi mi (TMK m.328/2)?",
+    "Mevcut nafaka varsa dava türü (artırım) doğru belirlendi mi (TMK m.331)?",
+    "Nafakanın talep/dava tarihinden itibaren işlemesi sonuç-istemde belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.182", "TMK m.328", "TMK m.330", "TMK m.331"],
+    "emsal_ara": "iştirak nafakası çocuk velayet ihtiyaç ergin eğitim",
+    "vurgula": ["çocuğun ihtiyacı ile yükümlünün gücü dengesi", "ergin çocukta eğitim koşulu", "nafakanın başlangıç tarihi"]
+  }
+}

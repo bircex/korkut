@@ -1,0 +1,43 @@
+{
+  "tip": "esas-hakkinda-savunma",
+  "ad": "Esas hakkında savunma / mütalaaya karşı beyan",
+  "dayanak": ["CMK m.216", "CMK m.230", "TCK m.61"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosya esas numarası (..../..... E.) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Savunmanın sunulacağı dosyanın belirlenmesi." },
+    { "id": "isnat_suc", "soru": "Sanığa isnat edilen suç ve sevk maddeleri neler?", "tip": "metin",
+      "zorunlu": true, "neden": "Savunmanın isnatla bire bir karşılanması (CMK m.225)." },
+    { "id": "mutalaa_ozeti", "soru": "Cumhuriyet savcısının esas hakkındaki mütalaasının özeti / istemi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Mütalaaya karşı beyanın hangi noktalara cevap vereceğinin belirlenmesi (CMK m.216)." },
+    { "id": "savunma_eksenleri", "soru": "Savunmanızın temel eksenleri neler?", "tip": "secim",
+      "secenekler": ["suç sabit değil — yetersiz delil", "suç vasfı hatalı / unsurlar oluşmadı", "hukuka uygunluk / kusurluluğu kaldıran neden", "lehe hükümler — indirim, takdiri indirim (TCK m.62)", "zamanaşımı / usule aykırılık"],
+      "zorunlu": true, "neden": "Savunma stratejisinin ve talep edilecek sonucun belirlenmesi." },
+    { "id": "lehe_hususlar", "soru": "Lehe değerlendirilmesi gereken hususlar (haksız tahrik, etkin pişmanlık, iyi hal vb.) var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Ceza tayininde lehe hükümlerin (TCK m.61-62) ileri sürülmesi." },
+    { "id": "son_soz", "soru": "Sanığın son sözünde vurgulamak istediği nokta var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Son söz hakkı sanığa aittir ve hükümden önce verilmelidir (CMK m.216/3)." }
+  ],
+
+  "kosullar": [
+    { "eger": "savunma_eksenleri == zamanaşımı / usule aykırılık",
+      "ekle": "Dava zamanaşımı (TCK m.66) veya hukuka aykırı delil (CMK m.217/2) gibi usule ilişkin def'ileri ayrı bir başlık altında işleyen bir bölüm ekle." },
+    { "eger": "savunma_eksenleri == suç sabit değil — yetersiz delil",
+      "ekle": "Şüpheden sanık yararlanır ilkesini (in dubio pro reo) ve delillerin mahkûmiyete yeterli olmadığını gerekçelendiren bir bölüm ekle (CMK m.217/1)." },
+    { "eger": "lehe_hususlar != ",
+      "ekle": "Haksız tahrik (TCK m.29), takdiri indirim (TCK m.62) gibi lehe hükümlerin somut olaya uygulanmasını talep eden bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: savunma, davanın görüldüğü ilgili Ceza Mahkemesine hitaben mi yazıldı?",
+    "Savcının esas hakkındaki mütalaasındaki her temel iddia karşılandı mı? (CMK m.216)",
+    "Beraat/lehe sonuç ile birlikte, mahkûmiyet halinde uygulanacak lehe hükümler (TCK m.61-62) kademeli olarak talep edildi mi?",
+    "Sanığın son söz hakkının (CMK m.216/3) hükümden önce kullandırılacağı gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.216", "CMK m.217", "CMK m.230", "TCK m.61", "TCK m.62"],
+    "emsal_ara": "esas hakkında savunma mütalaaya karşı beyan şüpheden sanık yararlanır lehe hükümler",
+    "vurgula": ["mütalaadaki her iddiayı karşılama", "in dubio pro reo ilkesi (CMK m.217)", "ceza tayininde lehe hükümler (TCK m.61-62)"]
+  }
+}

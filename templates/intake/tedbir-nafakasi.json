@@ -1,0 +1,45 @@
+{
+  "tip": "tedbir-nafakasi",
+  "ad": "Tedbir nafakası talepli dilekçe",
+  "dayanak": ["TMK m.169", "TMK m.197", "HMK m.119"],
+
+  "sorular": [
+    { "id": "nafaka_dayanagi", "soru": "Tedbir nafakası hangi durum için isteniyor?", "tip": "secim",
+      "secenekler": ["devam eden boşanma davası süresince (TMK m.169)", "ayrı yaşamada haklılık / birlikte yaşamaya ara verme (TMK m.197)", "diğer aile davası süresince"],
+      "zorunlu": true, "neden": "Tedbir nafakasının hukuki dayanağı (m.169 / m.197) ve şartları farklıdır." },
+    { "id": "lehine_kim", "soru": "Tedbir nafakası kimin lehine isteniyor? (eş ve/veya çocuk)", "tip": "metin",
+      "zorunlu": true, "neden": "Eş ve çocuk için nafaka ayrı ayrı takdir edilir; talep konusu netleşmelidir." },
+    { "id": "ayri_yasama", "soru": "Taraflar fiilen ne zamandan beri ayrı yaşıyor?", "tip": "tarih",
+      "zorunlu": false, "neden": "Ayrı yaşamada haklılık ve nafaka başlangıcı için fiilî ayrılık tarihi önemlidir (TMK m.197)." },
+    { "id": "gelir_durumu", "soru": "Tarafların gelir ve ekonomik durumu nedir (yaklaşık aylık gelir, iş)?", "tip": "metin",
+      "zorunlu": true, "neden": "Nafaka miktarı tarafların mali güç ve ihtiyaç dengesine göre takdir edilir." },
+    { "id": "cocuk_bakim", "soru": "Çocuk varsa fiilen kimin yanında ve bakımını kim üstleniyor?", "tip": "metin",
+      "zorunlu": false, "neden": "Çocuğun fiilen kaldığı taraf lehine tedbir nafakasına hükmedilir." },
+    { "id": "aciliyet", "soru": "Talep edenin ivedi geçim ihtiyacı var mı (geliri yok/yetersiz)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tedbir nafakası geçici koruma niteliğinde olup ivedilikle karar verilmesi istenir (TMK m.169)." }
+  ],
+
+  "kosullar": [
+    { "eger": "nafaka_dayanagi == ayrı yaşamada haklılık / birlikte yaşamaya ara verme (TMK m.197)",
+      "ekle": "Ayrı yaşamada haklı olunduğunu (birlikte yaşamanın çekilmezliği/tehlike) somut olgularla açıklayan bir bölüm ekle (TMK m.197).",
+      "uyari": "TMK m.197 nafakasında ayrı yaşamada haklılık ispat edilmelidir." },
+    { "eger": "aciliyet == evet",
+      "ekle": "Geçim ihtiyacının ivediliği nedeniyle tedbir nafakasına dava tarihinden itibaren ve gecikmeksizin hükmedilmesi talebini vurgula." },
+    { "eger": "lehine_kim != hayir",
+      "ekle": "Eş ve her bir çocuk için talep edilen aylık tedbir nafakası tutarını ayrı kalemler hâlinde sonuç-istemde göster." }
+  ],
+
+  "kontroller": [
+    "Tedbir nafakasının dayanağı (TMK m.169 mı m.197 mi) doğru seçildi mi?",
+    "Nafaka eş ve çocuk için ayrı ayrı ve miktar belirtilerek talep edildi mi?",
+    "Tarafların gelir/ihtiyaç dengesi miktar takdiri için açıklandı mı?",
+    "Nafakanın dava/talep tarihinden itibaren işlemesi talep edildi mi?",
+    "TMK m.197 dayanağında ayrı yaşamada haklılık olguları gösterildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.169", "TMK m.197"],
+    "emsal_ara": "tedbir nafakası dava tarihi ayrı yaşamada haklılık eş çocuk",
+    "vurgula": ["tedbir nafakasının geçici/koruyucu niteliği", "dava tarihinden itibaren işlemesi", "gelir-ihtiyaç dengesi"]
+  }
+}

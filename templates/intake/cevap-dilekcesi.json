@@ -1,0 +1,51 @@
+{
+  "tip": "cevap-dilekcesi",
+  "ad": "Cevap dilekçesi",
+  "dayanak": ["HMK m.126-129", "HMK m.116", "HMK m.131", "HMK m.319"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Cevap verilen davanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Cevap dilekçesi mevcut bir esasa verilir; dosya kimliği zorunludur (HMK m.129/1-a)." },
+    { "id": "teblig_tarihi", "soru": "Dava dilekçesi size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Cevap süresi (kural 2 hafta, HMK m.127) tebliğden işler; süre tutum açısından kritik." },
+    { "id": "ilk_itirazlar", "soru": "Bir ilk itirazınız var mı? (yetki, derdestlik, tahkim vb.)", "tip": "secim",
+      "secenekler": ["yetki itirazı", "derdestlik", "tahkim/iş bölümü", "yok"],
+      "zorunlu": true, "neden": "İlk itirazlar yalnızca cevap dilekçesinde ileri sürülebilir (HMK m.116, m.117)." },
+    { "id": "kabul_inkar", "soru": "Davacının iddialarından hangileri kabul, hangileri inkâr ediliyor?", "tip": "metin",
+      "zorunlu": true, "neden": "Açıkça inkâr edilmeyen vakıa ikrar sayılabilir (HMK m.128); savunmanın çatısı budur." },
+    { "id": "savunma_vakialari", "soru": "Savunmaya esas karşı vakıalar nelerdir?", "tip": "metin",
+      "zorunlu": true, "neden": "Savunma sebepleri ve dayanılan vakıalar cevapta gösterilmelidir (HMK m.129/1-d-e)." },
+    { "id": "zamanasimi", "soru": "Zamanaşımı veya hak düşürücü süre def'i ileri sürülecek mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Zamanaşımı def'i cevap dilekçesinde ileri sürülmezse sonradan ileri sürmek ıslaha/karşı tarafın muvafakatine bağlıdır." },
+    { "id": "karsi_dava_niyeti", "soru": "Karşı dava açma niyetiniz var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Karşı dava ancak cevap dilekçesiyle birlikte açılabilir (HMK m.133)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ilk_itirazlar != yok",
+      "ekle": "İlk itirazı (ör. yetki) gerekçeli ve hukuki dayanağıyla cevap dilekçesinin başında ayrı bir başlık altında ileri sür.",
+      "uyari": "İlk itirazlar cevap dilekçesinde ileri sürülmezse savunma genişletme yasağına takılır (HMK m.117/1)." },
+    { "eger": "zamanasimi == evet",
+      "ekle": "Zamanaşımı süresinin dolduğunu, başlangıç ve bitiş tarihleriyle gösteren bir def'i bölümü ekle.",
+      "uyari": "Zamanaşımı def'i cevap dilekçesinde açıkça ileri sürülmeli; aksi halde sonradan ileri sürmek sınırlanır." },
+    { "eger": "karsi_dava_niyeti == evet",
+      "ekle": "Karşı davayı, asıl davayla bağlantısını ve talep sonucunu gösteren ayrı bir bölüm olarak cevap dilekçesine ekle.",
+      "uyari": "Karşı dava cevap dilekçesiyle birlikte ve harcı yatırılarak açılmalıdır (HMK m.133)." },
+    { "eger": "gun_farki(teblig_tarihi) > 14",
+      "uyari": "KRİTİK: tebliğden bu yana 2 haftayı aşmış görünüyor — cevap süresi geçmiş olabilir; HMK m.128/cevap vermeme sonuçlarını ve ek süre talebini (HMK m.127/2) değerlendir." }
+  ],
+
+  "kontroller": [
+    "Esas no, taraflar ve tebliğ tarihi dilekçede doğru mu?",
+    "Cevap süresi (2 hafta, gerekirse 1 aya kadar ek süre — HMK m.127) hesaplandı mı?",
+    "İlk itirazlar ve zamanaşımı def'i bu dilekçede ileri sürüldü mü? (sonradan sınırlama).",
+    "Açıkça inkâr edilmeyen vakıaların ikrar sayılma riski (HMK m.128) gözetildi mi?",
+    "HMK m.129'daki zorunlu unsurlar tamam mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.116", "HMK m.127", "HMK m.128", "HMK m.129", "HMK m.133"],
+    "emsal_ara": "cevap dilekçesi ilk itiraz zamanaşımı def'i ikrar süre",
+    "vurgula": ["cevap süresi ve ek süre", "ilk itirazların cevapta ileri sürülme zorunluluğu", "inkâr edilmeyen vakıanın ikrarı"]
+  }
+}

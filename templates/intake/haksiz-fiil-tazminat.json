@@ -1,0 +1,43 @@
+{
+  "tip": "haksiz-fiil-tazminat",
+  "ad": "Haksız fiil nedeniyle tazminat dilekçesi",
+  "dayanak": ["TBK m.49", "TBK m.50", "TBK m.51", "TBK m.61", "TBK m.72"],
+
+  "sorular": [
+    { "id": "fiil_tarihi", "soru": "Haksız fiil ne zaman gerçekleşti?", "tip": "tarih",
+      "zorunlu": true, "neden": "Zamanaşımı ve faiz başlangıcı bu tarihten işler (TBK m.72)." },
+    { "id": "fiil_tanimi", "soru": "Davalının hukuka aykırı eylemini somut olarak anlatın.", "tip": "metin",
+      "zorunlu": true, "neden": "Hukuka aykırılık ve fiil unsuru (TBK m.49)." },
+    { "id": "illiyet_zarar", "soru": "Bu eylem ile uğranılan zarar arasındaki bağı ve zararı açıklayın.", "tip": "metin",
+      "zorunlu": true, "neden": "İlliyet bağı + zarar ispatı (TBK m.49-50)." },
+    { "id": "kusur_turu", "soru": "Davalının kusuru kasıt mı, ihmal mi? Birden çok fail var mı?", "tip": "metin",
+      "zorunlu": true, "neden": "Kusur derecesi tazminata; müteselsil sorumluluk birden çok faile etki eder (TBK m.61)." },
+    { "id": "hukuka_uygunluk", "soru": "Davalının dayanabileceği bir hukuka uygunluk sebebi (rıza, meşru savunma, zorunluluk) var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Hukuka aykırılığı kaldıran sebepler savunma olarak çıkabilir (TBK m.63-64)." },
+    { "id": "tazminat_tutari", "soru": "Talep edilen tazminat tutarı ve kalemleri?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabih ve zararın belirlenmesi (TBK m.50-51)." }
+  ],
+
+  "kosullar": [
+    { "eger": "kusur_turu != tek fail",
+      "ekle": "Birden çok failin birlikte verdiği zararda müteselsil sorumluluğu ve iç ilişkide rücu durumunu açıklayan bir paragraf ekle (TBK m.61-62)." },
+    { "eger": "gun_farki(fiil_tarihi) > 730",
+      "uyari": "2 yıllık zamanaşımı (TBK m.72) aşılmış olabilir; öğrenme tarihini ve fiil suç teşkil ediyorsa uzamış ceza zamanaşımını değerlendir." },
+    { "eger": "hukuka_uygunluk == evet",
+      "uyari": "Hukuka uygunluk sebebi varsa hukuka aykırılık unsuru tartışılacaktır; karşı vakıaları baştan çürüt." }
+  ],
+
+  "kontroller": [
+    "Haksız fiilin unsurları (fiil, hukuka aykırılık, kusur, illiyet, zarar) eksiksiz kuruldu mu?",
+    "Zamanaşımı (TBK m.72: 2/10 yıl; ceza zamanaşımı istisnası) değerlendirildi mi?",
+    "Birden çok fail varsa müteselsil sorumluluk ve rücu doğru kuruldu mu?",
+    "Faiz başlangıcı haksız fiil tarihi olarak talep edildi mi?",
+    "Zarar kalemleri belgeyle/hesapla desteklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.49", "TBK m.51", "TBK m.61", "TBK m.62", "TBK m.72"],
+    "emsal_ara": "haksız fiil tazminat illiyet bağı müteselsil sorumluluk zamanaşımı",
+    "vurgula": ["hukuka aykırılık ve illiyet bağı", "müteselsil sorumluluk ve rücu", "ceza zamanaşımının uygulanması"]
+  }
+}

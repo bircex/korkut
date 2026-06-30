@@ -1,0 +1,44 @@
+{
+  "tip": "uzlasma-beyan",
+  "ad": "Uzlaşma / uzlaştırmaya ilişkin beyan dilekçesi",
+  "dayanak": ["CMK m.253", "CMK m.254", "CMK m.255"],
+
+  "sorular": [
+    { "id": "dosya_no", "soru": "Uzlaştırmaya konu soruşturma/dava numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Beyanın doğru dosya/büroya yöneltilmesi (CMK m.253)." },
+    { "id": "beyan_sahibi_sifat", "soru": "Beyanda bulunan sıfatınız nedir?", "tip": "secim",
+      "secenekler": ["şüpheli/sanık", "mağdur/müşteki"],
+      "zorunlu": true, "neden": "Uzlaşma teklifini kabul/ret yetkisi tarafa aittir (CMK m.253/4)." },
+    { "id": "suc_uzlasmaya_tabi", "soru": "Suç uzlaştırmaya tabi suçlardan mı? (ör. basit yaralama, hakaret, tehdit)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Sadece kanunda sayılan suçlar uzlaştırmaya tabidir (CMK m.253/1)." },
+    { "id": "uzlasma_iradesi", "soru": "Uzlaşmaya ilişkin iradeniz nedir?", "tip": "secim",
+      "secenekler": ["uzlaşmayı kabul ediyorum", "uzlaşmayı kabul etmiyorum", "şartlı kabul (edim karşılığı)"],
+      "zorunlu": true, "neden": "Uzlaştırma sürecinin sonucunu belirler (CMK m.253/4)." },
+    { "id": "edim", "soru": "Uzlaşma kabul ediliyorsa kararlaştırılan edim nedir? (özür, tazminat, eski hale getirme vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Uzlaşma edimi ve ifa biçiminin tutanağa geçmesi (CMK m.253/13-14)." },
+    { "id": "ifa_zamani", "soru": "Edim derhal mi yerine getirilecek, belirli vadede mi?", "tip": "metin",
+      "zorunlu": false, "neden": "Edimin ifa biçimi soruşturma/kovuşturmanın akıbetini etkiler (CMK m.253/19)." }
+  ],
+
+  "kosullar": [
+    { "eger": "suc_uzlasmaya_tabi == hayir",
+      "uyari": "Suç uzlaştırma kapsamında değilse uzlaştırma yürütülemez; suçun CMK m.253/1 listesinde olup olmadığını teyit edin." },
+    { "eger": "uzlasma_iradesi == uzlaşmayı kabul etmiyorum",
+      "uyari": "Tarafın uzlaşmaya zorlanması mümkün değildir; ret halinde soruşturma/kovuşturma genel hükümlere göre sürer (CMK m.253/4)." },
+    { "eger": "ifa_zamani != ",
+      "ekle": "Edimin vadeli ifa edilmesi halinde, ifa gerçekleşinceye kadar kamu davasının açılmasının ertelenmesine/durmaya ilişkin bir bölüm ekle (CMK m.253/19)." }
+  ],
+
+  "kontroller": [
+    "Muhatap: beyan, dosyayı yürüten uzlaştırma bürosuna / ilgili mercie hitaben mi yazıldı? (CMK m.253)",
+    "Suçun uzlaştırma kapsamında (CMK m.253/1) olduğu teyit edildi mi?",
+    "Tarafın iradesi serbest ve açık biçimde (kabul/ret/edim) tutanağa geçecek şekilde belirtildi mi?",
+    "Uzlaşma edimi ifa edilirse soruşturmada kovuşturmaya yer olmadığı / kovuşturmada düşme sonucu (CMK m.253/19, m.254) gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.253", "CMK m.254", "CMK m.255"],
+    "emsal_ara": "uzlaştırma kapsamındaki suçlar edim ifa kovuşturmaya yer olmadığı",
+    "vurgula": ["uzlaştırmaya tabi suçlar (CMK m.253/1)", "iradenin serbestliği", "edimin ifasının davaya etkisi (CMK m.253/19)"]
+  }
+}

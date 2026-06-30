@@ -1,0 +1,45 @@
+{
+  "tip": "yas-duzeltme",
+  "ad": "Yaş/doğum tarihi düzeltme dava dilekçesi",
+  "dayanak": ["Nüfus Hizmetleri Kanunu m.35", "TMK m.39", "HMK m.382"],
+
+  "sorular": [
+    { "id": "kayitli_dogum", "soru": "Nüfusta kayıtlı mevcut doğum tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Düzeltilecek kütük kaydının kimliği (HMK m.119/d)." },
+    { "id": "istenen_dogum", "soru": "Talep edilen düzeltilmiş doğum tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Talebin konusu; hüküm fıkrasına geçecek tarih (NHK m.35)." },
+    { "id": "duzeltme_yonu", "soru": "Yaş büyütme mi, küçültme mi talep ediliyor?", "tip": "secim",
+      "secenekler": ["büyütme", "küçültme"],
+      "zorunlu": true, "neden": "İspat araçları ve gerekçe değişir; küçültmede tıbbi delil ağırlığı." },
+    { "id": "neden_olgular", "soru": "Kayıtlı tarihin gerçeği yansıtmadığını gösteren olgular?", "tip": "metin",
+      "zorunlu": true, "neden": "Maddi hata/geç bildirim/kardeş kaydı gibi haklı dayanak (NHK m.35)." },
+    { "id": "kardes_dogum", "soru": "Mevcut tarih, bir kardeşin doğumu ile aynı/çelişkili mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Aynı anneden kısa aralıkta doğum fiilen imkânsızsa düzeltme karinesi oluşur." },
+    { "id": "tibbi_rapor", "soru": "Yaş tespitine ilişkin kemik/tıbbi rapor alınabilir mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mahkeme genelde Adli Tıp/kemik yaşı tespiti yaptırır." }
+  ],
+
+  "kosullar": [
+    { "eger": "kardes_dogum == evet",
+      "ekle": "Aynı anneden doğan kardeşle aradaki sürenin fiilen doğuma elverişsiz olduğunu (nüfus kayıtlarıyla) gösteren bir bölüm ekle.",
+      "uyari": "Kardeş kaydı çelişkisi güçlü karinedir; nüfus aile kütüğü örneği temin et." },
+    { "eger": "duzeltme_yonu == küçültme",
+      "uyari": "Yaş küçültme talepleri daha katı incelenir; kemik yaşı/Adli Tıp raporu büyük olasılıkla istenir." },
+    { "eger": "tibbi_rapor == evet",
+      "ekle": "Talebi destekleyen kemik yaşı/tıbbi tespit raporunun mahkemece resmi kuruma (Adli Tıp) yaptırılmasını talep eden bir cümle ekle." }
+  ],
+
+  "kontroller": [
+    "Düzeltme nedeni (maddi hata/geç bildirim/kardeş çelişkisi) somut olgularla kuruldu mu? (NHK m.35).",
+    "Talep edilen tarih hüküm fıkrasına uygun, tek ve açık yazıldı mı?",
+    "Nüfus Müdürlüğünün ilgili/davalı gösterilmesi gözetildi mi?",
+    "Tıbbi/kemik yaşı tespiti gerekiyorsa Adli Tıp incelemesi talebi eklendi mi?",
+    "Aynı kayıt için mükerrer/önceki düzeltme bulunup bulunmadığı kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["Nüfus Hizmetleri Kanunu m.35", "TMK m.39", "HMK m.382"],
+    "emsal_ara": "yaş düzeltme doğum tarihi kemik yaşı kardeş kaydı asliye hukuk",
+    "vurgula": ["maddi hata/geç bildirim dayanağı", "kardeş kaydı karinesi", "kemik yaşı/Adli Tıp incelemesi"]
+  }
+}

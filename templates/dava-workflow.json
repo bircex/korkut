@@ -1,0 +1,409 @@
+{
+  "_meta": {
+    "aciklama": "Bir davanın uçtan uca akışı (orkestrasyon katmanı). Bu dosya yeni veri üretmez; mevcut parçaları birbirine bağlar: görev için 'mahkemeler.json', dilekçe tipleri için 'petition/catalog.json', sorular için 'intake/<id>.json', dilekçe iskeleti/zorunlu unsurlar için 'petition/_base.json' + 'petition/FORMAT.md', tool setleri için 'config/tools.yaml'. İki ana bölüm: (1) 'akis.asamalar' her davanın geçtiği genel omurga; (2) 'dava_turleri' arketip bazında görev/yetki/dilekçe/tool/delil eşlemesi.",
+    "iliskili_dosyalar": {
+      "mahkemeler": "templates/mahkemeler.json — gorevli_mahkeme.* alanları buradaki id'leri referanslar",
+      "dilekce_katalogu": "templates/petition/catalog.json — dilekce.* alanları buradaki id'leri referanslar",
+      "intake": "templates/intake/<id>.json — asama=intake sorular/koşullar/kontroller kaynağı",
+      "dilekce_iskeleti": "templates/petition/_base.json + FORMAT.md — HMK m.119 zorunlu unsurları",
+      "tool_setleri": "config/tools.yaml — tool_seti.* alanları buradaki grupları referanslar"
+    },
+    "alan_semasi": {
+      "akis.asamalar[]": "id, ad, amac, girdi, cikti, kullanir (referans/tool), kural (özet)",
+      "dava_turleri[]": "id, ad, yargi_kolu, gorevli_mahkeme, yetki, dava_sarti, dilekceler, tool_seti, anahtar_mevzuat, deliller, kritik_sureler",
+      "kategori_eslesme": "catalog.json kategorisi → dava_turu; type_id'nin deliller/görev/süre mirasını çözer (zincir: type_id→kategori→dava_turu)."
+    },
+    "yargi_kolu": "adli-hukuk | adli-ceza | idari | icra | anayasa — mahkemeler.json yargi_kolu ile uyumlu",
+    "delil_kullanimi": "dava_turleri[].deliller, intake aşamasında (aşama 3) HANGİ SORULARIN sorulacağını ve delil-işleme aşamasında (aşama 6) DELİLLER bölümünün nasıl kurulacağını besler. Özel 'intake/<id>.json' yoksa bu liste varsayılan delil/soru kaynağıdır; varsa onu özelleştirir. Korkut her delili 'soru' alanıyla kullanıcıya sorar, 'ispat' ile vakıaya bağlar (HMK m.119/f).",
+    "delil_semasi": {
+      "id": "stabil kimlik (kebab-case)",
+      "ad": "Delilin/belgenin adı (DELİLLER bölümünde görünecek)",
+      "zorunlu": "true (olmadan dava açılamaz/çok zayıf) | false (destekleyici) | 'kosullu' (yalnız belirli talepte)",
+      "tip": "belge | tanik | bilirkisi | kesif | yemin | kayit | rapor | resmi-kayit",
+      "soru": "Korkut'un kullanıcıya soracağı cümle (intake)",
+      "ispat": "Hangi vakıayı/unsuru ispatlar (HMK m.119/f bağlantısı)",
+      "temin": "Nereden/nasıl elde edilir (avukata yol gösterir)",
+      "celp": "true ise taraf sunamasa da mahkemeden celbi/müzekkere ile istenebilir"
+    },
+    "delil_turleri_hmk": "Türk usul hukukunda deliller: KESİN deliller (senet/ikrar/yemin/kesin hüküm — hâkimi bağlar) ve TAKDİRİ deliller (tanık/bilirkişi/keşif/özel belge — hâkim serbestçe değerlendirir). Senetle ispat zorunluluğu (HMK m.200) ve senede karşı tanık yasağı (HMK m.201) sınırına dikkat: belirli tutar üstü hukuki işlemler kural olarak senetle ispatlanır."
+  },
+
+  "akis": {
+    "aciklama": "Her dava bu 8 aşamadan geçer. Aşamalar sıralıdır ama araştırma (4) intake (3) ile koşut yürüyebilir. 'manuel_yapilabilir=true' olan aşamalar ileride avukat tarafından elle de tamamlanabilir; otomasyon opsiyoneldir.",
+    "asamalar": [
+      {
+        "id": "tip-tespiti",
+        "ad": "1) Dava türünün tespiti",
+        "amac": "Kullanıcının anlattığı olaydan hukuk dalını (yargı kolu) ve somut dava/dilekçe tipini belirlemek.",
+        "girdi": "Avukatın serbest anlatımı (olay, talep, taraflar).",
+        "cikti": "dava_turleri[].id + petition/catalog.json dilekçe id'si.",
+        "kullanir": ["templates/petition/catalog.json", "bu dosya: dava_turleri"],
+        "kural": "Talep belirsizse en yakın arketibi öner, kullanıcıya teyit ettir. Tip kapalı liste değildir."
+      },
+      {
+        "id": "gorev-yetki",
+        "ad": "2) Görevli ve yetkili mahkeme",
+        "amac": "Hangi mahkeme TİPİ (görev) ve hangi YERDEKİ mahkeme (yetki) belirlenir.",
+        "girdi": "Dava türü + tarafların yerleşim yeri / sözleşme / taşınmaz yeri.",
+        "cikti": "gorevli_mahkeme (mahkemeler.json id) + yetkili yer (somut adliye).",
+        "kullanir": ["templates/mahkemeler.json", "bu dosya: dava_turleri[].gorevli_mahkeme/yetki"],
+        "kural": "Görev kamu düzenindendir, re'sen denetlenir. Yetki kural olarak davalının yerleşim yeri (HMK m.6); kesin yetki / özel yetki halleri saklı. İlk dava açılışında başlığa 'NÖBETÇİ' eklenir (tevzi)."
+      },
+      {
+        "id": "intake",
+        "ad": "3) Bilgi toplama (intake)",
+        "amac": "Dilekçeyi yazmadan önce eksik olgusal/hukuki bilgileri tek mesajda sormak.",
+        "girdi": "Dava türü → ilgili intake dosyası + dava_turleri[].deliller (delil soruları).",
+        "cikti": "Cevaplanmış 'sorular' + delil envanteri (hangi deliller var/yok) + tetiklenen 'kosullar'.",
+        "kullanir": ["templates/intake/<dava_turu>.json", "templates/intake/FORMAT.md", "bu dosya: dava_turleri[].deliller"],
+        "kural": "intake dosyası yoksa dava_turleri[].deliller varsayılan soru kaynağıdır: her delilin 'soru' alanı kullanıcıya sorulur (zorunlu deliller önce). 'zorunlu=true' delil yoksa kullanıcı uyarılır + 'celp=true' ise mahkemeden istenebileceği belirtilir. HMK m.119 kritik alanları (a,d,e,f,g) asla boş bırakılmaz."
+      },
+      {
+        "id": "arastirma",
+        "ad": "4) Hukuki araştırma",
+        "amac": "Dayanak mevzuatı teyit etmek ve emsal içtihat toplamak.",
+        "girdi": "intake.zenginlestir (mevzuat_dogrula / emsal_ara) + dava türü tool_seti.",
+        "cikti": "Teyitli mevzuat maddeleri + emsal karar listesi (documentId + özet).",
+        "kullanir": ["config/tools.yaml", "bu dosya: dava_turleri[].tool_seti"],
+        "kural": "Önce mevzuat doğrula (search_mevzuat→fetch_legislation), sonra emsal ara (search_yargitay/danistay/emsal→fetch_decision). Atıf verilmeden önce TEYİT edilir; uydurma madde/karar yasak.",
+        "manuel_yapilabilir": true
+      },
+      {
+        "id": "dilekce-kurgu",
+        "ad": "5) Dilekçenin kurgulanması",
+        "amac": "intake cevapları + araştırmayı HMK m.119 bölüm dizilimine yerleştirmek.",
+        "girdi": "Cevaplanmış sorular + teyitli mevzuat/emsal.",
+        "cikti": "Doldurulmuş dilekçe (petition/_base.json bölümleri).",
+        "kullanir": ["templates/petition/_base.json", "templates/petition/FORMAT.md"],
+        "kural": "Bölüm sırası: Mahkeme Başlığı → DAVACI → VEKİLİ → DAVALI → KONU(+dava değeri) → AÇIKLAMALAR (numaralı vakıalar) → HUKUKİ NEDENLER → DELİLLER → SONUÇ VE İSTEM → Tarih/İmza. Vakıalar kronolojik ve SIRA NUMARALI."
+      },
+      {
+        "id": "delil-isleme",
+        "ad": "6) Araştırma ve delillerin dilekçeye işlenmesi",
+        "amac": "Her vakıayı bir delile bağlamak (HMK m.119/f), delil listesini ve emsal atıflarını kurmak.",
+        "girdi": "Numaralı vakıalar + delil envanteri (aşama 3'ten) + emsal kararlar.",
+        "cikti": "AÇIKLAMALAR içinde vakıa→delil işaretleri, DELİLLER bölümü, HUKUKİ NEDENLER'de emsal atıfları.",
+        "kullanir": ["bu dosya: dava_turleri[].deliller", "araştırma çıktısı"],
+        "kural": "Her iddia bir delile dayanmalı: deliller[].ispat alanı vakıa↔delil eşlemesini verir. AÇIKLAMALAR'da '...(EK-3 banka dekontu)' işareti; DELİLLER bölümünde mevcut deliller EK numarasıyla listelenir + 'ikamesi mümkün her türlü yasal delil'. Sunulamayan ama 'celp=true' deliller için 'mahkemece celbi talep olunur' yazılır. Emsal kararlar HUKUKİ NEDENLER'de daire/esas-karar/tarih ile anılır."
+      },
+      {
+        "id": "kontrol",
+        "ad": "7) Usul ve içerik kontrolü",
+        "amac": "Dilekçe sunulmadan önce eksiklik/usul taraması (son checklist).",
+        "girdi": "Taslak dilekçe.",
+        "cikti": "Kontrol listesi sonucu (geç/uyarı).",
+        "kullanir": ["templates/intake/<dava_turu>.json → kontroller", "petition/FORMAT.md §2 (HMK m.119 tablosu)"],
+        "kural": "Kritik bentler (a Mahkeme adı, d Konu+değer, e Vakıalar, f Deliller, g Hukuki sebepler) eksikse SÜRE VERİLMEZ → düzeltme şansı yok; bunlar mutlaka dolu olmalı."
+      },
+      {
+        "id": "kanun-yollari",
+        "ad": "8) Kanun yolları (karar sonrası)",
+        "amac": "Aleyhe karar halinde istinaf/temyiz/bireysel başvuru yolunu kurmak.",
+        "girdi": "Gerekçeli karar + esas/karar no + tebliğ tarihi.",
+        "cikti": "İstinaf/temyiz/AYM dilekçesi + süre takibi.",
+        "kullanir": ["templates/mahkemeler.json (bolge-adliye-mahkemesi/bolge-idare-mahkemesi/yargitay/danistay/anayasa-mahkemesi)", "catalog: Kanun Yolları kategorisi"],
+        "kural": "Süreler tebliğden işler ve kesindir. Adli yargı istinaf süresi kural 2 hafta; idari yargıda 30 gün. Süre tutum dilekçesi gerekçeli kararı beklerken süreyi korur."
+      }
+    ]
+  },
+
+  "kategori_eslesme": {
+    "aciklama": "catalog.json kategorisi → dava_turleri[].id. Bir dilekçe tipinin deliller/görev/yetki/süre MİRASINI çözmek için zincir: type_id → catalog'daki kategori → bu tablo → dava_turu → dava_turleri[dava_turu]. Böylece 126 tipin hepsi 11 arketipten miras alır; intake/<id>.json yalnızca tipe ÖZEL soruları tutar. null = kategori bir ilk-derece arketibine bağlanmaz (kanun yolu / özel yargı); deliller kaynak davadan (aşama 8) veya tipe özel intake'ten gelir.",
+    "tablo": {
+      "Aile Hukuku": "bosanma",
+      "Genel Hukuk Yargılaması (HMK)": "genel-hukuk-davasi",
+      "Borçlar / Tazminat / Eşya Hukuku": "genel-hukuk-davasi",
+      "Kira / Gayrimenkul": "kira-tahliye",
+      "İş ve Sosyal Güvenlik Hukuku": "is-davasi",
+      "Ticaret / Şirketler Hukuku": "ticari-dava",
+      "İcra ve İflas Hukuku": "icra-takibi",
+      "Ceza Hukuku (CMK)": "ceza-davasi",
+      "İdari Yargı (İYUK)": "idari-dava",
+      "Vergi Hukuku": "vergi-davasi",
+      "Tüketici Hukuku": "tuketici-davasi",
+      "Fikri ve Sınai Mülkiyet": "ticari-dava",
+      "Miras Hukuku": "cekismesiz-miras",
+      "Çekişmesiz Yargı / Nüfus / Kişiler Hukuku": "cekismesiz-miras",
+      "Kanun Yolları (Ortak)": null,
+      "Anayasa Mahkemesi / AİHM": null,
+      "İdari / Genel Başvuru Dilekçeleri": "idari-dava"
+    },
+    "notlar": {
+      "Fikri ve Sınai Mülkiyet": "Görev FSH Hukuk/Ceza Mahkemesi (mahkemeler.json: fsh-hukuk/fsh-ceza). Deliller ticari-dava ile yakın (sözleşme/bilirkişi); tipe özel intake'te marka/patent tescil belgesi, lisans sözleşmesi eklenebilir.",
+      "Kanun Yolları (Ortak)": "İstinaf/temyiz — aşama 8. Görev kaynak davaya göre BAM/Yargıtay/Bölge İdare. Deliller: kaynak dava dosyası + gerekçeli karar (esas/karar no, tebliğ tarihi).",
+      "Anayasa Mahkemesi / AİHM": "Bireysel başvuru — iç hukuk yolları tükendikten sonra (mahkemeler.json: anayasa-mahkemesi). Süre ve usul tamamen özeldir; tipe özel intake gerekir."
+    }
+  },
+
+  "dava_turleri": [
+    {
+      "id": "bosanma",
+      "ad": "Boşanma davası (anlaşmalı / çekişmeli)",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "aile-mahkemesi", "not": "Aile mahkemesi yoksa o yer Asliye Hukuk bu sıfatla bakar." },
+      "yetki": "Eşlerden birinin yerleşim yeri veya son 6 aydır birlikte oturdukları yer mahkemesi (TMK m.168).",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["anlasmali-bosanma", "cekismeli-bosanma"],
+        "cevap": ["bosanma-cevap", "bosanma-karsi-dava"],
+        "yan_talep": ["tedbir-nafakasi", "velayet-davasi", "6284-koruma"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["TMK m.161-166 (boşanma sebepleri)", "TMK m.168 (yetki)", "TMK m.166/3 (anlaşmalı)", "HMK m.119"],
+      "deliller": [
+        { "id": "nufus-kayit", "ad": "Vukuatlı nüfus kayıt örneği", "zorunlu": true, "tip": "resmi-kayit", "soru": "Tarafların ve çocukların güncel nüfus kayıt örneği mevcut mu?", "ispat": "Evlilik bağı ve soybağı (HMK m.119/f)", "temin": "e-Devlet / Nüfus Müdürlüğü", "celp": true },
+        { "id": "tanik", "ad": "Tanık beyanı", "zorunlu": false, "tip": "tanik", "soru": "Evlilik birliğinin temelinden sarsıldığına/kusura tanık olan kişi var mı? (ad-soyad ve adres)", "ispat": "Geçimsizlik ve kusur", "temin": "Tanık listesi (ad-adres)", "celp": false },
+        { "id": "iletisim-kayit", "ad": "Mesaj / çağrı / sosyal medya kayıtları", "zorunlu": false, "tip": "kayit", "soru": "Kusuru gösteren mesaj, çağrı dökümü veya sosyal medya kaydı var mı?", "ispat": "Kusurlu davranış (sadakatsizlik, hakaret vb.)", "temin": "Hukuka uygun elde edilmiş kayıt; gerekirse HTS celbi", "celp": true },
+        { "id": "gelir-belge", "ad": "Gelir / SGK / malvarlığı belgesi", "zorunlu": "kosullu", "tip": "belge", "soru": "Nafaka talebi varsa tarafların gelir, SGK hizmet dökümü veya malvarlığı belgesi var mı?", "ispat": "Nafaka miktarı ve tazminat (TMK m.174-175)", "temin": "İşyeri/SGK/e-Devlet; mahkemece SGK-tapu-banka müzekkeresi", "celp": true },
+        { "id": "anlasma-protokolu", "ad": "Boşanma protokolü", "zorunlu": "kosullu", "tip": "belge", "soru": "Anlaşmalı boşanma ise tarafların imzaladığı protokol hazır mı?", "ispat": "Tarafların tam anlaşması (TMK m.166/3)", "temin": "Taraflarca imzalanır", "celp": false },
+        { "id": "saglik-rapor", "ad": "Sağlık / darp raporu", "zorunlu": false, "tip": "rapor", "soru": "Şiddet/kötü muamele iddiası varsa sağlık veya darp raporu var mı?", "ispat": "Şiddet (kusur + 6284 tedbiri)", "temin": "Hastane/ATK; kolluk tutanağı", "celp": true }
+      ],
+      "kritik_sureler": ["Cevap: tebliğden 2 hafta (HMK m.127 ile +1 ay)", "Anlaşmalıda evlilik en az 1 yıl olmalı (TMK m.166/3)"]
+    },
+    {
+      "id": "genel-hukuk-davasi",
+      "ad": "Genel hukuk davası (alacak / tazminat / tapu vb.)",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "asliye-hukuk", "not": "Genel görevli; aksine hüküm yoksa (HMK m.2). Bazı işler Sulh Hukuk (HMK m.4)." },
+      "yetki": "Genel: davalının yerleşim yeri (HMK m.6). Haksız fiilde fiilin işlendiği/zararın doğduğu yer (HMK m.16); sözleşmede ifa yeri (HMK m.10); taşınmazda taşınmazın bulunduğu yer (kesin, HMK m.12).",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["dava-dilekcesi"],
+        "cevap": ["cevap-dilekcesi", "replik", "duplik"],
+        "yan_talep": ["islah", "ihtiyati-tedbir", "delil-listesi", "tanik-listesi", "bilirkisi-itiraz"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["HMK m.119 (dava dilekçesi)", "HMK m.2/m.4 (görev)", "HMK m.6-19 (yetki)", "TBK / TMK (esas)"],
+      "deliller": [
+        { "id": "sozlesme-senet", "ad": "Sözleşme / senet / taahhüt", "zorunlu": true, "tip": "belge", "soru": "İddianızı dayandırdığınız sözleşme, senet veya yazılı taahhüt var mı?", "ispat": "Hukuki ilişkinin varlığı ve içeriği (HMK m.200 senetle ispat)", "temin": "Taraf nüshası; noterse noterden örnek", "celp": true },
+        { "id": "odeme-kayit", "ad": "Fatura / dekont / banka kaydı", "zorunlu": false, "tip": "belge", "soru": "Ödeme, borç veya alacağı gösteren fatura, dekont ya da banka hesap hareketi var mı?", "ispat": "Ödeme/borç miktarı ve tarihi", "temin": "Banka; mahkemece hesap müzekkeresi", "celp": true },
+        { "id": "yazisma", "ad": "Yazışma / ihtarname / e-posta", "zorunlu": false, "tip": "belge", "soru": "Tarafa çekilmiş ihtarname veya konuya ilişkin yazışma/e-posta var mı?", "ispat": "Temerrüt, bildirim, irade beyanı", "temin": "Noter (ihtar); taraf arşivi", "celp": false },
+        { "id": "tanik", "ad": "Tanık beyanı", "zorunlu": false, "tip": "tanik", "soru": "Olaya tanık olan kişi var mı? (senetle ispat sınırına dikkat — HMK m.201)", "ispat": "Maddi vakıalar (senet zorunlu olmayan hallerde)", "temin": "Tanık listesi (ad-adres)", "celp": false },
+        { "id": "bilirkisi", "ad": "Bilirkişi incelemesi", "zorunlu": false, "tip": "bilirkisi", "soru": "Teknik/hesabi bir konu (zarar, kusur oranı, değer) var mı — bilirkişi gerekecek mi?", "ispat": "Özel/teknik bilgi gerektiren vakıalar (HMK m.266)", "temin": "Mahkeme tayin eder", "celp": false },
+        { "id": "kesif", "ad": "Keşif", "zorunlu": false, "tip": "kesif", "soru": "Yerinde inceleme gereken bir taşınmaz/durum var mı?", "ispat": "Mahallinde tespit gereken vakıalar (HMK m.288)", "temin": "Mahkemeden talep", "celp": false }
+      ],
+      "kritik_sureler": ["Cevap: 2 hafta", "Islah: tahkikat bitene kadar bir kez", "İstinaf: 2 hafta"]
+    },
+    {
+      "id": "is-davasi",
+      "ad": "İş davası (işe iade / kıdem-ihbar / alacak)",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "is-mahkemesi", "not": "İş mahkemesi yoksa Asliye Hukuk bu sıfatla bakar (7036)." },
+      "yetki": "Davalı işverenin yerleşim yeri VEYA işin/işyerinin bulunduğu yer (7036 m.6) — işçi lehine seçimlik.",
+      "dava_sarti": "ZORUNLU ARABULUCULUK — alacak/işe iade davalarında dava şartıdır (7036 m.3). Anlaşmazlık tutanağı dilekçeye eklenir.",
+      "dilekceler": {
+        "acan": ["ise-iade", "iscilik-alacaklari", "hizmet-tespiti"],
+        "cevap": ["cevap-dilekcesi"],
+        "yan_talep": ["islah", "tanik-listesi"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["4857 İş K.", "7036 İş Mahkemeleri K. (m.3 arabuluculuk, m.6 yetki)", "5510 SGK"],
+      "deliller": [
+        { "id": "is-sozlesmesi", "ad": "İş sözleşmesi", "zorunlu": false, "tip": "belge", "soru": "Yazılı iş sözleşmesi var mı?", "ispat": "İş ilişkisi, ücret ve şartlar", "temin": "Taraf nüshası; işverende celp", "celp": true },
+        { "id": "sgk-dokum", "ad": "SGK hizmet dökümü / işe giriş-çıkış bildirgesi", "zorunlu": true, "tip": "resmi-kayit", "soru": "SGK hizmet dökümünüz (işe giriş-çıkış tarihleri) mevcut mu?", "ispat": "Çalışma süresi ve kıdem (HMK m.119/f)", "temin": "e-Devlet / SGK; mahkemece SGK müzekkeresi", "celp": true },
+        { "id": "bordro-banka", "ad": "Ücret bordrosu / banka kayıtları", "zorunlu": false, "tip": "belge", "soru": "Maaş bordroları veya ücretin yattığı banka hesap hareketleri var mı?", "ispat": "Ücret miktarı ve ödemeler", "temin": "Banka/işveren; hesap müzekkeresi", "celp": true },
+        { "id": "puantaj", "ad": "Puantaj / mesai kayıtları", "zorunlu": "kosullu", "tip": "kayit", "soru": "Fazla mesai talebi varsa puantaj, PDKS veya giriş-çıkış kaydı var mı?", "ispat": "Fazla çalışma süresi", "temin": "İşverende; celp", "celp": true },
+        { "id": "fesih-bildirimi", "ad": "Fesih bildirimi / ihtarname", "zorunlu": "kosullu", "tip": "belge", "soru": "İşe iade talebi varsa fesih bildirimi/yazısı elinizde mi (tebliğ tarihiyle)?", "ispat": "Fesih tarihi ve gerekçesi (1 aylık süre)", "temin": "İşverence verilir", "celp": false },
+        { "id": "tanik", "ad": "Tanık (mesai arkadaşı)", "zorunlu": false, "tip": "tanik", "soru": "Çalışma koşullarına/fazla mesaiye tanık iş arkadaşı var mı?", "ispat": "Fiili çalışma ve koşullar", "temin": "Tanık listesi", "celp": false },
+        { "id": "arabuluculuk-tutanak", "ad": "Arabuluculuk anlaşmazlık tutanağı", "zorunlu": true, "tip": "belge", "soru": "Zorunlu arabuluculuk tamamlandı mı — son (anlaşmazlık) tutanağı var mı?", "ispat": "Dava şartının yerine getirildiği (7036 m.3)", "temin": "Arabuluculuk bürosu", "celp": false }
+      ],
+      "kritik_sureler": ["İşe iade: fesih tebliğinden 1 ay içinde arabulucuya; anlaşmazlıktan 2 hafta içinde dava", "Arabuluculuk dava şartı: yoksa dava usulden reddedilir"]
+    },
+    {
+      "id": "kira-tahliye",
+      "ad": "Kira / tahliye / kira tespiti",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "sulh-hukuk", "not": "Kira ilişkisinden doğan tüm davalar Sulh Hukuk'tadır (HMK m.4/1-a)." },
+      "yetki": "Taşınmazın bulunduğu yer veya sözleşmenin ifa yeri (HMK m.10); genel yetki de uygulanabilir.",
+      "dava_sarti": "Kira uyuşmazlıklarında dava şartı arabuluculuk (2023+ kapsama göre tahliye/alacak için zorunlu olabilir — somut talebe göre teyit et).",
+      "dilekceler": {
+        "acan": ["tahliye-temerrut", "tahliye-ihtiyac", "tahliye-taahhut", "kira-tespiti", "kira-uyarlama"],
+        "cevap": ["cevap-dilekcesi"],
+        "yan_talep": ["ihtiyati-tedbir"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["TBK m.299-378 (kira)", "TBK m.347-356 (tahliye sebepleri)", "HMK m.4 (görev)"],
+      "deliller": [
+        { "id": "kira-sozlesmesi", "ad": "Kira sözleşmesi", "zorunlu": true, "tip": "belge", "soru": "Yazılı kira sözleşmesi var mı? (yoksa fiili kira ilişkisi nasıl ispatlanacak?)", "ispat": "Kira ilişkisi, bedel ve süre", "temin": "Taraf nüshası", "celp": false },
+        { "id": "ihtarname", "ad": "İhtarname", "zorunlu": "kosullu", "tip": "belge", "soru": "Temerrüt/tahliye için çekilmiş noter ihtarnamesi var mı (tebliğ şerhiyle)?", "ispat": "Temerrüt ve süre (TBK m.315) / tahliye iradesi", "temin": "Noter", "celp": true },
+        { "id": "odeme-kayit", "ad": "Banka / ödeme kayıtları", "zorunlu": false, "tip": "belge", "soru": "Kira ödemelerine ilişkin banka dekontu/hesap hareketi var mı?", "ispat": "Ödenen/ödenmeyen kira (temerrüt)", "temin": "Banka; hesap müzekkeresi", "celp": true },
+        { "id": "tahliye-taahhudu", "ad": "Tahliye taahhütnamesi", "zorunlu": "kosullu", "tip": "belge", "soru": "Tahliye taahhüdüne dayanıyorsanız imzalı taahhütname var mı (tarih ve imza)?", "ispat": "Tahliye yükümü (TBK m.352/1)", "temin": "Kiracıdan alınan taahhüt", "celp": false },
+        { "id": "tanik", "ad": "Tanık", "zorunlu": false, "tip": "tanik", "soru": "İhtiyaç/fiili kullanım gibi vakıalara tanık var mı?", "ispat": "İhtiyaç iddiası, fiili durum", "temin": "Tanık listesi", "celp": false }
+      ],
+      "kritik_sureler": ["Tahliye taahhüdü: süre bitiminden 1 ay içinde icra/dava", "Temerrüt: 30 günlük ödeme süreli ihtar şart"]
+    },
+    {
+      "id": "ticari-dava",
+      "ad": "Ticari dava (şirket / sözleşme / haksız rekabet)",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "asliye-ticaret", "not": "Bulunmayan yerlerde Asliye Hukuk ticaret sıfatıyla bakar (TTK m.5)." },
+      "yetki": "Davalının yerleşim yeri (HMK m.6); sözleşmede ifa yeri (HMK m.10); şirket merkezi.",
+      "dava_sarti": "Konusu para alacağı/tazminat olan ticari davalarda ZORUNLU ARABULUCULUK (TTK m.5/A).",
+      "dilekceler": {
+        "acan": ["dava-dilekcesi", "menfi-tespit"],
+        "cevap": ["cevap-dilekcesi"],
+        "yan_talep": ["ihtiyati-haciz", "ihtiyati-tedbir"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": ["search_rekabet", "search_kik"] },
+      "anahtar_mevzuat": ["TTK (m.4 ticari dava, m.5/A arabuluculuk)", "TBK", "6102 ortaklık hükümleri"],
+      "deliller": [
+        { "id": "ticari-defter", "ad": "Ticari defterler", "zorunlu": false, "tip": "belge", "soru": "Tarafların ticari defter kayıtları (yevmiye/defter-i kebir) delil olarak gösterilecek mi?", "ispat": "Cari hesap, borç-alacak (TTK m.64 vd.)", "temin": "Taraf; mahkemece defter ibrazı", "celp": true },
+        { "id": "fatura-cari", "ad": "Fatura / cari hesap ekstresi", "zorunlu": true, "tip": "belge", "soru": "Alacağı doğuran fatura veya cari hesap ekstresi var mı?", "ispat": "Alacak miktarı ve doğumu", "temin": "Taraf kayıtları", "celp": false },
+        { "id": "sozlesme", "ad": "Ticari sözleşme", "zorunlu": false, "tip": "belge", "soru": "Uyuşmazlığın dayandığı sözleşme/sipariş formu var mı?", "ispat": "Sözleşmesel ilişki ve şartlar", "temin": "Taraf nüshası", "celp": false },
+        { "id": "ticaret-sicil", "ad": "Ticaret sicil kayıtları", "zorunlu": false, "tip": "resmi-kayit", "soru": "Şirket/temsil yetkisine ilişkin ticaret sicil kaydı gerekiyor mu?", "ispat": "Tüzel kişilik, temsil yetkisi", "temin": "MERSİS / Ticaret Sicil Müdürlüğü", "celp": true },
+        { "id": "bilirkisi-hesap", "ad": "Bilirkişi (hesap/teknik)", "zorunlu": false, "tip": "bilirkisi", "soru": "Alacağın hesabı için bilirkişi incelemesi gerekecek mi?", "ispat": "Hesabi/teknik vakıalar", "temin": "Mahkeme tayin eder", "celp": false },
+        { "id": "arabuluculuk-tutanak", "ad": "Arabuluculuk anlaşmazlık tutanağı", "zorunlu": "kosullu", "tip": "belge", "soru": "Para alacağı/tazminat ise zorunlu arabuluculuk son tutanağı var mı?", "ispat": "Dava şartı (TTK m.5/A)", "temin": "Arabuluculuk bürosu", "celp": false }
+      ],
+      "kritik_sureler": ["Arabuluculuk: para alacağında dava şartı", "İhtiyati haciz: senede dayalı talepte hızlı karar"]
+    },
+    {
+      "id": "tuketici-davasi",
+      "ad": "Tüketici uyuşmazlığı",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "tuketici-mahkemesi", "not": "Parasal sınır altı: önce Tüketici Hakem Heyeti (zorunlu)." },
+      "yetki": "Tüketicinin yerleşim yeri mahkemesi de yetkili (6502 m.73/5) — tüketici lehine.",
+      "dava_sarti": "Parasal sınır altı uyuşmazlıkta Tüketici Hakem Heyeti başvurusu zorunlu; kararına itiraz Tüketici Mahkemesine.",
+      "dilekceler": {
+        "acan": ["tuketici-mahkemesi", "tuketici-hakem-basvuru", "ayipli-mal-iade"],
+        "cevap": ["cevap-dilekcesi"],
+        "yan_talep": [],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["6502 Tüketicinin Korunması K. (m.73 görev/yetki)", "TBK (ayıp/sözleşme)"],
+      "deliller": [
+        { "id": "fatura-sozlesme", "ad": "Fatura / sözleşme", "zorunlu": true, "tip": "belge", "soru": "Mal/hizmete ilişkin fatura veya sözleşme (mesafeli/abonelik) var mı?", "ispat": "Tüketici işleminin varlığı ve bedeli", "temin": "Satıcı/sağlayıcı; taraf arşivi", "celp": false },
+        { "id": "ayip-servis", "ad": "Ayıp tespiti / servis kaydı", "zorunlu": "kosullu", "tip": "rapor", "soru": "Ayıplı mal/hizmet iddiasında servis raporu, ekspertiz veya ayıp tespiti var mı?", "ispat": "Ayıbın varlığı ve niteliği", "temin": "Yetkili servis; tespit (HMK m.400)", "celp": true },
+        { "id": "yazisma", "ad": "Yazışma / şikâyet kaydı", "zorunlu": false, "tip": "belge", "soru": "Satıcıyla yapılan yazışma, çağrı merkezi kaydı veya iade talebi var mı?", "ispat": "Bildirim ve talep (ayıp ihbarı)", "temin": "Taraf arşivi", "celp": false },
+        { "id": "thh-karari", "ad": "Tüketici Hakem Heyeti kararı", "zorunlu": "kosullu", "tip": "belge", "soru": "THH kararına itiraz ediyorsanız karar elinizde mi (tebliğ tarihiyle)?", "ispat": "İtiraza konu karar ve 15 günlük süre", "temin": "İlçe/İl THH", "celp": false }
+      ],
+      "kritik_sureler": ["THH kararına itiraz: tebliğden 15 gün", "Ayıplı mal: teslimden 2 yıl zamanaşımı (gizli ayıp istisna)"]
+    },
+    {
+      "id": "icra-takibi",
+      "ad": "İcra takibi ve takip hukuku uyuşmazlıkları",
+      "yargi_kolu": "icra",
+      "gorevli_mahkeme": { "ref": "icra-hukuk", "not": "Takip İcra Dairesinde başlatılır; uyuşmazlık İcra (Hukuk) Mahkemesinde görülür. İİK suçları İcra Ceza'da." },
+      "yetki": "Alacaklının seçtiği icra dairesi (İİK m.50); itirazın kaldırılması/şikâyet o yer İcra Mahkemesinde.",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["ilamsiz-takip-talebi", "ilamli-takip-talebi", "kambiyo-takip-talebi", "itirazin-iptali", "itirazin-kaldirilmasi", "menfi-tespit", "istirdat"],
+        "cevap": ["odeme-emrine-itiraz", "icra-takibine-itiraz-iiK16"],
+        "yan_talep": ["istihkak", "haczin-kaldirilmasi", "icranin-geri-birakilmasi", "maas-haczi-itiraz"],
+        "intake_var": false,
+        "matbu_form_notu": "İcra takip talepleri serbest metin DEĞİL; İİK 'Örnek No' matbu formlarıyla açılır (FORMAT.md §6): Örnek 1 (ilamsız), 7 (kambiyo), 10 (ilamlı), 13 (kira/tahliye)."
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["İİK (m.42 vd. takip, m.62-72 itiraz, m.67 itirazın iptali, m.68 itirazın kaldırılması)"],
+      "deliller": [
+        { "id": "senet-cek", "ad": "Senet / çek / bono (kambiyo)", "zorunlu": "kosullu", "tip": "belge", "soru": "Kambiyo takibi ise senet/çek/bono aslı elinizde mi?", "ispat": "Kambiyo alacağı (İİK m.167 — özel takip)", "temin": "Alacaklı; aslı icra dosyasına konur", "celp": false },
+        { "id": "dayanak-belge", "ad": "Alacağın dayanağı belge (fatura/sözleşme)", "zorunlu": true, "tip": "belge", "soru": "Alacağı doğuran fatura, sözleşme veya cari hesap belgesi var mı?", "ispat": "Alacağın varlığı (itirazın iptali/kaldırılması için)", "temin": "Taraf kayıtları", "celp": false },
+        { "id": "ihtarname", "ad": "İhtarname / temerrüt belgesi", "zorunlu": false, "tip": "belge", "soru": "Borçluya çekilmiş ihtarname veya temerrüt belgesi var mı?", "ispat": "Temerrüt ve faiz başlangıcı", "temin": "Noter", "celp": true },
+        { "id": "takip-dosyasi", "ad": "İcra takip dosyası", "zorunlu": true, "tip": "resmi-kayit", "soru": "İlgili icra takip dosya numarası nedir (ödeme emri, itiraz tarihleri)?", "ispat": "Takibin ve itirazın varlığı, süreler", "temin": "İcra Dairesi / UYAP", "celp": true },
+        { "id": "odeme-belgesi", "ad": "Ödeme belgeleri", "zorunlu": "kosullu", "tip": "belge", "soru": "Menfi tespit/istirdat ise ödediğinizi gösteren dekont/makbuz var mı?", "ispat": "Borcun bulunmadığı / ödendiği", "temin": "Banka; taraf arşivi", "celp": true }
+      ],
+      "kritik_sureler": ["Ödeme emrine itiraz: 7 gün (ilamsız) / 5 gün (kambiyo)", "İtirazın iptali: itirazın tebliğinden 1 yıl", "İhalenin feshi: 7 gün"]
+    },
+    {
+      "id": "ceza-davasi",
+      "ad": "Ceza yargılaması (şikâyet / savunma)",
+      "yargi_kolu": "adli-ceza",
+      "gorevli_mahkeme": { "ref": "asliye-ceza", "not": "Suçun cezasına göre değişir: üst sınır 10 yıl altı Asliye Ceza, üstü ve katalog suçlar Ağır Ceza. Soruşturma tedbirleri Sulh Ceza Hâkimliği." },
+      "yetki": "Suçun işlendiği yer mahkemesi (CMK m.12).",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["suc-duyurusu", "sikayet-dilekcesi", "katilma-talebi"],
+        "cevap": ["esas-hakkinda-savunma", "tutuklamaya-itiraz", "tahliye-talebi"],
+        "yan_talep": ["kyok-itiraz", "el-koymaya-itiraz", "infaz-erteleme"],
+        "intake_var": false,
+        "merci_notu": "Soruşturma evresinde muhatap CUMHURİYET BAŞSAVCILIĞI'dır (mahkeme değil); iddianame kabulüyle dava mahkemeye gelir."
+      },
+      "tool_seti": { "research": "core", "ekstra": ["search_kyb"] },
+      "anahtar_mevzuat": ["TCK (suç tipleri)", "CMK (m.12 yetki, m.158 şikâyet, m.170 iddianame)", "5395 (çocuk)"],
+      "deliller": [
+        { "id": "tutanak", "ad": "Kolluk / olay tutanakları", "zorunlu": false, "tip": "belge", "soru": "Olaya ilişkin kolluk tutanağı, ihbar veya yakalama tutanağı var mı?", "ispat": "Maddi olayın gerçekleşmesi", "temin": "Kolluk; soruşturma dosyasından celp", "celp": true },
+        { "id": "tanik", "ad": "Tanık beyanı", "zorunlu": false, "tip": "tanik", "soru": "Olaya tanık olan kişi var mı? (ad-soyad ve adres)", "ispat": "Suçun işlendiği / fail", "temin": "Tanık bildirimi", "celp": true },
+        { "id": "rapor-otopsi", "ad": "Sağlık / ATK / otopsi raporu", "zorunlu": "kosullu", "tip": "rapor", "soru": "Yaralama/ölüm varsa adli rapor, ATK veya otopsi raporu var mı?", "ispat": "Yaralanma derecesi, ölüm nedeni", "temin": "Hastane/ATK; dosyadan celp", "celp": true },
+        { "id": "kamera-hts", "ad": "Kamera (MOBESE) / HTS / dijital kayıt", "zorunlu": false, "tip": "kayit", "soru": "Olayı gösteren güvenlik kamerası, HTS veya dijital kayıt var mı?", "ispat": "Failin teşhisi, olay anı", "temin": "Mahkeme/savcılık müzekkeresi (MOBESE/operatör)", "celp": true },
+        { "id": "belge-delil", "ad": "Belge delili", "zorunlu": false, "tip": "belge", "soru": "Suçu/savunmayı destekleyen belge (sözleşme, dekont, yazışma) var mı?", "ispat": "Kast, zarar, hukuki ilişki", "temin": "Taraf; ilgili kurumdan celp", "celp": true }
+      ],
+      "kritik_sureler": ["Şikâyete bağlı suçlarda şikâyet: failin/fiilin öğrenilmesinden 6 ay", "Tutuklamaya itiraz: 7 gün", "İstinaf: 7 gün (hükmün tefhim/tebliğinden)"]
+    },
+    {
+      "id": "idari-dava",
+      "ad": "İdari dava (iptal / tam yargı)",
+      "yargi_kolu": "idari",
+      "gorevli_mahkeme": { "ref": "idare-mahkemesi", "not": "Bazı düzenleyici işlemler ilk derece Danıştay'da." },
+      "yetki": "Kural: işlemi yapan idarenin bulunduğu yer (İYUK m.32); personel/taşınmaz vb. özel yetki kuralları.",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["iptal-davasi", "tam-yargi", "disiplin-cezasi-iptal", "imar-iptal"],
+        "cevap": [],
+        "yan_talep": ["yurutmenin-durdurulmasi", "idareye-basvuru-iyuk11"],
+        "intake_var": false,
+        "baslik_notu": "Başlık: '... İDARE MAHKEMESİ BAŞKANLIĞI'NA' (İYUK m.3 — imzalı dilekçeyle açılır)."
+      },
+      "tool_seti": { "research": "core", "ekstra": ["search_danistay", "search_sayistay", "search_kik", "search_rekabet"] },
+      "anahtar_mevzuat": ["2577 İYUK (m.3 dilekçe, m.7 süre, m.10/11 başvuru, m.27 YD)", "2576 (görev)"],
+      "deliller": [
+        { "id": "dava-konusu-islem", "ad": "Dava konusu idari işlem", "zorunlu": true, "tip": "belge", "soru": "İptali istenen idari işlem/karar elinizde mi (tebliğ tarihiyle)?", "ispat": "İşlemin varlığı, içeriği ve 60 günlük süre", "temin": "İdarece tebliğ edilir", "celp": true },
+        { "id": "basvuru-yaniti", "ad": "İdareye başvuru ve yanıt yazıları", "zorunlu": "kosullu", "tip": "belge", "soru": "İYUK m.10/11 kapsamında idareye başvuru ve aldığınız yanıt var mı?", "ispat": "Dava açma süresinin işlemesi/durması", "temin": "Taraf; idare kaydı", "celp": false },
+        { "id": "idari-dosya", "ad": "İşlem dosyası (idari dosya)", "zorunlu": false, "tip": "resmi-kayit", "soru": "İşlemin dayanağı belgeler (idari dosya) mahkemece istenmeli mi?", "ispat": "İşlemin sebep ve usul yönünden denetimi", "temin": "Mahkeme re'sen idareden ister (İYUK m.20)", "celp": true },
+        { "id": "bilirkisi", "ad": "Bilirkişi", "zorunlu": false, "tip": "bilirkisi", "soru": "Teknik konu (imar, kamulaştırma değeri, ÇED) bilirkişi gerektirecek mi?", "ispat": "Teknik vakıalar", "temin": "Mahkeme tayin eder", "celp": false }
+      ],
+      "kritik_sureler": ["Dava açma: işlemin tebliğinden 60 gün (özel kanunlarda farklı)", "İstinaf (Bölge İdare): 30 gün", "YD itiraz: 7 gün"]
+    },
+    {
+      "id": "vergi-davasi",
+      "ad": "Vergi davası",
+      "yargi_kolu": "idari",
+      "gorevli_mahkeme": { "ref": "vergi-mahkemesi", "not": "Vergi/resim/harç ve zam-cezalarına ilişkin uyuşmazlıklar." },
+      "yetki": "Tarhiyatı/işlemi yapan vergi dairesinin bulunduğu yer (İYUK m.37).",
+      "dava_sarti": "İhtiyari: uzlaşma / cezada indirim yolları (dava açmadan önce değerlendirilebilir).",
+      "dilekceler": {
+        "acan": ["vergi-iptal"],
+        "cevap": [],
+        "yan_talep": ["yurutmenin-durdurulmasi", "vergi-uzlasma", "duzeltme-sikayet"],
+        "intake_var": false
+      },
+      "tool_seti": { "research": "core", "ekstra": ["search_danistay", "search_gib"] },
+      "anahtar_mevzuat": ["213 VUK", "2577 İYUK (m.7 süre)", "6183 AATUHK"],
+      "deliller": [
+        { "id": "ihbarname", "ad": "Vergi/ceza ihbarnamesi / ödeme emri", "zorunlu": true, "tip": "belge", "soru": "Dava konusu ihbarname veya ödeme emri elinizde mi (tebliğ tarihiyle)?", "ispat": "Tarhiyatın varlığı ve 30 günlük süre", "temin": "Vergi dairesince tebliğ edilir", "celp": true },
+        { "id": "inceleme-raporu", "ad": "Vergi inceleme / takdir raporu", "zorunlu": false, "tip": "rapor", "soru": "Tarhiyatın dayandığı vergi inceleme raporu veya takdir komisyonu kararı var mı?", "ispat": "Tarhiyatın sebep unsuru", "temin": "Vergi dairesi; mahkemece celp", "celp": true },
+        { "id": "defter-belge", "ad": "Defter ve belgeler", "zorunlu": false, "tip": "belge", "soru": "İddianızı destekleyen defter, fatura ve muhasebe belgeleri var mı?", "ispat": "Beyanın doğruluğu, matrah", "temin": "Mükellef kayıtları", "celp": false },
+        { "id": "bilirkisi", "ad": "Bilirkişi (mali)", "zorunlu": false, "tip": "bilirkisi", "soru": "Matrah/hesap için bilirkişi incelemesi gerekecek mi?", "ispat": "Hesabi/teknik vakıalar", "temin": "Mahkeme tayin eder", "celp": false }
+      ],
+      "kritik_sureler": ["Dava açma: tebliğden 30 gün", "Uzlaşma talebi: tebliğden 30 gün (dava süresini etkiler)"]
+    },
+    {
+      "id": "cekismesiz-miras",
+      "ad": "Çekişmesiz yargı / miras (veraset, mirasın reddi)",
+      "yargi_kolu": "adli-hukuk",
+      "gorevli_mahkeme": { "ref": "sulh-hukuk", "not": "Çekişmesiz yargı işleri kural olarak Sulh Hukuk (HMK m.383)." },
+      "yetki": "Veraset: talep edenin yerleşim yeri (TMK m.598). Mirasın reddi: murisin son yerleşim yeri (TMK m.609).",
+      "dava_sarti": null,
+      "dilekceler": {
+        "acan": ["veraset-ilami", "mirasin-reddi", "terekenin-tespiti"],
+        "cevap": [],
+        "yan_talep": [],
+        "intake_var": true,
+        "intake_dosyalari": ["templates/intake/veraset-ilami.json", "templates/intake/mirasin-reddi.json"]
+      },
+      "tool_seti": { "research": "core", "ekstra": [] },
+      "anahtar_mevzuat": ["TMK m.495-501 (zümre)", "TMK m.598 (veraset)", "TMK m.605-609 (ret)", "HMK m.382-388 (çekişmesiz yargı)"],
+      "deliller": [
+        { "id": "nufus-kayit", "ad": "Vukuatlı nüfus kayıt örneği", "zorunlu": true, "tip": "resmi-kayit", "soru": "Murisin vukuatlı nüfus kayıt örneği (tüm mirasçıları gösterir) mevcut mu?", "ispat": "Mirasçılık zinciri ve zümre (HMK m.119/f)", "temin": "e-Devlet / Nüfus Müdürlüğü; mahkemece MERNIS celbi", "celp": true },
+        { "id": "olum-belgesi", "ad": "Ölüm belgesi / MERNIS ölüm kaydı", "zorunlu": true, "tip": "resmi-kayit", "soru": "Murisin ölüm tarihini gösteren belge/MERNIS kaydı var mı?", "ispat": "Mirasın açıldığı an (TMK m.575)", "temin": "Nüfus Müdürlüğü; mahkemece celp", "celp": true },
+        { "id": "vasiyetname", "ad": "Vasiyetname / ölüme bağlı tasarruf", "zorunlu": "kosullu", "tip": "belge", "soru": "Vasiyetname veya ölüme bağlı tasarruf var mı?", "ispat": "Atanmış mirasçılık / saklı tutulan tasarruf (TMK m.598/son)", "temin": "Sulh Hukuk (açılma); noter kaydı", "celp": true },
+        { "id": "borc-tablosu", "ad": "Tereke borç-alacak tablosu", "zorunlu": "kosullu", "tip": "belge", "soru": "Hükmen ret/borca batıklık iddiası varsa terekenin borç-alacak durumunu gösteren belge var mı?", "ispat": "Terekenin ödemeden aczi (TMK m.605/2)", "temin": "Banka/icra kayıtları; taraf", "celp": true }
+      ],
+      "kritik_sureler": ["Mirasın reddi: ölümü/mirasçılığı öğrenmeden itibaren 3 ay (TMK m.606)"]
+    }
+  ]
+}

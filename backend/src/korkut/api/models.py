@@ -54,6 +54,26 @@ class StyleProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
+class OfficeModel(Base):
+    """An office's custom LLM, defined by the owner in Özelleştir (one row per office).
+
+    When `enabled`, every chat/draft for the office routes to this model instead of the built-in
+    default. `is_local` True means the endpoint runs on-prem (Ollama etc.) → the router skips
+    redaction (data never leaves the machine); False means an external endpoint, so cloud-bound
+    text is still redacted. Any OpenAI-compatible Chat Completions endpoint works.
+    """
+
+    __tablename__ = "office_models"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), unique=True, index=True)
+    enabled: Mapped[bool] = mapped_column(default=False)
+    is_local: Mapped[bool] = mapped_column(default=False)
+    model: Mapped[str] = mapped_column(String(200), default="")  # e.g. "llama-3.3-70b-versatile"
+    base_url: Mapped[str] = mapped_column(String(500), default="")  # OpenAI-compatible /v1 URL
+    api_key: Mapped[str] = mapped_column(Text, default="")  # blank for keyless local endpoints
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -14,8 +14,9 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
-from korkut.api.models import TemplateDefault, TemplateOverride
+from korkut.api.models import OfficeModel, TemplateDefault, TemplateOverride
 from korkut.core import db
+from korkut.core.router import ModelCfg
 from korkut.paths import DATA_DIR, TEMPLATES_DIR
 
 _DEFAULT_URL = f"sqlite+pysqlite:///{DATA_DIR / 'korkut.db'}"
@@ -74,6 +75,19 @@ def effective_theme(s: Session, office_id: int, user_id: int | None, type_id: st
         return office.content
     default = s.scalar(select(TemplateDefault).where(TemplateDefault.type_id == type_id))
     return default.content if default is not None else None
+
+
+def office_model_cfg(s: Session, office_id: int) -> ModelCfg | None:
+    """The office's custom model as a router `ModelCfg`, or None if unset/disabled (→ default)."""
+    row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == office_id))
+    if row is None or not row.enabled or not row.model or not row.base_url:
+        return None
+    return ModelCfg(
+        model=row.model,
+        base_url=row.base_url,
+        api_key=row.api_key or None,
+        local=row.is_local,
+    )
 
 
 def sync_template_defaults(engine) -> None:

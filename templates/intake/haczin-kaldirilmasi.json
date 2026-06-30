@@ -1,0 +1,46 @@
+{
+  "tip": "haczin-kaldirilmasi",
+  "ad": "Haczin/yedimin kaldırılması talebi",
+  "dayanak": ["İİK m.16", "İİK m.82", "İİK m.83", "İİK m.106"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Haczin kaldırılması belirli bir takip dosyasındaki hacze ilişkindir; dosya numarasıyla işlem yapılır." },
+    { "id": "haciz_konusu_mal", "soru": "Haczedilen mal/hak nedir? (taşınır, taşınmaz, maaş, banka hesabı, araç vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Kaldırma sebebi malın türüne ve haczedilemezlik kapsamına göre değişir (İİK m.82-83)." },
+    { "id": "kaldirma_sebebi", "soru": "Haczin kaldırılma sebebi nedir? (haczedilmezlik, borcun ödenmesi, hacizde hukuka aykırılık, üçüncü kişiye ait olması, süre aşımı)", "tip": "secim",
+      "secenekler": ["haczedilemez mal (İİK m.82-83)", "borcun ödenmesi/takibin düşmesi", "hacizde usul/hukuka aykırılık (şikâyet)", "malın üçüncü kişiye ait olması (istihkak)", "haciz süresinin geçmesi (İİK m.106-110)"],
+      "zorunlu": true, "neden": "Her sebep ayrı usule (şikâyet, istihkak, süre düşmesi) ve mercie tabidir; doğru yolu belirler." },
+    { "id": "haciz_ogrenme_tarihi", "soru": "Haczi/haciz işlemini ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "Haczedilmezlik/usulsüzlük şikâyeti, öğrenmeden itibaren 7 GÜN içinde icra mahkemesine yapılır (İİK m.16)." },
+    { "id": "haczedilmezlik_dayanagi", "soru": "Haczedilmezlik iddiası varsa dayanağı nedir? (maaşın 1/4'ü kuralı, ev eşyası, mesleki alet, emekli maaşı vb.)", "tip": "metin",
+      "zorunlu": false, "neden": "Maaşın ancak 1/4'ü haczedilebilir (İİK m.83); bazı mallar tamamen haczedilemez (İİK m.82); dayanak gösterilmelidir." },
+    { "id": "feragat_var_mi", "soru": "Emekli/maaş haczinde borçlunun önceden muvafakati/feragati var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Haczedilmezlikten haciz sırasında veya öncesinde geçerli feragat şikâyeti etkiler (İİK m.83a)." }
+  ],
+
+  "kosullar": [
+    { "eger": "kaldirma_sebebi == haczedilemez mal (İİK m.82-83)",
+      "ekle": "Malın İİK m.82/83 kapsamında haczedilemez olduğunu (ör. ev eşyası, mesleki alet, maaşın 1/4 sınırı) somut dayanakla açıklayan bölüm ekle.",
+      "uyari": "Haczedilmezlik şikâyeti işlemin öğrenilmesinden itibaren 7 GÜN içinde icra mahkemesine yapılır (İİK m.16)." },
+    { "eger": "kaldirma_sebebi == malın üçüncü kişiye ait olması (istihkak)",
+      "uyari": "Mal üçüncü kişiye aitse yol istihkak prosedürüdür (İİK m.96 vd.); basit kaldırma talebi yerine istihkak ileri sürülmelidir." },
+    { "eger": "kaldirma_sebebi == haciz süresinin geçmesi (İİK m.106-110)",
+      "uyari": "Haczedilen malın süresinde satışı istenmezse haciz düşer (İİK m.106-110); satış isteme süresinin geçtiğini hesapla ve göster." },
+    { "eger": "gun_farki(haciz_ogrenme_tarihi) > 7",
+      "uyari": "KRİTİK: haczi öğrenmenizden bu yana 7 günü aşmış görünüyor — haczedilmezlik/usul şikâyeti süresi (İİK m.16) geçmiş olabilir; süresiz şikâyet/başka yol değerlendir." }
+  ],
+
+  "kontroller": [
+    "Kaldırma sebebine uygun usul seçildi mi? (haczedilmezlik/usulsüzlük → şikâyet; 3. kişi malı → istihkak; süre → İİK m.106-110).",
+    "Şikâyet yoluysa 7 günlük süre haczin öğrenildiği tarihten hesaplandı mı (İİK m.16)?",
+    "Maaş haczinde 1/4 sınırı (İİK m.83) ve geçerli feragat olup olmadığı denetlendi mi?",
+    "Borç ödendiyse takibin düştüğü/haczin fekki talebi açıkça yazıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.16", "İİK m.82", "İİK m.83", "İİK m.83a", "İİK m.106"],
+    "emsal_ara": "haczedilmezlik şikayet maaş haczi dörtte bir 7 gün haczin kaldırılması",
+    "vurgula": ["haczedilmezlik halleri (İİK m.82-83)", "şikâyet için 7 günlük süre", "maaşta 1/4 sınırı ve feragat (İİK m.83a)"]
+  }
+}

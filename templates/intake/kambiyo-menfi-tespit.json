@@ -1,0 +1,49 @@
+{
+  "tip": "kambiyo-menfi-tespit",
+  "ad": "Kambiyo senedine dayalı menfi tespit dilekçesi",
+  "dayanak": ["TTK m.778", "TTK m.818", "İİK m.72", "TBK m.18"],
+
+  "sorular": [
+    { "id": "senet_turu", "soru": "Kambiyo senedinin türü nedir?", "tip": "secim",
+      "secenekler": ["bono (emre yazılı senet)", "poliçe", "çek"],
+      "zorunlu": true, "neden": "Uygulanacak kambiyo hükümleri ve defiler senet türüne göre değişir (TTK m.776, m.818)." },
+    { "id": "senet_bedeli", "soru": "Senet bedeli ve düzenleme/vade tarihi?", "tip": "metin",
+      "zorunlu": true, "neden": "Borçlu olunmadığı iddia edilen miktarın tespiti; konu (HMK m.119/d)." },
+    { "id": "borc_yok_sebebi", "soru": "Borçlu olmama sebebiniz nedir (bedelsizlik, tahsil cirosu, teminat senedi, sahtelik, ödeme)?", "tip": "secim",
+      "secenekler": ["bedelsizlik (karşılıksızlık)", "teminat amaçlı verildi", "borç ödendi", "imza sahte/tahrifat", "hatır senedi", "diğer"],
+      "zorunlu": true, "neden": "Menfi tespit davasının dayanağı ve ispat yükü dağılımı (İİK m.72/son)." },
+    { "id": "takip_var", "soru": "Bu senede dayalı icra takibi başlatıldı mı? (varsa dosya no ve tarih)", "tip": "metin",
+      "zorunlu": true, "neden": "Takipten önce/sonra açılma davanın türünü ve %15 tazminat riskini etkiler (İİK m.72)." },
+    { "id": "ilk_el_mi", "soru": "Senedi elinde bulunduran ilk hamil mi (sizinle doğrudan ilişkili) yoksa ciro yoluyla devralan üçüncü kişi mi?", "tip": "secim",
+      "secenekler": ["ilk hamil (taraflar arası ilişki var)", "ciro ile devralan üçüncü kişi"],
+      "zorunlu": true, "neden": "Şahsi defiler yalnız taraflar arasında ileri sürülebilir; iyiniyetli hamile karşı ileri sürülemez (TTK m.687)." },
+    { "id": "teminat_istemi", "soru": "Takibin durdurulması için ihtiyati tedbir / teminat yatırmayı talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Takip durdurulması için %15 teminatla tedbir gerekir (İİK m.72/3)." }
+  ],
+
+  "kosullar": [
+    { "eger": "ilk_el_mi == ciro ile devralan üçüncü kişi",
+      "uyari": "Üçüncü kişi iyiniyetli hamil ise şahsi defiler (bedelsizlik vb.) ileri sürülemez (TTK m.687); önce kötüniyet/ağır kusur iddiasını somutlaştır." },
+    { "eger": "borc_yok_sebebi == imza sahte/tahrifat",
+      "ekle": "İmza/senet üzerindeki sahtelik-tahrifat iddiasını ve grafolojik bilirkişi incelemesi istemini açıklayan bir bölüm ekle.",
+      "uyari": "Sahtelik iddiasında ispat yükü kural olarak iddia edende; senet aslının dosyaya celbi sağlanmalı." },
+    { "eger": "takip_var != ",
+      "ekle": "Mevcut icra takibinin durdurulmasına/iptaline ilişkin istemi ve takip dosyası bilgilerini sonuç-isteme ekle." },
+    { "eger": "teminat_istemi == evet",
+      "uyari": "Takibin durdurulması için alacağın %15'i oranında teminat karşılığı ihtiyati tedbir gerekir (İİK m.72/3)." }
+  ],
+
+  "kontroller": [
+    "Senedin kambiyo senedi vasfını taşıyıp taşımadığı (zorunlu unsurlar — TTK m.776/m.692) incelendi mi?",
+    "Dava takipten önce mi sonra mı açılıyor; tazminat (%20/%15) ve teminat sonuçları doğru kurgulandı mı (İİK m.72)?",
+    "İleri sürülen defi türü (mutlak/şahsi) hamilin sıfatıyla uyumlu mu (TTK m.687)?",
+    "Senet aslının veya takip dosyasının celbi sonuç-istemde talep edildi mi?",
+    "Borçlu olunmayan miktar sonuç-istemde net belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TTK m.687", "TTK m.776", "TTK m.778", "İİK m.72"],
+    "emsal_ara": "kambiyo senedi menfi tespit bedelsizlik teminat senedi defi hamil",
+    "vurgula": ["mutlak ve şahsi defi ayrımı", "iyiniyetli hamile karşı defi sınırı", "menfi tespitte ispat yükü ve teminat"]
+  }
+}

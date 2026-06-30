@@ -1,0 +1,47 @@
+{
+  "tip": "kambiyo-takip-talebi",
+  "ad": "Kambiyo senetlerine özgü takip talebi",
+  "dayanak": ["İİK m.167", "İİK m.168", "İİK m.170a", "TTK m.778"],
+
+  "sorular": [
+    { "id": "senet_turu", "soru": "Kambiyo senedinin türü nedir? (bono/emre muharrer senet, poliçe, çek)", "tip": "secim",
+      "secenekler": ["bono (emre muharrer senet)", "poliçe", "çek"],
+      "zorunlu": true, "neden": "Kambiyo takibi yalnızca TTK'daki kambiyo senetlerine özgüdür (İİK m.167); senedin şekil şartları türüne göre denetlenir." },
+    { "id": "senet_tutari", "soru": "Senet bedeli, düzenleme tarihi ve vade/keşide tarihi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Senedin geçerliliği ve faiz başlangıcı için zorunlu unsurlar (TTK m.776/778); takip talebinde gösterilir." },
+    { "id": "vade_turu", "soru": "Senedin vadesi geldi mi? (vade türü: belirli gün / görüldüğünde / keşideden itibaren)", "tip": "tarih",
+      "zorunlu": true, "neden": "Vadesi gelmemiş kambiyo senedi için kambiyo takibi yapılamaz; muacceliyet denetlenir." },
+    { "id": "ibraz_protesto", "soru": "Çekse bankaya ibraz edildi mi / poliçe-bonoda protesto çekildi mi? Tarihleri?", "tip": "metin",
+      "zorunlu": true, "neden": "Müracaat borçlularına başvuru için süresinde ibraz/protesto şartı aranır (TTK m.714, m.730); çekte ibraz süresi kısadır." },
+    { "id": "borclu_sifati", "soru": "Borçlu senette hangi sıfatla yer alıyor? (keşideci, lehtar-ciranta, aval veren, muhatap)", "tip": "secim",
+      "secenekler": ["keşideci/düzenleyen", "ciranta", "aval veren", "diğer müracaat borçlusu"],
+      "zorunlu": true, "neden": "Asıl borçlu ile müracaat borçlularının sorumluluğu ve ibraz/protesto şartı farklıdır (TTK m.724)." },
+    { "id": "zamanasimi", "soru": "Senedin vade/keşide tarihinden bu yana ne kadar zaman geçti? Zamanaşımı riski var mı?", "tip": "metin",
+      "zorunlu": true, "neden": "Kambiyo senetlerinde özel zamanaşımı süreleri vardır (TTK m.749 — bonoda asıl borçluya 3 yıl); aşılırsa kambiyo vasfı tartışılır." }
+  ],
+
+  "kosullar": [
+    { "eger": "senet_turu == çek",
+      "ekle": "Çekin bankaya süresinde ibraz edildiğini ve karşılıksızlık/ibraz kaşesini gösteren bilgileri ekle.",
+      "uyari": "Çekte ibraz süresi kısadır (TTK m.796); süresinde ibraz edilmeyen çek için müracaat borçlularına başvuru hakkı düşebilir." },
+    { "eger": "borclu_sifati == ciranta",
+      "uyari": "Cirantalar müracaat borçlusudur; sorumlulukları süresinde ibraz/protesto şartına bağlıdır (TTK m.730)." },
+    { "eger": "vade_turu == gelecek",
+      "uyari": "Vadesi gelmemiş senet için kambiyo takibi açılamaz; muacceliyeti teyit et." },
+    { "eger": "zamanasimi == evet",
+      "uyari": "Kambiyo zamanaşımı dolmuşsa senet kambiyo vasfını yitirebilir; bu durumda kambiyo takibi yerine genel hükümler değerlendirilmeli." }
+  ],
+
+  "kontroller": [
+    "Senet kambiyo senedi vasfını taşıyor mu? (TTK zorunlu şekil şartları tam mı) — İİK m.170a şikâyet riskine karşı denetle.",
+    "Borçlu, ödeme emri tebliğinden itibaren 5 GÜN içinde icra mahkemesine imza/borç itirazı yapabilir (İİK m.168/4-5) — bu süre genel itirazdan KISADIR.",
+    "İmzaya itirazda satıştan başka işlemler durmaz; borca itirazda da takip kendiliğinden durmaz (İİK m.169a) — süreyi ve usulü vurgula.",
+    "Çekte/poliçede süresinde ibraz/protesto belgesi dosyaya eklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.167", "İİK m.168", "İİK m.170a", "TTK m.778", "TTK m.796"],
+    "emsal_ara": "kambiyo takip ödeme emri 5 gün itiraz icra mahkemesi imza",
+    "vurgula": ["kambiyo senedi şekil şartları", "5 günlük itiraz süresi (icra mahkemesine)", "ibraz/protesto ve zamanaşımı"]
+  }
+}

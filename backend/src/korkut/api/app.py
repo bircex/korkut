@@ -41,6 +41,7 @@ from korkut.api.models import (
     DocumentVersion,
     Message,
     Office,
+    OfficeModel,
     ProposedEdit,
     RecoveryCode,
     StyleProfile,
@@ -48,7 +49,7 @@ from korkut.api.models import (
     TemplateOverride,
     User,
 )
-from korkut.api.store import effective_theme, session
+from korkut.api.store import effective_theme, office_model_cfg, session
 from korkut.brain import agent
 from korkut.core.tool_registry import ToolSpec
 
@@ -115,6 +116,21 @@ class StyleBody(BaseModel):
 class TemplateBody(BaseModel):
     scope: str  # "user" | "office"
     content: str
+
+
+class ModelBody(BaseModel):
+    enabled: bool = False
+    is_local: bool = False
+    model: str = ""
+    base_url: str = ""
+    # None → keep the stored key (so the UI need not re-send it); "" → clear it.
+    api_key: str | None = None
+
+
+class ExportBody(BaseModel):
+    format: str  # "udf" | "docx"
+    title: str = "belge"
+    markdown: str
 
 
 # ---------------- helpers ----------------
@@ -450,6 +466,65 @@ def save_office_style(body: StyleBody, korkut_session: str | None = Cookie(defau
         return _upsert_style(s, office_id=owner.office_id, user_id=None, body=body)
 
 
+# ---------------- custom model (Özelleştir) ----------------
+# An office owner can point Korkut at the office's own LLM (any OpenAI-compatible endpoint —
+# on-prem Ollama, vLLM, or an external cloud gateway). Stored once per office; the API key is
+# write-only (never returned). Local endpoints skip redaction; external ones stay redacted.
+
+
+def _model_public(row: OfficeModel | None, *, can_edit: bool) -> dict:
+    return {
+        "enabled": bool(row and row.enabled),
+        "is_local": bool(row and row.is_local),
+        "model": row.model if row else "",
+        "base_url": row.base_url if row else "",
+        "hasApiKey": bool(row and row.api_key),
+        "can_edit": can_edit,
+    }
+
+
+@app.get("/api/model")
+def get_model(korkut_session: str | None = Cookie(default=None)):
+    """The office's custom-model config (key hidden). Any member may view; only the owner edits."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == user.office_id))
+        return _model_public(row, can_edit=user.role == "owner")
+
+
+@app.put("/api/model")
+def save_model(body: ModelBody, korkut_session: str | None = Cookie(default=None)):
+    """Owner-only upsert. `api_key` None keeps the stored key; "" clears it."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        if body.enabled and (not body.model.strip() or not body.base_url.strip()):
+            raise HTTPException(status_code=400, detail="Model adı ve sunucu adresi zorunludur.")
+        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == owner.office_id))
+        if row is None:
+            row = OfficeModel(office_id=owner.office_id)
+            s.add(row)
+        row.enabled = body.enabled
+        row.is_local = body.is_local
+        row.model = body.model.strip()
+        row.base_url = body.base_url.strip()
+        if body.api_key is not None:
+            row.api_key = body.api_key.strip()
+        s.commit()
+        return _model_public(row, can_edit=True)
+
+
+@app.delete("/api/model")
+def delete_model(korkut_session: str | None = Cookie(default=None)):
+    """Owner-only: remove the custom model → the office falls back to the built-in default."""
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == owner.office_id))
+        if row is not None:
+            s.delete(row)
+            s.commit()
+        return {"ok": True}
+
+
 @app.post("/api/login")
 def login(body: LoginBody, request: Request, response: Response):
     ip = _client_ip(request)
@@ -739,6 +814,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         s.commit()
         style = _effective_style(s, user)
         office_name = _office_name(s, user)
+        model_cfg = office_model_cfg(s, user.office_id)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -757,6 +833,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         history=history_msgs,
         extra_tools=[_CANVAS_TOOL],
         handlers={"dilekce_canvas": _canvas},
+        model_cfg=model_cfg,
     )
 
     with session() as s:
@@ -874,8 +951,11 @@ def session_upload(
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=display))
         s.commit()
         office_name = _office_name(s, user)
+        model_cfg = office_model_cfg(s, user.office_id)
 
-    reply = agent.answer(model_input, office_name=office_name, history=history_msgs)
+    reply = agent.answer(
+        model_input, office_name=office_name, history=history_msgs, model_cfg=model_cfg
+    )
 
     with session() as s:
         conv = s.get(Conversation, cid)
@@ -1203,6 +1283,7 @@ def _make_draft(
         conv = s.get(Conversation, doc.conversation_id)
         office = s.get(Office, conv.office_id) if conv else None
         office_name = office.name if office else None
+        model_cfg = office_model_cfg(s, conv.office_id) if conv else None
         # Effective theme: lawyer override > office override > built-in default.
         theme = (
             effective_theme(s, conv.office_id, user_id, petition_type)
@@ -1232,7 +1313,9 @@ def _make_draft(
         "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
-    proposed = _strip_fences(agent.answer(prompt, office_name=office_name, history=history))
+    proposed = _strip_fences(
+        agent.answer(prompt, office_name=office_name, history=history, model_cfg=model_cfg)
+    )
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
     # after the cloud call (so they never leave the machine). Later edits keep them via the
     # redaction round-trip on `current`.
@@ -1328,6 +1411,25 @@ def save_document(
             )
         s.commit()
         return _doc_brief(doc, _pending(s, doc_id))
+
+
+@app.post("/api/export")
+def export_markdown(body: ExportBody, korkut_session: str | None = Cookie(default=None)):
+    """Render arbitrary editor markdown to a chosen format — works for any editor (doc or theme)."""
+    from korkut.api import docexport
+
+    with session() as s:
+        _require_user(s, korkut_session)
+    if body.format not in docexport.RENDERERS:
+        raise HTTPException(status_code=400, detail="Desteklenmeyen biçim")
+    mime, render = docexport.RENDERERS[body.format]
+    data = render(body.title, body.markdown)
+    safe = re.sub(r"[^A-Za-z0-9_\-]+", "_", body.title).strip("_")[:60] or "belge"
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{safe}.{body.format}"'},
+    )
 
 
 @app.get("/api/documents/{doc_id}/export")

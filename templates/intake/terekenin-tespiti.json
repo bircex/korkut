@@ -1,0 +1,49 @@
+{
+  "tip": "terekenin-tespiti",
+  "ad": "Terekenin tespiti / defter tutma talebi",
+  "dayanak": ["TMK m.589-590", "TMK m.619", "HMK m.382/2-c"],
+
+  "sorular": [
+    { "id": "muris_ad", "soru": "Muris (vefat eden) ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Tereke kimliği; talebin konusu (HMK m.119/d)." },
+    { "id": "olum_tarihi", "soru": "Ölüm tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mirasın açıldığı an; defter/koruma tedbiri bu ana bağlanır (TMK m.575)." },
+    { "id": "talep_eden_sifat", "soru": "Talep edenin murise yakınlığı / sıfatı?", "tip": "secim",
+      "secenekler": ["yasal mirasçı", "atanmış mirasçı", "vasiyet alacaklısı", "tereke alacaklısı", "menfaati olan diğer kişi"],
+      "zorunlu": true, "neden": "Defter tutma/tespit talep hakkı sıfata bağlıdır (TMK m.619)." },
+    { "id": "talep_amaci", "soru": "Talebin amacı nedir?", "tip": "secim",
+      "secenekler": ["mevcut durumun tespiti (delil tespiti niteliğinde)", "resmi defter tutulması (TMK m.619)", "terekenin korunması/mühürlenmesi (TMK m.590)"],
+      "zorunlu": true, "neden": "Tespit, defter ve koruma tedbirleri farklı usule tabidir." },
+    { "id": "malvarligi_dokumu", "soru": "Bilinen tereke malvarlığı (taşınmaz, banka, araç, alacak vb.) nelerdir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tespit/defterin kapsamını belirler; mahkeme ilgili kurumlardan sorar." },
+    { "id": "kaybolma_riski", "soru": "Tereke mallarının kaybolma/zarar görme/elden çıkarılma riski var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Koruma/mühürleme tedbirinin gerekliliği için (TMK m.590)." },
+    { "id": "borc_supheli", "soru": "Terekenin borca batık olma ihtimali var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Defter tutma, kayıtlı borçlarla sınırlı sorumluluk imkânı verir (TMK m.619/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_amaci == resmi defter tutulması (TMK m.619)",
+      "ekle": "Resmi defter tutulmasının, mirasçıya kayıtlı borçlarla sınırlı sorumluluk (defter mukabilinde kabul) imkânı verdiğini açıklayan bir bölüm ekle.",
+      "uyari": "Defter tutma talebi mirasın açılmasından itibaren 1 AY içinde yapılır (TMK m.619)." },
+    { "eger": "kaybolma_riski == evet",
+      "ekle": "Acil koruma tedbiri (mühürleme, yediemine teslim, banka hesaplarının bloke edilmesi) talebini gerekçesiyle ekle (TMK m.590).",
+      "uyari": "Koruma tedbirleri gecikmesinde sakınca bulunan hallerde derhal alınmalıdır." },
+    { "eger": "borc_supheli == evet",
+      "uyari": "Borca batıklık ihtimalinde mirasçı, ret (TMK m.605) veya defter mukabilinde kabul seçeneklerini değerlendirmeli; süreleri kaçırma." }
+  ],
+
+  "kontroller": [
+    "Talep edenin sıfatı (mirasçı/alacaklı/menfaattar) belgelenebilir mi? (TMK m.619).",
+    "Defter tutma isteniyorsa 1 aylık süre içinde mi? (TMK m.619).",
+    "Malvarlığı dökümü ve sorgulanacak kurumlar (tapu, banka, trafik) belirtildi mi?",
+    "Koruma tedbiri isteniyorsa aciliyet/gereklilik somutlandı mı? (TMK m.590).",
+    "Talep, tereke ortaklarının tamamının menfaatini gözetiyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.589", "TMK m.590", "TMK m.619", "HMK m.382"],
+    "emsal_ara": "terekenin tespiti defter tutma sulh hukuk koruma tedbiri",
+    "vurgula": ["defter tutmanın 1 aylık süresi", "sınırlı sorumluluk imkânı", "koruma tedbirleri (mühürleme)"]
+  }
+}

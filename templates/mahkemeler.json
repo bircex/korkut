@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "aciklama": "Türk yargı teşkilatındaki mahkeme/merci tipleri kanonik listesi. catalog.json içindeki 'mahkeme' alanı ve dilekçe 'Mahkeme Başlığı' bölümü için stabil kaynak. Türkiye'de mahkemeler il/ilçe (yargı çevresi) bazında çoğaltılır; burada listelenen 'tip'lerdir, somut birim değil (ör. 'Aile Mahkemesi' tipi → 'İstanbul Anadolu 3. Aile Mahkemesi' birimi). Somut birim/yargı çevresi için resmi kaynaklar: HSK (hsk.gov.tr) kuruluş kararları, UYAP birim kodları, adalet.gov.tr.",
+    "alan_semasi": {
+      "id": "stabil kimlik (kebab-case) — mahkeme alanında referans için",
+      "ad": "Resmi/yerleşik Türkçe ad (Mahkeme Başlığı'nda kullanılır)",
+      "yargi_kolu": "adli-hukuk | adli-ceza | idari | istinaf | temyiz | anayasa | uyusmazlik | ozel",
+      "derece": "ilk-derece | istinaf | temyiz | yuksek",
+      "heyet": "tek-hakim | heyet | hakimlik (soruşturma/infaz) | degisken",
+      "gorev": "tipik görevli olduğu işler (özet)",
+      "sik": "true ise dilekçe/şablon picker'ında öne çıkarılır"
+    },
+    "yetki_notu": "Görev (hangi mahkeme tipi) ile yetki (hangi yerdeki mahkeme) ayrıdır. Yetki kural bazlıdır (genel kural: davalının yerleşim yeri — HMK m.6; ayrıca özel/kesin yetki halleri). Bu listede yalnızca GÖREV tipleri yer alır; yetkili yer somut olaya göre belirlenir.",
+    "kaynak": [
+      "5235 sayılı Adli Yargı İlk Derece Mahkemeleri ile BAM Kuruluş Kanunu",
+      "2576 sayılı İdari Yargı Mahkemeleri Kuruluş Kanunu",
+      "HMK, CMK, İş Mahkemeleri K. (7036), Aile Mahkemeleri K. (4787), Çocuk Koruma K. (5395), 6769 SMK, 6502 Tüketici K."
+    ]
+  },
+  "kategoriler": [
+    {
+      "kategori": "Adli Yargı — Hukuk (İlk Derece)",
+      "mahkemeler": [
+        { "id": "sulh-hukuk", "ad": "Sulh Hukuk Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Kira/tahliye, paylı mülkiyet, çekişmesiz yargı işleri (veraset, vesayet/kayyım), terekede tedbir, kira tespiti; HMK m.4 ile görevlendirilen işler.", "sik": true },
+        { "id": "asliye-hukuk", "ad": "Asliye Hukuk Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Genel görevli hukuk mahkemesi (HMK m.2). Aksine düzenleme yoksa malvarlığı ve şahıs varlığına ilişkin davalar; tazminat, tapu iptal/tescil, men'i müdahale.", "sik": true },
+        { "id": "asliye-ticaret", "ad": "Asliye Ticaret Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "degisken", "gorev": "Ticari davalar (TTK m.4) ve ticari nitelikteki çekişmesiz yargı işleri; iflas/konkordato, ihtiyati haciz. Belirli parasal sınır üstü ve bazı işlerde heyet, aksi halde tek hâkim.", "sik": true },
+        { "id": "is-mahkemesi", "ad": "İş Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "İşçi-işveren uyuşmazlıkları, işe iade, kıdem/ihbar/fazla mesai, SGK uyuşmazlıkları (7036 sayılı K.). Çoğu işte dava şartı arabuluculuk zorunlu.", "sik": true },
+        { "id": "aile-mahkemesi", "ad": "Aile Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Boşanma, nafaka, velayet, mal rejimi tasfiyesi, soybağı, evlat edinme, 6284 koruma tedbirleri (4787 sayılı K.). Aile mahkemesi yoksa o yer Asliye Hukuk bu sıfatla bakar.", "sik": true },
+        { "id": "tuketici-mahkemesi", "ad": "Tüketici Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Tüketici işlemlerinden doğan uyuşmazlıklar (6502 sayılı K.). Parasal sınır altındaki uyuşmazlıklarda önce Tüketici Hakem Heyeti zorunlu.", "sik": true },
+        { "id": "icra-hukuk", "ad": "İcra (Hukuk) Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "İcra-iflas takiplerine ilişkin şikâyet, itirazın kaldırılması, ihalenin feshi, istihkak (İİK). İcra dairesi işlemlerine karşı denetim.", "sik": true },
+        { "id": "kadastro-mahkemesi", "ad": "Kadastro Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Kadastro tespitine itiraz ve kadastro çalışmalarından doğan mülkiyet uyuşmazlıkları (3402 sayılı K.).", "sik": false },
+        { "id": "fsh-hukuk", "ad": "Fikrî ve Sınaî Haklar Hukuk Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Telif, marka, patent, tasarım uyuşmazlıkları; tecavüzün tespiti/men'i, hükümsüzlük (6769 SMK, 5846 FSEK). Bulunmayan yerlerde Asliye Hukuk/Ticaret görevlendirilir.", "sik": false },
+        { "id": "denizcilik-ihtisas", "ad": "Denizcilik İhtisas Mahkemesi", "yargi_kolu": "adli-hukuk", "derece": "ilk-derece", "heyet": "degisken", "gorev": "Deniz ticareti ve deniz hukukundan doğan ihtisas davaları (sınırlı sayıda yerde kuruludur).", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Adli Yargı — Ceza (İlk Derece)",
+      "mahkemeler": [
+        { "id": "sulh-ceza-hakimligi", "ad": "Sulh Ceza Hâkimliği", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "hakimlik", "gorev": "Soruşturma evresi koruma tedbirleri: tutuklama, adli kontrol, arama/elkoyma kararları ve bunlara itirazlar. Kovuşturma (dava) görmez.", "sik": true },
+        { "id": "asliye-ceza", "ad": "Asliye Ceza Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Ağır ceza mahkemesinin görevi dışında kalan suçlara ilişkin kovuşturma (kural olarak üst sınırı 10 yıla kadar olan suçlar).", "sik": true },
+        { "id": "agir-ceza", "ad": "Ağır Ceza Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "heyet", "gorev": "Ağırlaştırılmış müebbet/müebbet ve üst sınırı 10 yıldan fazla hapis gerektiren suçlar; yağma, kasten öldürme, nitelikli dolandırıcılık vb. Bir başkan + iki üye.", "sik": true },
+        { "id": "cocuk-mahkemesi", "ad": "Çocuk Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Suça sürüklenen çocuklar ve korunma ihtiyacı olan çocuklara ilişkin davalar (5395 sayılı K.); asliye ceza kapsamındaki çocuk işleri.", "sik": false },
+        { "id": "cocuk-agir-ceza", "ad": "Çocuk Ağır Ceza Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "heyet", "gorev": "Ağır ceza mahkemesinin görev alanına giren suçları işleyen çocuklara ilişkin davalar.", "sik": false },
+        { "id": "icra-ceza", "ad": "İcra Ceza Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "İİK'daki suçlar: karşılıksız çek, taahhüdü ihlal, mal beyanında bulunmama, ticareti terk vb. şikâyetler.", "sik": false },
+        { "id": "fsh-ceza", "ad": "Fikrî ve Sınaî Haklar Ceza Mahkemesi", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "tek-hakim", "gorev": "Fikrî ve sınaî haklara tecavüz suçları (FSEK, SMK). Bulunmayan yerlerde Asliye Ceza görevlendirilir.", "sik": false },
+        { "id": "infaz-hakimligi", "ad": "İnfaz Hâkimliği", "yargi_kolu": "adli-ceza", "derece": "ilk-derece", "heyet": "hakimlik", "gorev": "Ceza infaz kurumu işlem ve disiplin kararlarına karşı şikâyetler; koşullu salıverme/denetimli serbestlik işlemleri (4675 sayılı K.).", "sik": false }
+      ]
+    },
+    {
+      "kategori": "İdari Yargı (İlk Derece)",
+      "mahkemeler": [
+        { "id": "idare-mahkemesi", "ad": "İdare Mahkemesi", "yargi_kolu": "idari", "derece": "ilk-derece", "heyet": "degisken", "gorev": "İdari işlem ve eylemlere karşı iptal ve tam yargı (tazminat) davaları (2577 İYUK). Belirli parasal sınır altı tek hâkim, üstü heyet.", "sik": true },
+        { "id": "vergi-mahkemesi", "ad": "Vergi Mahkemesi", "yargi_kolu": "idari", "derece": "ilk-derece", "heyet": "degisken", "gorev": "Vergi, resim, harç ve benzeri mali yükümlülükler ile bunların zam ve cezalarına ilişkin uyuşmazlıklar.", "sik": true }
+      ]
+    },
+    {
+      "kategori": "İstinaf (Bölge / İkinci Derece)",
+      "mahkemeler": [
+        { "id": "bolge-adliye-mahkemesi", "ad": "Bölge Adliye Mahkemesi (İstinaf)", "yargi_kolu": "istinaf", "derece": "istinaf", "heyet": "heyet", "gorev": "Adli yargı (hukuk + ceza) ilk derece kararlarına karşı istinaf incelemesi; hukuk ve ceza daireleri (5235 sayılı K.).", "sik": true },
+        { "id": "bolge-idare-mahkemesi", "ad": "Bölge İdare Mahkemesi (İstinaf)", "yargi_kolu": "istinaf", "derece": "istinaf", "heyet": "heyet", "gorev": "İdare ve vergi mahkemesi kararlarına karşı istinaf incelemesi; idari ve vergi dava daireleri.", "sik": true }
+      ]
+    },
+    {
+      "kategori": "Yüksek Mahkemeler",
+      "mahkemeler": [
+        { "id": "yargitay", "ad": "Yargıtay", "yargi_kolu": "temyiz", "derece": "yuksek", "heyet": "heyet", "gorev": "Adli yargının temyiz mercii; BAM kararlarının kanuna uygunluğunu denetler. Hukuk/Ceza daireleri, Genel Kurullar.", "sik": false },
+        { "id": "danistay", "ad": "Danıştay", "yargi_kolu": "temyiz", "derece": "yuksek", "heyet": "heyet", "gorev": "İdari yargının temyiz mercii; ayrıca ilk derece olarak bazı düzenleyici işlem davaları ve idari görevler.", "sik": false },
+        { "id": "anayasa-mahkemesi", "ad": "Anayasa Mahkemesi", "yargi_kolu": "anayasa", "derece": "yuksek", "heyet": "heyet", "gorev": "Norm denetimi (iptal/itiraz), bireysel başvuru, Yüce Divan sıfatı. İç hukuk yolları tükendikten sonra bireysel başvuru.", "sik": false },
+        { "id": "uyusmazlik-mahkemesi", "ad": "Uyuşmazlık Mahkemesi", "yargi_kolu": "uyusmazlik", "derece": "yuksek", "heyet": "heyet", "gorev": "Adli ve idari yargı mercileri arasındaki görev ve hüküm uyuşmazlıklarını kesin olarak çözer (2247 sayılı K.).", "sik": false }
+      ]
+    },
+    {
+      "kategori": "Alternatif / Yargı Dışı Çözüm Mercileri",
+      "mahkemeler": [
+        { "id": "tuketici-hakem-heyeti", "ad": "Tüketici Hakem Heyeti", "yargi_kolu": "ozel", "derece": "ilk-derece", "heyet": "heyet", "gorev": "Parasal sınır altı tüketici uyuşmazlıklarında zorunlu başvuru mercii (mahkeme değildir; kararına karşı Tüketici Mahkemesine itiraz).", "sik": false },
+        { "id": "arabuluculuk", "ad": "Arabuluculuk (Adliye Arabuluculuk Bürosu)", "yargi_kolu": "ozel", "derece": "ilk-derece", "heyet": "hakimlik", "gorev": "İş, ticari ve tüketici davalarında dava şartı (zorunlu) arabuluculuk; anlaşmazlık halinde dava yolu açılır.", "sik": false }
+      ]
+    }
+  ]
+}

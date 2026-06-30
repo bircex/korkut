@@ -268,6 +268,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <Customize user={user} onClose={() => setView("chats")} />;
   }
 
+  // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
+  if (view !== "docs" && pane === "document" && currentId !== null) {
+    return (
+      <DocumentPanel
+        key={currentId}
+        sessionId={currentId}
+        refreshKey={docRefresh}
+        onClose={() => setPane("chat")}
+      />
+    );
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
       <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
@@ -486,15 +498,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         <div className="relative flex min-w-0 flex-1">
         {view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
-        ) : pane === "document" && currentId !== null ? (
-          <div className="drawer-left flex min-w-0 flex-1">
-            <DocumentPanel
-              key={currentId}
-              sessionId={currentId}
-              refreshKey={docRefresh}
-              onClose={() => setPane("chat")}
-            />
-          </div>
         ) : (
         <div className="flex min-w-0 flex-1 flex-col">
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">

@@ -1,0 +1,46 @@
+{
+  "tip": "istihkak",
+  "ad": "İstihkak dava dilekçesi",
+  "dayanak": ["İİK m.96", "İİK m.97", "İİK m.97a", "İİK m.99"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "Haczin yapıldığı icra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İstihkak iddiası belirli bir takipteki hacze bağlıdır; dosya numarasıyla işlenir (İİK m.96)." },
+    { "id": "haciz_tarihi", "soru": "Haciz hangi tarihte yapıldı / istihkak iddianız size ne zaman bildirildi (icra dairesinin ihtarı)?", "tip": "tarih",
+      "zorunlu": true, "neden": "İstihkak davası için 7 GÜNLÜK dava açma süresi icra dairesinin bildirimi/ihtarından işler (İİK m.97/9, m.99)." },
+    { "id": "davaci_sifati", "soru": "İstihkak iddiasını kim ileri sürüyor? (üçüncü kişi / borçlu / alacaklı)", "tip": "secim",
+      "secenekler": ["üçüncü kişi (malı kendine ait gösteren)", "alacaklı (üçüncü kişinin istihkakına itiraz eden)"],
+      "zorunlu": true, "neden": "İstihkak davasını kimin açacağı ve ispat yükü, malın kimin elinde (zilyetliğinde) haczedildiğine göre değişir (İİK m.97a)." },
+    { "id": "zilyetlik_durumu", "soru": "Haczedilen mal kimin elinde/zilyetliğinde haczedildi? (borçlu, üçüncü kişi, müşterek)", "tip": "secim",
+      "secenekler": ["borçlunun elinde", "üçüncü kişinin elinde", "borçlu ile üçüncü kişinin müşterek elinde"],
+      "zorunlu": true, "neden": "Zilyetlik mülkiyet karinesi doğurur (İİK m.97a); ispat yükünü ve davacının kim olacağını belirler." },
+    { "id": "mulkiyet_dayanagi", "soru": "Malın istihkak iddia edene ait olduğunun dayanağı nedir? (fatura, tapu, ruhsat, sözleşme vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Mülkiyet karinesini çürütmek veya desteklemek için belge gerekir (İİK m.97a)." },
+    { "id": "takibin_durmasi", "soru": "Haczin/satışın geçici olarak durdurulmasını (takibin tehirini) talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İstihkak davasında icra mahkemesi teminat karşılığı takibin ertelenmesine karar verebilir (İİK m.97/6-8)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(haciz_tarihi) > 7",
+      "uyari": "KRİTİK: bildirimden bu yana 7 günü aşmış görünüyor — istihkak davası açma süresi (İİK m.99/m.97) geçmiş olabilir; süreyi ve bildirim tarihini titizlikle teyit et." },
+    { "eger": "zilyetlik_durumu == borçlunun elinde",
+      "ekle": "Mal borçlunun elinde haczedildiyse mülkiyet karinesinin borçlu/alacaklı lehine olduğunu ve üçüncü kişinin bu karineyi çürütmesi gerektiğini açıklayan bölüm ekle (İİK m.97a)." },
+    { "eger": "zilyetlik_durumu == üçüncü kişinin elinde",
+      "uyari": "Mal üçüncü kişinin elinde haczedildiyse karine üçüncü kişi lehinedir; bu halde dava açma yükü ALACAKLIDADIR (İİK m.99)." },
+    { "eger": "takibin_durmasi == evet",
+      "ekle": "Teminat karşılığında haczin/satışın geçici durdurulması (takibin tehiri) talebini ve gerekçesini sonuç kısmına ekle (İİK m.97/6-8)." }
+  ],
+
+  "kontroller": [
+    "İstihkak davası, icra dairesinin bildirimi/ihtarından itibaren 7 günlük süre içinde mi açılıyor (İİK m.99, m.97/9)?",
+    "Davacının kim olduğu, malın haciz anındaki zilyetliği ve mülkiyet karinesine (İİK m.97a) göre doğru belirlendi mi?",
+    "Mülkiyet iddiasını destekleyen belgeler (fatura/tapu/ruhsat) dilekçede gösterildi mi?",
+    "Takibin geçici durdurulması isteniyorsa teminat ve gerekçe sunuldu mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.96", "İİK m.97", "İİK m.97a", "İİK m.99"],
+    "emsal_ara": "istihkak davası mülkiyet karinesi zilyetlik 7 gün ispat yükü",
+    "vurgula": ["7 günlük dava açma süresi", "zilyetliğe bağlı mülkiyet karinesi (İİK m.97a)", "davacının/ispat yükünün belirlenmesi (m.97/m.99)"]
+  }
+}

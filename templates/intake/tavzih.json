@@ -1,0 +1,40 @@
+{
+  "tip": "tavzih",
+  "ad": "Tavzih (hükmün açıklanması) talebi",
+  "dayanak": ["HMK m.305", "HMK m.306"],
+
+  "sorular": [
+    { "id": "karar_bilgisi", "soru": "Tavzihi istenen kararın mahkemesi, esas/karar numarası ve tarihi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tavzih, hükmü veren mahkemeden istenir; kararın kimliği zorunludur (HMK m.305)." },
+    { "id": "belirsiz_kisim", "soru": "Hükmün hangi kısmı belirsiz/çelişkili ya da uygulanması tereddütlü?", "tip": "metin",
+      "zorunlu": true, "neden": "Tavzih yalnız hüküm fıkrasındaki belirsizlik/çelişki için istenebilir (HMK m.305/1)." },
+    { "id": "tavzih_talebi", "soru": "Hangi yönde açıklama/giderim talep ediyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Talep, hükmü değiştirmeden yorumlayıcı açıklamayla sınırlı kalmalıdır (HMK m.305/2)." },
+    { "id": "kesinlesme_durumu", "soru": "Karar kesinleşti mi / icraya kondu mu?", "tip": "secim",
+      "secenekler": ["henüz kesinleşmedi", "kesinleşti", "icra takibine konuldu"],
+      "zorunlu": true, "neden": "Tavzih, hüküm icra edilinceye kadar her zaman istenebilir (HMK m.305/1)." },
+    { "id": "esasa_etki", "soru": "Talep ettiğiniz açıklama, hükmün sonucunu/kapsamını değiştiriyor mu?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Tavzih yoluyla hüküm sınırlandırılamaz, genişletilemez, değiştirilemez (HMK m.305/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "esasa_etki == evet",
+      "uyari": "KRİTİK: tavzih hükmü değiştiremez/genişletemez/sınırlandıramaz (HMK m.305/2); esasa etki eden talep tavzihle değil kanun yoluyla ileri sürülmelidir." },
+    { "eger": "kesinlesme_durumu == icra takibine konuldu",
+      "uyari": "Tavzih hüküm icra edilinceye kadar istenebilir (HMK m.305/1); icranın tamamlanmasından sonra tavzih yolu kapanır." }
+  ],
+
+  "kontroller": [
+    "Talep, hükmü veren mahkemeye yöneltildi mi (HMK m.305)?",
+    "Belirsizlik/çelişki yalnız hüküm fıkrasıyla mı ilgili?",
+    "Talep, hükmü değiştirmeden açıklama/giderim sınırında mı (HMK m.305/2)?",
+    "Karar henüz icra edilmemiş mi (tavzih zamanı)?",
+    "Maddi hata söz konusuysa tavzih yerine maddi hata düzeltmesi (HMK m.304) mi gerekli?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.304", "HMK m.305", "HMK m.306"],
+    "emsal_ara": "tavzih hükmün açıklanması belirsizlik çelişki hüküm değiştirilemez",
+    "vurgula": ["tavzihin sınırı (hükmü değiştirememe)", "tavzih zamanı (icraya kadar)", "tavzih ile maddi hata düzeltmesi ayrımı"]
+  }
+}

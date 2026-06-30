@@ -1,0 +1,43 @@
+{
+  "tip": "bosanma-karsi-dava",
+  "ad": "Boşanmada karşı dava dilekçesi",
+  "dayanak": ["HMK m.132-133", "TMK m.166", "TMK m.174"],
+
+  "sorular": [
+    { "id": "asil_dava_bilgi", "soru": "Asıl boşanma davasının esas numarası ve davacısı kim?", "tip": "metin",
+      "zorunlu": true, "neden": "Karşı dava asıl davayla aynı dosyada görülür; bağlantı kurulmalıdır (HMK m.132)." },
+    { "id": "cevap_suresi_icinde", "soru": "Karşı dava, cevap süresi içinde mi açılıyor?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Karşı dava cevap dilekçesiyle veya esasa cevap süresi içinde açılabilir (HMK m.133)." },
+    { "id": "karsi_bosanma_sebebi", "soru": "Karşı boşanma talebiniz hangi sebebe ve hangi kusur vakıalarına dayanıyor?", "tip": "metin",
+      "zorunlu": true, "neden": "Karşı davacının dayandığı sebep ve davalı (asıl davacı) kusuru ispat konusudur (TMK m.166)." },
+    { "id": "karsi_talepler", "soru": "Karşı davada hangi fer'i talepler isteniyor? (velayet, nafaka türleri, maddi-manevi tazminat)", "tip": "metin",
+      "zorunlu": true, "neden": "Tazminat (TMK m.174) ve nafaka talepleri karşı dava dilekçesinde açıkça gösterilmelidir." },
+    { "id": "ortak_cocuk", "soru": "Ortak çocuk var mı? Velayet talebi kimin için isteniyor?", "tip": "metin",
+      "zorunlu": false, "neden": "Karşı davada velayet ve iştirak nafakası talebi çocuğun yararına göre kurulur." },
+    { "id": "baglanti_var", "soru": "Karşı talep ile asıl dava arasında takas/bağlantı ilişkisi var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Karşı davanın görülebilmesi için bağlantı koşulu aranır (HMK m.132/1)." }
+  ],
+
+  "kosullar": [
+    { "eger": "cevap_suresi_icinde == hayir",
+      "uyari": "KRİTİK: Cevap süresi geçmişse karşı dava reddedilebilir; ayrı bağımsız dava açılması ve birleştirme talebi değerlendirilmelidir (HMK m.133)." },
+    { "eger": "baglanti_var == hayir",
+      "uyari": "Asıl dava ile bağlantı (takas/aynı hukuki ilişki) yoksa karşı dava şartı oluşmaz (HMK m.132); bağlantıyı açıkça kur." },
+    { "eger": "karsi_talepler != hayir",
+      "ekle": "Karşı davada asıl davacının ağır/eşit kusurunu vakıalarla ortaya koyarak maddi-manevi tazminat ve nafaka taleplerini gerekçelendir (TMK m.174)." }
+  ],
+
+  "kontroller": [
+    "Karşı dava cevap süresi içinde ve aynı mahkemede açıldı mı (HMK m.133)?",
+    "Asıl dava ile bağlantı (HMK m.132) dilekçede açıkça gösterildi mi?",
+    "Karşı boşanma sebebi ve asıl davacının kusur vakıaları somutlaştırıldı mı?",
+    "Karşı davadaki fer'i talepler (velayet/nafaka/tazminat) tam ve gerekçeli mi?",
+    "Talep sonucunda hem boşanma hem fer'iler ayrı ayrı talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.132", "HMK m.133", "TMK m.166", "TMK m.174"],
+    "emsal_ara": "boşanma karşı dava bağlantı cevap süresi kusur tazminat",
+    "vurgula": ["karşı dava süresi ve bağlantı şartı", "asıl davacının kusurunun ispatı", "fer'i taleplerin karşılıklılığı"]
+  }
+}

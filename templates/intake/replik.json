@@ -1,0 +1,44 @@
+{
+  "tip": "replik",
+  "ad": "Cevaba cevap (replik) dilekçesi",
+  "dayanak": ["HMK m.136", "HMK m.141", "HMK m.129"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Replik mevcut esasa, davalının cevabına karşı verilir; dosya kimliği zorunludur." },
+    { "id": "cevap_teblig_tarihi", "soru": "Davalının cevap dilekçesi size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Replik süresi (2 hafta — HMK m.136/1) cevabın tebliğinden işler." },
+    { "id": "yanit_savunmalar", "soru": "Davalının cevabındaki hangi savunmalara/itirazlara yanıt verilecek?", "tip": "metin",
+      "zorunlu": true, "neden": "Replikin işlevi, cevaptaki savunmaları çürütmektir; somut başlıklar gerekir." },
+    { "id": "yeni_vakia", "soru": "Cevaba karşı dayanmak istediğiniz, ilk dilekçede yer almayan vakıa var mı?", "tip": "metin",
+      "zorunlu": false, "neden": "Dilekçeler aşaması iddianın genişletilebileceği son aşamadır (HMK m.141); bunun dışında karşı tarafın muvafakati gerekir." },
+    { "id": "ikrar_degerlendirme", "soru": "Davalının cevabında lehinize bir ikrar/kabul var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İkrar bağlayıcı delildir (HMK m.188); replikte sabit kabul edilen vakıalar vurgulanır." },
+    { "id": "delil_ekleme", "soru": "Cevaba karşı eklemek istediğiniz yeni delil var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Dilekçeler aşamasında bildirilen vakıalara ilişkin deliller sunulabilir; sonradan sınırlama doğar." }
+  ],
+
+  "kosullar": [
+    { "eger": "yeni_vakia != ",
+      "ekle": "Yeni vakıayı, ilk dilekçedeki iddiayla bağını ve neden bu aşamada ileri sürüldüğünü açıklayan bir bölüm ekle.",
+      "uyari": "İddiayı genişletme/değiştirme yasağı dilekçeler aşamasından sonra başlar (HMK m.141); bu aşamayı geçirme." },
+    { "eger": "ikrar_degerlendirme == evet",
+      "ekle": "Davalının cevabındaki ikrarı/kabulü açıkça alıntılayıp sabit vakıa olarak vurgulayan bir paragraf ekle." },
+    { "eger": "gun_farki(cevap_teblig_tarihi) > 14",
+      "uyari": "KRİTİK: cevabın tebliğinden bu yana 2 haftayı aşmış olabilir — replik süresi (HMK m.136) geçmiş olabilir; süreyi teyit et." }
+  ],
+
+  "kontroller": [
+    "Esas no ve taraf bilgileri davayla tutarlı mı?",
+    "Replik süresi (cevabın tebliğinden 2 hafta — HMK m.136) içinde mi?",
+    "Replik, cevaptaki savunmalara nokta nokta yanıt veriyor mu (yeni dava değil)?",
+    "İddiayı genişletme dilekçeler aşaması sınırı (HMK m.141) içinde tutuldu mu?",
+    "Davalının ikrarları sabit vakıa olarak işaretlendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.136", "HMK m.141", "HMK m.188"],
+    "emsal_ara": "cevaba cevap replik iddianın genişletilmesi yasağı dilekçeler aşaması",
+    "vurgula": ["replik süresi", "iddianın genişletilebileceği son aşama", "davalı ikrarının bağlayıcılığı"]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "tip": "iscilik-alacaklari",
+  "ad": "Kıdem/ihbar ve işçilik alacakları dava dilekçesi",
+  "dayanak": ["İş K. m.17", "1475 s.K. m.14", "İş K. m.32", "7036 s.K. m.3"],
+
+  "sorular": [
+    { "id": "ise_giris", "soru": "İşe giriş tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Kıdem süresinin ve kıdem tazminatı hesabının başlangıcı (1475 s.K. m.14)." },
+    { "id": "fesih_tarihi", "soru": "İş sözleşmesinin sona erdiği (fesih) tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Kıdem süresinin sonu; ihbar süresi ve zamanaşımının başlangıcı." },
+    { "id": "fesih_eden", "soru": "Sözleşmeyi kim feshetti ve sebep neydi?", "tip": "secim",
+      "secenekler": ["işçi haklı nedenle feshetti", "işçi istifa etti", "işveren haklı nedenle feshetti", "işveren haksız/geçersiz feshetti"],
+      "zorunlu": true, "neden": "Kıdem tazminatına hak kazanma, fesih şekline ve haklılığa bağlıdır (İş K. m.24-25, 1475 s.K. m.14)." },
+    { "id": "son_ucret", "soru": "İşçinin giydirilmiş son brüt ücreti (ikramiye/yol/yemek dahil) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Kıdem tazminatı giydirilmiş ücret üzerinden hesaplanır; ihbar/diğer alacaklar için temel." },
+    { "id": "talep_kalemleri", "soru": "Hangi alacak kalemleri talep ediliyor? (kıdem, ihbar, yıllık izin, fazla mesai, ücret vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Davanın konusu ve kalem bazında talep; her kalem ayrı zamanaşımına tabi olabilir." },
+    { "id": "arabulucu_basvuru", "soru": "İşçilik alacakları için arabuluculuğa başvuruldu mu (dava şartı)?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İşçi-işveren alacak/tazminat davalarında arabuluculuk zorunlu DAVA ŞARTIDIR (7036 s.K. m.3)." }
+  ],
+
+  "kosullar": [
+    { "eger": "arabulucu_basvuru == hayir",
+      "uyari": "KRİTİK: İşçilik alacaklarında arabuluculuk dava şartıdır (7036 s.K. m.3); başvuru yapılmadan açılan dava usulden reddedilir. Önce arabuluculuğa başvurulmalı." },
+    { "eger": "fesih_eden == işçi istifa etti",
+      "uyari": "DİKKAT: Haklı sebebe dayanmayan istifada kıdem ve ihbar tazminatı kural olarak doğmaz (1475 s.K. m.14); istifanın gerçek niteliği irdelenmeli." },
+    { "eger": "fesih_eden == işveren haklı nedenle feshetti",
+      "uyari": "İşverenin İş K. m.25/II'ye (ahlak ve iyiniyete aykırılık) dayalı haklı feshinde kıdem tazminatı ödenmez; haklılığın ispatı işverendedir." },
+    { "eger": "talep_kalemleri != ",
+      "ekle": "Talep edilen her alacak kalemini (kıdem, ihbar, yıllık izin, fazla mesai, ücret) ayrı ayrı, hesap yöntemi ve zamanaşımı durumuyla birlikte gösteren bir bölüm ekle; belirsiz alacak/kısmi dava tercihi belirtilsin." }
+  ],
+
+  "kontroller": [
+    "Arabuluculuk dava şartı yerine getirildi mi (7036 s.K. m.3)?",
+    "Kıdem süresi işe giriş-fesih tarihleri üzerinden doğru hesaplandı mı (1475 s.K. m.14)?",
+    "Kıdem tazminatı giydirilmiş ücret üzerinden, kıdem tavanı gözetilerek hesaplandı mı?",
+    "Her alacak kaleminin zamanaşımı (kıdem/ihbar 5 yıl) kontrol edildi mi?",
+    "Belirsiz alacak davası mı, kısmi dava mı açıldığı ve faiz türü/başlangıcı belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İş K. m.17", "İş K. m.24", "İş K. m.25", "İş K. m.32", "1475 s.K. m.14", "7036 s.K. m.3"],
+    "emsal_ara": "kıdem ihbar tazminatı giydirilmiş ücret arabuluculuk dava şartı zamanaşımı",
+    "vurgula": ["fesih şekline göre kıdem/ihbar hakkı", "giydirilmiş ücret ve kıdem tavanı", "arabuluculuk dava şartı", "kalem bazlı zamanaşımı"]
+  }
+}

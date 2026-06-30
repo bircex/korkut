@@ -1,0 +1,46 @@
+{
+  "tip": "kiralananin-tahliyesi-icra",
+  "ad": "İlamsız tahliye (icra yoluyla) takip talebi",
+  "dayanak": ["İİK m.269", "İİK m.272", "TBK m.315"],
+
+  "sorular": [
+    { "id": "takip_sebebi", "soru": "İlamsız tahliye hangi sebebe dayanıyor? (kira borcunun ödenmemesi / sözleşme süresinin bitmesi / tahliye taahhüdü)", "tip": "secim",
+      "secenekler": ["kira borcunun ödenmemesi (İİK m.269)", "kira süresinin sona ermesi", "tahliye taahhüdü (İİK m.272)"],
+      "zorunlu": true, "neden": "Takip türü ve ödeme/itiraz süreleri sebebe göre değişir (İİK m.269 / m.272)." },
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin tarihi ve süresi?", "tip": "metin",
+      "zorunlu": true, "neden": "Kira ilişkisinin varlığı ve süre sonu hesabı için temel." },
+    { "id": "aylik_kira", "soru": "Aylık kira bedeli ve takibe konu birikmiş borç tutarı?", "tip": "metin",
+      "zorunlu": true, "neden": "Ödeme emrine konu alacak miktarı (İİK m.269)." },
+    { "id": "odenmeyen_donem", "soru": "Hangi dönemin kirası ödenmedi?", "tip": "metin",
+      "zorunlu": false, "neden": "Kira borcunun ödenmemesi sebebinde muaccel borcun dökümü için gereklidir." },
+    { "id": "taahhut_tarihi", "soru": "Tahliye taahhüdüne dayanılıyorsa taahhütteki boşaltma tarihi?", "tip": "tarih",
+      "zorunlu": false, "neden": "İİK m.272 takibi taahhütteki tahliye tarihinden sonra başlatılır." },
+    { "id": "itiraz_durumu", "soru": "Ödeme/tahliye emrine kiracı tarafından itiraz edildi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İtiraz halinde takip durur; tahliye için icra mahkemesine başvurmak gerekir (İİK m.269/b, m.272)." }
+  ],
+
+  "kosullar": [
+    { "eger": "takip_sebebi == kira borcunun ödenmemesi (İİK m.269)",
+      "ekle": "Ödeme emrinde kiracıya 30 gün ödeme + 7 gün itiraz süresi tanındığını, süresinde ödenmez ve itiraz edilmezse tahliyeye karar verileceğini açıklayan bir bölüm ekle (İİK m.269).",
+      "uyari": "İİK m.269'da kiracıya 7 gün itiraz, 30 gün ödeme süresi verilir; itiraz edilmez ve ödenmezse icra mahkemesinden tahliye istenir." },
+    { "eger": "takip_sebebi == tahliye taahhüdü (İİK m.272)",
+      "uyari": "Taahhüde dayalı icra takibinde tahliye emrine 7 gün içinde itiraz edilebilir; itiraz halinde icra mahkemesinde tahliye davası açılır (İİK m.272-275)." },
+    { "eger": "itiraz_durumu == evet",
+      "ekle": "Kiracının itirazı üzerine takibin durduğunu ve itirazın kaldırılması/tahliye için icra hukuk mahkemesine başvurulacağını açıklayan bir bölüm ekle.",
+      "uyari": "İtiraz halinde doğrudan tahliye yapılamaz; süresinde icra mahkemesine başvurulmalıdır." }
+  ],
+
+  "kontroller": [
+    "Takip sebebine uygun ödeme/tahliye emri (İİK m.269 veya m.272) düzenlendi mi?",
+    "Kira borcu sebebinde 30 gün ödeme + 7 gün itiraz süreleri ödeme emrinde gösterildi mi?",
+    "Taahhüt sebebinde tahliye tarihinin geçtiği ve takibin süresinde başlatıldığı belirtildi mi?",
+    "İtiraz halinde icra mahkemesine başvuru süresi (7 gün/itirazın kaldırılması) gözetildi mi?",
+    "Kira sözleşmesi/tahliye taahhüdü takip talebine eklendi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.269", "İİK m.272", "İİK m.275"],
+    "emsal_ara": "ilamsız tahliye icra ödeme emri 30 gün 7 gün itiraz taahhüt",
+    "vurgula": ["İİK m.269 ödeme/itiraz süreleri", "taahhüde dayalı İİK m.272 takibi", "itiraz halinde icra mahkemesi yolu"]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "tip": "tahliye-ihtiyac",
+  "ad": "İhtiyaç nedeniyle tahliye dava dilekçesi",
+  "dayanak": ["TBK m.350", "TBK m.351", "TBK m.355"],
+
+  "sorular": [
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin tarihi ve süresi (belirli/belirsiz)?", "tip": "metin",
+      "zorunlu": true, "neden": "Tahliye davası açma süresinin hesabı sözleşme süresine/dönemine bağlıdır (TBK m.350)." },
+    { "id": "ihtiyac_sahibi", "soru": "Konut/işyeri kimin ihtiyacı için isteniyor? (kiraya veren, eşi, altsoyu, üstsoyu, kanunen bakmakla yükümlü olduğu kişi)", "tip": "secim",
+      "secenekler": ["kiraya verenin kendisi", "eşi", "altsoyu (çocuk/torun)", "üstsoyu (anne/baba)", "kanunen bakmakla yükümlü olduğu kişi"],
+      "zorunlu": true, "neden": "İhtiyaç tahliyesi yalnızca kanunda sayılan yakınlar için açılabilir (TBK m.350/1)." },
+    { "id": "ihtiyac_turu", "soru": "İhtiyaç konut ihtiyacı mı, işyeri ihtiyacı mı?", "tip": "secim",
+      "secenekler": ["konut ihtiyacı", "işyeri ihtiyacı"],
+      "zorunlu": true, "neden": "İhtiyacın somut, gerçek ve zorunlu olduğunun ispat ölçütü buna göre kurulur." },
+    { "id": "ihtiyac_gerekce", "soru": "İhtiyacın somut gerekçesi nedir? (örn. başka konutu olmaması, işyerini taşıma zorunluluğu)", "tip": "metin",
+      "zorunlu": true, "neden": "İhtiyaç gerçek, samimi ve zorunlu olmalıdır; soyut beyan yeterli değildir (TBK m.350)." },
+    { "id": "yeni_malik", "soru": "Taşınmaz sonradan satın alınarak mı edinildi (yeni malik ihtiyacı)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yeni malikte edinme tarihinden itibaren 1 ay içinde ihtar + 6 ay sonunda dava rejimi uygulanır (TBK m.351)." },
+    { "id": "edinme_tarihi", "soru": "Yeni malikse, taşınmazı edinme (tapu) tarihi?", "tip": "tarih",
+      "zorunlu": false, "neden": "1 aylık ihtar ve 6 aylık dava süreleri bu tarihten işler (TBK m.351)." }
+  ],
+
+  "kosullar": [
+    { "eger": "yeni_malik == evet",
+      "sor": ["edinme_tarihi"],
+      "ekle": "Yeni malik ihtiyacına dayanıldığını, edinme tarihinden itibaren 1 ay içinde ihtarın çekildiğini ve 6 aylık sürenin gözetildiğini açıklayan bir bölüm ekle.",
+      "uyari": "Yeni malik, edinmeden itibaren 1 ay içinde durumu yazılı bildirip 6 ay sonra dava açabilir; alternatif olarak sözleşme sonundaki süre de kullanılabilir (TBK m.351)." },
+    { "eger": "ihtiyac_turu == işyeri ihtiyacı",
+      "ekle": "İşyeri ihtiyacının zorunluluğunu (faaliyet, taşınma, ruhsat vb.) somut delillerle ortaya koyan bir bölüm ekle." },
+    { "eger": "ihtiyac_gerekce != ",
+      "uyari": "İhtiyaç gerçek, samimi ve zorunlu olmalı; tahliye sonrası taşınmazın üçüncü kişiye kiralanması yeniden kiralama yasağına (TBK m.355) takılır." }
+  ],
+
+  "kontroller": [
+    "İhtiyaç sahibi TBK m.350'de sayılan kişilerden mi (kendisi/eşi/altsoy/üstsoy/bakmakla yükümlü)?",
+    "İhtiyacın gerçek, samimi ve zorunlu olduğu somut olgularla gösterildi mi?",
+    "Belirli süreli sözleşmede süre sonundan itibaren 1 ay içinde dava açma süresi gözetildi mi (TBK m.350)?",
+    "Yeni malikse 1 aylık ihtar + 6 aylık bekleme süresi uygulandı mı (TBK m.351)?",
+    "Tahliye sonrası yeniden kiralama yasağı (3 yıl — TBK m.355) açıklamalarda hatırlatıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.350", "TBK m.351", "TBK m.355"],
+    "emsal_ara": "ihtiyaç nedeniyle tahliye gerçek samimi zorunlu yeni malik 6 ay",
+    "vurgula": ["ihtiyacın gerçek ve zorunlu olması", "yeni malik 1 ay ihtar 6 ay dava süresi", "yeniden kiralama yasağı"]
+  }
+}

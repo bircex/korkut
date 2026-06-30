@@ -1,0 +1,50 @@
+{
+  "tip": "vergi-uzlasma",
+  "ad": "Uzlaşma talebi dilekçesi",
+  "dayanak": ["VUK ek m.1", "VUK ek m.11", "VUK m.34"],
+
+  "sorular": [
+    { "id": "uzlasma_asamasi", "soru": "Tarhiyat öncesi uzlaşma mı, tarhiyat sonrası uzlaşma mı talep ediyorsunuz?", "tip": "secim",
+      "secenekler": ["tarhiyat öncesi uzlaşma (VUK ek m.11)", "tarhiyat sonrası uzlaşma (VUK ek m.1)"],
+      "zorunlu": true, "neden": "Başvuru mercii (komisyon) ve süresi aşamaya göre değişir." },
+    { "id": "ihbarname_teblig", "soru": "Tarhiyat sonrası ise ihbarname size hangi tarihte tebliğ edildi?", "tip": "tarih",
+      "zorunlu": false, "neden": "Tarhiyat sonrası uzlaşma başvurusu tebliğden itibaren 30 GÜN içinde yapılır (VUK ek m.1)." },
+    { "id": "vergi_turu", "soru": "Uzlaşmaya konu vergi türü nedir (KDV, gelir, kurumlar, ÖTV vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Uzlaşma kapsamı ve yetkili komisyon belirlemesi için." },
+    { "id": "vergi_donemi", "soru": "Vergilendirme dönemi/yılı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tarhiyatın dönem ve matrah olarak belirlenmesi için." },
+    { "id": "matrah_ceza", "soru": "Tarh edilen vergi aslı ve ceza tutarları nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Uzlaşma talep edilen tutar ve komisyon yetki sınırı için." },
+    { "id": "ceza_turu", "soru": "Kesilen ceza türü nedir (vergi ziyaı, usulsüzlük, özel usulsüzlük)?", "tip": "secim",
+      "secenekler": ["vergi ziyaı cezası", "usulsüzlük", "özel usulsüzlük"],
+      "zorunlu": true, "neden": "Kaçakçılık (VUK m.359) kaynaklı ziyaı cezası uzlaşma kapsamı dışıdır (VUK ek m.1)." },
+    { "id": "kacakcilik_iddiasi", "soru": "Tarhiyat VUK m.359'daki fiillere (sahte belge vb.) dayandırılıyor mu?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "359 kapsamındaki ziyaı cezası uzlaşmaya konu edilemez (VUK ek m.1/son)." }
+  ],
+
+  "kosullar": [
+    { "eger": "uzlasma_asamasi == tarhiyat sonrası uzlaşma (VUK ek m.1)",
+      "uyari": "Tarhiyat sonrası uzlaşma başvurusu ihbarnamenin tebliğinden itibaren 30 GÜN içinde yapılmalıdır; süreyi teyit et." },
+    { "eger": "gun_farki(ihbarname_teblig) > 30",
+      "uyari": "KRİTİK: tarhiyat sonrası uzlaşma için 30 günlük süre aşılmış görünüyor; başvuru reddedilebilir, dava açma süresini değerlendir." },
+    { "eger": "kacakcilik_iddiasi == evet",
+      "uyari": "VUK m.359 kapsamındaki fiillere bağlı vergi ziyaı cezası uzlaşmaya konu edilemez (VUK ek m.1/son); uzlaşma yerine dava/indirim yolunu değerlendir." },
+    { "eger": "uzlasma_asamasi == tarhiyat öncesi uzlaşma (VUK ek m.11)",
+      "ekle": "Tarhiyat öncesi uzlaşmanın inceleme aşamasında, vergi/ceza ihbarnamesi düzenlenmeden önce talep edildiğini belirten bir paragraf ekle.",
+      "uyari": "Tarhiyat öncesi uzlaşma sağlanırsa aynı konuda tarhiyat sonrası uzlaşma istenemez (VUK ek m.11)." }
+  ],
+
+  "kontroller": [
+    "Uzlaşma aşaması (öncesi/sonrası) ve yetkili uzlaşma komisyonu doğru belirlendi mi?",
+    "Tarhiyat sonrası ise tebliğ tarihi ve 30 günlük başvuru süresi gösterildi mi?",
+    "Vergi türü-dönem-matrah-ceza tutarları net şekilde yer alıyor mu?",
+    "VUK m.359 kapsamı dışı tutulan ceza varsa ayrıştırıldı mı?",
+    "Uzlaşmanın dava açma süresine etkisi (vaki olmazsa VUK ek m.7) hatırlatıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["VUK ek m.1", "VUK ek m.7", "VUK ek m.11", "VUK m.359"],
+    "emsal_ara": "tarhiyat sonrası uzlaşma başvuru süresi 30 gün komisyon",
+    "vurgula": ["tarhiyat öncesi/sonrası uzlaşma ayrımı", "30 günlük başvuru süresi", "VUK m.359 kapsamı dışılığı"]
+  }
+}

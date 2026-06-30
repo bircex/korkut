@@ -1,0 +1,44 @@
+{
+  "tip": "kira-tespiti",
+  "ad": "Kira bedelinin tespiti dava dilekçesi",
+  "dayanak": ["TBK m.344", "TBK m.345", "HMK m.119"],
+
+  "sorular": [
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin başlangıç tarihi ve süresi?", "tip": "metin",
+      "zorunlu": true, "neden": "5 yıllık dönem ve uyarlama ölçütü için sözleşmenin yaşı belirleyicidir (TBK m.344/3)." },
+    { "id": "mevcut_kira", "soru": "Hâlihazırdaki aylık kira bedeli nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tespiti istenen bedelin karşılaştırma tabanı." },
+    { "id": "talep_edilen_kira", "soru": "Tespiti istenen yeni kira bedeli (talep) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Davanın konusu ve değeri; hâkim hak ve nesafete göre belirler (TBK m.344/3)." },
+    { "id": "bes_yil_doldu", "soru": "Kira ilişkisi 5 yıl ve üzeri sürdü mü?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "5 yıldan uzun süren kirada hâkim TÜFE ile bağlı olmaksızın hak ve nesafetle bedel belirler (TBK m.344/3)." },
+    { "id": "ihtar_gonderildi", "soru": "Yeni dönem öncesi kiracıya kira artışına ilişkin ihtar gönderildi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İhtarın yeni dönem başlamadan 30 gün önce tebliği, yeni dönem başından itibaren tespit için önem taşır (TBK m.345)." },
+    { "id": "dava_zamani", "soru": "Dava yeni kira döneminin başlangıcından önceki 30 gün içinde mi açılıyor?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Bu sürede açılan/ihtarın tebliğ edildiği dava yeni dönemden itibaren hüküm doğurur (TBK m.345)." }
+  ],
+
+  "kosullar": [
+    { "eger": "bes_yil_doldu == evet",
+      "ekle": "Beş yılı aşan kira ilişkisinde hâkimin TÜFE artış oranıyla bağlı olmaksızın, taşınmazın durumu ve emsal kira bedelleri gözetilerek hak ve nesafete göre belirleme yapacağını açıklayan bir bölüm ekle (TBK m.344/3).",
+      "uyari": "5 yıl ve sonrası yenilemelerde TÜFE tavanı uygulanmaz; emsal/bilirkişi incelemesi belirleyici olur." },
+    { "eger": "bes_yil_doldu == hayir",
+      "uyari": "5 yıldan kısa kira ilişkisinde artış kural olarak bir önceki kira yılının TÜFE oniki aylık ortalaması ile sınırlıdır (TBK m.344/1); tespit talebini buna göre kur." },
+    { "eger": "ihtar_gonderildi == evet",
+      "ekle": "Yeni dönem başlamadan en az 30 gün önce ihtarın tebliğ edildiğini ve davanın yeni dönem başından itibaren hüküm doğuracağını belirten bir bölüm ekle (TBK m.345)." }
+  ],
+
+  "kontroller": [
+    "Kira ilişkisinin süresi (5 yıl eşiği) dilekçede açıkça belirtildi mi (TBK m.344)?",
+    "Talep edilen bedel emsal/hak ve nesafet gerekçesiyle desteklendi mi?",
+    "Yeni dönem başından hüküm istemek için 30 günlük ihtar/dava süresi (TBK m.345) gözetildi mi?",
+    "5 yıldan kısa ilişkide TÜFE tavanı; uzun ilişkide hak-nesafet ölçütü doğru uygulandı mı?",
+    "Emsal kira araştırması / bilirkişi talebi sonuç-istemde yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.344", "TBK m.345"],
+    "emsal_ara": "kira bedeli tespiti beş yıl hak nesafet TÜFE emsal kira",
+    "vurgula": ["5 yıl eşiği ve hak-nesafet belirlemesi", "TÜFE tavanı sınırı", "yeni dönemden hüküm için 30 günlük süre"]
+  }
+}

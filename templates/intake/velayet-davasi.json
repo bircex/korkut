@@ -1,0 +1,45 @@
+{
+  "tip": "velayet-davasi",
+  "ad": "Velayet (değişikliği) dava dilekçesi",
+  "dayanak": ["TMK m.183", "TMK m.335-337", "TMK m.348", "HMK m.119"],
+
+  "sorular": [
+    { "id": "dava_turu", "soru": "Talep velayetin ilk kez tevdii mi, yoksa mevcut velayetin değiştirilmesi/kaldırılması mı?", "tip": "secim",
+      "secenekler": ["velayetin kendisine verilmesi (değişiklik)", "velayetin kaldırılması/değiştirilmesi (TMK m.348)", "boşanma sonrası velayet düzenlemesi"],
+      "zorunlu": true, "neden": "Velayet değişikliği değişen koşullara, kaldırma ise ağır sebeplere dayanır (TMK m.183/348)." },
+    { "id": "cocuk_bilgi", "soru": "Çocuğun/çocukların adı, doğum tarihi ve hâlen fiilen kimin yanında kaldığı?", "tip": "metin",
+      "zorunlu": true, "neden": "Velayet kararı çocuğun yaşı ve fiilî durumu esas alınarak verilir." },
+    { "id": "mevcut_velayet", "soru": "Velayet hâlen kimde ve hangi karar/tarihle belirlendi?", "tip": "metin",
+      "zorunlu": true, "neden": "Değişiklik talebi mevcut velayet hükmüne dayanır." },
+    { "id": "degisiklik_sebebi", "soru": "Velayetin değiştirilmesini gerektiren olgular neler? (ihmal, kötü muamele, çocuğun üstün yararı, koşul değişimi)", "tip": "metin",
+      "zorunlu": true, "neden": "Velayet değişikliği ancak çocuğun yararı ve değişen koşulla mümkündür (TMK m.183)." },
+    { "id": "cocuk_gorusu", "soru": "Çocuk idrak çağında mı; görüşünün alınması isteniyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İdrak gücüne sahip çocuğun görüşü alınır (BM Çocuk Hakları Sözleşmesi m.12; yerleşik uygulama)." },
+    { "id": "kisisel_iliski", "soru": "Velayet talep edilirken diğer ebeveynle kişisel ilişki düzeni de isteniyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Velayet düzenlemesiyle birlikte kişisel ilişki de kurulur (TMK m.323)." }
+  ],
+
+  "kosullar": [
+    { "eger": "dava_turu == velayetin kaldırılması/değiştirilmesi (TMK m.348)",
+      "ekle": "Velayet hakkının kötüye kullanıldığı / çocuğun tehlikede olduğu somut olguları (ihmal, istismar, ağır kusur) ortaya koyan bir bölüm ekle (TMK m.348).",
+      "uyari": "Velayetin kaldırılması ağır sebep gerektirir; çocuğun korunması için gerekli görülür." },
+    { "eger": "cocuk_gorusu == evet",
+      "ekle": "Çocuğun idrak çağında olduğunu belirterek görüşünün ve gerekirse uzman (pedagog) görüşünün alınmasını talep et." },
+    { "eger": "kisisel_iliski == evet",
+      "ekle": "Velayet talebine ek olarak diğer ebeveynle kişisel ilişki günleri ve koşullarını sonuç-istemde düzenle (TMK m.323)." }
+  ],
+
+  "kontroller": [
+    "Talep çocuğun üstün yararı ölçütüyle gerekçelendirildi mi (TMK m.183)?",
+    "Velayet değişikliği için değişen koşullar / ağır sebepler somutlaştırıldı mı?",
+    "İdrak çağındaki çocuğun görüşünün alınması talep edildi mi?",
+    "Uzman (pedagog/sosyal inceleme) raporu talebi gündeme getirildi mi?",
+    "Velayetle birlikte kişisel ilişki ve iştirak nafakası düzeni kuruldu mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.183", "TMK m.335", "TMK m.348", "TMK m.323"],
+    "emsal_ara": "velayet değişikliği çocuğun üstün yararı idrak görüşü sosyal inceleme",
+    "vurgula": ["çocuğun üstün yararı ilkesi", "değişen koşul / ağır sebep ayrımı", "çocuğun görüşü ve uzman incelemesi"]
+  }
+}

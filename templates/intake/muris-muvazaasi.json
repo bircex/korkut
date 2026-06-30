@@ -1,0 +1,51 @@
+{
+  "tip": "muris-muvazaasi",
+  "ad": "Muris muvazaası (tapu iptal-tescil) dava dilekçesi",
+  "dayanak": ["TBK m.19", "TMK m.706", "TMK m.495-501"],
+
+  "sorular": [
+    { "id": "muris_ad", "soru": "Muris (vefat eden) ad-soyadı ve T.C. kimlik no?", "tip": "metin",
+      "zorunlu": true, "neden": "Muvazaalı işlemi yapan kişi; tereke kimliği (HMK m.119/d)." },
+    { "id": "olum_tarihi", "soru": "Ölüm tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Mirasçılık sıfatının ve dava hakkının doğduğu an (TMK m.575)." },
+    { "id": "davaci_sifat", "soru": "Davacının murise yakınlığı (mirasçılık sıfatı)?", "tip": "secim",
+      "secenekler": ["altsoy (çocuk/torun)", "sağ kalan eş", "ana-baba", "kardeş", "diğer yasal mirasçı"],
+      "zorunlu": true, "neden": "Muris muvazaasında dava hakkı yasal mirasçılara aittir." },
+    { "id": "tasinmaz_bilgi", "soru": "Muvazaaya konu taşınmazın tapu bilgileri (ada/parsel, il/ilçe)?", "tip": "metin",
+      "zorunlu": true, "neden": "Tapu iptal-tescil isteminin konusu (HMK m.119/d)." },
+    { "id": "gorunurdeki_islem", "soru": "Tapuda görünen işlem türü nedir?", "tip": "secim",
+      "secenekler": ["satış (bedelli devir)", "ölünceye kadar bakma sözleşmesi", "diğer"],
+      "zorunlu": true, "neden": "Görünürdeki (muvazaalı) işlemin nitelendirilmesi için." },
+    { "id": "gercek_amac_bagis", "soru": "Murisin gerçek amacının mirasçıdan mal kaçırmak (gizli bağış) olduğunu gösteren olgular?", "tip": "metin",
+      "zorunlu": true, "neden": "Muvazaanın ispatı: bedel ödenmemesi, satış-bağış uyumsuzluğu, akrabalık (TBK m.19)." },
+    { "id": "devralan_kim", "soru": "Taşınmazı devralan kişi kim ve murise yakınlığı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Davalı kimliği ve mal kaçırma saikinin değerlendirilmesi (HMK m.119/b)." },
+    { "id": "ucuncu_kisi_devir", "soru": "Taşınmaz sonradan iyiniyetli üçüncü kişiye devredildi mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İyiniyetli üçüncü kişi kazanımı korunabilir (TMK m.1023); tazminata dönüşebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "gorunurdeki_islem == ölünceye kadar bakma sözleşmesi",
+      "ekle": "Görünüşte ölünceye kadar bakma akdi olan işlemin gerçekte bağış amacı taşıdığını (bakım edimi gerçekleşmedi/gerekmiyordu) açıklayan bir bölüm ekle.",
+      "uyari": "Ölünceye kadar bakma sözleşmesi muvazaası ayrı emsalle değerlendirilir; bakım ihtiyacı/edimi sorgulanır." },
+    { "eger": "ucuncu_kisi_devir == evet",
+      "ekle": "Üçüncü kişi iyiniyetli değilse (muvazaayı biliyor/bilmesi gerekiyorsa) tescilin de iptalini, aksi halde tazminat/bedel talebini terditli olarak ekle.",
+      "uyari": "İyiniyetli üçüncü kişiye karşı tescil iptali istenemez (TMK m.1023); talep tazminata dönüşebilir." },
+    { "eger": "gercek_amac_bagis == ",
+      "uyari": "Muvazaa iddiası somut olgularla (bedelin ödenmemesi, denkleştirme, tanık) desteklenmeli; soyut iddia yetersizdir." }
+  ],
+
+  "kontroller": [
+    "Davacının yasal mirasçılık sıfatı (veraset ilamı) ortaya konuldu mu?",
+    "Görünürdeki işlemin muvazaalı, gizli işlemin bağış olduğu olgusal olarak kuruldu mu? (TBK m.19).",
+    "Tapu kaydı, akit tablosu ve bedel akışı dilekçede tarif edildi mi?",
+    "İyiniyetli üçüncü kişi devri varsa terditli tazminat talebi eklendi mi? (TMK m.1023).",
+    "Sonuç-istemde tapu iptali ve mirasçılar adına/payına tescil açıkça belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.19", "TMK m.706", "TMK m.1023", "TMK m.495"],
+    "emsal_ara": "muris muvazaası tapu iptal tescil mal kaçırma 1-2-1989 içtihat",
+    "vurgula": ["görünürdeki işlem ile gizli bağış ayrımı", "muvazaanın ispatı için karineler", "iyiniyetli üçüncü kişinin korunması"]
+  }
+}

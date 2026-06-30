@@ -1,0 +1,48 @@
+{
+  "tip": "tam-yargi",
+  "ad": "Tam yargı (tazminat) davası dilekçesi",
+  "dayanak": ["İYUK m.2", "İYUK m.12", "İYUK m.13", "İYUK m.7", "Anayasa m.125"],
+
+  "sorular": [
+    { "id": "zarar_kaynagi", "soru": "Zararın kaynağı bir idari işlem mi yoksa idari eylem mi?", "tip": "secim",
+      "secenekler": ["idari işlem (hukuka aykırı işlem)", "idari eylem (hizmet kusuru/kusursuz sorumluluk)"],
+      "zorunlu": true, "neden": "İşlem mi eylem mi olduğu süreyi ve usulü (İYUK m.12-13) belirler." },
+    { "id": "zarar_miktari", "soru": "Talep edilen tazminat miktarı (maddi/manevi) ve hesabı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabih ve harç matrahı; tam yargıda miktar belirtilir (İYUK m.3)." },
+    { "id": "olay_teblig_tarihi", "soru": "Zarara yol açan işlemin tebliği veya eylemin/zararın öğrenildiği tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "İşlemde 60 gün (m.12); eylemde önce m.13 başvurusu ve süreler buradan işler." },
+    { "id": "eylem_basvuru", "soru": "İdari eylemse, dava öncesi ilgili idareye yazılı başvuru yapıldı mı? (tarih)", "tip": "metin",
+      "zorunlu": false, "neden": "İdari eylemlerde dava öncesi idareye başvuru zorunludur (İYUK m.13)." },
+    { "id": "sorumluluk_turu", "soru": "İdarenin sorumluluğu hangi esasa dayanıyor (hizmet kusuru, kusursuz sorumluluk, sosyal risk)?", "tip": "secim",
+      "secenekler": ["hizmet kusuru", "kusursuz sorumluluk", "sosyal risk", "belirsiz/değerlendirilecek"],
+      "zorunlu": true, "neden": "Sorumluluk esası nedensellik ve ispat yükünü belirler (Anayasa m.125/son)." },
+    { "id": "nedensellik", "soru": "İdari işlem/eylem ile zarar arasındaki illiyet bağı nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tazminat için işlem/eylem-zarar arasında nedensellik bağı aranır." }
+  ],
+
+  "kosullar": [
+    { "eger": "zarar_kaynagi == idari eylem (hizmet kusuru/kusursuz sorumluluk)",
+      "ekle": "İYUK m.13 uyarınca dava öncesi idareye başvuruyu, idarenin cevabını/zımni reddini ve buna bağlı dava süresini açıklayan bir bölüm ekle.",
+      "uyari": "İdari eylemlerde dava açmadan önce 1 yıl/en geç 5 yıl içinde idareye başvuru zorunludur (İYUK m.13); başvurusuz dava reddedilir." },
+    { "eger": "zarar_kaynagi == idari işlem (hukuka aykırı işlem)",
+      "uyari": "İşlemden doğan tam yargı davası işlemin tebliğinden itibaren 60 gün içinde açılır; iptal davasıyla birlikte veya iptalden sonra açılabilir (İYUK m.12)." },
+    { "eger": "sorumluluk_turu == kusursuz sorumluluk",
+      "ekle": "Kusursuz sorumluluk (risk ilkesi/fedakârlığın denkleştirilmesi) esasını ve idarenin kusurunun aranmadığını açıklayan bir bölüm ekle." },
+    { "eger": "sorumluluk_turu == sosyal risk",
+      "ekle": "Sosyal risk ilkesini ve toplumsal/terör kaynaklı zararın idarece karşılanması gerekçesini açıklayan bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Zarar kaynağı (işlem/eylem) doğru nitelendirilip uygun usule (İYUK m.12 / m.13) bağlandı mı?",
+    "İdari eylemde dava öncesi idareye başvuru (m.13) yapıldı ve süreler doğru hesaplandı mı?",
+    "Sorumluluk esası (hizmet kusuru / kusursuz / sosyal risk) açıkça gerekçelendirildi mi?",
+    "İlliyet bağı ve zarar miktarı somut ve hesaplanabilir biçimde gösterildi mi?",
+    "Maddi ve manevi tazminat ayrı ayrı belirtilip müddeabih netleştirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İYUK m.12", "İYUK m.13", "İYUK m.7", "Anayasa m.125"],
+    "emsal_ara": "tam yargı davası hizmet kusuru kusursuz sorumluluk idari eylem m.13 başvuru",
+    "vurgula": ["işlem-eylem ayrımı ve m.13 ön başvuru", "sorumluluk esasları (kusur/kusursuz/sosyal risk)", "illiyet bağı ve zarar hesabı"]
+  }
+}

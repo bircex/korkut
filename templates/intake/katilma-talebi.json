@@ -1,0 +1,44 @@
+{
+  "tip": "katilma-talebi",
+  "ad": "Davaya katılma (müdahale) talebi",
+  "dayanak": ["CMK m.237", "CMK m.238", "CMK m.239"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Katılmak istediğiniz davanın esas numarası (..../..... E.) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin sunulacağı dosyanın belirlenmesi (CMK m.237)." },
+    { "id": "katilan_sifat", "soru": "Hangi sıfatla katılmak istiyorsunuz?", "tip": "secim",
+      "secenekler": ["suçtan zarar gören / mağdur", "şikâyetçi", "malen sorumlu"],
+      "zorunlu": true, "neden": "Katılma hakkı suçtan zarar görene/mağdura tanınır (CMK m.237/1)." },
+    { "id": "suc_tipi", "soru": "Davaya konu suç tipi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Suçtan doğrudan zarar görme bağının kurulması (CMK m.237)." },
+    { "id": "zarar_iliskisi", "soru": "Bu suç nedeniyle uğradığınız zararı / mağduriyetinizi açıklayın?", "tip": "metin",
+      "zorunlu": true, "neden": "Katılma için suçtan doğrudan zarar görme şartının ispatı (CMK m.237)." },
+    { "id": "asama", "soru": "Dava hangi aşamada? (henüz hüküm verilmedi / istinaf-temyiz aşaması)", "tip": "secim",
+      "secenekler": ["ilk derece — hüküm öncesi", "kanun yolu aşaması"],
+      "zorunlu": true, "neden": "Katılma hüküm verilinceye kadar mümkündür (CMK m.237/1)." },
+    { "id": "vekil_var", "soru": "Davayı bir vekil (avukat) aracılığıyla mı takip edeceksiniz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Katılanın vekille temsili ve giderlerin değerlendirilmesi (CMK m.239)." }
+  ],
+
+  "kosullar": [
+    { "eger": "asama == kanun yolu aşaması",
+      "uyari": "Katılma talebi hüküm verilinceye kadar yapılabilir; hükümden sonra (kanun yolu aşamasında) ilk kez katılma kural olarak mümkün değildir (CMK m.237/1)." },
+    { "eger": "katilan_sifat == malen sorumlu",
+      "ekle": "Malen sorumlu sıfatının dayanağını ve davayla menfaat ilişkisini açıklayan bir paragraf ekle." },
+    { "eger": "vekil_var == evet",
+      "ekle": "Katılanın vekil ile temsil edileceğini ve vekâletname/yetki bilgisini belirten bir ifade ekle (CMK m.239)." }
+  ],
+
+  "kontroller": [
+    "Muhatap: talep, davanın görüldüğü ilgili Ceza Mahkemesine hitaben mi yazıldı? (CMK m.238)",
+    "Katılma talebi hüküm verilmeden önce sunuluyor mu? (CMK m.237/1)",
+    "Suçtan doğrudan zarar görme bağı somut olarak ortaya konuldu mu?",
+    "Katılma sıfatına bağlı haklar (delil sunma, kanun yoluna başvurma — CMK m.237/2) talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.237", "CMK m.238", "CMK m.239"],
+    "emsal_ara": "davaya katılma müdahale suçtan zarar gören hüküm öncesi",
+    "vurgula": ["suçtan doğrudan zarar görme şartı", "katılmanın hüküm öncesinde yapılması", "katılanın usuli hakları (CMK m.237/2)"]
+  }
+}

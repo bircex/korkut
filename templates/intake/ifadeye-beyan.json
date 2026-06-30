@@ -1,0 +1,43 @@
+{
+  "tip": "ifadeye-beyan",
+  "ad": "Soruşturmada beyan / ek beyan dilekçesi",
+  "dayanak": ["CMK m.147", "CMK m.148", "CMK m.160"],
+
+  "sorular": [
+    { "id": "sorusturma_no", "soru": "Soruşturma numarası (..../..... Sor.) nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Beyanın doğru dosyaya eklenmesi (CMK m.160)." },
+    { "id": "beyan_sahibi_sifat", "soru": "Beyanda bulunan sıfatınız nedir?", "tip": "secim",
+      "secenekler": ["şüpheli", "müşteki/mağdur", "tanık"],
+      "zorunlu": true, "neden": "Sıfat, susma/kendini suçlamama hakkı ve usul güvencelerini belirler (CMK m.147)." },
+    { "id": "beyan_konusu", "soru": "Ek beyanınızın konusu nedir? (savunma, olgu düzeltmesi, yeni bilgi)", "tip": "metin",
+      "zorunlu": true, "neden": "Beyanın soruşturmaya katkısının değerlendirilmesi." },
+    { "id": "beyan_metni", "soru": "Beyan/savunma içeriğinizi yazın?", "tip": "metin",
+      "zorunlu": true, "neden": "Dosyaya geçecek esas beyan metni (CMK m.147-148)." },
+    { "id": "onceki_ifade", "soru": "Daha önce bu dosyada ifade verdiniz mi? (verdiyseniz tarihi)", "tip": "metin",
+      "zorunlu": false, "neden": "Önceki ifadeyle çelişki/tamamlama ilişkisinin kurulması." },
+    { "id": "musteki_zarar", "soru": "Müşteki iseniz uğradığınız zararı/talebinizi belirtin?", "tip": "metin",
+      "zorunlu": false, "neden": "Mağdurun beyanı ve talebinin dosyaya yansıtılması (CMK m.160)." }
+  ],
+
+  "kosullar": [
+    { "eger": "beyan_sahibi_sifat == şüpheli",
+      "uyari": "Şüphelinin susma hakkı ve kendini suçlamama ilkesi (CMK m.147/1-e) saklıdır; beyan baskı altında alınamaz, müdafi hakkı hatırlatılmalıdır." },
+    { "eger": "onceki_ifade != ",
+      "ekle": "Önceki ifadeyle bu beyan arasındaki ilişkiyi (tamamlama/düzeltme) açıklayan bir paragraf ekle." },
+    { "eger": "beyan_sahibi_sifat == müşteki/mağdur",
+      "ekle": "Mağdurun haklarına (CMK m.234) ve varsa şikâyet/talep beyanına ilişkin bir bölüm ekle." }
+  ],
+
+  "kontroller": [
+    "Muhatap: dilekçe soruşturmayı yürüten Cumhuriyet Başsavcılığı'na hitaben mi yazıldı? (CMK m.160)",
+    "Soruşturma numarası ve beyan sahibinin sıfatı dilekçede açık mı?",
+    "Şüpheliyse müdafi hakkı ve susma hakkı (CMK m.147) ihlal edilmeden beyan alınmış mı?",
+    "Beyanın dosyaya eklenmesi talebi sonuç kısmında yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.147", "CMK m.148", "CMK m.160"],
+    "emsal_ara": "soruşturma ek beyan şüpheli susma hakkı müdafi ifade",
+    "vurgula": ["sıfata göre değişen usul güvenceleri", "şüphelinin susma ve müdafi hakkı (CMK m.147)", "beyanın hukuka uygun alınması"]
+  }
+}

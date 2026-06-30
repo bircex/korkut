@@ -1,0 +1,49 @@
+{
+  "tip": "cekismeli-bosanma",
+  "ad": "Çekişmeli boşanma dava dilekçesi",
+  "dayanak": ["TMK m.166", "TMK m.161-165", "TMK m.174", "HMK m.119"],
+
+  "sorular": [
+    { "id": "evlilik_tarihi", "soru": "Evlilik (resmî nikâh) tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Evlilik süresi ve birlikte yaşam dönemi kusur/tazminat değerlendirmesi için gerekir." },
+    { "id": "bosanma_sebebi", "soru": "Boşanma hangi sebebe dayanıyor?", "tip": "secim",
+      "secenekler": ["evlilik birliğinin temelinden sarsılması (TMK m.166/1)", "zina (TMK m.161)", "hayata kast/pek kötü muamele (TMK m.162)", "suç işleme/haysiyetsiz hayat (TMK m.163)", "terk (TMK m.164)", "akıl hastalığı (TMK m.165)"],
+      "zorunlu": true, "neden": "Dayanılan sebep ispat konusu vakıaları ve uygulanacak özel hükmü belirler." },
+    { "id": "kusur_vakialari", "soru": "Davalının kusurlu davranışlarını (vakıaları) tarih ve olayla özetleyin?", "tip": "metin",
+      "zorunlu": true, "neden": "Genel boşanma sebebinde kusur ve geçimsizlik somut vakıalarla ispatlanır (TMK m.166/1)." },
+    { "id": "ortak_cocuk", "soru": "Ortak (müşterek) çocuk var mı? Varsa sayısı, yaşları ve fiilen kimde kaldığı?", "tip": "metin",
+      "zorunlu": true, "neden": "Velayet, iştirak nafakası ve kişisel ilişki talepleri için gereklidir." },
+    { "id": "talep_kalemleri", "soru": "Hangi feri talepler isteniyor? (velayet, tedbir/yoksulluk/iştirak nafakası, maddi-manevi tazminat)", "tip": "metin",
+      "zorunlu": true, "neden": "Tazminat (TMK m.174) ve nafaka talepleri dava dilekçesinde açıkça gösterilmelidir." },
+    { "id": "tedbir_talebi", "soru": "Yargılama süresince tedbir nafakası / velayet / barınma tedbiri isteniyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Hâkim dava süresince geçici önlemlere kendiliğinden de karar verebilir (TMK m.169)." },
+    { "id": "siddet_var", "soru": "Aile içi şiddet/tehdit söz konusu mu (6284 tedbiri gerekir mi)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Şiddet varsa 6284 sayılı Kanun kapsamında koruyucu/önleyici tedbir talep edilebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "bosanma_sebebi == zina (TMK m.161)",
+      "uyari": "Zina sebebi öğrenmeden itibaren 6 ay ve her hâlde 5 yıllık hak düşürücü süreye tabidir (TMK m.161/2). Süreyi teyit et." },
+    { "eger": "tedbir_talebi == evet",
+      "ekle": "Yargılama süresince eşin/çocukların geçimi ve barınması için tedbir nafakası ve geçici velayet talebini ayrı bir ara-talep olarak ekle (TMK m.169)." },
+    { "eger": "siddet_var == evet",
+      "ekle": "6284 sayılı Kanun kapsamında koruyucu/önleyici tedbir (uzaklaştırma) talebini gündeme getir.",
+      "uyari": "Şiddet iddiası varsa derhal koruma tedbiri için ayrı/ek başvuru değerlendirilmelidir." },
+    { "eger": "talep_kalemleri != hayir",
+      "ekle": "Maddi-manevi tazminat (TMK m.174) talebinde davacının kusursuz/az kusurlu, davalının ağır kusurlu olduğunu vakıalara bağlayarak gerekçelendir." }
+  ],
+
+  "kontroller": [
+    "Dayanılan boşanma sebebi ile ileri sürülen vakıalar birbiriyle tutarlı mı?",
+    "Kusur vakıaları tarih-olay-tanık eşleşmesiyle somutlaştırıldı mı (TMK m.166/1)?",
+    "Velayet ve iştirak nafakası talepleri çocuğun yararı ölçütüyle gerekçelendirildi mi?",
+    "Tazminat talebinde kusur dengesi (davalının ağır/eşit kusuru) açıklandı mı (TMK m.174)?",
+    "Özel sebebe (zina/terk vb.) dayanılıyorsa hak düşürücü süreler kontrol edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.166", "TMK m.161", "TMK m.164", "TMK m.169", "TMK m.174"],
+    "emsal_ara": "çekişmeli boşanma kusur evlilik birliği temelinden sarsılma tazminat",
+    "vurgula": ["kusur dengesi ve ispat", "boşanma sebebine bağlı özel süreler", "feri talepler (nafaka/velayet/tazminat) bütünlüğü"]
+  }
+}

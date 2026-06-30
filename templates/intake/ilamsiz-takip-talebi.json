@@ -1,0 +1,45 @@
+{
+  "tip": "ilamsiz-takip-talebi",
+  "ad": "İlamsız icra takip talebi",
+  "dayanak": ["İİK m.42", "İİK m.58", "İİK m.60", "İİK m.62"],
+
+  "sorular": [
+    { "id": "alacak_dayanagi", "soru": "Alacağın dayanağı nedir? (sözleşme, fatura, cari hesap, ödünç, kira vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "İlamsız takip ilama/senede bağlı olmayan para/teminat alacakları içindir (İİK m.42); takip talebinde sebep gösterilir (İİK m.58/3)." },
+    { "id": "alacak_tutari", "soru": "Asıl alacak tutarı ve para birimi nedir?", "tip": "sayi",
+      "zorunlu": true, "neden": "Takip talebinde alacağın miktarı açıkça gösterilmelidir (İİK m.58/3)." },
+    { "id": "faiz_turu", "soru": "Talep edilen faiz türü ve başlangıç tarihi nedir? (yasal/ticari/akdi; muacceliyet/temerrüt tarihi)", "tip": "metin",
+      "zorunlu": true, "neden": "Faiz oranı ve işleme tarihi takip talebinde belirtilir (İİK m.58/3); aksi halde ödeme emrinde gösterilemez." },
+    { "id": "borclu_sayisi", "soru": "Borçlu sayısı ve birden fazlaysa sorumluluk türü (müteselsil mi)?", "tip": "metin",
+      "zorunlu": true, "neden": "Her borçluya ayrı ödeme emri çıkar; müteselsil sorumluluk takip talebinde gösterilir." },
+    { "id": "muacceliyet", "soru": "Borç muaccel mi? Vade/muacceliyet tarihi nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Muaccel olmayan alacak için ilamsız takip yapılamaz; faiz başlangıcı ve itiraz değerlendirmesi buna bağlıdır." },
+    { "id": "yabanci_para", "soru": "Alacak yabancı para cinsinden mi? Aynen mi TL karşılığı mı isteniyor?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Yabancı para alacağında talebin aynen/çevrim şekli ve kur tarihi takip talebinde gösterilmelidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "faiz_turu != yok",
+      "ekle": "Faiz türü, oranı ve işlemeye başladığı tarihi takip talebinde açıkça hesapla ve dök.",
+      "uyari": "Takip talebinde gösterilmeyen faiz/oran ödeme emrine yansımaz; itiraz halinde fazlaya hak düşebilir." },
+    { "eger": "borclu_sayisi > 1",
+      "uyari": "Birden çok borçluya AYRI ödeme emri tebliğ edilir; itiraz süresi her borçlu için tebliğden ayrı işler." },
+    { "eger": "muacceliyet != hayir",
+      "uyari": "Borç muaccel değilse ilamsız takip açılamaz; vade/muacceliyet tarihini teyit et." },
+    { "eger": "yabanci_para == evet",
+      "ekle": "Yabancı para alacağında aynen veya fiili ödeme günü kuru üzerinden TL talebini ve dayanağını ekle (BK m.99)." }
+  ],
+
+  "kontroller": [
+    "Takip talebinde alacağın sebebi, miktarı, faiz türü-oranı-başlangıcı eksiksiz mi (İİK m.58)?",
+    "Borçluya ödeme emri tebliğinden sonra 7 günlük itiraz süresi işlemeye başlar (İİK m.62) — süreyi takip et.",
+    "İtiraz gelmezse takip kesinleşir; 1 yıl içinde haciz istenmezse dosya işlemden kalkar (İİK m.78).",
+    "Müteselsil borçlu varsa her birine ayrı ödeme emri çıkarıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.42", "İİK m.58", "İİK m.60", "İİK m.62", "İİK m.78"],
+    "emsal_ara": "ilamsız takip ödeme emri itiraz süre faiz takip talebi",
+    "vurgula": ["takip talebinin zorunlu unsurları (İİK m.58)", "ödeme emrine 7 günlük itiraz süresi", "muacceliyet ve faiz başlangıcı"]
+  }
+}

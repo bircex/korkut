@@ -1,0 +1,42 @@
+{
+  "tip": "menfi-tespit",
+  "ad": "Menfi tespit dava dilekçesi",
+  "dayanak": ["İİK m.72", "HMK m.106", "TBK m.131"],
+
+  "sorular": [
+    { "id": "borc_iliskisi", "soru": "Borçlu olmadığınızı iddia ettiğiniz borç ilişkisi nedir (sözleşme, senet, takip vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Tespiti istenen hukuki ilişkinin konusu (HMK m.106)." },
+    { "id": "takip_var", "soru": "Bu borç için aleyhinize başlatılmış bir icra takibi var mı? Varsa takip no ve tarihi?", "tip": "metin",
+      "zorunlu": true, "neden": "Takipten önce/sonra menfi tespitin usulü ve sonuçları farklıdır (İİK m.72)." },
+    { "id": "borcsuzluk_nedeni", "soru": "Neden borçlu olmadığınızı açıklayın (borç hiç doğmadı / ödendi / ifa imkânsız / muvazaa vb.).", "tip": "metin",
+      "zorunlu": true, "neden": "Menfi tespitin esasını oluşturan vakıalar." },
+    { "id": "odeme_iddiasi", "soru": "Borcun ödendiğini mi iddia ediyorsunuz? (Evetse istirdat talebi gerekir.)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Ödenmiş borçta menfi tespit değil istirdat davası açılır (İİK m.72/6)." },
+    { "id": "tedbir_talebi", "soru": "Takibin durdurulması / paranın alacaklıya ödenmemesi için ihtiyati tedbir istiyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Menfi tespitte tedbirle takip durdurulabilir/teminat şartı (İİK m.72/2-3)." }
+  ],
+
+  "kosullar": [
+    { "eger": "odeme_iddiasi == evet",
+      "uyari": "KRİTİK: Borç ÖDENMİŞSE menfi tespit dinlenmez; istirdat davası açılmalıdır (İİK m.72/6). Talebi istirdata çevir." },
+    { "eger": "takip_var != yok",
+      "ekle": "Takipten sonra açılan menfi tespitte takibin durmayacağını, ancak %15 teminatla satışın durdurulabileceğini açıklayan paragraf ve tedbir talebini ekle (İİK m.72/3).",
+      "uyari": "Takipten sonra menfi tespit takibi kendiliğinden durdurmaz; tedbir ve teminat şartlarını kur." },
+    { "eger": "tedbir_talebi == evet",
+      "ekle": "İhtiyati tedbir talebini, teminat oranını ve alacaklıya ödeme yapılmaması istemini ayrı başlıkta düzenle (İİK m.72/2-3)." }
+  ],
+
+  "kontroller": [
+    "Hukuki yarar (borç tehdidi/takip riski) somut olarak gösterildi mi (HMK m.106)?",
+    "Borç ödenmişse istirdata; ödenmemişse menfi tespite doğru karar verildi mi (İİK m.72/6)?",
+    "Takipten önce/sonra açılma durumuna göre tedbir ve teminat (İİK m.72/2-3) düzenlendi mi?",
+    "Davayı kazanan borçlu lehine %20 tazminat ihtimali (İİK m.72/4) öngörüldü mü?",
+    "İspat yükü dağılımı (borcun varlığını alacaklı ispatlar) dilekçede vurgulandı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.72", "HMK m.106"],
+    "emsal_ara": "menfi tespit davası icra takibi teminat ihtiyati tedbir istirdat ayrımı",
+    "vurgula": ["takipten önce/sonra menfi tespit ayrımı", "ödenmiş borçta istirdat zorunluluğu", "ihtiyati tedbir ve teminat"]
+  }
+}

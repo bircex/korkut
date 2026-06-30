@@ -1,0 +1,44 @@
+{
+  "tip": "nafaka-artirim",
+  "ad": "Nafaka artırım / azaltım dava dilekçesi",
+  "dayanak": ["TMK m.331", "TMK m.176/4", "TMK m.365", "HMK m.119"],
+
+  "sorular": [
+    { "id": "talep_yonu", "soru": "Talep artırım mı, azaltım mı (veya kaldırma)?", "tip": "secim",
+      "secenekler": ["nafakanın artırılması", "nafakanın azaltılması", "nafakanın kaldırılması"],
+      "zorunlu": true, "neden": "Talebin yönü ispat yükünü ve değişen koşul iddiasını belirler (TMK m.331/176)." },
+    { "id": "mevcut_nafaka", "soru": "Hâlen ödenen nafaka türü, aylık tutarı ve hangi karar/dosya ile belirlendiği?", "tip": "metin",
+      "zorunlu": true, "neden": "Değişiklik talebi mevcut hükme dayanır; karar ve tutar belirtilmelidir." },
+    { "id": "karar_tarihi", "soru": "Mevcut nafaka hangi tarihli kararla belirlendi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Aradan geçen süre ve koşulların değişimi bu tarihe göre değerlendirilir." },
+    { "id": "degisen_kosul", "soru": "Tarafların durumunda değişen koşullar neler? (gelir artışı/azalması, çocuğun büyümesi, ihtiyaç değişimi, enflasyon)", "tip": "metin",
+      "zorunlu": true, "neden": "Hâkim, koşulların değişmesi hâlinde nafakayı yeniden takdir eder (TMK m.331)." },
+    { "id": "talep_miktar", "soru": "Talep edilen yeni aylık nafaka miktarı nedir?", "tip": "sayi",
+      "zorunlu": true, "neden": "Yeni miktar/oran talebi sonuç-istemde açıkça belirtilmelidir." },
+    { "id": "uefe_artirim", "soru": "İleriye dönük her yıl ÜFE/TÜFE oranında otomatik artış da isteniyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tarafların durumu uygunsa hâkim her yıl artış oranına da karar verebilir (TMK m.176/4)." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_yonu == nafakanın artırılması",
+      "ekle": "Yükümlünün gelirindeki artışı veya alacaklının/çocuğun ihtiyacındaki artışı ve hayat pahalılığını somut verilerle gösteren bir bölüm ekle (TMK m.331)." },
+    { "eger": "talep_yonu == nafakanın azaltılması",
+      "ekle": "Yükümlünün ödeme gücündeki düşüşü veya alacaklının ihtiyacının ortadan kalktığını somut delillerle açıklayan bir bölüm ekle (TMK m.331)." },
+    { "eger": "uefe_artirim == evet",
+      "ekle": "Sonuç-istemde, nafakanın takip eden her yıl ÜFE/TÜFE oranında artırılmasına karar verilmesini talep et (TMK m.176/4)." }
+  ],
+
+  "kontroller": [
+    "Mevcut nafakayı belirleyen karar ve tutar dilekçede tam olarak gösterildi mi?",
+    "Koşulların hangi yönde ve ne ölçüde değiştiği somut verilerle ortaya konuldu mu (TMK m.331)?",
+    "Talep edilen yeni miktar/oran sonuç-istemde açık ve belirli mi?",
+    "Hakkaniyet ve orantı (yükümlünün gücü - alacaklının ihtiyacı) dengesi kuruldu mu?",
+    "ÜFE/TÜFE artışı isteniyorsa ileriye dönük talep ayrıca gösterildi mi (TMK m.176/4)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.331", "TMK m.176/4", "TMK m.365"],
+    "emsal_ara": "nafaka artırım azaltım değişen koşullar ÜFE hakkaniyet",
+    "vurgula": ["koşulların değişmesi şartı", "hakkaniyet ve orantı", "ileriye dönük endeks artışı imkânı"]
+  }
+}

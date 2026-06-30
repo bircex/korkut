@@ -1,0 +1,47 @@
+{
+  "tip": "iptal-davasi",
+  "ad": "İptal davası dilekçesi",
+  "dayanak": ["İYUK m.2", "İYUK m.7", "İYUK m.10", "İYUK m.11", "İYUK m.3"],
+
+  "sorular": [
+    { "id": "dava_konusu_islem", "soru": "İptali istenen idari işlem nedir (kararın/işlemin adı, sayısı, konusu)?", "tip": "metin",
+      "zorunlu": true, "neden": "İptal davasının konusu kesin ve yürütülebilir idari işlemdir (İYUK m.2/1-a); konu (İYUK m.3)." },
+    { "id": "teblig_tarihi", "soru": "İşlem size ne zaman tebliğ edildi / ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "60 günlük dava açma süresi tebliğ/öğrenme tarihinden işler (İYUK m.7)." },
+    { "id": "iptal_sebepleri", "soru": "İşlemin hangi unsurları hukuka aykırı (yetki, şekil, sebep, konu, maksat)?", "tip": "secim",
+      "secenekler": ["yetki", "şekil", "sebep", "konu", "maksat (kamu yararı)", "birden fazlası"],
+      "zorunlu": true, "neden": "İptal sebepleri işlemin beş unsuru üzerinden kurulur (İYUK m.2/1-a)." },
+    { "id": "iyuk11_basvuru", "soru": "Dava açmadan önce İYUK m.11 kapsamında üst makama/işlemi yapan makama başvurdunuz mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İsteğe bağlı m.11 başvurusu süreyi durdurur; cevaba göre süre yeniden işler." },
+    { "id": "yurutme_durdurma", "soru": "Yürütmenin durdurulmasını talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Telafisi güç zarar + açık hukuka aykırılık koşullarıyla YD istenebilir (İYUK m.27)." },
+    { "id": "menfaat_ilgisi", "soru": "İşlemle aranızdaki güncel, kişisel ve meşru menfaat ilişkisi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "İptal davası açma ehliyeti menfaat ihlaline bağlıdır (İYUK m.2/1-a)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(teblig_tarihi) > 60",
+      "uyari": "KRİTİK: tebliğden bu yana 60 günü aşmış görünüyor — dava açma süresi (İYUK m.7) geçmiş olabilir. m.11 başvurusu yapıldıysa süre durmuş olabilir; tarihleri yeniden hesapla." },
+    { "eger": "iyuk11_basvuru == evet",
+      "ekle": "İYUK m.11 başvurusunun tarihini, idarenin cevabını (veya 60 günlük zımni ret) ve kalan dava süresinin nasıl hesaplandığını açıklayan bir paragraf ekle.",
+      "uyari": "m.11 başvurusu işlemeye başlamış süreyi durdurur; cevap/zımni ret sonrası kalan süreyle birlikte işler." },
+    { "eger": "yurutme_durdurma == evet",
+      "ekle": "Yürütmenin durdurulması istemini; uygulanması hâlinde telafisi güç/imkânsız zararı ve işlemin açıkça hukuka aykırılığını somutlaştıran ayrı bir bölüm ekle (İYUK m.27)." },
+    { "eger": "iptal_sebepleri == yetki",
+      "ekle": "İşlemi tesis eden makamın yetkisizliğini (konu/yer/zaman bakımından) açıklayan bir bölüm ekle; yetki en önce incelenen unsurdur." }
+  ],
+
+  "kontroller": [
+    "Dava süresi: tebliğ/öğrenmeden 60 gün (İYUK m.7); m.11 başvurusu varsa durması/işlemesi doğru hesaplandı mı?",
+    "İşlemin kesin ve yürütülebilir idari işlem (İYUK m.2) niteliği taşıdığı gösterildi mi?",
+    "İptal sebepleri işlemin beş unsuru (yetki/şekil/sebep/konu/maksat) üzerinden kuruldu mu?",
+    "Menfaat ihlali (güncel-kişisel-meşru) ile dava açma ehliyeti ortaya konuldu mu?",
+    "YD istemi varsa İYUK m.27 koşulları (telafisi güç zarar + açık hukuka aykırılık) belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İYUK m.2", "İYUK m.7", "İYUK m.11", "İYUK m.27"],
+    "emsal_ara": "iptal davası idari işlem unsurları yetki şekil sebep menfaat 60 gün",
+    "vurgula": ["idari işlemin beş unsuru", "60 günlük süre ve m.11 etkisi", "menfaat ihlali ehliyeti"]
+  }
+}

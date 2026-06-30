@@ -1,0 +1,47 @@
+{
+  "tip": "icra-takibine-itiraz-iiK16",
+  "ad": "İcra memur işlemini şikâyet dilekçesi (İİK m.16)",
+  "dayanak": ["İİK m.16", "İİK m.17", "İİK m.18"],
+
+  "sorular": [
+    { "id": "takip_no", "soru": "İcra dairesi ve takip (esas) numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Şikâyet, işlemi yapan icra dairesi dosyasına ilişkindir; icra mahkemesi dosyayı bu numarayla inceler (İİK m.16)." },
+    { "id": "sikayet_konusu_islem", "soru": "Şikâyet konusu icra memuru işlemi nedir? (haciz, kıymet takdiri, sıra cetveli, ihale, ödeme emri düzenlenmesi vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Şikâyet, kanuna/olaya aykırı somut bir memur işlemine yöneliktir (İİK m.16); işlem açıkça tanımlanmalıdır." },
+    { "id": "islem_ogrenme_tarihi", "soru": "Şikâyet konusu işlemi/işlemin öğrenildiği tarih nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Süreli şikâyet, işlemin öğrenilmesinden itibaren 7 GÜN içinde yapılır (İİK m.16/1); süre hak düşürücüdür." },
+    { "id": "sikayet_turu", "soru": "Şikâyet süreli mi yoksa süresiz mi? (kamu düzenine aykırılık / hakkın yerine getirilmemesi gibi süresiz haller var mı)", "tip": "secim",
+      "secenekler": ["süreli şikâyet (7 gün)", "süresiz şikâyet (kamu düzeni / hakkın yerine getirilmemesi - sürüncemede bırakma)"],
+      "zorunlu": true, "neden": "Bir hakkın yerine getirilmemesi/sebepsiz sürüncemede bırakılması ve kamu düzenine aykırılık süresiz şikâyete tabidir (İİK m.16/2)." },
+    { "id": "aykiriligin_sebebi", "soru": "İşlemin kanuna veya olaya aykırılığının somut sebebi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Şikâyette işlemin neden hukuka aykırı olduğu açıklanmalıdır; icra mahkemesi bu çerçevede inceler (İİK m.17)." },
+    { "id": "talep_turu", "soru": "Talebiniz nedir? (işlemin iptali, düzeltilmesi, yapılması gereken işlemin yapılması)", "tip": "secim",
+      "secenekler": ["işlemin iptali", "işlemin düzeltilmesi", "yapılması gereken işlemin yaptırılması"],
+      "zorunlu": true, "neden": "İcra mahkemesi şikâyeti kabulde işlemi bozar, düzeltir veya yapılmasını emreder (İİK m.17)." }
+  ],
+
+  "kosullar": [
+    { "eger": "sikayet_turu == süreli şikâyet (7 gün)",
+      "uyari": "Süreli şikâyet, işlemin ÖĞRENİLMESİNDEN itibaren 7 GÜN içinde icra mahkemesine yapılmalıdır (İİK m.16/1); öğrenme tarihini delillendir." },
+    { "eger": "gun_farki(islem_ogrenme_tarihi) > 7",
+      "uyari": "KRİTİK: işlemin öğrenilmesinden bu yana 7 günü aşmış görünüyor — süreli şikâyet süresi geçmiş olabilir. İşlemin süresiz şikâyet kapsamına girip girmediğini (İİK m.16/2) değerlendir." },
+    { "eger": "sikayet_turu == süresiz şikâyet (kamu düzeni / hakkın yerine getirilmemesi - sürüncemede bırakma)",
+      "ekle": "Şikâyetin neden süreye bağlı olmadığını (kamu düzeni / hakkın yerine getirilmemesi-sürüncemede bırakma) gerekçelendiren bir bölüm ekle (İİK m.16/2)." },
+    { "eger": "talep_turu == yapılması gereken işlemin yaptırılması",
+      "uyari": "Bir hakkın yerine getirilmemesi/sürüncemede bırakılması süresiz şikâyettir; talebi buna göre kur." }
+  ],
+
+  "kontroller": [
+    "Şikâyet doğru mercie (işlemi yapan icra dairesinin bağlı olduğu icra mahkemesi) yönlendirildi mi?",
+    "Süreli şikâyette 7 günlük süre, işlemin öğrenildiği tarihten hesaplandı mı (İİK m.16/1)?",
+    "Süresiz şikâyet iddia ediliyorsa kamu düzeni/hakkın yerine getirilmemesi gerekçesi açıkça gösterildi mi?",
+    "Şikâyet kural olarak takibi/işlemi kendiliğinden durdurmaz; gerekiyorsa icranın geri bırakılması (durdurma) ayrıca talep edildi mi?",
+    "Talep (iptal/düzeltme/yaptırma) işlemin niteliğine uygun mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.16", "İİK m.17", "İİK m.18"],
+    "emsal_ara": "icra memur işlemi şikayet 7 gün süresiz şikayet icra mahkemesi",
+    "vurgula": ["7 günlük süreli şikâyet ve öğrenme tarihi", "süresiz şikâyet halleri (İİK m.16/2)", "şikâyetin takibi durdurmaması"]
+  }
+}

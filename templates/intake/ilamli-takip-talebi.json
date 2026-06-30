@@ -1,0 +1,44 @@
+{
+  "tip": "ilamli-takip-talebi",
+  "ad": "İlamlı icra takip talebi",
+  "dayanak": ["İİK m.24", "İİK m.32", "İİK m.34", "İİK m.38"],
+
+  "sorular": [
+    { "id": "ilam_turu", "soru": "Takibe konu belge nedir? (mahkeme ilamı, ilam niteliğinde belge, kesinleşmiş hakem kararı vb.)", "tip": "secim",
+      "secenekler": ["mahkeme ilamı", "ilam niteliğinde belge (İİK m.38)", "hakem kararı", "noter senedi (para alacağı)", "diğer"],
+      "zorunlu": true, "neden": "İlamlı takip yalnızca ilam veya ilam niteliğindeki belgelere dayanır (İİK m.38)." },
+    { "id": "ilam_bilgisi", "soru": "İlamı veren mahkeme, esas-karar numarası ve karar tarihi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Takip talebinde ilam dayanağı kimliğiyle gösterilir (İİK m.58)." },
+    { "id": "kesinlesme", "soru": "İlam kesinleşti mi? (kesinleşme şerhi var mı)", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Bazı ilamlar (taşınmaz aynı, aile-şahsın hukuku) kesinleşmeden icra edilemez (İİK m.36, HMK m.367/2)." },
+    { "id": "ilam_konusu", "soru": "İlamın hüküm fıkrası neyi içeriyor? (para, taşınır/taşınmaz teslimi, bir işin yapılması, çocuk teslimi)", "tip": "metin",
+      "zorunlu": true, "neden": "İcra emrinin türü ve süresi ilamın konusuna göre değişir (İİK m.24, m.30, m.32)." },
+    { "id": "yargilama_gideri_vekalet", "soru": "İlamda yargılama gideri ve vekâlet ücreti hükmü var mı? Tutarları?", "tip": "metin",
+      "zorunlu": false, "neden": "Bunlar da ilamla birlikte ilamlı takibe konulabilir." },
+    { "id": "faiz_baslangici", "soru": "Para alacağında faiz hangi tarihten ve hangi oranla isteniyor?", "tip": "metin",
+      "zorunlu": false, "neden": "İlamda hükmedilen faiz ve dava/karar tarihinden işleyecek faiz takip talebinde gösterilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "kesinlesme == hayir",
+      "uyari": "Taşınmaz aynına/aile ve şahsın hukukuna ilişkin ilamlar KESİNLEŞMEDEN icraya konamaz (İİK m.36; HMK m.367/2). İlam konusunu teyit et." },
+    { "eger": "ilam_konusu != para",
+      "ekle": "İlam konusu para dışı ise (teslim/yapma/çocuk teslimi) icra emrinin İİK m.24/30/32'ye uygun türünü ve uygulanacak özel süreyi belirt.",
+      "uyari": "Para dışı ilamlarda icra emri süresi ve usulü farklıdır; doğru maddeyi seç." },
+    { "eger": "ilam_turu == noter senedi (para alacağı)",
+      "uyari": "Para borcu ikrarını içeren noter senetleri ilam niteliğindedir (İİK m.38); icra emri buna göre çıkar." }
+  ],
+
+  "kontroller": [
+    "İcra emri tebliğinden sonra borçlu 7 GÜN içinde ödemezse haciz/işlem başlar (İİK m.32) — süreyi izle.",
+    "İlamlı takipte ödeme emri değil İCRA EMRİ çıkar; talep ve dayanak buna göre yazıldı mı?",
+    "Kesinleşme şartı olan ilamlarda kesinleşme şerhi dosyaya eklendi mi (İİK m.36)?",
+    "Yargılama gideri ve vekâlet ücreti ilam uyarınca takibe doğru aktarıldı mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İİK m.24", "İİK m.32", "İİK m.34", "İİK m.36", "İİK m.38"],
+    "emsal_ara": "ilamlı takip icra emri kesinleşme şartı 7 gün",
+    "vurgula": ["ilam niteliğindeki belgeler (İİK m.38)", "kesinleşmeden icra yasağı (İİK m.36)", "icra emrine 7 günlük süre"]
+  }
+}

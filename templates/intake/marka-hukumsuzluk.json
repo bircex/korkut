@@ -1,0 +1,50 @@
+{
+  "tip": "marka-hukumsuzluk",
+  "ad": "Marka/patent hükümsüzlüğü dava dilekçesi",
+  "dayanak": ["SMK m.25", "SMK m.5", "SMK m.6", "SMK m.138"],
+
+  "sorular": [
+    { "id": "hak_turu", "soru": "Hükümsüzlüğü istenen sınai hak nedir: marka mı, patent/faydalı model mi, tasarım mı?", "tip": "secim",
+      "secenekler": ["marka (SMK m.25)", "patent/faydalı model (SMK m.138)", "tasarım (SMK m.77)"],
+      "zorunlu": true, "neden": "Hükümsüzlük sebepleri ve dayanak madde hak türüne göre değişir." },
+    { "id": "tescil_no", "soru": "Hükümsüzlüğü istenen tescilin TÜRKPATENT tescil/başvuru numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Dava konusu hakkın tek tek belirlenmesi (sicil kaydıyla eşleştirme) için." },
+    { "id": "tescil_tarihi", "soru": "Söz konusu hakkın tescil/yayım tarihi nedir?", "tip": "tarih",
+      "zorunlu": true, "neden": "Hükümsüzlük süresi ve sessiz kalma yoluyla hak kaybı (SMK m.25/6 — 5 yıl) değerlendirmesi için." },
+    { "id": "hukumsuzluk_sebebi", "soru": "Hükümsüzlük hangi sebebe dayanıyor (mutlak red — SMK m.5 / nispi red — SMK m.6)?", "tip": "secim",
+      "secenekler": ["mutlak ret sebebi (ayırt edicilik yok/tanımlayıcı/yanıltıcı — SMK m.5)", "nispi ret sebebi (önceki hak/karıştırılma — SMK m.6)", "kötüniyetli tescil", "patentte yenilik/buluş basamağı yokluğu (SMK m.138)"],
+      "zorunlu": true, "neden": "İleri sürülebilecek sebep ve husumet (önceki hak sahipliği) bu seçime bağlıdır." },
+    { "id": "onceki_hak", "soru": "Nispi sebep ileri sürülüyorsa dayandığınız önceki marka/hak nedir (tescil no/kullanım)?", "tip": "metin",
+      "zorunlu": false, "neden": "SMK m.6 nispi sebepte davacının önceki ve üstün hakkını ispatı gerekir." },
+    { "id": "menfaat", "soru": "Davacının hükümsüzlükteki hukuki yararı/menfaati nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Hükümsüzlük davasını menfaati olanlar açabilir (SMK m.25/2); hukuki yarar dava şartıdır." },
+    { "id": "kullanim_savunmasi", "soru": "Dayandığınız önceki marka 5 yıldan eski mi; ciddi kullanımını ispatlayabilir misiniz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Karşı tarafın kullanmama def'i (SMK m.25/7, m.19/2) ileri sürmesi halinde gereklidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "hukumsuzluk_sebebi == nispi ret sebebi (önceki hak/karıştırılma — SMK m.6)",
+      "sor": ["onceki_hak", "kullanim_savunmasi"],
+      "ekle": "Önceki hakkın üstünlüğünü, mal/hizmet benzerliğini ve karıştırılma ihtimalini (SMK m.6/1) somut karşılaştırmayla açıklayan bir bölüm ekle." },
+    { "eger": "hak_turu == marka (SMK m.25)",
+      "uyari": "Markada nispi sebebe dayalı hükümsüzlük talebinde, davacının markasına 5 yıl süreyle sessiz kalınmışsa hak düşebilir (SMK m.25/6); süreyi değerlendir." },
+    { "eger": "hukumsuzluk_sebebi == patentte yenilik/buluş basamağı yokluğu (SMK m.138)",
+      "ekle": "Tekniğin bilinen durumunu (önceki yayın/kullanım) göstererek yenilik ve buluş basamağı yokluğunu (SMK m.138) gerekçelendiren bir bölüm ekle." },
+    { "eger": "kullanim_savunmasi == hayir",
+      "uyari": "Önceki markanın ciddi kullanımı ispatlanamazsa, karşı tarafın kullanmama def'i (SMK m.25/7) nispi sebebi etkisiz bırakabilir." }
+  ],
+
+  "kontroller": [
+    "Hükümsüzlüğü istenen hak tescil numarasıyla tek tek belirlendi mi (sicil kaydıyla uyumlu)?",
+    "İleri sürülen sebep mutlak (SMK m.5) / nispi (SMK m.6) ayrımıyla doğru nitelendirildi mi?",
+    "Bu davanın hükümsüzlük olduğu, tecavüzün men'i davasından ayrı tutulduğu açık mı?",
+    "Davacının menfaati/hukuki yararı (SMK m.25/2) ortaya konuldu mu?",
+    "Sessiz kalma yoluyla hak kaybı (SMK m.25/6) ve kullanmama def'i (SMK m.25/7) riskleri değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["SMK m.5", "SMK m.6", "SMK m.25", "SMK m.138"],
+    "emsal_ara": "marka hükümsüzlük nispi sebep karıştırılma sessiz kalma kullanmama def'i",
+    "vurgula": ["mutlak/nispi hükümsüzlük sebebi ayrımı", "hükümsüzlük ile tecavüz davası ayrımı", "sessiz kalma ve kullanmama def'i"]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "tip": "delil-tespiti",
+  "ad": "Delil tespiti talebi",
+  "dayanak": ["HMK m.400", "HMK m.401", "HMK m.402", "HMK m.405"],
+
+  "sorular": [
+    { "id": "tespit_konusu", "soru": "Tespiti istenen delil/olgu nedir? (durum, hasar, kusur, mevcut hâl vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Tespit konusu somut olarak gösterilmelidir (HMK m.402/2)." },
+    { "id": "hukuki_yarar", "soru": "Delilin hemen tespitinde hukuki yararınız nedir? (kaybolma/değişme tehlikesi)", "tip": "metin",
+      "zorunlu": true, "neden": "Delilin kaybolma/güçleşme tehlikesi veya hukuki yarar şarttır (HMK m.400/2)." },
+    { "id": "tespit_yontemi", "soru": "Tespit hangi yolla yapılsın? (keşif, bilirkişi incelemesi, tanık beyanı)", "tip": "secim",
+      "secenekler": ["keşif", "bilirkişi incelemesi", "tanık dinlenmesi", "keşif + bilirkişi"],
+      "zorunlu": true, "neden": "Talep edilen tespit yöntemi gösterilmelidir (HMK m.402/2)." },
+    { "id": "karsi_taraf", "soru": "Aleyhine tespit istenen karşı taraf belli mi? (ad-adres)", "tip": "metin",
+      "zorunlu": false, "neden": "Karşı taraf biliniyorsa gösterilir; bilinmiyorsa sonradan ona karşı ileri sürülemeyebilir (HMK m.402/3)." },
+    { "id": "dava_asamasi", "soru": "Talep dava açılmadan önce mi, derdest dava sırasında mı?", "tip": "secim",
+      "secenekler": ["dava açılmadan önce", "derdest dava sırasında"],
+      "zorunlu": true, "neden": "Görevli/yetkili merci ve usul buna göre belirlenir (HMK m.401)." }
+  ],
+
+  "kosullar": [
+    { "eger": "dava_asamasi == dava açılmadan önce",
+      "ekle": "Delilin hemen tespit edilmemesi halinde kaybolacağını/değişeceğini somutlaştıran bir gerekçe bölümü ekle (HMK m.400/2)." },
+    { "eger": "karsi_taraf == ",
+      "uyari": "Karşı taraf gösterilemiyorsa tespit, kendisine karşı ileri sürülecek kişiye sonradan tebliğ edilmeli; aksi halde ona karşı delil değeri sınırlı kalır (HMK m.402/3, m.405)." }
+  ],
+
+  "kontroller": [
+    "Tespit konusu ve yöntemi açık biçimde gösterildi mi (HMK m.402)?",
+    "Hukuki yarar/delilin kaybolma tehlikesi gerekçelendirildi mi (HMK m.400)?",
+    "Karşı taraf belirtildi mi; belirsizse tebliğ/bildirim usulü planlandı mı (HMK m.405)?",
+    "Acele hâllerde karşı taraf dinlenmeden tespit imkânı (HMK m.403) değerlendirildi mi?",
+    "Tespit sonucu açılacak esas davayla bağlantısı kuruldu mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.400", "HMK m.401", "HMK m.402", "HMK m.405"],
+    "emsal_ara": "delil tespiti hukuki yarar delilin kaybolma tehlikesi keşif bilirkişi",
+    "vurgula": ["hukuki yarar / kaybolma tehlikesi", "tespit yönteminin gösterilmesi", "karşı tarafa tebliğ ve delil değeri"]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "tip": "tuketici-hakem-basvuru",
+  "ad": "Tüketici Hakem Heyetine başvuru dilekçesi",
+  "dayanak": ["TKHK m.66", "TKHK m.68", "TKHK m.70"],
+
+  "sorular": [
+    { "id": "uyusmazlik_konusu", "soru": "Uyuşmazlık neye ilişkin (ayıplı mal/hizmet, haksız şart, abonelik, kredi/banka ücreti vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Talebin hukuki nitelendirmesi ve dayanağı (TKHK ilgili madde) için." },
+    { "id": "talep_tutari", "soru": "Talep ettiğiniz parasal tutar nedir (TL)?", "tip": "sayi",
+      "zorunlu": true, "neden": "Hakem heyetinin görevi parasal sınıra bağlıdır (TKHK m.68); sınır üstü uyuşmazlık tüketici mahkemesinde görülür." },
+    { "id": "satin_alma_tarihi", "soru": "Mal/hizmet hangi tarihte satın alındı / sözleşme ne zaman kuruldu?", "tip": "tarih",
+      "zorunlu": true, "neden": "Zamanaşımı/garanti süresi ve olayın belirlenmesi için." },
+    { "id": "satici_bilgisi", "soru": "Satıcı/sağlayıcının unvanı ve adresi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Karşı taraf belirlemesi ve yetkili hakem heyeti (yerleşim/işlem yeri) tespiti için." },
+    { "id": "satici_basvuru", "soru": "Satıcıya/sağlayıcıya daha önce başvurdunuz mu, yanıt aldınız mı?", "tip": "secim",
+      "secenekler": ["başvurdum-reddedildi", "başvurdum-yanıt yok", "başvurmadım"],
+      "zorunlu": false, "neden": "Uyuşmazlığın doğduğunu ve çözülemediğini ortaya koymak için." },
+    { "id": "talep_turu", "soru": "Talebiniz nedir: bedel iadesi mi, değişim/onarım mı, ücret iadesi mi, sözleşmeden dönme mi?", "tip": "secim",
+      "secenekler": ["bedel iadesi", "ayıpsız ile değişim/ücretsiz onarım", "ödenen ücretin iadesi", "sözleşmeden dönme/fesih", "diğer"],
+      "zorunlu": true, "neden": "Sonuç-istemin ve seçimlik hakkın (TKHK m.11) belirlenmesi için." }
+  ],
+
+  "kosullar": [
+    { "eger": "talep_tutari > 104000",
+      "uyari": "KRİTİK: talep tutarı güncel hakem heyeti parasal sınırını aşıyor olabilir — bu durumda görevli merci Tüketici Mahkemesidir (TKHK m.68). Başvuru tarihindeki güncel parasal sınırı mutlaka teyit et." },
+    { "eger": "uyusmazlik_konusu == ayıplı mal",
+      "ekle": "Malın ayıbını ve TKHK m.11 seçimlik haklarından hangisinin kullanıldığını açıklayan bir bölüm ekle." },
+    { "eger": "satici_basvuru == başvurmadım",
+      "ekle": "Hakem heyetine başvurudan önce satıcıya başvuru zorunlu olmamakla birlikte, uyuşmazlığın doğduğunu somutlaştıran bir açıklama ekle." }
+  ],
+
+  "kontroller": [
+    "Talep tutarı güncel hakem heyeti parasal sınırı içinde mi (sınır üstü ise tüketici mahkemesi)?",
+    "Yetkili hakem heyeti (tüketicinin yerleşim yeri veya işlem yapılan yer) doğru belirlendi mi?",
+    "Talep türü (iade/onarım/değişim) ve dayanağı (TKHK m.11) net mi?",
+    "Talep edilen tutar gerekçeleriyle ve belgelerle desteklenecek şekilde açık mı?",
+    "Tarafların (tüketici-satıcı/sağlayıcı) kimlik ve adres bilgileri tam mı?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TKHK m.11", "TKHK m.66", "TKHK m.68", "TKHK m.70"],
+    "emsal_ara": "tüketici hakem heyeti parasal sınır görev ayıplı mal",
+    "vurgula": ["parasal sınır ve hakem heyeti zorunluluğu", "yetkili hakem heyeti", "seçimlik haklar (TKHK m.11)"]
+  }
+}

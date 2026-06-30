@@ -1,0 +1,45 @@
+{
+  "tip": "kira-uyarlama",
+  "ad": "Kira sözleşmesinin uyarlanması dava dilekçesi",
+  "dayanak": ["TBK m.138", "TBK m.344", "HMK m.119"],
+
+  "sorular": [
+    { "id": "sozlesme_tarihi", "soru": "Kira sözleşmesinin tarihi ve süresi?", "tip": "metin",
+      "zorunlu": true, "neden": "Sözleşmenin kurulduğu koşullarla bugünkü koşulları karşılaştırmak için temel (TBK m.138)." },
+    { "id": "mevcut_kira", "soru": "Mevcut aylık kira bedeli ve talep edilen yeni bedel?", "tip": "metin",
+      "zorunlu": true, "neden": "Uyarlamanın yönü ve miktarı; davanın değeri." },
+    { "id": "degisen_kosul", "soru": "Sözleşme kurulduktan sonra ortaya çıkan olağanüstü/öngörülemez koşul nedir? (örn. aşırı enflasyon, ekonomik kriz, döviz kuru sıçraması)", "tip": "metin",
+      "zorunlu": true, "neden": "Uyarlamanın şartı: sonradan ortaya çıkan, öngörülemeyen ve taraftan kaynaklanmayan değişiklik (TBK m.138)." },
+    { "id": "ongorulemezlik", "soru": "Bu koşul sözleşme yapılırken öngörülemez nitelikte miydi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Aşırı ifa güçlüğü için değişikliğin öngörülemez olması zorunludur (TBK m.138/1)." },
+    { "id": "ifa_henuz", "soru": "Edim (kira borcu) henüz ifa edildi mi, yoksa ifa devam mı ediyor?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Borçlu, ifayı henüz yerine getirmediği veya ihtirazi kayıtla yerine getirdiği sürece uyarlama isteyebilir (TBK m.138)." },
+    { "id": "esit_arttirim_kaydi", "soru": "Sözleşmede artışı sınırlayan/sabit kılan bir hüküm var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Sözleşmedeki artış kaydı, uyarlama talebinin değerlendirilmesinde dikkate alınır." }
+  ],
+
+  "kosullar": [
+    { "eger": "ongorulemezlik == hayir",
+      "uyari": "DİKKAT: Değişiklik öngörülebilir nitelikteyse aşırı ifa güçlüğüne dayalı uyarlama şartları oluşmaz (TBK m.138). Talebin dayanağını yeniden değerlendir." },
+    { "eger": "ifa_henuz == evet",
+      "uyari": "Edim ihtirazi kayıt olmaksızın ve tam olarak ifa edilmişse uyarlama hakkı kural olarak düşer; ifa durumunu açıkça belirt (TBK m.138)." },
+    { "eger": "degisen_kosul != ",
+      "ekle": "Sözleşmenin kurulduğu tarihteki ekonomik koşullarla dava tarihindeki koşulları karşılaştıran, edimler arası dengenin aşırı bozulduğunu somut verilerle (enflasyon/emsal kira) gösteren bir bölüm ekle." },
+    { "eger": "esit_arttirim_kaydi == evet",
+      "uyari": "Sözleşmedeki artış kaydının olağanüstü koşullar karşısında dengeyi koruyup korumadığı tartışılmalı; uyarlama sözleşme serbestisinin istisnasıdır." }
+  ],
+
+  "kontroller": [
+    "Sonradan ortaya çıkan, öngörülemez ve taraftan kaynaklanmayan değişiklik somutlaştırıldı mı (TBK m.138)?",
+    "Edimler arasındaki dengenin aşırı bozulduğu somut verilerle gösterildi mi?",
+    "Borçlunun edimi henüz ifa etmediği / ihtirazi kayıtla ifa ettiği belirtildi mi?",
+    "Öncelikle sözleşmenin uyarlanması, mümkün değilse dönme/fesih talebi sıraya konuldu mu?",
+    "Emsal kira ve ekonomik göstergelere ilişkin bilirkişi incelemesi talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TBK m.138", "TBK m.344"],
+    "emsal_ara": "kira uyarlama aşırı ifa güçlüğü öngörülemezlik edimler dengesi",
+    "vurgula": ["öngörülemez ve olağanüstü değişiklik şartı", "edimler arası dengenin aşırı bozulması", "ifa edilmemiş olma koşulu"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "tip": "sikayet-dilekcesi",
+  "ad": "Şikâyet dilekçesi",
+  "dayanak": ["CMK m.158", "TCK m.73", "CMK m.160"],
+
+  "sorular": [
+    { "id": "suc_tipi", "soru": "Şikâyete konu fiil / suç tipi nedir? (ör. hakaret, tehdit, dolandırıcılık, yaralama)", "tip": "metin",
+      "zorunlu": true, "neden": "Suç vasfı şikâyete bağlılığı ve görevli birimi belirler (TCK m.73)." },
+    { "id": "olay_tarihi", "soru": "Fiilin gerçekleştiği (veya öğrenildiği) tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "Şikâyet süresi (6 ay) ve dava zamanaşımı bu tarihe göre hesaplanır (TCK m.73)." },
+    { "id": "ogrenme_tarihi", "soru": "Fail ve fiili ne zaman öğrendiniz?", "tip": "tarih",
+      "zorunlu": true, "neden": "6 aylık şikâyet süresi öğrenme tarihinden işler (TCK m.73/2)." },
+    { "id": "supheli_bilgisi", "soru": "Şüpheli/fail kim? (biliniyorsa ad-soyad ve bilinen bilgiler; bilinmiyorsa 'meçhul')", "tip": "metin",
+      "zorunlu": true, "neden": "Şikâyet edilen kişinin belirlenmesi (CMK m.158)." },
+    { "id": "olay_anlatimi", "soru": "Olayı kısaca anlatın (ne oldu, nasıl, nerede)?", "tip": "metin",
+      "zorunlu": true, "neden": "Soruşturmanın konusunu ve suç unsurlarını ortaya koyar (CMK m.160)." },
+    { "id": "sikayetten_vazgecme", "soru": "Daha önce bu olay için şikâyetten vazgeçtiniz mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Şikâyetten vazgeçme halinde tekrar şikâyet hakkı düşer (TCK m.73/6)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(ogrenme_tarihi) > 180",
+      "uyari": "KRİTİK: öğrenme tarihinden bu yana 6 ayı (180 gün) aşmış görünüyor — şikâyete bağlı suçlarda şikâyet süresi geçmiş olabilir (TCK m.73). Suçun re'sen takip edilip edilmediğini teyit edin." },
+    { "eger": "supheli_bilgisi == meçhul",
+      "ekle": "Failin meçhul olduğunu, kimlik tespiti için soruşturma yapılmasını talep eden bir paragraf ekle." },
+    { "eger": "sikayetten_vazgecme == evet",
+      "uyari": "Şikâyete bağlı suçta şikâyetten vazgeçme halinde tekrar şikâyet hakkı kullanılamaz (TCK m.73/6); suçun re'sen takibe tabi olup olmadığını değerlendirin." }
+  ],
+
+  "kontroller": [
+    "Muhatap: dilekçe mahkemeye değil, ilgili Cumhuriyet Başsavcılığı'na hitaben yazıldı mı? (CMK m.158)",
+    "Şikâyete bağlı suçsa 6 aylık süre (öğrenme tarihinden) hesaplandı ve dilekçede gösterildi mi? (TCK m.73)",
+    "Suç vasfı ve sevk maddeleri olay anlatımıyla tutarlı mı?",
+    "Müşteki/mağdur sıfatı ve soruşturma yapılması talebi sonuç kısmında açıkça yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.158", "CMK m.160", "TCK m.73"],
+    "emsal_ara": "şikâyet süresi altı ay öğrenme tarihi takibi şikâyete bağlı suç",
+    "vurgula": ["şikâyet süresinin başlangıcı (öğrenme tarihi)", "şikâyete bağlı / re'sen takip ayrımı", "soruşturma evresinde muhatabın savcılık olması"]
+  }
+}

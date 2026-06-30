@@ -1,0 +1,44 @@
+{
+  "tip": "soybagi-babalik",
+  "ad": "Babalık / soybağının tespiti dava dilekçesi",
+  "dayanak": ["TMK m.301-304", "TMK m.282", "HMK m.119"],
+
+  "sorular": [
+    { "id": "davaci_sifat", "soru": "Davayı kim açıyor? (ana, çocuk, kayyım)", "tip": "secim",
+      "secenekler": ["ana", "çocuk", "çocuğa atanan kayyım"],
+      "zorunlu": true, "neden": "Babalık davası ana ve çocuk tarafından açılabilir (TMK m.301)." },
+    { "id": "cocuk_dogum", "soru": "Çocuğun adı ve doğum tarihi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Hak düşürücü süreler ve karine doğum tarihine göre işler (TMK m.303)." },
+    { "id": "baba_iddiasi", "soru": "Baba olduğu iddia edilen kişinin kimliği ve ana ile ilişkisine dair olgular nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Davalı baba ile gebe kalma dönemindeki cinsel ilişki karinesi ispat konusudur (TMK m.302)." },
+    { "id": "gebe_kalma_donemi", "soru": "Doğumdan önceki 300-180 gün arasında davalı ile ana arasında ilişki var mıydı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Bu dönemdeki ilişki babalık karinesini doğurur (TMK m.302)." },
+    { "id": "evlilik_disi", "soru": "Çocuğun başka bir erkekle kurulmuş mevcut soybağı (tanıma/babalık karinesi) var mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mevcut soybağı varsa önce reddi gerekir; babalık davası buna engellenir." },
+    { "id": "ana_tazminat", "soru": "Ana, doğum giderleri / nafaka gibi mali talepler de istiyor mu?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Ana, babalık davasıyla birlikte mali taleplerde bulunabilir (TMK m.304)." }
+  ],
+
+  "kosullar": [
+    { "eger": "gebe_kalma_donemi == evet",
+      "ekle": "Doğumdan önceki 300 ila 180. günler arasında davalı ile ana arasında cinsel ilişki bulunduğu karinesini olgularla kur (TMK m.302) ve DNA incelemesi talebini ekle." },
+    { "eger": "evlilik_disi == evet",
+      "uyari": "Çocuğun mevcut bir babayla soybağı varsa, babalık davasından önce o soybağının reddi/iptali gerekir." },
+    { "eger": "ana_tazminat == evet",
+      "ekle": "Ananın doğum giderleri, doğumdan önceki ve sonraki 6 haftalık geçim ile gebelik-doğum kaynaklı diğer giderlerine ilişkin talebini ekle (TMK m.304)." }
+  ],
+
+  "kontroller": [
+    "Davacı sıfatı (ana/çocuk/kayyım) ve dava ehliyeti doğru mu (TMK m.301)?",
+    "Hak düşürücü süreler doğum/öğrenmeye göre kontrol edildi mi (TMK m.303)?",
+    "Gebe kalma dönemi karinesi (300-180 gün) olgularla kuruldu mu (TMK m.302)?",
+    "DNA / bilirkişi incelemesi talep edildi mi?",
+    "Çocuğun mevcut soybağı varsa önce reddi gerektiği değerlendirildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.301", "TMK m.302", "TMK m.303", "TMK m.304"],
+    "emsal_ara": "babalık davası soybağı tespiti DNA karine 300 180 gün",
+    "vurgula": ["babalık karinesi (300-180 gün)", "DNA incelemesinin belirleyiciliği", "ananın mali talepleri (TMK m.304)"]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "tip": "ise-iade",
+  "ad": "İşe iade dava dilekçesi",
+  "dayanak": ["İş K. m.18", "İş K. m.19", "İş K. m.20", "İş K. m.21", "7036 s.K. m.3"],
+
+  "sorular": [
+    { "id": "fesih_tarihi", "soru": "İş sözleşmesinin işveren tarafından feshedildiği tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "Arabuluculuğa başvuru ve dava süreleri bu tarihten işler; feshin geçerli sebebe dayanıp dayanmadığı bu ana göre değerlendirilir." },
+    { "id": "isci_sayisi", "soru": "İşyerinde (aynı işkolundaki tüm işyerleri dahil) çalışan işçi sayısı 30 ve üzeri mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İş güvencesi hükümleri yalnızca 30 ve daha fazla işçi çalıştıran işyerlerinde uygulanır (İş K. m.18/1)." },
+    { "id": "kidem_alti_ay", "soru": "İşçinin işyerindeki kıdemi en az 6 ay mı?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İş güvencesinden yararlanmak için en az 6 aylık kıdem şartı vardır (İş K. m.18/1)." },
+    { "id": "fesih_bildirimi", "soru": "Fesih yazılı olarak ve sebebi açıkça gösterilerek mi bildirildi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Geçerli fesih için yazılı bildirim ve açık sebep şartı vardır (İş K. m.19); savunma alınması da gerekebilir." },
+    { "id": "fesih_sebebi", "soru": "İşverenin gösterdiği fesih sebebi nedir? (yetersizlik/davranış/işletme gerekleri)", "tip": "secim",
+      "secenekler": ["işçinin yetersizliği", "işçinin davranışları", "işletme/işyeri/işin gerekleri", "sebep gösterilmedi"],
+      "zorunlu": true, "neden": "Geçerli sebebin varlığı ve ispat yükü (işverende) bu kategoriye göre değerlendirilir (İş K. m.18-20)." },
+    { "id": "arabulucu_basvuru", "soru": "İşe iade için arabuluculuğa başvuruldu mu (dava şartı)?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "İşe iade davasında arabuluculuk zorunlu DAVA ŞARTIDIR; fesih bildiriminden itibaren 1 ay içinde başvurulmalıdır (7036 s.K. m.3, İş K. m.20)." },
+    { "id": "yonetici_konumu", "soru": "İşçi işveren vekili veya işletmenin bütününü yöneten konumda mıydı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "İşveren vekilleri ve belirli üst düzey yöneticiler iş güvencesi kapsamı dışındadır (İş K. m.18/son)." }
+  ],
+
+  "kosullar": [
+    { "eger": "isci_sayisi == hayir",
+      "uyari": "KRİTİK: 30 işçi şartı sağlanmıyorsa iş güvencesi (işe iade) uygulanmaz; ihbar/kıdem ve kötüniyet tazminatı yolları değerlendirilmelidir (İş K. m.17-18)." },
+    { "eger": "kidem_alti_ay == hayir",
+      "uyari": "KRİTİK: 6 aylık kıdem şartı sağlanmıyorsa işe iade davası açılamaz (İş K. m.18/1). Alternatif tazminat yollarını değerlendir." },
+    { "eger": "arabulucu_basvuru == hayir",
+      "uyari": "KRİTİK: Arabuluculuk dava şartıdır ve fesih bildiriminden itibaren 1 ay içinde başvuru zorunludur (İş K. m.20, 7036 s.K. m.3). Anlaşmazlık tutanağından sonra 2 hafta içinde dava açılmalıdır." },
+    { "eger": "gun_farki(fesih_tarihi) > 30",
+      "uyari": "DİKKAT: Fesihten bu yana 1 ayı aşmış görünüyor — işe iadede arabuluculuğa başvuru süresi (fesih bildiriminden 1 ay) kaçırılmış olabilir; süreyi mutlaka teyit et." },
+    { "eger": "fesih_bildirimi == hayir",
+      "ekle": "Feshin yazılı yapılmadığını veya sebebin açıkça gösterilmediğini, bu nedenle feshin geçerli sayılamayacağını açıklayan bir bölüm ekle (İş K. m.19)." }
+  ],
+
+  "kontroller": [
+    "30 işçi ve 6 aylık kıdem şartları sağlandı mı (İş K. m.18/1)?",
+    "Arabuluculuk dava şartı yerine getirildi mi; anlaşamama tutanağından sonra 2 hafta içinde dava açıldı mı (İş K. m.20)?",
+    "Feshin yazılı ve açık sebeple yapıldığı / yapılmadığı dilekçede tartışıldı mı (İş K. m.19)?",
+    "Geçerli sebebin ispatının işverende olduğu vurgulandı mı (İş K. m.20/2)?",
+    "Boşta geçen süre ücreti (en çok 4 ay) ve işe başlatmama tazminatı (4-8 ay) talepleri belirtildi mi (İş K. m.21)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["İş K. m.18", "İş K. m.19", "İş K. m.20", "İş K. m.21", "7036 s.K. m.3"],
+    "emsal_ara": "işe iade geçerli sebep 30 işçi 6 ay kıdem arabuluculuk dava şartı",
+    "vurgula": ["30 işçi ve 6 ay kıdem güvence eşiği", "arabuluculuk dava şartı ve 1 aylık başvuru süresi", "ispat yükünün işverende olması", "işe başlatmama tazminatı 4-8 ay"]
+  }
+}

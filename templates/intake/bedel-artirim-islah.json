@@ -1,0 +1,46 @@
+{
+  "tip": "bedel-artirim-islah",
+  "ad": "Bedel/ıslah ile talep artırım dilekçesi",
+  "dayanak": ["HMK m.176-178", "HMK m.107", "HMK m.109"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Talep artırımı mevcut davada yapılır; dosya kimliği zorunludur." },
+    { "id": "ilk_talep_miktari", "soru": "Dava dilekçesindeki ilk talep miktarı neydi?", "tip": "sayi",
+      "zorunlu": true, "neden": "Artırılan kısmın hesabı ve ek harç bu tutara göre yapılır." },
+    { "id": "yeni_talep_miktari", "soru": "Artırımdan sonra talep edilen toplam miktar nedir?", "tip": "sayi",
+      "zorunlu": true, "neden": "Artırılan fark üzerinden harç tamamlanır; faiz ve zamanaşımı bu tutara bağlanır." },
+    { "id": "artirim_dayanagi", "soru": "Artırım neye dayanıyor? (bilirkişi raporu, hesap, yeni belirleme)", "tip": "metin",
+      "zorunlu": true, "neden": "Belirsiz alacakta bedel artırımının dayanağı gösterilmelidir (HMK m.107)." },
+    { "id": "dava_turu", "soru": "Asıl dava türü nedir?", "tip": "secim",
+      "secenekler": ["belirsiz alacak davası (HMK m.107)", "kısmi dava (HMK m.109)", "tam eda davası — ıslahla artırım"],
+      "zorunlu": true, "neden": "Belirsiz alacakta artırım ıslaha gerek olmadan, kısmi/tam davada ıslahla yapılır; usul farklıdır." },
+    { "id": "rapor_teblig_tarihi", "soru": "Artırıma esas bilirkişi raporu size ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": false, "neden": "Belirsiz alacakta artırım, miktarın belirlenebilir hale geldiği andan itibaren makul sürede yapılmalıdır." }
+  ],
+
+  "kosullar": [
+    { "eger": "dava_turu == belirsiz alacak davası (HMK m.107)",
+      "ekle": "Alacağın artık belirlenebilir hale geldiğini ve talep sonucunun artırıldığını gösteren bir bölüm ekle; bunun ıslah olmadığını belirt.",
+      "uyari": "Belirsiz alacakta talep artırımı ıslah değildir; bir ıslah hakkını tüketmez ve karşı tarafın muvafakati gerekmez (HMK m.107/2)." },
+    { "eger": "dava_turu == kısmi dava (HMK m.109)",
+      "ekle": "Saklı tutulan fazlaya ilişkin hakkın bu artırımla talep edildiğini açıkça belirt.",
+      "uyari": "Kısmi davada bakiye için ıslah hakkı kullanılır; zamanaşımı yalnız artırılan kısımda ıslah tarihinde kesilir." },
+    { "eger": "yeni_talep_miktari > ilk_talep_miktari",
+      "ekle": "Artırılan fark üzerinden tamamlanan harcı ve güncellenmiş faiz talebini sonuç-istemde göster." }
+  ],
+
+  "kontroller": [
+    "Artırılan fark doğru hesaplandı; ek harç tamamlandı mı?",
+    "Davanın türüne göre artırım yolu (belirsiz alacakta serbest / kısmi-tam davada ıslah) doğru seçildi mi?",
+    "Belirsiz alacakta artırım, miktarın belirlenebilir hale geldiği andan itibaren makul sürede mi?",
+    "Artırılan kısımda zamanaşımı def'i riski değerlendirildi mi?",
+    "Faiz, artırılan tutar için doğru başlangıçla talep edildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.107", "HMK m.109", "HMK m.176", "HMK m.177"],
+    "emsal_ara": "belirsiz alacak talep artırımı ıslah kısmi dava bilirkişi raporu zamanaşımı",
+    "vurgula": ["belirsiz alacakta artırımın ıslah olmaması", "kısmi davada bakiye ve ıslah", "artırılan kısımda zamanaşımı"]
+  }
+}

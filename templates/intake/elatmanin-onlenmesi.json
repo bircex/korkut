@@ -1,0 +1,42 @@
+{
+  "tip": "elatmanin-onlenmesi",
+  "ad": "Elatmanın önlenmesi (müdahalenin meni) dava dilekçesi",
+  "dayanak": ["TMK m.683", "TMK m.684", "TMK m.1007"],
+
+  "sorular": [
+    { "id": "tasinmaz_bilgisi", "soru": "Müdahaleye uğrayan taşınmazın ada/parsel ve tapu/zilyetlik bilgisi?", "tip": "metin",
+      "zorunlu": true, "neden": "Müddeabih ve davacının mülkiyet/zilyetlik dayanağı (TMK m.683)." },
+    { "id": "mulkiyet_durumu", "soru": "Davacı malik mi, paydaş mı, yoksa zilyet mi? (Tapu var mı?)", "tip": "secim",
+      "secenekler": ["tek malik", "paylı/elbirliği malik", "tapusuz zilyet", "sınırlı ayni hak sahibi"],
+      "zorunlu": true, "neden": "Dava hakkı ve husumet, hak sahipliğine göre değişir (TMK m.683/688)." },
+    { "id": "mudahale_sekli", "soru": "Davalının el atması/müdahalesi nasıl gerçekleşiyor (işgal, inşaat, geçiş, taşkın yapı vb.)?", "tip": "metin",
+      "zorunlu": true, "neden": "Müdahalenin niteliği talebi (men/eski hale getirme) belirler (TMK m.683/2)." },
+    { "id": "mudahale_baslangici", "soru": "Müdahale ne zaman başladı ve hâlen devam ediyor mu?", "tip": "metin",
+      "zorunlu": true, "neden": "Sürmekte olan müdahale meni davasının ön şartıdır; ecrimisil dönemini de etkiler." },
+    { "id": "ecrimisil_talebi", "soru": "Müdahale dönemi için ecrimisil (haksız işgal tazminatı) da talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Men ile birlikte ecrimisil birlikte istenebilir; ayrı kalem olarak kurulur." }
+  ],
+
+  "kosullar": [
+    { "eger": "mulkiyet_durumu == paylı/elbirliği malik",
+      "uyari": "Paydaşlardan biri tek başına men davası açabilir; ancak elbirliği mülkiyetinde tüm ortakların katılımı/temsili gerekebilir (TMK m.688/702)." },
+    { "eger": "mudahale_sekli != geçici",
+      "ekle": "Taşkın yapı/inşaat varsa eski hale getirme (yıkım) talebini ve TMK m.725 taşkın inşaat değerlendirmesini ayrı başlıkta düzenle." },
+    { "eger": "ecrimisil_talebi == evet",
+      "ekle": "Haksız işgal süresini ve ecrimisil hesabını gösteren bir kalem ekle; men talebiyle birlikte sonuç-isteme yaz." }
+  ],
+
+  "kontroller": [
+    "Davacının mülkiyet/zilyetlik sıfatı ve aktif husumeti gösterildi mi (TMK m.683)?",
+    "Müdahalenin halen sürdüğü/sürme tehlikesi somutlaştırıldı mı?",
+    "Talep men ile mi sınırlı, yoksa eski hale getirme/yıkım da mı isteniyor (TMK m.683/2)?",
+    "Ecrimisil de isteniyorsa ayrı kalem ve dönem olarak kuruldu mu?",
+    "Paylı/elbirliği mülkiyette husumet ve temsil doğru kuruldu mu (TMK m.688/702)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TMK m.683", "TMK m.684", "TMK m.688", "TMK m.725"],
+    "emsal_ara": "elatmanın önlenmesi müdahalenin meni paydaş tek başına dava taşkın yapı",
+    "vurgula": ["mülkiyet hakkına dayalı men hakkı", "paydaşın tek başına dava ehliyeti", "men ile ecrimisilin birlikte istenmesi"]
+  }
+}

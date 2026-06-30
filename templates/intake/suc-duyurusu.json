@@ -1,0 +1,43 @@
+{
+  "tip": "suc-duyurusu",
+  "ad": "Suç duyurusu / ihbar dilekçesi",
+  "dayanak": ["CMK m.158", "CMK m.160", "TCK m.279"],
+
+  "sorular": [
+    { "id": "suc_tipi", "soru": "İhbar edilen fiil / suç tipi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Suç vasfı ve görevli birimin belirlenmesi (CMK m.158)." },
+    { "id": "olay_tarihi", "soru": "Fiilin gerçekleştiği veya farkına varıldığı tarih?", "tip": "tarih",
+      "zorunlu": true, "neden": "Dava zamanaşımının ve soruşturma kapsamının belirlenmesi (TCK m.66)." },
+    { "id": "ihbar_eden_sifat", "soru": "İhbarda bulunan sıfatınız nedir?", "tip": "secim",
+      "secenekler": ["mağdur", "tanık/üçüncü kişi", "kamu görevlisi (bildirim yükümlüsü)", "ihbarı yapan vatandaş"],
+      "zorunlu": true, "neden": "Kamu görevlisinin bildirim yükümlülüğü ayrı sonuç doğurur (TCK m.279)." },
+    { "id": "supheli_bilgisi", "soru": "Şüpheli/fail kim? (biliniyorsa kimlik bilgileri, bilinmiyorsa 'meçhul')", "tip": "metin",
+      "zorunlu": true, "neden": "Soruşturma yöneliminin belirlenmesi (CMK m.160)." },
+    { "id": "olay_anlatimi", "soru": "İhbara konu olayı somut olarak anlatın?", "tip": "metin",
+      "zorunlu": true, "neden": "Suç şüphesinin değerlendirilmesi için maddi olgular (CMK m.160)." },
+    { "id": "kamu_zarari", "soru": "Fiil kamu düzenini / kamu zararını mı ilgilendiriyor? (ör. rüşvet, görevi kötüye kullanma)", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Re'sen soruşturulan suçlarda şikâyet aranmaz; ihbar yeterlidir." }
+  ],
+
+  "kosullar": [
+    { "eger": "ihbar_eden_sifat == kamu görevlisi (bildirim yükümlüsü)",
+      "ekle": "Görevi sebebiyle suçu öğrenen kamu görevlisinin bildirim yükümlülüğüne (CMK m.158/2, TCK m.279) atıf yapan bir paragraf ekle." },
+    { "eger": "supheli_bilgisi == meçhul",
+      "ekle": "Failin meçhul olduğunu ve kimlik tespiti için soruşturma yapılmasını talep eden bir bölüm ekle." },
+    { "eger": "kamu_zarari == evet",
+      "uyari": "Re'sen takip edilen suçlarda şikâyet süresi aranmaz; ihbar üzerine savcılık doğrudan soruşturma başlatır (CMK m.160)." }
+  ],
+
+  "kontroller": [
+    "Muhatap: dilekçe ilgili Cumhuriyet Başsavcılığı'na hitaben mi yazıldı? (CMK m.158)",
+    "Suç vasfı ve maddi olgular soruşturma açılmasını gerektirecek somutlukta mı? (CMK m.160)",
+    "İhbarın mesnetsiz/iftira niteliğine düşmemesi için olgular delillendirilebilir mi? (TCK m.267 iftira riski)",
+    "Soruşturma yapılması ve gerekirse kamu davası açılması talebi sonuç kısmında yer alıyor mu?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["CMK m.158", "CMK m.160", "TCK m.279"],
+    "emsal_ara": "suç ihbarı re'sen soruşturma kamu görevlisi bildirim yükümlülüğü",
+    "vurgula": ["ihbar ile şikâyet arasındaki fark", "re'sen takip edilen suçlarda süre aranmaması", "iftira (TCK m.267) riskine karşı olguların somutluğu"]
+  }
+}

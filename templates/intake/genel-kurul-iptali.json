@@ -1,0 +1,51 @@
+{
+  "tip": "genel-kurul-iptali",
+  "ad": "Genel kurul kararının iptali dava dilekçesi",
+  "dayanak": ["TTK m.445", "TTK m.446", "TTK m.447", "TTK m.448", "HMK m.119"],
+
+  "sorular": [
+    { "id": "sirket_turu", "soru": "Şirketin türü ve unvanı nedir (anonim/limited)?", "tip": "secim",
+      "secenekler": ["anonim şirket", "limited şirket", "diğer sermaye şirketi"],
+      "zorunlu": true, "neden": "İptal rejimi AŞ için TTK m.445 vd.; LŞ için TTK m.622 atfıyla uygulanır." },
+    { "id": "karar_tarihi", "soru": "İptali istenen genel kurul kararının tarihi ve gündem maddesi?", "tip": "tarih",
+      "zorunlu": true, "neden": "3 aylık hak düşürücü iptal süresi bu tarihten işler (TTK m.445)." },
+    { "id": "davaci_sifati", "soru": "Davacının sıfatı nedir (toplantıda bulunup muhalefet şerhi veren pay sahibi / katılmayan / yönetim kurulu üyesi)?", "tip": "secim",
+      "secenekler": ["toplantıda muhalefetini tutanağa geçiren pay sahibi", "toplantıya haksız alınmayan pay sahibi", "çağrı/gündeme uyulmadığını ileri süren pay sahibi", "yönetim kurulu / üyesi"],
+      "zorunlu": true, "neden": "Dava açma hakkı TTK m.446'daki sınırlı sıfatlara bağlıdır." },
+    { "id": "muhalefet_serhi", "soru": "Toplantıda muhalefet şerhi tutanağa geçirildi mi?", "tip": "evet_hayir",
+      "zorunlu": true, "neden": "Toplantıda bulunan pay sahibi için muhalefet şerhi dava şartıdır (TTK m.446/1-a)." },
+    { "id": "iptal_sebebi", "soru": "İptal sebebi nedir (kanuna/esas sözleşmeye/dürüstlük kuralına aykırılık, çağrı/toplantı usulü, oy hesabı)?", "tip": "secim",
+      "secenekler": ["kanuna aykırılık", "esas sözleşmeye aykırılık", "dürüstlük kuralına (afaki iyiniyet) aykırılık", "çağrı/gündem/toplantı usulü hatası", "oy hesabı/nisap hatası"],
+      "zorunlu": true, "neden": "İptal (TTK m.445) ile butlan (TTK m.447) ayrımını ve gerekçeyi belirler." },
+    { "id": "butlan_iddiasi", "soru": "Karar pay sahipliği temel hakkını veya emredici hükümleri mi ihlal ediyor (butlan iddiası)?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Butlan TTK m.447 — süreye bağlı değildir, tespit niteliğindedir." },
+    { "id": "yurutme_durdurma", "soru": "Kararın icrasının/yürütmesinin geri bırakılmasını talep ediyor musunuz?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Mahkeme yönetim kurulunun görüşünü alarak kararın yürütülmesini geri bırakabilir (TTK m.449)." }
+  ],
+
+  "kosullar": [
+    { "eger": "davaci_sifati == toplantıda muhalefetini tutanağa geçiren pay sahibi",
+      "uyari": "Toplantıda bulunan pay sahibinde muhalefet şerhinin tutanağa geçmiş olması aranır (TTK m.446/1-a); şerhin varlığını teyit et." },
+    { "eger": "gun_farki(karar_tarihi) > 90",
+      "uyari": "KRİTİK: karar tarihinden bu yana 3 ayı (90 gün) aşmış görünüyor — iptal davası hak düşürücü süreye tabidir (TTK m.445). Butlan (TTK m.447) yolunu değerlendir." },
+    { "eger": "butlan_iddiasi == evet",
+      "ekle": "Kararın TTK m.447 anlamında butlan sebebini (vazgeçilmez/müktesep hak ihlali, anonim şirketin temel yapısına aykırılık) açıklayan ayrı bir bölüm ekle.",
+      "uyari": "Butlan tespiti süreye bağlı değildir; iptal süresi geçse de butlan ileri sürülebilir." },
+    { "eger": "yurutme_durdurma == evet",
+      "ekle": "Kararın yürütülmesinin geri bırakılması istemini, sebeplerini ve teminat hususunu açıklayan bir paragraf ekle (TTK m.449)." }
+  ],
+
+  "kontroller": [
+    "İptal süresi: karar tarihinden itibaren 3 ay (TTK m.445) içinde mi açılıyor?",
+    "Davacının TTK m.446 kapsamında dava açma sıfatı (muhalefet şerhi / katılım durumu) sağlanıyor mu?",
+    "İptal (m.445) ile butlan (m.447) talepleri doğru nitelendirildi mi?",
+    "Şirket tüzel kişiliği davalı olarak gösterildi mi; kararın bağlayıcılık alanı doğru mu?",
+    "Yürütmenin geri bırakılması istemi varsa TTK m.449 koşulları (görüş alma, teminat) belirtildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["TTK m.445", "TTK m.446", "TTK m.447", "TTK m.448", "TTK m.449"],
+    "emsal_ara": "genel kurul kararı iptal butlan muhalefet şerhi üç aylık süre dürüstlük",
+    "vurgula": ["iptal ile butlan ayrımı", "3 aylık hak düşürücü süre", "muhalefet şerhi ve dava açma sıfatı"]
+  }
+}

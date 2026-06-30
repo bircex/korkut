@@ -1,0 +1,43 @@
+{
+  "tip": "ihtiyati-tedbir",
+  "ad": "İhtiyati tedbir talebi",
+  "dayanak": ["HMK m.389", "HMK m.390", "HMK m.391", "HMK m.392", "HMK m.395"],
+
+  "sorular": [
+    { "id": "uyusmazlik_konusu", "soru": "Tedbir istenen uyuşmazlık/dava konusu nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Tedbir bir hakkın/şeyin korunmasına yöneliktir; konunun tanımı zorunludur (HMK m.389)." },
+    { "id": "talep_edilen_tedbir", "soru": "Somut olarak hangi tedbir isteniyor? (ihtiyati haciz dışı — ör. tapuya şerh, devir yasağı, mevcut durumun korunması)", "tip": "metin",
+      "zorunlu": true, "neden": "Talep edilen tedbir açık ve uyuşmazlıkla ölçülü olmalıdır (HMK m.391)." },
+    { "id": "yaklasik_ispat", "soru": "Haklılığınızı yaklaşık olarak ispatlayan olgular/belgeler neler?", "tip": "metin",
+      "zorunlu": true, "neden": "İhtiyati tedbirde yaklaşık ispat yeterli ve zorunludur (HMK m.390/3)." },
+    { "id": "tehlike_gerekce", "soru": "Tedbir alınmazsa doğacak zarar/gecikme tehlikesi nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Hakkın elde edilmesinin önemli ölçüde zorlaşacağı/imkânsızlaşacağı gösterilmelidir (HMK m.389/1)." },
+    { "id": "dava_durumu", "soru": "Talep dava açılmadan önce mi, dava sırasında mı?", "tip": "secim",
+      "secenekler": ["dava açılmadan önce", "dava sırasında"],
+      "zorunlu": true, "neden": "Dava açılmadan verilen tedbirde 2 hafta içinde dava açma zorunluluğu vardır (HMK m.397/1)." },
+    { "id": "teminat", "soru": "Teminat yatırmaya hazır mısınız? (yoksa muafiyet gerekçeniz?)", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Tedbir kural olarak teminata bağlanır (HMK m.392); belgeye dayanan kuvvetli olasılıkta teminatsız verilebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "dava_durumu == dava açılmadan önce",
+      "uyari": "KRİTİK: dava açılmadan verilen ihtiyati tedbirde, tedbir kararından itibaren 2 hafta içinde esas dava açılmazsa tedbir kendiliğinden kalkar (HMK m.397/1)." },
+    { "eger": "teminat == hayir",
+      "ekle": "Talebin resmî belgeye/kuvvetli delile dayandığını ve teminattan muafiyet gerekçesini açıklayan bir bölüm ekle (HMK m.392/1).",
+      "uyari": "Teminat muafiyeti istisnadır; dayanak kuvvetli değilse mahkeme teminat arayacaktır." }
+  ],
+
+  "kontroller": [
+    "Yaklaşık ispat (HMK m.390/3) somut belge/olgularla sağlandı mı?",
+    "Talep edilen tedbir, uyuşmazlık konusuyla ölçülü ve infaza elverişli mi (HMK m.391)?",
+    "Gecikmesinde tehlike/telafisi güç zarar gerekçesi gösterildi mi (HMK m.389)?",
+    "Dava açılmadan istenmişse 2 haftalık dava açma yükümlülüğü (HMK m.397) not edildi mi?",
+    "Teminat ve uygulamanın 1 hafta içinde istenmesi (HMK m.393) hususları gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.389", "HMK m.390", "HMK m.391", "HMK m.392", "HMK m.397"],
+    "emsal_ara": "ihtiyati tedbir yaklaşık ispat teminat dava açılmadan iki hafta",
+    "vurgula": ["yaklaşık ispat ölçüsü", "teminat ve muafiyet", "dava açma süresi ve tedbirin uygulanması"]
+  }
+}

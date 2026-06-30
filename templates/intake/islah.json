@@ -1,0 +1,49 @@
+{
+  "tip": "islah",
+  "ad": "Islah dilekçesi",
+  "dayanak": ["HMK m.176-182", "HMK m.177", "HMK m.178"],
+
+  "sorular": [
+    { "id": "esas_no", "soru": "Islah edilecek dosyanın mahkemesi ve esas numarası nedir?", "tip": "metin",
+      "zorunlu": true, "neden": "Islah mevcut bir davada yapılan usul işlemine yöneliktir; dosya kimliği zorunludur." },
+    { "id": "islah_kapsami", "soru": "Tam ıslah mı, kısmen ıslah mı yapılacak?", "tip": "secim",
+      "secenekler": ["tam ıslah (dava dilekçesinin tamamı)", "kısmen ıslah (talep sonucu/vakıa/taraf)"],
+      "zorunlu": true, "neden": "Tam ve kısmi ıslahın sonuçları ve usulü farklıdır (HMK m.176, m.180-181)." },
+    { "id": "neyi_degistiriyor", "soru": "Islahla somut olarak ne değişiyor? (talep miktarı, vakıa, talep sonucu vb.)", "tip": "metin",
+      "zorunlu": true, "neden": "Islahın konusu açık olmalı; iddianın ve savunmanın genişletilmesi yasağının istisnasıdır (HMK m.176)." },
+    { "id": "yeni_talep_miktari", "soru": "Talep artırımı varsa yeni talep miktarı nedir?", "tip": "sayi",
+      "zorunlu": false, "neden": "Artırılan kısmın harcı tamamlanmalıdır; faiz ve zamanaşımı bakımından önem taşır." },
+    { "id": "tahkikat_durumu", "soru": "Tahkikat tamamlandı mı / hangi aşamadasınız?", "tip": "secim",
+      "secenekler": ["tahkikat devam ediyor", "tahkikat sona ermek üzere", "sözlü yargılamaya geçildi"],
+      "zorunlu": true, "neden": "Islah tahkikat bitinceye kadar yapılabilir (HMK m.177/1)." },
+    { "id": "daha_once_islah", "soru": "Bu davada daha önce ıslah yapıldı mı?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "Aynı dava içinde ıslah yalnızca bir kez yapılabilir (HMK m.176/2)." }
+  ],
+
+  "kosullar": [
+    { "eger": "islah_kapsami == tam ıslah (dava dilekçesinin tamamı)",
+      "ekle": "Tam ıslah sonucu davanın yeniden açılmış sayılacağını ve ıslahtan sonra yeni dilekçenin verileceğini belirten bir bölüm ekle.",
+      "uyari": "Tam ıslahta dava baştan açılmış sayılır; ıslahı izleyen 1 hafta içinde yeni dilekçe verilmezse ıslah yapılmamış sayılır (HMK m.180)." },
+    { "eger": "yeni_talep_miktari > 0",
+      "ekle": "Artırılan talep miktarını ve harcın tamamlandığını gösteren bir kayıt ekle; faiz başlangıcını ıslah tarihine göre düzenle.",
+      "uyari": "Artırılan kısımda zamanaşımı ıslah tarihinde kesilir; karşı tarafın zamanaşımı def'ine açıktır." },
+    { "eger": "tahkikat_durumu == sözlü yargılamaya geçildi",
+      "uyari": "KRİTİK: ıslah tahkikat sona erinceye kadar yapılabilir (HMK m.177); sözlü yargılama aşamasında ıslah kural olarak mümkün değildir — istisna (m.177/2) koşullarını teyit et." },
+    { "eger": "daha_once_islah == evet",
+      "uyari": "Aynı davada ıslah bir kez yapılabilir (HMK m.176/2); ikinci ıslah talebi reddedilir." }
+  ],
+
+  "kontroller": [
+    "Esas no ve ıslahın konusu açıkça gösterildi mi?",
+    "Islah zamanı (tahkikat bitimine kadar — HMK m.177) uygun mu?",
+    "Tek ıslah hakkı (HMK m.176/2) daha önce kullanılmamış mı?",
+    "Talep artırımı varsa harç tamamlandı; ıslah masrafı/yargılama gideri (HMK m.178) yatırıldı mı?",
+    "Tam ıslahta 1 haftalık yeni dilekçe süresi (HMK m.180) gözetildi mi?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.176", "HMK m.177", "HMK m.178", "HMK m.180"],
+    "emsal_ara": "ıslah talep artırımı tahkikat sonu zamanaşımı tek ıslah hakkı",
+    "vurgula": ["ıslahın zamanı (tahkikat bitimi)", "bir kez ıslah hakkı", "artırılan kısımda zamanaşımı ve harç"]
+  }
+}

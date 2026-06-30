@@ -1,0 +1,45 @@
+{
+  "tip": "bosanma-cevap",
+  "ad": "Boşanma davasına cevap dilekçesi",
+  "dayanak": ["HMK m.126-131", "TMK m.166", "TMK m.174"],
+
+  "sorular": [
+    { "id": "teblig_tarihi", "soru": "Dava dilekçesi (tebligat) tarafınıza ne zaman tebliğ edildi?", "tip": "tarih",
+      "zorunlu": true, "neden": "Cevap süresi tebliğden itibaren 2 haftadır (HMK m.127); süre buradan hesaplanır." },
+    { "id": "savunma_tutumu", "soru": "Boşanma talebine tutumunuz nedir?", "tip": "secim",
+      "secenekler": ["boşanmayı kabul, fer'ilere itiraz", "boşanmaya karşı (evliliğin sürdürülmesini istiyorum)", "boşanmayı kabul, karşı dava açacağım"],
+      "zorunlu": true, "neden": "Cevabın hukuki niteliğini ve karşı dava ihtiyacını belirler." },
+    { "id": "karsi_kusur", "soru": "Davacının kusurlu olduğu vakıalar var mı? Tarih ve olayla özetleyin?", "tip": "metin",
+      "zorunlu": true, "neden": "Kusur dengesi tazminat ve nafaka sonucunu etkiler (TMK m.174); savunmada ileri sürülmelidir." },
+    { "id": "iddialara_itiraz", "soru": "Dava dilekçesindeki hangi vakıaları/iddiaları kabul/inkâr ediyorsunuz?", "tip": "metin",
+      "zorunlu": true, "neden": "Açıkça çürütülmeyen vakıalar ikrar/çekişmesiz sayılabilir (HMK m.128)." },
+    { "id": "feri_talep_itiraz", "soru": "Velayet, nafaka ve tazminat taleplerine itirazınız/karşı talebiniz nedir?", "tip": "metin",
+      "zorunlu": false, "neden": "Fer'i taleplere karşı savunma ve karşı talepler cevap dilekçesinde gösterilmelidir." },
+    { "id": "zamanasimi_sure", "soru": "Özel sebepli davada (zina/terk) hak düşürücü süre def'i ileri sürülecek mi?", "tip": "evet_hayir",
+      "zorunlu": false, "neden": "TMK m.161/164'teki süreler savunmada def'i olarak ileri sürülebilir." }
+  ],
+
+  "kosullar": [
+    { "eger": "gun_farki(teblig_tarihi) > 14",
+      "uyari": "KRİTİK: Tebliğden bu yana 2 haftayı aşmış görünüyor (HMK m.127). Cevap verme hakkı düşmüş olabilir; süre tutum/eski hale getirme yollarını değerlendir." },
+    { "eger": "savunma_tutumu == boşanmayı kabul, karşı dava açacağım",
+      "ekle": "Cevap dilekçesiyle birlikte aynı dilekçede veya ayrı dilekçeyle karşı boşanma davası açılacağını belirt ve talep sonucunu kur (HMK m.133).",
+      "uyari": "Karşı dava cevap süresi içinde açılmalıdır." },
+    { "eger": "zamanasimi_sure == evet",
+      "ekle": "İlk itiraz/def'i olarak özel sebebe ilişkin hak düşürücü sürenin geçtiğini ileri süren bir bölüm ekle (TMK m.161/2, m.164)." }
+  ],
+
+  "kontroller": [
+    "Cevap, tebliğden itibaren 2 haftalık süre içinde mi (HMK m.127)?",
+    "Dava dilekçesindeki vakıalara karşı açık kabul/inkâr beyanı yapıldı mı (HMK m.128)?",
+    "Davacının kusuru savunmada somut vakıalarla ileri sürüldü mü (kusur dengesi)?",
+    "Fer'i taleplere (velayet/nafaka/tazminat) karşı savunma ve varsa karşı talep eksiksiz mi?",
+    "Karşı dava gerekiyorsa süresi içinde ve usulüne uygun açıldı mı (HMK m.133)?"
+  ],
+
+  "zenginlestir": {
+    "mevzuat_dogrula": ["HMK m.127", "HMK m.128", "HMK m.133", "TMK m.174"],
+    "emsal_ara": "boşanma cevap dilekçesi süresi kusur karşı dava ikrar",
+    "vurgula": ["iki haftalık cevap süresi", "vakıaların açık inkârı / ikrar", "kusur dengesinin savunmada ortaya konması"]
+  }
+}
