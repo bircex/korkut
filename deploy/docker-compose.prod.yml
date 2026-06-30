@@ -1,0 +1,51 @@
+# Production stack: pulls the published image from GHCR and runs Korkut against Postgres.
+#
+#   docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
+#
+# Put Korkut behind a TLS-terminating reverse proxy (nginx/Caddy/Traefik); it listens on
+# 127.0.0.1:8080 here, with secure cookies and X-Forwarded-For trust enabled. See docs/DEPLOYMENT.md.
+x-korkut: &korkut
+  image: ${KORKUT_IMAGE:-ghcr.io/recepkizilarslan/korkut:latest}
+  restart: unless-stopped
+  env_file: ../.env
+  environment:
+    KORKUT_DB_URL: ${KORKUT_DB_URL:-postgresql+psycopg://korkut:${POSTGRES_PASSWORD:-korkut}@db:5432/korkut}
+    KORKUT_HOST: "0.0.0.0"
+    KORKUT_PORT: "8080"
+    KORKUT_SECURE_COOKIES: "1"
+    KORKUT_TRUST_PROXY: "1"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: korkut
+      POSTGRES_DB: korkut
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korkut}
+    volumes:
+      - korkut-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U korkut -d korkut"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  korkut:
+    <<: *korkut
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  dispatcher:
+    <<: *korkut
+    command: sh -c "while true; do python -m korkut.api.dispatcher; sleep 60; done"
+
+  integrations:
+    <<: *korkut
+    command: sh -c "while true; do python -m korkut.integrations.runner; sleep 5; done"
+
+volumes:
+  korkut-db:

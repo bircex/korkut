@@ -1,6 +1,6 @@
 [project]
 name = "korkut"
-version = "0.1.0"
+version = "2026.7.0"
 description = "Korkut — AI assistant for a law office over a self-hosted chat UI"
 license = "MIT"
 requires-python = ">=3.12"
