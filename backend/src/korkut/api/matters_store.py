@@ -16,7 +16,7 @@ from datetime import timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api.models import Client, Hearing, Matter
+from korkut.api.models import Client, Deadline, Hearing, Matter
 
 # Fields a caller may set on create/update (whitelist guards against arbitrary attribute writes).
 _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "status", "notes")
@@ -87,12 +87,25 @@ def matter_brief(m: Matter) -> dict:
     }
 
 
+def deadline_brief(d: Deadline) -> dict:
+    return {
+        "id": d.id,
+        "matter_id": d.matter_id,
+        "due_date": d.due_date.isoformat() if d.due_date else None,
+        "title": d.title,
+        "type": d.type,
+        "status": d.status,
+        "notes": d.notes,
+    }
+
+
 def matter_detail(m: Matter) -> dict:
     return {
         **matter_brief(m),
         "client": client_brief(m.client) if m.client else None,
         "notes": m.notes,
         "hearings": [hearing_brief(h) for h in m.hearings],
+        "deadlines": [deadline_brief(d) for d in m.deadlines],
     }
 
 
@@ -215,3 +228,76 @@ def upcoming_hearings(s: Session, office_id: int, days: int = 14) -> list[Hearin
         .order_by(Hearing.date, Hearing.time)
     )
     return list(s.scalars(stmt))
+
+
+# ---------- deadlines (süre) ----------
+
+
+def list_deadlines(s: Session, office_id: int, matter_id: int | None = None) -> list[Deadline]:
+    stmt = select(Deadline).where(Deadline.office_id == office_id)
+    if matter_id is not None:
+        stmt = stmt.where(Deadline.matter_id == matter_id)
+    return list(s.scalars(stmt.order_by(Deadline.due_date)))
+
+
+def add_deadline(
+    s: Session,
+    office_id: int,
+    matter_id: int,
+    *,
+    due_date: object,
+    title: str,
+    type: str | None = None,
+    notes: str | None = None,
+) -> Deadline | None:
+    m = get_matter(s, office_id, matter_id)
+    if m is None:
+        return None
+    d = Deadline(
+        office_id=office_id,
+        matter_id=matter_id,
+        due_date=parse_date(due_date),
+        title=title.strip(),
+        type=type,
+        notes=notes,
+    )
+    s.add(d)
+    s.commit()
+    return d
+
+
+def complete_deadline(s: Session, office_id: int, deadline_id: int) -> Deadline | None:
+    d = s.get(Deadline, deadline_id)
+    if d is None or d.office_id != office_id:
+        return None
+    d.status = "done"
+    s.commit()
+    return d
+
+
+def upcoming_agenda(s: Session, office_id: int, days: int = 14) -> list[dict]:
+    """Unified office calendar: upcoming hearings + pending deadlines, soonest first.
+
+    Each item is tagged with `kind` ("hearing"|"deadline") and a common `date` so the agent and UI
+    can show one merged list of "yaklaşan duruşmalar/süreler".
+    """
+    today = datetime.now().date()
+    end = today + timedelta(days=days)
+    items: list[dict] = []
+    for h in s.scalars(
+        select(Hearing).where(
+            Hearing.office_id == office_id, Hearing.date >= today, Hearing.date <= end
+        )
+    ):
+        items.append({"kind": "hearing", "date": h.date.isoformat(), **hearing_brief(h)})
+    for d in s.scalars(
+        select(Deadline).where(
+            Deadline.office_id == office_id,
+            Deadline.status == "pending",
+            Deadline.due_date >= today,
+            Deadline.due_date <= end,
+        )
+    ):
+        items.append({"kind": "deadline", "date": d.due_date.isoformat(), **deadline_brief(d)})
+    items.sort(key=lambda x: (x["date"], x.get("time") or ""))
+    return items

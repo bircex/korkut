@@ -237,6 +237,13 @@ class HearingBody(BaseModel):
     notes: str | None = None
 
 
+class DeadlineBody(BaseModel):
+    due_date: str  # YYYY-MM-DD
+    title: str
+    type: str | None = None
+    notes: str | None = None
+
+
 class ClientBody(BaseModel):
     full_name: str
     national_id: str | None = None
@@ -1023,11 +1030,36 @@ def add_hearing_ep(
 
 @app.get("/api/calendar/upcoming")
 def upcoming_ep(days: int = 14, korkut_session: str | None = Cookie(default=None)):
+    """Unified office agenda: upcoming hearings + pending deadlines, soonest first."""
     days = max(1, min(days, 365))
     with session() as s:
         user = _require_user(s, korkut_session)
-        hs = mstore.upcoming_hearings(s, user.office_id, days=days)
-        return {"items": [mstore.hearing_brief(h) for h in hs], "days": days}
+        return {"items": mstore.upcoming_agenda(s, user.office_id, days=days), "days": days}
+
+
+@app.post("/api/matters/{mid}/deadlines")
+def add_deadline_ep(mid: int, body: DeadlineBody, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        _require_matter(s, user, mid)
+        try:
+            d = mstore.add_deadline(
+                s, user.office_id, mid, due_date=body.due_date, title=body.title,
+                type=body.type, notes=body.notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}")
+        return mstore.deadline_brief(d)
+
+
+@app.post("/api/deadlines/{did}/complete")
+def complete_deadline_ep(did: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        d = mstore.complete_deadline(s, user.office_id, did)
+        if d is None:
+            raise HTTPException(status_code=404, detail="Süre bulunamadı")
+        return mstore.deadline_brief(d)
 
 
 @app.get("/api/clients")
@@ -1097,9 +1129,18 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         if not to:
             return {"ok": False, "note": "Alıcı e-posta adresi gerekli."}
         with session() as s:
+            # Optionally file the correspondence under a matter (only if it's this office's).
+            matter_id = None
+            try:
+                mid = int(args.get("matter_id")) if args.get("matter_id") else None
+            except (TypeError, ValueError):
+                mid = None
+            if mid and mstore.get_matter(s, user.office_id, mid) is not None:
+                matter_id = mid
             msg = OutboundMessage(
                 office_id=user.office_id,
                 user_id=user.id,
+                matter_id=matter_id,
                 kind="email",
                 to_addr=to,
                 subject=(args.get("subject") or "").strip(),
@@ -1825,6 +1866,11 @@ _SEND_EMAIL_TOOL = ToolSpec(
             "type": "string",
             "required": False,
             "description": "İsteğe bağlı gönderim zamanı (ISO 8601). Boşsa onayla hemen gider.",
+        },
+        "matter_id": {
+            "type": "integer",
+            "required": False,
+            "description": "İlgili dosya no (id) — yazışmayı dosyaya bağlamak için (varsa).",
         },
     },
     requires_key=None,

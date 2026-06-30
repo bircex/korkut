@@ -288,6 +288,8 @@ class OutboundMessage(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
+    # Optional link to a matter (dosya): correspondence filed under a case file. Null = unfiled.
+    matter_id: Mapped[int | None] = mapped_column(ForeignKey("matters.id"), default=None, index=True)
     kind: Mapped[str] = mapped_column(String(32), default="email")
     to_addr: Mapped[str] = mapped_column(String(320))
     subject: Mapped[str] = mapped_column(String(500), default="")
@@ -393,6 +395,9 @@ class Matter(Base):
     hearings: Mapped[list[Hearing]] = relationship(
         back_populates="matter", cascade="all, delete-orphan", order_by="Hearing.date"
     )
+    deadlines: Mapped[list[Deadline]] = relationship(
+        back_populates="matter", cascade="all, delete-orphan", order_by="Deadline.due_date"
+    )
 
 
 class Hearing(Base):
@@ -412,6 +417,27 @@ class Hearing(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     matter: Mapped[Matter] = relationship(back_populates="hearings")
+
+
+class Deadline(Base):
+    """A procedural deadline (süre) on a matter — e.g. cevap, istinaf, temyiz süresi.
+
+    Distinct from a hearing: a hearing is an event you attend, a deadline is a date by which an
+    act must be done. `status` is pending|done. Surfaced alongside hearings in the office agenda.
+    """
+
+    __tablename__ = "deadlines"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
+    matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
+    due_date: Mapped[_date] = mapped_column(Date, index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    type: Mapped[str | None] = mapped_column(String(100), default=None)  # cevap, istinaf, temyiz…
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | done
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    matter: Mapped[Matter] = relationship(back_populates="deadlines")
 
 
 class AuthEvent(Base):

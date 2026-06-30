@@ -91,7 +91,7 @@ def test_error_paths_never_raise(seeded):
     assert h["update_matter"]({})["ok"] is False  # missing matter_id
 
 
-def test_upcoming_deadlines_window(seeded):
+def test_upcoming_agenda_merges_hearings_and_deadlines(seeded):
     from datetime import date, timedelta
 
     _, user_a, _ = seeded
@@ -100,6 +100,25 @@ def test_upcoming_deadlines_window(seeded):
     soon = (date.today() + timedelta(days=3)).isoformat()
     far = (date.today() + timedelta(days=100)).isoformat()
     h["add_hearing"]({"matter_id": mid, "date": soon})
-    h["add_hearing"]({"matter_id": mid, "date": far})
-    assert h["upcoming_deadlines"]({"days": 14})["count"] == 1  # only the near one
-    assert h["upcoming_deadlines"]({"days": 200})["count"] == 2
+    assert h["add_deadline"]({"matter_id": mid, "due_date": soon, "title": "Cevap", "type": "cevap"})["ok"]
+    h["add_deadline"]({"matter_id": mid, "due_date": far, "title": "Temyiz"})
+
+    ag = h["upcoming_deadlines"]({"days": 14})
+    assert ag["count"] == 2 and {i["kind"] for i in ag["agenda"]} == {"hearing", "deadline"}
+    assert h["upcoming_deadlines"]({"days": 200})["count"] == 3  # far deadline now in window
+
+    # Completing the near deadline removes it from the 14-day agenda (hearing stays).
+    did = h["list_deadlines"]({"matter_id": mid})["deadlines"][0]["id"]  # ordered by due_date → near
+    assert h["complete_deadline"]({"deadline_id": did})["ok"]
+    assert h["upcoming_deadlines"]({"days": 14})["count"] == 1
+
+
+def test_deadline_isolation_and_errors(seeded):
+    _, user_a, user_b = seeded
+    ha, hb = _tools(user_a), _tools(user_b)
+    mid = ha["create_matter"]({"title": "G"})["matter"]["id"]
+    did = ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "S"})["deadline"]["id"]
+    assert hb["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "X"})["ok"] is False
+    assert hb["complete_deadline"]({"deadline_id": did})["ok"] is False
+    assert ha["add_deadline"]({"matter_id": mid, "due_date": "kötü tarih", "title": "S"})["ok"] is False
+    assert ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "  "})["ok"] is False
