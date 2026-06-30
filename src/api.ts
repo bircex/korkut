@@ -76,6 +76,39 @@ export type TemplateDetail = {
   userOverride: string | null;
   effective: string | null;
 };
+export type EmailChannel = {
+  kind: string;
+  enabled: boolean;
+  from_address: string;
+  from_name: string;
+  hasPassword: boolean;
+  can_edit: boolean;
+};
+export type EmailChannelInput = {
+  enabled: boolean;
+  from_address: string;
+  from_name: string;
+  app_password: string | null; // null → keep stored password; "" → clear
+};
+export type OutboxStatus = "draft" | "queued" | "sent" | "failed" | "cancelled";
+export type OutboxMessage = {
+  id: number;
+  kind: string;
+  to: string;
+  subject: string;
+  body: string;
+  send_at: string | null;
+  status: OutboxStatus;
+  error: string | null;
+  created_at: string | null;
+  sent_at: string | null;
+};
+export type OutboxEdit = {
+  to_addr: string;
+  subject: string;
+  body: string;
+  send_at: string | null;
+};
 export type ModelData = {
   enabled: boolean;
   is_local: boolean;
@@ -205,11 +238,24 @@ export const api = {
     }),
   cloneSession: (id: number) =>
     request<SessionBrief>(`/api/sessions/${id}/clone`, { method: "POST" }),
+  getEmailChannel: () => request<EmailChannel>("/api/channels/email"),
+  saveEmailChannel: (input: EmailChannelInput) =>
+    request<EmailChannel>("/api/channels/email", { method: "PUT", body: JSON.stringify(input) }),
+  getOutbox: (id: number) => request<OutboxMessage>(`/api/outbox/${id}`),
+  listOutbox: () => request<OutboxMessage[]>("/api/outbox"),
+  editOutbox: (id: number, fields: OutboxEdit) =>
+    request<OutboxMessage>(`/api/outbox/${id}`, { method: "PUT", body: JSON.stringify(fields) }),
+  confirmOutbox: (id: number) =>
+    request<OutboxMessage>(`/api/outbox/${id}/confirm`, { method: "POST" }),
+  cancelOutbox: (id: number) =>
+    request<OutboxMessage>(`/api/outbox/${id}/cancel`, { method: "POST" }),
   sessionChat: (id: number, text: string) =>
-    request<{ reply: string; title: string; open_document: number | null }>(
-      `/api/sessions/${id}/chat`,
-      { method: "POST", body: JSON.stringify({ text }) },
-    ),
+    request<{
+      reply: string;
+      title: string;
+      open_document: number | null;
+      pending_email: number | null;
+    }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
   uploadToSession: async (id: number, file: File, text: string) => {
     const fd = new FormData();
     fd.append("file", file);

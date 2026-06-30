@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type Member, type StyleFields, type User } from "../api";
+import { EmailSettings } from "./EmailSettings";
 import { ModelSettings } from "./ModelSettings";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -280,13 +281,14 @@ function StyleTab() {
   );
 }
 
-type Tab = "account" | "members" | "style" | "model";
+type Tab = "account" | "members" | "style" | "model" | "email";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
   members: "Ofis üyeleri",
   style: "Yazım stili",
   model: "Model",
+  email: "E-posta",
 };
 
 export function Settings({ user, onClose }: { user: User; onClose: () => void }) {
@@ -295,8 +297,13 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
     { id: "account", label: "Hesap" },
     { id: "members", label: "Üyeler" },
     { id: "style", label: "Stil" },
-    // Model selection is an office-wide setting — owner only.
-    ...(user.role === "owner" ? [{ id: "model" as Tab, label: "Model" }] : []),
+    // Model + e-posta are office-wide settings — owner only.
+    ...(user.role === "owner"
+      ? [
+          { id: "model" as Tab, label: "Model" },
+          { id: "email" as Tab, label: "E-posta" },
+        ]
+      : []),
   ];
 
   return (
@@ -345,6 +352,7 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
           {tab === "members" && <Members isOwner={user.role === "owner"} />}
           {tab === "style" && <StyleTab />}
           {tab === "model" && user.role === "owner" && <ModelSettings />}
+          {tab === "email" && user.role === "owner" && <EmailSettings />}
         </div>
       </div>
     </div>
