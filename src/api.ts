@@ -55,6 +55,26 @@ export type StyleData = {
 };
 export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik: boolean };
 export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
+export type TemplateKind = "dilekce" | "sozlesme";
+export type TemplateScope = "user" | "office";
+export type TemplateTypeRow = {
+  id: string;
+  ad: string;
+  ref: string | null;
+  hasOfficeOverride: boolean;
+  hasUserOverride: boolean;
+};
+export type TemplateCategory = { kategori: string; tipler: TemplateTypeRow[] };
+export type TemplateList = { kind: TemplateKind; kategoriler: TemplateCategory[] };
+export type TemplateDetail = {
+  id: string;
+  ad: string;
+  kind: string;
+  default: string | null;
+  officeOverride: string | null;
+  userOverride: string | null;
+  effective: string | null;
+};
 export type Provision = { secret: string; otpauth_uri: string; qr: string };
 export type EnrollResult = User & { recovery_codes: string[] };
 export type Coverage = {
@@ -118,6 +138,18 @@ export const api = {
     request<StyleFields>("/api/style/user", { method: "PUT", body: JSON.stringify(fields) }),
   saveOfficeStyle: (fields: StyleFields) =>
     request<StyleFields>("/api/style/office", { method: "PUT", body: JSON.stringify(fields) }),
+  listTemplates: (kind: TemplateKind) => request<TemplateList>(`/api/templates?kind=${kind}`),
+  getTemplate: (typeId: string) =>
+    request<TemplateDetail>(`/api/templates/${encodeURIComponent(typeId)}`),
+  saveTemplate: (typeId: string, scope: TemplateScope, content: string) =>
+    request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ scope, content }),
+    }),
+  deleteTemplate: (typeId: string, scope: TemplateScope) =>
+    request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}?scope=${scope}`, {
+      method: "DELETE",
+    }),
   provision: () => request<Provision>("/api/2fa/provision"),
   enroll: (code: string) =>
     request<EnrollResult>("/api/2fa/enroll", {

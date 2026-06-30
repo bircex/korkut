@@ -5,6 +5,7 @@ import { api, ApiError, type ChatMessage, type DocBrief, type SessionBrief, type
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
+import { Customize } from "./Customize";
 
 const SESSION_PAGE = 20;
 
@@ -31,7 +32,7 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-type SidebarView = "chats" | "docs" | "settings";
+type SidebarView = "chats" | "docs" | "settings" | "customize";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -263,6 +264,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <Settings user={user} onClose={() => setView("chats")} />;
   }
 
+  if (view === "customize") {
+    return <Customize user={user} onClose={() => setView("chats")} />;
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
       <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
@@ -340,6 +345,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     ⚙ Ayarlar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setView("customize");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    🎨 Özelleştir
                   </button>
                   <button
                     onClick={onLogout}
