@@ -36,6 +36,7 @@ def answer(
     extra_tools: list | None = None,
     handlers: dict | None = None,
     model_cfg: ModelCfg | None = None,
+    extra_system: str | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured model.
 
@@ -43,11 +44,15 @@ def answer(
     user's tenant). `extra_tools`/`handlers` let a caller add session-bound tools for this turn
     (e.g. the web app's document-Canvas signal) without touching the global tool registry.
     `model_cfg`, when set, routes this turn to the office's own custom model instead of the
-    built-in default.
+    built-in default. `extra_system` appends turn-specific guidance to the persona (e.g. the
+    intake completeness gate before drafting) — kept in one system message for provider safety.
     """
     router = single_model_router(model_cfg) if model_cfg is not None else get_router()
     tools = tool_registry.available_tools()
-    messages: list[dict] = [{"role": "system", "content": build_persona(office_name)}]
+    system = build_persona(office_name)
+    if extra_system:
+        system = f"{system}\n\n{extra_system}"
+    messages: list[dict] = [{"role": "system", "content": system}]
     if history:
         messages.extend(history)
     messages.append({"role": "user", "content": user_text})

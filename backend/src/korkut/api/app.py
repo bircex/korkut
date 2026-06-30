@@ -827,6 +827,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             "sohbete yalnızca tek cümlelik kısa bir bilgilendirme yaz.",
         }
 
+    # Detect the document type once: it gates the chat turn (ask for missing essentials before
+    # drafting) and is reused as the petition type when the draft actually happens.
+    detected = petitions.detect(text)
     reply = agent.answer(
         text,
         office_name=office_name,
@@ -834,6 +837,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         extra_tools=[_CANVAS_TOOL],
         handlers={"dilekce_canvas": _canvas},
         model_cfg=model_cfg,
+        extra_system=petitions.required_hint(detected) if detected else None,
     )
 
     with session() as s:
@@ -858,9 +862,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             doc_id = doc.id
         # Korkut infers the petition type itself, then drafts in the standard format and the
         # result lands straight in the editor (the editor is the lawyer's review surface).
-        _make_draft(
-            doc_id, text, history_msgs, petitions.detect(text), style=style, user_id=user.id
-        )
+        _make_draft(doc_id, text, history_msgs, detected, style=style, user_id=user.id)
         _accept_pending(doc_id)
         open_document = doc_id
 
