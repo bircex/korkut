@@ -17,7 +17,7 @@ both):
 Security note: inbound mail is trusted as the *linked* sender, but the `From` header is spoofable.
 Use a dedicated mailbox for this channel and treat its contents as lower-trust; identity binding
 plus the office's own redaction are the safety net, but a spoofed `From` matching a linked address
-is a known limitation (documented in docs/INTEGRATIONS.md).
+is a known limitation.
 """
 
 from __future__ import annotations

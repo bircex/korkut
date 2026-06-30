@@ -3,7 +3,7 @@
 Korkut proposes a message; the lawyer confirms; a `Channel` sends it. Channels are a Strategy
 pattern (like the LLM providers): one `Channel` interface, many implementations, registered in
 `registry`. Scheduling lives one level up in the `OutboundMessage` queue, so every channel gets
-"send now" and "send at <date>" for free. See docs/MESSAGING.md.
+"send now" and "send at <date>" for free.
 """
 
 from .channel import Channel, OutboundDraft, SendResult

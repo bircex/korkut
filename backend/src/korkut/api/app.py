@@ -1625,7 +1625,7 @@ def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(de
 
 # ---------------- two-way integrations (Telegram / WhatsApp / e-mail chat) ----------------
 # Owners configure each channel's connector; any member links their own account to a channel with
-# a one-time code, then chats with Korkut. See korkut.integrations + docs/INTEGRATIONS.md.
+# a one-time code, then chats with Korkut. See korkut.integrations and docs/ARCHITECTURE.md.
 
 _INTEGRATION_KINDS = ("telegram", "whatsapp", "email")
 

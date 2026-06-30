@@ -1,298 +1,120 @@
-# Architecture — Technical Design
+# Architecture
 
-> ⚠️ **Historical design.** This document describes the original Mattermost-based design. The
-> gateway is now the self-hosted **FastAPI web app** (`backend/src/korkut/api`) with a React SPA;
-> references to "Mattermost" as the front door are superseded. See the repo
-> [README](../README.md) for the current layout and run instructions. The underlying principles
-> (separate application DB, single identity, redaction chokepoint, approval flow) still hold.
+Korkut is a self-hosted, multi-tenant AI assistant for Turkish law offices. It is a single
+FastAPI web app that serves a React SPA, runs an agent over live legal-database tools, and keeps
+each office's data on the office's own machine.
 
-> PLAN.md is the roadmap; this document is the detail of *how it works*. All structural
-> decisions to be clarified before starting setup are here.
+This document describes the system as it is built today.
 
-## 1. Process topology (single Linux server)
+## Big picture
 
 ```
-┌─ Docker ─────────────────────────────┐
-│  mattermost      (web + WebSocket)    │
-│  mattermost-db   (Postgres, MM only)  │
-└───────────────────────────────────────┘
-        ▲ WebSocket (read) + REST (write)
-        │
-┌─ systemd service ────────────────────┐
-│  asistan  (single Python process)     │
-│    ├─ bridge/      MM listen (channel+DM)
-│    ├─ korkut/      single identity; specialty modules inside (parallel)
-│    └─ core/        router+redactor+db  │
-└───────────────────────────────────────┘
-        │
-┌─ Docker ─────────────────────────────┐
-│  asistan-db   (Postgres, application) │
-└───────────────────────────────────────┘
-        ▲
-┌─ cron ───────────────────────────────┐
-│  reminder  (calls core every morning  │
-│              → writes hearing summary to MM)│
-└───────────────────────────────────────┘
+Browser (React SPA)
+      │  /api/*
+      ▼
+FastAPI app (korkut.api.app)
+      ├─ auth + mandatory TOTP 2FA, per-office (tenant) scoping
+      ├─ matters / clients / hearings / deadlines  (the case-file domain)
+      ├─ chat  ──►  brain.agent.answer(...)
+      │                 ├─ persona (per office)
+      │                 ├─ tools (registry + per-request handler tools)
+      │                 └─ router ─► provider (cloud or local), redaction for cloud
+      ├─ documents (petition drafting Canvas) + DOCX/UDF export
+      └─ outbound messaging (e-mail) + inbound integrations (Telegram/WhatsApp/e-mail)
+      ▼
+SQLite (trial) or Postgres (production)  +  config/ + templates/
 ```
 
-- **3 running parts:** Mattermost (Docker), `asistan` (Python service), `cron` (reminder).
-- Mattermost uses its own Postgres; **application data lives in a separate Postgres**
-  database (same server, different DB). Postgres from the start → ready to grow to
-  multiple users/offices.
-- All on the same machine; the only external dependency is the OpenAI API (with redacted text).
+## Multi-tenancy
 
-## 2. Mattermost bot identity — a single "Korkut"
-- **Single bot account: Korkut** (single token). The user talks to one assistant.
-- Inside there are specialty modules (dispatch, court hearing, petition, research); when
-  needed they run **in parallel** but **all write as Korkut** → the user sees a single identity.
-- The `asistan` service listens over a single WebSocket and writes as **Korkut** via REST.
-- **Two surfaces:** (a) channel — `@Korkut` mention / Korkut's thread; (b) **direct message (DM)**
-  — one-on-one conversation with Korkut.
-- **Loop protection:** The service ignores Korkut's own messages.
+Every office is a tenant. A person self-registers an office (becoming its `owner`) and adds members;
+usernames are globally unique. Every domain row carries an `office_id`, and every query filters by
+it — one office never sees another's data. This is enforced in the data-access layer
+(`api/matters_store.py`, `api/store.py`) and covered by isolation tests.
 
-## 3. Message flow (step by step)
+## The matter-centric domain
 
-```
-1. The user writes in a channel or DMs Korkut.
-2. bridge receives the message over WS. If it is Korkut's own message → ignore (stop).
-3. Trigger:
-     a) If DM → every message goes to Korkut (private chat; no mention needed).
-     b) If @Korkut is mentioned in a channel OR it is a reply in Korkut's thread → goes to Korkut.
-     c) Unmentioned in a channel → ignore (does not flood the channel, no cost).
-4. Korkut's dispatcher understands the intent → routes to the relevant specialty module(s)
-   (court hearing / petition / research); if more than one is needed they run IN PARALLEL.
-5. The module fetches data from the DB; if an LLM is needed it passes (specialty, task_type, text) to core.router.
-6. core.router: specialty→model mapping.
-     - model=local & Ollama down → fall back to cloud + log.
-     - model=cloud → redactor.redact → provider(gpt) → redactor.restore.
-7. The outputs merge into **a single Korkut response**; written to the thread/DM **as the Korkut identity**.
-8. If there is a data write (court hearing/petition) → DB/file + approval status.
-```
+A lawyer's work hangs off a **matter** (case file / dosya). The core entities (`api/models.py`):
 
-- **Context = Mattermost thread / DM sequence.** Korkut sees the messages of that
-  sequence as context. Persistent information (case/client) is in the DB.
+- **Client** — a müvekkil.
+- **Matter** — a case file: title, optional client, court, file number, case type, counterparty,
+  status, notes.
+- **Hearing** — a duruşma on a matter's calendar (date/time/location/type/result).
+- **Deadline** — a procedural süre (cevap/istinaf/temyiz): a date by which an act must be done.
 
-## 4. core contracts (interfaces)
+Chats (`Conversation.matter_id`) and correspondence (`OutboundMessage.matter_id`) can be filed under
+a matter, and a matter surfaces its own drafts (documents in its filed conversations). The
+**agenda** is a unified, date-sorted view of upcoming hearings + pending deadlines, surfaced both in
+the UI and to the agent. Data access lives in one place — `api/matters_store.py` — shared by the
+REST endpoints and the agent tools, so scoping and shaping never diverge.
 
-```
-router.respond(specialty: str, task_type: str, messages: list) -> str
-    # select specialty→model, local/cloud, fallback rule; applies redaction internally.
+## The agentic core
 
-redactor.redact(text: str) -> (redacted_text: str, mapping: dict)
-redactor.restore(text: str, mapping: dict) -> str
+Korkut is **one capable agent**, not a multi-agent system. Intent is the model's decision; tools map
+to the domain's natural actions. The pieces (`backend/src/korkut/`):
 
-agent_loop.run(provider, messages: list, tools: list[ToolSpec]) -> str
-    # provider-agnostic loop; runs tools centrally via tool_registry. §13.
-providers.<name>.step(messages: list, tools: list[ToolSpec]) -> StepResult
-    # one model turn (gpt/claude now; ollama later). NEVER runs tools itself.
+- **Tool registry** (`core/tool_registry.py`) — discovers tools under `tools/*/tool.yaml`, builds the
+  model's function-calling schema, gates tools whose API key is absent, and runs a tool by name. A
+  composite tool can hide the ones it replaces via `supersedes`.
+- **Agent loop** (`core/agent_loop.py`) — provider-agnostic: given the normalized conversation +
+  tools, ask the model for one step (final text or tool calls), execute the calls, append results,
+  repeat until a final answer or `max_iters`. A tool name in the `handlers` map runs in-process; any
+  other name runs via the registry.
+- **Router** (`core/router.py`) — maps a specialty to a backend (cloud/local) per
+  `config/model-routing.yaml`. For cloud-bound calls it **redacts PII first and restores it in the
+  reply** (`core/redactor.py`); for a local (on-prem) endpoint it skips redaction because the text
+  never leaves the machine.
+- **Providers** (`core/providers/`) — `ClaudeProvider`, `GptProvider`, `GroqProvider`, and
+  `OpenAICompatProvider` (any OpenAI-compatible endpoint: Ollama, LM Studio, vLLM). All implement one
+  `step(messages, tools)` protocol.
+- **Persona** (`brain/persona.py`) and the entry point `brain/agent.py::answer(...)` wire the persona
+  + tools + router into a single call.
 
-db: client / case / hearing / petition CRUD (schema below)
+### Tools
 
-tool_registry.discover() -> list[ToolSpec]    # scans tools/ and reads manifests
-tool_registry.available_tools() -> list[ToolSpec]   # specs whose required key is present (key-gated)
-tool_registry.run(name: str, params: dict) -> Any   # run a tool by name
-    # Tools live under tools/; can also be called from the CLI. Detail: §12.
-```
+Two kinds:
 
-- **Adding a provider = a file under `providers/` + one line in config.** The agents
-  and bridge do not change at all.
-- **Adding a new capability = a tool under `tools/`** (CLI + tool.yaml + README). §12.
+1. **Stateless legal-database tools** under `tools/*/` — CLI-runnable, auto-discovered, hand-written
+   `tool.yaml` schemas. The search/fetch surface is **consolidated**: a single
+   `search_decisions(source=...)` and `fetch_document(source=...)` route to per-source backends
+   (Yargıtay, Danıştay, UYAP Emsal, mevzuat, KİK, Rekabet, Sayıştay, GİB, Uyuşmazlık, KVKK, BDDK,
+   insurance arbitration). This keeps the per-request token footprint small — important for weak
+   local models.
+2. **Per-request handler tools** built in the chat endpoint (`api/matter_tools.py`,
+   `_CANVAS_TOOL`, `_SEND_EMAIL_TOOL`). These close over the authenticated user, enforce `office_id`,
+   and act on the office's own data (matters, hearings, deadlines, drafting Canvas signal, e-mail
+   drafts). Internal writes are direct; outward-facing actions (sending e-mail, finalizing a draft)
+   stay behind explicit human approval.
 
-## 5. Redaction flow (every text going to the cloud)
+### Design principles
 
-```
-text ──> detection (regex + name dictionary)
-            • TCKN (11 digits + algorithm)  • phone     • IBAN
-            • plate                          • case file number
-            • person name (dictionary + rule)
-       ──> replace with token:  "Ahmet Yılmaz" → "[PERSON_1]"
-       ──> map: { "[PERSON_1]": "Ahmet Yılmaz", ... }  (in RAM, per request)
-       ──> provider(gpt) call  (only redacted text is sent)
-       ──> put the tokens back in the returned answer
-```
+- **Model-driven intent, not keyword gates.** Whether to draft a document, open a matter, or just
+  answer is the model's call via the tool contracts — no regex pre-classification.
+- **Context discipline.** Tool schemas are sent on every model step, so the offered surface is kept
+  tight (consolidated search) and the persona lean.
+- **Human-in-the-loop for irreversible/outward actions.** E-mail is drafted and queued, never sent
+  without the lawyer's confirmation.
 
-- Text going to the `local` model **is not redacted** (it does not leave the machine anyway).
-- The map is in RAM per request; if kept persistently (audit), encrypted in `data/`. [KARAR-3]
+## Drafting & documents
 
-## 6. Data model (Postgres — first draft)
+Petition drafting happens in a Canvas editor (`Document`/`DocumentVersion`/`ProposedEdit`). The
+office's templates and intake schemas live in `templates/`; theme resolution is lawyer → office →
+built-in default (`store.effective_theme`). Drafts export to DOCX/UDF.
 
-```sql
-client(id, full_name, national_id, phone, email, address, notes, created_at)
-case(id, file_no, client_id, court, case_type, counterparty,
-     status, opened_at, notes)
-hearing(id, case_id, date, time, location, type, result,
-        reminder_status, notes)
-petition(id, case_id, type, file_path,
-         status,           -- draft | pending_approval | approved
-         created_by, created_at)
-```
+## Messaging & integrations
 
-- All sensitive fields are already on a LUKS-encrypted disk. Field-level extra encryption
-  for the TCKN is optional (if needed). The `office` field will be added in the multi-office phase.
+- **Outbound** (`messaging/`) — channel-agnostic sending (e-mail now), with a propose → confirm →
+  queue → send lifecycle; scheduled sends are flushed by `api.dispatcher`.
+- **Inbound** (`integrations/`) — two-way connectors (Telegram/WhatsApp/e-mail). A member links their
+  account with a one-time code; the runner polls and answers through the same brain. WhatsApp uses a
+  Node/Baileys sidecar.
 
-## 7. Korkut's internal structure (single identity, specialty modules)
-The user sees a single **Korkut**. Inside, the dispatcher understands intent, runs the
-relevant module(s) (may be parallel), and the outputs merge into **a single Korkut response**.
+## Data & configuration
 
-| Module (internal) | Job | LLM / tools | Data |
-|-----------------|----|---------------|------|
-| **dispatcher** | understand intent → hand to module, general chat | classification | — |
-| **court hearing** | add/list hearing, reminder | date/entity extraction | hearing, case |
-| **petition** | select template + generate draft → .docx | text generation | case, petition, template |
-| **research** | search legislation/case law + summarize | tools/ (search_yargitay, search_mevzuat, fetch_decision) | external portal API |
-
-- Korkut has a **single persona/system instruction** (role, limits, "this is a draft" warning);
-  the modules specialize within this persona.
-
-## 8. Data entry (court hearing/client) — KARAR-2: Natural language + approval
-- It is written to Korkut in natural language: "Korkut, Ahmet Yılmaz divorce case, July 15
-  10:00 at the Antalya 3rd Family Court".
-- Korkut **extracts** the fields and shows them as a **structured summary**.
-- Before saving, it applies the **natural-language approval dialog in §9** — it does not
-  write to the DB until the user approves; if the user says "fix this date" it corrects
-  it and presents it for approval again.
-
-## 9. Approval flow — KARAR-4: Natural-language dialog (for all persistent operations)
-This applies not only to the petition, but to **every persistent/important operation**
-(court hearing record, petition finalization, data change).
-
-```
-The agent prepares the work → SUMMARIZES what it will do → ASKS "Do you approve?"
-   │   (status: pending_approval — not yet persistent)
-   ▼
-The user responds in natural language:
-   • "okay / fine / I approve / yes"          → the agent FINALIZES the operation
-   • "no / stop / cancel"                      → it does NOT perform the operation, drops it
-   • "fix this date / add the opposing party"  → the agent APPLIES THE CHANGE,
-                                                  re-summarizes and asks for approval again
-```
-
-- The agent understands the approval/rejection/correction intent **from natural language** (no fixed command).
-- **No persistent operation is performed without approval.** On an ambiguous answer it asks again.
-- For the petition, additionally: the agent can **analyze and propose** the places that need
-  to change ("the date is missing in this clause, would you like me to add it?").
-
-## 10. Error / fallback behavior
-- Ollama down + model=local → fall back to cloud, silent to the user, write to log.
-- Provider error/timeout → the agent says "I can't reach it right now, could you try again"; it does not crash.
-- If unsure about the redaction detection → **err on the safe side**: redact the suspect field too.
-- **No persistent operation without approval** (§9). DB/file writes are first `pending_approval`; they
-  are only finalized with natural-language approval. This is a cross-cutting principle for all write operations.
-
-## 11. Design decisions (closed)
-- **KARAR-1 — Trigger:** ✅ In a channel only `@Korkut` / Korkut's thread; **every message
-  in DM**. Unmentioned messages in a channel are ignored.
-- **KARAR-2 — Data entry:** ✅ Natural language + structured summary + approval (§8).
-- **KARAR-3 — Redaction map:** ✅ Default: in RAM only, deleted after the request
-  (minimal PII trace). If audit is needed, an encrypted persistent log is added as an option.
-- **KARAR-4 — Approval:** ✅ Natural-language dialog; no persistent operation without approval (§9).
-- **KARAR-5 — Application DB:** ✅ Postgres from the start (separate database).
-
-## 12. Tools layer (agent capabilities)
-Each external capability is an **independent, CLI-runnable, self-documenting** tool under
-`tools/`. Korkut (the specialty modules) uses these as a toolset.
-
-### Folder contract (`tools/<ad>/`)
-```
-tools/search_yargitay/
-  ├─ __main__.py    # CLI entry
-  ├─ tool.yaml      # name, description, parameter schema (JSON Schema) → function-calling
-  ├─ README.md      # what it does, example input/output, which endpoint it hits
-  └─ client.py      # thin client over tools/_base/ (our own httpx client for this source)
-```
-
-### CLI contract (clean, agent-independent)
-```
-python -m tools.search_yargitay --query "kira tespiti" --limit 10
-  • Input: arguments or stdin JSON
-  • Output: a SINGLE JSON object to stdout (for machines, not humans)
-  • Log: stderr   • Success/error: exit code (0/≠0)
-```
-This way each tool is tested on its own; it works even without the agent.
-
-### tool.yaml (example)
-```yaml
-name: search_yargitay
-description: "Searches Yargıtay (Court of Cassation) decisions (Bedesten API)."
-requires_key: null        # e.g. BRAVE_API_KEY for niche sources; null = no key needed
-parameters:
-  query: { type: string, required: true }
-  limit: { type: integer, default: 10 }
-```
-
-### Registration and invocation (registry)
-- `core/tool_registry.py` scans `tools/` at startup and reads each `tool.yaml`.
-- The manifests are given to GPT as **function-calling tools** (config defines which
-  agent can access which tool: `config/tools.yaml`).
-- When GPT calls a tool, the registry runs it (in-process import; subprocess CLI if
-  needed) and returns the JSON result to the model.
-
-### config/tools.yaml (which specialty module accesses what)
-```yaml
-# Korkut is a single identity; tools are grouped internally by specialty.
-hearing:   [add_hearing, list_hearings]
-petition:   [get_template, draft_petition, search_yargitay, search_mevzuat, fetch_decision]
-research: [search_yargitay, search_danistay, search_emsal, search_mevzuat, fetch_decision, fetch_legislation]
-```
-
-### Privacy
-- If the tool input is going to a cloud model, **redaction rules apply** (§5).
-- Case law/legislation queries are public; but if client context is added, that part is redacted.
-
-### Resource granularity (one lightweight tool per source)
-- **Shared base client** `tools/_base/` (httpx + token-bucket rate-limit + cache) → each
-  source client stays truly thin (just that endpoint + param mapping). One module per source.
-- **One tool per source:** `search_yargitay`, `search_danistay`, `search_emsal`,
-  `search_anayasa`, `search_kik`, `search_rekabet`, `search_sayistay`, `search_gib`,
-  `search_mevzuat`, plus `fetch_decision` / `fetch_legislation`. Each has its own
-  tool.yaml + README and is CLI-runnable.
-- **Tiered exposure (avoid tool bloat):** the registry always offers the **core** tools
-  (yargitay, danistay, emsal, mevzuat, fetch_*); **niche** ones (kik, rekabet, sayistay,
-  gib, kvkk, bddk, sigorta_tahkim) load on demand when the query targets that domain → GPT's
-  tool list stays small and selection stays sharp.
-
-### Key handling (`requires_key`)
-- A tool's `tool.yaml` declares any needed key (e.g. `requires_key: BRAVE_API_KEY`). At
-  startup `tool_registry` checks the env; **if the key is missing the tool is disabled
-  (never offered to GPT) + logged** → graceful degradation, the system never breaks.
-- **Group A — no key (core):** Yargıtay, Danıştay, Emsal, Bedesten, Anayasa, KİK, Rekabet,
-  Sayıştay, GİB, mevzuat.gov.tr → plain httpx.
-- **Group B — needs a search provider:** KVKK, BDDK, Sigorta Tahkim → optional; prefer our
-  own search/scrape over Brave/Tavily; deferred (core covers ~95%).
-- **Group C — embedding:** semantic search → **local embedding** (HF TEI/Ollama), no
-  external key, data stays in the office.
-- Keys live in `.env` (never in the repo).
-
-### First tool set (Phase 5)
-`search_yargitay` + `search_mevzuat` + `fetch_decision`/`fetch_legislation` — built as
-our own httpx clients over `tools/_base/` (SOURCES.md §8). Other sources and the court-hearing/petition tools
-follow the same contract. (Supersedes the earlier `ictihat_ara`/`mevzuat_ara`/`karar_metin`
-sketch — now one tool per source.)
-
-## 13. Runtime engine (framework decision)
-- Korkut is **our own Python application**; not clawbot/Claude Code (those are only
-  *development* tools — once the product is set up they are not needed, it is an independent service).
-- The agent loop is a **thin layer**: official provider SDKs (`openai`, `anthropic`; later
-  `ollama`) + our own small loop. **No heavy orchestration framework** (LangChain/LangGraph).
-- **One provider-agnostic loop — every model uses the SAME skillset and the SAME loop.**
-  `core/agent_loop.py` owns the orchestration and runs the tools **once, centrally**, over a
-  normalized conversation. A provider only takes one turn (`step()`): serialize the normalized
-  history to its wire format, make a single call, return either final text or tool calls — it
-  never runs a tool itself.
-  ```
-  agent_loop.run(provider, messages, tools):
-    loop: result = provider.step(messages, tools)        # one model turn, provider-specific
-          if result.tool_calls: tool_registry.run(...)   # tools run HERE, identically for all
-                                append results → repeat
-          else: return result.text
-  ```
-- All model calls go through `core/router` → redaction + provider selection +
-  "fall back to cloud if no local" **at a single point**; the router calls `agent_loop.run`.
-- `core/providers/<name>.py` only implements `step()` — translating the shared normalized
-  conversation (system/user/assistant+tool_calls/tool-results) and the shared `ToolSpec`s into
-  that provider's format. Swapping GPT↔Claude↔local changes nothing about how tools are
-  defined, selected, or executed → a new provider is one `step()` file.
-- **Why a thin layer:** (1) provider-swap is our priority, a heavy framework makes it harder;
-  (2) redaction guaranteed at a single chokepoint; (3) the loop is small (~150 lines), few
-  dependencies = longevity; (4) tools are already in `tools/`+registry, the framework's tool
-  abstraction is unnecessary.
+- **Database** — SQLAlchemy models on one `Base`; SQLite for the trial, Postgres in production.
+  Schema is created with `create_all`; lightweight in-code migrations add columns / drop dormant
+  tables (`api/store.py`).
+- **Paths** (`paths.py`) — `config/`, `templates/`, and `data/` are resolved relative to the repo
+  root (`KORKUT_ROOT` or a walk-up), so edits survive an editable install.
+- **Secrets** — `.env` (gitignored); `KORKUT_SECRET` signs session cookies. See
+  [DEPLOYMENT.md](DEPLOYMENT.md) for the full environment.

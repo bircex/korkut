@@ -206,7 +206,7 @@ def _dava_turleri() -> dict[str, dict]:
 def dava_turu(type_id: str) -> dict | None:
     """Archetype inherited by a petition type (deliller/görev/yetki/süre), or None.
 
-    Resolution chain (see docs/DRAFTING_FLOW.md): type_id → catalog kategori →
+    Resolution chain: type_id → catalog kategori →
     dava-workflow.kategori_eslesme → dava_turleri[dava_turu]. Lets the 126 types inherit
     evidence/jurisdiction from 11 archetypes so intake/<id>.json stays thin.
     """
@@ -397,7 +397,7 @@ def _intake_block(type_id: str) -> str:
 
     Activates templates/intake/<id>.json and the dava-workflow archetype so drafting is
     fact-aware: missing critical fields are asked/placeheld and the DELİLLER section is built
-    from the archetype's evidence list. See docs/DRAFTING_FLOW.md.
+    from the archetype's evidence list.
     """
     parts: list[str] = []
 
