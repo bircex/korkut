@@ -177,10 +177,32 @@ export type MatterBrief = {
   opened_at: string | null;
   updated_at: string | null;
 };
+export type Deadline = {
+  id: number;
+  matter_id: number;
+  due_date: string | null;
+  title: string;
+  type: string | null;
+  status: string;
+  notes: string | null;
+};
+export type DeadlineInput = { due_date: string; title: string; type?: string | null; notes?: string | null };
+export type AgendaItem = {
+  kind: "hearing" | "deadline";
+  date: string;
+  id: number;
+  matter_id: number;
+  type: string | null;
+  title?: string; // deadline
+  time?: string | null; // hearing
+  location?: string | null; // hearing
+  status?: string; // deadline
+};
 export type MatterDetail = MatterBrief & {
   client: ClientBrief | null;
   notes: string | null;
   hearings: Hearing[];
+  deadlines: Deadline[];
 };
 export type MatterInput = {
   title: string;
@@ -291,8 +313,12 @@ export const api = {
     request<{ ok: boolean }>(`/api/matters/${id}`, { method: "DELETE" }),
   addHearing: (id: number, input: HearingInput) =>
     request<Hearing>(`/api/matters/${id}/hearings`, { method: "POST", body: JSON.stringify(input) }),
-  upcomingHearings: (days = 14) =>
-    request<{ items: Hearing[]; days: number }>(`/api/calendar/upcoming?days=${days}`),
+  agenda: (days = 14) =>
+    request<{ items: AgendaItem[]; days: number }>(`/api/calendar/upcoming?days=${days}`),
+  addDeadline: (id: number, input: DeadlineInput) =>
+    request<Deadline>(`/api/matters/${id}/deadlines`, { method: "POST", body: JSON.stringify(input) }),
+  completeDeadline: (did: number) =>
+    request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
