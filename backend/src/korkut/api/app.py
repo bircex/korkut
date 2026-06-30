@@ -1020,9 +1020,7 @@ def add_hearing_ep(mid: int, body: HearingBody, korkut_session: str | None = Coo
                 notes=body.notes,
             )
         except ValueError as exc:
-            raise HTTPException(
-                status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}"
-            ) from exc
+            raise HTTPException(status_code=400, detail=f"Tarih/saat biçimi hatalı: {exc}") from exc
         return mstore.hearing_brief(h)
 
 
