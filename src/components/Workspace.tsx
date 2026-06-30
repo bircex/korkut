@@ -300,9 +300,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           ☰
         </button>
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-[11px] font-extrabold text-white">
-            K
-          </span>
+          <img
+            src="/korkut-logo.svg"
+            alt="Korkut"
+            className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
+          />
           <span className="font-bold">Korkut</span>
           {user.office && (
             <span className="hidden border-l border-zinc-200 pl-2 text-sm text-zinc-500 sm:inline">
