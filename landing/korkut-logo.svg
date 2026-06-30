@@ -1,0 +1,70 @@
+<svg width="256" height="256" viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Korkut">
+  <title>Korkut</title>
+  <!-- Korkut — the lawyer with the ANAYASA (Constitution). Hand-drawn doodle, ink on transparent bg. -->
+  <g stroke="#141414" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ears -->
+    <ellipse cx="49" cy="84" rx="9" ry="12" fill="#ffffff"/>
+    <ellipse cx="151" cy="84" rx="9" ry="12" fill="#ffffff"/>
+
+    <!-- suit / robe body -->
+    <path d="M58 132 C40 140 22 160 18 220 L182 220 C178 160 160 140 142 132 Z" fill="#141414"/>
+    <!-- white shirt collar V -->
+    <path d="M84 130 L100 168 L116 130 L107 126 L100 150 L93 126 Z" fill="#ffffff"/>
+    <!-- tie -->
+    <path d="M100 150 L92 162 L100 205 L108 162 Z" fill="#141414"/>
+    <!-- shoulder seams -->
+    <path d="M70 130 L78 150 M130 130 L122 150" fill="none"/>
+
+    <!-- head -->
+    <ellipse cx="100" cy="78" rx="52" ry="58" fill="#ffffff"/>
+
+    <!-- eyes -->
+    <circle cx="80" cy="72" r="13" fill="#ffffff"/>
+    <circle cx="120" cy="72" r="13" fill="#ffffff"/>
+    <circle cx="80" cy="73" r="5" fill="#141414" stroke="none"/>
+    <circle cx="120" cy="73" r="5" fill="#141414" stroke="none"/>
+    <!-- rounder nose -->
+    <path d="M98 81 C93 92 96 99 102 99 C108 99 110 92 105 84" fill="none" stroke-width="2.6"/>
+    <!-- smile -->
+    <path d="M78 104 C88 118 112 118 122 104" fill="none"/>
+  </g>
+
+  <!-- hair: a fuller fringe across the crown with a few spikes -->
+  <path d="M50 52 C53 33 70 21 100 21 C130 21 147 33 150 52"
+        fill="none" stroke="#141414" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M58 44 L64 33 M70 36 L75 25 M82 31 L86 21 M94 28 L96 18 M106 28 L104 18 M118 31 L114 21 M130 36 L125 25 M142 44 L136 33"
+        fill="none" stroke="#141414" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- ANAYASA book, gripped low-left -->
+  <g transform="rotate(-8 78 178)">
+    <rect x="44" y="150" width="64" height="58" rx="3" fill="#ffffff" stroke="#141414" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M44 150 L52 144 L116 144 L108 150 M108 150 L108 208 L116 202 L116 144" fill="#ffffff" stroke="#141414" stroke-width="3.4" stroke-linejoin="round"/>
+    <text x="76" y="183" font-family="'Trebuchet MS','Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#141414" text-anchor="middle" letter-spacing="0.5">ANAYASA</text>
+  </g>
+
+  <!-- left hand: fingers clearly wrapping the lower-left of the book -->
+  <g stroke="#141414" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 212
+             C25 206 26 196 32 191
+             C36 185 44 187 45 194
+             C47 186 55 186 57 194
+             C59 187 67 188 67 196
+             C72 191 79 196 77 204
+             C74 213 63 219 52 218
+             C44 218 35 217 30 212 Z" fill="#ffffff"/>
+    <path d="M45 195 L44 207 M57 195 L56 207 M67 197 L65 207" fill="none" stroke-width="2.4"/>
+  </g>
+
+  <!-- right hand: peeking from the robe, lower right -->
+  <g stroke="#141414" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M143 192
+             C137 197 138 207 144 212
+             C148 215 154 214 156 210
+             C159 215 165 215 167 210
+             C171 213 177 209 175 203
+             C180 200 179 192 172 191
+             C167 195 160 195 155 190
+             C151 187 146 188 143 192 Z" fill="#ffffff"/>
+    <path d="M156 207 L157 197 M167 206 L167 196" fill="none" stroke-width="2.4"/>
+  </g>
+</svg>

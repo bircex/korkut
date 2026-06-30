@@ -1,4 +1,8 @@
-# Korkut
+<p align="center">
+  <img src="assets/korkut-logo.svg" alt="Korkut" width="120" height="120" />
+</p>
+
+<h1 align="center">Korkut</h1>
 
 Korkut is an AI assistant for a Turkish law office — legal research (live case law +
 legislation), petition & contract drafting, and document workflow — delivered through a

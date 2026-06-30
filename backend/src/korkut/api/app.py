@@ -1730,3 +1730,14 @@ def index():
 
 if (_STATIC / "assets").exists():
     app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
+
+
+@app.get("/{filename}")
+def root_file(filename: str):
+    # Root-level static files emitted by Vite from public/ (e.g. korkut-logo.svg, favicons).
+    # Single path segment only, so /api/* and /assets/* keep their own handlers; the resolved
+    # path must be a direct child of _STATIC to bar traversal.
+    candidate = (_STATIC / filename).resolve()
+    if candidate.parent == _STATIC and candidate.is_file():
+        return FileResponse(candidate)
+    raise HTTPException(status_code=404)
