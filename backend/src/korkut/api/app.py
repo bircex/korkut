@@ -53,13 +53,12 @@ from korkut.api.models import (
 )
 from korkut.api.store import (
     effective_theme,
-    office_channel_config,
     office_model_cfg,
+    send_outbound_message,
     session,
 )
 from korkut.brain import agent
 from korkut.core.tool_registry import ToolSpec
-from korkut.messaging import OutboundDraft, SendResult, build_channel
 
 _STATIC = Path(__file__).resolve().parent / "static"
 _HISTORY_TURNS = 20
@@ -1351,27 +1350,6 @@ def _outbox_public(m: OutboundMessage) -> dict:
     }
 
 
-def _send_outbound(s: Session, msg: OutboundMessage) -> SendResult:
-    """Send one message now via its office's channel config; updates `msg` status in place."""
-    cfg = office_channel_config(s, msg.office_id, msg.kind)
-    msg.attempts += 1
-    if cfg is None:
-        msg.status = "failed"
-        msg.error = "Kanal yapılandırılmamış veya kapalı"
-        return SendResult(ok=False, detail=msg.error)
-    result = build_channel(msg.kind, cfg).send(
-        OutboundDraft(to_addr=msg.to_addr, subject=msg.subject, body=msg.body)
-    )
-    if result.ok:
-        msg.status = "sent"
-        msg.sent_at = _utcnow()
-        msg.error = None
-    else:
-        msg.status = "failed"
-        msg.error = result.detail
-    return result
-
-
 def _require_outbox(s: Session, user: User, mid: int) -> OutboundMessage:
     msg = s.get(OutboundMessage, mid)
     if msg is None or msg.office_id != user.office_id:
@@ -1422,7 +1400,7 @@ def confirm_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
             msg.status = "queued"
             s.commit()
             return _outbox_public(msg)
-        _send_outbound(s, msg)
+        send_outbound_message(s, msg)
         s.commit()
         return _outbox_public(msg)
 

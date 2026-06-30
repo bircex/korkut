@@ -9,14 +9,22 @@ from __future__ import annotations
 
 import hashlib
 import os
+from datetime import UTC, datetime
 
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
-from korkut.api.models import OfficeChannel, OfficeModel, TemplateDefault, TemplateOverride
+from korkut.api.models import (
+    OfficeChannel,
+    OfficeModel,
+    OutboundMessage,
+    TemplateDefault,
+    TemplateOverride,
+)
 from korkut.core import db
 from korkut.core.router import ModelCfg
+from korkut.messaging import OutboundDraft, SendResult, build_channel
 from korkut.paths import DATA_DIR, TEMPLATES_DIR
 
 _DEFAULT_URL = f"sqlite+pysqlite:///{DATA_DIR / 'korkut.db'}"
@@ -100,6 +108,59 @@ def office_channel_config(s: Session, office_id: int, kind: str) -> dict | None:
     if row is None or not row.enabled:
         return None
     return dict(row.config or {})
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def send_outbound_message(s: Session, msg: OutboundMessage) -> SendResult:
+    """Send one message now via its office's channel config; updates `msg` status in place.
+
+    Shared by the confirm endpoint (immediate sends) and the dispatcher (scheduled sends).
+    """
+    cfg = office_channel_config(s, msg.office_id, msg.kind)
+    msg.attempts += 1
+    if cfg is None:
+        msg.status = "failed"
+        msg.error = "Kanal yapılandırılmamış veya kapalı"
+        return SendResult(ok=False, detail=msg.error)
+    result = build_channel(msg.kind, cfg).send(
+        OutboundDraft(to_addr=msg.to_addr, subject=msg.subject, body=msg.body)
+    )
+    if result.ok:
+        msg.status = "sent"
+        msg.sent_at = _utcnow()
+        msg.error = None
+    else:
+        msg.status = "failed"
+        msg.error = result.detail
+    return result
+
+
+def dispatch_due(limit: int = 100) -> int:
+    """Send every queued message whose `send_at` has arrived. Returns how many were processed.
+
+    Idempotent and safe to run on a schedule (cron): only `queued` rows with a due `send_at` are
+    touched, and each becomes `sent`/`failed` so it is never picked up twice.
+    """
+    processed = 0
+    with session() as s:
+        due = s.scalars(
+            select(OutboundMessage)
+            .where(
+                OutboundMessage.status == "queued",
+                OutboundMessage.send_at.is_not(None),
+                OutboundMessage.send_at <= _utcnow(),
+            )
+            .order_by(OutboundMessage.send_at)
+            .limit(limit)
+        ).all()
+        for msg in due:
+            send_outbound_message(s, msg)
+            processed += 1
+        s.commit()
+    return processed
 
 
 def sync_template_defaults(engine) -> None:

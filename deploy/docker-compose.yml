@@ -19,3 +19,17 @@ services:
       - "8090:8090"
     volumes:
       - ../data:/app/data
+
+  # Scheduled-send worker: flushes due outbound messages (e.g. "X tarihinde gönder") every minute.
+  # Shares the same image + DB volume as the web app. (Production: one dispatcher per DB.)
+  dispatcher:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      KORKUT_DB_URL: "sqlite:////app/data/korkut.db"
+    volumes:
+      - ../data:/app/data
+    command: sh -c "while true; do python -m korkut.api.dispatcher; sleep 60; done"

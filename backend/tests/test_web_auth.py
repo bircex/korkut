@@ -889,3 +889,31 @@ def test_email_confirm_without_config_fails(client):
     # No email channel configured → immediate confirm cannot send.
     out = client.post(f"/api/outbox/{mid}/confirm").json()
     assert out["status"] == "failed" and out["error"]
+
+
+def test_dispatcher_flushes_due_queued(client):
+    import datetime as _dt
+
+    import korkut.api.store as store
+    from korkut.api.models import OutboundMessage
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+    mid = _draft_email(client, cid)["pending_email"]
+    # Schedule to the future → confirm → queued (not sent yet).
+    client.put(
+        f"/api/outbox/{mid}",
+        json={"to_addr": "x@y.com", "subject": "s", "body": "b", "send_at": "2999-01-01T00:00:00"},
+    )
+    assert client.post(f"/api/outbox/{mid}/confirm").json()["status"] == "queued"
+
+    # Make it due, then run the dispatcher.
+    with store.session() as s:
+        s.get(OutboundMessage, mid).send_at = _dt.datetime(2000, 1, 1)
+        s.commit()
+    assert store.dispatch_due() >= 1
+
+    # Processed → no longer queued (failed here, since no SMTP channel is configured).
+    out = client.get("/api/outbox").json()
+    msg = next(m for m in out if m["id"] == mid)
+    assert msg["status"] == "failed"

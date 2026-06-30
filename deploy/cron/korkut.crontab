@@ -1,0 +1,6 @@
+# Korkut scheduled-send worker (non-Docker hosts).
+# Flushes due outbound messages ("X tarihinde gönder", reminders) every minute.
+# Install with:  crontab deploy/cron/korkut.crontab   (adjust the paths to your install).
+# In Docker, the compose `dispatcher` service does this automatically — no crontab needed.
+
+* * * * * cd /opt/korkut/backend && /opt/korkut/.venv/bin/python -m korkut.api.dispatcher >> /var/log/korkut-dispatcher.log 2>&1
