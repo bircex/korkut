@@ -4,7 +4,9 @@ The single privacy chokepoint (ARCHITECTURE.md §5). Text bound for a *local* mo
 never redacted (it does not leave the machine); text bound for the *cloud* always is.
 
 Detectors are driven by config/redaction-rules.yaml (regex + a person-name detector).
-TCKN additionally passes the official checksum. Each distinct detected value is replaced
+TCKN additionally passes the official checksum. A caller may also pass ``known_entities``
+— exact values the office already stores (client/lawyer/matter fields) — which are masked
+deterministically rather than guessed (Layer 4). Each distinct detected value is replaced
 with a stable token like ``[TCKN_1]``; the mapping (token → original) is returned so the
 caller can restore the real values in the model's response. The mapping lives in RAM only.
 
@@ -100,7 +102,11 @@ def _valid_tckn(value: str) -> bool:
 
 
 class Redactor:
-    def __init__(self, rules: dict | None = None) -> None:
+    def __init__(
+        self,
+        rules: dict | None = None,
+        known_entities: list[tuple[str, str]] | None = None,
+    ) -> None:
         rules = rules if rules is not None else _load_rules()
         detectors = rules.get("detectors") or {}
         self._regex: list[tuple[str, re.Pattern[str], bool]] = []
@@ -114,6 +120,24 @@ class Redactor:
         extra = {n.lower() for n in (person_spec.get("extra_names") or [])}
         self._names = _SEED_NAMES | extra
         self._word_re = re.compile(_CAP)
+        # Layer 4 — values the office already stores (client/lawyer/matter fields) that must be
+        # masked deterministically instead of guessed. Each is (value, kind); longest first so a
+        # full name wins over a substring of it. Empty values are dropped.
+        self._known = sorted(
+            {(v, k.upper()) for v, k in (known_entities or []) if v and v.strip()},
+            key=lambda vk: len(vk[0]),
+            reverse=True,
+        )
+
+    def _find_known(self, text: str) -> list[tuple[int, int, str, str]]:
+        """Every literal occurrence of each known entity value (repeats included)."""
+        spans: list[tuple[int, int, str, str]] = []
+        for value, kind in self._known:
+            start = text.find(value)
+            while start != -1:
+                spans.append((start, start + len(value), kind, value))
+                start = text.find(value, start + len(value))
+        return spans
 
     def _find_persons(self, text: str) -> list[tuple[int, int, str, str]]:
         """A known first name + up to 2 immediately following capitalized words."""
@@ -135,7 +159,7 @@ class Redactor:
 
     def _find(self, text: str) -> list[tuple[int, int, str, str]]:
         """Return (start, end, kind, value) spans, longest-first, non-overlapping."""
-        spans: list[tuple[int, int, str, str]] = []
+        spans: list[tuple[int, int, str, str]] = self._find_known(text)
         for kind, pattern, check in self._regex:
             for m in pattern.finditer(text):
                 if check and kind == "TCKN" and not _valid_tckn(m.group(0)):
