@@ -5,7 +5,11 @@ export type User = {
   bar_registry_no: string | null;
   role: "owner" | "member";
   office: string | null;
+  has_2fa?: boolean;
+  require_2fa?: boolean;
 };
+// Login/register either hand back a full session ("done") or ask for a 2FA step.
+export type LoginResult = { step: LoginStep } | { step: "done"; user: User };
 export type Member = {
   id: number;
   username: string;
@@ -14,6 +18,7 @@ export type Member = {
   role: "owner" | "member";
   is_active: boolean;
   enrolled: boolean;
+  mfa_required: boolean;
   is_self: boolean;
 };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -388,12 +393,12 @@ export const api = {
   me: () => request<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
   login: (username: string, password: string) =>
-    request<{ step: LoginStep }>("/api/login", {
+    request<LoginResult>("/api/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
   register: (office_name: string, full_name: string, username: string, password: string) =>
-    request<{ step: LoginStep }>("/api/register", {
+    request<LoginResult>("/api/register", {
       method: "POST",
       body: JSON.stringify({ office_name, full_name, username, password }),
     }),
@@ -405,6 +410,11 @@ export const api = {
     }),
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
+  setMember2fa: (id: number, required: boolean) =>
+    request<Member>(`/api/members/${id}/2fa`, {
+      method: "POST",
+      body: JSON.stringify({ required }),
+    }),
   updateMe: (patch: { full_name?: string; bar_registry_no?: string | null }) =>
     request<User>("/api/me", { method: "PATCH", body: JSON.stringify(patch) }),
   getStyle: () => request<StyleData>("/api/style"),

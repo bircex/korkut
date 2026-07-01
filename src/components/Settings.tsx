@@ -104,6 +104,23 @@ function Members({ isOwner }: { isOwner: boolean }) {
     }
   }
 
+  async function toggle2fa(m: Member) {
+    const turnOn = !(m.mfa_required || m.enrolled);
+    if (!turnOn && !confirm(`${m.full_name ?? m.username} için 2FA kapatılsın mı?`)) return;
+    try {
+      const updated = await api.setMember2fa(m.id, turnOn);
+      setMembers((list) => list.map((x) => (x.id === m.id ? updated : x)));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function twoFaLabel(m: Member): string {
+    if (m.enrolled) return "2FA açık";
+    if (m.mfa_required) return "2FA zorunlu · kurulum bekliyor";
+    return "2FA kapalı";
+  }
+
   return (
     <div>
       <div className="mb-3 divide-y divide-zinc-100 rounded-lg border border-zinc-200">
@@ -119,9 +136,17 @@ function Members({ isOwner }: { isOwner: boolean }) {
               </span>
               <span className="block truncate text-[12px] text-zinc-400">
                 @{m.username} · {m.role === "owner" ? "Sahip" : "Üye"}
-                {!m.is_active ? " · pasif" : m.enrolled ? "" : " · 2FA bekliyor"}
+                {!m.is_active ? " · pasif" : ` · ${twoFaLabel(m)}`}
               </span>
             </span>
+            {isOwner && m.is_active && (
+              <button
+                onClick={() => toggle2fa(m)}
+                className="shrink-0 rounded-md px-2 py-1 text-[12px] text-zinc-600 hover:bg-zinc-100"
+              >
+                {m.mfa_required || m.enrolled ? "2FA'yı kapat" : "2FA iste"}
+              </button>
+            )}
             {isOwner && !m.is_self && m.is_active && (
               <button
                 onClick={() => remove(m)}
@@ -173,7 +198,8 @@ function Members({ isOwner }: { isOwner: boolean }) {
           </button>
           {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
           <p className="m-0 text-[12px] text-zinc-400">
-            Üye, verdiğiniz kullanıcı adı + geçici parola ile giriş yapar ve ilk girişte kendi 2FA'sını kurar.
+            Üye, verdiğiniz kullanıcı adı + geçici parola ile giriş yapar. 2FA varsayılan kapalıdır;
+            yukarıdaki listeden bir üye için “2FA iste” diyerek zorunlu kılabilirsiniz.
           </p>
         </form>
       ) : (
@@ -422,7 +448,11 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
               <BarNoField initial={user.bar_registry_no} />
               <div className="mt-4" />
               <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[13px] text-zinc-600">
-                İki adımlı doğrulama (2FA) <span className="font-medium text-zinc-800">aktif</span>.
+                İki adımlı doğrulama (2FA){" "}
+                <span className="font-medium text-zinc-800">
+                  {user.has_2fa ? "hesabınızda açık" : user.require_2fa ? "zorunlu (girişte kurulacak)" : "kapalı"}
+                </span>
+                .
               </div>
             </div>
           )}

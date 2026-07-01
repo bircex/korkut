@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { api, ApiError, type LoginStep } from "../api";
+import { api, ApiError, type LoginStep, type User } from "../api";
 import { AuthShell, Brand, Button, ErrorText, Field } from "../ui";
 
 export function Register({
   onStep,
+  onAuthed,
   onBack,
 }: {
   onStep: (step: LoginStep) => void;
+  onAuthed: (user: User) => void;
   onBack: () => void;
 }) {
   const [officeName, setOfficeName] = useState("");
@@ -21,8 +23,9 @@ export function Register({
     setError("");
     setBusy(true);
     try {
-      const { step } = await api.register(officeName, fullName, username, password);
-      onStep(step);
+      const res = await api.register(officeName, fullName, username, password);
+      if (res.step === "done") onAuthed(res.user);
+      else onStep(res.step);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Kayıt başarısız");
     } finally {

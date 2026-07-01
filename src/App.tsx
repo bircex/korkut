@@ -46,9 +46,17 @@ export function App() {
     case "loading":
       return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
     case "login":
-      return <Login onStep={(step) => setStage(step)} onRegister={() => setStage("register")} />;
+      return (
+        <Login
+          onStep={(step) => setStage(step)}
+          onAuthed={authed}
+          onRegister={() => setStage("register")}
+        />
+      );
     case "register":
-      return <Register onStep={(step) => setStage(step)} onBack={() => setStage("login")} />;
+      return (
+        <Register onStep={(step) => setStage(step)} onAuthed={authed} onBack={() => setStage("login")} />
+      );
     case "enroll":
       return <Enroll onDone={authed} />;
     case "mfa":
@@ -57,7 +65,7 @@ export function App() {
       return user ? (
         <Workspace user={user} onLogout={logout} />
       ) : (
-        <Login onStep={(s) => setStage(s)} onRegister={() => setStage("register")} />
+        <Login onStep={(s) => setStage(s)} onAuthed={authed} onRegister={() => setStage("register")} />
       );
   }
 }
