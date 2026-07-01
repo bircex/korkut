@@ -17,6 +17,7 @@ import { Customize } from "./Customize";
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
+import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
 
 const SESSION_PAGE = 20;
@@ -51,7 +52,8 @@ type SidebarView =
   | "customize"
   | "matters"
   | "clients"
-  | "finance";
+  | "finance"
+  | "tasks";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -322,6 +324,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <FinancePanel onClose={() => setView("chats")} />;
   }
 
+  if (view === "tasks") {
+    return <TasksPanel onClose={() => setView("chats")} />;
+  }
+
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
   if (view !== "docs" && pane === "document" && currentId !== null) {
     return (
@@ -434,6 +440,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     ₺ Mali
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setView("tasks");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    ✅ Görevler
                   </button>
                   <button
                     onClick={() => {

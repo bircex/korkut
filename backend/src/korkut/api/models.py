@@ -518,6 +518,31 @@ class Expense(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
+class Task(Base):
+    """A to-do assigned to an office member (görev). Optionally tied to a matter and due-dated.
+
+    `status` is open|done. A due-dated open task can surface in the office agenda alongside
+    hearings and deadlines. `assignee` is the member responsible; `created_by` who added it.
+    """
+
+    __tablename__ = "tasks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    assignee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), default=None, index=True
+    )
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
+    status: Mapped[str] = mapped_column(String(16), default="open")  # open | done
+    due_date: Mapped[_date | None] = mapped_column(Date, default=None, index=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
+
+
 class AuthEvent(Base):
     """Append-only audit trail for authentication events (KVKK / incident response)."""
 
