@@ -28,6 +28,7 @@ app = [
     "pytesseract>=0.3.13",
     "Pillow>=12.0",
     "SQLAlchemy>=2.0.51",
+    "alembic>=1.13",
 ]
 dev = [
     "pytest>=9.1",
@@ -64,6 +65,8 @@ skip_covered = true
 
 [tool.ruff]
 line-length = 100
+# Alembic writes migration files under versions/; leave the generated DDL unlinted.
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = [

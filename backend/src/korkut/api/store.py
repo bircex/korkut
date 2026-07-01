@@ -12,7 +12,7 @@ import os
 from datetime import UTC, datetime
 from urllib.parse import urlsplit, urlunsplit
 
-from sqlalchemy import inspect, select, text
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
@@ -49,9 +49,14 @@ def engine():
         if url.startswith("sqlite") and "memory" not in url:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
-        _migrate_legacy(_engine)  # pre-init: drop obsolete chat tables so init_db rebuilds them
-        db.init_db(_engine)  # create any missing tables (offices, documents, matters, …)
-        _migrate_matter_links(_engine)  # post-init: link chats + correspondence to a matter
+        if "memory" in url:
+            # In-memory test databases are ephemeral: build the schema straight from the models.
+            db.init_db(_engine)
+        else:
+            # Real (file SQLite / Postgres) databases are migrated so schema changes never drift.
+            from korkut.core.migrate import run_migrations
+
+            run_migrations(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         sync_template_defaults(
             _engine
@@ -236,36 +241,6 @@ def sync_template_defaults(engine) -> None:
                 elif row.source_hash != digest or row.kind != kind:
                     row.content, row.source_hash, row.kind = content, digest, kind
         s.commit()
-
-
-def _migrate_legacy(engine) -> None:
-    """Old per-user `messages` schema (no `conversation_id`) → drop chat tables; init_db rebuilds.
-    Chat history is disposable; accounts/2FA/recovery/audit are preserved.
-    """
-    insp = inspect(engine)
-    tables = set(insp.get_table_names())
-    if "messages" not in tables:
-        return
-    cols = {c["name"] for c in insp.get_columns("messages")}
-    if "conversation_id" not in cols:
-        with engine.begin() as conn:
-            conn.execute(text("DROP TABLE messages"))
-            if "conversations" in tables:
-                conn.execute(text("DROP TABLE conversations"))
-
-
-def _migrate_matter_links(engine) -> None:
-    """Add the optional `matter_id` link column to existing tables (chats, correspondence).
-
-    Kept separate from `_migrate_tenant` (which early-returns on already-tenant DBs). Idempotent:
-    each table is skipped once it has the column; a fresh DB already has it from init_db.
-    """
-    insp = inspect(engine)
-    tables = set(insp.get_table_names())
-    with engine.begin() as conn:
-        for table in ("conversations", "outbound_messages"):
-            if table in tables and "matter_id" not in {c["name"] for c in insp.get_columns(table)}:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN matter_id INTEGER"))
 
 
 def session() -> Session:
