@@ -340,3 +340,54 @@ def test_evrak_register_crud_and_filter(app_mod):
     c.delete(f"/api/evrak/{d['id']}")
     assert len(c.get("/api/evrak").json()["items"]) == 1
     assert c.post("/api/evrak", json={"title": "   "}).status_code == 400
+
+
+def test_reports_overview_rolls_up_every_module(app_mod):
+    c = _existing(app_mod)
+    me = next(m for m in c.get("/api/members").json() if m["username"] == "avukat")
+    cid = c.post("/api/clients", json={"full_name": "Ayşe Yıldız"}).json()["id"]
+    mid = c.post("/api/matters", json={"title": "Dava", "client_name": "Ayşe Yıldız"}).json()["id"]
+
+    # Finance: one paid invoice + one expense.
+    inv = c.post(
+        "/api/finance/invoices",
+        json={"client_id": cid, "amount": 1000, "vat_rate": 20, "status": "issued"},
+    ).json()
+    c.patch(f"/api/finance/invoices/{inv['id']}", json={"status": "paid"})
+    c.post("/api/finance/expenses", json={"client_id": cid, "amount": 150, "kind": "harç"})
+
+    # Tasks: one open-and-overdue, one done.
+    past = (date.today() - timedelta(days=2)).isoformat()
+    c.post("/api/tasks", json={"title": "Geciken görev", "assignee_id": me["id"], "due_date": past})
+    done = c.post("/api/tasks", json={"title": "Biten görev"}).json()
+    c.patch(f"/api/tasks/{done['id']}", json={"status": "done"})
+
+    # Agenda: an upcoming hearing, an upcoming deadline, and an overdue deadline.
+    soon = (date.today() + timedelta(days=3)).isoformat()
+    c.post(f"/api/matters/{mid}/hearings", json={"date": soon, "time": "09:30"})
+    c.post(f"/api/matters/{mid}/deadlines", json={"due_date": soon, "title": "Cevap süresi"})
+    c.post(f"/api/matters/{mid}/deadlines", json={"due_date": past, "title": "Geçen süre"})
+
+    # Evrak: one incoming, one outgoing.
+    c.post("/api/evrak", json={"matter_id": mid, "direction": "incoming", "title": "Tebligat"})
+    c.post("/api/evrak", json={"direction": "outgoing", "title": "Cevap"})
+
+    o = c.get("/api/reports/overview").json()
+    assert o["matters"]["total"] == 1 and o["matters"]["by_status"]["open"] == 1
+    assert o["clients"]["total"] == 1
+    assert o["finance"] == {
+        "invoiced": 1000.0,
+        "paid": 1000.0,
+        "outstanding": 0.0,
+        "expenses": 150.0,
+    }
+    assert o["tasks"] == {"open": 1, "done": 1, "overdue": 1}
+    assert o["agenda"]["hearings_upcoming"] == 1
+    assert o["agenda"]["deadlines_upcoming"] == 1
+    assert o["agenda"]["deadlines_overdue"] == 1
+    assert o["evrak"]["total"] == 2
+    assert o["evrak"]["by_direction"] == {"incoming": 1, "outgoing": 1}
+
+
+def test_reports_overview_requires_auth(app_mod):
+    assert TestClient(app_mod.app).get("/api/reports/overview").status_code == 401

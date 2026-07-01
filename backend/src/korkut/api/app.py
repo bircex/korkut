@@ -37,6 +37,7 @@ from sqlalchemy.orm import Session
 from korkut.api import auth, extract, matter_tools, petitions, totp
 from korkut.api import finance_store as fin
 from korkut.api import matters_store as mstore
+from korkut.api import reports_store as reports
 from korkut.api.models import (
     AuthEvent,
     Client,
@@ -1443,6 +1444,16 @@ def finance_summary_ep(
     with session() as s:
         _require_user(s, korkut_session)
         return fin.summary(s, client_id=client_id)
+
+
+# ---------------- reports (rapor / özet panosu) ----------------
+
+
+@app.get("/api/reports/overview")
+def reports_overview_ep(korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        return reports.overview(s)
 
 
 # ---------------- tasks (görev atama) ----------------
