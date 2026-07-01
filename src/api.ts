@@ -239,6 +239,19 @@ export type DocumentRecord = {
   doc_date: string | null;
   notes: string | null;
 };
+export type ReportsOverview = {
+  matters: { total: number; by_status: Record<string, number> };
+  clients: { total: number };
+  finance: FinanceSummary;
+  tasks: { open: number; done: number; overdue: number };
+  agenda: {
+    days: number;
+    hearings_upcoming: number;
+    deadlines_upcoming: number;
+    deadlines_overdue: number;
+  };
+  evrak: { total: number; by_direction: Record<string, number> };
+};
 export type MatterBrief = {
   id: number;
   title: string;
@@ -455,6 +468,7 @@ export const api = {
   }) => request<DocumentRecord>("/api/evrak", { method: "POST", body: JSON.stringify(input) }),
   deleteEvrak: (id: number) =>
     request<{ ok: boolean }>(`/api/evrak/${id}`, { method: "DELETE" }),
+  reportsOverview: () => request<ReportsOverview>("/api/reports/overview"),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
