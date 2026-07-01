@@ -26,7 +26,8 @@ _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "sta
 def collect_known_entities(s: Session) -> list[tuple[str, str]]:
     """Exact PII values the office already stores — for the redactor to mask deterministically
     instead of guessing (see core.redactor Layer 4). Covers client identities (name, TCKN, phone,
-    e-mail, address), matter counterparties, and lawyer names. Returned as (value, kind) pairs; the
+    e-mail, address, birth date), matter counterparties, and lawyer names + bar-registry numbers.
+    Returned as (value, kind) pairs; the
     redactor dedupes and drops blanks. Collected office-wide so any stored party's PII is masked
     wherever it appears in a cloud-bound prompt, not only the matter in context.
     """
@@ -43,8 +44,11 @@ def collect_known_entities(s: Session) -> list[tuple[str, str]]:
         select(Matter.counterparty).where(Matter.counterparty.is_not(None))
     ):
         entities.append((counterparty, "PERSON"))
-    for full_name in s.scalars(select(User.full_name).where(User.full_name.is_not(None))):
-        entities.append((full_name, "PERSON"))
+    for u in s.scalars(select(User)):
+        if u.full_name:
+            entities.append((u.full_name, "PERSON"))
+        if u.bar_registry_no:
+            entities.append((u.bar_registry_no, "BAR_NO"))
     return entities
 
 

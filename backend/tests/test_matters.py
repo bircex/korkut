@@ -170,11 +170,14 @@ def test_requires_auth(app_mod):
 
 def test_collect_known_entities_gathers_stored_pii(app_mod):
     # Layer 4 source: the exact PII the office stores becomes (value, kind) pairs for the redactor.
+    from sqlalchemy import select
+
     from korkut.api import matters_store as ms
-    from korkut.api.models import Client, Matter
+    from korkut.api.models import Client, Matter, User
     from korkut.api.store import session
 
     with session() as s:
+        s.scalar(select(User)).bar_registry_no = "34567"  # the bootstrapped lawyer's bar number
         s.add(
             Client(
                 full_name="Oğuzhan Karaca",
@@ -199,6 +202,7 @@ def test_collect_known_entities_gathers_stored_pii(app_mod):
     assert ("01.01.1990", "DOB") in entities  # birth date, formatted dd.mm.yyyy
     assert ("Cengiz Aktürk", "PERSON") in entities  # matter counterparty
     assert ("Av. Test", "PERSON") in entities  # bootstrapped lawyer (adduser fixture)
+    assert ("34567", "BAR_NO") in entities  # lawyer bar-registry number
 
 
 def test_client_create_and_update_pii(app_mod):

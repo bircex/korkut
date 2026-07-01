@@ -411,6 +411,27 @@ def test_persona_owner_only_and_member_readonly(client):
     assert c2.put("/api/persona", json={"tone": "x"}).status_code == 403
 
 
+def test_bar_registry_no_on_member_and_self_edit(client):
+    _enroll(client, "avukat")
+    # A lawyer sets their own bar-registry number via PATCH /api/me.
+    me = client.patch("/api/me", json={"bar_registry_no": "12345"}).json()
+    assert me["bar_registry_no"] == "12345"
+    # The owner adds a member with a bar number.
+    m = client.post(
+        "/api/members",
+        json={
+            "username": "katip",
+            "full_name": "Av. Kâtip",
+            "password": "parola123",
+            "bar_registry_no": "67890",
+        },
+    ).json()
+    assert m["bar_registry_no"] == "67890"
+    roster = {u["username"]: u for u in client.get("/api/members").json()}
+    assert roster["katip"]["bar_registry_no"] == "67890"
+    assert roster["avukat"]["bar_registry_no"] == "12345"
+
+
 def test_memory_crud_shared_across_members(client):
     _enroll(client, "avukat")
     assert client.get("/api/memory").json() == {"items": []}
