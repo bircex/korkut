@@ -7,13 +7,13 @@ the agent) share the same aggregation logic.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from korkut.api import finance_store as fin
-from korkut.api.models import Client, Deadline, DocumentRecord, Hearing, Matter, Task
+from korkut.api.models import CalendarEvent, Client, DocumentRecord, Matter, Task
 
 _UPCOMING_DAYS = 14  # window for "yaklaşan" hearings/deadlines
 
@@ -46,23 +46,31 @@ def overview(s: Session) -> dict:
         or 0
     )
 
-    # Agenda: what is coming up (and what deadlines have already slipped).
+    # Agenda: what is coming up (and what deadlines have already slipped). Events carry a datetime
+    # start_at, so compare against day boundaries (deadlines are stored at midnight).
+    day_start = datetime.combine(today, time())
+    window_end = datetime.combine(today + timedelta(days=_UPCOMING_DAYS + 1), time())
     hearings_upcoming = (
         s.scalar(
             select(func.count())
-            .select_from(Hearing)
-            .where(Hearing.date >= today, Hearing.date <= today + timedelta(days=_UPCOMING_DAYS))
+            .select_from(CalendarEvent)
+            .where(
+                CalendarEvent.category == "hearing",
+                CalendarEvent.start_at >= day_start,
+                CalendarEvent.start_at < window_end,
+            )
         )
         or 0
     )
     deadlines_upcoming = (
         s.scalar(
             select(func.count())
-            .select_from(Deadline)
+            .select_from(CalendarEvent)
             .where(
-                Deadline.status == "pending",
-                Deadline.due_date >= today,
-                Deadline.due_date <= today + timedelta(days=_UPCOMING_DAYS),
+                CalendarEvent.category == "deadline",
+                CalendarEvent.status == "pending",
+                CalendarEvent.start_at >= day_start,
+                CalendarEvent.start_at < window_end,
             )
         )
         or 0
@@ -70,8 +78,12 @@ def overview(s: Session) -> dict:
     deadlines_overdue = (
         s.scalar(
             select(func.count())
-            .select_from(Deadline)
-            .where(Deadline.status == "pending", Deadline.due_date < today)
+            .select_from(CalendarEvent)
+            .where(
+                CalendarEvent.category == "deadline",
+                CalendarEvent.status == "pending",
+                CalendarEvent.start_at < day_start,
+            )
         )
         or 0
     )

@@ -17,6 +17,7 @@ import { Customize } from "./Customize";
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
+import { CalendarPanel } from "./CalendarPanel";
 import { EvrakPanel } from "./EvrakPanel";
 import { ReportsPanel } from "./ReportsPanel";
 import { TasksPanel } from "./TasksPanel";
@@ -57,7 +58,8 @@ type SidebarView =
   | "finance"
   | "tasks"
   | "evrak"
-  | "reports";
+  | "reports"
+  | "calendar";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -340,6 +342,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <ReportsPanel onClose={() => setView("chats")} />;
   }
 
+  if (view === "calendar") {
+    return <CalendarPanel onClose={() => setView("chats")} />;
+  }
+
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
   if (view !== "docs" && pane === "document" && currentId !== null) {
     return (
@@ -461,6 +467,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     ✅ Görevler
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setView("calendar");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    📅 Takvim
                   </button>
                   <button
                     onClick={() => {

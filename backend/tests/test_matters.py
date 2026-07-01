@@ -391,3 +391,69 @@ def test_reports_overview_rolls_up_every_module(app_mod):
 
 def test_reports_overview_requires_auth(app_mod):
     assert TestClient(app_mod.app).get("/api/reports/overview").status_code == 401
+
+
+def test_calendar_events_crud_and_range(app_mod):
+    c = _existing(app_mod)
+    cid = c.post("/api/clients", json={"full_name": "Ayşe Yıldız"}).json()["id"]
+
+    # A client meeting (appointment) with a full datetime, linked to the client.
+    ev = c.post(
+        "/api/calendar/events",
+        json={
+            "category": "appointment",
+            "type": "müvekkil görüşme",
+            "title": "İlk görüşme",
+            "start_at": "2026-08-10T14:30:00",
+            "client_id": cid,
+            "location": "Ofis",
+        },
+    ).json()
+    assert ev["category"] == "appointment" and ev["title"] == "İlk görüşme"
+    assert ev["client_id"] == cid and ev["client_name"] == "Ayşe Yıldız"
+    assert ev["start_at"].startswith("2026-08-10T14:30") and ev["status"] == "planned"
+
+    # A reminder later in the year.
+    c.post(
+        "/api/calendar/events",
+        json={"category": "reminder", "title": "Vekalet bitişi", "start_at": "2026-12-01"},
+    )
+
+    # Range filter: only the August event falls in the window.
+    aug = c.get("/api/calendar/events?start=2026-08-01T00:00:00&end=2026-08-31T23:59:59").json()
+    assert [e["title"] for e in aug["items"]] == ["İlk görüşme"]
+    # Category filter across the whole year.
+    reminders = c.get("/api/calendar/events?category=reminder").json()
+    assert [e["title"] for e in reminders["items"]] == ["Vekalet bitişi"]
+
+    # Patch: move it and mark done.
+    upd = c.patch(
+        f"/api/calendar/events/{ev['id']}",
+        json={"start_at": "2026-08-11T15:00:00", "status": "done"},
+    ).json()
+    assert upd["start_at"].startswith("2026-08-11T15:00") and upd["status"] == "done"
+
+    c.delete(f"/api/calendar/events/{ev['id']}")
+    assert [e["title"] for e in c.get("/api/calendar/events").json()["items"]] == ["Vekalet bitişi"]
+    assert c.patch("/api/calendar/events/99999", json={"title": "x"}).status_code == 404
+    assert (
+        c.post("/api/calendar/events", json={"title": "  ", "start_at": "2026-01-01"}).status_code
+        == 400
+    )
+
+
+def test_hearings_and_deadlines_share_the_event_table(app_mod):
+    # Hearings and deadlines are now CalendarEvent rows; they surface via /api/calendar/events too.
+    c = _existing(app_mod)
+    mid = c.post("/api/matters", json={"title": "Dava"}).json()["id"]
+    c.post(f"/api/matters/{mid}/hearings", json={"date": "2026-09-01", "time": "09:30"})
+    c.post(f"/api/matters/{mid}/deadlines", json={"due_date": "2026-09-05", "title": "Cevap"})
+
+    cats = sorted(
+        e["category"] for e in c.get(f"/api/calendar/events?matter_id={mid}").json()["items"]
+    )
+    assert cats == ["deadline", "hearing"]
+    # The legacy matter-detail shape still lists them split out.
+    detail = c.get(f"/api/matters/{mid}").json()
+    assert len(detail["hearings"]) == 1 and len(detail["deadlines"]) == 1
+    assert detail["hearings"][0]["time"] == "09:30"

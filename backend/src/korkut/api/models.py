@@ -5,8 +5,9 @@ app is SINGLE-TENANT: there is one `Office`, a singleton identity row (id, name)
 to register (becoming `owner`) names it and adds members; usernames stay globally unique so login
 is username+password.
 
-The matter domain (`Client`, `Matter`, `Hearing`) is the spine of the lawyer's work — research,
-drafts and hearings hang off a matter. It is exposed to the agent via `korkut.api.matter_tools`.
+The matter domain (`Client`, `Matter`, `CalendarEvent`) is the spine of the lawyer's work —
+research, drafts and calendar events hang off a matter. Exposed to the agent via
+`korkut.api.matter_tools`.
 
 Chat sessions are shared: every member sees and can open every session (Conversation). Messages
 belong to a Conversation, not to a single user.
@@ -16,7 +17,6 @@ from __future__ import annotations
 
 from datetime import date as _date
 from datetime import datetime
-from datetime import time as _time
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -27,7 +27,6 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
-    Time,
     UniqueConstraint,
     func,
     text,
@@ -427,50 +426,60 @@ class Matter(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     client: Mapped[Client | None] = relationship()
-    hearings: Mapped[list[Hearing]] = relationship(
-        back_populates="matter", cascade="all, delete-orphan", order_by="Hearing.date"
-    )
-    deadlines: Mapped[list[Deadline]] = relationship(
-        back_populates="matter", cascade="all, delete-orphan", order_by="Deadline.due_date"
+    events: Mapped[list[CalendarEvent]] = relationship(
+        back_populates="matter", cascade="all, delete-orphan", order_by="CalendarEvent.start_at"
     )
 
 
-class Hearing(Base):
-    """A hearing (duruşma) on a matter's calendar — the Phase-1 deadline primitive."""
+class CalendarEvent(Base):
+    """A single entry on the office calendar (takvim) — the unified event primitive.
 
-    __tablename__ = "hearings"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
-    date: Mapped[_date] = mapped_column(Date, index=True)
-    time: Mapped[_time | None] = mapped_column(Time, default=None)  # fixed: was Date in old schema
-    location: Mapped[str | None] = mapped_column(String(200), default=None)
-    type: Mapped[str | None] = mapped_column(String(100), default=None)
-    result: Mapped[str | None] = mapped_column(Text, default=None)
-    reminder_status: Mapped[str] = mapped_column(String(30), default="pending")
-    notes: Mapped[str | None] = mapped_column(Text, default=None)
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    One table for every kind of dated thing a law office tracks, distinguished by `category` and a
+    finer `type`:
 
-    matter: Mapped[Matter] = relationship(back_populates="hearings")
+    * category="hearing"     → duruşma, keşif, bilirkişi, icra, ifade, arabuluculuk (yargısal)
+    * category="deadline"    → cevap/istinaf/temyiz/itiraz süreleri (yasal süre)
+    * category="appointment" → müvekkil görüşmesi, noter randevusu, iç toplantı
+    * category="reminder"    → ödeme/vekalet/sözleşme hatırlatmaları, genel hatırlatma
 
-
-class Deadline(Base):
-    """A procedural deadline (süre) on a matter — e.g. cevap, istinaf, temyiz süresi.
-
-    Distinct from a hearing: a hearing is an event you attend, a deadline is a date by which an
-    act must be done. `status` is pending|done. Surfaced alongside hearings in the office agenda.
+    `start_at` is a full datetime; `all_day` marks day-scoped items (deadlines, all-day meetings) so
+    the time part is ignored. Optional links: `matter_id` (dosya), `client_id` (müvekkil),
+    `assignee_id` (sorumlu avukat). `status` is the lifecycle (planned|done|cancelled; deadlines use
+    pending|done). `rrule` (RFC-5545) and the `remind_*` fields back later phases (recurrence and
+    integration reminders) and stay null until then.
     """
 
-    __tablename__ = "deadlines"
+    __tablename__ = "calendar_events"
     id: Mapped[int] = mapped_column(primary_key=True)
-    matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
-    due_date: Mapped[_date] = mapped_column(Date, index=True)
+    category: Mapped[str] = mapped_column(String(20), default="appointment", index=True)
+    type: Mapped[str | None] = mapped_column(String(100), default=None)  # finer subtype
     title: Mapped[str] = mapped_column(String(200))
-    type: Mapped[str | None] = mapped_column(String(100), default=None)  # cevap, istinaf, temyiz…
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | done
+    start_at: Mapped[datetime] = mapped_column(index=True)
+    end_at: Mapped[datetime | None] = mapped_column(default=None)
+    all_day: Mapped[bool] = mapped_column(default=False)
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id"), default=None, index=True
+    )
+    assignee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), default=None, index=True
+    )
+    location: Mapped[str | None] = mapped_column(String(200), default=None)
+    status: Mapped[str] = mapped_column(String(20), default="planned")  # planned|done|cancelled
+    result: Mapped[str | None] = mapped_column(Text, default=None)  # duruşma sonucu vb.
+    reminder_status: Mapped[str] = mapped_column(String(30), default="pending")
+    remind_before_min: Mapped[int | None] = mapped_column(default=None)  # phase: reminders
+    remind_channel: Mapped[str | None] = mapped_column(String(32), default=None)  # email|whatsapp…
+    rrule: Mapped[str | None] = mapped_column(String(300), default=None)  # phase: recurrence
     notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    matter: Mapped[Matter] = relationship(back_populates="deadlines")
+    matter: Mapped[Matter | None] = relationship(back_populates="events")
+    client: Mapped[Client | None] = relationship()
+    assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
 
 
 class Invoice(Base):

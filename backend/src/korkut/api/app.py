@@ -272,6 +272,36 @@ class DeadlineBody(BaseModel):
     notes: str | None = None
 
 
+class EventBody(BaseModel):
+    category: str = "appointment"  # hearing | deadline | appointment | reminder
+    title: str
+    start_at: str  # ISO datetime, or YYYY-MM-DD for all-day
+    end_at: str | None = None
+    all_day: bool = False
+    type: str | None = None
+    matter_id: int | None = None
+    client_id: int | None = None
+    assignee_id: int | None = None
+    location: str | None = None
+    notes: str | None = None
+
+
+class EventUpdateBody(BaseModel):
+    category: str | None = None
+    title: str | None = None
+    start_at: str | None = None
+    end_at: str | None = None
+    all_day: bool | None = None
+    type: str | None = None
+    matter_id: int | None = None
+    client_id: int | None = None
+    assignee_id: int | None = None
+    location: str | None = None
+    status: str | None = None
+    result: str | None = None
+    notes: str | None = None
+
+
 class ClientBody(BaseModel):
     full_name: str
     national_id: str | None = None
@@ -1271,6 +1301,90 @@ def complete_deadline_ep(did: int, korkut_session: str | None = Cookie(default=N
         if d is None:
             raise HTTPException(status_code=404, detail="Süre bulunamadı")
         return mstore.deadline_brief(d)
+
+
+# ---------------- calendar events (takvim) — unified, all-category ----------------
+
+
+@app.get("/api/calendar/events")
+def list_events_ep(
+    start: str | None = None,
+    end: str | None = None,
+    category: str | None = None,
+    matter_id: int | None = None,
+    client_id: int | None = None,
+    assignee_id: int | None = None,
+    korkut_session: str | None = Cookie(default=None),
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        try:
+            rows = mstore.list_events(
+                s,
+                start=start,
+                end=end,
+                category=category,
+                matter_id=matter_id,
+                client_id=client_id,
+                assignee_id=assignee_id,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
+        return {"items": [mstore.event_brief(e) for e in rows]}
+
+
+@app.post("/api/calendar/events")
+def create_event_ep(body: EventBody, korkut_session: str | None = Cookie(default=None)):
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Etkinlik başlığı zorunludur.")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        try:
+            e = mstore.create_event(
+                s,
+                created_by=user.id,
+                category=body.category,
+                title=title,
+                start_at=body.start_at,
+                end_at=body.end_at,
+                all_day=body.all_day,
+                type=body.type,
+                matter_id=body.matter_id,
+                client_id=body.client_id,
+                assignee_id=body.assignee_id,
+                location=body.location,
+                notes=body.notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
+        return mstore.event_brief(e)
+
+
+@app.patch("/api/calendar/events/{event_id}")
+def update_event_ep(
+    event_id: int, body: EventUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    fields = body.model_dump(exclude_unset=True)
+    if "title" in fields and not (fields["title"] or "").strip():
+        raise HTTPException(status_code=400, detail="Etkinlik başlığı zorunludur.")
+    with session() as s:
+        _require_user(s, korkut_session)
+        try:
+            e = mstore.update_event(s, event_id, **fields)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
+        if e is None:
+            raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        return mstore.event_brief(e)
+
+
+@app.delete("/api/calendar/events/{event_id}")
+def delete_event_ep(event_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        mstore.delete_event(s, event_id)
+        return {"ok": True}
 
 
 @app.get("/api/clients")
