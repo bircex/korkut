@@ -22,8 +22,9 @@ from korkut.messaging import SendResult
 
 
 class FakeTelegramApi:
-    def __init__(self, updates):
+    def __init__(self, updates, bot_username="KorkutBot"):
         self._updates = updates
+        self.bot_username = bot_username
         self.sent: list = []
         self.calls: list = []  # every (method, payload), for progress-affordance assertions
         self._next_mid = 1000
@@ -32,6 +33,8 @@ class FakeTelegramApi:
         self.calls.append((method, payload))
         if method == "getUpdates":
             return {"ok": True, "result": self._updates}
+        if method == "getMe":
+            return {"ok": True, "result": {"username": self.bot_username}}
         if method == "sendMessage":
             self.sent.append(payload)
             self._next_mid += 1
@@ -51,6 +54,51 @@ def _tg_update(uid, chat_id, from_id, text, first="Av", last="Test"):
             "text": text,
         },
     }
+
+
+def _tg_group_update(uid, chat_id, from_id, text, *, reply_from=None):
+    msg = {
+        "message_id": uid,
+        "from": {"id": from_id, "first_name": "Av", "last_name": "Test"},
+        "chat": {"id": chat_id, "type": "supergroup"},
+        "text": text,
+    }
+    if reply_from is not None:
+        msg["reply_to_message"] = {"from": reply_from}
+    return {"update_id": uid, "message": msg}
+
+
+def test_telegram_group_ignores_unaddressed_message():
+    # In a group, a plain message that neither @mentions nor replies to the bot is skipped.
+    api = FakeTelegramApi([_tg_group_update(20, -100, 555, "arkadaşlar toplantı saat 3'te")])
+    c = TelegramConnector(token="t", offset=0, api=api)
+    assert c.poll() == []
+
+
+def test_telegram_group_answers_when_mentioned_and_strips_mention():
+    api = FakeTelegramApi([_tg_group_update(21, -100, 555, "@KorkutBot kira davası içtihadı bul")])
+    c = TelegramConnector(token="t", offset=0, api=api)
+    msgs = c.poll()
+    assert len(msgs) == 1
+    assert msgs[0].text == "kira davası içtihadı bul"  # @mention stripped before the brain sees it
+    assert msgs[0].thread_id == "-100" and msgs[0].external_id == "555"
+
+
+def test_telegram_group_answers_when_replying_to_bot():
+    api = FakeTelegramApi(
+        [
+            _tg_group_update(
+                22,
+                -100,
+                555,
+                "peki temyiz süresi?",
+                reply_from={"is_bot": True, "username": "KorkutBot"},
+            )
+        ]
+    )
+    c = TelegramConnector(token="t", offset=0, api=api)
+    msgs = c.poll()
+    assert [m.text for m in msgs] == ["peki temyiz süresi?"]
 
 
 def test_telegram_poll_parses_and_advances_offset():
@@ -142,17 +190,32 @@ def test_telegram_no_token_is_quiet():
 
 
 class FakeWhatsAppApi:
-    def __init__(self, inbox):
+    def __init__(self, inbox, self_number="905000"):
         self._inbox = inbox
+        self.self_number = self_number
         self.sent: list = []
 
     def __call__(self, method, path, payload):
         if method == "GET" and path == "/inbox":
             return self._inbox
+        if method == "GET" and path == "/me":
+            return {"number": self.self_number}
         if method == "POST" and path == "/send":
             self.sent.append(payload)
             return {"ok": True}
         raise AssertionError((method, path))
+
+
+def _wa_group_msg(mid, text, *, mentions=None, quoted=None):
+    return {
+        "id": mid,
+        "from": "905111@s.whatsapp.net",  # the human sender within the group
+        "chat": "120363@g.us",  # a group jid (ends with @g.us)
+        "text": text,
+        "name": "Av. Test",
+        "mentions": mentions or [],
+        "quoted": quoted or "",
+    }
 
 
 def test_whatsapp_poll_and_cursor():
@@ -186,6 +249,57 @@ def test_whatsapp_send():
     res = c.send(OutboundReply(thread_id="905001@s.whatsapp.net", text="cevap"))
     assert res.ok
     assert api.sent == [{"to": "905001@s.whatsapp.net", "text": "cevap"}]
+
+
+def test_whatsapp_group_ignores_unaddressed_message():
+    # A plain group message that neither @mentions nor replies to the bot is skipped.
+    api = FakeWhatsAppApi(
+        {"messages": [_wa_group_msg(7, "arkadaşlar dosya hazır mı")], "cursor": 7}
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert c.poll() == []
+
+
+def test_whatsapp_group_answers_when_mentioned_and_strips_mention():
+    api = FakeWhatsAppApi(
+        {
+            "messages": [_wa_group_msg(8, "@905000 kira davası bul", mentions=["905000"])],
+            "cursor": 8,
+        }
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    msgs = c.poll()
+    assert len(msgs) == 1
+    assert msgs[0].text == "kira davası bul"  # @mention stripped before the brain sees it
+    assert msgs[0].thread_id == "120363@g.us" and msgs[0].external_id == "905111@s.whatsapp.net"
+
+
+def test_whatsapp_group_answers_when_replying_to_bot():
+    api = FakeWhatsAppApi(
+        {"messages": [_wa_group_msg(9, "peki temyiz süresi?", quoted="905000")], "cursor": 9}
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert [m.text for m in c.poll()] == ["peki temyiz süresi?"]
+
+
+def test_whatsapp_direct_message_needs_no_mention():
+    # Direct chats (…@s.whatsapp.net) are always handled — the gate only applies to groups.
+    api = FakeWhatsAppApi(
+        {
+            "messages": [
+                {
+                    "id": 3,
+                    "from": "905001@s.whatsapp.net",
+                    "chat": "905001@s.whatsapp.net",
+                    "text": "merhaba",
+                    "name": "Müvekkil",
+                }
+            ],
+            "cursor": 3,
+        }
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert [m.text for m in c.poll()] == ["merhaba"]
 
 
 # ----------------------------- E-mail -----------------------------

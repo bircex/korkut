@@ -16,6 +16,7 @@ The low-level HTTP call is injectable (`api`) so the connector is unit-testable 
 from __future__ import annotations
 
 import contextlib
+import re
 from collections.abc import Callable
 from typing import Any, Self
 
@@ -58,6 +59,17 @@ class TelegramConnector(Connector):
         self._offset = offset
         self._start_offset = offset
         self._api = api or _default_api(token)
+        self._bot_username_cache: str | None = None
+
+    def _bot_username(self) -> str:
+        """The bot's @username (cached), used to detect group @mentions. Empty on failure."""
+        if self._bot_username_cache is None:
+            self._bot_username_cache = ""
+            with contextlib.suppress(Exception):
+                data = self._api("getMe", {})
+                if data.get("ok"):
+                    self._bot_username_cache = str((data.get("result") or {}).get("username") or "")
+        return self._bot_username_cache
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> Self:
@@ -92,6 +104,26 @@ class TelegramConnector(Connector):
             chat = msg.get("chat") or {}
             if not text or "id" not in frm or "id" not in chat:
                 continue
+
+            # In a group the bot must not answer every message. Telegram's default *privacy mode*
+            # already hides normal group chatter from the bot; on top of that we only act when the
+            # bot is explicitly addressed — @mentioned, or the message replies to one of the bot's
+            # own messages. Private chats are always handled. (To also receive plain group messages,
+            # disable privacy mode via BotFather and re-add the bot; the gate below still applies.)
+            if (chat.get("type") or "private") in ("group", "supergroup"):
+                uname = self._bot_username()
+                reply_from = (msg.get("reply_to_message") or {}).get("from") or {}
+                mentioned = bool(uname) and f"@{uname}".lower() in text.lower()
+                replied_to_bot = bool(reply_from.get("is_bot")) and (
+                    str(reply_from.get("username") or "").lower() == uname.lower()
+                )
+                if not (mentioned or replied_to_bot):
+                    continue
+                if mentioned and uname:
+                    text = re.sub(rf"@{re.escape(uname)}\b", " ", text, flags=re.IGNORECASE).strip()
+                    if not text:
+                        continue
+
             out.append(
                 InboundMessage(
                     channel=self.kind,
