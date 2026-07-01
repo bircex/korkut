@@ -1,0 +1,18 @@
+{
+  "name": "korkut-landing",
+  "private": true,
+  "version": "2026.7.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^5.14.1",
+    "@astrojs/sitemap": "^3.7.0"
+  }
+}

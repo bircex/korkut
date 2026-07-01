@@ -1,0 +1,96 @@
+---
+const steps = [
+  {
+    n: 1,
+    title: "Yazın",
+    body: "Kanaldan ya da özelden, gündelik dille ne istediğinizi söyleyin.",
+  },
+  {
+    n: 2,
+    title: "Yönlendirir",
+    body: "Korkut niyetinizi anlar, ilgili uzmanlık modüllerine paralel dağıtır.",
+  },
+  {
+    n: 3,
+    title: "Hazırlar",
+    body: "Gerekirse buluta giden metni rumuzlar, araştırır ve taslağı üretir.",
+  },
+  {
+    n: 4,
+    title: "Onaylatır",
+    body: "Yapacağını özetler. Onaylayınca kaydeder; düzeltme isterseniz yeniden sunar.",
+  },
+];
+---
+
+<section id="nasil">
+  <div class="wrap center">
+    <span class="eyebrow">Nasıl çalışır</span>
+    <h2>Sorudan onaya, dört adımda</h2>
+    <p class="section-lead">
+      Doğal dilde yazarsınız; gerisini Korkut halleder ve size onaylanacak bir
+      özet sunar.
+    </p>
+
+    <ol class="steps">
+      {
+        steps.map((s) => (
+          <li class="step">
+            <div class="num" aria-hidden="true">
+              {s.n}
+            </div>
+            <h3>{s.title}</h3>
+            <p>{s.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 52px;
+    list-style: none;
+    text-align: left;
+  }
+  @media (max-width: 900px) {
+    .steps {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 540px) {
+    .steps {
+      grid-template-columns: 1fr;
+    }
+  }
+  .step {
+    position: relative;
+    padding: 26px 22px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+  }
+  .step .num {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+  }
+  .step h3 {
+    font-size: 16.5px;
+    margin-bottom: 6px;
+  }
+  .step p {
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+</style>

@@ -1,0 +1,173 @@
+---
+const models = [
+  { logo: "/logos/ollama.svg", name: "Ollama", tag: "Yerel" },
+  { logo: "/logos/lmstudio.svg", name: "LM Studio", tag: "Yerel" },
+  { logo: "/logos/vllm.svg", name: "vLLM", tag: "Yerel" },
+  { logo: "/logos/groq.svg", name: "Groq", tag: "Bulut" },
+  { logo: "/logos/anthropic.svg", name: "Anthropic (Claude)", tag: "Bulut" },
+  { logo: "/logos/openai.svg", name: "OpenAI (GPT)", tag: "Bulut" },
+  { logo: "/logos/googlegemini.svg", name: "Google Gemini", tag: "Bulut" },
+];
+// Az sayıda sağlayıcı var; seti çoğaltıp ekranı dolduruyor ve kesintisiz döngü sağlıyoruz.
+const loop = [...models, ...models, ...models, ...models];
+---
+
+<section id="modeller" class="band">
+  <div class="wrap center">
+    <span class="eyebrow">Modeller</span>
+    <h2>Yerel çalışın ya da bulut modele bağlanın</h2>
+    <p class="section-lead">
+      Korkut, OpenAI uyumlu her modele bağlanır. Yerel bir modelle hiçbir veri
+      makineden çıkmaz; bulut modeli seçerseniz giden metin önce rumuzlanır.
+    </p>
+
+    <div class="model-legend">
+      <span class="badge">Yerel · veriler çıkmaz</span>
+      <span class="badge badge-outline">Bulut · rumuzlanarak</span>
+    </div>
+  </div>
+
+  <!-- Modeller kayan şerit (slider). Duraklatmak için üzerine gelin. -->
+  <div class="marquee">
+    <ul class="marquee-track">
+      {
+        loop.map((m, i) => (
+          <li class="mtile" aria-hidden={i >= models.length ? "true" : undefined}>
+            <img src={m.logo} alt={`${m.name} logosu`} width="26" height="26" loading="lazy" />
+            <span class="mname">{m.name}</span>
+            <span class:list={["mtag", m.tag === "Yerel" && "mtag-local"]}>{m.tag}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="wrap center">
+    <p class="model-note">
+      … ve OpenAI uyumlu API sunan diğer tüm sağlayıcılar. Sağlayıcı bağımsızdır,
+      tek satır ayarla değişir.
+    </p>
+  </div>
+</section>
+
+<style>
+  .model-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+  }
+  .badge-outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+  }
+
+  /* Full-bleed kayan şerit, kenarlarda yumuşak solma (fade) maskesiyle. */
+  .marquee {
+    margin-top: 40px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 7%,
+      #000 93%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 7%,
+      #000 93%,
+      transparent
+    );
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    list-style: none;
+    animation: model-scroll 34s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes model-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      /* Şerit 4 özdeş kopyadan oluşur; yarısı kadar kaydırınca kesintisiz döner. */
+      transform: translateX(-50%);
+    }
+  }
+
+  .mtile {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    margin-right: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 14.5px;
+    background: #fff;
+    white-space: nowrap;
+  }
+  .mtile img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+  .mtag {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line-strong);
+  }
+  .mtag-local {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .model-note {
+    color: var(--muted);
+    font-size: 14.5px;
+    margin: 32px auto 0;
+    max-width: 620px;
+  }
+
+  /* Hareket azaltma tercihinde şerit durur ve merkezli sarmaya döner. */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .marquee-track {
+      animation: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: auto;
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .mtile[aria-hidden="true"] {
+      display: none;
+    }
+  }
+</style>
