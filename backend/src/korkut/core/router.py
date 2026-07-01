@@ -98,6 +98,7 @@ class Router:
         tools: list[ToolSpec] | None = None,
         extra_tools: list[Any] | None = None,
         handlers: dict[str, Any] | None = None,
+        known_entities: list[tuple[str, str]] | None = None,
     ) -> str:
         tier = self._resolve_tier(specialty)
         provider = self._provider_for(tier)
@@ -113,7 +114,7 @@ class Router:
         # The shared agent loop carries the redacted conversation through every model turn;
         # tool outputs are public case-law/legislation, so no un-redacted PII reaches the model.
         contents = [str(m.get("content", "")) for m in messages]
-        redacted, mapping = redaction.Redactor().redact_batch(contents)
+        redacted, mapping = redaction.Redactor(known_entities=known_entities).redact_batch(contents)
         safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted, strict=True)]
         reply = agent_loop.run(provider, safe_messages, all_tools, handlers=handlers)
         return redaction.restore(reply, mapping)

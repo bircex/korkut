@@ -166,3 +166,34 @@ def test_requires_auth(app_mod):
     c = TestClient(app_mod.app)  # no login
     assert c.get("/api/matters").status_code == 401
     assert c.post("/api/matters", json={"title": "x"}).status_code == 401
+
+
+def test_collect_known_entities_gathers_stored_pii(app_mod):
+    # Layer 4 source: the exact PII the office stores becomes (value, kind) pairs for the redactor.
+    from korkut.api import matters_store as ms
+    from korkut.api.models import Client, Matter
+    from korkut.api.store import session
+
+    with session() as s:
+        s.add(
+            Client(
+                full_name="Oğuzhan Karaca",
+                national_id="10000000146",
+                phone="05321234567",
+                email="o@x.tr",
+                address="Bağdat Cad. No:12",
+            )
+        )
+        s.add(Matter(title="Dava", counterparty="Cengiz Aktürk"))
+        s.commit()
+
+    with session() as s:
+        entities = ms.collect_known_entities(s)
+
+    assert ("Oğuzhan Karaca", "PERSON") in entities  # client name
+    assert ("10000000146", "TCKN") in entities
+    assert ("05321234567", "PHONE") in entities
+    assert ("o@x.tr", "EMAIL") in entities
+    assert ("Bağdat Cad. No:12", "ADDRESS") in entities
+    assert ("Cengiz Aktürk", "PERSON") in entities  # matter counterparty
+    assert ("Av. Test", "PERSON") in entities  # bootstrapped lawyer (adduser fixture)

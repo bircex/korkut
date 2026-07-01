@@ -35,6 +35,21 @@ def test_cloud_redacts_then_restores():
     assert out == "Sayın Ahmet Yılmaz, TCKN 10000000146 doğrulandı."
 
 
+def test_cloud_masks_known_entities_the_detectors_miss():
+    # "Oğuzhan Karaca" and the address are not caught by the base detectors; only the DB-known
+    # entities (Layer 4) mask them before the cloud call.
+    gpt = FakeProvider(reply="ok")
+    router = Router({"gpt": gpt, "ollama": FakeProvider()}, config=CFG)
+    router.respond(
+        "research",
+        "qa",
+        [{"role": "user", "content": "Müvekkil Oğuzhan Karaca, adres Bağdat Cad. No:12."}],
+        known_entities=[("Oğuzhan Karaca", "PERSON"), ("Bağdat Cad. No:12", "ADDRESS")],
+    )
+    assert "Oğuzhan Karaca" not in gpt.seen[0]["content"]
+    assert "Bağdat Cad. No:12" not in gpt.seen[0]["content"]
+
+
 def test_local_is_not_redacted():
     ollama = FakeProvider()
     router = Router(

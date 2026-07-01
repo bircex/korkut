@@ -1110,6 +1110,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         style = _effective_style(s, user)
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
+        known_entities = mstore.collect_known_entities(s)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -1170,6 +1171,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, *m_tools],
         handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
         model_cfg=model_cfg,
+        known_entities=known_entities,
     )
 
     with session() as s:
@@ -1292,9 +1294,14 @@ def session_upload(
         s.commit()
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
+        known_entities = mstore.collect_known_entities(s)
 
     reply = _safe_answer(
-        model_input, office_name=office_name, history=history_msgs, model_cfg=model_cfg
+        model_input,
+        office_name=office_name,
+        history=history_msgs,
+        model_cfg=model_cfg,
+        known_entities=known_entities,
     )
 
     with session() as s:
@@ -1932,6 +1939,7 @@ def _make_draft(
         conv = s.get(Conversation, doc.conversation_id)
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
+        known_entities = mstore.collect_known_entities(s)
         # Effective theme: lawyer override > office override > built-in default.
         theme = effective_theme(s, user_id, petition_type) if petition_type and conv else None
     instr = (instruction or "").strip()
@@ -1958,7 +1966,13 @@ def _make_draft(
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
     proposed = _strip_fences(
-        _safe_answer(prompt, office_name=office_name, history=history, model_cfg=model_cfg)
+        _safe_answer(
+            prompt,
+            office_name=office_name,
+            history=history,
+            model_cfg=model_cfg,
+            known_entities=known_entities,
+        )
     )
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
     # after the cloud call (so they never leave the machine). Later edits keep them via the
