@@ -25,9 +25,13 @@ answers under that office's identity.
   arbitration).
 - **Drafting** — petition/contract drafting in a Canvas editor with DOCX/UDF export.
 - **Correspondence** — propose-and-confirm e-mail; two-way Telegram/WhatsApp/e-mail integrations.
-- **Privacy by design** — cloud-bound text is redacted first; point Korkut at a local
-  OpenAI-compatible model (e.g. LM Studio) and nothing leaves the machine.
-- **Secure & self-hosted** — mandatory TOTP 2FA; each install serves one office.
+- **Local-first** — point Korkut at a local OpenAI-compatible model (e.g. LM Studio,
+  Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
+  passed through **best-effort** redaction first — a mitigation, **not a guarantee**
+  (see [DISCLAIMER.md](DISCLAIMER.md)).
+- **Self-hosted, 2FA** — mandatory TOTP 2FA; each install serves one office. Overall
+  security depends on how *you* deploy it (TLS, backups, updates); provided as-is, with
+  no warranty.
 
 ## Quick start
 
@@ -61,6 +65,40 @@ Start with the **[documentation index](docs/README.md)**:
 Contributions are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** and our
 **[Code of Conduct](CODE_OF_CONDUCT.md)**. Report security issues privately via
 **[SECURITY.md](SECURITY.md)**.
+
+## Legal & disclaimer
+
+Korkut is **free, open-source software that you self-host** — not a service, a SaaS
+platform, or legal advice. It is provided **"AS IS"**, without warranty of any kind
+(see [LICENSE](LICENSE)). Full text: **[DISCLAIMER.md](DISCLAIMER.md)**.
+
+- **Not legal advice.** Korkut does not provide legal counsel or representation. Every
+  output — research, summaries, petition/contract drafts — is a **draft for a qualified
+  lawyer to review**. AI output can be wrong, incomplete, or fabricated (e.g. invented
+  case/article citations); **verifying it is the user's responsibility.**
+- **Your data stays on your machine.** By default all data (chats, documents, accounts)
+  lives only on **your own server**. The project ships **no telemetry or analytics** —
+  the developers receive nothing and cannot access your deployment.
+- **You are the data controller.** Whoever installs and operates Korkut is the "data
+  controller" (veri sorumlusu) under Türkiye's KVKK (and GDPR where applicable) for the
+  personal data they process, and bears all related obligations (registration, notice,
+  consent, security, retention). The developers are not a controller or processor of
+  your data.
+- **Local by default; cloud models are optional and your responsibility.** Point Korkut
+  at a **local** OpenAI-compatible model and nothing leaves the machine. If *you* choose
+  to connect it to an **external/cloud** model (e.g. OpenAI, Google, any third-party
+  API), your inputs are sent to that provider — possibly **abroad**. Meeting cross-border
+  transfer requirements (KVKK Art. 9 / GDPR) and assessing that provider's data-retention
+  and training policies is **solely your responsibility.**
+- **Optional integrations.** Enabling WhatsApp, Telegram, or e-mail integrations sends the
+  relevant data to those third parties, under their own terms. Lawfulness and any required
+  notice/consent are **your responsibility.**
+- **Limitation of liability.** To the maximum extent permitted by law, the developers are
+  not liable for any direct or indirect damages arising from use of the software. This
+  does not apply to gross negligence or willful misconduct.
+
+> This is a general notice, **not legal advice.** Before using Korkut with real client
+> data, have a data-protection/IT lawyer review your deployment.
 
 ## License
 
