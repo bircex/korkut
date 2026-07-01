@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type CalendarEvent, type ClientBrief, type MatterBrief } from "../api";
+import { Modal } from "./Modal";
 
 // Takvim — the office calendar. Every dated thing (duruşma, süre, randevu, hatırlatma) is a single
 // CalendarEvent, linked to a matter and/or client. Four views over the same data: month grid, week,
@@ -104,14 +105,14 @@ function buildRrule(repeat: string, until: string): string | null {
   return rule;
 }
 
-export function CalendarPanel({ onClose }: { onClose: () => void }) {
+export function CalendarPanel() {
   const [mode, setMode] = useState<Mode>("month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
   const [filter, setFilter] = useState("");
   const [items, setItems] = useState<CalendarEvent[]>([]);
   const [matters, setMatters] = useState<MatterBrief[]>([]);
   const [clients, setClients] = useState<ClientBrief[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [f, setF] = useState(EMPTY_FORM);
 
   const todayYmd = ymdOf(new Date());
@@ -163,7 +164,7 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
 
   function openFormOn(day?: string) {
     setF({ ...EMPTY_FORM, date: day ?? "" });
-    setShowForm(true);
+    setAdding(true);
   }
 
   async function add() {
@@ -183,7 +184,7 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
       rrule: buildRrule(f.repeat, f.until),
     });
     setF({ ...EMPTY_FORM, category: f.category });
-    setShowForm(false);
+    setAdding(false);
     reload();
   }
 
@@ -221,14 +222,8 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
         : `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`;
 
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-4 py-3">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
-        >
-          Geri
-        </button>
         <h1 className="text-lg font-bold text-zinc-900">Takvim</h1>
 
         <div className="ml-2 flex overflow-hidden rounded-lg border border-zinc-300 text-sm">
@@ -286,16 +281,37 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
           <option value="reminder">Hatırlatma</option>
         </select>
         <button
-          onClick={() => (showForm ? setShowForm(false) : openFormOn(ymdOf(cursor)))}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
+          onClick={() => openFormOn(ymdOf(cursor))}
+          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
         >
-          {showForm ? "Kapat" : "Yeni"}
+          + Yeni etkinlik
         </button>
       </div>
 
-      {showForm && (
-        <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
-          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
+      {adding && (
+        <Modal
+          title="Yeni etkinlik"
+          width="max-w-3xl"
+          onClose={() => setAdding(false)}
+          footer={
+            <>
+              <button
+                onClick={() => setAdding(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={add}
+                disabled={!f.title.trim() || !f.date}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                Ekle
+              </button>
+            </>
+          }
+        >
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <select
               value={f.category}
               onChange={(e) => setF({ ...f, category: e.target.value })}
@@ -389,17 +405,8 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
               title="Tekrar bitiş tarihi (opsiyonel)"
               className={`${input} text-zinc-700 disabled:opacity-50`}
             />
-            <div className="col-span-2 flex justify-end sm:col-span-4">
-              <button
-                onClick={add}
-                disabled={!f.title.trim() || !f.date}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-              >
-                Ekle
-              </button>
-            </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50">
