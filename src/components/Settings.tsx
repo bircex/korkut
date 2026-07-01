@@ -15,11 +15,55 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+// A lawyer's own bar-registry number (baro sicil no). Editable inline; feeds the redactor so the
+// number is masked in cloud-bound prompts.
+function BarNoField({ initial }: { initial: string | null }) {
+  const [value, setValue] = useState(initial ?? "");
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await api.updateMe({ bar_registry_no: value.trim() || null });
+      setSaved(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 flex items-end gap-2">
+      <label className="flex flex-1 flex-col gap-1">
+        <span className="text-[13px] text-zinc-500">Baro sicil no</span>
+        <input
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setSaved(false);
+          }}
+          placeholder="—"
+          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
+        />
+      </label>
+      <button
+        onClick={save}
+        disabled={busy}
+        className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+      >
+        {busy ? "Kaydediliyor…" : "Kaydet"}
+      </button>
+      {saved && <span className="pb-2 text-[12px] text-zinc-400">Kaydedildi.</span>}
+    </div>
+  );
+}
+
 function Members({ isOwner }: { isOwner: boolean }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [barNo, setBarNo] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -32,11 +76,17 @@ function Members({ isOwner }: { isOwner: boolean }) {
     setError("");
     setBusy(true);
     try {
-      const m = await api.addMember(username.trim(), fullName.trim(), password);
+      const m = await api.addMember(
+        username.trim(),
+        fullName.trim(),
+        password,
+        barNo.trim() || undefined,
+      );
       setMembers((list) => [...list, m]);
       setUsername("");
       setFullName("");
       setPassword("");
+      setBarNo("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Üye eklenemedi");
     } finally {
@@ -106,6 +156,12 @@ function Members({ isOwner }: { isOwner: boolean }) {
             type="password"
             placeholder="Geçici parola (en az 8 karakter)"
             autoComplete="new-password"
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
+          />
+          <input
+            value={barNo}
+            onChange={(e) => setBarNo(e.target.value)}
+            placeholder="Baro sicil no (opsiyonel)"
             className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
           />
           <button
@@ -363,6 +419,8 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
                 <Row label="Kullanıcı adı" value={user.username} />
                 <Row label="Ad Soyad" value={user.full_name ?? "—"} />
               </div>
+              <BarNoField initial={user.bar_registry_no} />
+              <div className="mt-4" />
               <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[13px] text-zinc-600">
                 İki adımlı doğrulama (2FA) <span className="font-medium text-zinc-800">aktif</span>.
               </div>

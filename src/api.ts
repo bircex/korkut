@@ -2,6 +2,7 @@ export type LoginStep = "mfa" | "enroll";
 export type User = {
   username: string;
   full_name: string | null;
+  bar_registry_no: string | null;
   role: "owner" | "member";
   office: string | null;
 };
@@ -9,6 +10,7 @@ export type Member = {
   id: number;
   username: string;
   full_name: string | null;
+  bar_registry_no: string | null;
   role: "owner" | "member";
   is_active: boolean;
   enrolled: boolean;
@@ -305,13 +307,15 @@ export const api = {
       body: JSON.stringify({ office_name, full_name, username, password }),
     }),
   members: () => request<Member[]>("/api/members"),
-  addMember: (username: string, full_name: string, password: string) =>
+  addMember: (username: string, full_name: string, password: string, bar_registry_no?: string) =>
     request<Member>("/api/members", {
       method: "POST",
-      body: JSON.stringify({ username, full_name, password }),
+      body: JSON.stringify({ username, full_name, password, bar_registry_no }),
     }),
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
+  updateMe: (patch: { full_name?: string; bar_registry_no?: string | null }) =>
+    request<User>("/api/me", { method: "PATCH", body: JSON.stringify(patch) }),
   getStyle: () => request<StyleData>("/api/style"),
   saveUserStyle: (fields: StyleFields) =>
     request<StyleFields>("/api/style/user", { method: "PUT", body: JSON.stringify(fields) }),
