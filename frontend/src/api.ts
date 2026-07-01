@@ -308,6 +308,8 @@ export type CalendarEvent = {
   status: string;
   result: string | null;
   notes: string | null;
+  rrule: string | null;
+  recurring?: boolean; // true when this row is an expanded occurrence of a recurring event
 };
 export type CalendarEventInput = {
   category: string;
@@ -321,6 +323,7 @@ export type CalendarEventInput = {
   assignee_id?: number | null;
   location?: string | null;
   notes?: string | null;
+  rrule?: string | null;
 };
 export type MatterDocument = {
   id: number;

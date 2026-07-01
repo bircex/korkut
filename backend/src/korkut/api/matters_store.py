@@ -7,11 +7,12 @@ Mirrors the `store.office_*` helper style.
 
 from __future__ import annotations
 
+import calendar as _calendar
 from datetime import date as _date
 from datetime import datetime, timedelta
 from datetime import time as _time
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from korkut.api.models import (
@@ -217,6 +218,7 @@ def event_brief(e: CalendarEvent) -> dict:
         "status": e.status,
         "result": e.result,
         "notes": e.notes,
+        "rrule": e.rrule,
     }
 
 
@@ -505,7 +507,145 @@ def list_events(
     return list(s.scalars(stmt.order_by(CalendarEvent.start_at)))
 
 
+# ---------- recurrence (rrule) — a small RFC-5545 subset expanded in pure Python ----------
+#
+# We store an RFC-5545 RRULE string (e.g. "FREQ=WEEKLY;INTERVAL=1;UNTIL=2026-12-31") so the same
+# value can later feed an ICS export. Only FREQ in {DAILY, WEEKLY, MONTHLY} plus INTERVAL and
+# UNTIL/COUNT are honoured; anything else is ignored and the event is treated as a single entry.
+
+_FREQS = ("DAILY", "WEEKLY", "MONTHLY")
+
+
+def _parse_rrule(rule: str) -> dict[str, str]:
+    parts: dict[str, str] = {}
+    for token in (rule or "").split(";"):
+        if "=" in token:
+            key, value = token.split("=", 1)
+            parts[key.strip().upper()] = value.strip()
+    return parts
+
+
+def _add_months(dt: datetime, months: int) -> datetime:
+    """Shift a datetime by whole months, clamping the day to the target month's length."""
+    index = dt.month - 1 + months
+    year = dt.year + index // 12
+    month = index % 12 + 1
+    day = min(dt.day, _calendar.monthrange(year, month)[1])
+    return dt.replace(year=year, month=month, day=day)
+
+
+def _advance(dtstart: datetime, freq: str, interval: int, steps: int) -> datetime:
+    """The occurrence `steps` intervals after `dtstart` (computed from dtstart to avoid drift)."""
+    if freq == "DAILY":
+        return dtstart + timedelta(days=interval * steps)
+    if freq == "WEEKLY":
+        return dtstart + timedelta(weeks=interval * steps)
+    return _add_months(dtstart, interval * steps)
+
+
+def _iter_occurrences(dtstart: datetime, rule: str, lo: datetime, hi: datetime):
+    """Yield occurrence start datetimes of `rule` (anchored at dtstart) within [lo, hi]."""
+    p = _parse_rrule(rule)
+    freq = p.get("FREQ", "").upper()
+    if freq not in _FREQS or dtstart is None:
+        return
+    try:
+        interval = max(1, int(p.get("INTERVAL", "1") or "1"))
+    except ValueError:
+        interval = 1
+    until = parse_date(p["UNTIL"]) if p.get("UNTIL") else None
+    try:
+        count = int(p["COUNT"]) if p.get("COUNT") else None
+    except ValueError:
+        count = None
+
+    # Jump close to the window instead of iterating from dtstart (which may be years earlier).
+    if dtstart >= lo:
+        n = 0
+    elif freq == "MONTHLY":
+        n = max(0, (lo.year - dtstart.year) * 12 + (lo.month - dtstart.month) // interval)
+    else:
+        unit = 1 if freq == "DAILY" else 7
+        n = max(0, (lo.date() - dtstart.date()).days // (interval * unit))
+
+    for _ in range(1000):  # a single view window can never hold more occurrences than this
+        if count is not None and n >= count:
+            return
+        cur = _advance(dtstart, freq, interval, n)
+        if until is not None and cur.date() > until:
+            return
+        if cur > hi:
+            return
+        if cur >= lo:
+            yield cur
+        n += 1
+
+
+def _event_brief_at(e: CalendarEvent, occ_start: datetime) -> dict:
+    """An occurrence DTO: the base event's brief with the occurrence's start/end substituted."""
+    b = event_brief(e)
+    delta = occ_start - e.start_at
+    b["start_at"] = occ_start.isoformat()
+    if e.end_at is not None:
+        b["end_at"] = (e.end_at + delta).isoformat()
+    b["recurring"] = True
+    return b
+
+
+def events_in_range(
+    s: Session,
+    *,
+    start: object,
+    end: object,
+    category: str | None = None,
+    matter_id: int | None = None,
+    client_id: int | None = None,
+    assignee_id: int | None = None,
+) -> list[dict]:
+    """Calendar DTOs in [start, end], expanding recurring events into their occurrences.
+
+    Without a bounded window (both start and end) recurrence cannot be expanded safely, so events
+    are returned as single entries in that case.
+    """
+    lo, hi = parse_datetime(start), parse_datetime(end)
+    stmt = select(CalendarEvent)
+    if hi is not None:
+        # A recurring event may start before the window yet occur inside it, so only bound
+        # non-recurring rows by `lo`; recurring rows are filtered by the expansion below.
+        stmt = stmt.where(CalendarEvent.start_at <= hi)
+    if lo is not None:
+        stmt = stmt.where(or_(CalendarEvent.rrule.is_not(None), CalendarEvent.start_at >= lo))
+    if category:
+        stmt = stmt.where(CalendarEvent.category == category)
+    if matter_id is not None:
+        stmt = stmt.where(CalendarEvent.matter_id == matter_id)
+    if client_id is not None:
+        stmt = stmt.where(CalendarEvent.client_id == client_id)
+    if assignee_id is not None:
+        stmt = stmt.where(CalendarEvent.assignee_id == assignee_id)
+
+    out: list[dict] = []
+    for e in s.scalars(stmt):
+        if e.rrule and lo is not None and hi is not None:
+            for occ in _iter_occurrences(e.start_at, e.rrule, lo, hi):
+                out.append(_event_brief_at(e, occ))
+        else:
+            b = event_brief(e)
+            b["recurring"] = bool(e.rrule)
+            out.append(b)
+    out.sort(key=lambda x: x["start_at"] or "")
+    return out
+
+
 _EVENT_CATEGORIES = ("hearing", "deadline", "appointment", "reminder")
+
+
+def clean_rrule(rule: str | None) -> str | None:
+    """Keep an RRULE string only if it names a supported FREQ; otherwise drop it (None)."""
+    value = (rule or "").strip()
+    if not value:
+        return None
+    return value if _parse_rrule(value).get("FREQ", "").upper() in _FREQS else None
 
 
 def create_event(
@@ -523,6 +663,7 @@ def create_event(
     assignee_id: int | None = None,
     location: str | None = None,
     notes: str | None = None,
+    rrule: str | None = None,
 ) -> CalendarEvent:
     """Create any calendar event. Deadlines default to pending; others to planned."""
     cat = category if category in _EVENT_CATEGORIES else "appointment"
@@ -539,6 +680,7 @@ def create_event(
         assignee_id=assignee_id,
         location=(location or "").strip() or None,
         notes=(notes or "").strip() or None,
+        rrule=clean_rrule(rrule),
         created_by=created_by,
     )
     s.add(e)
@@ -572,6 +714,9 @@ def update_event(s: Session, event_id: int, **fields: object) -> CalendarEvent |
             e.start_at = parsed
     if "end_at" in fields:
         e.end_at = parse_datetime(fields["end_at"])
+    if "rrule" in fields:
+        raw = fields["rrule"]
+        e.rrule = clean_rrule(raw if isinstance(raw, str) else None)
     for key, value in fields.items():
         if key in _EVENT_FIELDS:
             setattr(e, key, value)

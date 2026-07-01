@@ -434,6 +434,44 @@ def test_calendar_events_crud_and_range(app_mod):
     )
 
 
+def test_recurring_events_expand_within_the_window(app_mod):
+    c = _existing(app_mod)
+    # A weekly meeting every Monday in August, ending mid-month.
+    ev = c.post(
+        "/api/calendar/events",
+        json={
+            "category": "appointment",
+            "title": "Ekip toplantısı",
+            "start_at": "2026-08-03T10:00:00",  # a Monday
+            "rrule": "FREQ=WEEKLY;INTERVAL=1;UNTIL=2026-08-24",
+        },
+    ).json()
+    assert ev["rrule"] == "FREQ=WEEKLY;INTERVAL=1;UNTIL=2026-08-24"
+
+    # August window: occurrences on the 3rd, 10th, 17th, 24th (UNTIL caps it — no 31st).
+    aug = c.get("/api/calendar/events?start=2026-08-01T00:00:00&end=2026-08-31T23:59:59").json()
+    dates = [e["start_at"][:10] for e in aug["items"]]
+    assert dates == ["2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"]
+    assert all(e["recurring"] and e["id"] == ev["id"] for e in aug["items"])
+    assert all(e["start_at"].endswith("10:00:00") for e in aug["items"])
+
+    # A narrower window returns only the occurrences inside it.
+    mid = c.get("/api/calendar/events?start=2026-08-09T00:00:00&end=2026-08-18T23:59:59").json()
+    assert [e["start_at"][:10] for e in mid["items"]] == ["2026-08-10", "2026-08-17"]
+
+    # A bogus FREQ is dropped: the event stays a single, non-recurring entry.
+    single = c.post(
+        "/api/calendar/events",
+        json={
+            "category": "reminder",
+            "title": "Tek",
+            "start_at": "2026-08-05",
+            "rrule": "FREQ=YEARLY",
+        },
+    ).json()
+    assert single["rrule"] is None
+
+
 def test_hearings_and_deadlines_share_the_event_table(app_mod):
     # Hearings and deadlines are now CalendarEvent rows; they surface via /api/calendar/events too.
     c = _existing(app_mod)

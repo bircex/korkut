@@ -85,7 +85,24 @@ const EMPTY_FORM = {
   matter_id: "",
   client_id: "",
   notes: "",
+  repeat: "", // "" | daily | weekly | monthly
+  until: "",
 };
+
+const FREQ_BY_REPEAT: Record<string, string> = {
+  daily: "DAILY",
+  weekly: "WEEKLY",
+  monthly: "MONTHLY",
+};
+
+// Build an RFC-5545 subset RRULE from the form's repeat + until, or null when non-recurring.
+function buildRrule(repeat: string, until: string): string | null {
+  const freq = FREQ_BY_REPEAT[repeat];
+  if (!freq) return null;
+  let rule = `FREQ=${freq};INTERVAL=1`;
+  if (until) rule += `;UNTIL=${until}`;
+  return rule;
+}
 
 export function CalendarPanel({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<Mode>("month");
@@ -163,6 +180,7 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
       matter_id: f.matter_id ? Number(f.matter_id) : null,
       client_id: f.client_id ? Number(f.client_id) : null,
       notes: f.notes.trim() || null,
+      rrule: buildRrule(f.repeat, f.until),
     });
     setF({ ...EMPTY_FORM, category: f.category });
     setShowForm(false);
@@ -353,6 +371,24 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
               placeholder="Yer (adliye/ofis/online)"
               className={`${input} col-span-2`}
             />
+            <select
+              value={f.repeat}
+              onChange={(e) => setF({ ...f, repeat: e.target.value })}
+              className={`${input} text-zinc-700`}
+            >
+              <option value="">Tekrar yok</option>
+              <option value="daily">Her gün</option>
+              <option value="weekly">Her hafta</option>
+              <option value="monthly">Her ay</option>
+            </select>
+            <input
+              type="date"
+              value={f.until}
+              onChange={(e) => setF({ ...f, until: e.target.value })}
+              disabled={!f.repeat}
+              title="Tekrar bitiş tarihi (opsiyonel)"
+              className={`${input} text-zinc-700 disabled:opacity-50`}
+            />
             <div className="col-span-2 flex justify-end sm:col-span-4">
               <button
                 onClick={add}
@@ -478,6 +514,7 @@ function MonthGrid({
                       {!e.all_day && fmtTime(e.start_at, false) !== ""
                         ? `${fmtTime(e.start_at, false)} `
                         : ""}
+                      {e.recurring ? "↻ " : ""}
                       {e.title}
                     </span>
                   </button>
@@ -656,13 +693,14 @@ function EventRow({
             e.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
           }`}
         >
+          {e.recurring && <span title="Tekrarlayan">↻ </span>}
           {e.title}
         </div>
         <div className="truncate text-[12px] text-zinc-400">
           {[e.matter_title, e.client_name, e.location].filter(Boolean).join(" · ") || "—"}
         </div>
       </div>
-      {e.status !== "done" && (
+      {!e.recurring && e.status !== "done" && (
         <button
           onClick={() => onComplete(e)}
           className="shrink-0 rounded-md px-2 py-1 text-[12px] text-emerald-600 hover:bg-emerald-50"
@@ -672,6 +710,7 @@ function EventRow({
       )}
       <button
         onClick={() => onRemove(e.id)}
+        title={e.recurring ? "Tüm tekrar serisini sil" : "Sil"}
         className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
       >
         Sil
