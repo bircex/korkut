@@ -160,6 +160,7 @@ export type MemoryItem = {
   id: number;
   kind: string;
   text: string;
+  status: string; // "active" | "pending"
   author: string | null;
   created_at: string | null;
 };
@@ -347,6 +348,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text, kind }),
     }),
+  approveMemory: (id: number) =>
+    request<MemoryItem>(`/api/memory/${id}/approve`, { method: "POST" }),
   deleteMemory: (id: number) =>
     request<{ ok: boolean }>(`/api/memory/${id}`, { method: "DELETE" }),
   matters: (status?: string) =>
