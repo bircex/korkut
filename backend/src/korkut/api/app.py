@@ -289,6 +289,7 @@ class EventBody(BaseModel):
     assignee_id: int | None = None
     location: str | None = None
     notes: str | None = None
+    rrule: str | None = None  # RFC-5545 subset, e.g. FREQ=WEEKLY;INTERVAL=1;UNTIL=2026-12-31
 
 
 class EventUpdateBody(BaseModel):
@@ -305,6 +306,7 @@ class EventUpdateBody(BaseModel):
     status: str | None = None
     result: str | None = None
     notes: str | None = None
+    rrule: str | None = None
 
 
 class ClientBody(BaseModel):
@@ -1350,7 +1352,7 @@ def list_events_ep(
     with session() as s:
         _require_user(s, korkut_session)
         try:
-            rows = mstore.list_events(
+            items = mstore.events_in_range(
                 s,
                 start=start,
                 end=end,
@@ -1361,7 +1363,7 @@ def list_events_ep(
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
-        return {"items": [mstore.event_brief(e) for e in rows]}
+        return {"items": items}
 
 
 @app.post("/api/calendar/events")
@@ -1386,6 +1388,7 @@ def create_event_ep(body: EventBody, korkut_session: str | None = Cookie(default
                 assignee_id=body.assignee_id,
                 location=body.location,
                 notes=body.notes,
+                rrule=body.rrule,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc
