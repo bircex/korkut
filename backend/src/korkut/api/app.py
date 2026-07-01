@@ -1,10 +1,11 @@
-"""FastAPI application — the chat front door for Korkut, with hardened auth + mandatory 2FA.
+"""FastAPI application — the chat front door for Korkut, with hardened auth + optional 2FA.
 
-Login is two steps and a full session cookie is issued ONLY after 2FA completes:
+Login is two steps when 2FA is in play; otherwise the password alone yields a full session:
 
   POST /api/login      {username,password}
-        password ok, no 2FA yet   -> 200 {step:"enroll"} + short-lived enrol ticket cookie
-        password ok, 2FA enrolled -> 200 {step:"mfa"}    + short-lived mfa  ticket cookie
+        password ok, 2FA off        -> 200 {step:"done", user} + session cookie
+        password ok, 2FA required   -> 200 {step:"enroll"} + short-lived enrol ticket cookie
+        password ok, 2FA enrolled   -> 200 {step:"mfa"}    + short-lived mfa  ticket cookie
   GET  /api/2fa/provision         (enrol ticket)  -> {secret, otpauth_uri, qr_svg}
   POST /api/2fa/enroll {code}      (enrol ticket)  -> {recovery_codes:[...]} + session cookie
   POST /api/2fa/verify {code}      (mfa ticket)    -> session cookie  (TOTP or recovery code)
@@ -31,7 +32,7 @@ from fastapi import Cookie, FastAPI, File, Form, HTTPException, Request, Respons
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from korkut.api import auth, extract, matter_tools, petitions, totp
@@ -168,6 +169,10 @@ class MemberBody(BaseModel):
     full_name: str
     password: str
     bar_registry_no: str | None = None
+
+
+class Toggle2faBody(BaseModel):
+    required: bool
 
 
 class MeBody(BaseModel):
@@ -463,7 +468,8 @@ def _current_user(s: Session, token: str | None) -> User | None:
         return None
     uid, epoch = parsed
     user = s.get(User, uid)
-    if user and user.is_active and user.has_2fa and user.token_epoch == epoch:
+    # The signed token + epoch are the gate; 2FA (when required) is enforced before it is issued.
+    if user and user.is_active and user.token_epoch == epoch:
         return user
     return None
 
@@ -495,6 +501,8 @@ def _user_public(s: Session, user: User) -> dict:
         "bar_registry_no": user.bar_registry_no,
         "role": user.role,
         "office": _office_name(s),
+        "has_2fa": user.has_2fa,
+        "require_2fa": user.require_2fa,
     }
 
 
@@ -568,10 +576,11 @@ def _ticket_user(s: Session, ticket: str | None, purpose: str) -> User:
 
 @app.post("/api/register")
 def register(body: RegisterBody, request: Request, response: Response):
-    """Bootstrap the single office + its first user (owner), then go to 2FA enrolment.
+    """Bootstrap the single office + its first user (owner) and sign them straight in.
 
     Single-tenant: only the first registration succeeds. Once the office exists, further
-    registrations are refused (409) — new people are added as members by the owner.
+    registrations are refused (409) — new people are added as members by the owner. 2FA is
+    optional and off by default; the owner can require it per user afterwards.
     """
     ip = _client_ip(request)
     if not _ip_allowed(ip):
@@ -604,30 +613,34 @@ def register(body: RegisterBody, request: Request, response: Response):
         )
         s.add(user)
         s.commit()
-        _set_ticket_cookie(response, auth.PURPOSE_ENROLL, user)
+        _set_session_cookie(response, user)
         _audit(s, "register", username=username, ip=ip, detail=office_name[:100])
-        return {"step": "enroll"}
+        return {"step": "done", "user": _user_public(s, user)}
+
+
+def _member_public(u: User, *, self_id: int | None) -> dict:
+    return {
+        "id": u.id,
+        "username": u.username,
+        "full_name": u.full_name,
+        "bar_registry_no": u.bar_registry_no,
+        "role": u.role,
+        "is_active": u.is_active,
+        "enrolled": u.has_2fa,
+        "mfa_required": u.require_2fa,
+        "is_self": u.id == self_id,
+    }
 
 
 @app.get("/api/members")
+
+
 def list_members(korkut_session: str | None = Cookie(default=None)):
     """Members of the office (any member may view the roster)."""
     with session() as s:
         user = _require_user(s, korkut_session)
         rows = s.scalars(select(User).order_by(User.id)).all()
-        return [
-            {
-                "id": u.id,
-                "username": u.username,
-                "full_name": u.full_name,
-                "bar_registry_no": u.bar_registry_no,
-                "role": u.role,
-                "is_active": u.is_active,
-                "enrolled": u.has_2fa,
-                "is_self": u.id == user.id,
-            }
-            for u in rows
-        ]
+        return [_member_public(u, self_id=user.id) for u in rows]
 
 
 @app.post("/api/members")
@@ -652,16 +665,7 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
         )
         s.add(member)
         s.commit()
-        return {
-            "id": member.id,
-            "username": member.username,
-            "full_name": member.full_name,
-            "bar_registry_no": member.bar_registry_no,
-            "role": member.role,
-            "is_active": True,
-            "enrolled": False,
-            "is_self": False,
-        }
+        return _member_public(member, self_id=None)
 
 
 @app.delete("/api/members/{uid}")
@@ -678,6 +682,30 @@ def remove_member(uid: int, korkut_session: str | None = Cookie(default=None)):
         target.token_epoch += 1  # revoke any outstanding session
         s.commit()
         return {"ok": True}
+
+
+@app.post("/api/members/{uid}/2fa")
+def set_member_2fa(
+    uid: int, body: Toggle2faBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Owner turns a member's 2FA requirement on or off.
+
+    Turning it on forces the member to enrol on their next login. Turning it off clears any
+    existing enrolment (secret + recovery codes) so the password alone signs them in.
+    """
+    with session() as s:
+        _require_owner(s, korkut_session)
+        target = s.get(User, uid)
+        if not target:
+            raise HTTPException(status_code=404, detail="Üye bulunamadı")
+        target.require_2fa = body.required
+        if not body.required:
+            target.totp_secret = None
+            target.totp_confirmed_at = None
+            target.totp_last_counter = 0
+            s.execute(delete(RecoveryCode).where(RecoveryCode.user_id == target.id))
+        s.commit()
+        return _member_public(target, self_id=None)
 
 
 def _upsert_style(s: Session, *, user_id: int | None, body: StyleBody) -> dict:
@@ -922,9 +950,14 @@ def login(body: LoginBody, request: Request, response: Response):
             _set_ticket_cookie(response, auth.PURPOSE_MFA, user)
             _audit(s, "login_password_ok", username=username, ip=ip, detail="mfa")
             return {"step": "mfa"}
-        _set_ticket_cookie(response, auth.PURPOSE_ENROLL, user)
-        _audit(s, "login_password_ok", username=username, ip=ip, detail="enroll")
-        return {"step": "enroll"}
+        if user.require_2fa:
+            _set_ticket_cookie(response, auth.PURPOSE_ENROLL, user)
+            _audit(s, "login_password_ok", username=username, ip=ip, detail="enroll")
+            return {"step": "enroll"}
+        # 2FA is not required for this user — the password alone signs them in.
+        _set_session_cookie(response, user)
+        _audit(s, "login_password_ok", username=username, ip=ip, detail="direct")
+        return {"step": "done", "user": _user_public(s, user)}
 
 
 @app.get("/api/2fa/provision")

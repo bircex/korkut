@@ -136,7 +136,9 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    # Two-factor (TOTP). Mandatory: a user with no confirmed secret must enrol before chatting.
+    # Two-factor (TOTP). Optional per user: the owner toggles `require_2fa`; when on, a user with
+    # no confirmed secret must enrol before chatting, otherwise password alone signs them in.
+    require_2fa: Mapped[bool] = mapped_column(default=False)
     totp_secret: Mapped[str | None] = mapped_column(String(64), default=None)
     totp_confirmed_at: Mapped[datetime | None] = mapped_column(default=None)
     totp_last_counter: Mapped[int] = mapped_column(default=0)  # anti-replay

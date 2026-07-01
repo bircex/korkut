@@ -77,7 +77,8 @@ def test_register_creates_office_and_owner(empty_client):
         == 400
     )
 
-    # Single-tenant: the first registration bootstraps the office + its owner → 2FA enrolment.
+    # Single-tenant: the first registration bootstraps the office + its owner and signs them in
+    # directly (2FA is optional and off by default).
     r = client.post(
         "/api/register",
         json={
@@ -87,10 +88,8 @@ def test_register_creates_office_and_owner(empty_client):
             "password": "parola123",
         },
     )
-    assert r.status_code == 200 and r.json()["step"] == "enroll"
-    secret = client.get("/api/2fa/provision").json()["secret"]
-    enrolled = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()
-    assert enrolled["office"] == "Deniz Hukuk" and enrolled["role"] == "owner"
+    assert r.status_code == 200 and r.json()["step"] == "done"
+    assert r.json()["user"]["office"] == "Deniz Hukuk" and r.json()["user"]["role"] == "owner"
     assert client.get("/api/me").json()["office"] == "Deniz Hukuk"
 
     # Once the office exists, a second registration is refused (409) — members are added by owner.
@@ -107,6 +106,7 @@ def test_register_creates_office_and_owner(empty_client):
 
 
 def test_password_then_enroll_then_chat(client):
+    _enable_2fa(client)  # owner requires 2FA for this user
     # Step 1: password → enrol step (no full session yet).
     r = client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     assert r.status_code == 200 and r.json()["step"] == "enroll"
@@ -136,6 +136,7 @@ def test_password_then_enroll_then_chat(client):
 
 
 def test_second_login_requires_totp(client):
+    _enable_2fa(client)
     # Enrol first.
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
@@ -152,6 +153,7 @@ def test_second_login_requires_totp(client):
 
 
 def test_recovery_code_single_use(client):
+    _enable_2fa(client)
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
     codes = client.post("/api/2fa/enroll", json={"code": _totp_now(secret)}).json()[
@@ -171,6 +173,7 @@ def test_recovery_code_single_use(client):
 
 
 def test_totp_replay_blocked(client):
+    _enable_2fa(client)
     client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     secret = client.get("/api/2fa/provision").json()["secret"]
     client.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
@@ -204,10 +207,32 @@ def test_unknown_user_generic_401(client):
     assert r.status_code == 401 and r.json()["detail"] == "Kullanıcı adı veya parola hatalı"
 
 
-def test_logout_revokes_all_sessions(client):
-    client.post("/api/login", json={"username": "avukat", "password": "parola123"})
+def test_owner_toggles_member_2fa(client):
+    creds = {"username": "avukat", "password": "parola123"}
+    # 2FA is off by default → the password alone signs the owner in.
+    assert client.post("/api/login", json=creds).json()["step"] == "done"
+    uid = next(m["id"] for m in client.get("/api/members").json() if m["username"] == "avukat")
+
+    # Enable → the roster reflects it and the next login is forced into enrolment.
+    m = client.post(f"/api/members/{uid}/2fa", json={"required": True}).json()
+    assert m["mfa_required"] is True and m["enrolled"] is False
+    client.post("/api/logout")
+    client.cookies.clear()
+    assert client.post("/api/login", json=creds).json()["step"] == "enroll"
+
+    # Enrol, then the owner disables 2FA → enrolment is cleared and login is direct again.
     secret = client.get("/api/2fa/provision").json()["secret"]
     client.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
+    m = client.post(f"/api/members/{uid}/2fa", json={"required": False}).json()
+    assert m["mfa_required"] is False and m["enrolled"] is False
+    client.post("/api/logout")
+    client.cookies.clear()
+    assert client.post("/api/login", json=creds).json()["step"] == "done"
+
+
+def test_logout_revokes_all_sessions(client):
+    # 2FA is off by default, so the password alone yields a full session.
+    client.post("/api/login", json={"username": "avukat", "password": "parola123"})
     cookie = client.cookies.get("korkut_session")
     assert client.get("/api/me").status_code == 200
 
@@ -219,9 +244,18 @@ def test_logout_revokes_all_sessions(client):
 
 
 def _enroll(c, username, password="parola123"):
+    """Sign in to a full session. 2FA is off by default, so the password alone authenticates."""
+    r = c.post("/api/login", json={"username": username, "password": password})
+    assert r.json()["step"] == "done", r.text
+
+
+def _enable_2fa(c, username="avukat", password="parola123"):
+    """Owner turns on the 2FA requirement for `username`, then signs out (cookies cleared)."""
     c.post("/api/login", json={"username": username, "password": password})
-    secret = c.get("/api/2fa/provision").json()["secret"]
-    c.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
+    uid = next(m["id"] for m in c.get("/api/members").json() if m["username"] == username)
+    assert c.post(f"/api/members/{uid}/2fa", json={"required": True}).status_code == 200
+    c.post("/api/logout")
+    c.cookies.clear()
 
 
 def test_sessions_are_shared_across_users(client):

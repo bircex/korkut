@@ -7,13 +7,10 @@ lives in the dilekce_canvas tool contract and the model decides. This test pins 
 endpoint no longer passes `extra_system` to the brain.
 """
 
-import time
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-
-from korkut.api import totp
 
 
 @pytest.fixture
@@ -36,9 +33,8 @@ def client_and_spy(tmp_path, monkeypatch):
     spy = MagicMock(return_value="yanıt")
     with patch.object(app_mod.agent, "answer", spy):
         c = TestClient(app_mod.app)
+        # 2FA is off by default, so the password alone yields a full session.
         c.post("/api/login", json={"username": "avukat", "password": "parola123"})
-        secret = c.get("/api/2fa/provision").json()["secret"]
-        c.post("/api/2fa/enroll", json={"code": totp._hotp(secret, totp.counter_at(time.time()))})
         yield c, spy
 
 

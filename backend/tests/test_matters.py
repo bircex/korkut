@@ -1,17 +1,14 @@
 """HTTP endpoint tests for the matter domain (/api/matters, /api/clients, /api/calendar).
 
-Mirrors test_web_auth.py: a fresh SQLite file per run, the brain patched offline, and the full
-two-step + 2FA login to obtain an authenticated client. Covers CRUD and the chat↔matter link.
+Mirrors test_web_auth.py: a fresh SQLite file per run, the brain patched offline, and a password
+login to authenticate (2FA is off by default). Covers CRUD and the chat↔matter link.
 """
 
-import time
 from datetime import date, timedelta
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-
-from korkut.api import totp
 
 
 @pytest.fixture
@@ -36,14 +33,9 @@ def app_mod(tmp_path, monkeypatch):
         yield app_mod
 
 
-def _totp_now(secret: str) -> str:
-    return totp._hotp(secret, totp.counter_at(time.time()))
-
-
 def _enroll(c: TestClient, username: str, password: str) -> None:
+    """Sign in to a full session; 2FA is off by default, so the password alone authenticates."""
     c.post("/api/login", json={"username": username, "password": password})
-    secret = c.get("/api/2fa/provision").json()["secret"]
-    c.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
 
 
 def _existing(app_mod) -> TestClient:

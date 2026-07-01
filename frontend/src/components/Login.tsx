@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { api, ApiError, type LoginStep } from "../api";
+import { api, ApiError, type LoginStep, type User } from "../api";
 import { AuthShell, Brand, Button, ErrorText, Field } from "../ui";
 
 export function Login({
   onStep,
+  onAuthed,
   onRegister,
 }: {
   onStep: (step: LoginStep) => void;
+  onAuthed: (user: User) => void;
   onRegister: () => void;
 }) {
   const [username, setUsername] = useState("");
@@ -19,8 +21,9 @@ export function Login({
     setError("");
     setBusy(true);
     try {
-      const { step } = await api.login(username, password);
-      onStep(step);
+      const res = await api.login(username, password);
+      if (res.step === "done") onAuthed(res.user);
+      else onStep(res.step);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Giriş başarısız");
     } finally {
