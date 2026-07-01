@@ -37,6 +37,8 @@ def collect_known_entities(s: Session) -> list[tuple[str, str]]:
         entities.append((c.phone or "", "PHONE"))
         entities.append((c.email or "", "EMAIL"))
         entities.append((c.address or "", "ADDRESS"))
+        if c.date_of_birth is not None:
+            entities.append((c.date_of_birth.strftime("%d.%m.%Y"), "DOB"))
     for counterparty in s.scalars(
         select(Matter.counterparty).where(Matter.counterparty.is_not(None))
     ):
@@ -79,6 +81,8 @@ def client_brief(c: Client) -> dict:
         "phone": c.phone,
         "email": c.email,
         "national_id": c.national_id,
+        "address": c.address,
+        "date_of_birth": c.date_of_birth.isoformat() if c.date_of_birth else None,
     }
 
 
