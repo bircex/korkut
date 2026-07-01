@@ -14,7 +14,7 @@ Two metrics, by design weighted differently:
 
 Run as a report:
 
-    python -m tests.redaction_eval.measure         # from the backend/ dir
+    python tests/redaction_eval/measure.py         # from the backend/ dir
 
 or call `evaluate()` from a test to assert a baseline and track known leaks.
 """

@@ -6,7 +6,7 @@ baseline so it can only improve as we add detector layers — the known leaks (o
 names, address, e-mail, company, date of birth) are tracked here rather than asserted away.
 """
 
-from tests.redaction_eval.measure import evaluate
+from redaction_eval.measure import evaluate
 
 # Detectors backed by regex/checksum — these are deterministic and must stay perfect.
 DETERMINISTIC_TAGS = {"tckn", "phone", "iban", "plate", "case_no"}
