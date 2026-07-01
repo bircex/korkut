@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { api, type MemoryItem } from "../api";
 
 // Ayarlar → Hafıza: the office's durable notes Korkut keeps in mind across chats. Shared office
-// knowledge — any member can add or remove. Manually curated (nothing is auto-remembered); the
+// knowledge — any member can add or remove. Notes added here are active immediately; notes Korkut
+// proposes during a chat land as pending suggestions and only take effect once approved. Active
 // text is injected into prompts as context and masked by the redactor on cloud calls.
 
 const KIND_LABEL: Record<string, string> = {
@@ -43,13 +44,22 @@ export function MemorySettings() {
     setItems((list) => (list ? list.filter((x) => x.id !== id) : list));
   }
 
+  async function approve(id: number) {
+    const updated = await api.approveMemory(id);
+    setItems((list) => (list ? list.map((x) => (x.id === id ? updated : x)) : list));
+  }
+
   if (!items) return <p className="text-[13px] text-zinc-400">Yükleniyor…</p>;
+
+  const pending = items.filter((m) => m.status === "pending");
+  const active = items.filter((m) => m.status !== "pending");
 
   return (
     <div>
       <p className="mb-4 text-[13px] text-zinc-500">
         Korkut'un her sohbette akılda tutmasını istediğiniz kalıcı notlar. Büro geneli ve
-        paylaşımlıdır; elle eklenir (hiçbir şey otomatik hatırlanmaz).
+        paylaşımlıdır. Elle eklediğiniz notlar hemen geçerli olur; Korkut'un sohbette önerdiği
+        notlar siz onaylayana kadar “beklemede” kalır.
       </p>
 
       <div className="mb-5 rounded-lg border border-zinc-200 p-3">
@@ -82,11 +92,46 @@ export function MemorySettings() {
         </div>
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-[13px] text-zinc-400">Henüz not yok.</p>
+      {pending.length > 0 && (
+        <div className="mb-5">
+          <p className="mb-2 text-[13px] font-semibold text-zinc-700">
+            Korkut'un önerileri ({pending.length})
+          </p>
+          <ul className="flex flex-col gap-2">
+            {pending.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3"
+              >
+                <div className="min-w-0">
+                  <p className="m-0 whitespace-pre-wrap text-sm text-zinc-800">{m.text}</p>
+                  <p className="m-0 mt-1 text-[12px] text-zinc-400">{KIND_LABEL[m.kind] ?? m.kind}</p>
+                </div>
+                <div className="flex shrink-0 gap-1.5">
+                  <button
+                    onClick={() => approve(m.id)}
+                    className="rounded-md bg-zinc-900 px-2.5 py-1 text-[12px] font-semibold text-white hover:opacity-90"
+                  >
+                    Onayla
+                  </button>
+                  <button
+                    onClick={() => remove(m.id)}
+                    className="rounded-md border border-zinc-300 px-2 py-1 text-[12px] text-zinc-600 hover:border-red-400 hover:text-red-600"
+                  >
+                    Reddet
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {active.length === 0 ? (
+        <p className="text-[13px] text-zinc-400">Henüz onaylı not yok.</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {items.map((m) => (
+          {active.map((m) => (
             <li
               key={m.id}
               className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 p-3"

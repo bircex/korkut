@@ -247,3 +247,18 @@ def test_collect_memory_formats_notes_as_bullets(app_mod):
     assert "- Video duruşma tercih edilir" in block
     assert "- İcra dosyalarında X şablonu kullanılır" in block
     assert block.count("\n") == 1  # two bullets, one newline between; blank skipped
+
+
+def test_collect_memory_excludes_pending(app_mod):
+    from korkut.api.models import MemoryItem
+    from korkut.api.store import collect_memory, session
+
+    with session() as s:
+        s.add(MemoryItem(text="Onaylı not", status="active"))
+        s.add(MemoryItem(text="Bekleyen öneri", status="pending"))
+        s.commit()
+
+    with session() as s:
+        block = collect_memory(s)
+    assert "Onaylı not" in block
+    assert "Bekleyen öneri" not in block  # pending proposals never reach the model

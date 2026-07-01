@@ -103,8 +103,14 @@ def get_persona(s: Session) -> PersonaCfg:
 
 
 def collect_memory(s: Session) -> str:
-    """The office's durable memory notes as a prompt block (bulleted), or '' if there are none."""
-    rows = s.scalars(select(MemoryItem).order_by(MemoryItem.created_at)).all()
+    """The office's APPROVED memory notes as a prompt block (bulleted), or '' if there are none.
+
+    Only ``active`` notes are injected; agent-proposed (``pending``) notes wait for a lawyer's
+    approval in the Hafıza tab and never reach the model until then.
+    """
+    rows = s.scalars(
+        select(MemoryItem).where(MemoryItem.status == "active").order_by(MemoryItem.created_at)
+    ).all()
     lines = [f"- {r.text.strip()}" for r in rows if r.text.strip()]
     return "\n".join(lines)
 
