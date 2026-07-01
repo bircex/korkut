@@ -1,10 +1,10 @@
-"""Per-request, office-scoped agent tools for the matter domain (dosya/müvekkil/duruşma).
+"""Per-request agent tools for the matter domain (dosya/müvekkil/duruşma).
 
 Mirrors the `_send_email` handler pattern: `build_matter_tools(user)` returns `(specs, handlers)`
 where each handler closes over the authenticated `user`, opens its own DB session, and delegates to
-`matters_store` (which enforces `office_id`). Writes happen DIRECTLY (low-risk, reversible internal
-state); deletion is intentionally NOT exposed to the agent — only the UI deletes. The model decides
-when to call these; no keyword pre-classification.
+`matters_store`. Writes happen DIRECTLY (low-risk, reversible internal state); deletion is
+intentionally NOT exposed to the agent — only the UI deletes. The model decides when to call these;
+no keyword pre-classification.
 """
 
 from __future__ import annotations
@@ -25,19 +25,18 @@ def _int(value: Any) -> int | None:
 
 
 def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[dict], Any]]]:
-    """Build the office-scoped matter toolset for one authenticated request."""
-    office_id = user.office_id
+    """Build the matter toolset for one authenticated request."""
     user_id = user.id
 
     def list_matters(args: dict) -> dict:
         with store.session() as s:
-            rows = ms.list_matters(s, office_id, status=(args.get("status") or None))
+            rows = ms.list_matters(s, status=(args.get("status") or None))
             return {"matters": [ms.matter_brief(m) for m in rows], "count": len(rows)}
 
     def get_matter(args: dict) -> dict:
         mid = _int(args.get("matter_id"))
         with store.session() as s:
-            full = ms.matter_full(s, office_id, mid) if mid else None
+            full = ms.matter_full(s, mid) if mid else None
             if full is None:
                 return {"error": "not_found", "detail": "Dosya bulunamadı."}
             return {"matter": full}
@@ -47,12 +46,10 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
         if not mid:
             return {"ok": False, "error": "matter_id gerekli."}
         with store.session() as s:
-            full = ms.matter_full(s, office_id, mid)
+            full = ms.matter_full(s, mid)
             if full is None:
                 return {"error": "not_found", "detail": "Dosya bulunamadı."}
-            agenda = [
-                a for a in ms.upcoming_agenda(s, office_id, days=365) if a["matter_id"] == mid
-            ]
+            agenda = [a for a in ms.upcoming_agenda(s, days=365) if a["matter_id"] == mid]
             return {
                 "matter": full,
                 "agenda": agenda,
@@ -70,7 +67,6 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
         with store.session() as s:
             m = ms.create_matter(
                 s,
-                office_id,
                 user_id,
                 title=title,
                 client_name=args.get("client_name"),
@@ -94,7 +90,7 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
             for k in ("title", "status", "file_no", "court", "case_type", "counterparty", "notes")
         }
         with store.session() as s:
-            m = ms.update_matter(s, office_id, mid, **fields)
+            m = ms.update_matter(s, mid, **fields)
             if m is None:
                 return {"ok": False, "error": "Dosya bulunamadı."}
             return {"ok": True, "matter": ms.matter_brief(m), "note": "Dosya güncellendi."}
@@ -103,12 +99,12 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
         mid = _int(args.get("matter_id"))
         with store.session() as s:
             if mid:
-                m = ms.get_matter(s, office_id, mid)
+                m = ms.get_matter(s, mid)
                 if m is None:
                     return {"error": "not_found", "detail": "Dosya bulunamadı."}
                 hs = list(m.hearings)
             else:
-                hs = ms.upcoming_hearings(s, office_id, days=_int(args.get("upcoming_days")) or 14)
+                hs = ms.upcoming_hearings(s, days=_int(args.get("upcoming_days")) or 14)
             return {"hearings": [ms.hearing_brief(h) for h in hs], "count": len(hs)}
 
     def add_hearing(args: dict) -> dict:
@@ -121,7 +117,6 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
             try:
                 h = ms.add_hearing(
                     s,
-                    office_id,
                     mid,
                     date=args.get("date"),
                     time=args.get("time"),
@@ -138,7 +133,7 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
     def upcoming_deadlines(args: dict) -> dict:
         days = _int(args.get("days")) or 14
         with store.session() as s:
-            items = ms.upcoming_agenda(s, office_id, days=days)
+            items = ms.upcoming_agenda(s, days=days)
             return {"agenda": items, "count": len(items), "days": days}
 
     def add_deadline(args: dict) -> dict:
@@ -154,7 +149,6 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
             try:
                 d = ms.add_deadline(
                     s,
-                    office_id,
                     mid,
                     due_date=args.get("due_date"),
                     title=title,
@@ -172,19 +166,19 @@ def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[d
         if not did:
             return {"ok": False, "error": "deadline_id gerekli."}
         with store.session() as s:
-            d = ms.complete_deadline(s, office_id, did)
+            d = ms.complete_deadline(s, did)
             if d is None:
                 return {"ok": False, "error": "Süre bulunamadı."}
             return {"ok": True, "deadline": ms.deadline_brief(d), "note": "Süre tamamlandı."}
 
     def list_deadlines(args: dict) -> dict:
         with store.session() as s:
-            ds = ms.list_deadlines(s, office_id, matter_id=_int(args.get("matter_id")))
+            ds = ms.list_deadlines(s, matter_id=_int(args.get("matter_id")))
             return {"deadlines": [ms.deadline_brief(d) for d in ds], "count": len(ds)}
 
     def list_clients(_args: dict) -> dict:
         with store.session() as s:
-            cs = ms.list_clients(s, office_id)
+            cs = ms.list_clients(s)
             return {"clients": [ms.client_brief(c) for c in cs], "count": len(cs)}
 
     handlers: dict[str, Callable[[dict], Any]] = {

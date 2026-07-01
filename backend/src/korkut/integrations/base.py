@@ -8,7 +8,7 @@ This is the inbound/outbound sibling of `korkut.messaging.Channel` (which is sen
   webhooks are required, which keeps deployment identical to the existing cron worker.
 * ``send(reply)`` — deliver Korkut's answer back to the originating chat.
 
-Connectors are built from a plain ``config`` dict (the per-office credentials stored on
+Connectors are built from a plain ``config`` dict (the credentials stored on
 `OfficeChannel.config`) via ``from_config``, so the registry can construct any connector without
 knowing its internals — the same contract the messaging channels use.
 
@@ -37,7 +37,6 @@ class InboundMessage:
     messages the two often coincide, but they differ for group chats, so both are carried.
     """
 
-    office_id: int
     channel: str
     external_id: str
     thread_id: str
@@ -54,15 +53,15 @@ class OutboundReply:
 
 
 class Connector(ABC):
-    """One two-way medium. Holds the office's credentials + read cursor; stateless per message."""
+    """One two-way medium. Holds the credentials + read cursor; stateless per message."""
 
     #: Stable identifier persisted on OfficeChannel.kind ("telegram", "whatsapp", "email").
     kind: str = ""
 
     @classmethod
     @abstractmethod
-    def from_config(cls, office_id: int, config: dict[str, Any]) -> Self:
-        """Build a configured connector for one office from its stored config dict."""
+    def from_config(cls, config: dict[str, Any]) -> Self:
+        """Build a configured connector from its stored config dict."""
 
     @abstractmethod
     def poll(self) -> list[InboundMessage]:

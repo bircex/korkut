@@ -74,10 +74,8 @@ def test_models_create_and_defaults():
     engine = make_engine("sqlite+pysqlite:///:memory:")
     init_db(engine)
     with Session(engine) as s:
-        s.add(
-            OfficeChannel(office_id=1, kind="email", enabled=True, config={"from_address": "a@x"})
-        )
-        msg = OutboundMessage(office_id=1, kind="email", to_addr="b@y.com", subject="S", body="B")
+        s.add(OfficeChannel(kind="email", enabled=True, config={"from_address": "a@x"}))
+        msg = OutboundMessage(kind="email", to_addr="b@y.com", subject="S", body="B")
         s.add(msg)
         s.commit()
         assert msg.status == "draft" and msg.attempts == 0 and msg.send_at is None

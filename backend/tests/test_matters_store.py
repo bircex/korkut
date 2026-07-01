@@ -27,9 +27,7 @@ def test_parse_time():
 
 
 def test_shapers_never_leak_office_id():
-    c = Client(
-        office_id=1, full_name="Ahmet Yılmaz", phone="555", email="a@x.tr", national_id="123"
-    )
+    c = Client(full_name="Ahmet Yılmaz", phone="555", email="a@x.tr", national_id="123")
     assert ms.client_brief(c) == {
         "id": None,
         "full_name": "Ahmet Yılmaz",
@@ -39,14 +37,12 @@ def test_shapers_never_leak_office_id():
     }
     assert "office_id" not in ms.client_brief(c)
 
-    h = Hearing(
-        office_id=1, matter_id=2, date=date(2026, 7, 12), time=time(10, 30), type="ön inceleme"
-    )
+    h = Hearing(matter_id=2, date=date(2026, 7, 12), time=time(10, 30), type="ön inceleme")
     hb = ms.hearing_brief(h)
     assert hb["date"] == "2026-07-12" and hb["time"] == "10:30" and hb["type"] == "ön inceleme"
     assert "office_id" not in hb
 
-    m = Matter(office_id=1, title="Dosya", status="open", file_no="2026/1")
+    m = Matter(title="Dosya", status="open", file_no="2026/1")
     mb = ms.matter_brief(m)
     assert mb["title"] == "Dosya" and mb["status"] == "open" and mb["file_no"] == "2026/1"
     assert mb["client_name"] is None  # no client attached
@@ -54,9 +50,9 @@ def test_shapers_never_leak_office_id():
 
 
 def test_matter_detail_includes_hearings_and_client():
-    m = Matter(office_id=1, title="Dosya", status="open")
-    m.client = Client(office_id=1, full_name="Ayşe")
-    m.hearings = [Hearing(office_id=1, matter_id=1, date=date(2026, 1, 1))]
+    m = Matter(title="Dosya", status="open")
+    m.client = Client(full_name="Ayşe")
+    m.hearings = [Hearing(matter_id=1, date=date(2026, 1, 1))]
     detail = ms.matter_detail(m)
     assert detail["client"]["full_name"] == "Ayşe"
     assert len(detail["hearings"]) == 1

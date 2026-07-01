@@ -20,9 +20,9 @@ CONNECTORS: dict[str, type[Connector]] = {
 }
 
 
-def build_connector(kind: str, office_id: int, config: dict[str, Any]) -> Connector:
-    """Construct a configured connector for `kind` from one office's stored config dict."""
+def build_connector(kind: str, config: dict[str, Any]) -> Connector:
+    """Construct a configured connector for `kind` from its stored config dict."""
     impl = CONNECTORS.get(kind)
     if impl is None:
         raise ValueError(f"unknown connector kind: {kind!r}")
-    return impl.from_config(office_id, config)
+    return impl.from_config(config)

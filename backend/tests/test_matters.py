@@ -1,8 +1,7 @@
 """HTTP endpoint tests for the matter domain (/api/matters, /api/clients, /api/calendar).
 
 Mirrors test_web_auth.py: a fresh SQLite file per run, the brain patched offline, and the full
-two-step + 2FA login to obtain an authenticated client. Covers CRUD, the chat↔matter link, and
-cross-office isolation (another office's matter is a 404, never visible).
+two-step + 2FA login to obtain an authenticated client. Covers CRUD and the chat↔matter link.
 """
 
 import time
@@ -50,22 +49,6 @@ def _enroll(c: TestClient, username: str, password: str) -> None:
 def _existing(app_mod) -> TestClient:
     c = TestClient(app_mod.app)
     _enroll(c, "avukat", "parola123")
-    return c
-
-
-def _new_office(app_mod, office: str, username: str) -> TestClient:
-    c = TestClient(app_mod.app)
-    c.post(
-        "/api/register",
-        json={
-            "office_name": office,
-            "full_name": username,
-            "username": username,
-            "password": "parola123",
-        },
-    )
-    secret = c.get("/api/2fa/provision").json()["secret"]
-    c.post("/api/2fa/enroll", json={"code": _totp_now(secret)})
     return c
 
 
@@ -121,21 +104,17 @@ def test_session_links_to_matter(app_mod):
     mid = c.post("/api/matters", json={"title": "Dosya X"}).json()["id"]
     sess = c.post(f"/api/sessions?matter_id={mid}").json()
     assert sess["matter_id"] == mid
-    # an unknown / other-office matter is rejected
+    # an unknown matter is rejected
     assert c.post("/api/sessions?matter_id=9999").status_code == 404
 
 
-def test_office_isolation(app_mod):
-    a = _existing(app_mod)
-    b = _new_office(app_mod, "Ofis B", "bavukat")
-    mid = a.post("/api/matters", json={"title": "Gizli Dosya"}).json()["id"]
-
-    # B can neither see nor touch A's matter — always 404, never a leak.
-    assert all(x["id"] != mid for x in b.get("/api/matters").json()["items"])
-    assert b.get(f"/api/matters/{mid}").status_code == 404
-    assert b.patch(f"/api/matters/{mid}", json={"status": "closed"}).status_code == 404
-    assert b.post(f"/api/matters/{mid}/hearings", json={"date": "2099-01-01"}).status_code == 404
-    assert b.delete(f"/api/matters/{mid}").status_code == 404
+def test_matter_not_found_is_404(app_mod):
+    c = _existing(app_mod)
+    # A nonexistent matter is a 404 on every route.
+    assert c.get("/api/matters/9999").status_code == 404
+    assert c.patch("/api/matters/9999", json={"status": "closed"}).status_code == 404
+    assert c.post("/api/matters/9999/hearings", json={"date": "2099-01-01"}).status_code == 404
+    assert c.delete("/api/matters/9999").status_code == 404
 
 
 def test_deadlines_and_unified_agenda(app_mod):
@@ -164,20 +143,16 @@ def test_deadlines_and_unified_agenda(app_mod):
     )
 
 
-def test_deadline_office_isolation(app_mod):
-    a = _existing(app_mod)
-    b = _new_office(app_mod, "Ofis B", "bavukat")
-    mid = a.post("/api/matters", json={"title": "X"}).json()["id"]
-    did = a.post(
-        f"/api/matters/{mid}/deadlines", json={"due_date": "2099-01-01", "title": "Süre"}
-    ).json()["id"]
+def test_deadline_not_found_is_404(app_mod):
+    c = _existing(app_mod)
+    # A deadline on a nonexistent matter, and completing a nonexistent deadline, are both 404.
     assert (
-        b.post(
-            f"/api/matters/{mid}/deadlines", json={"due_date": "2099-01-01", "title": "X"}
+        c.post(
+            "/api/matters/9999/deadlines", json={"due_date": "2099-01-01", "title": "X"}
         ).status_code
         == 404
     )
-    assert b.post(f"/api/deadlines/{did}/complete").status_code == 404
+    assert c.post("/api/deadlines/9999/complete").status_code == 404
 
 
 def test_matter_detail_includes_documents(app_mod):

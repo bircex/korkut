@@ -13,8 +13,8 @@ from fastapi.testclient import TestClient
 from korkut.api import totp
 
 
-@pytest.fixture
-def client(tmp_path, monkeypatch):
+def _fresh_app(tmp_path, monkeypatch):
+    """Reload the app + store against a fresh SQLite file (empty DB, no bootstrapped office)."""
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
     monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable")
     # Reset cached singletons that read those envs at import time.
@@ -28,11 +28,25 @@ def client(tmp_path, monkeypatch):
     import korkut.api.app as app_mod
 
     importlib.reload(app_mod)
+    return app_mod
+
+
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    app_mod = _fresh_app(tmp_path, monkeypatch)
 
     import korkut.api.adduser as adduser
 
     adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
 
+    with patch.object(app_mod.agent, "answer", return_value="DRAFT yanıt."):
+        yield TestClient(app_mod.app)
+
+
+@pytest.fixture
+def empty_client(tmp_path, monkeypatch):
+    """A client on a fresh DB with NO office bootstrapped yet (for the registration flow)."""
+    app_mod = _fresh_app(tmp_path, monkeypatch)
     with patch.object(app_mod.agent, "answer", return_value="DRAFT yanıt."):
         yield TestClient(app_mod.app)
 
@@ -47,8 +61,23 @@ def _totp_next(secret: str) -> str:
     return totp._hotp(secret, totp.counter_at(time.time()) + 1)
 
 
-def test_register_creates_office_and_owner(client):
-    # Self-service: registering an office routes the new owner straight to 2FA enrolment.
+def test_register_creates_office_and_owner(empty_client):
+    client = empty_client
+    # Short password is rejected before any office exists.
+    assert (
+        client.post(
+            "/api/register",
+            json={
+                "office_name": "B",
+                "full_name": "Y",
+                "username": "yeni",
+                "password": "kısa",
+            },
+        ).status_code
+        == 400
+    )
+
+    # Single-tenant: the first registration bootstraps the office + its owner → 2FA enrolment.
     r = client.post(
         "/api/register",
         json={
@@ -64,30 +93,17 @@ def test_register_creates_office_and_owner(client):
     assert enrolled["office"] == "Deniz Hukuk" and enrolled["role"] == "owner"
     assert client.get("/api/me").json()["office"] == "Deniz Hukuk"
 
-    # Username is globally unique → a second office cannot reuse it.
+    # Once the office exists, a second registration is refused (409) — members are added by owner.
     dup = client.post(
         "/api/register",
         json={
             "office_name": "Başka Büro",
             "full_name": "X",
-            "username": "deniz",
+            "username": "baskaci",
             "password": "parola123",
         },
     )
     assert dup.status_code == 409
-    # Short password is rejected.
-    assert (
-        client.post(
-            "/api/register",
-            json={
-                "office_name": "B",
-                "full_name": "Y",
-                "username": "yeni",
-                "password": "kısa",
-            },
-        ).status_code
-        == 400
-    )
 
 
 def test_password_then_enroll_then_chat(client):
@@ -301,25 +317,6 @@ def test_owner_adds_member_shared_office(client):
         ).status_code
         == 403
     )
-
-
-def test_cross_office_isolation(client):
-    import korkut.api.adduser as adduser
-
-    _enroll(client, "avukat")
-    sid = client.post("/api/sessions").json()["id"]
-
-    adduser.main(
-        ["rakip", "--office", "Rakip Büro", "--password", "parola123", "--name", "Av. Rakip"]
-    )
-    c2 = TestClient(client.app)
-    _enroll(c2, "rakip")
-    assert c2.get("/api/sessions").json()["items"] == [], "another office must not see the session"
-    assert c2.get(f"/api/sessions/{sid}").status_code == 404
-    assert c2.patch(f"/api/sessions/{sid}", json={"title": "hack"}).status_code == 404
-    assert c2.post(f"/api/sessions/{sid}/clone").status_code == 404
-    assert c2.delete(f"/api/sessions/{sid}").json() == {"ok": True}  # no-op, not an error
-    assert client.get(f"/api/sessions/{sid}").status_code == 200, "owner's session is untouched"
 
 
 def test_owner_removes_member(client):

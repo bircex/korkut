@@ -58,6 +58,7 @@ from korkut.api.models import (
 )
 from korkut.api.store import (
     effective_theme,
+    get_office,
     office_model_cfg,
     send_outbound_message,
     session,
@@ -361,8 +362,8 @@ def _require_owner(s: Session, token: str | None) -> User:
     return user
 
 
-def _office_name(s: Session, user: User) -> str | None:
-    office = s.get(Office, user.office_id)
+def _office_name(s: Session) -> str | None:
+    office = get_office(s)
     return office.name if office else None
 
 
@@ -372,7 +373,7 @@ def _user_public(s: Session, user: User) -> dict:
         "username": user.username,
         "full_name": user.full_name,
         "role": user.role,
-        "office": _office_name(s, user),
+        "office": _office_name(s),
     }
 
 
@@ -385,7 +386,7 @@ def _style_dict(p: StyleProfile | None) -> dict:
 
 def _effective_style(s: Session, user: User) -> dict:
     """Merge office + lawyer style: deterministic blocks override, generative text combines."""
-    op = s.scalar(select(StyleProfile).where(StyleProfile.office_id == user.office_id))
+    op = s.scalar(select(StyleProfile).where(StyleProfile.user_id.is_(None)))
     up = s.scalar(select(StyleProfile).where(StyleProfile.user_id == user.id))
     office, mine = _style_dict(op), _style_dict(up)
 
@@ -406,25 +407,25 @@ def _effective_style(s: Session, user: User) -> dict:
 def _require_conv(s: Session, user: User, cid: int) -> Conversation:
     """Fetch a conversation, enforcing it belongs to the caller's office (else 404, not 403)."""
     conv = s.get(Conversation, cid)
-    if not conv or conv.office_id != user.office_id:
+    if not conv:
         raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
     return conv
 
 
 def _require_matter(s: Session, user: User, mid: int) -> Matter:
-    """Fetch a matter, enforcing it belongs to the caller's office (else 404, not 403)."""
+    """Fetch a matter, or 404 if it does not exist."""
     m = s.get(Matter, mid)
-    if not m or m.office_id != user.office_id:
+    if not m:
         raise HTTPException(status_code=404, detail="Dosya bulunamadı")
     return m
 
 
 def _require_doc(s: Session, user: User, doc_id: int) -> Document:
-    """Fetch a document, enforcing its conversation belongs to the caller's office."""
+    """Fetch a document, or 404 if it does not exist."""
     doc = s.get(Document, doc_id)
     if doc is not None:
         conv = s.get(Conversation, doc.conversation_id)
-        if conv is not None and conv.office_id == user.office_id:
+        if conv is not None:
             return doc
     raise HTTPException(status_code=404, detail="Belge bulunamadı")
 
@@ -446,7 +447,11 @@ def _ticket_user(s: Session, ticket: str | None, purpose: str) -> User:
 
 @app.post("/api/register")
 def register(body: RegisterBody, request: Request, response: Response):
-    """Self-service: create a new office + its first user (owner), then go to 2FA enrolment."""
+    """Bootstrap the single office + its first user (owner), then go to 2FA enrolment.
+
+    Single-tenant: only the first registration succeeds. Once the office exists, further
+    registrations are refused (409) — new people are added as members by the owner.
+    """
     ip = _client_ip(request)
     if not _ip_allowed(ip):
         raise HTTPException(status_code=429, detail="Çok fazla deneme. Biraz sonra tekrar deneyin.")
@@ -460,13 +465,17 @@ def register(body: RegisterBody, request: Request, response: Response):
         raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalı")
 
     with session() as s:
+        if get_office(s) is not None:
+            raise HTTPException(
+                status_code=409,
+                detail="Ofis zaten kurulmuş; üye eklemek için sahibinize başvurun.",
+            )
         if s.scalar(select(User).where(User.username == username)):
             raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
         office = Office(name=office_name[:200])
         s.add(office)
         s.flush()
         user = User(
-            office_id=office.id,
             role="owner",
             username=username,
             full_name=full_name[:200],
@@ -481,12 +490,10 @@ def register(body: RegisterBody, request: Request, response: Response):
 
 @app.get("/api/members")
 def list_members(korkut_session: str | None = Cookie(default=None)):
-    """Members of the caller's office (any member may view the roster)."""
+    """Members of the office (any member may view the roster)."""
     with session() as s:
         user = _require_user(s, korkut_session)
-        rows = s.scalars(
-            select(User).where(User.office_id == user.office_id).order_by(User.id)
-        ).all()
+        rows = s.scalars(select(User).order_by(User.id)).all()
         return [
             {
                 "id": u.id,
@@ -511,11 +518,10 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
     if len(body.password) < 8:
         raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalı")
     with session() as s:
-        owner = _require_owner(s, korkut_session)
+        _require_owner(s, korkut_session)
         if s.scalar(select(User).where(User.username == username)):
             raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
         member = User(
-            office_id=owner.office_id,
             role="member",
             username=username,
             full_name=full_name[:200],
@@ -536,11 +542,11 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
 
 @app.delete("/api/members/{uid}")
 def remove_member(uid: int, korkut_session: str | None = Cookie(default=None)):
-    """Owner deactivates a member of their office (revokes sessions). Owner cannot remove self."""
+    """Owner deactivates a member (revokes sessions). Owner cannot remove self."""
     with session() as s:
         owner = _require_owner(s, korkut_session)
         target = s.get(User, uid)
-        if not target or target.office_id != owner.office_id:
+        if not target:
             raise HTTPException(status_code=404, detail="Üye bulunamadı")
         if target.id == owner.id:
             raise HTTPException(status_code=400, detail="Kendinizi çıkaramazsınız")
@@ -550,13 +556,14 @@ def remove_member(uid: int, korkut_session: str | None = Cookie(default=None)):
         return {"ok": True}
 
 
-def _upsert_style(
-    s: Session, *, office_id: int | None, user_id: int | None, body: StyleBody
-) -> dict:
-    where = StyleProfile.office_id == office_id if office_id else StyleProfile.user_id == user_id
+def _upsert_style(s: Session, *, user_id: int | None, body: StyleBody) -> dict:
+    """Upsert a style profile. `user_id` None = the office profile (the `user_id IS NULL` row)."""
+    where = (
+        StyleProfile.user_id == user_id if user_id is not None else StyleProfile.user_id.is_(None)
+    )
     p = s.scalar(select(StyleProfile).where(where))
     if p is None:
-        p = StyleProfile(office_id=office_id, user_id=user_id)
+        p = StyleProfile(user_id=user_id)
         s.add(p)
     for f in _STYLE_FIELDS:
         setattr(p, f, getattr(body, f) or "")
@@ -569,7 +576,7 @@ def get_style(korkut_session: str | None = Cookie(default=None)):
     """Both layers (office + my own) plus the merged result Korkut will actually apply."""
     with session() as s:
         user = _require_user(s, korkut_session)
-        op = s.scalar(select(StyleProfile).where(StyleProfile.office_id == user.office_id))
+        op = s.scalar(select(StyleProfile).where(StyleProfile.user_id.is_(None)))
         up = s.scalar(select(StyleProfile).where(StyleProfile.user_id == user.id))
         return {
             "office": _style_dict(op),
@@ -583,14 +590,14 @@ def get_style(korkut_session: str | None = Cookie(default=None)):
 def save_user_style(body: StyleBody, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
-        return _upsert_style(s, office_id=None, user_id=user.id, body=body)
+        return _upsert_style(s, user_id=user.id, body=body)
 
 
 @app.put("/api/style/office")
 def save_office_style(body: StyleBody, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        owner = _require_owner(s, korkut_session)
-        return _upsert_style(s, office_id=owner.office_id, user_id=None, body=body)
+        _require_owner(s, korkut_session)
+        return _upsert_style(s, user_id=None, body=body)
 
 
 # ---------------- custom model (Özelleştir) ----------------
@@ -615,7 +622,7 @@ def get_model(korkut_session: str | None = Cookie(default=None)):
     """The office's custom-model config (key hidden). Any member may view; only the owner edits."""
     with session() as s:
         user = _require_user(s, korkut_session)
-        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == user.office_id))
+        row = s.scalar(select(OfficeModel))
         return _model_public(row, can_edit=user.role == "owner")
 
 
@@ -625,8 +632,8 @@ def model_health(korkut_session: str | None = Cookie(default=None)):
     from korkut.core.health import model_status
 
     with session() as s:
-        user = _require_user(s, korkut_session)
-        cfg = office_model_cfg(s, user.office_id)
+        _require_user(s, korkut_session)
+        cfg = office_model_cfg(s)
     return model_status(cfg)
 
 
@@ -634,12 +641,12 @@ def model_health(korkut_session: str | None = Cookie(default=None)):
 def save_model(body: ModelBody, korkut_session: str | None = Cookie(default=None)):
     """Owner-only upsert. `api_key` None keeps the stored key; "" clears it."""
     with session() as s:
-        owner = _require_owner(s, korkut_session)
+        _require_owner(s, korkut_session)
         if body.enabled and (not body.model.strip() or not body.base_url.strip()):
             raise HTTPException(status_code=400, detail="Model adı ve sunucu adresi zorunludur.")
-        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == owner.office_id))
+        row = s.scalar(select(OfficeModel))
         if row is None:
-            row = OfficeModel(office_id=owner.office_id)
+            row = OfficeModel()
             s.add(row)
         row.enabled = body.enabled
         row.is_local = body.is_local
@@ -655,8 +662,8 @@ def save_model(body: ModelBody, korkut_session: str | None = Cookie(default=None
 def delete_model(korkut_session: str | None = Cookie(default=None)):
     """Owner-only: remove the custom model → the office falls back to the built-in default."""
     with session() as s:
-        owner = _require_owner(s, korkut_session)
-        row = s.scalar(select(OfficeModel).where(OfficeModel.office_id == owner.office_id))
+        _require_owner(s, korkut_session)
+        row = s.scalar(select(OfficeModel))
         if row is not None:
             s.delete(row)
             s.commit()
@@ -838,16 +845,14 @@ def _conv_brief(c: Conversation) -> dict:
 def list_sessions(
     limit: int = 20, offset: int = 0, korkut_session: str | None = Cookie(default=None)
 ):
-    """Office-scoped sessions, newest activity first — paginated for lazy "load older" in the UI."""
+    """All sessions, newest activity first — paginated for lazy "load older" in the UI."""
     limit = max(1, min(limit, 100))
     offset = max(0, offset)
     with session() as s:
-        user = _require_user(s, korkut_session)
-        scope = Conversation.office_id == user.office_id
-        total = s.scalar(select(func.count()).select_from(Conversation).where(scope)) or 0
+        _require_user(s, korkut_session)
+        total = s.scalar(select(func.count()).select_from(Conversation)) or 0
         rows = s.scalars(
             select(Conversation)
-            .where(scope)
             .order_by(Conversation.updated_at.desc(), Conversation.id.desc())
             .limit(limit)
             .offset(offset)
@@ -861,9 +866,8 @@ def create_session(matter_id: int | None = None, korkut_session: str | None = Co
     with session() as s:
         user = _require_user(s, korkut_session)
         if matter_id is not None:
-            _require_matter(s, user, matter_id)  # 404 if not this office's matter
+            _require_matter(s, user, matter_id)  # 404 if the matter does not exist
         conv = Conversation(
-            office_id=user.office_id,
             matter_id=matter_id,
             created_by=user.id,
             created_by_name=user.full_name or user.username,
@@ -904,7 +908,6 @@ def clone_session(cid: int, korkut_session: str | None = Cookie(default=None)):
         user = _require_user(s, korkut_session)
         src = _require_conv(s, user, cid)
         clone = Conversation(
-            office_id=user.office_id,
             title=f"{src.title} (kopya)"[:120],
             created_by=user.id,
             created_by_name=user.full_name or user.username,
@@ -932,9 +935,9 @@ def clone_session(cid: int, korkut_session: str | None = Cookie(default=None)):
 @app.delete("/api/sessions/{cid}")
 def delete_session(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        user = _require_user(s, korkut_session)
+        _require_user(s, korkut_session)
         conv = s.get(Conversation, cid)
-        if conv and conv.office_id == user.office_id:
+        if conv:
             s.delete(conv)
             s.commit()
         return {"ok": True}
@@ -942,14 +945,14 @@ def delete_session(cid: int, korkut_session: str | None = Cookie(default=None)):
 
 # ---------------- matter domain (dosya / müvekkil / duruşma) ----------------
 # CRUD over the office's case files. The same logic backs the agent's matter_tools (via
-# matters_store), so the UI and Korkut act on one shared, office-scoped data layer.
+# matters_store), so the UI and Korkut act on one shared data layer.
 
 
 @app.get("/api/matters")
 def list_matters_ep(status: str | None = None, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        user = _require_user(s, korkut_session)
-        rows = mstore.list_matters(s, user.office_id, status=status)
+        _require_user(s, korkut_session)
+        rows = mstore.list_matters(s, status=status)
         return {"items": [mstore.matter_brief(m) for m in rows], "total": len(rows)}
 
 
@@ -962,7 +965,6 @@ def create_matter_ep(body: MatterBody, korkut_session: str | None = Cookie(defau
         user = _require_user(s, korkut_session)
         m = mstore.create_matter(
             s,
-            user.office_id,
             user.id,
             title=title,
             client_name=body.client_name,
@@ -971,7 +973,7 @@ def create_matter_ep(body: MatterBody, korkut_session: str | None = Cookie(defau
             case_type=body.case_type,
             counterparty=body.counterparty,
         )
-        return mstore.matter_full(s, user.office_id, m.id)
+        return mstore.matter_full(s, m.id)
 
 
 @app.get("/api/matters/{mid}")
@@ -979,7 +981,7 @@ def get_matter_ep(mid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
-        return mstore.matter_full(s, user.office_id, mid)
+        return mstore.matter_full(s, mid)
 
 
 @app.patch("/api/matters/{mid}")
@@ -989,8 +991,8 @@ def update_matter_ep(
     with session() as s:
         user = _require_user(s, korkut_session)
         _require_matter(s, user, mid)
-        mstore.update_matter(s, user.office_id, mid, **body.model_dump(exclude_none=True))
-        return mstore.matter_full(s, user.office_id, mid)
+        mstore.update_matter(s, mid, **body.model_dump(exclude_none=True))
+        return mstore.matter_full(s, mid)
 
 
 @app.delete("/api/matters/{mid}")
@@ -1011,7 +1013,6 @@ def add_hearing_ep(mid: int, body: HearingBody, korkut_session: str | None = Coo
         try:
             h = mstore.add_hearing(
                 s,
-                user.office_id,
                 mid,
                 date=body.date,
                 time=body.time,
@@ -1029,8 +1030,8 @@ def upcoming_ep(days: int = 14, korkut_session: str | None = Cookie(default=None
     """Unified office agenda: upcoming hearings + pending deadlines, soonest first."""
     days = max(1, min(days, 365))
     with session() as s:
-        user = _require_user(s, korkut_session)
-        return {"items": mstore.upcoming_agenda(s, user.office_id, days=days), "days": days}
+        _require_user(s, korkut_session)
+        return {"items": mstore.upcoming_agenda(s, days=days), "days": days}
 
 
 @app.post("/api/matters/{mid}/deadlines")
@@ -1043,7 +1044,6 @@ def add_deadline_ep(
         try:
             d = mstore.add_deadline(
                 s,
-                user.office_id,
                 mid,
                 due_date=body.due_date,
                 title=body.title,
@@ -1058,8 +1058,8 @@ def add_deadline_ep(
 @app.post("/api/deadlines/{did}/complete")
 def complete_deadline_ep(did: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        user = _require_user(s, korkut_session)
-        d = mstore.complete_deadline(s, user.office_id, did)
+        _require_user(s, korkut_session)
+        d = mstore.complete_deadline(s, did)
         if d is None:
             raise HTTPException(status_code=404, detail="Süre bulunamadı")
         return mstore.deadline_brief(d)
@@ -1068,8 +1068,8 @@ def complete_deadline_ep(did: int, korkut_session: str | None = Cookie(default=N
 @app.get("/api/clients")
 def list_clients_ep(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        user = _require_user(s, korkut_session)
-        rows = mstore.list_clients(s, user.office_id)
+        _require_user(s, korkut_session)
+        rows = mstore.list_clients(s)
         return {"items": [mstore.client_brief(c) for c in rows]}
 
 
@@ -1079,9 +1079,8 @@ def create_client_ep(body: ClientBody, korkut_session: str | None = Cookie(defau
     if not name:
         raise HTTPException(status_code=400, detail="Müvekkil adı zorunludur.")
     with session() as s:
-        user = _require_user(s, korkut_session)
+        _require_user(s, korkut_session)
         c = Client(
-            office_id=user.office_id,
             full_name=name,
             national_id=body.national_id,
             phone=body.phone,
@@ -1109,8 +1108,8 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=text))
         s.commit()
         style = _effective_style(s, user)
-        office_name = _office_name(s, user)
-        model_cfg = office_model_cfg(s, user.office_id)
+        office_name = _office_name(s)
+        model_cfg = office_model_cfg(s)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -1138,10 +1137,9 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
                 mid = int(args.get("matter_id")) if args.get("matter_id") else None
             except (TypeError, ValueError):
                 mid = None
-            if mid and mstore.get_matter(s, user.office_id, mid) is not None:
+            if mid and mstore.get_matter(s, mid) is not None:
                 matter_id = mid
             msg = OutboundMessage(
-                office_id=user.office_id,
                 user_id=user.id,
                 matter_id=matter_id,
                 kind="email",
@@ -1163,7 +1161,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
     # Intent is the model's call, not a keyword gate: whether to draft (and thus whether to ask for
     # missing essentials first) is decided by the model via the dilekce_canvas tool contract — see
     # _CANVAS_TOOL. The document type is only inferred later, once a draft is actually chosen.
-    # Office-scoped matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
+    # Matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
     m_tools, m_handlers = matter_tools.build_matter_tools(user)
     reply = _safe_answer(
         text,
@@ -1292,8 +1290,8 @@ def session_upload(
             conv.title = (prompt or name)[:60]
         s.add(Message(conversation_id=cid, user_id=user.id, role="user", content=display))
         s.commit()
-        office_name = _office_name(s, user)
-        model_cfg = office_model_cfg(s, user.office_id)
+        office_name = _office_name(s)
+        model_cfg = office_model_cfg(s)
 
     reply = _safe_answer(
         model_input, office_name=office_name, history=history_msgs, model_cfg=model_cfg
@@ -1400,10 +1398,7 @@ def list_templates(kind: str = "dilekce", korkut_session: str | None = Cookie(de
         cats = petitions.contract_categories() if kind == "sozlesme" else petitions.categories()
         office_overridden = set(
             s.scalars(
-                select(TemplateOverride.type_id).where(
-                    TemplateOverride.office_id == user.office_id,
-                    TemplateOverride.user_id.is_(None),
-                )
+                select(TemplateOverride.type_id).where(TemplateOverride.user_id.is_(None))
             ).all()
         )
         user_overridden = set(
@@ -1441,7 +1436,6 @@ def get_template(type_id: str, korkut_session: str | None = Cookie(default=None)
         default = s.scalar(select(TemplateDefault).where(TemplateDefault.type_id == type_id))
         office = s.scalar(
             select(TemplateOverride).where(
-                TemplateOverride.office_id == user.office_id,
                 TemplateOverride.user_id.is_(None),
                 TemplateOverride.type_id == type_id,
             )
@@ -1458,7 +1452,7 @@ def get_template(type_id: str, korkut_session: str | None = Cookie(default=None)
             "default": default.content if default else None,
             "officeOverride": office.content if office else None,
             "userOverride": mine.content if mine else None,
-            "effective": effective_theme(s, user.office_id, user.id, type_id),
+            "effective": effective_theme(s, user.id, type_id),
         }
 
 
@@ -1471,14 +1465,10 @@ def save_template(
         user = _require_user(s, korkut_session)
         if petitions.get(type_id) is None:
             raise HTTPException(status_code=404, detail="Bilinmeyen tip")
-        office_id, user_id = _scope_ids(body.scope, user)
-        row = s.scalar(_override_query(type_id, office_id, user_id))
+        user_id = _scope_user_id(body.scope, user)
+        row = s.scalar(_override_query(type_id, user_id))
         if row is None:
-            s.add(
-                TemplateOverride(
-                    office_id=office_id, user_id=user_id, type_id=type_id, content=body.content
-                )
-            )
+            s.add(TemplateOverride(user_id=user_id, type_id=type_id, content=body.content))
         else:
             row.content = body.content
         s.commit()
@@ -1492,28 +1482,28 @@ def delete_template(
     """Remove a personal or office override → the type falls back to the lower layer."""
     with session() as s:
         user = _require_user(s, korkut_session)
-        office_id, user_id = _scope_ids(scope, user)
-        row = s.scalar(_override_query(type_id, office_id, user_id))
+        user_id = _scope_user_id(scope, user)
+        row = s.scalar(_override_query(type_id, user_id))
         if row is not None:
             s.delete(row)
             s.commit()
         return {"ok": True}
 
 
-def _scope_ids(scope: str, user: User) -> tuple[int | None, int | None]:
-    """Map a scope string to (office_id, user_id) for a TemplateOverride row."""
+def _scope_user_id(scope: str, user: User) -> int | None:
+    """Map a scope string to the TemplateOverride `user_id` (None = the office-wide override)."""
     if scope == "user":
-        return None, user.id
+        return user.id
     if scope == "office":
-        return user.office_id, None
+        return None
     raise HTTPException(status_code=400, detail="scope 'user' veya 'office' olmalı")
 
 
-def _override_query(type_id: str, office_id: int | None, user_id: int | None):
+def _override_query(type_id: str, user_id: int | None):
     cond = (
         TemplateOverride.user_id == user_id
         if user_id is not None
-        else (TemplateOverride.office_id == office_id) & TemplateOverride.user_id.is_(None)
+        else TemplateOverride.user_id.is_(None)
     )
     return select(TemplateOverride).where(TemplateOverride.type_id == type_id, cond)
 
@@ -1522,11 +1512,11 @@ def _override_query(type_id: str, office_id: int | None, user_id: int | None):
 def list_documents(korkut_session: str | None = Cookie(default=None)):
     """Every drafted petition/contract — newest first, labelled dilekçe vs sözleşme."""
     with session() as s:
-        user = _require_user(s, korkut_session)
+        _require_user(s, korkut_session)
         rows = s.scalars(
             select(Document)
             .join(Conversation, Conversation.id == Document.conversation_id)
-            .where(Document.content_md != "", Conversation.office_id == user.office_id)
+            .where(Document.content_md != "")
             .order_by(Document.updated_at.desc(), Document.id.desc())
         ).all()
         return [
@@ -1587,11 +1577,7 @@ def get_email_channel(korkut_session: str | None = Cookie(default=None)):
     """The office's Gmail config (password hidden). Any member views; only the owner edits."""
     with session() as s:
         user = _require_user(s, korkut_session)
-        row = s.scalar(
-            select(OfficeChannel).where(
-                OfficeChannel.office_id == user.office_id, OfficeChannel.kind == "email"
-            )
-        )
+        row = s.scalar(select(OfficeChannel).where(OfficeChannel.kind == "email"))
         return _channel_public(row, can_edit=user.role == "owner")
 
 
@@ -1599,16 +1585,12 @@ def get_email_channel(korkut_session: str | None = Cookie(default=None)):
 def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(default=None)):
     """Owner-only Gmail (SMTP) config upsert. `app_password` None keeps the stored one."""
     with session() as s:
-        owner = _require_owner(s, korkut_session)
+        _require_owner(s, korkut_session)
         if body.enabled and not body.from_address.strip():
             raise HTTPException(status_code=400, detail="Gönderen e-posta adresi zorunludur.")
-        row = s.scalar(
-            select(OfficeChannel).where(
-                OfficeChannel.office_id == owner.office_id, OfficeChannel.kind == "email"
-            )
-        )
+        row = s.scalar(select(OfficeChannel).where(OfficeChannel.kind == "email"))
         if row is None:
-            row = OfficeChannel(office_id=owner.office_id, kind="email", config={})
+            row = OfficeChannel(kind="email", config={})
             s.add(row)
         cfg = dict(row.config or {})
         cfg["from_address"] = body.from_address.strip()
@@ -1628,12 +1610,8 @@ def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(de
 _INTEGRATION_KINDS = ("telegram", "whatsapp", "email")
 
 
-def _office_channel(s: Session, office_id: int, kind: str) -> OfficeChannel | None:
-    return s.scalar(
-        select(OfficeChannel).where(
-            OfficeChannel.office_id == office_id, OfficeChannel.kind == kind
-        )
-    )
+def _office_channel(s: Session, kind: str) -> OfficeChannel | None:
+    return s.scalar(select(OfficeChannel).where(OfficeChannel.kind == kind))
 
 
 def _channel_configured(kind: str, cfg: dict) -> bool:
@@ -1671,7 +1649,7 @@ def list_integrations(korkut_session: str | None = Cookie(default=None)):
         can_edit = user.role == "owner"
         out = []
         for kind in _INTEGRATION_KINDS:
-            row = _office_channel(s, user.office_id, kind)
+            row = _office_channel(s, kind)
             cfg = (row.config if row else None) or {}
             link = _my_link(s, user, kind)
             out.append(
@@ -1694,10 +1672,10 @@ def save_telegram_channel(
 ):
     """Owner-only Telegram bot config. `bot_token` None keeps the stored token; "" clears it."""
     with session() as s:
-        owner = _require_owner(s, korkut_session)
-        row = _office_channel(s, owner.office_id, "telegram")
+        _require_owner(s, korkut_session)
+        row = _office_channel(s, "telegram")
         if row is None:
-            row = OfficeChannel(office_id=owner.office_id, kind="telegram", config={})
+            row = OfficeChannel(kind="telegram", config={})
             s.add(row)
         cfg = dict(row.config or {})
         if body.bot_token is not None:
@@ -1716,10 +1694,10 @@ def save_whatsapp_channel(
 ):
     """Owner-only WhatsApp sidecar config. `token` None keeps the stored secret; "" clears it."""
     with session() as s:
-        owner = _require_owner(s, korkut_session)
-        row = _office_channel(s, owner.office_id, "whatsapp")
+        _require_owner(s, korkut_session)
+        row = _office_channel(s, "whatsapp")
         if row is None:
-            row = OfficeChannel(office_id=owner.office_id, kind="whatsapp", config={})
+            row = OfficeChannel(kind="whatsapp", config={})
             s.add(row)
         cfg = dict(row.config or {})
         cfg["base_url"] = body.base_url.strip() or "http://127.0.0.1:8099"
@@ -1742,7 +1720,7 @@ def create_integration_link(kind: str, korkut_session: str | None = Cookie(defau
 
     with session() as s:
         user = _require_user(s, korkut_session)
-        code = identity.generate_code(s, user.office_id, user.id, kind)
+        code = identity.generate_code(s, user.id, kind)
     return {"code": code, "kind": kind}
 
 
@@ -1781,7 +1759,7 @@ def _outbox_public(m: OutboundMessage) -> dict:
 
 def _require_outbox(s: Session, user: User, mid: int) -> OutboundMessage:
     msg = s.get(OutboundMessage, mid)
-    if msg is None or msg.office_id != user.office_id:
+    if msg is None:
         raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
     return msg
 
@@ -1789,12 +1767,9 @@ def _require_outbox(s: Session, user: User, mid: int) -> OutboundMessage:
 @app.get("/api/outbox")
 def list_outbox(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
-        user = _require_user(s, korkut_session)
+        _require_user(s, korkut_session)
         rows = s.scalars(
-            select(OutboundMessage)
-            .where(OutboundMessage.office_id == user.office_id)
-            .order_by(OutboundMessage.id.desc())
-            .limit(50)
+            select(OutboundMessage).order_by(OutboundMessage.id.desc()).limit(50)
         ).all()
         return [_outbox_public(m) for m in rows]
 
@@ -1955,15 +1930,10 @@ def _make_draft(
             return None
         current = doc.content_md
         conv = s.get(Conversation, doc.conversation_id)
-        office = s.get(Office, conv.office_id) if conv else None
-        office_name = office.name if office else None
-        model_cfg = office_model_cfg(s, conv.office_id) if conv else None
+        office_name = _office_name(s)
+        model_cfg = office_model_cfg(s)
         # Effective theme: lawyer override > office override > built-in default.
-        theme = (
-            effective_theme(s, conv.office_id, user_id, petition_type)
-            if petition_type and conv
-            else None
-        )
+        theme = effective_theme(s, user_id, petition_type) if petition_type and conv else None
     instr = (instruction or "").strip()
     fmt = petitions.draft_prompt(petition_type) if petition_type else None
     if fmt:

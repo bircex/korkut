@@ -7,7 +7,7 @@ message runs through the same brain (`brain.agent.answer`) and the same redactio
 Layout (clawbot's gateway + pluggable-channel shape, in Korkut's Python stack):
 
     base.py        Connector ABC + InboundMessage / OutboundReply
-    registry.py    CONNECTORS: kind -> Connector ; build_connector(kind, office_id, config)
+    registry.py    CONNECTORS: kind -> Connector ; build_connector(kind, config)
     identity.py    link a channel sender to a korkut User (one-time code → IntegrationLink)
     gateway.py     inbound message -> resolve user -> agent.answer -> reply (the brain bridge)
     telegram.py    Telegram Bot API connector (httpx long-poll)

@@ -1,9 +1,8 @@
 """Data access for the matter domain (dosya / müvekkil / duruşma).
 
-Shared by the `/api/matters` HTTP endpoints AND the agent's `matter_tools`, so office scoping,
-queries and response shaping live in ONE place (no logic duplication, no tenant leaks). Every
-function takes a `Session` + `office_id` and enforces that scope. Mirrors the `store.office_*`
-helper style.
+Shared by the `/api/matters` HTTP endpoints AND the agent's `matter_tools`, so queries and
+response shaping live in ONE place (no logic duplication). Every function takes a `Session`.
+Mirrors the `store.office_*` helper style.
 """
 
 from __future__ import annotations
@@ -44,7 +43,7 @@ def parse_time(value: object) -> _time | None:
     return _time.fromisoformat(str(value).strip())
 
 
-# ---------- shapers (DTOs; never expose office_id) ----------
+# ---------- shapers (DTOs; never expose internal tenant identifiers) ----------
 
 
 def client_brief(c: Client) -> dict:
@@ -108,28 +107,27 @@ def matter_detail(m: Matter) -> dict:
     }
 
 
-# ---------- queries / mutations (all office-scoped) ----------
+# ---------- queries / mutations ----------
 
 
-def list_matters(s: Session, office_id: int, status: str | None = None) -> list[Matter]:
-    stmt = select(Matter).where(Matter.office_id == office_id)
+def list_matters(s: Session, status: str | None = None) -> list[Matter]:
+    stmt = select(Matter)
     if status:
         stmt = stmt.where(Matter.status == status)
     stmt = stmt.order_by(Matter.updated_at.desc(), Matter.id.desc())
     return list(s.scalars(stmt))
 
 
-def get_matter(s: Session, office_id: int, matter_id: int) -> Matter | None:
-    m = s.get(Matter, matter_id)
-    return m if m and m.office_id == office_id else None
+def get_matter(s: Session, matter_id: int) -> Matter | None:
+    return s.get(Matter, matter_id)
 
 
-def matter_documents(s: Session, office_id: int, matter_id: int) -> list[dict]:
+def matter_documents(s: Session, matter_id: int) -> list[dict]:
     """Documents (drafts) of conversations filed under this matter — the matter's work product."""
     rows = s.scalars(
         select(Document)
         .join(Conversation, Document.conversation_id == Conversation.id)
-        .where(Conversation.matter_id == matter_id, Conversation.office_id == office_id)
+        .where(Conversation.matter_id == matter_id)
         .order_by(Document.updated_at.desc())
     )
     return [
@@ -144,33 +142,27 @@ def matter_documents(s: Session, office_id: int, matter_id: int) -> list[dict]:
     ]
 
 
-def matter_full(s: Session, office_id: int, matter_id: int) -> dict | None:
+def matter_full(s: Session, matter_id: int) -> dict | None:
     """Full matter view (UI + agent): detail (hearings + deadlines) + linked documents."""
-    m = get_matter(s, office_id, matter_id)
+    m = get_matter(s, matter_id)
     if m is None:
         return None
-    return {**matter_detail(m), "documents": matter_documents(s, office_id, matter_id)}
+    return {**matter_detail(m), "documents": matter_documents(s, matter_id)}
 
 
-def list_clients(s: Session, office_id: int) -> list[Client]:
-    return list(
-        s.scalars(select(Client).where(Client.office_id == office_id).order_by(Client.full_name))
-    )
+def list_clients(s: Session) -> list[Client]:
+    return list(s.scalars(select(Client).order_by(Client.full_name)))
 
 
-def get_or_create_client(s: Session, office_id: int, full_name: str) -> Client | None:
-    """Find an office client by exact name (case-insensitive), else create one. None if no name."""
+def get_or_create_client(s: Session, full_name: str) -> Client | None:
+    """Find a client by exact name (case-insensitive), else create one. None if no name."""
     name = (full_name or "").strip()
     if not name:
         return None
-    existing = s.scalar(
-        select(Client).where(
-            Client.office_id == office_id, func.lower(Client.full_name) == name.lower()
-        )
-    )
+    existing = s.scalar(select(Client).where(func.lower(Client.full_name) == name.lower()))
     if existing:
         return existing
-    c = Client(office_id=office_id, full_name=name)
+    c = Client(full_name=name)
     s.add(c)
     s.flush()  # assign c.id without ending the transaction
     return c
@@ -178,7 +170,6 @@ def get_or_create_client(s: Session, office_id: int, full_name: str) -> Client |
 
 def create_matter(
     s: Session,
-    office_id: int,
     user_id: int | None,
     *,
     title: str,
@@ -188,9 +179,8 @@ def create_matter(
     case_type: str | None = None,
     counterparty: str | None = None,
 ) -> Matter:
-    client = get_or_create_client(s, office_id, client_name) if client_name else None
+    client = get_or_create_client(s, client_name) if client_name else None
     m = Matter(
-        office_id=office_id,
         created_by=user_id,
         title=title.strip(),
         client_id=client.id if client else None,
@@ -204,8 +194,8 @@ def create_matter(
     return m
 
 
-def update_matter(s: Session, office_id: int, matter_id: int, **fields: object) -> Matter | None:
-    m = get_matter(s, office_id, matter_id)
+def update_matter(s: Session, matter_id: int, **fields: object) -> Matter | None:
+    m = get_matter(s, matter_id)
     if m is None:
         return None
     for key, value in fields.items():
@@ -217,7 +207,6 @@ def update_matter(s: Session, office_id: int, matter_id: int, **fields: object) 
 
 def add_hearing(
     s: Session,
-    office_id: int,
     matter_id: int,
     *,
     date: object,
@@ -226,11 +215,10 @@ def add_hearing(
     type: str | None = None,
     notes: str | None = None,
 ) -> Hearing | None:
-    m = get_matter(s, office_id, matter_id)
+    m = get_matter(s, matter_id)
     if m is None:
         return None
     h = Hearing(
-        office_id=office_id,
         matter_id=matter_id,
         date=parse_date(date),
         time=parse_time(time),
@@ -243,13 +231,13 @@ def add_hearing(
     return h
 
 
-def upcoming_hearings(s: Session, office_id: int, days: int = 14) -> list[Hearing]:
-    """Office-wide hearings from today through today+days, soonest first (the lawyer's calendar)."""
+def upcoming_hearings(s: Session, days: int = 14) -> list[Hearing]:
+    """Upcoming hearings from today through today+days, soonest first (the lawyer's calendar)."""
     today = datetime.now().date()
     end = today + timedelta(days=days)
     stmt = (
         select(Hearing)
-        .where(Hearing.office_id == office_id, Hearing.date >= today, Hearing.date <= end)
+        .where(Hearing.date >= today, Hearing.date <= end)
         .order_by(Hearing.date, Hearing.time)
     )
     return list(s.scalars(stmt))
@@ -258,8 +246,8 @@ def upcoming_hearings(s: Session, office_id: int, days: int = 14) -> list[Hearin
 # ---------- deadlines (süre) ----------
 
 
-def list_deadlines(s: Session, office_id: int, matter_id: int | None = None) -> list[Deadline]:
-    stmt = select(Deadline).where(Deadline.office_id == office_id)
+def list_deadlines(s: Session, matter_id: int | None = None) -> list[Deadline]:
+    stmt = select(Deadline)
     if matter_id is not None:
         stmt = stmt.where(Deadline.matter_id == matter_id)
     return list(s.scalars(stmt.order_by(Deadline.due_date)))
@@ -267,7 +255,6 @@ def list_deadlines(s: Session, office_id: int, matter_id: int | None = None) -> 
 
 def add_deadline(
     s: Session,
-    office_id: int,
     matter_id: int,
     *,
     due_date: object,
@@ -275,11 +262,10 @@ def add_deadline(
     type: str | None = None,
     notes: str | None = None,
 ) -> Deadline | None:
-    m = get_matter(s, office_id, matter_id)
+    m = get_matter(s, matter_id)
     if m is None:
         return None
     d = Deadline(
-        office_id=office_id,
         matter_id=matter_id,
         due_date=parse_date(due_date),
         title=title.strip(),
@@ -291,17 +277,17 @@ def add_deadline(
     return d
 
 
-def complete_deadline(s: Session, office_id: int, deadline_id: int) -> Deadline | None:
+def complete_deadline(s: Session, deadline_id: int) -> Deadline | None:
     d = s.get(Deadline, deadline_id)
-    if d is None or d.office_id != office_id:
+    if d is None:
         return None
     d.status = "done"
     s.commit()
     return d
 
 
-def upcoming_agenda(s: Session, office_id: int, days: int = 14) -> list[dict]:
-    """Unified office calendar: upcoming hearings + pending deadlines, soonest first.
+def upcoming_agenda(s: Session, days: int = 14) -> list[dict]:
+    """Unified calendar: upcoming hearings + pending deadlines, soonest first.
 
     Each item is tagged with `kind` ("hearing"|"deadline") and a common `date` so the agent and UI
     can show one merged list of "yaklaşan duruşmalar/süreler".
@@ -309,15 +295,10 @@ def upcoming_agenda(s: Session, office_id: int, days: int = 14) -> list[dict]:
     today = datetime.now().date()
     end = today + timedelta(days=days)
     items: list[dict] = []
-    for h in s.scalars(
-        select(Hearing).where(
-            Hearing.office_id == office_id, Hearing.date >= today, Hearing.date <= end
-        )
-    ):
+    for h in s.scalars(select(Hearing).where(Hearing.date >= today, Hearing.date <= end)):
         items.append({"kind": "hearing", "date": h.date.isoformat(), **hearing_brief(h)})
     for d in s.scalars(
         select(Deadline).where(
-            Deadline.office_id == office_id,
             Deadline.status == "pending",
             Deadline.due_date >= today,
             Deadline.due_date <= end,

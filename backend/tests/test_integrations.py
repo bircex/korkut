@@ -49,7 +49,7 @@ def _tg_update(uid, chat_id, from_id, text, first="Av", last="Test"):
 
 def test_telegram_poll_parses_and_advances_offset():
     api = FakeTelegramApi([_tg_update(10, 555, 555, "merhaba"), _tg_update(11, 555, 555, "selam")])
-    c = TelegramConnector(office_id=1, token="t", offset=0, api=api)
+    c = TelegramConnector(token="t", offset=0, api=api)
     msgs = c.poll()
     assert [m.text for m in msgs] == ["merhaba", "selam"]
     assert msgs[0].channel == "telegram"
@@ -61,7 +61,7 @@ def test_telegram_poll_parses_and_advances_offset():
 
 def test_telegram_skips_non_text_and_send():
     api = FakeTelegramApi([{"update_id": 5, "message": {"from": {"id": 1}, "chat": {"id": 1}}}])
-    c = TelegramConnector(office_id=1, token="t", api=api)
+    c = TelegramConnector(token="t", api=api)
     assert c.poll() == []
     res = c.send(OutboundReply(thread_id="555", text="cevap"))
     assert res.ok
@@ -69,7 +69,7 @@ def test_telegram_skips_non_text_and_send():
 
 
 def test_telegram_no_token_is_quiet():
-    c = TelegramConnector(office_id=1, token="", api=FakeTelegramApi([]))
+    c = TelegramConnector(token="", api=FakeTelegramApi([]))
     assert c.poll() == []
     assert not c.send(OutboundReply(thread_id="1", text="x")).ok
 
@@ -106,7 +106,7 @@ def test_whatsapp_poll_and_cursor():
             "cursor": 4,
         }
     )
-    c = WhatsAppConnector(office_id=2, token="secret", cursor="", api=api)
+    c = WhatsAppConnector(token="secret", cursor="", api=api)
     msgs = c.poll()
     assert len(msgs) == 1
     assert msgs[0].channel == "whatsapp"
@@ -117,7 +117,7 @@ def test_whatsapp_poll_and_cursor():
 
 def test_whatsapp_send():
     api = FakeWhatsAppApi({"messages": [], "cursor": 0})
-    c = WhatsAppConnector(office_id=2, token="secret", api=api)
+    c = WhatsAppConnector(token="secret", api=api)
     assert c.poll() == []
     res = c.send(OutboundReply(thread_id="905001@s.whatsapp.net", text="cevap"))
     assert res.ok
@@ -182,7 +182,6 @@ def test_email_poll_parses_marks_seen_and_skips_self():
         ]
     )
     c = EmailConnector(
-        office_id=3,
         imap_host="imap",
         imap_port=993,
         imap_user="ofis@gmail.com",
@@ -205,7 +204,6 @@ def test_email_poll_parses_marks_seen_and_skips_self():
 def test_email_send_threads_reply():
     ch = FakeChannel()
     c = EmailConnector(
-        office_id=3,
         imap_host="imap",
         imap_port=993,
         imap_user="ofis@gmail.com",
@@ -237,7 +235,6 @@ def store_db(tmp_path, monkeypatch):
         s.add(office)
         s.flush()
         user = User(
-            office_id=office.id,
             role="owner",
             username="av",
             full_name="Av. Test",
@@ -246,13 +243,12 @@ def store_db(tmp_path, monkeypatch):
         )
         s.add(user)
         s.commit()
-        ids = (office.id, user.id)
-    return store_mod, ids
+        user_id = user.id
+    return store_mod, user_id
 
 
-def _inbound(office_id, text, external_id="999", thread_id="999"):
+def _inbound(text, external_id="999", thread_id="999"):
     return InboundMessage(
-        office_id=office_id,
         channel="telegram",
         external_id=external_id,
         thread_id=thread_id,
@@ -261,27 +257,26 @@ def _inbound(office_id, text, external_id="999", thread_id="999"):
 
 
 def test_unlinked_sender_gets_link_prompt(store_db):
-    _, (office_id, _user_id) = store_db
     from korkut.integrations import gateway
 
-    reply = gateway.handle(_inbound(office_id, "merhaba"))
+    reply = gateway.handle(_inbound("merhaba"))
     assert "bağlanma kodu" in reply.lower() or "bağlı değil" in reply.lower()
 
 
 def test_link_code_binds_then_chats(store_db):
-    store_mod, (office_id, user_id) = store_db
+    store_mod, user_id = store_db
     from korkut.integrations import gateway, identity
 
     with store_mod.session() as s:
-        code = identity.generate_code(s, office_id, user_id, "telegram")
+        code = identity.generate_code(s, user_id, "telegram")
 
     # Sending the code from the channel binds the sender.
-    welcome = gateway.handle(_inbound(office_id, f"BAGLAN {code}"))
+    welcome = gateway.handle(_inbound(f"BAGLAN {code}"))
     assert "bağlandınız" in welcome.lower()
 
     # Now resolves to the user, and a real message runs through the brain + persists.
     with patch.object(gateway.agent, "answer", return_value="Korkut cevabı.") as ans:
-        reply = gateway.handle(_inbound(office_id, "bir dava sorum var"))
+        reply = gateway.handle(_inbound("bir dava sorum var"))
     assert reply == "Korkut cevabı."
     assert ans.called
 
@@ -298,15 +293,14 @@ def test_link_code_binds_then_chats(store_db):
 
     # A second message reuses the same conversation (no duplicate thread).
     with patch.object(gateway.agent, "answer", return_value="ikinci"):
-        gateway.handle(_inbound(office_id, "ikinci mesaj"))
+        gateway.handle(_inbound("ikinci mesaj"))
     with store_mod.session() as s:
         assert s.query(IntegrationThread).count() == 1
 
 
 def test_expired_or_wrong_code_does_not_bind(store_db):
-    _store_mod, (office_id, _user_id) = store_db
     from korkut.integrations import gateway
 
     # A made-up code never binds.
-    reply = gateway.handle(_inbound(office_id, "BAGLAN ZZZZZZ"))
+    reply = gateway.handle(_inbound("BAGLAN ZZZZZZ"))
     assert "bağlandınız" not in reply.lower()

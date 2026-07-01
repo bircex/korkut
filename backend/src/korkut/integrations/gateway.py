@@ -2,7 +2,7 @@
 
 This is the one place a Telegram/WhatsApp/e-mail message becomes a Korkut answer. It does exactly
 what the web chat endpoint does, minus the browser session: resolve the sender to a `User`,
-attach the message to that office's `Conversation`, run the *same* `agent.answer` loop (so cloud
+attach the message to the office `Conversation`, run the *same* `agent.answer` loop (so cloud
 traffic still goes through the router's redaction and the office's own model config), persist the
 turn, and hand the reply text back to the connector to deliver.
 
@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from korkut.api import store
-from korkut.api.models import Conversation, IntegrationThread, Message, Office, User
+from korkut.api.models import Conversation, IntegrationThread, Message, User
 from korkut.brain import agent
 from korkut.integrations import identity
 from korkut.integrations.base import InboundMessage
@@ -38,8 +38,8 @@ def _utcnow() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
-def _office_name(s: Session, office_id: int) -> str | None:
-    office = s.get(Office, office_id)
+def _office_name(s: Session) -> str | None:
+    office = store.get_office(s)
     return office.name if office else None
 
 
@@ -58,7 +58,6 @@ def _conversation_for(s: Session, inbound: InboundMessage, user: User) -> Conver
     label = inbound.sender_name or inbound.subject or inbound.thread_id
     title = f"[{inbound.channel}] {label}"[:120]
     conv = Conversation(
-        office_id=inbound.office_id,
         title=title,
         created_by=user.id,
         created_by_name=user.full_name,
@@ -67,7 +66,6 @@ def _conversation_for(s: Session, inbound: InboundMessage, user: User) -> Conver
     s.flush()  # need conv.id for the thread row
     s.add(
         IntegrationThread(
-            office_id=inbound.office_id,
             channel=inbound.channel,
             thread_id=inbound.thread_id,
             conversation_id=conv.id,
@@ -85,9 +83,7 @@ def handle(inbound: InboundMessage) -> str | None:
     with store.session() as s:
         user = identity.resolve(s, inbound.channel, inbound.external_id)
         if user is None:
-            bound = identity.try_bind(
-                s, inbound.office_id, inbound.channel, inbound.external_id, text
-            )
+            bound = identity.try_bind(s, inbound.channel, inbound.external_id, text)
             if bound is None:
                 return _UNLINKED
             name = bound.full_name or bound.username
@@ -96,9 +92,8 @@ def handle(inbound: InboundMessage) -> str | None:
                 "Nasıl yardımcı olabilirim?"
             )
 
-        # Defence in depth: the resolved user must belong to the office whose connector received
-        # this message, and must be active.
-        if user.office_id != inbound.office_id or not user.is_active:
+        # Defence in depth: the resolved user must be active.
+        if not user.is_active:
             return None
 
         conv = _conversation_for(s, inbound, user)
@@ -108,8 +103,8 @@ def handle(inbound: InboundMessage) -> str | None:
         s.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=text))
         s.commit()
         conv_id = conv.id
-        office_name = _office_name(s, inbound.office_id)
-        model_cfg = store.office_model_cfg(s, inbound.office_id)
+        office_name = _office_name(s)
+        model_cfg = store.office_model_cfg(s)
 
     reply = agent.answer(text, office_name=office_name, history=history, model_cfg=model_cfg)
 
