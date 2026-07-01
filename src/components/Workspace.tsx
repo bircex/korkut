@@ -73,6 +73,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null); // current tool step, while waiting
+  const [streaming, setStreaming] = useState(false); // answer tokens are landing in the last bubble
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
@@ -270,16 +272,59 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         setSessions((s) => [created, ...s]);
         setSessionsTotal((tot) => tot + 1);
       }
-      const res = file ? await api.uploadToSession(id, file, t) : await api.sessionChat(id, t);
-      setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
-      if (!file && (res as { open_document?: number | null }).open_document) {
+      let res: {
+        reply: string;
+        title: string;
+        open_document?: number | null;
+        pending_email?: number | null;
+      };
+      if (file) {
+        // Uploads aren't streamed (the file is processed server-side, then answered).
+        res = await api.uploadToSession(id, file, t);
+        setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+      } else {
+        // Stream the answer: show activity steps, then grow the assistant bubble token by token.
+        let acc = "";
+        let started = false;
+        res = await api.sessionChatStream(id, t, {
+          onStep: (label) => {
+            if (!started) setActivity(label);
+          },
+          onToken: (tok) => {
+            if (!started) {
+              started = true;
+              setStreaming(true);
+              setActivity(null);
+              setMessages((m) => [...m, { role: "assistant", content: "" }]);
+            }
+            acc += tok;
+            setMessages((m) => {
+              const copy = m.slice();
+              copy[copy.length - 1] = { role: "assistant", content: acc };
+              return copy;
+            });
+          },
+        });
+        // Reconcile with the authoritative reply (e.g. the cloud path streams no tokens, or the
+        // final restored text differs from the streamed slices).
+        if (!started) {
+          setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+        } else if (res.reply && res.reply !== acc) {
+          setMessages((m) => {
+            const copy = m.slice();
+            copy[copy.length - 1] = { role: "assistant", content: res.reply };
+            return copy;
+          });
+        }
+      }
+      if (!file && res.open_document) {
         setPane("document");
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
-      if (!file && (res as { pending_email?: number | null }).pending_email) {
+      if (!file && res.pending_email) {
         // Korkut proposed an e-mail → surface the confirmation card (it never sends on its own).
-        setPendingEmailId((res as { pending_email: number }).pending_email);
+        setPendingEmailId(res.pending_email);
       }
       const fixedId = id;
       setSessions((s) => [
@@ -300,6 +345,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       if (err instanceof ApiError && err.status === 503) checkHealth(); // model down → refresh banner
     } finally {
       setSending(false);
+      setStreaming(false);
+      setActivity(null);
       taRef.current?.focus();
     }
   }
@@ -680,10 +727,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 </div>
               </div>
             ))}
-            {sending && (
+            {sending && !streaming && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
-                  Korkut yazıyor…
+                  {activity ? `🔍 ${activity}` : "Korkut yazıyor…"}
                 </div>
               </div>
             )}
