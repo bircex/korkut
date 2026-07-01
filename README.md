@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/version-CalVer-blue.svg" alt="CalVer" />
 </p>
 
-Korkut is a **self-hosted, multi-tenant AI assistant for Turkish law offices**. It manages case
+Korkut is a **self-hosted, single-tenant AI assistant for a Turkish law office**. It manages case
 files, does live legal research, drafts petitions, and handles correspondence — through a chat web
 app that **keeps client data on the office's own machine**. Each office self-registers and Korkut
 answers under that office's identity.
@@ -27,7 +27,7 @@ answers under that office's identity.
 - **Correspondence** — propose-and-confirm e-mail; two-way Telegram/WhatsApp/e-mail integrations.
 - **Privacy by design** — cloud-bound text is redacted first; point Korkut at a local
   OpenAI-compatible model (e.g. LM Studio) and nothing leaves the machine.
-- **Secure & multi-tenant** — mandatory TOTP 2FA, strict per-office isolation.
+- **Secure & self-hosted** — mandatory TOTP 2FA; each install serves one office.
 
 ## Quick start
 
@@ -52,7 +52,7 @@ Start with the **[documentation index](docs/README.md)**:
 |---|---|
 | [INSTALL](docs/INSTALL.md) | Native (macOS / Linux / Windows) and Docker installation |
 | [DEVELOPMENT](docs/DEVELOPMENT.md) | Dev loop: run, test, lint, build, CLIs, adding a tool |
-| [ARCHITECTURE](docs/ARCHITECTURE.md) | Multi-tenancy, the matter domain, and the agentic core |
+| [ARCHITECTURE](docs/ARCHITECTURE.md) | The single-office model, the matter domain, and the agentic core |
 | [DEPLOYMENT](docs/DEPLOYMENT.md) | Production: Docker + Postgres behind a reverse proxy |
 | [GLOSSARY](docs/GLOSSARY.md) | Turkish legal & product terms in English |
 

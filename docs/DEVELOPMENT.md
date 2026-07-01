@@ -10,7 +10,7 @@ backend/                Python package (src-layout) + tests
   src/korkut/
     api/                FastAPI app, auth/2FA, matters, documents, dispatcher, adduser
     core/               agent loop, tool registry, model router, providers, redactor, DB
-    brain/              agent entry point (answer) + per-office persona
+    brain/              agent entry point (answer) + office persona
     tools/              legal-database search/fetch tools (auto-discovered)
     messaging/          outbound channels (e-mail now)
     integrations/       inbound two-way connectors (Telegram/WhatsApp/e-mail)
