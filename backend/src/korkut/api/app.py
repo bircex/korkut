@@ -161,6 +161,12 @@ class MemberBody(BaseModel):
     username: str
     full_name: str
     password: str
+    bar_registry_no: str | None = None
+
+
+class MeBody(BaseModel):
+    full_name: str | None = None
+    bar_registry_no: str | None = None
 
 
 class StyleBody(BaseModel):
@@ -266,6 +272,16 @@ class ClientBody(BaseModel):
     phone: str | None = None
     email: str | None = None
     address: str | None = None
+    date_of_birth: str | None = None  # ISO or dd.mm.yyyy
+
+
+class ClientUpdateBody(BaseModel):
+    full_name: str | None = None
+    national_id: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    date_of_birth: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -387,6 +403,7 @@ def _user_public(s: Session, user: User) -> dict:
     return {
         "username": user.username,
         "full_name": user.full_name,
+        "bar_registry_no": user.bar_registry_no,
         "role": user.role,
         "office": _office_name(s),
     }
@@ -514,6 +531,7 @@ def list_members(korkut_session: str | None = Cookie(default=None)):
                 "id": u.id,
                 "username": u.username,
                 "full_name": u.full_name,
+                "bar_registry_no": u.bar_registry_no,
                 "role": u.role,
                 "is_active": u.is_active,
                 "enrolled": u.has_2fa,
@@ -540,6 +558,7 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
             role="member",
             username=username,
             full_name=full_name[:200],
+            bar_registry_no=(body.bar_registry_no or "").strip() or None,
             password_hash=auth.hash_secret(body.password),
         )
         s.add(member)
@@ -548,6 +567,7 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
             "id": member.id,
             "username": member.username,
             "full_name": member.full_name,
+            "bar_registry_no": member.bar_registry_no,
             "role": member.role,
             "is_active": True,
             "enrolled": False,
@@ -916,6 +936,23 @@ def me(korkut_session: str | None = Cookie(default=None)):
         return _user_public(s, user)
 
 
+@app.patch("/api/me")
+def update_me(body: MeBody, korkut_session: str | None = Cookie(default=None)):
+    """A user edits their own profile (display name, bar-registry number). Only fields sent."""
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        if "full_name" in fields:
+            name = (fields["full_name"] or "").strip()
+            if not name:
+                raise HTTPException(status_code=400, detail="Ad Soyad zorunludur.")
+            user.full_name = name[:200]
+        if "bar_registry_no" in fields:
+            user.bar_registry_no = (fields["bar_registry_no"] or "").strip() or None
+        s.commit()
+        return _user_public(s, user)
+
+
 @app.get("/api/coverage")
 def coverage_stats(korkut_session: str | None = Cookie(default=None)):
     """How many judicial decisions Korkut can search + the source list (measured live)."""
@@ -1184,8 +1221,34 @@ def create_client_ep(body: ClientBody, korkut_session: str | None = Cookie(defau
             phone=body.phone,
             email=body.email,
             address=body.address,
+            date_of_birth=mstore.parse_date(body.date_of_birth),
         )
         s.add(c)
+        s.commit()
+        return mstore.client_brief(c)
+
+
+@app.patch("/api/clients/{client_id}")
+def update_client_ep(
+    client_id: int, body: ClientUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Update a client's PII (only the fields sent). Feeds the redactor's known-entity layer."""
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        _require_user(s, korkut_session)
+        c = s.get(Client, client_id)
+        if c is None:
+            raise HTTPException(status_code=404, detail="Müvekkil bulunamadı")
+        if "full_name" in fields:
+            name = (fields["full_name"] or "").strip()
+            if not name:
+                raise HTTPException(status_code=400, detail="Müvekkil adı zorunludur.")
+            c.full_name = name
+        if "date_of_birth" in fields:
+            c.date_of_birth = mstore.parse_date(fields["date_of_birth"])
+        for key in ("national_id", "phone", "email", "address"):
+            if key in fields:
+                setattr(c, key, (fields[key] or "").strip() or None)
         s.commit()
         return mstore.client_brief(c)
 

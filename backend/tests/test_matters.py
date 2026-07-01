@@ -170,11 +170,14 @@ def test_requires_auth(app_mod):
 
 def test_collect_known_entities_gathers_stored_pii(app_mod):
     # Layer 4 source: the exact PII the office stores becomes (value, kind) pairs for the redactor.
+    from sqlalchemy import select
+
     from korkut.api import matters_store as ms
-    from korkut.api.models import Client, Matter
+    from korkut.api.models import Client, Matter, User
     from korkut.api.store import session
 
     with session() as s:
+        s.scalar(select(User)).bar_registry_no = "34567"  # the bootstrapped lawyer's bar number
         s.add(
             Client(
                 full_name="Oğuzhan Karaca",
@@ -182,6 +185,7 @@ def test_collect_known_entities_gathers_stored_pii(app_mod):
                 phone="05321234567",
                 email="o@x.tr",
                 address="Bağdat Cad. No:12",
+                date_of_birth=date(1990, 1, 1),
             )
         )
         s.add(Matter(title="Dava", counterparty="Cengiz Aktürk"))
@@ -195,8 +199,34 @@ def test_collect_known_entities_gathers_stored_pii(app_mod):
     assert ("05321234567", "PHONE") in entities
     assert ("o@x.tr", "EMAIL") in entities
     assert ("Bağdat Cad. No:12", "ADDRESS") in entities
+    assert ("01.01.1990", "DOB") in entities  # birth date, formatted dd.mm.yyyy
     assert ("Cengiz Aktürk", "PERSON") in entities  # matter counterparty
     assert ("Av. Test", "PERSON") in entities  # bootstrapped lawyer (adduser fixture)
+    assert ("34567", "BAR_NO") in entities  # lawyer bar-registry number
+
+
+def test_client_create_and_update_pii(app_mod):
+    c = _existing(app_mod)  # authenticated TestClient (2FA-enrolled)
+    created = c.post(
+        "/api/clients",
+        json={
+            "full_name": "Ayşe Yıldız",
+            "national_id": "10000000146",
+            "address": "Moda Cad. 5",
+            "date_of_birth": "1985-06-15",
+        },
+    ).json()
+    assert created["national_id"] == "10000000146"
+    assert created["address"] == "Moda Cad. 5"
+    assert created["date_of_birth"] == "1985-06-15"
+
+    updated = c.patch(
+        f"/api/clients/{created['id']}", json={"phone": "05321234567", "address": ""}
+    ).json()
+    assert updated["phone"] == "05321234567"
+    assert updated["address"] is None  # cleared
+    assert updated["national_id"] == "10000000146"  # untouched fields survive
+    assert c.patch("/api/clients/99999", json={"phone": "x"}).status_code == 404
 
 
 def test_collect_memory_formats_notes_as_bullets(app_mod):

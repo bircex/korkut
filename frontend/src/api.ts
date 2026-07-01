@@ -2,6 +2,7 @@ export type LoginStep = "mfa" | "enroll";
 export type User = {
   username: string;
   full_name: string | null;
+  bar_registry_no: string | null;
   role: "owner" | "member";
   office: string | null;
 };
@@ -9,6 +10,7 @@ export type Member = {
   id: number;
   username: string;
   full_name: string | null;
+  bar_registry_no: string | null;
   role: "owner" | "member";
   is_active: boolean;
   enrolled: boolean;
@@ -180,6 +182,16 @@ export type ClientBrief = {
   phone: string | null;
   email: string | null;
   national_id: string | null;
+  address: string | null;
+  date_of_birth: string | null;
+};
+export type ClientPatch = {
+  full_name?: string;
+  national_id?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  date_of_birth?: string | null;
 };
 export type MatterBrief = {
   id: number;
@@ -295,13 +307,15 @@ export const api = {
       body: JSON.stringify({ office_name, full_name, username, password }),
     }),
   members: () => request<Member[]>("/api/members"),
-  addMember: (username: string, full_name: string, password: string) =>
+  addMember: (username: string, full_name: string, password: string, bar_registry_no?: string) =>
     request<Member>("/api/members", {
       method: "POST",
-      body: JSON.stringify({ username, full_name, password }),
+      body: JSON.stringify({ username, full_name, password, bar_registry_no }),
     }),
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
+  updateMe: (patch: { full_name?: string; bar_registry_no?: string | null }) =>
+    request<User>("/api/me", { method: "PATCH", body: JSON.stringify(patch) }),
   getStyle: () => request<StyleData>("/api/style"),
   saveUserStyle: (fields: StyleFields) =>
     request<StyleFields>("/api/style/user", { method: "PUT", body: JSON.stringify(fields) }),
@@ -355,6 +369,8 @@ export const api = {
   completeDeadline: (did: number) =>
     request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
+  updateClient: (id: number, patch: ClientPatch) =>
+    request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
