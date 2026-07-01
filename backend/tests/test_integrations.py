@@ -275,7 +275,7 @@ def test_link_code_binds_then_chats(store_db):
     assert "bağlandınız" in welcome.lower()
 
     # Now resolves to the user, and a real message runs through the brain + persists.
-    with patch.object(gateway.agent, "answer", return_value="Korkut cevabı.") as ans:
+    with patch.object(gateway.resilience, "guarded_answer", return_value="Korkut cevabı.") as ans:
         reply = gateway.handle(_inbound("bir dava sorum var"))
     assert reply == "Korkut cevabı."
     assert ans.called
@@ -292,10 +292,34 @@ def test_link_code_binds_then_chats(store_db):
         assert msgs[1].content == "Korkut cevabı."
 
     # A second message reuses the same conversation (no duplicate thread).
-    with patch.object(gateway.agent, "answer", return_value="ikinci"):
+    with patch.object(gateway.resilience, "guarded_answer", return_value="ikinci"):
         gateway.handle(_inbound("ikinci mesaj"))
     with store_mod.session() as s:
         assert s.query(IntegrationThread).count() == 1
+
+
+def test_model_failure_replies_to_channel(store_db):
+    """A model failure must reach the sender (not silence) and not be stored as an answer."""
+    store_mod, user_id = store_db
+    from korkut.brain import resilience
+    from korkut.integrations import gateway, identity
+
+    with store_mod.session() as s:
+        code = identity.generate_code(s, user_id, "telegram")
+    gateway.handle(_inbound(f"BAGLAN {code}"))  # bind first
+
+    err = resilience.ModelError("Yapay zeka modeline ulaşılamadı.")
+    with patch.object(gateway.resilience, "guarded_answer", side_effect=err):
+        reply = gateway.handle(_inbound("bir dava sorum var"))
+    assert reply == "Yapay zeka modeline ulaşılamadı."
+
+    # The user turn is kept, but the failure note is NOT persisted as an assistant answer.
+    from korkut.api.models import Conversation, IntegrationThread, Message
+
+    with store_mod.session() as s:
+        conv = s.get(Conversation, s.query(IntegrationThread).one().conversation_id)
+        roles = [m.role for m in s.query(Message).filter(Message.conversation_id == conv.id)]
+        assert roles == ["user"]
 
 
 def test_expired_or_wrong_code_does_not_bind(store_db):

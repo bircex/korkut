@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from korkut.api import matters_store, store
 from korkut.api.models import Conversation, IntegrationThread, Message, User
-from korkut.brain import agent
+from korkut.brain import resilience
 from korkut.integrations import identity
 from korkut.integrations.base import InboundMessage
 
@@ -109,15 +109,23 @@ def handle(inbound: InboundMessage) -> str | None:
         persona_cfg = store.get_persona(s)
         memory = store.collect_memory(s)
 
-    reply = agent.answer(
-        text,
-        office_name=office_name,
-        history=history,
-        model_cfg=model_cfg,
-        known_entities=known_entities,
-        persona_cfg=persona_cfg,
-        memory=memory,
-    )
+    # A model failure must still reach the sender — on a chat channel an unhandled exception is
+    # silence. `guarded_answer` retries transient faults and turns the rest into a friendly
+    # Turkish message (the SAME text the web app shows); we send that as the reply. The failure
+    # note is not persisted as an assistant turn — it is transport feedback, not part of the case
+    # record — so a retry starts clean.
+    try:
+        reply = resilience.guarded_answer(
+            text,
+            office_name=office_name,
+            history=history,
+            model_cfg=model_cfg,
+            known_entities=known_entities,
+            persona_cfg=persona_cfg,
+            memory=memory,
+        )
+    except resilience.ModelError as exc:
+        return exc.detail
 
     with store.session() as s:
         conv = s.get(Conversation, conv_id)

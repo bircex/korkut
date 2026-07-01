@@ -7,6 +7,10 @@ provider's tool-calling loop, and restores tokens in the reply.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
+from korkut.brain import context_budget
 from korkut.brain.persona import PersonaCfg, build_persona
 from korkut.core import tool_registry
 from korkut.core.providers.claude import ClaudeProvider
@@ -40,6 +44,7 @@ def answer(
     known_entities: list[tuple[str, str]] | None = None,
     persona_cfg: PersonaCfg | None = None,
     memory: str | None = None,
+    on_event: Callable[[dict[str, Any]], None] | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured model.
 
@@ -60,9 +65,19 @@ def answer(
         system = f"{system}\n\n{extra_system}"
     if memory:
         system = f"{system}\n\nOfis hafızası (kalıcı notlar; dikkate al):\n{memory}"
+    # Trim history to the model's context window (by tokens, not message count) so a long thread —
+    # or a small local window — doesn't overflow into a "context penceresinden uzun" failure.
     messages: list[dict] = [{"role": "system", "content": system}]
     if history:
-        messages.extend(history)
+        messages.extend(
+            context_budget.fit_history(
+                history,
+                system_text=system,
+                user_text=user_text,
+                window=context_budget.window_for(model_cfg),
+                tools_tokens=context_budget.estimate_tools_tokens(tools),
+            )
+        )
     messages.append({"role": "user", "content": user_text})
     return router.respond(
         specialty,
@@ -72,4 +87,5 @@ def answer(
         extra_tools=extra_tools,
         handlers=handlers,
         known_entities=known_entities,
+        on_event=on_event,
     )

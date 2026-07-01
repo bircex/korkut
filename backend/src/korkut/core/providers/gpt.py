@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from typing import Any
 
 from korkut.core import tool_registry
@@ -72,3 +73,51 @@ class GptProvider:
             for tc in (getattr(message, "tool_calls", None) or [])
         ]
         return StepResult(text=message.content or "", tool_calls=calls)
+
+    def step_stream(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[ToolSpec],
+        *,
+        on_token: Callable[[str], None],
+    ) -> StepResult:
+        """Like `step`, but stream the answer: call `on_token` for each text delta.
+
+        Tool-call fragments arrive spread across chunks (id/name in one, arguments across many),
+        keyed by `index`, so we accumulate per index and parse the arguments once the stream ends.
+        The wire format and normalized StepResult are identical to `step` — only the delivery
+        differs, so the agent loop treats streaming and non-streaming turns the same.
+        """
+        client = self._ensure_client()
+        kwargs: dict[str, Any] = {
+            "model": self._model,
+            "messages": self._to_wire(messages),
+            "stream": True,
+        }
+        if tools:
+            kwargs["tools"] = tool_registry.to_openai_tools(tools)
+
+        text_parts: list[str] = []
+        frags: dict[int, dict[str, Any]] = {}
+        for chunk in client.chat.completions.create(**kwargs):
+            if not chunk.choices:
+                continue  # some servers send a trailing usage-only chunk with no choices
+            delta = chunk.choices[0].delta
+            if getattr(delta, "content", None):
+                text_parts.append(delta.content)
+                on_token(delta.content)
+            for tc in getattr(delta, "tool_calls", None) or []:
+                frag = frags.setdefault(tc.index, {"id": None, "name": "", "args": ""})
+                if tc.id:
+                    frag["id"] = tc.id
+                if tc.function and tc.function.name:
+                    frag["name"] = tc.function.name
+                if tc.function and tc.function.arguments:
+                    frag["args"] += tc.function.arguments
+
+        calls = [
+            {"id": f["id"], "name": f["name"], "args": json.loads(f["args"] or "{}")}
+            for f in frags.values()
+            if f["name"]
+        ]
+        return StepResult(text="".join(text_parts), tool_calls=calls)

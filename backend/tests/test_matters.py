@@ -29,7 +29,7 @@ def app_mod(tmp_path, monkeypatch):
     import korkut.api.adduser as adduser
 
     adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
-    with patch.object(app_mod.agent, "answer", return_value="DRAFT yanıt."):
+    with patch("korkut.brain.agent.answer", return_value="DRAFT yanıt."):
         yield app_mod
 
 
