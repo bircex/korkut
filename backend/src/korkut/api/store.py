@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import os
 from datetime import UTC, datetime
+from urllib.parse import urlsplit, urlunsplit
 
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -115,6 +116,27 @@ def collect_memory(s: Session) -> str:
     return "\n".join(lines)
 
 
+def _docker_host_rewrite(base_url: str) -> str:
+    """Inside a container, a user-entered `localhost` points at the container itself, not the
+    host machine. Rewrite loopback hosts to `host.docker.internal` so a local LM server running
+    on the host (e.g. LM Studio) stays reachable. No-op when not containerized or the host isn't
+    loopback — so the UI can just say `http://localhost:1234/v1` and it works everywhere.
+    """
+    if not os.path.exists("/.dockerenv"):
+        return base_url
+    try:
+        parts = urlsplit(base_url)
+    except ValueError:
+        return base_url
+    if parts.hostname not in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+        return base_url
+    userinfo = ""
+    if parts.username:
+        userinfo = parts.username + (f":{parts.password}" if parts.password else "") + "@"
+    netloc = f"{userinfo}host.docker.internal" + (f":{parts.port}" if parts.port else "")
+    return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+
+
 def office_model_cfg(s: Session) -> ModelCfg | None:
     """The office's custom model as a router `ModelCfg`, or None if unset/disabled (→ default)."""
     row = s.scalar(select(OfficeModel))
@@ -122,7 +144,7 @@ def office_model_cfg(s: Session) -> ModelCfg | None:
         return None
     return ModelCfg(
         model=row.model,
-        base_url=row.base_url,
+        base_url=_docker_host_rewrite(row.base_url),
         api_key=row.api_key or None,
         local=row.is_local,
     )
