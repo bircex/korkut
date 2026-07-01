@@ -57,7 +57,38 @@ cases:
     must_mask: ["Yağız Bozkurt"]
     tags: [person_out_of_seed]
 
+  # ---- Multiple occurrences: a detected value must be masked at EVERY position ----
+  - id: repeated_name
+    text: "Ahmet Yılmaz geldi, Ahmet Yılmaz imzaladı, sonra Ahmet Yılmaz gitti."
+    must_mask: ["Ahmet Yılmaz"]
+    tags: [person_in_seed]
+
   # ---- PII types with no detector today: expected leaks ----
+  - id: lawyer_bar_no
+    text: "Av. Mehmet Demir, İstanbul Barosu sicil numarası 34567 ile kayıtlıdır."
+    must_mask: ["34567"]
+    tags: [lawyer_bar_no]
+
+  - id: phone_landline
+    text: "Büro sabit hattı 02123456789 numarasıdır."
+    must_mask: ["02123456789"]
+    tags: [phone_landline]
+
+  - id: bank_account
+    text: "Ödeme 1234-5678901-50 hesap numarasına yatırıldı."
+    must_mask: ["1234-5678901-50"]
+    tags: [bank_account]
+
+  - id: credit_card
+    text: "Kart numarası 4508 0345 0803 4509 olarak kaydedildi."
+    must_mask: ["4508 0345 0803 4509"]
+    tags: [credit_card]
+
+  - id: brand
+    text: "Müvekkilim TeknoMarka markasının tescilli sahibidir."
+    must_mask: ["TeknoMarka"]
+    tags: [brand]
+
   - id: address
     text: "Tebligat adresi Bağdat Caddesi No:12 Kadıköy/İstanbul olarak bildirildi."
     must_mask: ["Bağdat Caddesi No:12 Kadıköy/İstanbul"]
