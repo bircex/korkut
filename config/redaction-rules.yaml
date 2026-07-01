@@ -3,6 +3,8 @@
 detectors:
   tckn:   { pattern: '\b[1-9][0-9]{10}\b', validate_checksum: true, token: "[TCKN]" }
   phone:  { pattern: '\b(?:0|\+90)?5\d{9}\b', token: "[PHONE]" }
+  landline: { pattern: '\b0(?:2|3|4)\d{9}\b', token: "[LANDLINE]" }
+  credit_card: { pattern: '\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b', validate_checksum: true, token: "[CREDIT_CARD]" }
   iban:   { pattern: '\bTR\d{24}\b', token: "[IBAN]" }
   plate:  { pattern: '\b\d{2}\s?[A-Z]{1,3}\s?\d{2,4}\b', token: "[PLATE]" }
   case_no: { pattern: '\b\d{4}/\d+\b', token: "[CASE_NO]" }

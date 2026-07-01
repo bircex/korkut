@@ -9,10 +9,10 @@ names, address, e-mail, company, date of birth) are tracked here rather than ass
 from redaction_eval.measure import evaluate
 
 # Detectors backed by regex/checksum — these are deterministic and must stay perfect.
-DETERMINISTIC_TAGS = {"tckn", "phone", "iban", "plate", "case_no"}
+DETERMINISTIC_TAGS = {"tckn", "phone", "phone_landline", "iban", "plate", "case_no", "credit_card"}
 
 # Current measured recall (2026-07). Raise this as detector layers land; it must never drop.
-RECALL_BASELINE = 0.36
+RECALL_BASELINE = 0.47
 
 
 def test_deterministic_detectors_have_full_recall():
@@ -42,9 +42,7 @@ def test_known_leak_categories_are_still_documented():
         "company",
         "dob",
         "lawyer_bar_no",
-        "phone_landline",
         "bank_account",
-        "credit_card",
         "brand",
     }
     assert leaking_tags == expected, f"unexpected change in leak categories: {leaking_tags}"
