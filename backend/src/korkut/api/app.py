@@ -42,6 +42,7 @@ from korkut.api.models import (
     Client,
     Conversation,
     Document,
+    DocumentRecord,
     DocumentVersion,
     Expense,
     IntegrationLink,
@@ -330,6 +331,15 @@ class TaskUpdateBody(BaseModel):
     matter_id: int | None = None
     status: str | None = None
     due_date: str | None = None
+
+
+class EvrakBody(BaseModel):
+    matter_id: int | None = None
+    direction: str = "incoming"
+    title: str
+    reference_no: str | None = None
+    doc_date: str | None = None
+    notes: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -1507,6 +1517,56 @@ def delete_task_ep(task_id: int, korkut_session: str | None = Cookie(default=Non
         t = s.get(Task, task_id)
         if t is not None:
             s.delete(t)
+            s.commit()
+        return {"ok": True}
+
+
+# ---------------- document register (evrak) ----------------
+
+_EVRAK_DIRECTIONS = ("incoming", "outgoing", "internal")
+
+
+@app.get("/api/evrak")
+def list_evrak_ep(
+    matter_id: int | None = None,
+    direction: str | None = None,
+    korkut_session: str | None = Cookie(default=None),
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = mstore.list_document_records(s, matter_id=matter_id, direction=direction)
+        return {"items": [mstore.document_record_brief(d) for d in rows]}
+
+
+@app.post("/api/evrak")
+def create_evrak_ep(body: EvrakBody, korkut_session: str | None = Cookie(default=None)):
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Evrak başlığı zorunludur.")
+    direction = body.direction if body.direction in _EVRAK_DIRECTIONS else "incoming"
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        d = DocumentRecord(
+            matter_id=body.matter_id,
+            direction=direction,
+            title=title,
+            reference_no=(body.reference_no or "").strip() or None,
+            doc_date=mstore.parse_date(body.doc_date),
+            notes=(body.notes or "").strip() or None,
+            created_by=user.id,
+        )
+        s.add(d)
+        s.commit()
+        return mstore.document_record_brief(d)
+
+
+@app.delete("/api/evrak/{record_id}")
+def delete_evrak_ep(record_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        d = s.get(DocumentRecord, record_id)
+        if d is not None:
+            s.delete(d)
             s.commit()
         return {"ok": True}
 

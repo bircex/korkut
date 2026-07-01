@@ -17,6 +17,7 @@ import { Customize } from "./Customize";
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
+import { EvrakPanel } from "./EvrakPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
 
@@ -53,7 +54,8 @@ type SidebarView =
   | "matters"
   | "clients"
   | "finance"
-  | "tasks";
+  | "tasks"
+  | "evrak";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -328,6 +330,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <TasksPanel onClose={() => setView("chats")} />;
   }
 
+  if (view === "evrak") {
+    return <EvrakPanel onClose={() => setView("chats")} />;
+  }
+
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
   if (view !== "docs" && pane === "document" && currentId !== null) {
     return (
@@ -449,6 +455,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     ✅ Görevler
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setView("evrak");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    📄 Evrak
                   </button>
                   <button
                     onClick={() => {

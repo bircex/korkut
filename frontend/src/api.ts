@@ -230,6 +230,15 @@ export type Task = {
   status: string;
   due_date: string | null;
 };
+export type DocumentRecord = {
+  id: number;
+  matter_id: number | null;
+  direction: string; // incoming | outgoing | internal
+  title: string;
+  reference_no: string | null;
+  doc_date: string | null;
+  notes: string | null;
+};
 export type MatterBrief = {
   id: number;
   title: string;
@@ -436,6 +445,16 @@ export const api = {
     request<Task>(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteTask: (id: number) =>
     request<{ ok: boolean }>(`/api/tasks/${id}`, { method: "DELETE" }),
+  evrak: (direction?: string) =>
+    request<{ items: DocumentRecord[] }>(`/api/evrak${direction ? `?direction=${direction}` : ""}`),
+  createEvrak: (input: {
+    direction: string;
+    title: string;
+    reference_no?: string | null;
+    doc_date?: string | null;
+  }) => request<DocumentRecord>("/api/evrak", { method: "POST", body: JSON.stringify(input) }),
+  deleteEvrak: (id: number) =>
+    request<{ ok: boolean }>(`/api/evrak/${id}`, { method: "DELETE" }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",

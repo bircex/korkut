@@ -543,6 +543,29 @@ class Task(Base):
     assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
 
 
+class DocumentRecord(Base):
+    """A document-register (evrak) entry — incoming/outgoing correspondence and internal notes.
+
+    A metadata log of the paper/e-documents on a matter (gelen/giden/iç), not file storage: title,
+    date, reference/sayı number, and notes. Optionally tied to a matter. File attachments are a
+    later addition.
+    """
+
+    __tablename__ = "document_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
+    # incoming | outgoing | internal
+    direction: Mapped[str] = mapped_column(String(16), default="incoming")
+    title: Mapped[str] = mapped_column(String(200))
+    reference_no: Mapped[str | None] = mapped_column(String(100), default=None)  # sayı/referans
+    doc_date: Mapped[_date | None] = mapped_column(Date, default=None)  # evrak tarihi
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
 class AuthEvent(Base):
     """Append-only audit trail for authentication events (KVKK / incident response)."""
 

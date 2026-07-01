@@ -19,6 +19,7 @@ from korkut.api.models import (
     Conversation,
     Deadline,
     Document,
+    DocumentRecord,
     Hearing,
     Matter,
     Task,
@@ -126,6 +127,34 @@ def list_tasks(
         q = q.where(Task.assignee_id == assignee_id)
     if matter_id is not None:
         q = q.where(Task.matter_id == matter_id)
+    return list(s.scalars(q))
+
+
+def document_record_brief(d: DocumentRecord) -> dict:
+    return {
+        "id": d.id,
+        "matter_id": d.matter_id,
+        "direction": d.direction,
+        "title": d.title,
+        "reference_no": d.reference_no,
+        "doc_date": d.doc_date.isoformat() if d.doc_date else None,
+        "notes": d.notes,
+    }
+
+
+def list_document_records(
+    s: Session, matter_id: int | None = None, direction: str | None = None
+) -> list[DocumentRecord]:
+    """Evrak entries, newest doc-date first (undated last); filtered by matter/direction."""
+    q = select(DocumentRecord).order_by(
+        DocumentRecord.doc_date.is_(None),
+        DocumentRecord.doc_date.desc(),
+        DocumentRecord.created_at.desc(),
+    )
+    if matter_id is not None:
+        q = q.where(DocumentRecord.matter_id == matter_id)
+    if direction:
+        q = q.where(DocumentRecord.direction == direction)
     return list(s.scalars(q))
 
 
