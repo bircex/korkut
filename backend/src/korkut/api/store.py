@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
 from sqlalchemy import select
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
 from korkut.api.models import (
+    CalendarEvent,
     MemoryItem,
     Office,
     OfficeChannel,
@@ -211,6 +212,67 @@ def dispatch_due(limit: int = 100) -> int:
         ).all()
         for msg in due:
             send_outbound_message(s, msg)
+            processed += 1
+        s.commit()
+    return processed
+
+
+def _reminder_body(ev: CalendarEvent) -> str:
+    """A short Turkish reminder e-mail body for a calendar event."""
+    when = ev.start_at.strftime("%d.%m.%Y %H:%M") if ev.start_at else ""
+    lines = [f"Yaklaşan etkinlik: {ev.title}", f"Zaman: {when}"]
+    if ev.location:
+        lines.append(f"Yer: {ev.location}")
+    if ev.notes:
+        lines.append("")
+        lines.append(ev.notes)
+    return "\n".join(lines)
+
+
+def dispatch_due_reminders(limit: int = 100) -> int:
+    """Send e-mail reminders for calendar events whose reminder moment has arrived.
+
+    A non-recurring event with `remind_before_min` set and `reminder_status == "pending"` is
+    reminded once, `remind_before_min` minutes before it starts, via the office's e-mail channel
+    (to the office's own configured address). Each event then flips to sent/failed/skipped so it is
+    never reminded twice. Events are stored in local time, so the due check uses the local clock.
+    Recurring-event reminders are a later refinement (occurrences need per-instance state).
+    """
+    processed = 0
+    now = datetime.now()
+    with session() as s:
+        cfg = office_channel_config(s, "email")
+        due = s.scalars(
+            select(CalendarEvent)
+            .where(
+                CalendarEvent.reminder_status == "pending",
+                CalendarEvent.remind_before_min.is_not(None),
+                CalendarEvent.rrule.is_(None),
+                CalendarEvent.start_at.is_not(None),
+                CalendarEvent.status != "cancelled",
+            )
+            .order_by(CalendarEvent.start_at)
+            .limit(limit)
+        ).all()
+        for ev in due:
+            remind_at = ev.start_at - timedelta(minutes=ev.remind_before_min or 0)
+            if remind_at > now:
+                continue  # reminder moment not reached yet — re-checked next run
+            if ev.start_at < now:
+                ev.reminder_status = "skipped"  # event already started; a reminder is pointless
+                processed += 1
+                continue
+            to_addr = (cfg or {}).get("from_address") or ""
+            if cfg is None or not to_addr:
+                ev.reminder_status = "skipped"  # no configured e-mail channel to send through
+                processed += 1
+                continue
+            result = build_channel("email", cfg).send(
+                OutboundDraft(
+                    to_addr=to_addr, subject=f"Hatırlatma: {ev.title}", body=_reminder_body(ev)
+                )
+            )
+            ev.reminder_status = "sent" if result.ok else "failed"
             processed += 1
         s.commit()
     return processed
