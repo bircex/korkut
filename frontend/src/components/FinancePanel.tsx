@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Expense, type FinanceSummary, type Invoice } from "../api";
+import { Modal } from "./Modal";
 
 // Mali — the office's bookkeeping (fatura / masraf / cari). A first slice: record invoices and
 // expenses and see a simple current-account summary. Real e-SMM/e-fatura submission (GİB) is out
@@ -26,10 +27,11 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function FinancePanel({ onClose }: { onClose: () => void }) {
+export function FinancePanel() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [adding, setAdding] = useState<"invoice" | "expense" | null>(null);
   const [inv, setInv] = useState({ amount: "", vat_rate: "20", description: "" });
   const [exp, setExp] = useState({ amount: "", kind: "", description: "" });
 
@@ -63,6 +65,7 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
       status: "issued",
     });
     setInv({ amount: "", vat_rate: "20", description: "" });
+    setAdding(null);
     refresh();
   }
 
@@ -75,6 +78,7 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
       description: exp.description.trim() || null,
     });
     setExp({ amount: "", kind: "", description: "" });
+    setAdding(null);
     refresh();
   }
 
@@ -94,15 +98,21 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
-        >
-          Geri
-        </button>
         <h1 className="text-lg font-bold text-zinc-900">Mali</h1>
+        <button
+          onClick={() => setAdding("invoice")}
+          className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+        >
+          + Fatura
+        </button>
+        <button
+          onClick={() => setAdding("expense")}
+          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+        >
+          + Masraf
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -117,35 +127,6 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
           )}
 
           <h2 className="mb-2 text-sm font-semibold text-zinc-700">Faturalar</h2>
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <input
-              value={inv.amount}
-              onChange={(e) => setInv({ ...inv, amount: e.target.value })}
-              placeholder="Tutar (KDV hariç)"
-              inputMode="decimal"
-              className={`${input} w-40`}
-            />
-            <input
-              value={inv.vat_rate}
-              onChange={(e) => setInv({ ...inv, vat_rate: e.target.value })}
-              placeholder="KDV %"
-              inputMode="decimal"
-              className={`${input} w-20`}
-            />
-            <input
-              value={inv.description}
-              onChange={(e) => setInv({ ...inv, description: e.target.value })}
-              placeholder="Açıklama"
-              className={`${input} min-w-40 flex-1`}
-            />
-            <button
-              onClick={addInvoice}
-              disabled={!parseFloat(inv.amount)}
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              Fatura ekle
-            </button>
-          </div>
           <div className="mb-6 divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
             {invoices.length === 0 && (
               <div className="px-4 py-3 text-sm text-zinc-400">Fatura yok.</div>
@@ -183,34 +164,6 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
           </div>
 
           <h2 className="mb-2 text-sm font-semibold text-zinc-700">Masraflar</h2>
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <input
-              value={exp.amount}
-              onChange={(e) => setExp({ ...exp, amount: e.target.value })}
-              placeholder="Tutar"
-              inputMode="decimal"
-              className={`${input} w-32`}
-            />
-            <input
-              value={exp.kind}
-              onChange={(e) => setExp({ ...exp, kind: e.target.value })}
-              placeholder="Tür (harç, posta…)"
-              className={`${input} w-40`}
-            />
-            <input
-              value={exp.description}
-              onChange={(e) => setExp({ ...exp, description: e.target.value })}
-              placeholder="Açıklama"
-              className={`${input} min-w-40 flex-1`}
-            />
-            <button
-              onClick={addExpense}
-              disabled={!parseFloat(exp.amount)}
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              Masraf ekle
-            </button>
-          </div>
           <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
             {expenses.length === 0 && (
               <div className="px-4 py-3 text-sm text-zinc-400">Masraf yok.</div>
@@ -234,6 +187,119 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
+
+      {adding === "invoice" && (
+        <Modal
+          title="Yeni fatura"
+          onClose={() => setAdding(null)}
+          footer={
+            <>
+              <button
+                onClick={() => setAdding(null)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={addInvoice}
+                disabled={!parseFloat(inv.amount)}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                Ekle
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Tutar (KDV hariç)
+              <input
+                autoFocus
+                value={inv.amount}
+                onChange={(e) => setInv({ ...inv, amount: e.target.value })}
+                placeholder="ör. 5000"
+                inputMode="decimal"
+                className={input}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              KDV %
+              <input
+                value={inv.vat_rate}
+                onChange={(e) => setInv({ ...inv, vat_rate: e.target.value })}
+                placeholder="20"
+                inputMode="decimal"
+                className={input}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Açıklama (opsiyonel)
+              <input
+                value={inv.description}
+                onChange={(e) => setInv({ ...inv, description: e.target.value })}
+                placeholder="ör. danışmanlık"
+                className={input}
+              />
+            </label>
+          </div>
+        </Modal>
+      )}
+
+      {adding === "expense" && (
+        <Modal
+          title="Yeni masraf"
+          onClose={() => setAdding(null)}
+          footer={
+            <>
+              <button
+                onClick={() => setAdding(null)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={addExpense}
+                disabled={!parseFloat(exp.amount)}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                Ekle
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Tutar
+              <input
+                autoFocus
+                value={exp.amount}
+                onChange={(e) => setExp({ ...exp, amount: e.target.value })}
+                placeholder="ör. 250"
+                inputMode="decimal"
+                className={input}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Tür (opsiyonel)
+              <input
+                value={exp.kind}
+                onChange={(e) => setExp({ ...exp, kind: e.target.value })}
+                placeholder="ör. harç, posta"
+                className={input}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Açıklama (opsiyonel)
+              <input
+                value={exp.description}
+                onChange={(e) => setExp({ ...exp, description: e.target.value })}
+                placeholder="ör. tebligat gideri"
+                className={input}
+              />
+            </label>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

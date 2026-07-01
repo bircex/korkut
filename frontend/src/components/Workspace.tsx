@@ -18,8 +18,6 @@ import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
-import { EvrakPanel } from "./EvrakPanel";
-import { ReportsPanel } from "./ReportsPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
 
@@ -48,6 +46,71 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
+// Soft (line) ikonlar — Claude Code / lucide tarzı, currentColor + ince stroke.
+function NavIcon({ name }: { name: string }) {
+  const p = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.75,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "shrink-0",
+  };
+  switch (name) {
+    case "matters":
+      return (
+        <svg {...p}>
+          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+        </svg>
+      );
+    case "clients":
+      return (
+        <svg {...p}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "finance":
+      return (
+        <svg {...p}>
+          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+          <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+          <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+        </svg>
+      );
+    case "tasks":
+      return (
+        <svg {...p}>
+          <path d="m9 11 3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg {...p}>
+          <rect width="18" height="18" x="3" y="4" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+      );
+    case "docs":
+      return (
+        <svg {...p}>
+          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+          <path d="M14 2v5h5" />
+          <path d="M16 13H8M16 17H8M10 9H8" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 type SidebarView =
   | "chats"
   | "docs"
@@ -57,8 +120,6 @@ type SidebarView =
   | "clients"
   | "finance"
   | "tasks"
-  | "evrak"
-  | "reports"
   | "calendar";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
@@ -73,6 +134,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
+  const [sendingId, setSendingId] = useState<number | null>(null); // which chat the in-flight send is for
   const [activity, setActivity] = useState<string | null>(null); // current tool step, while waiting
   const [streaming, setStreaming] = useState(false); // answer tokens are landing in the last bubble
   const [sidebarOpen, setSidebarOpen] = useState(() =>
@@ -99,6 +161,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Mirrors currentId for reads inside async stream callbacks (a state closure goes stale). This
+  // is what stops a still-arriving answer from being painted into a chat the user switched to —
+  // the reply is always persisted server-side under its own conversation, never mixed here.
+  const currentIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -126,6 +192,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
+  // Keep the ref in lockstep with currentId so stream callbacks read the chat the user is on now.
+  useEffect(() => {
+    currentIdRef.current = currentId;
+  }, [currentId]);
+
   function closeSidebarOnMobile() {
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
   }
@@ -148,6 +219,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   }
 
   async function openSession(id: number) {
+    currentIdRef.current = id; // synchronously, so an in-flight stream stops painting this view
     setCurrentId(id);
     setView("chats");
     setPane("chat");
@@ -161,6 +233,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   }
 
   function newChat() {
+    currentIdRef.current = null;
     setCurrentId(null);
     setMessages([greeting(coverage, user.office)]);
     setView("chats");
@@ -177,6 +250,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   }
 
   async function openDocFromList(d: DocBrief) {
+    currentIdRef.current = d.conversation_id;
     setCurrentId(d.conversation_id);
     setView("chats");
     setPane("document");
@@ -260,15 +334,21 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     setSending(true);
 
     const hadGreetingOnly = messages.length <= 1 && currentId === null;
-    const userDisplay = file ? (t ? `${t}\n\n📎 ${file.name}` : `📎 ${file.name}`) : t;
+    const userDisplay = file ? (t ? `${t}\n\nEk: ${file.name}` : `Ek: ${file.name}`) : t;
     setMessages((m) => [...(hadGreetingOnly ? [] : m), { role: "user", content: userDisplay }]);
 
+    // The chat this send belongs to. Every view mutation below is gated on the user still being
+    // here (currentIdRef), so a slow/streamed answer can never bleed into another chat's window.
+    let targetId = currentId;
+    const showsThisChat = () => currentIdRef.current === targetId;
+    setSendingId(targetId); // pin the "yazıyor…" indicator to this chat (updated below for new chats)
     try {
-      let id = currentId;
-      if (id === null) {
+      if (targetId === null) {
         const created = await api.createSession();
-        id = created.id;
-        setCurrentId(id);
+        targetId = created.id;
+        currentIdRef.current = targetId;
+        setCurrentId(targetId);
+        setSendingId(targetId);
         setSessions((s) => [created, ...s]);
         setSessionsTotal((tot) => tot + 1);
       }
@@ -280,24 +360,25 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       };
       if (file) {
         // Uploads aren't streamed (the file is processed server-side, then answered).
-        res = await api.uploadToSession(id, file, t);
-        setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+        res = await api.uploadToSession(targetId, file, t);
+        if (showsThisChat()) setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
       } else {
         // Stream the answer: show activity steps, then grow the assistant bubble token by token.
         let acc = "";
         let started = false;
-        res = await api.sessionChatStream(id, t, {
+        res = await api.sessionChatStream(targetId, t, {
           onStep: (label) => {
-            if (!started) setActivity(label);
+            if (!started && showsThisChat()) setActivity(label);
           },
           onToken: (tok) => {
+            acc += tok;
+            if (!showsThisChat()) return; // user moved to another chat → don't paint this one
             if (!started) {
               started = true;
               setStreaming(true);
               setActivity(null);
               setMessages((m) => [...m, { role: "assistant", content: "" }]);
             }
-            acc += tok;
             setMessages((m) => {
               const copy = m.slice();
               copy[copy.length - 1] = { role: "assistant", content: acc };
@@ -306,27 +387,30 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           },
         });
         // Reconcile with the authoritative reply (e.g. the cloud path streams no tokens, or the
-        // final restored text differs from the streamed slices).
-        if (!started) {
-          setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
-        } else if (res.reply && res.reply !== acc) {
-          setMessages((m) => {
-            const copy = m.slice();
-            copy[copy.length - 1] = { role: "assistant", content: res.reply };
-            return copy;
-          });
+        // final restored text differs from the streamed slices) — only if still viewing this chat.
+        if (showsThisChat()) {
+          if (!started) {
+            setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+          } else if (res.reply && res.reply !== acc) {
+            setMessages((m) => {
+              const copy = m.slice();
+              copy[copy.length - 1] = { role: "assistant", content: res.reply };
+              return copy;
+            });
+          }
         }
       }
-      if (!file && res.open_document) {
+      if (!file && showsThisChat() && res.open_document) {
         setPane("document");
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
-      if (!file && res.pending_email) {
+      if (!file && showsThisChat() && res.pending_email) {
         // Korkut proposed an e-mail → surface the confirmation card (it never sends on its own).
         setPendingEmailId(res.pending_email);
       }
-      const fixedId = id;
+      // The sidebar entry updates regardless of which chat is on screen — it's keyed by targetId.
+      const fixedId = targetId;
       setSessions((s) => [
         {
           ...(s.find((x) => x.id === fixedId) as SessionBrief),
@@ -341,10 +425,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         return;
       }
       const detail = err instanceof ApiError ? err.message : "yanıt alınamadı";
-      setMessages((m) => [...m, { role: "assistant", content: `Hata: ${detail}` }]);
+      if (showsThisChat()) {
+        setMessages((m) => [...m, { role: "assistant", content: `Hata: ${detail}` }]);
+      }
       if (err instanceof ApiError && err.status === 503) checkHealth(); // model down → refresh banner
     } finally {
       setSending(false);
+      setSendingId(null);
       setStreaming(false);
       setActivity(null);
       taRef.current?.focus();
@@ -357,40 +444,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   if (view === "customize") {
     return <Customize user={user} onClose={() => setView("chats")} />;
-  }
-
-  if (view === "matters") {
-    return (
-      <MattersPanel
-        user={user}
-        onClose={() => setView("chats")}
-        onOpenSession={(id) => openSession(id)}
-      />
-    );
-  }
-
-  if (view === "clients") {
-    return <ClientsPanel onClose={() => setView("chats")} />;
-  }
-
-  if (view === "finance") {
-    return <FinancePanel onClose={() => setView("chats")} />;
-  }
-
-  if (view === "tasks") {
-    return <TasksPanel onClose={() => setView("chats")} />;
-  }
-
-  if (view === "evrak") {
-    return <EvrakPanel onClose={() => setView("chats")} />;
-  }
-
-  if (view === "reports") {
-    return <ReportsPanel onClose={() => setView("chats")} />;
-  }
-
-  if (view === "calendar") {
-    return <CalendarPanel onClose={() => setView("chats")} />;
   }
 
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
@@ -482,74 +535,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      setView("matters");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    📁 Dosyalar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("clients");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    👤 Müvekkiller
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("finance");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    ₺ Mali
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("tasks");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    ✅ Görevler
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("calendar");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    📅 Takvim
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("evrak");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    📄 Evrak
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setView("reports");
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    📊 Rapor
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
                       setView("settings");
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
-                    ⚙ Ayarlar
+                    Ayarlar
                   </button>
                   <button
                     onClick={() => {
@@ -558,13 +548,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
-                    🎨 Özelleştir
+                    Özelleştir
                   </button>
                   <button
                     onClick={onLogout}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
-                    ↪ Çıkış
+                    Çıkış
                   </button>
                 </div>
               </>
@@ -598,35 +588,58 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <>
             <div className="fixed inset-0 z-10 bg-black/30 sm:hidden" onClick={() => setSidebarOpen(false)} />
             <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-zinc-200 bg-white sm:static sm:z-auto">
-              <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 m-3 mb-2 text-[13px] font-medium">
-                <button
-                  onClick={() => setView("chats")}
-                  className={
-                    "flex-1 rounded-md py-1.5 " +
-                    (view === "chats" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800")
-                  }
-                >
+              <div className="px-3 pt-3">
+                <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  Menü
+                </div>
+                <nav className="flex flex-col gap-0.5">
+                  {(
+                    [
+                      { key: "matters", label: "Dosyalar" },
+                      { key: "clients", label: "Müvekkiller" },
+                      { key: "finance", label: "Mali" },
+                      { key: "tasks", label: "Görevler" },
+                      { key: "calendar", label: "Takvim" },
+                      { key: "docs", label: "Belgeler" },
+                    ] as { key: SidebarView; label: string }[]
+                  ).map((it) => (
+                    <button
+                      key={it.key}
+                      onClick={() => {
+                        setView(it.key);
+                        if (it.key === "docs") loadDocs();
+                        closeSidebarOnMobile();
+                      }}
+                      className={
+                        "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm " +
+                        (view === it.key
+                          ? "bg-zinc-100 font-medium text-zinc-900"
+                          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
+                      }
+                    >
+                      <span className={view === it.key ? "text-zinc-700" : "text-zinc-400"}>
+                        <NavIcon name={it.key} />
+                      </span>
+                      {it.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t border-zinc-200 px-4 pb-1 pt-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Sohbetler
-                </button>
+                </span>
                 <button
-                  onClick={() => {
-                    setView("docs");
-                    loadDocs();
-                  }}
-                  className={
-                    "flex-1 rounded-md py-1.5 " +
-                    (view === "docs" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800")
-                  }
+                  onClick={newChat}
+                  title="Yeni sohbet"
+                  className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
                 >
-                  Belgeler
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
                 </button>
               </div>
-              <button
-                onClick={newChat}
-                className="mx-3 mb-2 rounded-lg bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                + Yeni sohbet
-              </button>
               <nav className="flex-1 overflow-y-auto px-2 pb-2">
                 {sessions.map((s) => (
                   <div
@@ -674,19 +687,19 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                             onClick={() => startRename(s)}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                           >
-                            ✎ Yeniden adlandır
+                            Yeniden adlandır
                           </button>
                           <button
                             onClick={() => cloneChat(s.id)}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                           >
-                            ⧉ Klonla
+                            Klonla
                           </button>
                           <button
                             onClick={() => remove(s.id)}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                           >
-                            🗑 Sil
+                            Sil
                           </button>
                         </div>
                       </>
@@ -711,6 +724,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         <div className="relative flex min-w-0 flex-1">
         {view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
+        ) : view === "matters" ? (
+          <MattersPanel user={user} onOpenSession={(id) => openSession(id)} />
+        ) : view === "clients" ? (
+          <ClientsPanel />
+        ) : view === "finance" ? (
+          <FinancePanel />
+        ) : view === "tasks" ? (
+          <TasksPanel />
+        ) : view === "calendar" ? (
+          <CalendarPanel />
         ) : (
         <div className="flex min-w-0 flex-1 flex-col">
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
@@ -727,10 +750,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 </div>
               </div>
             ))}
-            {sending && !streaming && (
+            {sending && sendingId === currentId && !streaming && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
-                  {activity ? `🔍 ${activity}` : "Korkut yazıyor…"}
+                  {activity ? activity : "Korkut yazıyor…"}
                 </div>
               </div>
             )}
@@ -739,7 +762,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
           {attachment && (
             <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-2 text-[13px] text-zinc-500">
-              <span className="truncate rounded-md border border-zinc-300 bg-white px-2 py-1">📎 {attachment.name}</span>
+              <span className="truncate rounded-md border border-zinc-300 bg-white px-2 py-1">Ek: {attachment.name}</span>
               <button type="button" onClick={() => setAttachment(null)} className="shrink-0 text-zinc-400 hover:text-red-500">
                 kaldır
               </button>
@@ -757,9 +780,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               type="button"
               onClick={() => fileRef.current?.click()}
               title="Dosya ekle (PDF, DOCX, TXT, PNG, JPG)"
-              className="shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3 py-3 text-lg leading-none text-zinc-600 hover:border-zinc-900"
+              className="shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3 py-3 leading-none text-zinc-600 hover:border-zinc-900"
             >
-              📎
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
             </button>
             <textarea
               ref={taRef}
