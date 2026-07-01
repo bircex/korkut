@@ -735,6 +735,7 @@ def _memory_public(row: MemoryItem) -> dict:
         "id": row.id,
         "kind": row.kind,
         "text": row.text,
+        "status": row.status,
         "author": row.created_by_name,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
@@ -764,9 +765,22 @@ def add_memory(body: MemoryBody, korkut_session: str | None = Cookie(default=Non
         return _memory_public(row)
 
 
+@app.post("/api/memory/{item_id}/approve")
+def approve_memory(item_id: int, korkut_session: str | None = Cookie(default=None)):
+    """Approve an agent-proposed (pending) note so it is injected into prompts."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        row = s.get(MemoryItem, item_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Not bulunamadı")
+        row.status = "active"
+        s.commit()
+        return _memory_public(row)
+
+
 @app.delete("/api/memory/{item_id}")
 def delete_memory(item_id: int, korkut_session: str | None = Cookie(default=None)):
-    """Remove a note from the office memory."""
+    """Remove a note from the office memory (also how a pending suggestion is rejected)."""
     with session() as s:
         _require_user(s, korkut_session)
         row = s.get(MemoryItem, item_id)
@@ -1322,6 +1336,24 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
             "cümlelik kısa bir bilgilendirme yaz (içeriği tekrar yazma).",
         }
 
+    # Korkut may notice a durable preference worth keeping; it PROPOSES it (status "pending"),
+    # never saves it silently — the lawyer approves it in the Hafıza tab.
+    def _remember(args: dict):
+        note = (args.get("text") or "").strip()
+        if not note:
+            return {"ok": False, "note": "Hatırlanacak not metni gerekli."}
+        kind = args.get("kind") if args.get("kind") in _MEMORY_KINDS else "preference"
+        with session() as s:
+            s.add(
+                MemoryItem(kind=kind, text=note, status="pending", created_by_name="Korkut (öneri)")
+            )
+            s.commit()
+        return {
+            "ok": True,
+            "note": "Not büro hafızasına ÖNERİ olarak eklendi; avukatın onayını bekliyor. "
+            "Sohbete tek cümlelik kısa bilgilendirme yaz.",
+        }
+
     # Intent is the model's call, not a keyword gate: whether to draft (and thus whether to ask for
     # missing essentials first) is decided by the model via the dilekce_canvas tool contract — see
     # _CANVAS_TOOL. The document type is only inferred later, once a draft is actually chosen.
@@ -1331,8 +1363,13 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         text,
         office_name=office_name,
         history=history_msgs,
-        extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, *m_tools],
-        handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
+        extra_tools=[_CANVAS_TOOL, _SEND_EMAIL_TOOL, _REMEMBER_TOOL, *m_tools],
+        handlers={
+            "dilekce_canvas": _canvas,
+            "send_email": _send_email,
+            "remember": _remember,
+            **m_handlers,
+        },
         model_cfg=model_cfg,
         known_entities=known_entities,
         persona_cfg=persona_cfg,
@@ -2046,6 +2083,34 @@ _CANVAS_TOOL = ToolSpec(
         "yalnızca cevap ver."
     ),
     parameters={},
+    requires_key=None,
+    module="",
+)
+
+
+_REMEMBER_TOOL = ToolSpec(
+    name="remember",
+    description=(
+        "Konuşmada ileride de geçerli olacak KALICI bir TERCİH ya da BAĞLAM fark edersen bunu "
+        "büro hafızasına ÖNERMEK için bu aracı çağır (ör. 'müvekkil duruşmalarda video konferans "
+        "ister', 'bu büro icra dosyalarında X şablonunu tercih eder'). Notu SEN kaydetmezsin: "
+        "avukatın onayına 'beklemede' öneri olarak düşer. "
+        "YAPISAL bilgi için bu aracı KULLANMA — müvekkil TCKN'si, duruşma/süre tarihi, taraf gibi "
+        "bilgiler ilgili müvekkil/dosya araçlarıyla KAYITLARA girer, hafızaya değil. Tek seferlik "
+        "ya da geçici ayrıntıları da önerme; yalnızca tekrar işine yarayacak kalıcı notları öner."
+    ),
+    parameters={
+        "text": {
+            "type": "string",
+            "required": True,
+            "description": "Hatırlanacak kalıcı not (tek, öz cümle)",
+        },
+        "kind": {
+            "type": "string",
+            "required": False,
+            "description": "note | fact | preference (varsayılan: preference)",
+        },
+    },
     requires_key=None,
     module="",
 )

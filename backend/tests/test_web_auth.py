@@ -432,6 +432,35 @@ def test_bar_registry_no_on_member_and_self_edit(client):
     assert roster["avukat"]["bar_registry_no"] == "12345"
 
 
+def test_agent_remember_proposes_pending_note_then_approve(client):
+    from unittest.mock import patch
+
+    import korkut.api.app as appmod
+
+    _enroll(client, "avukat")
+    cid = client.post("/api/sessions").json()["id"]
+
+    def fake_answer(user_text, *, handlers=None, **kwargs):
+        # The model decides this is a durable preference and proposes it via the remember tool.
+        if handlers and "remember" in handlers:
+            handlers["remember"]({"text": "Müvekkil video duruşma ister", "kind": "preference"})
+        return "Not aldım."
+
+    with patch.object(appmod.agent, "answer", side_effect=fake_answer):
+        client.post(f"/api/sessions/{cid}/chat", json={"text": "müvekkil video duruşma istiyor"})
+
+    items = client.get("/api/memory").json()["items"]
+    pending = [m for m in items if m["status"] == "pending"]
+    assert len(pending) == 1
+    assert pending[0]["text"] == "Müvekkil video duruşma ister"
+    assert pending[0]["author"] == "Korkut (öneri)"
+
+    # Approve → active; reject would be a DELETE.
+    approved = client.post(f"/api/memory/{pending[0]['id']}/approve").json()
+    assert approved["status"] == "active"
+    assert client.post("/api/memory/99999/approve").status_code == 404
+
+
 def test_memory_crud_shared_across_members(client):
     _enroll(client, "avukat")
     assert client.get("/api/memory").json() == {"items": []}

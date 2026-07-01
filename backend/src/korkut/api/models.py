@@ -106,16 +106,20 @@ class Persona(Base):
 class MemoryItem(Base):
     """A durable note the office wants Korkut to keep in mind (the Hafıza UI).
 
-    Office-wide, manually curated knowledge — house preferences, standing facts, reminders —
-    injected into every prompt as context (and masked by the redactor for cloud calls, like any
-    other content). Not auto-extracted: the office adds these by hand, so nothing about a client is
-    remembered without a lawyer choosing to.
+    Office-wide, durable knowledge — house preferences, standing facts, reminders — injected into
+    every prompt as context (and masked by the redactor for cloud calls, like any other content).
+
+    `status` gates what reaches the model: a lawyer's manual note is ``active`` immediately, while a
+    note the agent proposes via the `remember` tool is ``pending`` until a lawyer approves it in the
+    Hafıza tab. Only ``active`` notes are injected — nothing about a client is remembered without a
+    lawyer choosing to. Structured facts (TCKN, dates, parties) belong in the records, not here.
     """
 
     __tablename__ = "memory_items"
     id: Mapped[int] = mapped_column(primary_key=True)
     kind: Mapped[str] = mapped_column(String(16), default="note")  # "note" | "fact" | "preference"
     text: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="active")  # "active" | "pending"
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
