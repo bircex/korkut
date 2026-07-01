@@ -309,6 +309,8 @@ export type CalendarEvent = {
   result: string | null;
   notes: string | null;
   rrule: string | null;
+  remind_before_min: number | null;
+  reminder_status: string;
   recurring?: boolean; // true when this row is an expanded occurrence of a recurring event
 };
 export type CalendarEventInput = {
@@ -324,6 +326,7 @@ export type CalendarEventInput = {
   location?: string | null;
   notes?: string | null;
   rrule?: string | null;
+  remind_before_min?: number | null;
 };
 export type MatterDocument = {
   id: number;

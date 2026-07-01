@@ -87,6 +87,7 @@ const EMPTY_FORM = {
   notes: "",
   repeat: "", // "" | daily | weekly | monthly
   until: "",
+  remind: "", // "" | minutes-before as a string
 };
 
 const FREQ_BY_REPEAT: Record<string, string> = {
@@ -181,6 +182,7 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
       client_id: f.client_id ? Number(f.client_id) : null,
       notes: f.notes.trim() || null,
       rrule: buildRrule(f.repeat, f.until),
+      remind_before_min: f.remind ? Number(f.remind) : null,
     });
     setF({ ...EMPTY_FORM, category: f.category });
     setShowForm(false);
@@ -389,6 +391,17 @@ export function CalendarPanel({ onClose }: { onClose: () => void }) {
               title="Tekrar bitiş tarihi (opsiyonel)"
               className={`${input} text-zinc-700 disabled:opacity-50`}
             />
+            <select
+              value={f.remind}
+              onChange={(e) => setF({ ...f, remind: e.target.value })}
+              title="Başlamadan önce e-posta hatırlatması"
+              className={`${input} text-zinc-700`}
+            >
+              <option value="">Hatırlatma yok</option>
+              <option value="15">15 dk önce</option>
+              <option value="60">1 saat önce</option>
+              <option value="1440">1 gün önce</option>
+            </select>
             <div className="col-span-2 flex justify-end sm:col-span-4">
               <button
                 onClick={add}
@@ -694,6 +707,7 @@ function EventRow({
           }`}
         >
           {e.recurring && <span title="Tekrarlayan">↻ </span>}
+          {e.remind_before_min != null && <span title="Hatırlatma açık">🔔 </span>}
           {e.title}
         </div>
         <div className="truncate text-[12px] text-zinc-400">
