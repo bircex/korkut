@@ -369,6 +369,8 @@ export const api = {
   completeDeadline: (did: number) =>
     request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
+  createClient: (input: ClientPatch & { full_name: string }) =>
+    request<ClientBrief>("/api/clients", { method: "POST", body: JSON.stringify(input) }),
   updateClient: (id: number, patch: ClientPatch) =>
     request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
