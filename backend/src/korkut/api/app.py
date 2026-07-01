@@ -161,6 +161,12 @@ class MemberBody(BaseModel):
     username: str
     full_name: str
     password: str
+    bar_registry_no: str | None = None
+
+
+class MeBody(BaseModel):
+    full_name: str | None = None
+    bar_registry_no: str | None = None
 
 
 class StyleBody(BaseModel):
@@ -397,6 +403,7 @@ def _user_public(s: Session, user: User) -> dict:
     return {
         "username": user.username,
         "full_name": user.full_name,
+        "bar_registry_no": user.bar_registry_no,
         "role": user.role,
         "office": _office_name(s),
     }
@@ -524,6 +531,7 @@ def list_members(korkut_session: str | None = Cookie(default=None)):
                 "id": u.id,
                 "username": u.username,
                 "full_name": u.full_name,
+                "bar_registry_no": u.bar_registry_no,
                 "role": u.role,
                 "is_active": u.is_active,
                 "enrolled": u.has_2fa,
@@ -550,6 +558,7 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
             role="member",
             username=username,
             full_name=full_name[:200],
+            bar_registry_no=(body.bar_registry_no or "").strip() or None,
             password_hash=auth.hash_secret(body.password),
         )
         s.add(member)
@@ -558,6 +567,7 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
             "id": member.id,
             "username": member.username,
             "full_name": member.full_name,
+            "bar_registry_no": member.bar_registry_no,
             "role": member.role,
             "is_active": True,
             "enrolled": False,
@@ -923,6 +933,23 @@ def logout(response: Response, korkut_session: str | None = Cookie(default=None)
 def me(korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
+        return _user_public(s, user)
+
+
+@app.patch("/api/me")
+def update_me(body: MeBody, korkut_session: str | None = Cookie(default=None)):
+    """A user edits their own profile (display name, bar-registry number). Only fields sent."""
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        if "full_name" in fields:
+            name = (fields["full_name"] or "").strip()
+            if not name:
+                raise HTTPException(status_code=400, detail="Ad Soyad zorunludur.")
+            user.full_name = name[:200]
+        if "bar_registry_no" in fields:
+            user.bar_registry_no = (fields["bar_registry_no"] or "").strip() or None
+        s.commit()
         return _user_public(s, user)
 
 

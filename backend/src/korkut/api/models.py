@@ -127,6 +127,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
+    bar_registry_no: Mapped[str | None] = mapped_column(String(32), default=None)  # baro sicil no
     password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
 
