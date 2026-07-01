@@ -1,0 +1,105 @@
+---
+const features = [
+  {
+    icon: "📁",
+    title: "Dosya & duruşma takibi",
+    body: "Müvekkiller, duruşmalar ve usul süreleri tek yerde. Yaklaşan işleri önden gösteren proaktif bir gündem sunar.",
+  },
+  {
+    icon: "⚖️",
+    title: "İçtihat & karar arama",
+    body: "Yargıtay, Danıştay, UYAP Emsal ve Anayasa Mahkemesi kararlarında canlı arama; emsalleri özetleyip kaynak gösterir.",
+  },
+  {
+    icon: "📜",
+    title: "Mevzuat & Resmî Gazete",
+    body: "Kanun, KHK, yönetmelik ve tebliğlerde başlık/tam metin araması; Resmî Gazete tarih ve sayı filtresiyle.",
+  },
+  {
+    icon: "📝",
+    title: "Dilekçe & sözleşme taslağı",
+    body: "Canvas editöründe dava türüne uygun dilekçe ve sözleşme taslakları üretir; DOCX/UDF olarak dışa aktarır.",
+  },
+  {
+    icon: "✉️",
+    title: "Yazışma yönetimi",
+    body: "Öner-ve-onayla mantığıyla e-posta; Telegram, WhatsApp ve e-posta üzerinden iki yönlü iletişim.",
+  },
+  {
+    icon: "🔌",
+    title: "Yerel veya bulut model",
+    body: "LM Studio, Ollama gibi yerel bir modele bağlanın; hiçbir veri makineden çıkmaz. Sağlayıcı bağımsızdır.",
+  },
+];
+---
+
+<section id="ozellikler">
+  <div class="wrap center">
+    <span class="eyebrow">Yetenekler</span>
+    <h2>Büronun günlük işini yürüten tek asistan</h2>
+    <p class="section-lead">
+      Korkut, resmî kaynaklarda araştırma yapar, taslak üretir ve yazışmaları
+      yönetir — daima kaynak göstererek ve her kalıcı işlemi onayınıza sunarak.
+    </p>
+
+    <div class="grid">
+      {
+        features.map((f) => (
+          <article class="card">
+            <div class="ic" aria-hidden="true">
+              {f.icon}
+            </div>
+            <h3>{f.title}</h3>
+            <p>{f.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 52px;
+    text-align: left;
+  }
+  @media (max-width: 900px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: 0.18s ease;
+  }
+  .card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .ic {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    font-size: 22px;
+  }
+  .card h3 {
+    font-size: 18.5px;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .card p {
+    color: var(--muted);
+    font-size: 15px;
+  }
+</style>
