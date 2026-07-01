@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
 from korkut.api.models import (
+    MemoryItem,
     Office,
     OfficeChannel,
     OfficeModel,
@@ -99,6 +100,13 @@ def get_persona(s: Session) -> PersonaCfg:
     if row is None:
         return PersonaCfg()
     return PersonaCfg(tone=row.tone, expertise=row.expertise, extra_rules=row.extra_rules)
+
+
+def collect_memory(s: Session) -> str:
+    """The office's durable memory notes as a prompt block (bulleted), or '' if there are none."""
+    rows = s.scalars(select(MemoryItem).order_by(MemoryItem.created_at)).all()
+    lines = [f"- {r.text.strip()}" for r in rows if r.text.strip()]
+    return "\n".join(lines)
 
 
 def office_model_cfg(s: Session) -> ModelCfg | None:

@@ -45,3 +45,35 @@ def test_persona_cfg_skips_blank_fields():
     assert "Üslup: resmi" in p
     assert "Uzmanlık alanları" not in p
     assert "Ek kurallar" not in p
+
+
+def test_answer_injects_office_memory(monkeypatch):
+    # The office's durable notes are appended to the system message before the model call.
+    from korkut.brain import agent
+
+    captured: dict[str, str] = {}
+
+    class FakeRouter:
+        def respond(self, specialty, task_type, messages, **kwargs):
+            captured["system"] = messages[0]["content"]
+            return "ok"
+
+    monkeypatch.setattr(agent, "_router", FakeRouter())
+    agent.answer("merhaba", office_name="X Hukuk", memory="- video duruşma tercih edilir")
+    assert "Ofis hafızası" in captured["system"]
+    assert "- video duruşma tercih edilir" in captured["system"]
+
+
+def test_answer_without_memory_has_no_memory_block(monkeypatch):
+    from korkut.brain import agent
+
+    captured: dict[str, str] = {}
+
+    class FakeRouter:
+        def respond(self, specialty, task_type, messages, **kwargs):
+            captured["system"] = messages[0]["content"]
+            return "ok"
+
+    monkeypatch.setattr(agent, "_router", FakeRouter())
+    agent.answer("merhaba", office_name="X Hukuk")
+    assert "Ofis hafızası" not in captured["system"]

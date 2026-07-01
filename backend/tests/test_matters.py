@@ -197,3 +197,23 @@ def test_collect_known_entities_gathers_stored_pii(app_mod):
     assert ("Bağdat Cad. No:12", "ADDRESS") in entities
     assert ("Cengiz Aktürk", "PERSON") in entities  # matter counterparty
     assert ("Av. Test", "PERSON") in entities  # bootstrapped lawyer (adduser fixture)
+
+
+def test_collect_memory_formats_notes_as_bullets(app_mod):
+    from korkut.api.models import MemoryItem
+    from korkut.api.store import collect_memory, session
+
+    with session() as s:
+        assert collect_memory(s) == ""  # empty before any note
+
+    with session() as s:
+        s.add(MemoryItem(text="Video duruşma tercih edilir"))
+        s.add(MemoryItem(text="İcra dosyalarında X şablonu kullanılır"))
+        s.add(MemoryItem(text="   "))  # blank is skipped
+        s.commit()
+
+    with session() as s:
+        block = collect_memory(s)
+    assert "- Video duruşma tercih edilir" in block
+    assert "- İcra dosyalarında X şablonu kullanılır" in block
+    assert block.count("\n") == 1  # two bullets, one newline between; blank skipped

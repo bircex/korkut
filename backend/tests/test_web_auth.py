@@ -411,6 +411,33 @@ def test_persona_owner_only_and_member_readonly(client):
     assert c2.put("/api/persona", json={"tone": "x"}).status_code == 403
 
 
+def test_memory_crud_shared_across_members(client):
+    _enroll(client, "avukat")
+    assert client.get("/api/memory").json() == {"items": []}
+
+    added = client.post(
+        "/api/memory", json={"text": "Video duruşma tercih edilir", "kind": "preference"}
+    ).json()
+    assert added["text"] == "Video duruşma tercih edilir" and added["kind"] == "preference"
+    assert added["author"] == "Av. Test"
+
+    # A blank note is rejected.
+    assert client.post("/api/memory", json={"text": "   "}).status_code == 400
+
+    # A member sees the same shared office memory.
+    client.post(
+        "/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"}
+    )
+    c2 = TestClient(client.app)
+    _enroll(c2, "katip")
+    items = c2.get("/api/memory").json()["items"]
+    assert len(items) == 1 and items[0]["text"] == "Video duruşma tercih edilir"
+
+    # Delete removes it.
+    client.delete(f"/api/memory/{added['id']}")
+    assert client.get("/api/memory").json() == {"items": []}
+
+
 def test_custom_model_owner_only_and_key_hidden(client):
     _enroll(client, "avukat")
     # Default: no custom model.
@@ -621,6 +648,7 @@ def test_chat_detects_contract_and_injects_contract_format(client):
         extra_system=None,
         known_entities=None,
         persona_cfg=None,
+        memory=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -696,6 +724,7 @@ def test_chat_auto_opens_canvas_for_document(client):
         extra_system=None,
         known_entities=None,
         persona_cfg=None,
+        memory=None,
     ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
@@ -737,6 +766,7 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
         extra_system=None,
         known_entities=None,
         persona_cfg=None,
+        memory=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
