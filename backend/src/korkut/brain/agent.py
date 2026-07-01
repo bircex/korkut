@@ -7,7 +7,7 @@ provider's tool-calling loop, and restores tokens in the reply.
 
 from __future__ import annotations
 
-from korkut.brain.persona import build_persona
+from korkut.brain.persona import PersonaCfg, build_persona
 from korkut.core import tool_registry
 from korkut.core.providers.claude import ClaudeProvider
 from korkut.core.providers.gpt import GptProvider
@@ -38,6 +38,7 @@ def answer(
     model_cfg: ModelCfg | None = None,
     extra_system: str | None = None,
     known_entities: list[tuple[str, str]] | None = None,
+    persona_cfg: PersonaCfg | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured model.
 
@@ -52,7 +53,7 @@ def answer(
     """
     router = single_model_router(model_cfg) if model_cfg is not None else get_router()
     tools = tool_registry.available_tools()
-    system = build_persona(office_name)
+    system = build_persona(office_name, persona_cfg)
     if extra_system:
         system = f"{system}\n\n{extra_system}"
     messages: list[dict] = [{"role": "system", "content": system}]

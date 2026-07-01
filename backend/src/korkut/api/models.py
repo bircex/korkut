@@ -86,6 +86,23 @@ class OfficeModel(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
+class Persona(Base):
+    """The office's configurable assistant persona (the Kişilik UI). A singleton row.
+
+    Augments — never replaces — the locked core persona in `brain/persona.py`. `tone` sets the
+    assistant's voice, `expertise` names the office's focus areas, and `extra_rules` are house
+    rules the owner adds. The core security/citation/approval rules live in code and cannot be
+    overridden here. The reply language stays Turkish regardless.
+    """
+
+    __tablename__ = "personas"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tone: Mapped[str] = mapped_column(Text, default="")  # üslup/ses
+    expertise: Mapped[str] = mapped_column(Text, default="")  # uzmanlık alanları
+    extra_rules: Mapped[str] = mapped_column(Text, default="")  # ofisin ek kuralları
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)

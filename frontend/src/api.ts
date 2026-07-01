@@ -146,6 +146,14 @@ export type ModelInput = {
 };
 export type ModelHealth = { connected: boolean; configured: boolean; detail: string };
 
+export type PersonaData = {
+  tone: string;
+  expertise: string;
+  extra_rules: string;
+  can_edit: boolean;
+};
+export type PersonaInput = { tone: string; expertise: string; extra_rules: string };
+
 // ---- matter domain (dosya / müvekkil / duruşma) ----
 export type Hearing = {
   id: number;
@@ -308,6 +316,9 @@ export const api = {
     request<ModelData>("/api/model", { method: "PUT", body: JSON.stringify(input) }),
   deleteModel: () => request<{ ok: boolean }>("/api/model", { method: "DELETE" }),
   modelHealth: () => request<ModelHealth>("/api/model/health"),
+  getPersona: () => request<PersonaData>("/api/persona"),
+  savePersona: (input: PersonaInput) =>
+    request<PersonaData>("/api/persona", { method: "PUT", body: JSON.stringify(input) }),
   matters: (status?: string) =>
     request<{ items: MatterBrief[]; total: number }>(
       `/api/matters${status ? `?status=${encodeURIComponent(status)}` : ""}`,

@@ -20,9 +20,11 @@ from korkut.api.models import (
     OfficeChannel,
     OfficeModel,
     OutboundMessage,
+    Persona,
     TemplateDefault,
     TemplateOverride,
 )
+from korkut.brain.persona import PersonaCfg
 from korkut.core import db
 from korkut.core.router import ModelCfg
 from korkut.messaging import OutboundDraft, SendResult, build_channel
@@ -89,6 +91,14 @@ def effective_theme(s: Session, user_id: int | None, type_id: str) -> str | None
         return office.content
     default = s.scalar(select(TemplateDefault).where(TemplateDefault.type_id == type_id))
     return default.content if default is not None else None
+
+
+def get_persona(s: Session) -> PersonaCfg:
+    """The office's Kişilik tuning as a `PersonaCfg` (empty defaults before it is set)."""
+    row = s.scalar(select(Persona))
+    if row is None:
+        return PersonaCfg()
+    return PersonaCfg(tone=row.tone, expertise=row.expertise, extra_rules=row.extra_rules)
 
 
 def office_model_cfg(s: Session) -> ModelCfg | None:

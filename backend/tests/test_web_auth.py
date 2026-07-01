@@ -385,6 +385,32 @@ def test_style_layers_and_deterministic_insertion(client):
     assert "DRAFT" in body
 
 
+def test_persona_owner_only_and_member_readonly(client):
+    _enroll(client, "avukat")
+    # Default: empty persona; the owner may edit.
+    assert client.get("/api/persona").json() == {
+        "tone": "",
+        "expertise": "",
+        "extra_rules": "",
+        "can_edit": True,
+    }
+    saved = client.put(
+        "/api/persona",
+        json={"tone": "resmi ve öz", "expertise": "ceza, aile", "extra_rules": "kısa yanıt ver"},
+    ).json()
+    assert saved["tone"] == "resmi ve öz" and saved["expertise"] == "ceza, aile"
+
+    # Members can view but not edit.
+    client.post(
+        "/api/members", json={"username": "katip", "full_name": "Kâtip", "password": "parola123"}
+    )
+    c2 = TestClient(client.app)
+    _enroll(c2, "katip")
+    view = c2.get("/api/persona").json()
+    assert view["tone"] == "resmi ve öz" and view["can_edit"] is False
+    assert c2.put("/api/persona", json={"tone": "x"}).status_code == 403
+
+
 def test_custom_model_owner_only_and_key_hidden(client):
     _enroll(client, "avukat")
     # Default: no custom model.
@@ -594,6 +620,7 @@ def test_chat_detects_contract_and_injects_contract_format(client):
         model_cfg=None,
         extra_system=None,
         known_entities=None,
+        persona_cfg=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -668,6 +695,7 @@ def test_chat_auto_opens_canvas_for_document(client):
         model_cfg=None,
         extra_system=None,
         known_entities=None,
+        persona_cfg=None,
     ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
@@ -708,6 +736,7 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
         model_cfg=None,
         extra_system=None,
         known_entities=None,
+        persona_cfg=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
