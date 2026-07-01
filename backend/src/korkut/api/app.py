@@ -35,6 +35,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from korkut.api import auth, extract, matter_tools, petitions, totp
+from korkut.api import finance_store as fin
 from korkut.api import matters_store as mstore
 from korkut.api.models import (
     AuthEvent,
@@ -42,7 +43,9 @@ from korkut.api.models import (
     Conversation,
     Document,
     DocumentVersion,
+    Expense,
     IntegrationLink,
+    Invoice,
     Matter,
     MemoryItem,
     Message,
@@ -282,6 +285,33 @@ class ClientUpdateBody(BaseModel):
     email: str | None = None
     address: str | None = None
     date_of_birth: str | None = None
+
+
+class InvoiceBody(BaseModel):
+    client_id: int | None = None
+    matter_id: int | None = None
+    amount: float = 0
+    vat_rate: float = 20
+    description: str | None = None
+    status: str = "draft"
+    issued_at: str | None = None
+
+
+class InvoiceUpdateBody(BaseModel):
+    amount: float | None = None
+    vat_rate: float | None = None
+    description: str | None = None
+    status: str | None = None
+    issued_at: str | None = None
+
+
+class ExpenseBody(BaseModel):
+    matter_id: int | None = None
+    client_id: int | None = None
+    amount: float = 0
+    kind: str | None = None
+    description: str | None = None
+    spent_at: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -1265,6 +1295,126 @@ def update_client_ep(
                 setattr(c, key, (fields[key] or "").strip() or None)
         s.commit()
         return mstore.client_brief(c)
+
+
+# ---------------- finance (fatura / masraf / cari) ----------------
+
+_INVOICE_STATUSES = ("draft", "issued", "paid", "cancelled")
+
+
+@app.get("/api/finance/invoices")
+def list_invoices_ep(
+    client_id: int | None = None,
+    matter_id: int | None = None,
+    korkut_session: str | None = Cookie(default=None),
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = fin.list_invoices(s, client_id=client_id, matter_id=matter_id)
+        return {"items": [fin.invoice_brief(i) for i in rows]}
+
+
+@app.post("/api/finance/invoices")
+def create_invoice_ep(body: InvoiceBody, korkut_session: str | None = Cookie(default=None)):
+    status = body.status if body.status in _INVOICE_STATUSES else "draft"
+    with session() as s:
+        _require_user(s, korkut_session)
+        inv = Invoice(
+            client_id=body.client_id,
+            matter_id=body.matter_id,
+            amount=fin.to_amount(body.amount),
+            vat_rate=fin.to_amount(body.vat_rate),
+            description=(body.description or "").strip() or None,
+            status=status,
+            issued_at=mstore.parse_date(body.issued_at),
+        )
+        s.add(inv)
+        s.commit()
+        return fin.invoice_brief(inv)
+
+
+@app.patch("/api/finance/invoices/{invoice_id}")
+def update_invoice_ep(
+    invoice_id: int, body: InvoiceUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        _require_user(s, korkut_session)
+        inv = s.get(Invoice, invoice_id)
+        if inv is None:
+            raise HTTPException(status_code=404, detail="Fatura bulunamadı")
+        if "amount" in fields:
+            inv.amount = fin.to_amount(fields["amount"])
+        if "vat_rate" in fields:
+            inv.vat_rate = fin.to_amount(fields["vat_rate"])
+        if "description" in fields:
+            inv.description = (fields["description"] or "").strip() or None
+        if "issued_at" in fields:
+            inv.issued_at = mstore.parse_date(fields["issued_at"])
+        if "status" in fields and fields["status"] in _INVOICE_STATUSES:
+            inv.status = fields["status"]
+        s.commit()
+        return fin.invoice_brief(inv)
+
+
+@app.delete("/api/finance/invoices/{invoice_id}")
+def delete_invoice_ep(invoice_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        inv = s.get(Invoice, invoice_id)
+        if inv is not None:
+            s.delete(inv)
+            s.commit()
+        return {"ok": True}
+
+
+@app.get("/api/finance/expenses")
+def list_expenses_ep(
+    client_id: int | None = None,
+    matter_id: int | None = None,
+    korkut_session: str | None = Cookie(default=None),
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = fin.list_expenses(s, client_id=client_id, matter_id=matter_id)
+        return {"items": [fin.expense_brief(e) for e in rows]}
+
+
+@app.post("/api/finance/expenses")
+def create_expense_ep(body: ExpenseBody, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        exp = Expense(
+            matter_id=body.matter_id,
+            client_id=body.client_id,
+            amount=fin.to_amount(body.amount),
+            kind=(body.kind or "").strip() or None,
+            description=(body.description or "").strip() or None,
+            spent_at=mstore.parse_date(body.spent_at),
+        )
+        s.add(exp)
+        s.commit()
+        return fin.expense_brief(exp)
+
+
+@app.delete("/api/finance/expenses/{expense_id}")
+def delete_expense_ep(expense_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        exp = s.get(Expense, expense_id)
+        if exp is not None:
+            s.delete(exp)
+            s.commit()
+        return {"ok": True}
+
+
+@app.get("/api/finance/summary")
+def finance_summary_ep(
+    client_id: int | None = None, korkut_session: str | None = Cookie(default=None)
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        return fin.summary(s, client_id=client_id)
 
 
 @app.post("/api/sessions/{cid}/chat")

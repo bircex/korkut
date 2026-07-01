@@ -15,6 +15,7 @@ import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
 import { Customize } from "./Customize";
 import { ClientsPanel } from "./ClientsPanel";
+import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
 import { MailConfirm } from "./MailConfirm";
 
@@ -43,7 +44,14 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-type SidebarView = "chats" | "docs" | "settings" | "customize" | "matters" | "clients";
+type SidebarView =
+  | "chats"
+  | "docs"
+  | "settings"
+  | "customize"
+  | "matters"
+  | "clients"
+  | "finance";
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -310,6 +318,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     return <ClientsPanel onClose={() => setView("chats")} />;
   }
 
+  if (view === "finance") {
+    return <FinancePanel onClose={() => setView("chats")} />;
+  }
+
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
   if (view !== "docs" && pane === "document" && currentId !== null) {
     return (
@@ -413,6 +425,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     👤 Müvekkiller
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setView("finance");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    ₺ Mali
                   </button>
                   <button
                     onClick={() => {

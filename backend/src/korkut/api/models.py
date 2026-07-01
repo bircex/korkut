@@ -17,12 +17,14 @@ from __future__ import annotations
 from datetime import date as _date
 from datetime import datetime
 from datetime import time as _time
+from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
     Date,
     ForeignKey,
     Index,
+    Numeric,
     String,
     Text,
     Time,
@@ -469,6 +471,51 @@ class Deadline(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     matter: Mapped[Matter] = relationship(back_populates="deadlines")
+
+
+class Invoice(Base):
+    """A client invoice / serbest meslek makbuzu — draft-first, like the rest of Korkut.
+
+    `amount` is the net (KDV hariç) figure and `vat_rate` the KDV percent; the gross is derived.
+    `status` tracks the lifecycle draft → issued → paid (or cancelled). Optionally filed under a
+    client and/or matter. Real e-SMM/e-fatura submission (GİB) is out of scope for now.
+    """
+
+    __tablename__ = "invoices"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id"), default=None, index=True
+    )
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0)  # net tutar (KDV hariç)
+    vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=20)  # KDV %
+    description: Mapped[str | None] = mapped_column(String(300), default=None)
+    status: Mapped[str] = mapped_column(String(16), default="draft")  # draft|issued|paid|cancelled
+    issued_at: Mapped[_date | None] = mapped_column(Date, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
+class Expense(Base):
+    """A case expense or advance (masraf/avans) — harç, posta, bilirkişi, yol, etc.
+
+    Optionally filed under a matter and/or client, so it can roll up into a client's account.
+    """
+
+    __tablename__ = "expenses"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    matter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("matters.id"), default=None, index=True
+    )
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id"), default=None, index=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0)
+    kind: Mapped[str | None] = mapped_column(String(40), default=None)  # harç, posta, bilirkişi…
+    description: Mapped[str | None] = mapped_column(String(300), default=None)
+    spent_at: Mapped[_date | None] = mapped_column(Date, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
 class AuthEvent(Base):
