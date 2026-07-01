@@ -633,8 +633,6 @@ def _member_public(u: User, *, self_id: int | None) -> dict:
 
 
 @app.get("/api/members")
-
-
 def list_members(korkut_session: str | None = Cookie(default=None)):
     """Members of the office (any member may view the roster)."""
     with session() as s:
