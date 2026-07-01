@@ -313,3 +313,30 @@ def test_tasks_crud_assign_and_filter(app_mod):
     c.delete(f"/api/tasks/{t['id']}")
     assert c.get("/api/tasks").json()["items"] == []
     assert c.patch("/api/tasks/99999", json={"status": "done"}).status_code == 404
+
+
+def test_evrak_register_crud_and_filter(app_mod):
+    c = _existing(app_mod)
+    mid = c.post("/api/matters", json={"title": "Dava"}).json()["id"]
+
+    d = c.post(
+        "/api/evrak",
+        json={
+            "matter_id": mid,
+            "direction": "incoming",
+            "title": "Tebligat",
+            "reference_no": "2026/123",
+            "doc_date": "2026-07-01",
+        },
+    ).json()
+    assert d["title"] == "Tebligat" and d["direction"] == "incoming"
+    assert d["reference_no"] == "2026/123" and d["doc_date"] == "2026-07-01"
+
+    c.post("/api/evrak", json={"direction": "outgoing", "title": "Cevap dilekçesi"})
+    assert len(c.get("/api/evrak").json()["items"]) == 2
+    assert len(c.get("/api/evrak?direction=incoming").json()["items"]) == 1
+    assert len(c.get(f"/api/evrak?matter_id={mid}").json()["items"]) == 1
+
+    c.delete(f"/api/evrak/{d['id']}")
+    assert len(c.get("/api/evrak").json()["items"]) == 1
+    assert c.post("/api/evrak", json={"title": "   "}).status_code == 400
