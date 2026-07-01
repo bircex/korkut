@@ -14,10 +14,36 @@ from datetime import time as _time
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api.models import Client, Conversation, Deadline, Document, Hearing, Matter
+from korkut.api.models import Client, Conversation, Deadline, Document, Hearing, Matter, User
 
 # Fields a caller may set on create/update (whitelist guards against arbitrary attribute writes).
 _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "status", "notes")
+
+
+# ---------- redaction support (Layer 4: exact PII the office stores) ----------
+
+
+def collect_known_entities(s: Session) -> list[tuple[str, str]]:
+    """Exact PII values the office already stores — for the redactor to mask deterministically
+    instead of guessing (see core.redactor Layer 4). Covers client identities (name, TCKN, phone,
+    e-mail, address), matter counterparties, and lawyer names. Returned as (value, kind) pairs; the
+    redactor dedupes and drops blanks. Collected office-wide so any stored party's PII is masked
+    wherever it appears in a cloud-bound prompt, not only the matter in context.
+    """
+    entities: list[tuple[str, str]] = []
+    for c in s.scalars(select(Client)):
+        entities.append((c.full_name, "PERSON"))
+        entities.append((c.national_id or "", "TCKN"))
+        entities.append((c.phone or "", "PHONE"))
+        entities.append((c.email or "", "EMAIL"))
+        entities.append((c.address or "", "ADDRESS"))
+    for counterparty in s.scalars(
+        select(Matter.counterparty).where(Matter.counterparty.is_not(None))
+    ):
+        entities.append((counterparty, "PERSON"))
+    for full_name in s.scalars(select(User.full_name).where(User.full_name.is_not(None))):
+        entities.append((full_name, "PERSON"))
+    return entities
 
 
 # ---------- parsing (tool args arrive as strings; endpoints may pass typed values) ----------

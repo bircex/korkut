@@ -37,6 +37,7 @@ def answer(
     handlers: dict | None = None,
     model_cfg: ModelCfg | None = None,
     extra_system: str | None = None,
+    known_entities: list[tuple[str, str]] | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured model.
 
@@ -46,6 +47,8 @@ def answer(
     `model_cfg`, when set, routes this turn to the office's own custom model instead of the
     built-in default. `extra_system` appends turn-specific guidance to the persona (e.g. the
     intake completeness gate before drafting) — kept in one system message for provider safety.
+    `known_entities` are exact (value, kind) PII pairs the office stores (clients, counterparties,
+    lawyers); the router masks them deterministically on cloud-bound text (redaction Layer 4).
     """
     router = single_model_router(model_cfg) if model_cfg is not None else get_router()
     tools = tool_registry.available_tools()
@@ -57,5 +60,11 @@ def answer(
         messages.extend(history)
     messages.append({"role": "user", "content": user_text})
     return router.respond(
-        specialty, "chat", messages, tools=tools, extra_tools=extra_tools, handlers=handlers
+        specialty,
+        "chat",
+        messages,
+        tools=tools,
+        extra_tools=extra_tools,
+        handlers=handlers,
+        known_entities=known_entities,
     )

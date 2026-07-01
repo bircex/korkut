@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from korkut.api import store
+from korkut.api import matters_store, store
 from korkut.api.models import Conversation, IntegrationThread, Message, User
 from korkut.brain import agent
 from korkut.integrations import identity
@@ -105,8 +105,15 @@ def handle(inbound: InboundMessage) -> str | None:
         conv_id = conv.id
         office_name = _office_name(s)
         model_cfg = store.office_model_cfg(s)
+        known_entities = matters_store.collect_known_entities(s)
 
-    reply = agent.answer(text, office_name=office_name, history=history, model_cfg=model_cfg)
+    reply = agent.answer(
+        text,
+        office_name=office_name,
+        history=history,
+        model_cfg=model_cfg,
+        known_entities=known_entities,
+    )
 
     with store.session() as s:
         conv = s.get(Conversation, conv_id)

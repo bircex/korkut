@@ -593,6 +593,7 @@ def test_chat_detects_contract_and_injects_contract_format(client):
         handlers=None,
         model_cfg=None,
         extra_system=None,
+        known_entities=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
@@ -666,6 +667,7 @@ def test_chat_auto_opens_canvas_for_document(client):
         handlers=None,
         model_cfg=None,
         extra_system=None,
+        known_entities=None,
     ):
         # Chat turn: Korkut decides this is a document task → calls the Canvas tool.
         if handlers and "dilekce_canvas" in handlers:
@@ -705,6 +707,7 @@ def test_chat_auto_detects_petition_type_and_injects_format(client):
         handlers=None,
         model_cfg=None,
         extra_system=None,
+        known_entities=None,
     ):
         if handlers and "dilekce_canvas" in handlers:
             handlers["dilekce_canvas"]({})
