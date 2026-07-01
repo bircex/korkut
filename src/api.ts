@@ -194,6 +194,32 @@ export type ClientPatch = {
   address?: string | null;
   date_of_birth?: string | null;
 };
+export type Invoice = {
+  id: number;
+  client_id: number | null;
+  matter_id: number | null;
+  amount: number;
+  vat_rate: number;
+  gross: number;
+  description: string | null;
+  status: string;
+  issued_at: string | null;
+};
+export type Expense = {
+  id: number;
+  matter_id: number | null;
+  client_id: number | null;
+  amount: number;
+  kind: string | null;
+  description: string | null;
+  spent_at: string | null;
+};
+export type FinanceSummary = {
+  invoiced: number;
+  paid: number;
+  outstanding: number;
+  expenses: number;
+};
 export type MatterBrief = {
   id: number;
   title: string;
@@ -376,6 +402,19 @@ export const api = {
     request<ClientBrief>("/api/clients", { method: "POST", body: JSON.stringify(input) }),
   updateClient: (id: number, patch: ClientPatch) =>
     request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  invoices: () => request<{ items: Invoice[] }>("/api/finance/invoices"),
+  createInvoice: (input: Partial<Invoice>) =>
+    request<Invoice>("/api/finance/invoices", { method: "POST", body: JSON.stringify(input) }),
+  updateInvoice: (id: number, patch: { status?: string; amount?: number }) =>
+    request<Invoice>(`/api/finance/invoices/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteInvoice: (id: number) =>
+    request<{ ok: boolean }>(`/api/finance/invoices/${id}`, { method: "DELETE" }),
+  expenses: () => request<{ items: Expense[] }>("/api/finance/expenses"),
+  createExpense: (input: Partial<Expense>) =>
+    request<Expense>("/api/finance/expenses", { method: "POST", body: JSON.stringify(input) }),
+  deleteExpense: (id: number) =>
+    request<{ ok: boolean }>(`/api/finance/expenses/${id}`, { method: "DELETE" }),
+  financeSummary: () => request<FinanceSummary>("/api/finance/summary"),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
