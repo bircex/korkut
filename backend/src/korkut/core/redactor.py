@@ -101,6 +101,25 @@ def _valid_tckn(value: str) -> bool:
     return ((odd * 7 - even) % 10) == d[9]
 
 
+def _valid_luhn(value: str) -> bool:
+    """Validate a card number by the Luhn checksum (spaces/dashes ignored)."""
+    digits = [int(c) for c in value if c.isdigit()]
+    if len(digits) < 13:
+        return False
+    checksum = 0
+    for i, d in enumerate(reversed(digits)):
+        if i % 2 == 1:
+            d *= 2
+            if d > 9:
+                d -= 9
+        checksum += d
+    return checksum % 10 == 0
+
+
+# Checksum validators keyed by detector kind (only run when `validate_checksum` is set).
+_VALIDATORS = {"TCKN": _valid_tckn, "CREDIT_CARD": _valid_luhn}
+
+
 class Redactor:
     def __init__(
         self,
@@ -162,7 +181,7 @@ class Redactor:
         spans: list[tuple[int, int, str, str]] = self._find_known(text)
         for kind, pattern, check in self._regex:
             for m in pattern.finditer(text):
-                if check and kind == "TCKN" and not _valid_tckn(m.group(0)):
+                if check and (v := _VALIDATORS.get(kind)) is not None and not v(m.group(0)):
                     continue
                 spans.append((m.start(), m.end(), kind, m.group(0)))
         spans.extend(self._find_persons(text))

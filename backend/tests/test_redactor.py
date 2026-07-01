@@ -33,6 +33,21 @@ def test_invalid_tckn_not_redacted():
     assert not any(k.startswith("[TCKN") for k in mapping)
 
 
+def test_redacts_landline_and_valid_credit_card():
+    out, mapping = redact("Sabit hat 02123456789, kart 4508 0345 0803 4509.")
+    assert "02123456789" not in out
+    assert "4508 0345 0803 4509" not in out
+    assert any(k.startswith("[LANDLINE") for k in mapping)
+    assert any(k.startswith("[CREDIT_CARD") for k in mapping)
+
+
+def test_luhn_invalid_card_not_redacted():
+    # A 16-digit number that fails the Luhn check is left alone (like an invalid TCKN).
+    out, mapping = redact("Numara 4508 0345 0803 4500 geçersiz.")
+    assert "4508 0345 0803 4500" in out
+    assert not any(k.startswith("[CREDIT_CARD") for k in mapping)
+
+
 def test_court_name_not_misdetected_as_person():
     # "Yargıtay ..." does not start with a known first name → not a PERSON.
     out, _ = redact("Yargıtay Hukuk Genel Kurulu kararı")
