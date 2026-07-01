@@ -4,9 +4,9 @@
 export const SITE = {
   url: "https://korkut.dev",
   name: "Korkut",
-  title: "Korkut — Hukuk büronuz için açık kaynak yapay zeka asistanı",
+  title: "Korkut — Avukatlar için açık kaynak yapay zeka asistanı",
   description:
-    "Korkut; içtihat ve mevzuat araştırması yapar, dilekçe taslakları hazırlar ve büronun yazışmalarını yürütür. Kendi sunucunuzda çalışır, veriler ofiste kalır. MIT lisanslı, açık kaynak.",
+    "Avukatlar ve hukuk büroları için Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve bütçeyi takip eder, yazışmaları yürütür. Kendi sunucunuzda çalışır, veriler ofiste kalır. MIT lisanslı, açık kaynak.",
   locale: "tr_TR",
   lang: "tr",
   author: "Recep Kızılarslan",
