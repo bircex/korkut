@@ -38,7 +38,7 @@ from pydantic import BaseModel
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from korkut.api import auth, extract, matter_tools, petitions, totp
+from korkut.api import auth, extract, office_tools, petitions, totp
 from korkut.api import finance_store as fin
 from korkut.api import matters_store as mstore
 from korkut.api import reports_store as reports
@@ -1810,8 +1810,10 @@ def _session_chat_impl(
     # Intent is the model's call, not a keyword gate: whether to draft (and thus whether to ask for
     # missing essentials first) is decided by the model via the dilekce_canvas tool contract — see
     # _CANVAS_TOOL. The document type is only inferred later, once a draft is actually chosen.
-    # Matter tools (dosya/müvekkil/duruşma) — built per request, closing over `user`.
-    m_tools, m_handlers = matter_tools.build_matter_tools(user)
+    # Office tools (dosya/müvekkil/takvim/mali/görev/evrak/rapor) — built per request, closing
+    # over `user`. Same toolset the messaging integrations use, so the agent can run the practice
+    # from any surface (create/read/update only; delete and account settings stay off-limits).
+    m_tools, m_handlers = office_tools.build_office_tools(user)
     reply = _safe_answer(
         text,
         office_name=office_name,

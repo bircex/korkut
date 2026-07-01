@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from korkut.api import matters_store, store
+from korkut.api import matters_store, office_tools, store
 from korkut.api.models import Conversation, IntegrationThread, Message, User
 from korkut.brain import resilience
 from korkut.integrations import identity
@@ -113,6 +113,10 @@ def handle(inbound: InboundMessage, *, on_event=None) -> str | None:
         persona_cfg = store.get_persona(s)
         memory = store.collect_memory(s)
 
+    # Same office toolset as the web chat, so an integration message can run the practice
+    # (create matters, log expenses, add meetings/tasks/evrak, pull reports) — create/read/update
+    # only; deletion and account settings are never exposed to the agent.
+    o_tools, o_handlers = office_tools.build_office_tools(user)
     # A model failure must still reach the sender — on a chat channel an unhandled exception is
     # silence. `guarded_answer` retries transient faults and turns the rest into a friendly
     # Turkish message (the SAME text the web app shows); we send that as the reply. The failure
@@ -123,6 +127,8 @@ def handle(inbound: InboundMessage, *, on_event=None) -> str | None:
             text,
             office_name=office_name,
             history=history,
+            extra_tools=o_tools,
+            handlers=o_handlers,
             model_cfg=model_cfg,
             known_entities=known_entities,
             persona_cfg=persona_cfg,
