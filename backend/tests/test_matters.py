@@ -262,3 +262,30 @@ def test_collect_memory_excludes_pending(app_mod):
         block = collect_memory(s)
     assert "Onaylı not" in block
     assert "Bekleyen öneri" not in block  # pending proposals never reach the model
+
+
+def test_finance_invoices_expenses_and_summary(app_mod):
+    c = _existing(app_mod)
+    cid = c.post("/api/clients", json={"full_name": "Ayşe Yıldız"}).json()["id"]
+
+    # Invoice: net 1000 + %20 KDV → gross 1200; issued so it counts toward the account.
+    inv = c.post(
+        "/api/finance/invoices",
+        json={"client_id": cid, "amount": 1000, "vat_rate": 20, "status": "issued"},
+    ).json()
+    assert inv["amount"] == 1000.0 and inv["gross"] == 1200.0 and inv["status"] == "issued"
+
+    c.post("/api/finance/expenses", json={"client_id": cid, "amount": 150, "kind": "harç"})
+
+    summ = c.get(f"/api/finance/summary?client_id={cid}").json()
+    assert summ == {"invoiced": 1000.0, "paid": 0.0, "outstanding": 1000.0, "expenses": 150.0}
+
+    # Mark paid → collected rises, outstanding clears.
+    c.patch(f"/api/finance/invoices/{inv['id']}", json={"status": "paid"})
+    summ2 = c.get(f"/api/finance/summary?client_id={cid}").json()
+    assert summ2["paid"] == 1000.0 and summ2["outstanding"] == 0.0
+
+    assert len(c.get(f"/api/finance/invoices?client_id={cid}").json()["items"]) == 1
+    c.delete(f"/api/finance/invoices/{inv['id']}")
+    assert c.get(f"/api/finance/invoices?client_id={cid}").json()["items"] == []
+    assert c.patch("/api/finance/invoices/99999", json={"status": "paid"}).status_code == 404
