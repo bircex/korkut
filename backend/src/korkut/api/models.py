@@ -103,6 +103,24 @@ class Persona(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
+class MemoryItem(Base):
+    """A durable note the office wants Korkut to keep in mind (the Hafıza UI).
+
+    Office-wide, manually curated knowledge — house preferences, standing facts, reminders —
+    injected into every prompt as context (and masked by the redactor for cloud calls, like any
+    other content). Not auto-extracted: the office adds these by hand, so nothing about a client is
+    remembered without a lawyer choosing to.
+    """
+
+    __tablename__ = "memory_items"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), default="note")  # "note" | "fact" | "preference"
+    text: Mapped[str] = mapped_column(Text)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)

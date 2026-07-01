@@ -44,6 +44,7 @@ from korkut.api.models import (
     DocumentVersion,
     IntegrationLink,
     Matter,
+    MemoryItem,
     Message,
     Office,
     OfficeChannel,
@@ -58,6 +59,7 @@ from korkut.api.models import (
     User,
 )
 from korkut.api.store import (
+    collect_memory,
     effective_theme,
     get_office,
     get_persona,
@@ -186,6 +188,11 @@ class PersonaBody(BaseModel):
     tone: str = ""
     expertise: str = ""
     extra_rules: str = ""
+
+
+class MemoryBody(BaseModel):
+    text: str
+    kind: str = "note"
 
 
 class ExportBody(BaseModel):
@@ -700,6 +707,55 @@ def save_persona(body: PersonaBody, korkut_session: str | None = Cookie(default=
         return _persona_public(row, can_edit=True)
 
 
+_MEMORY_KINDS = ("note", "fact", "preference")
+
+
+def _memory_public(row: MemoryItem) -> dict:
+    return {
+        "id": row.id,
+        "kind": row.kind,
+        "text": row.text,
+        "author": row.created_by_name,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+@app.get("/api/memory")
+def list_memory(korkut_session: str | None = Cookie(default=None)):
+    """The office's durable memory notes — shared office knowledge; any member may view."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = s.scalars(select(MemoryItem).order_by(MemoryItem.created_at.desc())).all()
+        return {"items": [_memory_public(r) for r in rows]}
+
+
+@app.post("/api/memory")
+def add_memory(body: MemoryBody, korkut_session: str | None = Cookie(default=None)):
+    """Add a durable note. Any member may add — it is the office's shared memory."""
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Not metni zorunludur.")
+    kind = body.kind if body.kind in _MEMORY_KINDS else "note"
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        row = MemoryItem(kind=kind, text=text, created_by=user.id, created_by_name=user.full_name)
+        s.add(row)
+        s.commit()
+        return _memory_public(row)
+
+
+@app.delete("/api/memory/{item_id}")
+def delete_memory(item_id: int, korkut_session: str | None = Cookie(default=None)):
+    """Remove a note from the office memory."""
+    with session() as s:
+        _require_user(s, korkut_session)
+        row = s.get(MemoryItem, item_id)
+        if row is not None:
+            s.delete(row)
+            s.commit()
+        return {"ok": True}
+
+
 @app.delete("/api/model")
 def delete_model(korkut_session: str | None = Cookie(default=None)):
     """Owner-only: remove the custom model → the office falls back to the built-in default."""
@@ -1154,6 +1210,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
         persona_cfg = get_persona(s)
+        memory = collect_memory(s)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -1216,6 +1273,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         model_cfg=model_cfg,
         known_entities=known_entities,
         persona_cfg=persona_cfg,
+        memory=memory,
     )
 
     with session() as s:
@@ -1340,6 +1398,7 @@ def session_upload(
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
         persona_cfg = get_persona(s)
+        memory = collect_memory(s)
 
     reply = _safe_answer(
         model_input,
@@ -1348,6 +1407,7 @@ def session_upload(
         model_cfg=model_cfg,
         known_entities=known_entities,
         persona_cfg=persona_cfg,
+        memory=memory,
     )
 
     with session() as s:
@@ -1987,6 +2047,7 @@ def _make_draft(
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
         persona_cfg = get_persona(s)
+        memory = collect_memory(s)
         # Effective theme: lawyer override > office override > built-in default.
         theme = effective_theme(s, user_id, petition_type) if petition_type and conv else None
     instr = (instruction or "").strip()
@@ -2020,6 +2081,7 @@ def _make_draft(
             model_cfg=model_cfg,
             known_entities=known_entities,
             persona_cfg=persona_cfg,
+            memory=memory,
         )
     )
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,

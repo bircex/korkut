@@ -154,6 +154,14 @@ export type PersonaData = {
 };
 export type PersonaInput = { tone: string; expertise: string; extra_rules: string };
 
+export type MemoryItem = {
+  id: number;
+  kind: string;
+  text: string;
+  author: string | null;
+  created_at: string | null;
+};
+
 // ---- matter domain (dosya / müvekkil / duruşma) ----
 export type Hearing = {
   id: number;
@@ -319,6 +327,14 @@ export const api = {
   getPersona: () => request<PersonaData>("/api/persona"),
   savePersona: (input: PersonaInput) =>
     request<PersonaData>("/api/persona", { method: "PUT", body: JSON.stringify(input) }),
+  listMemory: () => request<{ items: MemoryItem[] }>("/api/memory"),
+  addMemory: (text: string, kind: string) =>
+    request<MemoryItem>("/api/memory", {
+      method: "POST",
+      body: JSON.stringify({ text, kind }),
+    }),
+  deleteMemory: (id: number) =>
+    request<{ ok: boolean }>(`/api/memory/${id}`, { method: "DELETE" }),
   matters: (status?: string) =>
     request<{ items: MatterBrief[]; total: number }>(
       `/api/matters${status ? `?status=${encodeURIComponent(status)}` : ""}`,

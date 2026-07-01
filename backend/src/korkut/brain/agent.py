@@ -39,6 +39,7 @@ def answer(
     extra_system: str | None = None,
     known_entities: list[tuple[str, str]] | None = None,
     persona_cfg: PersonaCfg | None = None,
+    memory: str | None = None,
 ) -> str:
     """Answer a user message as Korkut, using tools + the configured model.
 
@@ -50,12 +51,15 @@ def answer(
     intake completeness gate before drafting) — kept in one system message for provider safety.
     `known_entities` are exact (value, kind) PII pairs the office stores (clients, counterparties,
     lawyers); the router masks them deterministically on cloud-bound text (redaction Layer 4).
+    `memory` is the office's durable notes block, appended to the system message as context.
     """
     router = single_model_router(model_cfg) if model_cfg is not None else get_router()
     tools = tool_registry.available_tools()
     system = build_persona(office_name, persona_cfg)
     if extra_system:
         system = f"{system}\n\n{extra_system}"
+    if memory:
+        system = f"{system}\n\nOfis hafızası (kalıcı notlar; dikkate al):\n{memory}"
     messages: list[dict] = [{"role": "system", "content": system}]
     if history:
         messages.extend(history)
