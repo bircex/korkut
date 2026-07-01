@@ -5,7 +5,7 @@ from datetime import date, datetime, time
 import pytest
 
 from korkut.api import matters_store as ms
-from korkut.api.models import Client, Hearing, Matter
+from korkut.api.models import CalendarEvent, Client, Matter
 
 
 def test_parse_date():
@@ -39,7 +39,14 @@ def test_shapers_never_leak_office_id():
     }
     assert "office_id" not in ms.client_brief(c)
 
-    h = Hearing(matter_id=2, date=date(2026, 7, 12), time=time(10, 30), type="ön inceleme")
+    h = CalendarEvent(
+        category="hearing",
+        matter_id=2,
+        title="Duruşma",
+        start_at=datetime(2026, 7, 12, 10, 30),
+        all_day=False,
+        type="ön inceleme",
+    )
     hb = ms.hearing_brief(h)
     assert hb["date"] == "2026-07-12" and hb["time"] == "10:30" and hb["type"] == "ön inceleme"
     assert "office_id" not in hb
@@ -54,7 +61,15 @@ def test_shapers_never_leak_office_id():
 def test_matter_detail_includes_hearings_and_client():
     m = Matter(title="Dosya", status="open")
     m.client = Client(full_name="Ayşe")
-    m.hearings = [Hearing(matter_id=1, date=date(2026, 1, 1))]
+    m.events = [
+        CalendarEvent(
+            category="hearing",
+            matter_id=1,
+            title="Duruşma",
+            start_at=datetime(2026, 1, 1),
+            all_day=True,
+        )
+    ]
     detail = ms.matter_detail(m)
     assert detail["client"]["full_name"] == "Ayşe"
     assert len(detail["hearings"]) == 1

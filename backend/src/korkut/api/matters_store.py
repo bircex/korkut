@@ -15,16 +15,19 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from korkut.api.models import (
+    CalendarEvent,
     Client,
     Conversation,
-    Deadline,
     Document,
     DocumentRecord,
-    Hearing,
     Matter,
     Task,
     User,
 )
+
+# Event categories that behave like a legal deadline (süre) vs. an attended event.
+_DEADLINE = "deadline"
+_HEARING = "hearing"
 
 # Fields a caller may set on create/update (whitelist guards against arbitrary attribute writes).
 _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "status", "notes")
@@ -83,6 +86,25 @@ def parse_time(value: object) -> _time | None:
     if isinstance(value, _time):
         return value
     return _time.fromisoformat(str(value).strip())
+
+
+def parse_datetime(value: object) -> datetime | None:
+    """Accept a datetime, a date, or an ISO string → datetime (or None).
+
+    A bare 'YYYY-MM-DD' becomes midnight; a full ISO timestamp keeps its time.
+    """
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, _date):
+        return datetime.combine(value, _time())
+    return datetime.fromisoformat(str(value).strip())
+
+
+def _combine(d: _date, t: _time | None) -> datetime:
+    """A date + optional time → datetime (midnight when the time is absent)."""
+    return datetime.combine(d, t or _time())
 
 
 # ---------- shapers (DTOs; never expose internal tenant identifiers) ----------
@@ -158,17 +180,43 @@ def list_document_records(
     return list(s.scalars(q))
 
 
-def hearing_brief(h: Hearing) -> dict:
+def hearing_brief(h: CalendarEvent) -> dict:
+    """Shape a hearing-category event into the legacy duruşma DTO (date + optional time)."""
     return {
         "id": h.id,
         "matter_id": h.matter_id,
-        "date": h.date.isoformat() if h.date else None,
-        "time": h.time.isoformat(timespec="minutes") if h.time else None,
+        "date": h.start_at.date().isoformat() if h.start_at else None,
+        "time": (
+            None if h.all_day or h.start_at is None else h.start_at.time().isoformat("minutes")
+        ),
         "location": h.location,
         "type": h.type,
         "result": h.result,
         "reminder_status": h.reminder_status,
         "notes": h.notes,
+    }
+
+
+def event_brief(e: CalendarEvent) -> dict:
+    """Full calendar DTO for the takvim UI — every field a calendar entry can carry."""
+    return {
+        "id": e.id,
+        "category": e.category,
+        "type": e.type,
+        "title": e.title,
+        "start_at": e.start_at.isoformat() if e.start_at else None,
+        "end_at": e.end_at.isoformat() if e.end_at else None,
+        "all_day": e.all_day,
+        "matter_id": e.matter_id,
+        "matter_title": e.matter.title if e.matter else None,
+        "client_id": e.client_id,
+        "client_name": e.client.full_name if e.client else None,
+        "assignee_id": e.assignee_id,
+        "assignee_name": e.assignee.full_name if e.assignee else None,
+        "location": e.location,
+        "status": e.status,
+        "result": e.result,
+        "notes": e.notes,
     }
 
 
@@ -187,11 +235,12 @@ def matter_brief(m: Matter) -> dict:
     }
 
 
-def deadline_brief(d: Deadline) -> dict:
+def deadline_brief(d: CalendarEvent) -> dict:
+    """Shape a deadline-category event into the legacy süre DTO (due_date)."""
     return {
         "id": d.id,
         "matter_id": d.matter_id,
-        "due_date": d.due_date.isoformat() if d.due_date else None,
+        "due_date": d.start_at.date().isoformat() if d.start_at else None,
         "title": d.title,
         "type": d.type,
         "status": d.status,
@@ -204,8 +253,8 @@ def matter_detail(m: Matter) -> dict:
         **matter_brief(m),
         "client": client_brief(m.client) if m.client else None,
         "notes": m.notes,
-        "hearings": [hearing_brief(h) for h in m.hearings],
-        "deadlines": [deadline_brief(d) for d in m.deadlines],
+        "hearings": [hearing_brief(e) for e in m.events if e.category == _HEARING],
+        "deadlines": [deadline_brief(e) for e in m.events if e.category == _DEADLINE],
     }
 
 
@@ -316,14 +365,18 @@ def add_hearing(
     location: str | None = None,
     type: str | None = None,
     notes: str | None = None,
-) -> Hearing | None:
+) -> CalendarEvent | None:
     m = get_matter(s, matter_id)
     if m is None:
         return None
-    h = Hearing(
+    day = parse_date(date)
+    clock = parse_time(time)
+    h = CalendarEvent(
+        category=_HEARING,
         matter_id=matter_id,
-        date=parse_date(date),
-        time=parse_time(time),
+        title=(type or "Duruşma"),
+        start_at=_combine(day, clock) if day else None,
+        all_day=clock is None,
         location=location,
         type=type,
         notes=notes,
@@ -333,14 +386,12 @@ def add_hearing(
     return h
 
 
-def upcoming_hearings(s: Session, days: int = 14) -> list[Hearing]:
+def upcoming_hearings(s: Session, days: int = 14) -> list[CalendarEvent]:
     """Upcoming hearings from today through today+days, soonest first (the lawyer's calendar)."""
-    today = datetime.now().date()
-    end = today + timedelta(days=days)
     stmt = (
-        select(Hearing)
-        .where(Hearing.date >= today, Hearing.date <= end)
-        .order_by(Hearing.date, Hearing.time)
+        select(CalendarEvent)
+        .where(CalendarEvent.category == _HEARING, *_window(days))
+        .order_by(CalendarEvent.start_at)
     )
     return list(s.scalars(stmt))
 
@@ -348,11 +399,11 @@ def upcoming_hearings(s: Session, days: int = 14) -> list[Hearing]:
 # ---------- deadlines (süre) ----------
 
 
-def list_deadlines(s: Session, matter_id: int | None = None) -> list[Deadline]:
-    stmt = select(Deadline)
+def list_deadlines(s: Session, matter_id: int | None = None) -> list[CalendarEvent]:
+    stmt = select(CalendarEvent).where(CalendarEvent.category == _DEADLINE)
     if matter_id is not None:
-        stmt = stmt.where(Deadline.matter_id == matter_id)
-    return list(s.scalars(stmt.order_by(Deadline.due_date)))
+        stmt = stmt.where(CalendarEvent.matter_id == matter_id)
+    return list(s.scalars(stmt.order_by(CalendarEvent.start_at)))
 
 
 def add_deadline(
@@ -363,14 +414,18 @@ def add_deadline(
     title: str,
     type: str | None = None,
     notes: str | None = None,
-) -> Deadline | None:
+) -> CalendarEvent | None:
     m = get_matter(s, matter_id)
     if m is None:
         return None
-    d = Deadline(
+    day = parse_date(due_date)
+    d = CalendarEvent(
+        category=_DEADLINE,
         matter_id=matter_id,
-        due_date=parse_date(due_date),
         title=title.strip(),
+        start_at=_combine(day, None) if day else None,
+        all_day=True,
+        status="pending",
         type=type,
         notes=notes,
     )
@@ -379,9 +434,9 @@ def add_deadline(
     return d
 
 
-def complete_deadline(s: Session, deadline_id: int) -> Deadline | None:
-    d = s.get(Deadline, deadline_id)
-    if d is None:
+def complete_deadline(s: Session, deadline_id: int) -> CalendarEvent | None:
+    d = s.get(CalendarEvent, deadline_id)
+    if d is None or d.category != _DEADLINE:
         return None
     d.status = "done"
     s.commit()
@@ -394,18 +449,140 @@ def upcoming_agenda(s: Session, days: int = 14) -> list[dict]:
     Each item is tagged with `kind` ("hearing"|"deadline") and a common `date` so the agent and UI
     can show one merged list of "yaklaşan duruşmalar/süreler".
     """
-    today = datetime.now().date()
-    end = today + timedelta(days=days)
     items: list[dict] = []
-    for h in s.scalars(select(Hearing).where(Hearing.date >= today, Hearing.date <= end)):
-        items.append({"kind": "hearing", "date": h.date.isoformat(), **hearing_brief(h)})
+    for h in s.scalars(
+        select(CalendarEvent).where(CalendarEvent.category == _HEARING, *_window(days))
+    ):
+        b = hearing_brief(h)
+        items.append({"kind": "hearing", "date": b["date"], **b})
     for d in s.scalars(
-        select(Deadline).where(
-            Deadline.status == "pending",
-            Deadline.due_date >= today,
-            Deadline.due_date <= end,
+        select(CalendarEvent).where(
+            CalendarEvent.category == _DEADLINE, CalendarEvent.status == "pending", *_window(days)
         )
     ):
-        items.append({"kind": "deadline", "date": d.due_date.isoformat(), **deadline_brief(d)})
-    items.sort(key=lambda x: (x["date"], x.get("time") or ""))
+        b = deadline_brief(d)
+        items.append({"kind": "deadline", "date": b["due_date"], **b})
+    items.sort(key=lambda x: (x["date"] or "", x.get("time") or ""))
     return items
+
+
+# ---------- calendar events (takvim) — the unified, all-category surface ----------
+
+
+def _window(days: int) -> tuple:
+    """SQL bounds covering today through the end of today+days (inclusive), for start_at."""
+    today = datetime.now().date()
+    lo = datetime.combine(today, _time())
+    hi = datetime.combine(today + timedelta(days=days + 1), _time())
+    return (CalendarEvent.start_at >= lo, CalendarEvent.start_at < hi)
+
+
+def list_events(
+    s: Session,
+    *,
+    start: object = None,
+    end: object = None,
+    category: str | None = None,
+    matter_id: int | None = None,
+    client_id: int | None = None,
+    assignee_id: int | None = None,
+) -> list[CalendarEvent]:
+    """Calendar events in an optional [start, end] datetime range, filtered as given."""
+    stmt = select(CalendarEvent)
+    lo, hi = parse_datetime(start), parse_datetime(end)
+    if lo is not None:
+        stmt = stmt.where(CalendarEvent.start_at >= lo)
+    if hi is not None:
+        stmt = stmt.where(CalendarEvent.start_at <= hi)
+    if category:
+        stmt = stmt.where(CalendarEvent.category == category)
+    if matter_id is not None:
+        stmt = stmt.where(CalendarEvent.matter_id == matter_id)
+    if client_id is not None:
+        stmt = stmt.where(CalendarEvent.client_id == client_id)
+    if assignee_id is not None:
+        stmt = stmt.where(CalendarEvent.assignee_id == assignee_id)
+    return list(s.scalars(stmt.order_by(CalendarEvent.start_at)))
+
+
+_EVENT_CATEGORIES = ("hearing", "deadline", "appointment", "reminder")
+
+
+def create_event(
+    s: Session,
+    *,
+    created_by: int | None,
+    category: str,
+    title: str,
+    start_at: object,
+    end_at: object = None,
+    all_day: bool = False,
+    type: str | None = None,
+    matter_id: int | None = None,
+    client_id: int | None = None,
+    assignee_id: int | None = None,
+    location: str | None = None,
+    notes: str | None = None,
+) -> CalendarEvent:
+    """Create any calendar event. Deadlines default to pending; others to planned."""
+    cat = category if category in _EVENT_CATEGORIES else "appointment"
+    e = CalendarEvent(
+        category=cat,
+        title=title.strip(),
+        start_at=parse_datetime(start_at),
+        end_at=parse_datetime(end_at),
+        all_day=all_day,
+        status="pending" if cat == _DEADLINE else "planned",
+        type=(type or "").strip() or None,
+        matter_id=matter_id,
+        client_id=client_id,
+        assignee_id=assignee_id,
+        location=(location or "").strip() or None,
+        notes=(notes or "").strip() or None,
+        created_by=created_by,
+    )
+    s.add(e)
+    s.commit()
+    return e
+
+
+# Fields a caller may patch on an event (whitelist; None means "clear", except title).
+_EVENT_FIELDS = (
+    "category",
+    "type",
+    "title",
+    "all_day",
+    "matter_id",
+    "client_id",
+    "assignee_id",
+    "location",
+    "status",
+    "result",
+    "notes",
+)
+
+
+def update_event(s: Session, event_id: int, **fields: object) -> CalendarEvent | None:
+    e = s.get(CalendarEvent, event_id)
+    if e is None:
+        return None
+    if "start_at" in fields:
+        parsed = parse_datetime(fields["start_at"])
+        if parsed is not None:
+            e.start_at = parsed
+    if "end_at" in fields:
+        e.end_at = parse_datetime(fields["end_at"])
+    for key, value in fields.items():
+        if key in _EVENT_FIELDS:
+            setattr(e, key, value)
+    s.commit()
+    return e
+
+
+def delete_event(s: Session, event_id: int) -> bool:
+    e = s.get(CalendarEvent, event_id)
+    if e is None:
+        return False
+    s.delete(e)
+    s.commit()
+    return True

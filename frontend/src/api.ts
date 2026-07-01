@@ -285,6 +285,38 @@ export type AgendaItem = {
   location?: string | null; // hearing
   status?: string; // deadline
 };
+export type CalendarEvent = {
+  id: number;
+  category: string; // hearing | deadline | appointment | reminder
+  type: string | null;
+  title: string;
+  start_at: string | null;
+  end_at: string | null;
+  all_day: boolean;
+  matter_id: number | null;
+  matter_title: string | null;
+  client_id: number | null;
+  client_name: string | null;
+  assignee_id: number | null;
+  assignee_name: string | null;
+  location: string | null;
+  status: string;
+  result: string | null;
+  notes: string | null;
+};
+export type CalendarEventInput = {
+  category: string;
+  title: string;
+  start_at: string;
+  end_at?: string | null;
+  all_day?: boolean;
+  type?: string | null;
+  matter_id?: number | null;
+  client_id?: number | null;
+  assignee_id?: number | null;
+  location?: string | null;
+  notes?: string | null;
+};
 export type MatterDocument = {
   id: number;
   conversation_id: number;
@@ -469,6 +501,32 @@ export const api = {
   deleteEvrak: (id: number) =>
     request<{ ok: boolean }>(`/api/evrak/${id}`, { method: "DELETE" }),
   reportsOverview: () => request<ReportsOverview>("/api/reports/overview"),
+  calendarEvents: (params?: {
+    start?: string;
+    end?: string;
+    category?: string;
+    matter_id?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params?.start) q.set("start", params.start);
+    if (params?.end) q.set("end", params.end);
+    if (params?.category) q.set("category", params.category);
+    if (params?.matter_id != null) q.set("matter_id", String(params.matter_id));
+    const qs = q.toString();
+    return request<{ items: CalendarEvent[] }>(`/api/calendar/events${qs ? `?${qs}` : ""}`);
+  },
+  createCalendarEvent: (input: CalendarEventInput) =>
+    request<CalendarEvent>("/api/calendar/events", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateCalendarEvent: (id: number, patch: Partial<CalendarEventInput> & { status?: string }) =>
+    request<CalendarEvent>(`/api/calendar/events/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  deleteCalendarEvent: (id: number) =>
+    request<{ ok: boolean }>(`/api/calendar/events/${id}`, { method: "DELETE" }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
