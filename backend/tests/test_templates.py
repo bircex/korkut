@@ -53,32 +53,22 @@ def _seed_default(engine, type_id="anlasmali-bosanma"):
 
 def test_resolution_default_office_user(engine):
     _seed_default(engine)
-    tid, office, user = "anlasmali-bosanma", 1, 7
+    tid, user = "anlasmali-bosanma", 7
     with Session(engine) as s:
         # default only
-        assert store.effective_theme(s, office, user, tid) == "DEFAULT"
-        # office override wins over default
-        s.add(TemplateOverride(office_id=office, user_id=None, type_id=tid, content="OFICE"))
+        assert store.effective_theme(s, user, tid) == "DEFAULT"
+        # office override (user_id IS NULL) wins over default
+        s.add(TemplateOverride(user_id=None, type_id=tid, content="OFICE"))
         s.commit()
-        assert store.effective_theme(s, office, user, tid) == "OFICE"
+        assert store.effective_theme(s, user, tid) == "OFICE"
         # personal override wins over office
         s.add(TemplateOverride(user_id=user, type_id=tid, content="BENIM"))
         s.commit()
-        assert store.effective_theme(s, office, user, tid) == "BENIM"
+        assert store.effective_theme(s, user, tid) == "BENIM"
         # None user_id skips the personal layer → office
-        assert store.effective_theme(s, office, None, tid) == "OFICE"
-
-
-def test_office_isolation(engine):
-    _seed_default(engine)
-    tid = "anlasmali-bosanma"
-    with Session(engine) as s:
-        s.add(TemplateOverride(office_id=1, user_id=None, type_id=tid, content="A-OFFICE"))
-        s.commit()
-        # Office 2 never sees office 1's override → falls back to default.
-        assert store.effective_theme(s, 2, 99, tid) == "DEFAULT"
+        assert store.effective_theme(s, None, tid) == "OFICE"
 
 
 def test_unknown_type_returns_none(engine):
     with Session(engine) as s:
-        assert store.effective_theme(s, 1, 1, "yok-boyle-tip") is None
+        assert store.effective_theme(s, 1, "yok-boyle-tip") is None

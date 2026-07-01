@@ -57,13 +57,11 @@ class WhatsAppConnector(Connector):
     def __init__(
         self,
         *,
-        office_id: int,
         base_url: str = _DEFAULT_BASE,
         token: str = "",
         cursor: str = "",
         api: ApiCall | None = None,
     ):
-        self._office_id = office_id
         self._base_url = base_url or _DEFAULT_BASE
         self._token = token
         self._cursor = cursor
@@ -71,10 +69,9 @@ class WhatsAppConnector(Connector):
         self._api = api or _default_api(self._base_url, token)
 
     @classmethod
-    def from_config(cls, office_id: int, config: dict[str, Any]) -> Self:
+    def from_config(cls, config: dict[str, Any]) -> Self:
         cursor = config.get("_cursor") or {}
         return cls(
-            office_id=office_id,
             base_url=config.get("base_url") or _DEFAULT_BASE,
             token=config.get("token", ""),
             cursor=str(cursor.get("after") or ""),
@@ -94,7 +91,6 @@ class WhatsAppConnector(Connector):
                 continue
             out.append(
                 InboundMessage(
-                    office_id=self._office_id,
                     channel=self.kind,
                     external_id=str(sender),
                     thread_id=str(msg.get("chat") or sender),

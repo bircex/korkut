@@ -1,16 +1,15 @@
 """Web-app data models — office users, shared chat sessions, 2FA, the matter domain, and audit.
 
 All models share `core.db.Base`, so `core.db.init_db(engine)` creates them in one metadata. The
-app is MULTI-TENANT: each `Office` is a tenant. A person self-registers an office (becoming its
-`owner`) and adds members; usernames stay globally unique so login is username+password.
+app is SINGLE-TENANT: there is one `Office`, a singleton identity row (id, name). The first person
+to register (becoming `owner`) names it and adds members; usernames stay globally unique so login
+is username+password.
 
 The matter domain (`Client`, `Matter`, `Hearing`) is the spine of the lawyer's work — research,
-drafts and hearings hang off a matter. It is office-scoped like every other table here and is
-exposed to the agent via `korkut.api.matter_tools`.
+drafts and hearings hang off a matter. It is exposed to the agent via `korkut.api.matter_tools`.
 
-Chat sessions are shared WITHIN an office: every member sees and can open every session
-(Conversation) belonging to their `office_id`, but never another office's. Messages belong to
-a Conversation, not to a single user.
+Chat sessions are shared: every member sees and can open every session (Conversation). Messages
+belong to a Conversation, not to a single user.
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ from korkut.core.db import Base
 
 
 class Office(Base):
-    """A law office — the tenant. Members share every session/document under their office."""
+    """The law office — a singleton identity row. Members share every session/document."""
 
     __tablename__ = "offices"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -46,8 +45,9 @@ class Office(Base):
 
 
 class StyleProfile(Base):
-    """A drafting-style profile for an office OR a single lawyer (exactly one of the FKs is set).
+    """A drafting-style profile for the office OR a single lawyer.
 
+    The office profile is the row with `user_id IS NULL`; a personal profile sets `user_id`.
     Two layers merge into a lawyer's effective style: deterministic blocks (`letterhead`,
     `signature`) override (lawyer wins over office) and are inserted into the document directly —
     never sent to the cloud, so names/addresses are exact and skip redaction. Generative text
@@ -57,9 +57,6 @@ class StyleProfile(Base):
 
     __tablename__ = "style_profiles"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int | None] = mapped_column(
-        ForeignKey("offices.id"), unique=True, default=None
-    )
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), unique=True, default=None)
     letterhead: Mapped[str] = mapped_column(Text, default="")  # antet (deterministik, üstte)
     signature: Mapped[str] = mapped_column(
@@ -71,17 +68,16 @@ class StyleProfile(Base):
 
 
 class OfficeModel(Base):
-    """An office's custom LLM, defined by the owner in Özelleştir (one row per office).
+    """The office's custom LLM, defined by the owner in Özelleştir (a singleton row).
 
-    When `enabled`, every chat/draft for the office routes to this model instead of the built-in
-    default. `is_local` True means the endpoint runs on-prem (Ollama etc.) → the router skips
-    redaction (data never leaves the machine); False means an external endpoint, so cloud-bound
-    text is still redacted. Any OpenAI-compatible Chat Completions endpoint works.
+    When `enabled`, every chat/draft routes to this model instead of the built-in default.
+    `is_local` True means the endpoint runs on-prem (Ollama etc.) → the router skips redaction
+    (data never leaves the machine); False means an external endpoint, so cloud-bound text is
+    still redacted. Any OpenAI-compatible Chat Completions endpoint works.
     """
 
     __tablename__ = "office_models"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), unique=True, index=True)
     enabled: Mapped[bool] = mapped_column(default=False)
     is_local: Mapped[bool] = mapped_column(default=False)
     model: Mapped[str] = mapped_column(String(200), default="")  # e.g. "llama-3.3-70b-versatile"
@@ -93,7 +89,6 @@ class OfficeModel(Base):
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
@@ -138,7 +133,6 @@ class Conversation(Base):
 
     __tablename__ = "conversations"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     # Optional link to a matter (dosya): a chat can belong to a case file. Null = unfiled.
     matter_id: Mapped[int | None] = mapped_column(
         ForeignKey("matters.id"), default=None, index=True
@@ -236,13 +230,13 @@ class TemplateDefault(Base):
 class TemplateOverride(Base):
     """An office- or lawyer-customized theme for one type. Never touched by the file sync.
 
-    Exactly one scope FK is set: `user_id` → personal override, `office_id` (with `user_id` NULL)
-    → office-wide override. Resolution order is user > office > default (see `effective_theme`).
+    The office override is the row with `user_id IS NULL` for a `type_id`; a personal override
+    sets `user_id`. Resolution order is user > office > default (see `effective_theme`).
     """
 
     __tablename__ = "template_overrides"
     __table_args__ = (
-        # One personal override per (user, type); one office override per (office, type).
+        # One personal override per (user, type).
         Index(
             "uq_tpl_override_user",
             "user_id",
@@ -251,19 +245,8 @@ class TemplateOverride(Base):
             sqlite_where=text("user_id IS NOT NULL"),
             postgresql_where=text("user_id IS NOT NULL"),
         ),
-        Index(
-            "uq_tpl_override_office",
-            "office_id",
-            "type_id",
-            unique=True,
-            sqlite_where=text("user_id IS NULL"),
-            postgresql_where=text("user_id IS NULL"),
-        ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int | None] = mapped_column(
-        ForeignKey("offices.id"), index=True, default=None
-    )
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
     type_id: Mapped[str] = mapped_column(String(80), index=True)
     content: Mapped[str] = mapped_column(Text, default="")
@@ -271,7 +254,7 @@ class TemplateOverride(Base):
 
 
 class OfficeChannel(Base):
-    """An office's credentials for one outbound channel (email now; Telegram/SMTP/… later).
+    """The office's credentials for one outbound channel (email now; Telegram/SMTP/… later).
 
     Generic by design: `config` is a JSON blob whose keys are channel-specific (e.g. email:
     from_address, from_name, app_password, host, port), so new integrations need no schema change.
@@ -279,9 +262,8 @@ class OfficeChannel(Base):
     """
 
     __tablename__ = "office_channels"
-    __table_args__ = (UniqueConstraint("office_id", "kind", name="uq_office_channel"),)
+    __table_args__ = (UniqueConstraint("kind", name="uq_office_channel"),)
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     kind: Mapped[str] = mapped_column(String(32))  # "email", "telegram", …
     enabled: Mapped[bool] = mapped_column(default=False)
     config: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -299,7 +281,6 @@ class OutboundMessage(Base):
 
     __tablename__ = "outbound_messages"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
     # Optional link to a matter (dosya): correspondence filed under a case file. Null = unfiled.
     matter_id: Mapped[int | None] = mapped_column(
@@ -334,7 +315,6 @@ class IntegrationLink(Base):
     __tablename__ = "integration_links"
     __table_args__ = (UniqueConstraint("channel", "external_id", name="uq_integration_external"),)
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     channel: Mapped[str] = mapped_column(String(32))  # "telegram" | "whatsapp" | "email"
     external_id: Mapped[str | None] = mapped_column(String(320), default=None, index=True)
@@ -353,7 +333,6 @@ class IntegrationThread(Base):
     __tablename__ = "integration_threads"
     __table_args__ = (UniqueConstraint("channel", "thread_id", name="uq_integration_thread"),)
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     channel: Mapped[str] = mapped_column(String(32))
     thread_id: Mapped[str] = mapped_column(String(190))
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
@@ -362,8 +341,8 @@ class IntegrationThread(Base):
 
 # ---------------- matter domain (dosya/dava omurgası) ----------------
 # The case file is the spine of a lawyer's work: research, drafts, hearings and correspondence
-# all hang off a Matter. Office-scoped like every other tenant table. Exposed to the agent via
-# korkut.api.matter_tools and to the UI via /api/matters.
+# all hang off a Matter. Exposed to the agent via korkut.api.matter_tools and to the UI via
+# /api/matters.
 
 
 class Client(Base):
@@ -371,7 +350,6 @@ class Client(Base):
 
     __tablename__ = "clients"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     full_name: Mapped[str] = mapped_column(String(200))
     national_id: Mapped[str | None] = mapped_column(String(11), default=None)
     phone: Mapped[str | None] = mapped_column(String(20), default=None)
@@ -390,7 +368,6 @@ class Matter(Base):
 
     __tablename__ = "matters"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     title: Mapped[str] = mapped_column(String(200))
     client_id: Mapped[int | None] = mapped_column(
@@ -420,7 +397,6 @@ class Hearing(Base):
 
     __tablename__ = "hearings"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
     date: Mapped[_date] = mapped_column(Date, index=True)
     time: Mapped[_time | None] = mapped_column(Time, default=None)  # fixed: was Date in old schema
@@ -443,7 +419,6 @@ class Deadline(Base):
 
     __tablename__ = "deadlines"
     id: Mapped[int] = mapped_column(primary_key=True)
-    office_id: Mapped[int] = mapped_column(ForeignKey("offices.id"), index=True)
     matter_id: Mapped[int] = mapped_column(ForeignKey("matters.id"), index=True)
     due_date: Mapped[_date] = mapped_column(Date, index=True)
     title: Mapped[str] = mapped_column(String(200))

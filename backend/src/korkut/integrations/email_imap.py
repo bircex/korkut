@@ -69,7 +69,6 @@ class EmailConnector(Connector):
     def __init__(
         self,
         *,
-        office_id: int,
         imap_host: str,
         imap_port: int,
         imap_user: str,
@@ -77,7 +76,6 @@ class EmailConnector(Connector):
         out_channel: Channel,
         imap_factory: Callable[[], Any] | None = None,
     ):
-        self._office_id = office_id
         self._imap_host = imap_host
         self._imap_port = imap_port
         self._imap_user = imap_user
@@ -86,9 +84,8 @@ class EmailConnector(Connector):
         self._imap_factory = imap_factory or _default_imap_factory(imap_host, imap_port)
 
     @classmethod
-    def from_config(cls, office_id: int, config: dict[str, Any]) -> Self:
+    def from_config(cls, config: dict[str, Any]) -> Self:
         return cls(
-            office_id=office_id,
             imap_host=config.get("imap_host") or _DEFAULT_IMAP_HOST,
             imap_port=int(config.get("imap_port") or _DEFAULT_IMAP_PORT),
             imap_user=config.get("imap_user") or config.get("from_address", ""),
@@ -129,7 +126,6 @@ class EmailConnector(Connector):
                 addr = sender_addr.lower()
                 out.append(
                     InboundMessage(
-                        office_id=self._office_id,
                         channel=self.kind,
                         external_id=addr,
                         thread_id=addr,

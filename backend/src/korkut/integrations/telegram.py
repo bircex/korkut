@@ -51,18 +51,16 @@ def _sender_name(frm: dict[str, Any]) -> str:
 class TelegramConnector(Connector):
     kind = "telegram"
 
-    def __init__(self, *, office_id: int, token: str, offset: int = 0, api: ApiCall | None = None):
-        self._office_id = office_id
+    def __init__(self, *, token: str, offset: int = 0, api: ApiCall | None = None):
         self._token = token
         self._offset = offset
         self._start_offset = offset
         self._api = api or _default_api(token)
 
     @classmethod
-    def from_config(cls, office_id: int, config: dict[str, Any]) -> Self:
+    def from_config(cls, config: dict[str, Any]) -> Self:
         cursor = config.get("_cursor") or {}
         return cls(
-            office_id=office_id,
             token=config.get("bot_token", ""),
             offset=int(cursor.get("offset") or 0),
         )
@@ -94,7 +92,6 @@ class TelegramConnector(Connector):
                 continue
             out.append(
                 InboundMessage(
-                    office_id=self._office_id,
                     channel=self.kind,
                     external_id=str(frm["id"]),
                     thread_id=str(chat["id"]),

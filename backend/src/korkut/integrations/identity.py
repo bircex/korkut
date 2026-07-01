@@ -12,8 +12,7 @@ gateway will act on a message it must know *which lawyer* sent it. That mapping 
 3. **Resolve** — every later inbound is authenticated by `resolve` (active link lookup).
 
 Codes are short and one-time; a pending link expires (`_CODE_TTL`) so a leaked code is useless
-after a few minutes. Binding is also scoped to the office whose connector received the message,
-so a code can only ever activate within its own tenant.
+after a few minutes.
 """
 
 from __future__ import annotations
@@ -44,7 +43,7 @@ def _gen_code() -> str:
     return "".join(secrets.choice(_ALPHABET) for _ in range(_CODE_LEN))
 
 
-def generate_code(s: Session, office_id: int, user_id: int, channel: str) -> str:
+def generate_code(s: Session, user_id: int, channel: str) -> str:
     """Create (or refresh) a pending link for this user+channel and return its one-time code.
 
     Re-issuing replaces any earlier pending code for the same user+channel, so a lawyer who lost
@@ -59,9 +58,7 @@ def generate_code(s: Session, office_id: int, user_id: int, channel: str) -> str
     )
     code = _gen_code()
     if pending is None:
-        pending = IntegrationLink(
-            office_id=office_id, user_id=user_id, channel=channel, status="pending"
-        )
+        pending = IntegrationLink(user_id=user_id, channel=channel, status="pending")
         s.add(pending)
     pending.code = code
     pending.created_at = _utcnow()
@@ -85,9 +82,9 @@ def resolve(s: Session, channel: str, external_id: str) -> User | None:
     return s.get(User, link.user_id)
 
 
-def try_bind(s: Session, office_id: int, channel: str, external_id: str, text: str) -> User | None:
-    """If `text` carries a valid, unexpired pending code for this office+channel, activate the
-    link to `external_id` and return the bound `User`. Returns None when there is nothing to bind.
+def try_bind(s: Session, channel: str, external_id: str, text: str) -> User | None:
+    """If `text` carries a valid, unexpired pending code for this channel, activate the link to
+    `external_id` and return the bound `User`. Returns None when there is nothing to bind.
     """
     m = _BIND_RE.search(text or "")
     if not m:
@@ -95,7 +92,6 @@ def try_bind(s: Session, office_id: int, channel: str, external_id: str, text: s
     code = m.group(1).upper()
     link = s.scalar(
         select(IntegrationLink).where(
-            IntegrationLink.office_id == office_id,
             IntegrationLink.channel == channel,
             IntegrationLink.status == "pending",
             IntegrationLink.code == code,

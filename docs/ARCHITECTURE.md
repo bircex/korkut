@@ -1,6 +1,6 @@
 # Architecture
 
-Korkut is a self-hosted, multi-tenant AI assistant for Turkish law offices. It is a single
+Korkut is a self-hosted, single-tenant AI assistant for a Turkish law office. It is a single
 FastAPI web app that serves a React SPA, runs an agent over live legal-database tools, and keeps
 each office's data on the office's own machine.
 
@@ -13,7 +13,7 @@ Browser (React SPA)
       │  /api/*
       ▼
 FastAPI app (korkut.api.app)
-      ├─ auth + mandatory TOTP 2FA, per-office (tenant) scoping
+      ├─ auth + mandatory TOTP 2FA (single office per install)
       ├─ matters / clients / hearings / deadlines  (the case-file domain)
       ├─ chat  ──►  brain.agent.answer(...)
       │                 ├─ persona (per office)
@@ -25,12 +25,14 @@ FastAPI app (korkut.api.app)
 SQLite (trial) or Postgres (production)  +  config/ + templates/
 ```
 
-## Multi-tenancy
+## One office per install
 
-Every office is a tenant. A person self-registers an office (becoming its `owner`) and adds members;
-usernames are globally unique. Every domain row carries an `office_id`, and every query filters by
-it — one office never sees another's data. This is enforced in the data-access layer
-(`api/matters_store.py`, `api/store.py`) and covered by isolation tests.
+Korkut is single-tenant: each self-hosted install serves exactly one law office. The first person to
+register creates that office and becomes its `owner`; the owner then adds members (usernames are
+unique). Registration is a one-time bootstrap — once the office exists, `/api/register` returns 409 and
+further users are added by the owner. Domain rows carry no `office_id`: everything belongs to the one
+office, so the data-access layer (`api/matters_store.py`, `api/store.py`) is office-implicit. `Office`
+remains as a singleton identity row (its name drives the persona) and `User.role` is `owner`/`member`.
 
 ## The matter-centric domain
 

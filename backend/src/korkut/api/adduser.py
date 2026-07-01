@@ -1,11 +1,11 @@
-"""Create or update an office user — an admin path alongside in-app self-registration.
+"""Create or update a user — an admin path alongside in-app self-registration.
 
-Multi-tenant: a user belongs to an Office (tenant). Pass --office to place them in a specific
-office (created if new); the first user of an office becomes its owner.
+Single-tenant: there is one Office (a singleton identity row). The first bootstrap names it (from
+--office or a default); the first user created becomes the owner, later users are members.
 
 Usage:
     python -m web.adduser <username> --office "Örnek Hukuk" --name "Ad Soyad"  # prompts for pw
-    python -m web.adduser <username> --password <pw> --name "Ad Soyad"  # office: "<user> ofisi"
+    python -m web.adduser <username> --password <pw> --name "Ad Soyad"  # default office name
     python -m web.adduser <username> --disable                # deactivate + revoke sessions
     python -m web.adduser <username> --reset-2fa              # force fresh 2FA enrolment
     python -m web.adduser <username> --unlock                 # clear a brute-force lockout
@@ -34,8 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--office",
         default=None,
-        help="office (tenant) name; reused if it exists, else created. "
-        "Defaults to '<username> ofisi'. The first user of an office is its owner.",
+        help="office name; used only on first bootstrap to name the singleton office "
+        "(ignored afterwards). Defaults to '<username> ofisi'. The first user is the owner.",
     )
     p.add_argument("--disable", action="store_true", help="deactivate this user + revoke sessions")
     p.add_argument("--reset-2fa", action="store_true", help="clear 2FA so the user re-enrols")
@@ -83,17 +83,19 @@ def main(argv: list[str] | None = None) -> int:
             action = "güncellendi"
             office_name = None
         else:
-            office_name = (args.office or f"{username} ofisi").strip()
-            office = s.scalar(select(Office).where(Office.name == office_name))
+            # Bootstrap the singleton office on first run; --office only names it then.
+            office = s.scalar(select(Office))
             if office is None:
+                office_name = (args.office or f"{username} ofisi").strip()
                 office = Office(name=office_name[:200])
                 s.add(office)
                 s.flush()
-            # First user of an office owns it; later members join as "member".
-            has_members = s.scalar(select(User).where(User.office_id == office.id)) is not None
+            else:
+                office_name = office.name
+            # First user overall owns the office; later users join as "member".
+            has_members = s.scalar(select(User)) is not None
             s.add(
                 User(
-                    office_id=office.id,
                     role="member" if has_members else "owner",
                     username=username,
                     full_name=args.name,

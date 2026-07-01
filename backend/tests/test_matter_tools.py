@@ -1,8 +1,8 @@
 """Agent-tool tests for the matter domain — the per-request handler factory.
 
-Builds `matter_tools.build_matter_tools(user)` against a seeded two-office DB and exercises the
-handlers the model would call. Asserts writes land, office scoping holds (one office never sees
-another's data), and bad input degrades to a structured error (never an exception).
+Builds `matter_tools.build_matter_tools(user)` against a seeded single-office DB and exercises the
+handlers the model would call. Asserts writes land and bad input degrades to a structured error
+(never an exception).
 """
 
 import importlib
@@ -13,7 +13,7 @@ import pytest
 
 @pytest.fixture
 def seeded(tmp_path, monkeypatch):
-    """A fresh DB with two offices, each with one user. Yields (store, userA, userB)."""
+    """A fresh DB with the single office + one user. Yields (store, user)."""
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
     import korkut.api.store as store_mod
 
@@ -22,17 +22,15 @@ def seeded(tmp_path, monkeypatch):
 
     store_mod.engine()
     with store_mod.session() as s:
-        oa, ob = Office(name="A"), Office(name="B")
-        s.add_all([oa, ob])
+        office = Office(name="A")
+        s.add(office)
         s.flush()
-        ua = User(office_id=oa.id, username="a", password_hash="x", role="owner")
-        ub = User(office_id=ob.id, username="b", password_hash="x", role="owner")
-        s.add_all([ua, ub])
+        ua = User(username="a", password_hash="x", role="owner")
+        s.add(ua)
         s.commit()
-        # Lightweight stand-ins (the factory only reads office_id + id).
-        user_a = types.SimpleNamespace(office_id=oa.id, id=ua.id)
-        user_b = types.SimpleNamespace(office_id=ob.id, id=ub.id)
-    return store_mod, user_a, user_b
+        # Lightweight stand-in (the factory only reads id).
+        user_a = types.SimpleNamespace(id=ua.id)
+    return store_mod, user_a
 
 
 def _tools(user):
@@ -43,7 +41,7 @@ def _tools(user):
 
 
 def test_create_list_get_hearing(seeded):
-    _, user_a, _ = seeded
+    _, user_a = seeded
     h = _tools(user_a)
 
     r = h["create_matter"]({"title": "Ahmet Y. – Boşanma", "client_name": "Ahmet Yılmaz"})
@@ -66,29 +64,15 @@ def test_create_list_get_hearing(seeded):
 
 
 def test_client_dedup_on_create(seeded):
-    _, user_a, _ = seeded
+    _, user_a = seeded
     h = _tools(user_a)
     h["create_matter"]({"title": "Dosya 1", "client_name": "Ayşe Demir"})
     h["create_matter"]({"title": "Dosya 2", "client_name": "ayşe demir"})  # same name, diff case
     assert h["list_clients"]({})["count"] == 1  # one client, reused
 
 
-def test_office_isolation(seeded):
-    _, user_a, user_b = seeded
-    ha, hb = _tools(user_a), _tools(user_b)
-    mid = ha["create_matter"]({"title": "Gizli"})["matter"]["id"]
-
-    assert hb["list_matters"]({})["count"] == 0
-    assert hb["get_matter"]({"matter_id": mid}) == {
-        "error": "not_found",
-        "detail": "Dosya bulunamadı.",
-    }
-    assert hb["add_hearing"]({"matter_id": mid, "date": "2099-01-01"})["ok"] is False
-    assert hb["update_matter"]({"matter_id": mid, "status": "closed"})["ok"] is False
-
-
 def test_error_paths_never_raise(seeded):
-    _, user_a, _ = seeded
+    _, user_a = seeded
     h = _tools(user_a)
     assert h["create_matter"]({"title": "   "})["ok"] is False
     assert h["get_matter"]({"matter_id": 9999})["error"] == "not_found"
@@ -99,7 +83,7 @@ def test_error_paths_never_raise(seeded):
 def test_upcoming_agenda_merges_hearings_and_deadlines(seeded):
     from datetime import date, timedelta
 
-    _, user_a, _ = seeded
+    _, user_a = seeded
     h = _tools(user_a)
     mid = h["create_matter"]({"title": "D"})["matter"]["id"]
     soon = (date.today() + timedelta(days=3)).isoformat()
@@ -125,14 +109,14 @@ def test_upcoming_agenda_merges_hearings_and_deadlines(seeded):
 def test_documents_linked_and_prepare_hearing(seeded):
     from datetime import date, timedelta
 
-    store_mod, user_a, _ = seeded
+    store_mod, user_a = seeded
     from korkut.api.models import Conversation, Document
 
     h = _tools(user_a)
     mid = h["create_matter"]({"title": "Dosya"})["matter"]["id"]
     # A draft in a conversation filed under the matter → should surface as the matter's document.
     with store_mod.session() as s:
-        conv = Conversation(office_id=user_a.office_id, matter_id=mid, title="Sohbet")
+        conv = Conversation(matter_id=mid, title="Sohbet")
         s.add(conv)
         s.flush()
         s.add(
@@ -154,28 +138,27 @@ def test_documents_linked_and_prepare_hearing(seeded):
     assert [d["title"] for d in pack["matter"]["documents"]] == ["Dava Dilekçesi"]
 
 
-def test_prepare_hearing_isolation(seeded):
-    _, user_a, user_b = seeded
-    ha, hb = _tools(user_a), _tools(user_b)
-    mid = ha["create_matter"]({"title": "G"})["matter"]["id"]
-    assert hb["prepare_hearing"]({"matter_id": mid}) == {
+def test_prepare_hearing_not_found(seeded):
+    _, user_a = seeded
+    ha = _tools(user_a)
+    assert ha["prepare_hearing"]({"matter_id": 9999}) == {
         "error": "not_found",
         "detail": "Dosya bulunamadı.",
     }
 
 
-def test_deadline_isolation_and_errors(seeded):
-    _, user_a, user_b = seeded
-    ha, hb = _tools(user_a), _tools(user_b)
+def test_deadline_not_found_and_errors(seeded):
+    _, user_a = seeded
+    ha = _tools(user_a)
     mid = ha["create_matter"]({"title": "G"})["matter"]["id"]
-    did = ha["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "S"})[
-        "deadline"
-    ]["id"]
+    # A deadline on a nonexistent matter fails.
     assert (
-        hb["add_deadline"]({"matter_id": mid, "due_date": "2099-01-01", "title": "X"})["ok"]
+        ha["add_deadline"]({"matter_id": 9999, "due_date": "2099-01-01", "title": "X"})["ok"]
         is False
     )
-    assert hb["complete_deadline"]({"deadline_id": did})["ok"] is False
+    # Completing a nonexistent deadline fails.
+    assert ha["complete_deadline"]({"deadline_id": 9999})["ok"] is False
+    # Bad date / blank title degrade to a structured error.
     assert (
         ha["add_deadline"]({"matter_id": mid, "due_date": "kötü tarih", "title": "S"})["ok"]
         is False
