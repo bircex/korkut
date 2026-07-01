@@ -220,6 +220,16 @@ export type FinanceSummary = {
   outstanding: number;
   expenses: number;
 };
+export type Task = {
+  id: number;
+  title: string;
+  description: string | null;
+  assignee_id: number | null;
+  assignee_name: string | null;
+  matter_id: number | null;
+  status: string;
+  due_date: string | null;
+};
 export type MatterBrief = {
   id: number;
   title: string;
@@ -415,6 +425,17 @@ export const api = {
   deleteExpense: (id: number) =>
     request<{ ok: boolean }>(`/api/finance/expenses/${id}`, { method: "DELETE" }),
   financeSummary: () => request<FinanceSummary>("/api/finance/summary"),
+  tasks: (status?: string) =>
+    request<{ items: Task[] }>(`/api/tasks${status ? `?status=${status}` : ""}`),
+  createTask: (input: {
+    title: string;
+    assignee_id?: number | null;
+    due_date?: string | null;
+  }) => request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(input) }),
+  updateTask: (id: number, patch: { status?: string; assignee_id?: number | null }) =>
+    request<Task>(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteTask: (id: number) =>
+    request<{ ok: boolean }>(`/api/tasks/${id}`, { method: "DELETE" }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",

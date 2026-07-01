@@ -57,6 +57,7 @@ from korkut.api.models import (
     ProposedEdit,
     RecoveryCode,
     StyleProfile,
+    Task,
     TemplateDefault,
     TemplateOverride,
     User,
@@ -312,6 +313,23 @@ class ExpenseBody(BaseModel):
     kind: str | None = None
     description: str | None = None
     spent_at: str | None = None
+
+
+class TaskBody(BaseModel):
+    title: str
+    description: str | None = None
+    assignee_id: int | None = None
+    matter_id: int | None = None
+    due_date: str | None = None
+
+
+class TaskUpdateBody(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    assignee_id: int | None = None
+    matter_id: int | None = None
+    status: str | None = None
+    due_date: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -1415,6 +1433,82 @@ def finance_summary_ep(
     with session() as s:
         _require_user(s, korkut_session)
         return fin.summary(s, client_id=client_id)
+
+
+# ---------------- tasks (görev atama) ----------------
+
+
+@app.get("/api/tasks")
+def list_tasks_ep(
+    status: str | None = None,
+    assignee_id: int | None = None,
+    matter_id: int | None = None,
+    korkut_session: str | None = Cookie(default=None),
+):
+    with session() as s:
+        _require_user(s, korkut_session)
+        rows = mstore.list_tasks(s, status=status, assignee_id=assignee_id, matter_id=matter_id)
+        return {"items": [mstore.task_brief(t) for t in rows]}
+
+
+@app.post("/api/tasks")
+def create_task_ep(body: TaskBody, korkut_session: str | None = Cookie(default=None)):
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Görev başlığı zorunludur.")
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        t = Task(
+            title=title,
+            description=(body.description or "").strip() or None,
+            assignee_id=body.assignee_id,
+            matter_id=body.matter_id,
+            due_date=mstore.parse_date(body.due_date),
+            created_by=user.id,
+        )
+        s.add(t)
+        s.commit()
+        return mstore.task_brief(t)
+
+
+@app.patch("/api/tasks/{task_id}")
+def update_task_ep(
+    task_id: int, body: TaskUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        _require_user(s, korkut_session)
+        t = s.get(Task, task_id)
+        if t is None:
+            raise HTTPException(status_code=404, detail="Görev bulunamadı")
+        if "title" in fields:
+            title = (fields["title"] or "").strip()
+            if not title:
+                raise HTTPException(status_code=400, detail="Görev başlığı zorunludur.")
+            t.title = title
+        if "description" in fields:
+            t.description = (fields["description"] or "").strip() or None
+        if "assignee_id" in fields:
+            t.assignee_id = fields["assignee_id"]
+        if "matter_id" in fields:
+            t.matter_id = fields["matter_id"]
+        if "due_date" in fields:
+            t.due_date = mstore.parse_date(fields["due_date"])
+        if "status" in fields and fields["status"] in ("open", "done"):
+            t.status = fields["status"]
+        s.commit()
+        return mstore.task_brief(t)
+
+
+@app.delete("/api/tasks/{task_id}")
+def delete_task_ep(task_id: int, korkut_session: str | None = Cookie(default=None)):
+    with session() as s:
+        _require_user(s, korkut_session)
+        t = s.get(Task, task_id)
+        if t is not None:
+            s.delete(t)
+            s.commit()
+        return {"ok": True}
 
 
 @app.post("/api/sessions/{cid}/chat")

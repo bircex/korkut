@@ -289,3 +289,27 @@ def test_finance_invoices_expenses_and_summary(app_mod):
     c.delete(f"/api/finance/invoices/{inv['id']}")
     assert c.get(f"/api/finance/invoices?client_id={cid}").json()["items"] == []
     assert c.patch("/api/finance/invoices/99999", json={"status": "paid"}).status_code == 404
+
+
+def test_tasks_crud_assign_and_filter(app_mod):
+    c = _existing(app_mod)
+    me = next(m for m in c.get("/api/members").json() if m["username"] == "avukat")
+
+    t = c.post(
+        "/api/tasks",
+        json={"title": "Cevap dilekçesi yaz", "assignee_id": me["id"], "due_date": "2026-08-01"},
+    ).json()
+    assert t["title"] == "Cevap dilekçesi yaz"
+    assert t["assignee_name"] == "Av. Test" and t["status"] == "open"
+    assert t["due_date"] == "2026-08-01"
+
+    assert len(c.get("/api/tasks?status=open").json()["items"]) == 1
+
+    done = c.patch(f"/api/tasks/{t['id']}", json={"status": "done"}).json()
+    assert done["status"] == "done"
+    assert c.get("/api/tasks?status=open").json()["items"] == []
+    assert len(c.get("/api/tasks").json()["items"]) == 1
+
+    c.delete(f"/api/tasks/{t['id']}")
+    assert c.get("/api/tasks").json()["items"] == []
+    assert c.patch("/api/tasks/99999", json={"status": "done"}).status_code == 404

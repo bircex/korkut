@@ -14,7 +14,16 @@ from datetime import time as _time
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from korkut.api.models import Client, Conversation, Deadline, Document, Hearing, Matter, User
+from korkut.api.models import (
+    Client,
+    Conversation,
+    Deadline,
+    Document,
+    Hearing,
+    Matter,
+    Task,
+    User,
+)
 
 # Fields a caller may set on create/update (whitelist guards against arbitrary attribute writes).
 _MATTER_FIELDS = ("title", "file_no", "court", "case_type", "counterparty", "status", "notes")
@@ -88,6 +97,36 @@ def client_brief(c: Client) -> dict:
         "address": c.address,
         "date_of_birth": c.date_of_birth.isoformat() if c.date_of_birth else None,
     }
+
+
+def task_brief(t: Task) -> dict:
+    return {
+        "id": t.id,
+        "title": t.title,
+        "description": t.description,
+        "assignee_id": t.assignee_id,
+        "assignee_name": t.assignee.full_name if t.assignee else None,
+        "matter_id": t.matter_id,
+        "status": t.status,
+        "due_date": t.due_date.isoformat() if t.due_date else None,
+    }
+
+
+def list_tasks(
+    s: Session,
+    status: str | None = None,
+    assignee_id: int | None = None,
+    matter_id: int | None = None,
+) -> list[Task]:
+    """Tasks ordered by due date (undated last), then newest first; filtered as given."""
+    q = select(Task).order_by(Task.due_date.is_(None), Task.due_date, Task.created_at.desc())
+    if status:
+        q = q.where(Task.status == status)
+    if assignee_id is not None:
+        q = q.where(Task.assignee_id == assignee_id)
+    if matter_id is not None:
+        q = q.where(Task.matter_id == matter_id)
+    return list(s.scalars(q))
 
 
 def hearing_brief(h: Hearing) -> dict:
