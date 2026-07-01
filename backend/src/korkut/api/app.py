@@ -266,6 +266,16 @@ class ClientBody(BaseModel):
     phone: str | None = None
     email: str | None = None
     address: str | None = None
+    date_of_birth: str | None = None  # ISO or dd.mm.yyyy
+
+
+class ClientUpdateBody(BaseModel):
+    full_name: str | None = None
+    national_id: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    date_of_birth: str | None = None
 
 
 # ---------------- helpers ----------------
@@ -1184,8 +1194,34 @@ def create_client_ep(body: ClientBody, korkut_session: str | None = Cookie(defau
             phone=body.phone,
             email=body.email,
             address=body.address,
+            date_of_birth=mstore.parse_date(body.date_of_birth),
         )
         s.add(c)
+        s.commit()
+        return mstore.client_brief(c)
+
+
+@app.patch("/api/clients/{client_id}")
+def update_client_ep(
+    client_id: int, body: ClientUpdateBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Update a client's PII (only the fields sent). Feeds the redactor's known-entity layer."""
+    fields = body.model_dump(exclude_unset=True)
+    with session() as s:
+        _require_user(s, korkut_session)
+        c = s.get(Client, client_id)
+        if c is None:
+            raise HTTPException(status_code=404, detail="Müvekkil bulunamadı")
+        if "full_name" in fields:
+            name = (fields["full_name"] or "").strip()
+            if not name:
+                raise HTTPException(status_code=400, detail="Müvekkil adı zorunludur.")
+            c.full_name = name
+        if "date_of_birth" in fields:
+            c.date_of_birth = mstore.parse_date(fields["date_of_birth"])
+        for key in ("national_id", "phone", "email", "address"):
+            if key in fields:
+                setattr(c, key, (fields[key] or "").strip() or None)
         s.commit()
         return mstore.client_brief(c)
 

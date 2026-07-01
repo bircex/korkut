@@ -180,6 +180,16 @@ export type ClientBrief = {
   phone: string | null;
   email: string | null;
   national_id: string | null;
+  address: string | null;
+  date_of_birth: string | null;
+};
+export type ClientPatch = {
+  full_name?: string;
+  national_id?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  date_of_birth?: string | null;
 };
 export type MatterBrief = {
   id: number;
@@ -355,6 +365,8 @@ export const api = {
   completeDeadline: (did: number) =>
     request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
+  updateClient: (id: number, patch: ClientPatch) =>
+    request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",

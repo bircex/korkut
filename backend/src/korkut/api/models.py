@@ -390,6 +390,7 @@ class Client(Base):
     phone: Mapped[str | None] = mapped_column(String(20), default=None)
     email: Mapped[str | None] = mapped_column(String(200), default=None)
     address: Mapped[str | None] = mapped_column(String(500), default=None)
+    date_of_birth: Mapped[_date | None] = mapped_column(Date, default=None)  # doğum tarihi
     notes: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 

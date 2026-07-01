@@ -34,6 +34,8 @@ def test_shapers_never_leak_office_id():
         "phone": "555",
         "email": "a@x.tr",
         "national_id": "123",
+        "address": None,
+        "date_of_birth": None,
     }
     assert "office_id" not in ms.client_brief(c)
 
