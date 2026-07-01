@@ -25,12 +25,18 @@ class FakeTelegramApi:
     def __init__(self, updates):
         self._updates = updates
         self.sent: list = []
+        self.calls: list = []  # every (method, payload), for progress-affordance assertions
+        self._next_mid = 1000
 
     def __call__(self, method, payload):
+        self.calls.append((method, payload))
         if method == "getUpdates":
             return {"ok": True, "result": self._updates}
         if method == "sendMessage":
             self.sent.append(payload)
+            self._next_mid += 1
+            return {"ok": True, "result": {"message_id": self._next_mid}}
+        if method in ("sendChatAction", "editMessageText", "deleteMessage"):
             return {"ok": True}
         raise AssertionError(method)
 
@@ -57,6 +63,64 @@ def test_telegram_poll_parses_and_advances_offset():
     assert msgs[0].sender_name == "Av Test"
     # offset advances past the last update so the next poll won't replay
     assert c.state_patch() == {"_cursor": {"offset": 12}}
+
+
+def test_telegram_progress_affordances():
+    """typing / post / edit / clear map to the right Bot API methods; post returns a handle."""
+    api = FakeTelegramApi([])
+    c = TelegramConnector(token="t", offset=0, api=api)
+
+    c.typing("555")
+    handle = c.post_status("555", "🔍 Yargıtay'da arıyorum")
+    assert handle == "1001"  # message_id from the fake, as a string handle
+    c.edit_status("555", handle, "🔍 Belgeyi getiriyorum")
+    c.clear_status("555", handle)
+
+    methods = [m for m, _ in api.calls]
+    assert methods == ["sendChatAction", "sendMessage", "editMessageText", "deleteMessage"]
+    assert api.calls[0][1] == {"chat_id": "555", "action": "typing"}
+    assert api.calls[2][1]["message_id"] == 1001 and api.calls[3][1]["message_id"] == 1001
+
+
+class _RecordingConnector:
+    """Captures the progress calls the runner's `_Progress` makes."""
+
+    supports_progress = True
+
+    def __init__(self):
+        self.log: list = []
+
+    def typing(self, thread_id):
+        self.log.append(("typing", thread_id))
+
+    def post_status(self, thread_id, text):
+        self.log.append(("post", text))
+        return "42"
+
+    def edit_status(self, thread_id, handle, text):
+        self.log.append(("edit", handle, text))
+
+    def clear_status(self, thread_id, handle):
+        self.log.append(("clear", handle))
+
+
+def test_progress_posts_edits_and_clears_status():
+    from korkut.integrations.runner import _Progress
+
+    conn = _RecordingConnector()
+    p = _Progress(conn, "999")
+    p.on_event({"type": "tool", "name": "search_yargitay", "args": {"query": "kira"}})
+    p.on_event({"type": "token", "text": "cevap"})  # tokens don't change the status line
+    p.on_event({"type": "tool", "name": "fetch_document", "args": {}})  # a new step → edit
+    p.finish()
+
+    kinds = [e[0] for e in conn.log]
+    assert kinds.count("post") == 1 and kinds.count("edit") == 1 and kinds.count("clear") == 1
+    assert "typing" in kinds  # keepalive fired
+    post = next(e for e in conn.log if e[0] == "post")
+    assert "Yargıtay" in post[1]
+    clear = next(e for e in conn.log if e[0] == "clear")
+    assert clear[1] == "42"  # the handle post_status returned
 
 
 def test_telegram_skips_non_text_and_send():

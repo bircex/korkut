@@ -74,8 +74,12 @@ def _conversation_for(s: Session, inbound: InboundMessage, user: User) -> Conver
     return conv
 
 
-def handle(inbound: InboundMessage) -> str | None:
-    """Process one inbound message; return the reply text to send back (or None to stay silent)."""
+def handle(inbound: InboundMessage, *, on_event=None) -> str | None:
+    """Process one inbound message; return the reply text to send back (or None to stay silent).
+
+    `on_event`, when set, receives the brain's progress events (token/tool) so the runner can show
+    live activity on the channel (typing + a status line). It never affects the returned reply.
+    """
     text = (inbound.text or "").strip()
     if not text:
         return None
@@ -123,6 +127,7 @@ def handle(inbound: InboundMessage) -> str | None:
             known_entities=known_entities,
             persona_cfg=persona_cfg,
             memory=memory,
+            on_event=on_event,
         )
     except resilience.ModelError as exc:
         return exc.detail

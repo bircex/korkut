@@ -15,6 +15,7 @@ The low-level HTTP call is injectable (`api`) so the connector is unit-testable 
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Callable
 from typing import Any, Self
 
@@ -50,6 +51,7 @@ def _sender_name(frm: dict[str, Any]) -> str:
 
 class TelegramConnector(Connector):
     kind = "telegram"
+    supports_progress = True
 
     def __init__(self, *, token: str, offset: int = 0, api: ApiCall | None = None):
         self._token = token
@@ -116,3 +118,37 @@ class TelegramConnector(Connector):
         if self._offset == self._start_offset:
             return {}
         return {"_cursor": {"offset": self._offset}}
+
+    # ----- live progress (the ChatGPT-style "typing / 🔍 searching…" affordance) -----
+    # All of these swallow errors: progress is best-effort decoration and must never break a turn.
+
+    def typing(self, thread_id: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api("sendChatAction", {"chat_id": thread_id, "action": "typing"})
+
+    def post_status(self, thread_id: str, text: str) -> str | None:
+        if not self._token:
+            return None
+        try:
+            data = self._api("sendMessage", {"chat_id": thread_id, "text": text})
+        except Exception:
+            return None
+        mid = (data.get("result") or {}).get("message_id") if data.get("ok") else None
+        return str(mid) if mid is not None else None
+
+    def edit_status(self, thread_id: str, handle: str, text: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api(
+                "editMessageText",
+                {"chat_id": thread_id, "message_id": int(handle), "text": text},
+            )
+
+    def clear_status(self, thread_id: str, handle: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api("deleteMessage", {"chat_id": thread_id, "message_id": int(handle)})
