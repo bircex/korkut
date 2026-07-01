@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
+import { ClientDetailsCard } from "./ClientDetailsCard";
 
 // Minimal "Dosyalar" (matters) workspace: browse the office's case files, open one to see its
 // details + hearings, create a matter, add a hearing, and start a chat filed under the matter.
@@ -196,6 +197,13 @@ export function MattersPanel({
                 </button>
               </div>
             </div>
+
+            {detail.client && (
+              <ClientDetailsCard
+                client={detail.client}
+                onSaved={(c) => setDetail({ ...detail, client: c })}
+              />
+            )}
 
             <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Duruşmalar</h2>
             <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
