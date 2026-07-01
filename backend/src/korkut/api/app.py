@@ -49,6 +49,7 @@ from korkut.api.models import (
     OfficeChannel,
     OfficeModel,
     OutboundMessage,
+    Persona,
     ProposedEdit,
     RecoveryCode,
     StyleProfile,
@@ -59,6 +60,7 @@ from korkut.api.models import (
 from korkut.api.store import (
     effective_theme,
     get_office,
+    get_persona,
     office_model_cfg,
     send_outbound_message,
     session,
@@ -178,6 +180,12 @@ class ModelBody(BaseModel):
     base_url: str = ""
     # None → keep the stored key (so the UI need not re-send it); "" → clear it.
     api_key: str | None = None
+
+
+class PersonaBody(BaseModel):
+    tone: str = ""
+    expertise: str = ""
+    extra_rules: str = ""
 
 
 class ExportBody(BaseModel):
@@ -658,6 +666,40 @@ def save_model(body: ModelBody, korkut_session: str | None = Cookie(default=None
         return _model_public(row, can_edit=True)
 
 
+def _persona_public(row: Persona | None, *, can_edit: bool) -> dict:
+    return {
+        "tone": row.tone if row else "",
+        "expertise": row.expertise if row else "",
+        "extra_rules": row.extra_rules if row else "",
+        "can_edit": can_edit,
+    }
+
+
+@app.get("/api/persona")
+def get_persona_config(korkut_session: str | None = Cookie(default=None)):
+    """The office's Kişilik tuning. Any member may view; only the owner edits."""
+    with session() as s:
+        user = _require_user(s, korkut_session)
+        row = s.scalar(select(Persona))
+        return _persona_public(row, can_edit=user.role == "owner")
+
+
+@app.put("/api/persona")
+def save_persona(body: PersonaBody, korkut_session: str | None = Cookie(default=None)):
+    """Owner-only upsert of the office persona (augments the locked core rules)."""
+    with session() as s:
+        _require_owner(s, korkut_session)
+        row = s.scalar(select(Persona))
+        if row is None:
+            row = Persona()
+            s.add(row)
+        row.tone = body.tone.strip()
+        row.expertise = body.expertise.strip()
+        row.extra_rules = body.extra_rules.strip()
+        s.commit()
+        return _persona_public(row, can_edit=True)
+
+
 @app.delete("/api/model")
 def delete_model(korkut_session: str | None = Cookie(default=None)):
     """Owner-only: remove the custom model → the office falls back to the built-in default."""
@@ -1111,6 +1153,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
+        persona_cfg = get_persona(s)
 
     # Give Korkut a Canvas signal: it decides (like ChatGPT) whether this is a document task.
     canvas = {"used": False}
@@ -1172,6 +1215,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         handlers={"dilekce_canvas": _canvas, "send_email": _send_email, **m_handlers},
         model_cfg=model_cfg,
         known_entities=known_entities,
+        persona_cfg=persona_cfg,
     )
 
     with session() as s:
@@ -1295,6 +1339,7 @@ def session_upload(
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
+        persona_cfg = get_persona(s)
 
     reply = _safe_answer(
         model_input,
@@ -1302,6 +1347,7 @@ def session_upload(
         history=history_msgs,
         model_cfg=model_cfg,
         known_entities=known_entities,
+        persona_cfg=persona_cfg,
     )
 
     with session() as s:
@@ -1940,6 +1986,7 @@ def _make_draft(
         office_name = _office_name(s)
         model_cfg = office_model_cfg(s)
         known_entities = mstore.collect_known_entities(s)
+        persona_cfg = get_persona(s)
         # Effective theme: lawyer override > office override > built-in default.
         theme = effective_theme(s, user_id, petition_type) if petition_type and conv else None
     instr = (instruction or "").strip()
@@ -1972,6 +2019,7 @@ def _make_draft(
             history=history,
             model_cfg=model_cfg,
             known_entities=known_entities,
+            persona_cfg=persona_cfg,
         )
     )
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,

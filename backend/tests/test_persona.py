@@ -1,6 +1,6 @@
-"""Tests for the per-office system persona (korkut.persona.build_persona)."""
+"""Tests for the office system persona (korkut.persona.build_persona)."""
 
-from korkut.brain.persona import build_persona
+from korkut.brain.persona import PersonaCfg, build_persona
 
 
 def test_persona_includes_office_name():
@@ -21,3 +21,27 @@ def test_persona_keeps_guardrails():
     # Core guardrails survive the templating.
     assert "Citation discipline" in p
     assert "GÜVENİLMEZ İÇERİK" in p
+
+
+def test_empty_persona_cfg_leaves_core_unchanged():
+    assert build_persona("X Hukuk") == build_persona("X Hukuk", PersonaCfg())
+    assert build_persona("X Hukuk", PersonaCfg("  ", "", "  ")) == build_persona("X Hukuk")
+
+
+def test_persona_cfg_appends_office_tuning_after_core():
+    cfg = PersonaCfg(tone="resmi ve öz", expertise="ceza, aile", extra_rules="kısa yanıt ver")
+    p = build_persona("X Hukuk", cfg)
+    # Core guardrails still present...
+    assert "Citation discipline" in p
+    # ...and the office additions are appended.
+    assert "Üslup: resmi ve öz" in p
+    assert "Uzmanlık alanları: ceza, aile" in p
+    assert "Ek kurallar: kısa yanıt ver" in p
+    assert p.index("Citation discipline") < p.index("Ofisin tercihleri")
+
+
+def test_persona_cfg_skips_blank_fields():
+    p = build_persona("X Hukuk", PersonaCfg(tone="resmi", expertise="", extra_rules=""))
+    assert "Üslup: resmi" in p
+    assert "Uzmanlık alanları" not in p
+    assert "Ek kurallar" not in p

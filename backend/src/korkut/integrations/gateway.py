@@ -106,6 +106,7 @@ def handle(inbound: InboundMessage) -> str | None:
         office_name = _office_name(s)
         model_cfg = store.office_model_cfg(s)
         known_entities = matters_store.collect_known_entities(s)
+        persona_cfg = store.get_persona(s)
 
     reply = agent.answer(
         text,
@@ -113,6 +114,7 @@ def handle(inbound: InboundMessage) -> str | None:
         history=history,
         model_cfg=model_cfg,
         known_entities=known_entities,
+        persona_cfg=persona_cfg,
     )
 
     with store.session() as s:

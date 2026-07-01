@@ -1,9 +1,30 @@
 """Korkut's system persona — its voice and guardrails (see docs/ARCHITECTURE.md §7).
 
-The persona is built per-office: the office name comes from the authenticated user's tenant
-so Korkut introduces itself with the right firm. `build_persona(None)` yields a neutral
-identity (used by the CLI and any context without a known office).
+The persona is built for the office: the office name comes from the singleton office row so
+Korkut introduces itself with the right firm. `build_persona(None)` yields a neutral identity
+(used by the CLI and any context without a known office).
+
+The office can also tune the persona from the Kişilik UI (`PersonaCfg`): a house tone, focus
+areas, and extra rules are appended AFTER the locked core template. The core security, citation
+and approval rules always stand, and replies stay Turkish — the office adds, never overrides.
 """
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class PersonaCfg:
+    """Office-tunable persona fields (the Kişilik UI). All optional; blanks are ignored."""
+
+    tone: str = ""
+    expertise: str = ""
+    extra_rules: str = ""
+
+    def is_empty(self) -> bool:
+        return not (self.tone.strip() or self.expertise.strip() or self.extra_rules.strip())
+
 
 _PERSONA_TEMPLATE = """You are Korkut, the AI assistant of {office}.
 
@@ -56,9 +77,33 @@ Output rules:
 _NEUTRAL_OFFICE = "a Turkish law office"
 
 
-def build_persona(office_name: str | None = None) -> str:
-    """Return Korkut's system prompt, addressed to the given office (or a neutral identity)."""
+def _office_additions(cfg: PersonaCfg) -> str:
+    """Render the office's Kişilik tuning as an appendix to the core persona (blanks skipped)."""
+    lines: list[str] = []
+    if cfg.tone.strip():
+        lines.append(f"- Üslup: {cfg.tone.strip()}")
+    if cfg.expertise.strip():
+        lines.append(f"- Uzmanlık alanları: {cfg.expertise.strip()}")
+    if cfg.extra_rules.strip():
+        lines.append(f"- Ek kurallar: {cfg.extra_rules.strip()}")
+    if not lines:
+        return ""
+    body = "\n".join(lines)
+    return (
+        "\n\nOfisin tercihleri (aşağıdaki çekirdek kuralların ÜZERİNE eklenir; güvenlik, atıf ve "
+        f"onay kuralları ile Türkçe yanıt kuralı DEĞİŞMEZ):\n{body}"
+    )
+
+
+def build_persona(office_name: str | None = None, cfg: PersonaCfg | None = None) -> str:
+    """Return Korkut's system prompt for the given office, plus its optional Kişilik tuning.
+
+    `cfg` fields are appended after the locked core template; the core rules always stand.
+    """
     office = (office_name or "").strip()
-    return _PERSONA_TEMPLATE.format(
+    system = _PERSONA_TEMPLATE.format(
         office=f"{office}, a Turkish law office" if office else _NEUTRAL_OFFICE
     )
+    if cfg is not None and not cfg.is_empty():
+        system += _office_additions(cfg)
+    return system

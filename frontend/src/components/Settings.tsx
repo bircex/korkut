@@ -3,6 +3,7 @@ import { api, ApiError, type Member, type StyleFields, type User } from "../api"
 import { EmailSettings } from "./EmailSettings";
 import { IntegrationsSettings } from "./IntegrationsSettings";
 import { ModelSettings } from "./ModelSettings";
+import { PersonaSettings } from "./PersonaSettings";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -282,11 +283,12 @@ function StyleTab() {
   );
 }
 
-type Tab = "account" | "members" | "style" | "integrations" | "model" | "email";
+type Tab = "account" | "members" | "persona" | "style" | "integrations" | "model" | "email";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
   members: "Ofis üyeleri",
+  persona: "Kişilik",
   style: "Yazım stili",
   integrations: "Entegrasyonlar",
   model: "Model",
@@ -298,6 +300,8 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
   const tabs: { id: Tab; label: string }[] = [
     { id: "account", label: "Hesap" },
     { id: "members", label: "Üyeler" },
+    // Persona is office-wide; everyone sees it, only the owner can edit (gated server-side).
+    { id: "persona", label: "Kişilik" },
     { id: "style", label: "Stil" },
     // Every member can link their own account; channel config inside is owner-gated.
     { id: "integrations", label: "Entegrasyonlar" },
@@ -354,6 +358,7 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
             </div>
           )}
           {tab === "members" && <Members isOwner={user.role === "owner"} />}
+          {tab === "persona" && <PersonaSettings />}
           {tab === "style" && <StyleTab />}
           {tab === "integrations" && <IntegrationsSettings />}
           {tab === "model" && user.role === "owner" && <ModelSettings />}
