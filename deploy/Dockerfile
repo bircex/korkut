@@ -4,7 +4,7 @@
 
 # 1) Build the single-page app. vite.config.ts emits to ../backend/src/korkut/api/static,
 #    so with WORKDIR /app/frontend the output lands at /app/backend/src/korkut/api/static.
-FROM node:22-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
