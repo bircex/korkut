@@ -21,7 +21,7 @@ const groups = [
           "Sonuçları özetler, uydurma atıfları önlemek için kaynağa bağlar",
           "Resmî Gazete tarih/sayı ve tam metin filtresi",
         ],
-        shot: null,
+        shot: "/shots/arastirma.png",
         video: null,
       },
       {
@@ -34,7 +34,7 @@ const groups = [
           "Canvas'ta canlı, madde madde düzenleme",
           "DOCX ve UYAP (UDF) formatında dışa aktarım",
         ],
-        shot: null,
+        shot: "/shots/dilekce.png",
         video: null,
       },
       {
@@ -68,7 +68,7 @@ const groups = [
           "Müvekkil ve karşı taraf bilgileri tek yerde",
           "Onaysız hiçbir kayıt oluşturulmaz",
         ],
-        shot: null,
+        shot: "/shots/dosya.png",
         video: null,
       },
       {
@@ -81,7 +81,7 @@ const groups = [
           "Tekrarlayan etkinlikler (rrule) desteği",
           "Yaklaşan 14/365 günlük gündem görünümü",
         ],
-        shot: null,
+        shot: "/shots/takvim.png",
         video: null,
       },
       {
@@ -94,7 +94,7 @@ const groups = [
           "Proaktif gündem: yaklaşan süre & duruşmalar",
           "Kaçırılan süre riskini önden uyarır",
         ],
-        shot: null,
+        shot: "/shots/gorev.png",
         video: null,
       },
       {
@@ -107,7 +107,7 @@ const groups = [
           "Cari hesap: faturalanan / tahsilat / bakiye",
           "Dosya, mali ve görev verisinden raporlama",
         ],
-        shot: null,
+        shot: "/shots/butce.png",
         video: null,
       },
       {
@@ -126,6 +126,7 @@ const groups = [
     ],
   },
 ];
+const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
 ---
 
 <section id="ozellikler">
@@ -184,9 +185,9 @@ const groups = [
                     </div>
                     <div class="frame-body">
                       {t.video ? (
-                        <video src={t.video} muted autoplay loop playsinline preload="metadata" />
+                        <video src={`${base}${t.video.slice(1)}`} muted autoplay loop playsinline preload="metadata" />
                       ) : t.shot ? (
-                        <img src={t.shot} alt={`${t.title} ekran görüntüsü`} loading="lazy" />
+                        <img src={`${base}${t.shot.slice(1)}`} alt={`${t.title} ekran görüntüsü`} loading="lazy" />
                       ) : (
                         <div class="placeholder">
                           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
