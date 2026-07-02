@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Member, type Task } from "../api";
+import { Modal } from "./Modal";
 
 // Görevler — to-dos assigned to office members, optionally due-dated. A first slice: create,
 // assign, mark done, delete, and filter open vs. all.
@@ -13,10 +14,11 @@ function fmtDate(iso: string | null): string {
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
-export function TasksPanel({ onClose }: { onClose: () => void }) {
+export function TasksPanel() {
   const [showAll, setShowAll] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("");
   const [due, setDue] = useState("");
@@ -50,6 +52,7 @@ export function TasksPanel({ onClose }: { onClose: () => void }) {
     setTitle("");
     setAssignee("");
     setDue("");
+    setAdding(false);
     reload();
   }
 
@@ -64,57 +67,23 @@ export function TasksPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
-        >
-          Geri
-        </button>
         <h1 className="text-lg font-bold text-zinc-900">Görevler</h1>
         <label className="ml-auto flex items-center gap-1.5 text-[13px] text-zinc-600">
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
           Tamamlananları da göster
         </label>
+        <button
+          onClick={() => setAdding(true)}
+          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+        >
+          + Yeni görev
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-4">
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Görev (ör. cevap dilekçesi yaz)"
-              className={`${input} min-w-48 flex-1`}
-            />
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className={`${input} text-zinc-700`}
-            >
-              <option value="">Atanan (ops.)</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name ?? m.username}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-              className={`${input} text-zinc-700`}
-            />
-            <button
-              onClick={add}
-              disabled={!title.trim()}
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              Ekle
-            </button>
-          </div>
-
           {tasks.length === 0 ? (
             <p className="text-[13px] text-zinc-400">Görev yok.</p>
           ) : (
@@ -152,6 +121,67 @@ export function TasksPanel({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      {adding && (
+        <Modal
+          title="Yeni görev"
+          onClose={() => setAdding(false)}
+          footer={
+            <>
+              <button
+                onClick={() => setAdding(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={add}
+                disabled={!title.trim()}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                Ekle
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Görev
+              <input
+                autoFocus
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="ör. cevap dilekçesi yaz"
+                className={input}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Atanan (opsiyonel)
+              <select
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                className={`${input} text-zinc-700`}
+              >
+                <option value="">—</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name ?? m.username}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
+              Son tarih (opsiyonel)
+              <input
+                type="date"
+                value={due}
+                onChange={(e) => setDue(e.target.value)}
+                className={`${input} text-zinc-700`}
+              />
+            </label>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

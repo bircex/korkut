@@ -615,6 +615,72 @@ export const api = {
       open_document: number | null;
       pending_email: number | null;
     }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
+  // Streaming twin of sessionChat: activity steps + answer tokens arrive live over SSE. `onStep`
+  // and `onToken` fire as events land; the promise resolves with the same payload as sessionChat
+  // (or rejects with an ApiError carrying the friendly detail from an `error` event).
+  sessionChatStream: async (
+    id: number,
+    text: string,
+    on: { onStep?: (label: string) => void; onToken?: (t: string) => void },
+  ) => {
+    const res = await fetch(`/api/sessions/${id}/chat/stream`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok || !res.body) {
+      let detail = "yanıt alınamadı";
+      try {
+        const b = await res.json();
+        if (b?.detail) detail = b.detail;
+      } catch {
+        /* keep default */
+      }
+      throw new ApiError(res.status, detail);
+    }
+
+    type Done = {
+      reply: string;
+      title: string;
+      open_document: number | null;
+      pending_email: number | null;
+    };
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let done: Done | null = null;
+    let errorDetail: string | null = null;
+
+    const dispatch = (frame: string) => {
+      let event = "message";
+      let data = "";
+      for (const line of frame.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) data += line.slice(5).trim();
+      }
+      if (!data) return;
+      const parsed = JSON.parse(data);
+      if (event === "step") on.onStep?.(parsed.label as string);
+      else if (event === "token") on.onToken?.(parsed.text as string);
+      else if (event === "done") done = parsed as Done;
+      else if (event === "error") errorDetail = parsed.detail as string;
+    };
+
+    for (;;) {
+      const { done: finished, value } = await reader.read();
+      if (finished) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buf.indexOf("\n\n")) !== -1) {
+        dispatch(buf.slice(0, idx));
+        buf = buf.slice(idx + 2);
+      }
+    }
+    if (errorDetail !== null) throw new ApiError(503, errorDetail);
+    if (done === null) throw new ApiError(500, "yanıt tamamlanamadı");
+    return done as Done;
+  },
   uploadToSession: async (id: number, file: File, text: string) => {
     const fd = new FormData();
     fd.append("file", file);

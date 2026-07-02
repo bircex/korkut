@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type ClientBrief } from "../api";
+import { Modal } from "./Modal";
 
 // Müvekkiller — a standalone client (müvekkil) management screen: list, create, and edit clients
 // directly (not only through a matter). The PII entered here also feeds the redactor's known-entity
@@ -121,7 +122,7 @@ function ClientRow({
   );
 }
 
-export function ClientsPanel({ onClose }: { onClose: () => void }) {
+export function ClientsPanel() {
   const [clients, setClients] = useState<ClientBrief[] | null>(null);
   const [nf, setNf] = useState<Fields>({ ...EMPTY });
   const [adding, setAdding] = useState(false);
@@ -154,44 +155,23 @@ export function ClientsPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
-        >
-          Geri
-        </button>
         <h1 className="text-lg font-bold text-zinc-900">Müvekkiller</h1>
         <button
-          onClick={() => setAdding((a) => !a)}
-          className="ml-auto rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
+          onClick={() => {
+            setNf({ ...EMPTY });
+            setError("");
+            setAdding(true);
+          }}
+          className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
         >
-          {adding ? "Vazgeç" : "Yeni müvekkil"}
+          + Yeni müvekkil
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-4">
-          {adding && (
-            <div className="mb-4 rounded-xl border border-zinc-200 p-4">
-              <p className="mb-2 text-sm font-semibold text-zinc-700">Yeni müvekkil</p>
-              <div className="flex flex-col gap-3">
-                <FieldGrid f={nf} set={setN} withName />
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={create}
-                    disabled={busy || !nf.full_name.trim()}
-                    className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                  >
-                    {busy ? "Ekleniyor…" : "Ekle"}
-                  </button>
-                  {error && <span className="text-[13px] text-red-600">{error}</span>}
-                </div>
-              </div>
-            </div>
-          )}
-
           {clients === null ? (
             <p className="text-[13px] text-zinc-400">Yükleniyor…</p>
           ) : clients.length === 0 ? (
@@ -215,6 +195,35 @@ export function ClientsPanel({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       </div>
+
+      {adding && (
+        <Modal
+          title="Yeni müvekkil"
+          onClose={() => setAdding(false)}
+          footer={
+            <>
+              <button
+                onClick={() => setAdding(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={create}
+                disabled={busy || !nf.full_name.trim()}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {busy ? "Ekleniyor…" : "Ekle"}
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <FieldGrid f={nf} set={setN} withName />
+            {error && <span className="text-[13px] text-red-600">{error}</span>}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
