@@ -4,7 +4,7 @@ Mirrors test_web_auth.py: a fresh SQLite file per run, the brain patched offline
 login to authenticate (2FA is off by default). Covers CRUD and the chat↔matter link.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -470,6 +470,69 @@ def test_recurring_events_expand_within_the_window(app_mod):
         },
     ).json()
     assert single["rrule"] is None
+
+
+def test_event_reminder_is_dispatched_once(app_mod, monkeypatch):
+    from korkut.api import store
+    from korkut.api.models import CalendarEvent, OfficeChannel
+    from korkut.messaging import SendResult
+
+    c = _existing(app_mod)
+    with store.session() as s:
+        s.add(
+            OfficeChannel(
+                kind="email",
+                enabled=True,
+                config={"from_address": "ofis@x.tr", "app_password": "pw"},
+            )
+        )
+        s.commit()
+
+    # An event starting in 5 minutes with a 60-minute reminder → the reminder moment has passed.
+    start = (datetime.now() + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S")
+    ev = c.post(
+        "/api/calendar/events",
+        json={
+            "category": "appointment",
+            "title": "Görüşme",
+            "start_at": start,
+            "remind_before_min": 60,
+        },
+    ).json()
+    assert ev["remind_before_min"] == 60 and ev["reminder_status"] == "pending"
+
+    sent: dict = {}
+
+    class FakeChannel:
+        def send(self, draft):
+            sent.update(to=draft.to_addr, subject=draft.subject, body=draft.body)
+            return SendResult(ok=True)
+
+    monkeypatch.setattr(store, "build_channel", lambda kind, cfg: FakeChannel())
+
+    assert store.dispatch_due_reminders() == 1
+    assert sent["to"] == "ofis@x.tr" and "Görüşme" in sent["subject"]
+    with store.session() as s:
+        assert s.get(CalendarEvent, ev["id"]).reminder_status == "sent"
+
+    # A second run does not re-send (idempotent).
+    assert store.dispatch_due_reminders() == 0
+
+
+def test_reminder_skipped_without_email_channel(app_mod):
+    from korkut.api import store
+    from korkut.api.models import CalendarEvent
+
+    c = _existing(app_mod)
+    start = (datetime.now() + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S")
+    ev = c.post(
+        "/api/calendar/events",
+        json={"category": "reminder", "title": "Ödeme", "start_at": start, "remind_before_min": 30},
+    ).json()
+    # No e-mail channel configured → the reminder is marked skipped, not left pending forever.
+    assert store.dispatch_due_reminders() == 1
+    with store.session() as s:
+        assert s.get(CalendarEvent, ev["id"]).reminder_status == "skipped"
 
 
 def test_hearings_and_deadlines_share_the_event_table(app_mod):

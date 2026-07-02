@@ -268,6 +268,7 @@ class EventBody(BaseModel):
     location: str | None = None
     notes: str | None = None
     rrule: str | None = None  # RFC-5545 subset, e.g. FREQ=WEEKLY;INTERVAL=1;UNTIL=2026-12-31
+    remind_before_min: int | None = None  # e-mail reminder N minutes before start
 
 
 class EventUpdateBody(BaseModel):
@@ -285,6 +286,7 @@ class EventUpdateBody(BaseModel):
     result: str | None = None
     notes: str | None = None
     rrule: str | None = None
+    remind_before_min: int | None = None
 
 
 class ClientBody(BaseModel):
@@ -1367,6 +1369,7 @@ def create_event_ep(body: EventBody, korkut_session: str | None = Cookie(default
                 location=body.location,
                 notes=body.notes,
                 rrule=body.rrule,
+                remind_before_min=body.remind_before_min,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"Tarih biçimi hatalı: {exc}") from exc

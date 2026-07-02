@@ -219,6 +219,8 @@ def event_brief(e: CalendarEvent) -> dict:
         "result": e.result,
         "notes": e.notes,
         "rrule": e.rrule,
+        "remind_before_min": e.remind_before_min,
+        "reminder_status": e.reminder_status,
     }
 
 
@@ -664,6 +666,8 @@ def create_event(
     location: str | None = None,
     notes: str | None = None,
     rrule: str | None = None,
+    remind_before_min: int | None = None,
+    remind_channel: str | None = None,
 ) -> CalendarEvent:
     """Create any calendar event. Deadlines default to pending; others to planned."""
     cat = category if category in _EVENT_CATEGORIES else "appointment"
@@ -681,6 +685,9 @@ def create_event(
         location=(location or "").strip() or None,
         notes=(notes or "").strip() or None,
         rrule=clean_rrule(rrule),
+        remind_before_min=remind_before_min,
+        # Only e-mail delivery exists today, so a reminder always uses the e-mail channel.
+        remind_channel=("email" if remind_before_min is not None else None),
         created_by=created_by,
     )
     s.add(e)
@@ -717,6 +724,11 @@ def update_event(s: Session, event_id: int, **fields: object) -> CalendarEvent |
     if "rrule" in fields:
         raw = fields["rrule"]
         e.rrule = clean_rrule(raw if isinstance(raw, str) else None)
+    if "remind_before_min" in fields:
+        raw_min = fields["remind_before_min"]
+        e.remind_before_min = raw_min if isinstance(raw_min, int) else None
+        e.remind_channel = "email" if e.remind_before_min is not None else None
+        e.reminder_status = "pending"  # re-arm so the (re)scheduled reminder can fire
     for key, value in fields.items():
         if key in _EVENT_FIELDS:
             setattr(e, key, value)
