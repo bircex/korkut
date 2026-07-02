@@ -2,7 +2,11 @@
 // Kendi alan adınıza göre `url` değerini güncelleyin.
 
 export const SITE = {
-  url: "https://korkut.dev",
+  // Sitenin yayınlandığı origin. Şu an GitHub Pages proje sayfası:
+  // https://recepkizilarslan.com/korkut/ (alt yol `base` ile astro.config.mjs'te verilir).
+  // Özel alan adına (ör. korkut.dev) geçince: burayı "https://korkut.dev" yapın ve
+  // astro.config.mjs'teki `base` değerini "/" yapın — gerisi kendiliğinden çalışır.
+  url: "https://recepkizilarslan.com",
   name: "Korkut",
   title: "Korkut — Avukatlar için açık kaynak yapay zeka asistanı",
   description:

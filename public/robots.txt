@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://korkut.dev/sitemap-index.xml
+Sitemap: https://recepkizilarslan.com/korkut/sitemap-index.xml
