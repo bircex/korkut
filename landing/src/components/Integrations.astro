@@ -16,6 +16,7 @@ const integrations = [
     body: "Öner-ve-onayla mantığıyla e-posta taslakları; siz onaylamadan gönderilmez.",
   },
 ];
+const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
 ---
 
 <section id="entegrasyonlar">
@@ -32,7 +33,7 @@ const integrations = [
         integrations.map((i) => (
           <article class="int-card">
             <div class="int-logo">
-              <img src={i.logo} alt={`${i.name} logosu`} width="28" height="28" loading="lazy" />
+              <img src={`${base}${i.logo.slice(1)}`} alt={`${i.name} logosu`} width="28" height="28" loading="lazy" />
             </div>
             <h3>{i.name}</h3>
             <p>{i.body}</p>

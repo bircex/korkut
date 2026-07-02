@@ -10,6 +10,7 @@ const models = [
 ];
 // Az sayıda sağlayıcı var; seti çoğaltıp ekranı dolduruyor ve kesintisiz döngü sağlıyoruz.
 const loop = [...models, ...models, ...models, ...models];
+const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
 ---
 
 <section id="modeller" class="band">
@@ -33,7 +34,7 @@ const loop = [...models, ...models, ...models, ...models];
       {
         loop.map((m, i) => (
           <li class="mtile" aria-hidden={i >= models.length ? "true" : undefined}>
-            <img src={m.logo} alt={`${m.name} logosu`} width="26" height="26" loading="lazy" />
+            <img src={`${base}${m.logo.slice(1)}`} alt={`${m.name} logosu`} width="26" height="26" loading="lazy" />
             <span class="mname">{m.name}</span>
             <span class:list={["mtag", m.tag === "Yerel" && "mtag-local"]}>{m.tag}</span>
           </li>
