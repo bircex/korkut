@@ -17,6 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency review
+        # Advisory, not a hard gate: if the dependency graph isn't provisioned yet (e.g. right
+        # after the repo is made public) the action errors out — don't let that block the PR.
+        # Requires "Dependency graph" enabled under Settings → Code security.
+        continue-on-error: true
         uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
