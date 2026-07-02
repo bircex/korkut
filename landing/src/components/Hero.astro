@@ -1,12 +1,13 @@
 ---
 import { GITHUB_URL } from "../consts";
+const base = import.meta.env.BASE_URL;
 ---
 
 <section class="hero" id="icerik">
   <div class="wrap">
     <img
       class="hero-logo"
-      src="/korkut-logo.png"
+      src={`${base}korkut-logo.png`}
       alt="Korkut"
       width="104"
       height="104"

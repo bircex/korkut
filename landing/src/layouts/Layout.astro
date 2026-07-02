@@ -10,11 +10,15 @@ interface Props {
   image?: string;
 }
 
+// Astro'nun `base` değeri (sondaki eğik çizgiyle): alt yolda "/korkut/", apex'te "/".
+// Tüm yerel bağlantılar buradan türetilir; alan adı değişince tek yerden çözülür.
+const base = import.meta.env.BASE_URL;
+
 const {
   title = SITE.title,
   description = SITE.description,
-  path = "/",
-  image = "/og.png",
+  path = base,
+  image = `${base}og.png`,
 } = Astro.props;
 
 const canonical = new URL(path, SITE.url).toString();
@@ -30,7 +34,7 @@ const jsonLd = {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Linux, macOS, Windows",
       description: SITE.description,
-      url: SITE.url,
+      url: canonical,
       inLanguage: "tr-TR",
       license: "https://opensource.org/licenses/MIT",
       isAccessibleForFree: true,
@@ -48,7 +52,7 @@ const jsonLd = {
     {
       "@type": "WebSite",
       name: SITE.name,
-      url: SITE.url,
+      url: canonical,
       inLanguage: "tr-TR",
     },
     {
@@ -78,8 +82,8 @@ const jsonLd = {
     <link rel="canonical" href={canonical} />
 
     <!-- İkonlar -->
-    <link rel="icon" type="image/svg+xml" href="/korkut-logo.svg" />
-    <link rel="apple-touch-icon" href="/korkut-logo.svg" />
+    <link rel="icon" type="image/svg+xml" href={`${base}korkut-logo.svg`} />
+    <link rel="apple-touch-icon" href={`${base}korkut-logo.svg`} />
     <meta name="theme-color" content="#ffffff" />
 
     <!-- Open Graph -->
@@ -108,7 +112,7 @@ const jsonLd = {
       rel="stylesheet"
     />
 
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="sitemap" href={`${base}sitemap-index.xml`} />
 
     <script
       type="application/ld+json"
