@@ -53,6 +53,32 @@ def _load_config() -> dict:
     return {}
 
 
+def _restoring_events(
+    on_event: Callable[[dict[str, Any]], None], mapping: dict
+) -> Callable[[dict[str, Any]], None]:
+    """Wrap a progress sink for the cloud path: drop redacted token deltas, un-redact tool args.
+
+    Streamed tokens carry redacted placeholders (and one can split across chunks), so they are not
+    forwarded on the cloud path. Tool events are still useful — their string args are restored so
+    the activity line reads with real names, not `⟦0⟧` placeholders.
+    """
+
+    def wrapped(event: dict[str, Any]) -> None:
+        kind = event.get("type")
+        if kind == "token":
+            return
+        if kind == "tool":
+            args = {
+                k: (redaction.restore(v, mapping) if isinstance(v, str) else v)
+                for k, v in (event.get("args") or {}).items()
+            }
+            on_event({**event, "args": args})
+            return
+        on_event(event)
+
+    return wrapped
+
+
 class Router:
     def __init__(
         self,
@@ -99,6 +125,7 @@ class Router:
         extra_tools: list[Any] | None = None,
         handlers: dict[str, Any] | None = None,
         known_entities: list[tuple[str, str]] | None = None,
+        on_event: Callable[[dict[str, Any]], None] | None = None,
     ) -> str:
         tier = self._resolve_tier(specialty)
         provider = self._provider_for(tier)
@@ -107,8 +134,10 @@ class Router:
         all_tools = list(tools or []) + list(extra_tools or [])
 
         if tier == "local":
-            # Local model: data never leaves the machine → no redaction.
-            return agent_loop.run(provider, messages, all_tools, handlers=handlers)
+            # Local model: data never leaves the machine → no redaction → stream freely.
+            return agent_loop.run(
+                provider, messages, all_tools, handlers=handlers, on_event=on_event
+            )
 
         # Cloud: redact every message's content with a shared mapping, then restore.
         # The shared agent loop carries the redacted conversation through every model turn;
@@ -116,7 +145,13 @@ class Router:
         contents = [str(m.get("content", "")) for m in messages]
         redacted, mapping = redaction.Redactor(known_entities=known_entities).redact_batch(contents)
         safe_messages = [{**m, "content": c} for m, c in zip(messages, redacted, strict=True)]
-        reply = agent_loop.run(provider, safe_messages, all_tools, handlers=handlers)
+        # Progress on the cloud path carries redacted text (a placeholder can even split across
+        # stream chunks), so token streaming is suppressed here; activity steps still flow, with
+        # their args restored. Placeholder-safe cloud token streaming is a later refinement.
+        cloud_events = _restoring_events(on_event, mapping) if on_event is not None else None
+        reply = agent_loop.run(
+            provider, safe_messages, all_tools, handlers=handlers, on_event=cloud_events
+        )
         return redaction.restore(reply, mapping)
 
 

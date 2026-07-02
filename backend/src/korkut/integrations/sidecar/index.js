@@ -3,7 +3,9 @@
 // requires: WhatsApp has no first-class bot API, so we drive WhatsApp Web and act as the paired
 // account.
 //
-//   GET  /inbox?after=<id>   -> { messages: [{id, from, chat, text, name}], cursor: <lastId> }
+//   GET  /inbox?after=<id>   -> { messages: [{id, from, chat, text, name, mentions, quoted}],
+//                                 cursor: <lastId> }   // mentions/quoted enable group @mention gating
+//   GET  /me                 -> { number: "<paired account's number>" }
 //   POST /send  {to, text}   -> { ok: true }
 //   GET  /status             -> { connected, hasQR }
 //
@@ -46,10 +48,16 @@ const inbox = [];
 let connected = false;
 let lastQR = null;
 let sock = null;
+let selfNumber = ""; // the paired account's bare number, learned on connect (for @mention gating)
 
 function pushInbound(msg) {
   inbox.push({ id: ++seq, ...msg });
   while (inbox.length > BUFFER_MAX) inbox.shift();
+}
+
+// A WhatsApp jid ("905551112233:12@s.whatsapp.net") reduced to its bare number ("905551112233").
+function jidToNumber(jid) {
+  return String(jid || "").split("@")[0].split(":")[0];
 }
 
 function textOf(message) {
@@ -80,6 +88,7 @@ async function start() {
     if (connection === "open") {
       connected = true;
       lastQR = null;
+      selfNumber = jidToNumber(sock?.user?.id);
       console.log("WhatsApp connected.");
     } else if (connection === "close") {
       connected = false;
@@ -102,7 +111,12 @@ async function start() {
       const chat = m.key.remoteJid || "";
       // In a group, the real sender is `participant`; in a DM it's the chat itself.
       const from = m.key.participant || chat;
-      pushInbound({ from, chat, text, name: m.pushName || "" });
+      // contextInfo carries @mentions (mentionedJid) and, for a reply, the quoted sender
+      // (participant). The connector uses these to decide whether a group message addresses us.
+      const ctx = m.message?.extendedTextMessage?.contextInfo || {};
+      const mentions = (ctx.mentionedJid || []).map(jidToNumber);
+      const quoted = ctx.participant ? jidToNumber(ctx.participant) : "";
+      pushInbound({ from, chat, text, name: m.pushName || "", mentions, quoted });
     }
   });
 }
@@ -143,6 +157,10 @@ const server = createServer(async (req, res) => {
     const messages = inbox.filter((m) => m.id > after);
     const cursor = messages.length ? messages[messages.length - 1].id : after;
     return sendJSON(res, 200, { messages, cursor });
+  }
+
+  if (req.method === "GET" && url.pathname === "/me") {
+    return sendJSON(res, 200, { number: selfNumber });
   }
 
   if (req.method === "POST" && url.pathname === "/send") {

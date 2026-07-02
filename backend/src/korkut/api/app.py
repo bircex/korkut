@@ -20,16 +20,19 @@ HttpOnly + SameSite=Strict (+ Secure behind TLS) cookies. See SECURITY.md.
 from __future__ import annotations
 
 import difflib
+import json
 import logging
 import os
+import queue
 import re
+import threading
 import time
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import Cookie, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select
@@ -74,47 +77,22 @@ from korkut.api.store import (
     send_outbound_message,
     session,
 )
-from korkut.brain import agent
+from korkut.brain import activity, resilience
 from korkut.core.tool_registry import ToolSpec
 
 logger = logging.getLogger("korkut.api")
 
-# Shown when a model call fails (endpoint down, wrong URL, no key) instead of a raw 500, so the
-# user is pointed at the fix rather than a stack trace.
-_MODEL_DOWN_DETAIL = (
-    "Yapay zeka modeline ulaşılamadı. Modelin (örn. yerel sunucunuz) çalıştığından emin olun "
-    "veya Ayarlar → Model'den bağlantıyı kontrol edin."
-)
-_MODEL_CONTEXT_DETAIL = (
-    "İstek, modelin context penceresinden uzun. Modeli daha büyük 'Context Length' "
-    "(örn. 16384 veya üzeri) ile yeniden yükleyin."
-)
-
-
-def _model_error_detail(exc: Exception) -> str:
-    """Map a provider failure to an actionable Turkish message — connection vs. context vs. other.
-
-    The probe (`/api/model/health`) only proves the endpoint answers; a chat can still fail because
-    the prompt overflows the model's loaded context, so these cases must read differently.
-    """
-    name = type(exc).__name__.lower()
-    text = str(exc).lower()
-    if "connection" in name or "timeout" in name:
-        return _MODEL_DOWN_DETAIL
-    if "context length" in text or "context window" in text or "tokens to keep" in text:
-        return _MODEL_CONTEXT_DETAIL
-    return f"Yapay zeka modeli isteği yanıtlayamadı. Ayrıntı: {str(exc)[:200]}"
-
 
 def _safe_answer(*args, **kwargs) -> str:
-    """`agent.answer` wrapper that turns provider failures into a friendly, actionable 503."""
+    """Answer via the shared resilience layer, surfacing a failure as a friendly 503.
+
+    The retry/backoff and the Turkish error mapping live in `brain.resilience` so the chat
+    channels (Telegram/WhatsApp/e-mail) fail identically — see `integrations.gateway`.
+    """
     try:
-        return agent.answer(*args, **kwargs)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.exception("model call failed")
-        raise HTTPException(status_code=503, detail=_model_error_detail(exc)) from exc
+        return resilience.guarded_answer(*args, **kwargs)
+    except resilience.ModelError as exc:
+        raise HTTPException(status_code=503, detail=exc.detail) from exc
 
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -1733,11 +1711,20 @@ def delete_evrak_ep(record_id: int, korkut_session: str | None = Cookie(default=
         return {"ok": True}
 
 
-@app.post("/api/sessions/{cid}/chat")
-def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(default=None)):
-    text = body.text.strip()
-    if not text:
-        raise HTTPException(status_code=400, detail="Boş mesaj")
+def _session_chat_impl(
+    cid: int,
+    text: str,
+    korkut_session: str | None,
+    *,
+    on_event=None,
+) -> dict:
+    """Run one chat turn end to end and return the reply payload.
+
+    Shared by the JSON endpoint and the SSE streaming endpoint; `on_event`, when set, receives the
+    agent's progress events (token/tool) so the streaming endpoint can relay them live. All the
+    side effects (persisting turns, the Canvas auto-draft, the e-mail draft) are identical either
+    way — only whether progress is streamed differs.
+    """
     with session() as s:
         user = _require_user(s, korkut_session)
         conv = _require_conv(s, user, cid)
@@ -1840,6 +1827,7 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         known_entities=known_entities,
         persona_cfg=persona_cfg,
         memory=memory,
+        on_event=on_event,
     )
 
     with session() as s:
@@ -1875,6 +1863,75 @@ def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(d
         "open_document": open_document,
         "pending_email": pending_email["id"],
     }
+
+
+def _sse(event: str, data: dict) -> str:
+    """One Server-Sent Events frame."""
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@app.post("/api/sessions/{cid}/chat")
+def session_chat(cid: int, body: ChatBody, korkut_session: str | None = Cookie(default=None)):
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Boş mesaj")
+    return _session_chat_impl(cid, text, korkut_session)
+
+
+@app.post("/api/sessions/{cid}/chat/stream")
+def session_chat_stream(
+    cid: int, body: ChatBody, korkut_session: str | None = Cookie(default=None)
+):
+    """Streaming twin of `session_chat`: emits progress (activity steps + answer tokens) over SSE.
+
+    The turn runs in a worker thread (the brain call is blocking) and pushes events onto a queue;
+    this generator drains it into SSE frames. Event types the client sees:
+      step   {"label": str, "name": str}   a tool the model is running
+      token  {"text": str}                 an incremental slice of the answer
+      done   {reply, title, open_document, pending_email}   final payload (same as the JSON route)
+      error  {"detail": str}               a friendly failure message (never silence)
+    """
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Boş mesaj")
+
+    events: queue.Queue = queue.Queue()
+
+    def _worker() -> None:
+        try:
+            payload = _session_chat_impl(
+                cid, text, korkut_session, on_event=lambda e: events.put(("event", e))
+            )
+            events.put(("done", payload))
+        except HTTPException as exc:  # friendly model/validation failure (e.g. from _safe_answer)
+            events.put(("error", str(exc.detail)))
+        except Exception:
+            logger.exception("stream chat failed")
+            events.put(("error", "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."))
+        finally:
+            events.put(("end", None))
+
+    threading.Thread(target=_worker, daemon=True).start()
+
+    def _gen():
+        while True:
+            kind, data = events.get()
+            if kind == "end":
+                break
+            if kind == "event":
+                if data.get("type") == "token":
+                    yield _sse("token", {"text": data.get("text", "")})
+                elif data.get("type") == "tool":
+                    name = data.get("name", "")
+                    yield _sse(
+                        "step", {"name": name, "label": activity.tool_label(name, data.get("args"))}
+                    )
+            elif kind == "done":
+                yield _sse("done", data)
+            elif kind == "error":
+                yield _sse("error", {"detail": data})
+
+    return StreamingResponse(_gen(), media_type="text/event-stream")
 
 
 def _accept_pending(doc_id: int) -> None:

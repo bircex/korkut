@@ -14,15 +14,61 @@ try/except so one channel's bad token can't stall the others.
 
 from __future__ import annotations
 
+import time
+
 from sqlalchemy import select
 
 from korkut.api.models import OfficeChannel
 from korkut.api.store import session
+from korkut.brain import activity
 from korkut.core.env import load_dotenv
 from korkut.integrations import build_connector
-from korkut.integrations.base import OutboundReply
+from korkut.integrations.base import Connector, OutboundReply
 from korkut.integrations.gateway import handle
 from korkut.integrations.registry import CONNECTORS
+
+# Refresh the channel "typing" hint at most this often (Telegram's action lasts ~5s).
+_TYPING_REFRESH_SECONDS = 4.0
+
+
+class _Progress:
+    """Turns the brain's raw events into a channel's live-progress affordance (typing + status).
+
+    One status line is posted on the first tool step and edited in place as steps change; token
+    events only keep the typing hint alive (chat channels don't render partial text). `finish`
+    removes the status line just before the real answer is sent, leaving a clean thread.
+    """
+
+    def __init__(self, connector: Connector, thread_id: str) -> None:
+        self._c = connector
+        self._t = thread_id
+        self._handle: str | None = None
+        self._last_line: str | None = None
+        self._last_typing = 0.0
+
+    def _keepalive(self) -> None:
+        now = time.monotonic()
+        if now - self._last_typing >= _TYPING_REFRESH_SECONDS:
+            self._c.typing(self._t)
+            self._last_typing = now
+
+    def on_event(self, event: dict) -> None:
+        self._keepalive()
+        if event.get("type") != "tool":
+            return
+        line = f"🔍 {activity.tool_label(event.get('name', ''), event.get('args'))}"
+        if line == self._last_line:
+            return
+        self._last_line = line
+        if self._handle is None:
+            self._handle = self._c.post_status(self._t, line)
+        else:
+            self._c.edit_status(self._t, self._handle, line)
+
+    def finish(self) -> None:
+        if self._handle is not None:
+            self._c.clear_status(self._t, self._handle)
+            self._handle = None
 
 
 def _enabled_channels() -> list[tuple[int, str, dict]]:
@@ -53,7 +99,14 @@ def _run_channel(row_id: int, kind: str, config: dict) -> int:
     connector = build_connector(kind, config)
     answered = 0
     for inbound in connector.poll():
-        reply = handle(inbound)
+        # Show live progress (typing + a status line) while the brain works, if the channel can.
+        if connector.supports_progress:
+            prog = _Progress(connector, inbound.thread_id)
+            connector.typing(inbound.thread_id)
+            reply = handle(inbound, on_event=prog.on_event)
+            prog.finish()  # drop the status line just before the real answer
+        else:
+            reply = handle(inbound)
         if not reply:
             continue
         connector.send(

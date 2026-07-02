@@ -31,7 +31,7 @@ def client_and_spy(tmp_path, monkeypatch):
 
     adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
     spy = MagicMock(return_value="yanıt")
-    with patch.object(app_mod.agent, "answer", spy):
+    with patch("korkut.brain.agent.answer", spy):
         c = TestClient(app_mod.app)
         # 2FA is off by default, so the password alone yields a full session.
         c.post("/api/login", json={"username": "avukat", "password": "parola123"})

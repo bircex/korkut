@@ -15,6 +15,8 @@ The low-level HTTP call is injectable (`api`) so the connector is unit-testable 
 
 from __future__ import annotations
 
+import contextlib
+import re
 from collections.abc import Callable
 from typing import Any, Self
 
@@ -50,12 +52,24 @@ def _sender_name(frm: dict[str, Any]) -> str:
 
 class TelegramConnector(Connector):
     kind = "telegram"
+    supports_progress = True
 
     def __init__(self, *, token: str, offset: int = 0, api: ApiCall | None = None):
         self._token = token
         self._offset = offset
         self._start_offset = offset
         self._api = api or _default_api(token)
+        self._bot_username_cache: str | None = None
+
+    def _bot_username(self) -> str:
+        """The bot's @username (cached), used to detect group @mentions. Empty on failure."""
+        if self._bot_username_cache is None:
+            self._bot_username_cache = ""
+            with contextlib.suppress(Exception):
+                data = self._api("getMe", {})
+                if data.get("ok"):
+                    self._bot_username_cache = str((data.get("result") or {}).get("username") or "")
+        return self._bot_username_cache
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> Self:
@@ -90,6 +104,26 @@ class TelegramConnector(Connector):
             chat = msg.get("chat") or {}
             if not text or "id" not in frm or "id" not in chat:
                 continue
+
+            # In a group the bot must not answer every message. Telegram's default *privacy mode*
+            # already hides normal group chatter from the bot; on top of that we only act when the
+            # bot is explicitly addressed — @mentioned, or the message replies to one of the bot's
+            # own messages. Private chats are always handled. (To also receive plain group messages,
+            # disable privacy mode via BotFather and re-add the bot; the gate below still applies.)
+            if (chat.get("type") or "private") in ("group", "supergroup"):
+                uname = self._bot_username()
+                reply_from = (msg.get("reply_to_message") or {}).get("from") or {}
+                mentioned = bool(uname) and f"@{uname}".lower() in text.lower()
+                replied_to_bot = bool(reply_from.get("is_bot")) and (
+                    str(reply_from.get("username") or "").lower() == uname.lower()
+                )
+                if not (mentioned or replied_to_bot):
+                    continue
+                if mentioned and uname:
+                    text = re.sub(rf"@{re.escape(uname)}\b", " ", text, flags=re.IGNORECASE).strip()
+                    if not text:
+                        continue
+
             out.append(
                 InboundMessage(
                     channel=self.kind,
@@ -116,3 +150,37 @@ class TelegramConnector(Connector):
         if self._offset == self._start_offset:
             return {}
         return {"_cursor": {"offset": self._offset}}
+
+    # ----- live progress (the ChatGPT-style "typing / 🔍 searching…" affordance) -----
+    # All of these swallow errors: progress is best-effort decoration and must never break a turn.
+
+    def typing(self, thread_id: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api("sendChatAction", {"chat_id": thread_id, "action": "typing"})
+
+    def post_status(self, thread_id: str, text: str) -> str | None:
+        if not self._token:
+            return None
+        try:
+            data = self._api("sendMessage", {"chat_id": thread_id, "text": text})
+        except Exception:
+            return None
+        mid = (data.get("result") or {}).get("message_id") if data.get("ok") else None
+        return str(mid) if mid is not None else None
+
+    def edit_status(self, thread_id: str, handle: str, text: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api(
+                "editMessageText",
+                {"chat_id": thread_id, "message_id": int(handle), "text": text},
+            )
+
+    def clear_status(self, thread_id: str, handle: str) -> None:
+        if not self._token:
+            return
+        with contextlib.suppress(Exception):
+            self._api("deleteMessage", {"chat_id": thread_id, "message_id": int(handle)})

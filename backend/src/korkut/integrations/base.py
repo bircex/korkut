@@ -58,6 +58,28 @@ class Connector(ABC):
     #: Stable identifier persisted on OfficeChannel.kind ("telegram", "whatsapp", "email").
     kind: str = ""
 
+    #: Whether this channel can show live progress while Korkut works (typing + a status line).
+    #: The runner only wires progress reporting for connectors that opt in.
+    supports_progress: bool = False
+
+    # ----- optional live progress (default no-ops; a channel like Telegram overrides them) -----
+    # These let the runner surface "Korkut is working" the way a chat app would: a typing hint
+    # plus one status line ("🔍 Yargıtay'da arıyorum…") edited in place as steps change and removed
+    # just before the real answer is sent, so the thread stays clean.
+
+    def typing(self, thread_id: str) -> None:  # noqa: B027  (optional hook; default no-op)
+        """Signal that Korkut is working (e.g. a chat 'typing' action). Must not raise."""
+
+    def post_status(self, thread_id: str, text: str) -> str | None:
+        """Post a status line and return a handle to update it later (or None). Must not raise."""
+        return None
+
+    def edit_status(self, thread_id: str, handle: str, text: str) -> None:  # noqa: B027
+        """Update a previously posted status line in place. Must not raise."""
+
+    def clear_status(self, thread_id: str, handle: str) -> None:  # noqa: B027
+        """Remove a status line (before sending the real answer). Must not raise."""
+
     @classmethod
     @abstractmethod
     def from_config(cls, config: dict[str, Any]) -> Self:

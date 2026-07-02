@@ -22,15 +22,24 @@ from korkut.messaging import SendResult
 
 
 class FakeTelegramApi:
-    def __init__(self, updates):
+    def __init__(self, updates, bot_username="KorkutBot"):
         self._updates = updates
+        self.bot_username = bot_username
         self.sent: list = []
+        self.calls: list = []  # every (method, payload), for progress-affordance assertions
+        self._next_mid = 1000
 
     def __call__(self, method, payload):
+        self.calls.append((method, payload))
         if method == "getUpdates":
             return {"ok": True, "result": self._updates}
+        if method == "getMe":
+            return {"ok": True, "result": {"username": self.bot_username}}
         if method == "sendMessage":
             self.sent.append(payload)
+            self._next_mid += 1
+            return {"ok": True, "result": {"message_id": self._next_mid}}
+        if method in ("sendChatAction", "editMessageText", "deleteMessage"):
             return {"ok": True}
         raise AssertionError(method)
 
@@ -47,6 +56,51 @@ def _tg_update(uid, chat_id, from_id, text, first="Av", last="Test"):
     }
 
 
+def _tg_group_update(uid, chat_id, from_id, text, *, reply_from=None):
+    msg = {
+        "message_id": uid,
+        "from": {"id": from_id, "first_name": "Av", "last_name": "Test"},
+        "chat": {"id": chat_id, "type": "supergroup"},
+        "text": text,
+    }
+    if reply_from is not None:
+        msg["reply_to_message"] = {"from": reply_from}
+    return {"update_id": uid, "message": msg}
+
+
+def test_telegram_group_ignores_unaddressed_message():
+    # In a group, a plain message that neither @mentions nor replies to the bot is skipped.
+    api = FakeTelegramApi([_tg_group_update(20, -100, 555, "arkadaşlar toplantı saat 3'te")])
+    c = TelegramConnector(token="t", offset=0, api=api)
+    assert c.poll() == []
+
+
+def test_telegram_group_answers_when_mentioned_and_strips_mention():
+    api = FakeTelegramApi([_tg_group_update(21, -100, 555, "@KorkutBot kira davası içtihadı bul")])
+    c = TelegramConnector(token="t", offset=0, api=api)
+    msgs = c.poll()
+    assert len(msgs) == 1
+    assert msgs[0].text == "kira davası içtihadı bul"  # @mention stripped before the brain sees it
+    assert msgs[0].thread_id == "-100" and msgs[0].external_id == "555"
+
+
+def test_telegram_group_answers_when_replying_to_bot():
+    api = FakeTelegramApi(
+        [
+            _tg_group_update(
+                22,
+                -100,
+                555,
+                "peki temyiz süresi?",
+                reply_from={"is_bot": True, "username": "KorkutBot"},
+            )
+        ]
+    )
+    c = TelegramConnector(token="t", offset=0, api=api)
+    msgs = c.poll()
+    assert [m.text for m in msgs] == ["peki temyiz süresi?"]
+
+
 def test_telegram_poll_parses_and_advances_offset():
     api = FakeTelegramApi([_tg_update(10, 555, 555, "merhaba"), _tg_update(11, 555, 555, "selam")])
     c = TelegramConnector(token="t", offset=0, api=api)
@@ -57,6 +111,64 @@ def test_telegram_poll_parses_and_advances_offset():
     assert msgs[0].sender_name == "Av Test"
     # offset advances past the last update so the next poll won't replay
     assert c.state_patch() == {"_cursor": {"offset": 12}}
+
+
+def test_telegram_progress_affordances():
+    """typing / post / edit / clear map to the right Bot API methods; post returns a handle."""
+    api = FakeTelegramApi([])
+    c = TelegramConnector(token="t", offset=0, api=api)
+
+    c.typing("555")
+    handle = c.post_status("555", "🔍 Yargıtay'da arıyorum")
+    assert handle == "1001"  # message_id from the fake, as a string handle
+    c.edit_status("555", handle, "🔍 Belgeyi getiriyorum")
+    c.clear_status("555", handle)
+
+    methods = [m for m, _ in api.calls]
+    assert methods == ["sendChatAction", "sendMessage", "editMessageText", "deleteMessage"]
+    assert api.calls[0][1] == {"chat_id": "555", "action": "typing"}
+    assert api.calls[2][1]["message_id"] == 1001 and api.calls[3][1]["message_id"] == 1001
+
+
+class _RecordingConnector:
+    """Captures the progress calls the runner's `_Progress` makes."""
+
+    supports_progress = True
+
+    def __init__(self):
+        self.log: list = []
+
+    def typing(self, thread_id):
+        self.log.append(("typing", thread_id))
+
+    def post_status(self, thread_id, text):
+        self.log.append(("post", text))
+        return "42"
+
+    def edit_status(self, thread_id, handle, text):
+        self.log.append(("edit", handle, text))
+
+    def clear_status(self, thread_id, handle):
+        self.log.append(("clear", handle))
+
+
+def test_progress_posts_edits_and_clears_status():
+    from korkut.integrations.runner import _Progress
+
+    conn = _RecordingConnector()
+    p = _Progress(conn, "999")
+    p.on_event({"type": "tool", "name": "search_yargitay", "args": {"query": "kira"}})
+    p.on_event({"type": "token", "text": "cevap"})  # tokens don't change the status line
+    p.on_event({"type": "tool", "name": "fetch_document", "args": {}})  # a new step → edit
+    p.finish()
+
+    kinds = [e[0] for e in conn.log]
+    assert kinds.count("post") == 1 and kinds.count("edit") == 1 and kinds.count("clear") == 1
+    assert "typing" in kinds  # keepalive fired
+    post = next(e for e in conn.log if e[0] == "post")
+    assert "Yargıtay" in post[1]
+    clear = next(e for e in conn.log if e[0] == "clear")
+    assert clear[1] == "42"  # the handle post_status returned
 
 
 def test_telegram_skips_non_text_and_send():
@@ -78,17 +190,32 @@ def test_telegram_no_token_is_quiet():
 
 
 class FakeWhatsAppApi:
-    def __init__(self, inbox):
+    def __init__(self, inbox, self_number="905000"):
         self._inbox = inbox
+        self.self_number = self_number
         self.sent: list = []
 
     def __call__(self, method, path, payload):
         if method == "GET" and path == "/inbox":
             return self._inbox
+        if method == "GET" and path == "/me":
+            return {"number": self.self_number}
         if method == "POST" and path == "/send":
             self.sent.append(payload)
             return {"ok": True}
         raise AssertionError((method, path))
+
+
+def _wa_group_msg(mid, text, *, mentions=None, quoted=None):
+    return {
+        "id": mid,
+        "from": "905111@s.whatsapp.net",  # the human sender within the group
+        "chat": "120363@g.us",  # a group jid (ends with @g.us)
+        "text": text,
+        "name": "Av. Test",
+        "mentions": mentions or [],
+        "quoted": quoted or "",
+    }
 
 
 def test_whatsapp_poll_and_cursor():
@@ -122,6 +249,57 @@ def test_whatsapp_send():
     res = c.send(OutboundReply(thread_id="905001@s.whatsapp.net", text="cevap"))
     assert res.ok
     assert api.sent == [{"to": "905001@s.whatsapp.net", "text": "cevap"}]
+
+
+def test_whatsapp_group_ignores_unaddressed_message():
+    # A plain group message that neither @mentions nor replies to the bot is skipped.
+    api = FakeWhatsAppApi(
+        {"messages": [_wa_group_msg(7, "arkadaşlar dosya hazır mı")], "cursor": 7}
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert c.poll() == []
+
+
+def test_whatsapp_group_answers_when_mentioned_and_strips_mention():
+    api = FakeWhatsAppApi(
+        {
+            "messages": [_wa_group_msg(8, "@905000 kira davası bul", mentions=["905000"])],
+            "cursor": 8,
+        }
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    msgs = c.poll()
+    assert len(msgs) == 1
+    assert msgs[0].text == "kira davası bul"  # @mention stripped before the brain sees it
+    assert msgs[0].thread_id == "120363@g.us" and msgs[0].external_id == "905111@s.whatsapp.net"
+
+
+def test_whatsapp_group_answers_when_replying_to_bot():
+    api = FakeWhatsAppApi(
+        {"messages": [_wa_group_msg(9, "peki temyiz süresi?", quoted="905000")], "cursor": 9}
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert [m.text for m in c.poll()] == ["peki temyiz süresi?"]
+
+
+def test_whatsapp_direct_message_needs_no_mention():
+    # Direct chats (…@s.whatsapp.net) are always handled — the gate only applies to groups.
+    api = FakeWhatsAppApi(
+        {
+            "messages": [
+                {
+                    "id": 3,
+                    "from": "905001@s.whatsapp.net",
+                    "chat": "905001@s.whatsapp.net",
+                    "text": "merhaba",
+                    "name": "Müvekkil",
+                }
+            ],
+            "cursor": 3,
+        }
+    )
+    c = WhatsAppConnector(token="secret", api=api)
+    assert [m.text for m in c.poll()] == ["merhaba"]
 
 
 # ----------------------------- E-mail -----------------------------
@@ -275,7 +453,7 @@ def test_link_code_binds_then_chats(store_db):
     assert "bağlandınız" in welcome.lower()
 
     # Now resolves to the user, and a real message runs through the brain + persists.
-    with patch.object(gateway.agent, "answer", return_value="Korkut cevabı.") as ans:
+    with patch.object(gateway.resilience, "guarded_answer", return_value="Korkut cevabı.") as ans:
         reply = gateway.handle(_inbound("bir dava sorum var"))
     assert reply == "Korkut cevabı."
     assert ans.called
@@ -292,10 +470,34 @@ def test_link_code_binds_then_chats(store_db):
         assert msgs[1].content == "Korkut cevabı."
 
     # A second message reuses the same conversation (no duplicate thread).
-    with patch.object(gateway.agent, "answer", return_value="ikinci"):
+    with patch.object(gateway.resilience, "guarded_answer", return_value="ikinci"):
         gateway.handle(_inbound("ikinci mesaj"))
     with store_mod.session() as s:
         assert s.query(IntegrationThread).count() == 1
+
+
+def test_model_failure_replies_to_channel(store_db):
+    """A model failure must reach the sender (not silence) and not be stored as an answer."""
+    store_mod, user_id = store_db
+    from korkut.brain import resilience
+    from korkut.integrations import gateway, identity
+
+    with store_mod.session() as s:
+        code = identity.generate_code(s, user_id, "telegram")
+    gateway.handle(_inbound(f"BAGLAN {code}"))  # bind first
+
+    err = resilience.ModelError("Yapay zeka modeline ulaşılamadı.")
+    with patch.object(gateway.resilience, "guarded_answer", side_effect=err):
+        reply = gateway.handle(_inbound("bir dava sorum var"))
+    assert reply == "Yapay zeka modeline ulaşılamadı."
+
+    # The user turn is kept, but the failure note is NOT persisted as an assistant answer.
+    from korkut.api.models import Conversation, IntegrationThread, Message
+
+    with store_mod.session() as s:
+        conv = s.get(Conversation, s.query(IntegrationThread).one().conversation_id)
+        roles = [m.role for m in s.query(Message).filter(Message.conversation_id == conv.id)]
+        assert roles == ["user"]
 
 
 def test_expired_or_wrong_code_does_not_bind(store_db):

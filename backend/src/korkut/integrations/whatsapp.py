@@ -5,7 +5,9 @@ WhatsApp Web via the Baileys library, which is Node-only. So Korkut keeps a smal
 process (`integrations/sidecar/`) that owns the WhatsApp Web session (QR-paired once) and exposes
 a tiny local HTTP API:
 
-    GET  /inbox?after=<cursor>   -> {"messages": [{id, from, chat, text, name}], "cursor": <id>}
+    GET  /inbox?after=<cursor>   -> {"messages": [{id, from, chat, text, name, mentions, quoted}],
+                                     "cursor": <id>}   # mentions/quoted drive group @mention gating
+    GET  /me                     -> {"number": "<bot's own number>"}   # parallel of Telegram getMe
     POST /send  {to, text}       -> {"ok": true}
 
 This connector is the Python half: it polls ``/inbox`` (acknowledging by advancing the cursor) and
@@ -20,11 +22,16 @@ Config (`OfficeChannel.config`, kind="whatsapp"):
 
 from __future__ import annotations
 
+import contextlib
+import re
 from collections.abc import Callable
 from typing import Any, Self
 
 from korkut.integrations.base import Connector, InboundMessage, OutboundReply
 from korkut.messaging import SendResult
+
+# WhatsApp group chat jids end with this suffix; direct chats end with @s.whatsapp.net.
+_GROUP_SUFFIX = "@g.us"
 
 _HTTP_TIMEOUT = 30.0
 _DEFAULT_BASE = "http://127.0.0.1:8099"
@@ -67,6 +74,41 @@ class WhatsAppConnector(Connector):
         self._cursor = cursor
         self._start_cursor = cursor
         self._api = api or _default_api(self._base_url, token)
+        self._self_number_cache: str | None = None
+
+    def _self_number(self) -> str:
+        """The bot's own WhatsApp number (cached), from the sidecar's ``/me``. Empty on failure.
+
+        The parallel of Telegram's ``getMe``: needed to tell whether a group message @mentions the
+        bot or replies to it. An older sidecar without ``/me`` yields "" → in that case group
+        messages simply go unanswered (a safe default), while direct chats are unaffected.
+        """
+        if self._self_number_cache is None:
+            self._self_number_cache = ""
+            with contextlib.suppress(Exception):
+                data = self._api("GET", "/me", {})
+                self._self_number_cache = str(data.get("number") or "")
+        return self._self_number_cache
+
+    def _gate_group(self, chat: str, text: str, msg: dict[str, Any]) -> str | None:
+        """Group gating: answer only when addressed; strip the @mention. Returns None to skip.
+
+        Direct chats pass through untouched. In a group the bot acts only if it is @mentioned
+        (its number in ``mentions``) or the message replies to one of its own (``quoted`` == self),
+        mirroring the Telegram connector. The sidecar supplies ``mentions``/``quoted`` per message.
+        """
+        if not chat.endswith(_GROUP_SUFFIX):
+            return text
+        self_num = self._self_number()
+        if not self_num:
+            return None  # can't tell who was addressed → stay quiet in the group
+        mentions = {str(x) for x in (msg.get("mentions") or [])}
+        replied = str(msg.get("quoted") or "") == self_num
+        if self_num not in mentions and not replied:
+            return None
+        if self_num in mentions:
+            text = re.sub(rf"@{re.escape(self_num)}\b", " ", text).strip()
+        return text or None
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> Self:
@@ -89,12 +131,16 @@ class WhatsAppConnector(Connector):
             sender = msg.get("from")
             if not text or not sender:
                 continue
+            chat = str(msg.get("chat") or sender)
+            gated = self._gate_group(chat, text, msg)
+            if gated is None:
+                continue  # a group message not addressed to the bot
             out.append(
                 InboundMessage(
                     channel=self.kind,
                     external_id=str(sender),
-                    thread_id=str(msg.get("chat") or sender),
-                    text=text,
+                    thread_id=chat,
+                    text=gated,
                     sender_name=str(msg.get("name") or ""),
                 )
             )
