@@ -1,13 +1,14 @@
 name: Release
 
 # Manual only — the repository owner runs this from the Actions tab. There is no automatic
-# (push/tag) trigger by design.
+# (push/tag) trigger by design. Leave `version` blank to let the pipeline generate the next
+# CalVer automatically (YYYY.M.PATCH, patch auto-incremented from the month's existing tags).
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "CalVer release version (YYYY.M.PATCH), e.g. 2026.7.0"
-        required: true
+        description: "CalVer version (YYYY.M.PATCH) — leave blank to auto-generate"
+        required: false
         type: string
 
 permissions:
@@ -36,7 +37,20 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # 1. Full quality gate (mirror CI) before anything is published.
+      # 1. Resolve the CalVer version: use the manual input if given, else auto-generate
+      #    the next YYYY.M.PATCH from the month's existing tags.
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            value="${{ inputs.version }}"
+          else
+            value="$(python scripts/next_calver.py)"
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "Release version: $value"
+
+      # 2. Full quality gate (mirror CI) before anything is published.
       - name: Install backend
         run: pip install -e "backend[app,dev]"
 
@@ -55,24 +69,24 @@ jobs:
           npm run lint
           npm run build
 
-      # 2. Stamp the CalVer version into both manifests + the changelog.
+      # 3. Stamp the CalVer version into both manifests + the changelog.
       - name: Set version
-        run: python scripts/bump_version.py "${{ inputs.version }}"
+        run: python scripts/bump_version.py "${{ steps.version.outputs.value }}"
 
       - name: Promote changelog
-        run: python scripts/release_changelog.py "${{ inputs.version }}" "$(date -u +%F)"
+        run: python scripts/release_changelog.py "${{ steps.version.outputs.value }}" "$(date -u +%F)"
 
-      # 3. Commit, tag and push.
+      # 4. Commit, tag and push.
       - name: Commit and tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/pyproject.toml frontend/package.json CHANGELOG.md
-          git commit -m "Release v${{ inputs.version }}"
-          git tag "v${{ inputs.version }}"
+          git commit -m "Release v${{ steps.version.outputs.value }}"
+          git tag "v${{ steps.version.outputs.value }}"
           git push origin HEAD --follow-tags
 
-      # 4. Build and publish the image to GHCR.
+      # 5. Build and publish the image to GHCR.
       - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
@@ -89,24 +103,24 @@ jobs:
           file: deploy/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/korkut:v${{ inputs.version }}
+            ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}
             ghcr.io/${{ github.repository_owner }}/korkut:latest
 
-      # 5. Scan the published image (report-only; does not block the release).
+      # 6. Scan the published image (report-only; does not block the release).
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/korkut:v${{ inputs.version }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}
           format: table
           ignore-unfixed: true
           exit-code: "0"
 
-      # 6. Cut the GitHub Release with auto-generated notes.
+      # 7. Cut the GitHub Release with auto-generated notes.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ inputs.version }}
-          name: v${{ inputs.version }}
+          tag_name: v${{ steps.version.outputs.value }}
+          name: v${{ steps.version.outputs.value }}
           generate_release_notes: true
           body: |
-            Container image: `ghcr.io/${{ github.repository_owner }}/korkut:v${{ inputs.version }}`
+            Container image: `ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}`
