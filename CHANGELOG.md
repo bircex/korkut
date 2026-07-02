@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2026.7.0] - 2026-07-02
+
 ### Added
 - **Matter-centric domain**: case files (matters), clients, hearings, and procedural deadlines —
   with office-scoped agent tools, REST endpoints, and a "Dosyalar" UI.
