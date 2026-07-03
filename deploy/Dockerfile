@@ -29,11 +29,18 @@ COPY config ./config
 COPY templates ./templates
 # Built SPA from the frontend stage (the gitignored static dir).
 COPY --from=frontend /app/backend/src/korkut/api/static ./backend/src/korkut/api/static
+# Keep a copy outside the bind-mount path so entrypoint.sh can re-seed static/ when the compose
+# volume mount shadows it with an empty host dir (see deploy/docker-compose.yml).
+RUN cp -r ./backend/src/korkut/api/static /opt/korkut-static-seed
 
 # Editable install keeps the package running from /app/backend/src so the built static dir and
 # root-level config/templates resolve without packaging them as wheel data.
 RUN pip install --upgrade pip && pip install -e "./backend[app]"
 
+COPY deploy/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8080
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "korkut.api"]
