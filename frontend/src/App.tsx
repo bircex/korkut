@@ -5,11 +5,30 @@ import { Register } from "./components/Register";
 import { Enroll } from "./components/Enroll";
 import { Mfa } from "./components/Mfa";
 import { Workspace } from "./components/Workspace";
+import { navigate, usePath } from "./router";
 
-type Stage = "loading" | "login" | "register" | "enroll" | "mfa" | "chat";
+type AuthStage = "login" | "register" | "enroll" | "mfa";
+
+// Auth-flow stages have real URLs so a reload mid-flow (e.g. an in-progress MFA ticket, which the
+// server keeps alive for a few minutes in a cookie) lands back on the right screen instead of
+// bouncing to the login form, and so back/forward moves between them like any other page.
+const STAGE_PATH: Record<AuthStage, string> = {
+  login: "/giris",
+  register: "/kayit",
+  enroll: "/kurulum",
+  mfa: "/mfa",
+};
+
+const AUTH_PATHS: string[] = Object.values(STAGE_PATH);
+
+function stageFromPath(path: string): AuthStage {
+  const hit = (Object.entries(STAGE_PATH) as [AuthStage, string][]).find(([, p]) => p === path);
+  return hit ? hit[0] : "login";
+}
 
 export function App() {
-  const [stage, setStage] = useState<Stage>("loading");
+  const path = usePath();
+  const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -17,9 +36,18 @@ export function App() {
       .me()
       .then((u) => {
         setUser(u);
-        setStage("chat");
+        setStatus("authed");
+        // A stale bookmark to an auth screen while already signed in makes no sense — send them in.
+        if (AUTH_PATHS.includes(window.location.pathname)) {
+          navigate("/", { replace: true });
+        }
       })
-      .catch(() => setStage("login"));
+      .catch(() => {
+        setStatus("anon");
+        if (!AUTH_PATHS.includes(window.location.pathname)) {
+          navigate("/giris", { replace: true });
+        }
+      });
   }, []);
 
   // Tab title follows the signed-in office; falls back to the product name.
@@ -29,7 +57,8 @@ export function App() {
 
   function authed(u: User) {
     setUser(u);
-    setStage("chat");
+    setStatus("authed");
+    navigate("/", { replace: true });
   }
 
   async function logout() {
@@ -39,33 +68,40 @@ export function App() {
       /* ignore — we drop the session locally regardless */
     }
     setUser(null);
-    setStage("login");
+    setStatus("anon");
+    navigate("/giris", { replace: true });
   }
 
-  switch (stage) {
-    case "loading":
-      return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
+  if (status === "loading") {
+    return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
+  }
+
+  if (status === "authed" && user) {
+    return <Workspace user={user} onLogout={logout} />;
+  }
+
+  // Not authenticated — which screen shows is driven entirely by the URL, so browser back/forward
+  // moves between login/register/mfa/enroll like any other page.
+  switch (stageFromPath(path)) {
     case "login":
       return (
         <Login
-          onStep={(step) => setStage(step)}
+          onStep={(step) => navigate(STAGE_PATH[step])}
           onAuthed={authed}
-          onRegister={() => setStage("register")}
+          onRegister={() => navigate(STAGE_PATH.register)}
         />
       );
     case "register":
       return (
-        <Register onStep={(step) => setStage(step)} onAuthed={authed} onBack={() => setStage("login")} />
+        <Register
+          onStep={(step) => navigate(STAGE_PATH[step])}
+          onAuthed={authed}
+          onBack={() => navigate(STAGE_PATH.login)}
+        />
       );
     case "enroll":
-      return <Enroll onDone={authed} />;
+      return <Enroll onDone={authed} onBack={() => navigate(STAGE_PATH.login)} />;
     case "mfa":
-      return <Mfa onDone={authed} />;
-    case "chat":
-      return user ? (
-        <Workspace user={user} onLogout={logout} />
-      ) : (
-        <Login onStep={(s) => setStage(s)} onAuthed={authed} onRegister={() => setStage("register")} />
-      );
+      return <Mfa onDone={authed} onBack={() => navigate(STAGE_PATH.login)} />;
   }
 }

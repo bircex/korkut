@@ -2907,21 +2907,25 @@ def _qr_data_uri(data: str) -> str:
 # ---------------- static SPA ----------------
 
 
-@app.get("/")
-def index():
-    return FileResponse(_STATIC / "index.html")
-
-
 if (_STATIC / "assets").exists():
     app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
 
 
-@app.get("/{filename}")
-def root_file(filename: str):
-    # Root-level static files emitted by Vite from public/ (e.g. korkut-logo.svg, favicons).
-    # Single path segment only, so /api/* and /assets/* keep their own handlers; the resolved
-    # path must be a direct child of _STATIC to bar traversal.
-    candidate = (_STATIC / filename).resolve()
-    if candidate.parent == _STATIC and candidate.is_file():
-        return FileResponse(candidate)
-    raise HTTPException(status_code=404)
+@app.get("/{full_path:path}")
+def spa(full_path: str):
+    """Serve the SPA shell for `/` and any client-side route (Ayarlar, Dosyalar, ...); serve a
+    real root-level static file (e.g. korkut-logo.svg, favicons) when one exists at that path.
+
+    A path whose last segment has a "." (a stray .js/.map/.ico request for a file that isn't
+    there) 404s instead of masking the miss behind a 200 of index.html — everything else is a
+    client-side route with no server page, so App.tsx's router picks it up from `location`.
+    /api/* and /assets/* never reach here: they're registered as their own routes/mount above,
+    and Starlette matches routes in registration order.
+    """
+    if full_path:
+        candidate = (_STATIC / full_path).resolve()
+        if candidate.is_relative_to(_STATIC) and candidate.is_file():
+            return FileResponse(candidate)
+        if "." in full_path.rsplit("/", 1)[-1]:
+            raise HTTPException(status_code=404)
+    return FileResponse(_STATIC / "index.html")

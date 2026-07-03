@@ -20,6 +20,7 @@ import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
+import { navigate, usePath } from "../router";
 
 const SESSION_PAGE = 20;
 
@@ -122,12 +123,35 @@ type SidebarView =
   | "tasks"
   | "calendar";
 
+// Top-level page URLs — a page can be bookmarked, shared, or survive a reload; the specific chat
+// or matter open within "chats" is deliberately not part of the URL (out of scope, see Settings.tsx
+// for the same pattern one level down for its tabs).
+const VIEW_PATH: Record<SidebarView, string> = {
+  chats: "/",
+  docs: "/belgeler",
+  settings: "/ayarlar",
+  customize: "/ozellestir",
+  matters: "/dosyalar",
+  clients: "/muvekkiller",
+  finance: "/mali",
+  tasks: "/gorevler",
+  calendar: "/takvim",
+};
+
+function viewFromPath(path: string): SidebarView {
+  const hit = (Object.entries(VIEW_PATH) as [SidebarView, string][]).find(
+    ([v, p]) => v !== "chats" && (path === p || path.startsWith(`${p}/`)),
+  );
+  return hit ? hit[0] : "chats";
+}
+
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
   const [sessionsTotal, setSessionsTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [docs, setDocs] = useState<DocBrief[]>([]);
-  const [view, setView] = useState<SidebarView>("chats");
+  const path = usePath();
+  const view = viewFromPath(path);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
@@ -179,10 +203,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         const page = await api.sessions(SESSION_PAGE, 0);
         setSessions(page.items);
         setSessionsTotal(page.total);
-        if (page.items.length) await openSession(page.items[0].id);
-        else newChat();
+        // Loads the latest chat in the background regardless of which page we landed on — but
+        // must not steal a deep link (e.g. /ayarlar/model) by forcing the view back to "chats".
+        if (page.items.length) await openSession(page.items[0].id, { switchView: false });
+        else newChat({ switchView: false });
       } catch {
-        newChat();
+        newChat({ switchView: false });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,10 +244,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  async function openSession(id: number) {
+  async function openSession(id: number, opts: { switchView?: boolean } = {}) {
     currentIdRef.current = id; // synchronously, so an in-flight stream stops painting this view
     setCurrentId(id);
-    setView("chats");
+    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
     setPane("chat");
     closeSidebarOnMobile();
     try {
@@ -232,11 +258,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  function newChat() {
+  function newChat(opts: { switchView?: boolean } = {}) {
     currentIdRef.current = null;
     setCurrentId(null);
     setMessages([greeting(coverage, user.office)]);
-    setView("chats");
+    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
     setPane("chat");
     closeSidebarOnMobile();
   }
@@ -252,7 +278,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   async function openDocFromList(d: DocBrief) {
     currentIdRef.current = d.conversation_id;
     setCurrentId(d.conversation_id);
-    setView("chats");
+    navigate(VIEW_PATH.chats);
     setPane("document");
     closeSidebarOnMobile();
     try {
@@ -439,11 +465,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   }
 
   if (view === "settings") {
-    return <Settings user={user} onClose={() => setView("chats")} />;
+    return <Settings user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
   }
 
   if (view === "customize") {
-    return <Customize user={user} onClose={() => setView("chats")} />;
+    return <Customize user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
   }
 
   // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
@@ -535,7 +561,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      setView("settings");
+                      navigate(VIEW_PATH.settings);
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
@@ -544,7 +570,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      setView("customize");
+                      navigate(VIEW_PATH.customize);
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
@@ -568,7 +594,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <span className="text-base leading-none">⚠️</span>
           <span className="min-w-0 flex-1">{health.detail}</span>
           <button
-            onClick={() => setView("settings")}
+            onClick={() => navigate(VIEW_PATH.settings)}
             className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
           >
             Ayarlar → Model
@@ -606,7 +632,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     <button
                       key={it.key}
                       onClick={() => {
-                        setView(it.key);
+                        navigate(VIEW_PATH[it.key]);
                         if (it.key === "docs") loadDocs();
                         closeSidebarOnMobile();
                       }}
@@ -631,7 +657,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   Sohbetler
                 </span>
                 <button
-                  onClick={newChat}
+                  onClick={() => newChat()}
                   title="Yeni sohbet"
                   className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
                 >
