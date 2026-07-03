@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { api, ApiError, type Provision, type User } from "../api";
 import { AuthShell, Brand, Button, ErrorText, Field } from "../ui";
 
-export function Enroll({ onDone }: { onDone: (user: User) => void }) {
+export function Enroll({
+  onDone,
+  onBack,
+}: {
+  onDone: (user: User) => void;
+  onBack: () => void;
+}) {
   const [prov, setProv] = useState<Provision | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -95,6 +101,13 @@ export function Enroll({ onDone }: { onDone: (user: User) => void }) {
           {busy ? "Doğrulanıyor…" : "Kur ve devam et"}
         </Button>
         <ErrorText>{error}</ErrorText>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Girişe dön
+        </button>
       </form>
     </AuthShell>
   );

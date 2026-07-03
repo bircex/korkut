@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api, ApiError, type User } from "../api";
 import { AuthShell, Brand, Button, ErrorText, Field } from "../ui";
 
-export function Mfa({ onDone }: { onDone: (user: User) => void }) {
+export function Mfa({ onDone, onBack }: { onDone: (user: User) => void; onBack: () => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,6 +54,13 @@ export function Mfa({ onDone }: { onDone: (user: User) => void }) {
           className="mt-1 text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
         >
           {recovery ? "Authenticator kodu kullan" : "Kurtarma kodu kullan"}
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Girişe dön
         </button>
       </form>
     </AuthShell>
