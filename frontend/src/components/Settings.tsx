@@ -1,17 +1,43 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { api, ApiError, type Member, type StyleFields, type User } from "../api";
+import { navigate, usePath } from "../router";
 import { EmailSettings } from "./EmailSettings";
 import { IntegrationsSettings } from "./IntegrationsSettings";
 import { MemorySettings } from "./MemorySettings";
 import { ModelSettings } from "./ModelSettings";
 import { PersonaSettings } from "./PersonaSettings";
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-zinc-100 py-2 last:border-0">
-      <span className="text-zinc-500">{label}</span>
-      <span className="font-medium text-zinc-900">{value}</span>
+    <div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+      <dt className="font-medium text-zinc-900">{label}</dt>
+      <dd className="text-zinc-500">{value}</dd>
     </div>
+  );
+}
+
+function StatusBadge({
+  tone,
+  children,
+}: {
+  tone: "neutral" | "success" | "warning";
+  children: ReactNode;
+}) {
+  const dot =
+    tone === "success" ? "bg-emerald-500" : tone === "warning" ? "bg-amber-500" : "bg-zinc-400";
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 py-1 pr-2 pl-1 text-xs font-medium text-zinc-700">
+      <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
+      {children}
+    </span>
+  );
+}
+
+function RoleBadge({ role }: { role: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
+      {role === "owner" ? "Sahip" : "Üye"}
+    </span>
   );
 }
 
@@ -33,23 +59,25 @@ function BarNoField({ initial }: { initial: string | null }) {
   }
 
   return (
-    <div className="mt-4 flex items-end gap-2">
+    <div className="flex items-end gap-2">
       <label className="flex flex-1 flex-col gap-1">
         <span className="text-[13px] text-zinc-500">Baro sicil no</span>
         <input
+          name="bar_registry_no"
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
             setSaved(false);
           }}
           placeholder="—"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
+          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none max-sm:text-base/6 focus:border-zinc-900"
         />
       </label>
       <button
+        type="button"
         onClick={save}
         disabled={busy}
-        className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+        className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 disabled:opacity-50"
       >
         {busy ? "Kaydediliyor…" : "Kaydet"}
       </button>
@@ -387,8 +415,107 @@ const TAB_TITLE: Record<Tab, string> = {
   email: "E-posta",
 };
 
+// URL slug per tab, e.g. /ayarlar/model — lets a tab be bookmarked, shared, or survive a reload.
+const TAB_SLUG: Record<Tab, string> = {
+  account: "hesap",
+  members: "uyeler",
+  persona: "kisilik",
+  memory: "hafiza",
+  style: "stil",
+  integrations: "entegrasyonlar",
+  model: "model",
+  email: "e-posta",
+};
+
+function tabFromPath(path: string): Tab {
+  const slug = path.replace(/^\/ayarlar\/?/, "");
+  const hit = (Object.entries(TAB_SLUG) as [Tab, string][]).find(([, s]) => s === slug);
+  return hit ? hit[0] : "account";
+}
+
+// Groups the left-nav tabs for the "Gruplu liste" picker option below.
+const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
+  { label: "Hesap", ids: ["account", "members"] },
+  { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
+  { label: "Sistem", ids: ["integrations", "model", "email"] },
+];
+
+function TabIcon({ id }: { id: Tab }) {
+  const p = {
+    width: 17,
+    height: 17,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.75,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "shrink-0",
+  };
+  switch (id) {
+    case "account":
+      return (
+        <svg {...p}>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+        </svg>
+      );
+    case "members":
+      return (
+        <svg {...p}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "persona":
+      return (
+        <svg {...p}>
+          <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" />
+        </svg>
+      );
+    case "memory":
+      return (
+        <svg {...p}>
+          <path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
+        </svg>
+      );
+    case "style":
+      return (
+        <svg {...p}>
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+      );
+    case "integrations":
+      return (
+        <svg {...p}>
+          <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+          <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+        </svg>
+      );
+    case "model":
+      return (
+        <svg {...p}>
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+          <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2" />
+        </svg>
+      );
+    case "email":
+      return (
+        <svg {...p}>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+      );
+  }
+}
+
 export function Settings({ user, onClose }: { user: User; onClose: () => void }) {
-  const [tab, setTab] = useState<Tab>("account");
+  const path = usePath();
+  const tab = tabFromPath(path);
   const tabs: { id: Tab; label: string }[] = [
     { id: "account", label: "Hesap" },
     { id: "members", label: "Üyeler" },
@@ -408,51 +535,97 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
   ];
 
   return (
-    <div className="flex h-dvh bg-zinc-100 text-zinc-900">
-      <aside className="flex w-64 shrink-0 flex-col gap-1 border-r border-zinc-200 bg-white p-4">
+    <div className="flex h-dvh flex-col bg-white text-zinc-900 lg:flex-row">
+      <div className="flex items-center gap-2 border-b border-zinc-950/10 bg-white p-3 lg:hidden">
         <button
+          type="button"
           onClick={onClose}
-          className="mb-4 rounded-lg border border-zinc-300 px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:border-zinc-900"
+          className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:border-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+        >
+          Geri
+        </button>
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => navigate(`/ayarlar/${TAB_SLUG[t.id]}`)}
+              className={
+                "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 " +
+                (tab === t.id
+                  ? "bg-zinc-100 text-zinc-900"
+                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
+              }
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <aside className="hidden w-64 shrink-0 flex-col gap-1 border-r border-zinc-950/10 bg-white p-4 lg:flex">
+        <button
+          type="button"
+          onClick={onClose}
+          className="mb-4 rounded-lg border border-zinc-300 px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:border-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
         >
           Geri
         </button>
         <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
           Ayarlar
         </p>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={
-              "rounded-lg px-3 py-2.5 text-left text-[15px] font-medium " +
-              (tab === t.id ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100")
-            }
-          >
-            {t.label}
-          </button>
-        ))}
+
+        <nav className="flex flex-col gap-4">
+          {TAB_GROUPS.map((g) => {
+            const items = tabs.filter((t) => g.ids.includes(t.id));
+            if (!items.length) return null;
+            return (
+              <div key={g.label} className="flex flex-col gap-0.5">
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                  {g.label}
+                </p>
+                {items.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => navigate(`/ayarlar/${TAB_SLUG[t.id]}`)}
+                    className={
+                      "flex items-center gap-2.5 rounded-r-lg border-l-2 py-2 pr-3 pl-2.5 text-left text-[15px] font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 " +
+                      (tab === t.id
+                        ? "border-zinc-900 bg-zinc-100 text-zinc-900"
+                        : "border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
+                    }
+                  >
+                    <span className={tab === t.id ? "text-zinc-700" : "text-zinc-400"}>
+                      <TabIcon id={t.id} />
+                    </span>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+        </nav>
       </aside>
 
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div className="min-w-0 flex-1 overflow-y-auto bg-white">
         <div className="mx-auto w-full max-w-2xl px-6 py-8">
-          <h1 className="mb-5 text-lg font-bold text-zinc-900">{TAB_TITLE[tab]}</h1>
+          <h1 className="mb-5 text-lg font-semibold text-zinc-900">{TAB_TITLE[tab]}</h1>
 
           {tab === "account" && (
             <div>
-              <div className="mb-4 text-sm">
+              <dl className="mb-6 divide-y divide-zinc-950/5 text-sm">
                 <Row label="Hukuk bürosu" value={user.office ?? "—"} />
-                <Row label="Rol" value={user.role === "owner" ? "Sahip" : "Üye"} />
+                <Row label="Rol" value={<RoleBadge role={user.role} />} />
                 <Row label="Kullanıcı adı" value={user.username} />
                 <Row label="Ad Soyad" value={user.full_name ?? "—"} />
-              </div>
+              </dl>
               <BarNoField initial={user.bar_registry_no} />
-              <div className="mt-4" />
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[13px] text-zinc-600">
-                İki adımlı doğrulama (2FA){" "}
-                <span className="font-medium text-zinc-800">
-                  {user.has_2fa ? "hesabınızda açık" : user.require_2fa ? "zorunlu (girişte kurulacak)" : "kapalı"}
-                </span>
-                .
+              <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
+                <p className="m-0 text-[13px] text-zinc-600">İki adımlı doğrulama (2FA)</p>
+                <StatusBadge tone={user.has_2fa ? "success" : user.require_2fa ? "warning" : "neutral"}>
+                  {user.has_2fa ? "Açık" : user.require_2fa ? "Kurulum bekliyor" : "Kapalı"}
+                </StatusBadge>
               </div>
             </div>
           )}

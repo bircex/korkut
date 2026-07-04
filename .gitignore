@@ -3,6 +3,7 @@ data/
 *.env
 .env
 .env.*
+!.env.example
 secrets/
 *.key
 *.pem
@@ -46,3 +47,5 @@ branding/*.ico
 .DS_Store
 .idea/
 .vscode/
+/.claude
+.mcp.json
