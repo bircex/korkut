@@ -430,25 +430,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  if (view === "settings") {
-    return <Settings user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
-  }
-
-  if (view === "customize") {
-    return <Customize user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
-  }
-
-  // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
-  if (view !== "docs" && pane === "document" && currentId !== null) {
-    return (
-      <DocumentPanel
-        key={currentId}
-        sessionId={currentId}
-        refreshKey={docRefresh}
-        onClose={() => setPane("chat")}
-      />
-    );
-  }
+  // Settings / Customize / the document editor render below the persistent navbar but without
+  // the chat sidebar (they bring their own inner navigation); everything else gets the sidebar.
+  const editorOpen = view !== "docs" && pane === "document" && currentId !== null;
+  const chromeless = view === "settings" || view === "customize" || editorOpen;
 
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
@@ -457,13 +442,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       )}
       {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
       <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
-        <button
-          onClick={() => setSidebarOpen((o) => !o)}
-          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
-          title="Sohbet geçmişi"
-        >
-          <List size={20} aria-hidden />
-        </button>
+        {!chromeless && (
+          <button
+            onClick={() => setSidebarOpen((o) => !o)}
+            className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
+            title="Sohbet geçmişi"
+          >
+            <List size={20} aria-hidden />
+          </button>
+        )}
         <div className="flex items-center gap-2">
           <img
             src="/korkut-logo.svg"
@@ -576,6 +563,24 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
       )}
 
+      {view === "settings" ? (
+        <div className="min-h-0 flex-1">
+          <Settings user={user} onClose={() => navigate(VIEW_PATH.chats)} />
+        </div>
+      ) : view === "customize" ? (
+        <div className="min-h-0 flex-1">
+          <Customize user={user} onClose={() => navigate(VIEW_PATH.chats)} />
+        </div>
+      ) : editorOpen && currentId !== null ? (
+        <div className="min-h-0 flex-1">
+          <DocumentPanel
+            key={currentId}
+            sessionId={currentId}
+            refreshKey={docRefresh}
+            onClose={() => setPane("chat")}
+          />
+        </div>
+      ) : (
       <div className="flex min-h-0 flex-1">
         {sidebarOpen && (
           <>
@@ -805,13 +810,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         )}
         </div>
       </div>
+      )}
 
-      <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
-        {coverage > 0
-          ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
-          : ""}
-        © {user.office ?? "Korkut"}
-      </footer>
+      {!chromeless && (
+        <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
+          {coverage > 0
+            ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
+            : ""}
+          © {user.office ?? "Korkut"}
+        </footer>
+      )}
     </div>
   );
 }

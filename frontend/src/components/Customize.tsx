@@ -158,7 +158,7 @@ export function Customize({ user, onClose }: { user: User; onClose: () => void }
 
   // ---- List (browse) view ----
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-full flex-col bg-white">
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <button
           onClick={onClose}
