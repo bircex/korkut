@@ -127,8 +127,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sendingId, setSendingId] = useState<number | null>(null); // which chat the in-flight send is for
   const [activity, setActivity] = useState<string | null>(null); // current tool step, while waiting
   const [streaming, setStreaming] = useState(false); // answer tokens are landing in the last bubble
-  // Varsayılan kapalı — navbar'daki hamburger ile açılır.
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Masaüstünde açık başlar; mobilde kapalı (drawer olarak açılır).
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 640 : true,
+  );
   const [pane, setPane] = useState<"chat" | "document">("chat");
   const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
