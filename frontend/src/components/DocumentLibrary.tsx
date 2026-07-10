@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { type DocBrief } from "../api";
+import { CaretLeft, CaretRight } from "../icons";
 
 const PAGE = 12;
 
@@ -62,9 +63,9 @@ function Section({
               <button
                 onClick={() => setPage(safePage - 1)}
                 disabled={safePage === 0}
-                className="rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
               >
-                ‹ Önceki
+                <CaretLeft size={12} aria-hidden /> Önceki
               </button>
               <span>
                 {safePage + 1} / {pages}
@@ -72,9 +73,9 @@ function Section({
               <button
                 onClick={() => setPage(safePage + 1)}
                 disabled={safePage >= pages - 1}
-                className="rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
               >
-                Sonraki ›
+                Sonraki <CaretRight size={12} aria-hidden />
               </button>
             </div>
           )}

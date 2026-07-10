@@ -21,6 +21,22 @@ import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
 import { navigate, usePath } from "../router";
+import {
+  type Icon,
+  ArrowClockwise,
+  CalendarBlank,
+  CaretDown,
+  CheckSquare,
+  DotsThree,
+  FileText,
+  Folder,
+  List,
+  Paperclip,
+  Plus,
+  Users,
+  Wallet,
+  Warning,
+} from "../icons";
 
 const SESSION_PAGE = 20;
 
@@ -47,69 +63,19 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-// Soft (line) ikonlar — Claude Code / lucide tarzı, currentColor + ince stroke.
+// Sol menü ikonları — Phosphor set'inden (bkz. ../icons.ts).
+const NAV_ICON: Record<string, Icon> = {
+  matters: Folder,
+  clients: Users,
+  finance: Wallet,
+  tasks: CheckSquare,
+  calendar: CalendarBlank,
+  docs: FileText,
+};
+
 function NavIcon({ name }: { name: string }) {
-  const p = {
-    width: 18,
-    height: 18,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.75,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-    className: "shrink-0",
-  };
-  switch (name) {
-    case "matters":
-      return (
-        <svg {...p}>
-          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
-        </svg>
-      );
-    case "clients":
-      return (
-        <svg {...p}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "finance":
-      return (
-        <svg {...p}>
-          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-          <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-          <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-        </svg>
-      );
-    case "tasks":
-      return (
-        <svg {...p}>
-          <path d="m9 11 3 3L22 4" />
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-        </svg>
-      );
-    case "calendar":
-      return (
-        <svg {...p}>
-          <rect width="18" height="18" x="3" y="4" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-      );
-    case "docs":
-      return (
-        <svg {...p}>
-          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-          <path d="M14 2v5h5" />
-          <path d="M16 13H8M16 17H8M10 9H8" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const Ikon = NAV_ICON[name];
+  return Ikon ? <Ikon size={18} aria-hidden className="shrink-0" /> : null;
 }
 
 type SidebarView =
@@ -495,7 +461,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100"
           title="Sohbet geçmişi"
         >
-          ☰
+          <List size={20} aria-hidden />
         </button>
         <div className="flex items-center gap-2">
           <img
@@ -544,7 +510,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-900 text-[12px] font-bold text-white">
                 {initials(user)}
               </span>
-              <span className="text-[10px] text-zinc-400">▾</span>
+              <CaretDown size={12} aria-hidden className="text-zinc-400" />
             </button>
             {menuOpen && (
               <>
@@ -591,7 +557,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
       {health && !health.connected && (
         <div className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-[13px] text-amber-800">
-          <span className="text-base leading-none">⚠️</span>
+          <Warning size={18} weight="fill" aria-hidden className="shrink-0" />
           <span className="min-w-0 flex-1">{health.detail}</span>
           <button
             onClick={() => navigate(VIEW_PATH.settings)}
@@ -604,7 +570,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
             title="Yeniden dene"
           >
-            ↻
+            <ArrowClockwise size={14} aria-hidden />
           </button>
         </div>
       )}
@@ -661,9 +627,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   title="Yeni sohbet"
                   className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
+                  <Plus size={18} aria-hidden />
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto px-2 pb-2">
@@ -703,7 +667,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       }
                       title="Seçenekler"
                     >
-                      ⋯
+                      <DotsThree size={18} weight="bold" aria-hidden />
                     </button>
                     {rowMenuId === s.id && (
                       <>
@@ -808,9 +772,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               title="Dosya ekle (PDF, DOCX, TXT, PNG, JPG)"
               className="shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3 py-3 leading-none text-zinc-600 hover:border-zinc-900"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
+              <Paperclip size={18} aria-hidden />
             </button>
             <textarea
               ref={taRef}

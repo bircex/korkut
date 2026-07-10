@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
+import { ArrowLeft, CaretRight } from "../icons";
 import { Modal } from "./Modal";
 
 // Minimal "Dosyalar" (matters) workspace: browse the office's case files, open one to see its
@@ -155,9 +156,9 @@ export function MattersPanel({
         <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
           <button
             onClick={() => setDetail(null)}
-            className="text-sm text-zinc-500 hover:text-zinc-900"
+            className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
           >
-            ← Dosyalar
+            <ArrowLeft size={14} aria-hidden /> Dosyalar
           </button>
           <h1 className="text-base font-semibold text-zinc-900">{detail.title}</h1>
           <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>
@@ -280,7 +281,7 @@ export function MattersPanel({
                 >
                   <span className="min-w-0 flex-1 truncate text-zinc-800">{d.title}</span>
                   <span className="shrink-0 text-xs text-zinc-400">{d.status}</span>
-                  <span className="shrink-0 text-zinc-300">›</span>
+                  <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
                 </button>
               ))}
             </div>
@@ -465,7 +466,7 @@ export function MattersPanel({
                 >
                   {STATUS_LABEL[m.status] ?? m.status}
                 </span>
-                <span className="shrink-0 text-zinc-300">›</span>
+                <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
               </button>
             ))}
           </div>

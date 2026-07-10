@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type CalendarEvent, type ClientBrief, type MatterBrief } from "../api";
+import { ArrowsClockwise, Bell, CaretLeft, CaretRight } from "../icons";
 import { Modal } from "./Modal";
 
 // Takvim — the office calendar. Every dated thing (duruşma, süre, randevu, hatırlatma) is a single
@@ -254,7 +255,7 @@ export function CalendarPanel() {
             onClick={() => step(-1)}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
           >
-            ‹
+            <CaretLeft size={14} aria-hidden />
           </button>
           <button
             onClick={() => setCursor(startOfDay(new Date()))}
@@ -266,7 +267,7 @@ export function CalendarPanel() {
             onClick={() => step(1)}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
           >
-            ›
+            <CaretRight size={14} aria-hidden />
           </button>
         </div>
         <span className="min-w-40 text-sm font-medium text-zinc-800">{label}</span>
@@ -534,7 +535,9 @@ function MonthGrid({
                       {!e.all_day && fmtTime(e.start_at, false) !== ""
                         ? `${fmtTime(e.start_at, false)} `
                         : ""}
-                      {e.recurring ? "↻ " : ""}
+                      {e.recurring && (
+                        <ArrowsClockwise size={11} aria-hidden className="mr-0.5 inline align-[-1px]" />
+                      )}
                       {e.title}
                     </span>
                   </button>
@@ -713,8 +716,16 @@ function EventRow({
             e.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
           }`}
         >
-          {e.recurring && <span title="Tekrarlayan">↻ </span>}
-          {e.remind_before_min != null && <span title="Hatırlatma açık">🔔 </span>}
+          {e.recurring && (
+            <span title="Tekrarlayan" className="mr-1">
+              <ArrowsClockwise size={12} aria-hidden className="inline align-[-1px]" />
+            </span>
+          )}
+          {e.remind_before_min != null && (
+            <span title="Hatırlatma açık" className="mr-1">
+              <Bell size={12} aria-hidden className="inline align-[-1px]" />
+            </span>
+          )}
           {e.title}
         </div>
         <div className="truncate text-[12px] text-zinc-400">
