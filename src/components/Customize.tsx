@@ -10,6 +10,7 @@ import {
 } from "../api";
 import { DocumentEditor } from "./DocumentEditor";
 import { CaretRight, Check } from "../icons";
+import { matchPath, navigate, usePath, useSearch } from "../router";
 
 // Turkish-aware fold for the search box (diacritics → ascii), mirroring the backend.
 const FOLD: Record<string, string> = {
@@ -43,11 +44,17 @@ function TypeBadges({ t }: { t: TemplateTypeRow }) {
 }
 
 export function Customize({ user }: { user: User }) {
-  const [kind, setKind] = useState<TemplateKind>("dilekce");
+  const path = usePath();
+  const search = useSearch();
+  // Tür ve açık şablon URL'den okunur: /sablonlar(?tur=sozlesme) → liste, /sablonlar/:id → editör.
+  const kind: TemplateKind =
+    new URLSearchParams(search).get("tur") === "sozlesme" ? "sozlesme" : "dilekce";
+  const routeTid = matchPath("/sablonlar/:id", path)?.id ?? null;
+  const listPath = kind === "dilekce" ? "/sablonlar" : "/sablonlar?tur=sozlesme";
   const [cats, setCats] = useState<TemplateCategory[]>([]);
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string | null>(null); // null → tüm kategoriler
-  const [detail, setDetail] = useState<TemplateDetail | null>(null); // null → list view
+  const [detail, setDetail] = useState<TemplateDetail | null>(null); // /sablonlar/:id yüklenince dolar
   const [scope, setScope] = useState<TemplateScope>("user");
   const [content, setContent] = useState(""); // feeds the editor (re-fed on type/scope change)
   const [busy, setBusy] = useState(false);
@@ -67,17 +74,35 @@ export function Customize({ user }: { user: User }) {
 
   function chooseKind(next: TemplateKind) {
     if (next === kind) return;
-    setKind(next);
     setCatFilter(null); // diğer türün kategorileri farklı — rayı "Tümü"ne döndür
+    navigate(next === "dilekce" ? "/sablonlar" : "/sablonlar?tur=sozlesme", { replace: true });
   }
 
-  async function openType(id: string) {
-    const d = await api.getTemplate(id);
-    const startScope: TemplateScope = d.userOverride !== null ? "user" : "office";
-    setScope(startScope);
-    setContent(contentFor(d, startScope));
-    setSaved(false);
-    setDetail(d); // switches to editor view
+  // Listeye dönüşte editör kapanır — render sırasında state uyarlama deseni.
+  const [viewedTid, setViewedTid] = useState<string | null>(routeTid);
+  if (routeTid !== viewedTid) {
+    setViewedTid(routeTid);
+    if (routeTid === null) setDetail(null);
+  }
+
+  // URL'deki şablonu yükle — tıklama, reload ve back/forward hep buradan geçer.
+  useEffect(() => {
+    if (routeTid === null || detail?.id === routeTid) return;
+    api
+      .getTemplate(routeTid)
+      .then((d) => {
+        const startScope: TemplateScope = d.userOverride !== null ? "user" : "office";
+        setScope(startScope);
+        setContent(contentFor(d, startScope));
+        setSaved(false);
+        setDetail(d);
+      })
+      .catch(() => navigate(listPath, { replace: true })); // bilinmeyen id → liste
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeTid, detail?.id]);
+
+  function openType(id: string) {
+    navigate(`/sablonlar/${encodeURIComponent(id)}`); // yükleme URL efektinde
   }
 
   function switchScope(next: TemplateScope) {
@@ -168,7 +193,7 @@ export function Customize({ user }: { user: User }) {
         value={content}
         title={detail.ad}
         subtitle={detail.id}
-        onClose={() => setDetail(null)}
+        onClose={() => navigate(listPath)}
         onSave={saveOverride}
         headerExtra={scopeToggle}
         footer={footer}

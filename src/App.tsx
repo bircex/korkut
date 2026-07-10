@@ -21,6 +21,9 @@ const STAGE_PATH: Record<AuthStage, string> = {
 
 const AUTH_PATHS: string[] = Object.values(STAGE_PATH);
 
+// Girişten önce hedeflenen derin link (ör. /dosyalar/12) — login sonrası oraya dönmek için.
+const NEXT_KEY = "korkut:next";
+
 function stageFromPath(path: string): AuthStage {
   const hit = (Object.entries(STAGE_PATH) as [AuthStage, string][]).find(([, p]) => p === path);
   return hit ? hit[0] : "login";
@@ -45,6 +48,12 @@ export function App() {
       .catch(() => {
         setStatus("anon");
         if (!AUTH_PATHS.includes(window.location.pathname)) {
+          // Hedefi sakla ki giriş yaptıktan sonra kaldığı yere dönsün.
+          try {
+            sessionStorage.setItem(NEXT_KEY, window.location.pathname + window.location.search);
+          } catch {
+            /* storage kapalıysa derin link korunmaz, giriş yine çalışır */
+          }
           navigate("/giris", { replace: true });
         }
       });
@@ -58,7 +67,16 @@ export function App() {
   function authed(u: User) {
     setUser(u);
     setStatus("authed");
-    navigate("/", { replace: true });
+    let next: string | null = null;
+    try {
+      next = sessionStorage.getItem(NEXT_KEY);
+      sessionStorage.removeItem(NEXT_KEY);
+    } catch {
+      /* yoksay */
+    }
+    // Yalnızca uygulama içi mutlak yollar — auth ekranına geri dönmek anlamsız.
+    const safe = next && next.startsWith("/") && !AUTH_PATHS.includes(next.split("?")[0]);
+    navigate(safe && next ? next : "/", { replace: true });
   }
 
   async function logout() {

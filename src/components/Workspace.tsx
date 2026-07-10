@@ -21,7 +21,7 @@ import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
-import { navigate, usePath } from "../router";
+import { matchPath, navigate, usePath } from "../router";
 import {
   type Icon,
   ArrowClockwise,
@@ -124,8 +124,29 @@ function viewFromPath(path: string): SidebarView {
   const hit = (Object.entries(VIEW_PATH) as [SidebarView, string][]).find(
     ([v, p]) => v !== "chats" && (path === p || path.startsWith(`${p}/`)),
   );
-  return hit ? hit[0] : "chats";
+  return hit ? hit[0] : "chats"; // "/" ve /sohbet/... → chats
 }
+
+// /sohbet/:id ve /sohbet/:id/belge — açık sohbet ve editör paneli URL'den okunur.
+function chatRoute(path: string): { id: number; pane: "chat" | "document" } | null {
+  const doc = matchPath("/sohbet/:id/belge", path);
+  const m = doc ?? matchPath("/sohbet/:id", path);
+  if (!m) return null;
+  const id = Number(m.id);
+  return Number.isFinite(id) ? { id, pane: doc ? "document" : "chat" } : null;
+}
+
+const VIEW_TITLE: Record<SidebarView, string> = {
+  chats: "Sohbet",
+  docs: "Belgeler",
+  settings: "Ayarlar",
+  customize: "Şablonlar",
+  matters: "Dosyalar",
+  clients: "Müvekkiller",
+  finance: "Mali",
+  tasks: "Görevler",
+  calendar: "Takvim",
+};
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -135,7 +156,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [homeTasks, setHomeTasks] = useState<Task[]>([]); // ana ekrandaki açık görevler
   const path = usePath();
   const view = viewFromPath(path);
-  const [currentId, setCurrentId] = useState<number | null>(null);
+  // Açık sohbet ve panel URL'den türer — state değil (URL tek gerçek kaynak).
+  const route = view === "chats" ? chatRoute(path) : null;
+  const currentId = route?.id ?? null;
+  const pane: "chat" | "document" = route?.pane ?? "chat";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [text, setText] = useState("");
@@ -148,7 +172,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
-  const [pane, setPane] = useState<"chat" | "document">("chat");
   const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -173,6 +196,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   // is what stops a still-arriving answer from being painted into a chat the user switched to —
   // the reply is always persisted server-side under its own conversation, never mixed here.
   const currentIdRef = useRef<number | null>(null);
+  // Mesajları en son yüklenen sohbet — gönderim sırasında yaratılan oturumun URL'e yazılması
+  // yeniden yükleme tetiklemesin diye (iyimser mesajlar ezilmesin).
+  const loadedIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -203,6 +229,41 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     currentIdRef.current = currentId;
   }, [currentId]);
 
+  // Ana ekrana dönüşte önceki sohbetin mesajları kalmasın — render sırasında state uyarlama
+  // deseni (React'ın "adjust state when props change" önerisi); efekt içinde setState'ten kaçınır.
+  const routeKey = view !== "chats" ? null : route ? `sohbet:${route.id}` : "home";
+  const [viewedKey, setViewedKey] = useState(routeKey);
+  if (routeKey !== null && routeKey !== viewedKey) {
+    setViewedKey(routeKey);
+    if (routeKey === "home") {
+      setMessages([]);
+      loadedIdRef.current = null;
+    }
+  }
+
+  // URL'deki sohbetin mesajlarını yükle — /sohbet/:id'e her geliş (tıklama, reload, back/forward)
+  // buradan geçer; aksiyonlar yalnızca navigate eder.
+  useEffect(() => {
+    if (currentId === null || loadedIdRef.current === currentId) return;
+    loadedIdRef.current = currentId;
+    api
+      .getSession(currentId)
+      .then((detail) => {
+        if (currentIdRef.current !== currentId) return; // bu arada başka sohbete geçildi
+        setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
+      })
+      .catch(() => {
+        if (currentIdRef.current !== currentId) return;
+        setMessages([greeting(coverage, user.office)]);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId]);
+
+  // Sekme başlığı görünümü izler.
+  useEffect(() => {
+    document.title = `${VIEW_TITLE[view]} · ${user.office ?? "Korkut"}`;
+  }, [view, user.office]);
+
   function closeSidebarOnMobile() {
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
   }
@@ -224,27 +285,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  async function openSession(id: number, opts: { switchView?: boolean } = {}) {
-    currentIdRef.current = id; // synchronously, so an in-flight stream stops painting this view
-    setCurrentId(id);
-    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
-    setPane("chat");
+  function openSession(id: number) {
     closeSidebarOnMobile();
-    try {
-      const detail = await api.getSession(id);
-      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
-    } catch {
-      setMessages([greeting(coverage, user.office)]);
-    }
+    navigate(`/sohbet/${id}`); // yükleme URL efektinde
   }
 
-  function newChat(opts: { switchView?: boolean } = {}) {
-    currentIdRef.current = null;
-    setCurrentId(null);
-    setMessages([]); // boş sohbet karşılama (ana) ekranını gösterir
-    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
-    setPane("chat");
+  function newChat() {
     closeSidebarOnMobile();
+    navigate(VIEW_PATH.chats); // "/" → URL efekti ana ekranı kurar
     loadHomeTasks();
   }
 
@@ -276,18 +324,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  async function openDocFromList(d: DocBrief) {
-    currentIdRef.current = d.conversation_id;
-    setCurrentId(d.conversation_id);
-    navigate(VIEW_PATH.chats);
-    setPane("document");
+  function openDocFromList(d: DocBrief) {
     closeSidebarOnMobile();
-    try {
-      const detail = await api.getSession(d.conversation_id);
-      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
-    } catch {
-      setMessages([greeting(coverage, user.office)]);
-    }
+    navigate(`/sohbet/${d.conversation_id}/belge`);
   }
 
   async function cloneChat(id: number) {
@@ -297,7 +336,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       setSessions((s) => [created, ...s]);
       setSessionsTotal((t) => t + 1);
       loadDocs();
-      await openSession(created.id);
+      openSession(created.id);
     } catch {
       /* ignore */
     }
@@ -373,11 +412,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       if (targetId === null) {
         const created = await api.createSession();
         targetId = created.id;
+        // navigate'ten ÖNCE: yükleme efekti bu oturumu "yüklü" saysın, iyimser mesajlar ezilmesin.
         currentIdRef.current = targetId;
-        setCurrentId(targetId);
+        loadedIdRef.current = targetId;
         setSendingId(targetId);
         setSessions((s) => [created, ...s]);
         setSessionsTotal((tot) => tot + 1);
+        navigate(`/sohbet/${targetId}`, { replace: true }); // ana ekrandan sohbete geçen URL
       }
       let res: {
         reply: string;
@@ -428,7 +469,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         }
       }
       if (!file && showsThisChat() && res.open_document) {
-        setPane("document");
+        navigate(`/sohbet/${targetId}/belge`); // editör paneli URL'de — Back sohbete döner
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
@@ -481,8 +522,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </button>
         <div className="flex items-center gap-2">
           {/* Marka ana sayfaya döner — Ayarlar/Şablonlar gibi ekranların ayrı "Geri" düğmesi yok. */}
-          <button
-            onClick={() => navigate(VIEW_PATH.chats)}
+          <a
+            href={VIEW_PATH.chats}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(VIEW_PATH.chats);
+            }}
             title="Ana sayfa"
             className="flex items-center gap-2 rounded-md hover:opacity-75"
           >
@@ -492,7 +537,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
             />
             <span className="font-bold">Korkut</span>
-          </button>
+          </a>
           {user.office && (
             <span className="hidden border-l border-zinc-200 pl-2 text-sm text-zinc-500 sm:inline">
               {user.office}
@@ -502,7 +547,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         {view === "chats" && currentId !== null && (
           <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
             <button
-              onClick={() => setPane("chat")}
+              onClick={() => navigate(`/sohbet/${currentId}`)}
               className={
                 "rounded-md px-4 py-1 " +
                 (pane === "chat" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
@@ -511,7 +556,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               Sohbet
             </button>
             <button
-              onClick={() => setPane("document")}
+              onClick={() => navigate(`/sohbet/${currentId}/belge`)}
               className={
                 "rounded-md px-4 py-1 " +
                 (pane === "document" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
@@ -610,9 +655,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       { key: "customize", label: "Şablonlar" },
                     ] as { key: SidebarView; label: string }[]
                   ).map((it) => (
-                    <button
+                    <a
                       key={it.key}
-                      onClick={() => {
+                      href={VIEW_PATH[it.key]}
+                      onClick={(e) => {
+                        e.preventDefault();
                         navigate(VIEW_PATH[it.key]);
                         if (it.key === "docs") loadDocs();
                         closeSidebarOnMobile();
@@ -628,7 +675,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         <NavIcon name={it.key} />
                       </span>
                       {it.label}
-                    </button>
+                    </a>
                   ))}
                 </nav>
               </div>
@@ -667,12 +714,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none focus:border-zinc-900"
                       />
                     ) : (
-                      <button onClick={() => openSession(s.id)} className="min-w-0 flex-1 text-left" title={s.title}>
+                      <a
+                        href={`/sohbet/${s.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openSession(s.id);
+                        }}
+                        className="min-w-0 flex-1 text-left"
+                        title={s.title}
+                      >
                         <div className="truncate text-zinc-800">{s.title}</div>
                         <div className="truncate text-[11px] text-zinc-400">
                           {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
                         </div>
-                      </button>
+                      </a>
                     )}
                     <button
                       onClick={() => setRowMenuId((id) => (id === s.id ? null : s.id))}
