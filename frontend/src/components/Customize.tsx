@@ -158,7 +158,7 @@ export function Customize({ user }: { user: User }) {
 
   // ---- List (browse) view ----
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <h1 className="text-base font-semibold text-zinc-900">Özelleştir — Şablon temaları</h1>
         <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>

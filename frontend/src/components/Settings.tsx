@@ -490,7 +490,7 @@ export function Settings({ user }: { user: User }) {
   ];
 
   return (
-    <div className="flex h-full flex-col bg-white text-zinc-900 lg:flex-row">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white text-zinc-900 lg:flex-row">
       <div className="flex items-center gap-2 border-b border-zinc-950/10 bg-white p-3 lg:hidden">
         <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {tabs.map((t) => (
