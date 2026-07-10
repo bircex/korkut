@@ -101,10 +101,12 @@ body {
   color: #111111;
 }
 .doc-canvas .ck.ck-toolbar {
+  /* Belge dünyası her iki temada da kağıt-beyaz kalır (CKEditor içi de açık temadır),
+     o yüzden tema değişkenleri yerine sabit açık renkler. */
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e4e4e7;
   border-radius: 0;
-  background: var(--surface);
+  background: #ffffff;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -122,3 +124,91 @@ body {
 .ck-content h1 { font-size: 1.6em; }
 .ck-content h2 { font-size: 1.3em; }
 .ck-content h3 { font-size: 1.1em; }
+
+/* ---------------- karanlık tema ----------------
+   Sistem tercihini izler (prefers-color-scheme) — elle anahtar yok.
+   Tailwind 4 renk utility'leri CSS değişkenine derlendiği için palet burada,
+   kontrast oranları korunarak yeniden eşlenir: sayfa en koyu, kartlar bir tık
+   açık, birincil buton/metin (zinc-900) beyaza yakın; text-white koyuya döner
+   ki "koyu zemin + beyaz yazı" çiftleri otomatik "açık zemin + koyu yazı" olsun. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    /* eski tema değişkenleri (body bunları kullanır) */
+    --bg: #17171a;
+    --surface: #1e1e22;
+    --border: #33333a;
+    --text: #f1f1f4;
+    --muted: #9d9da8;
+    --accent: #f1f1f4;
+
+    /* nötr yüzeyler ve metin */
+    --color-white: #1e1e22;   /* kart/yüzey */
+    --color-zinc-50: #27272c; /* yüzey üstü hover */
+    --color-zinc-100: #17171a;/* sayfa zemini */
+    --color-zinc-200: #33333a;
+    --color-zinc-300: #43434c;
+    --color-zinc-400: #85858f;
+    --color-zinc-500: #9d9da8;
+    --color-zinc-600: #bcbcc6;
+    --color-zinc-700: #d2d2da;
+    --color-zinc-800: #e4e4e9;
+    --color-zinc-900: #f1f1f4;/* ana metin + birincil buton */
+    --color-zinc-950: #ffffff;/* /10 ve /5 tonlarında ince beyaz çizgiler */
+
+    /* uyarı/ajanda amberleri: koyu zeminde koyu kehribar yüzey + açık metin */
+    --color-amber-50: #2b2110;
+    --color-amber-100: #3a2c14;
+    --color-amber-200: #52401d;
+    --color-amber-300: #6b5426;
+    --color-amber-600: #e8b45a;
+    --color-amber-700: #ecc06e;
+    --color-amber-800: #f2cf8c;
+    --color-amber-900: #f8e0ae;
+
+    /* durum renkleri: yüzeyler koyulaşır, metinler aydınlanır */
+    --color-emerald-50: #12271c;
+    --color-emerald-100: #1a3527;
+    --color-emerald-600: #34d399;
+    --color-emerald-700: #56dfa5;
+    --color-emerald-800: #86efc4;
+    --color-sky-600: #4cc3f7;
+    --color-red-50: #2e1a1a;
+    --color-red-100: #3f2222;
+    --color-red-400: #b45555;
+    --color-red-500: #ef6a6a;
+    --color-red-600: #f47f7f;
+    --color-red-700: #f79c9c;
+    --color-indigo-100: #2b2b45;
+    --color-indigo-700: #a5b0f5;
+  }
+
+  /* Koyu temada gölge yok — katmanlar çizgiyle ayrılır. */
+  .shadow-sm,
+  .shadow-lg,
+  .shadow-xl,
+  .hover\:shadow-md:hover {
+    box-shadow: none;
+  }
+
+  /* Rendered markdown koyu eşlenikleri. */
+  .md a { color: #93b4ff; }
+  .md blockquote { border-left-color: #43434c; color: #9d9da8; }
+  .md code { background: #26262b; border-color: #3a3a42; }
+  .md pre { background: #26262b; border-color: #3a3a42; }
+  .md th { background: #26262b; }
+  .md th, .md td { border-color: #43434c; }
+  .md hr { border-top-color: #33333a; }
+
+  /* Belge kanvası: zemin koyulaşır, A4 sayfa kağıt-beyaz kalır (baskı sadakati). */
+  .doc-canvas,
+  .doc-canvas .ck.ck-editor,
+  .doc-canvas .ck-editor__main {
+    background: #101012;
+  }
+  .doc-canvas .ck.ck-editor__editable,
+  .doc-canvas .ck-editor__editable:focus {
+    border-color: #000000;
+    box-shadow: none;
+  }
+}

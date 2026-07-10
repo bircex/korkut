@@ -534,7 +534,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             <img
               src="/korkut-logo.svg"
               alt="Korkut"
-              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
+              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5 dark:hidden"
+            />
+            <img
+              src="/korkut-logo-dark.svg"
+              alt="Korkut"
+              className="hidden h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5 dark:block"
             />
             <span className="font-bold">Korkut</span>
           </a>
