@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { type DocBrief } from "../api";
+import { CaretLeft, CaretRight } from "../icons";
 
 const PAGE = 12;
 
@@ -39,9 +40,13 @@ function Section({
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {slice.map((d) => (
-              <button
+              <a
                 key={d.id}
-                onClick={() => onOpen(d)}
+                href={`/sohbet/${d.conversation_id}/belge`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpen(d);
+                }}
                 title={d.title}
                 className={
                   "group flex h-32 flex-col rounded-xl border bg-white p-3 text-left transition hover:shadow-md " +
@@ -54,7 +59,7 @@ function Section({
                   {d.title}
                 </span>
                 <span className="mt-1 text-[11px] text-zinc-400">{whenLabel(d.updated_at)}</span>
-              </button>
+              </a>
             ))}
           </div>
           {pages > 1 && (
@@ -62,9 +67,9 @@ function Section({
               <button
                 onClick={() => setPage(safePage - 1)}
                 disabled={safePage === 0}
-                className="rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
               >
-                ‹ Önceki
+                <CaretLeft size={12} aria-hidden /> Önceki
               </button>
               <span>
                 {safePage + 1} / {pages}
@@ -72,9 +77,9 @@ function Section({
               <button
                 onClick={() => setPage(safePage + 1)}
                 disabled={safePage >= pages - 1}
-                className="rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-md px-2 py-1 hover:bg-zinc-100 disabled:opacity-40"
               >
-                Sonraki ›
+                Sonraki <CaretRight size={12} aria-hidden />
               </button>
             </div>
           )}

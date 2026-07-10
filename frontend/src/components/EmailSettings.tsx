@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type EmailChannel } from "../api";
+import { Check } from "../icons";
 
 // Office e-mail channel (Ayarlar → E-posta, owner-only). Send-only Gmail over SMTP with an
 // App Password — no OAuth, no Google Cloud project. Mail leaves from the office's own account
@@ -151,7 +152,11 @@ export function EmailSettings() {
 
       {canEdit && (
         <div className="mt-5 flex items-center gap-3">
-          {saved && <span className="text-xs text-emerald-600">Kaydedildi ✓</span>}
+          {saved && (
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+              Kaydedildi <Check size={12} weight="bold" aria-hidden />
+            </span>
+          )}
           <button
             onClick={save}
             disabled={busy}

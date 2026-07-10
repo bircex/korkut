@@ -8,6 +8,7 @@ import {
   type DocBrief,
   type ModelHealth,
   type SessionBrief,
+  type Task,
   type User,
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
@@ -20,7 +21,24 @@ import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
-import { navigate, usePath } from "../router";
+import { matchPath, navigate, usePath } from "../router";
+import {
+  type Icon,
+  ArrowClockwise,
+  CalendarBlank,
+  CaretDown,
+  CheckSquare,
+  DotsThree,
+  FileDashed,
+  FileText,
+  Folder,
+  List,
+  Paperclip,
+  Plus,
+  Users,
+  Wallet,
+  Warning,
+} from "../icons";
 
 const SESSION_PAGE = 20;
 
@@ -42,74 +60,38 @@ function whenLabel(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" }) : "";
 }
 
+// Ana ekrandaki karşılama — günün saatine göre.
+function timeGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return "İyi geceler";
+  if (h < 12) return "Günaydın";
+  if (h < 18) return "İyi günler";
+  return "İyi akşamlar";
+}
+
+function firstName(u: User): string {
+  return (u.full_name ?? u.username).trim().split(/\s+/)[0];
+}
+
 function initials(u: User): string {
   const base = u.full_name ?? u.username;
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-// Soft (line) ikonlar — Claude Code / lucide tarzı, currentColor + ince stroke.
+// Sol menü ikonları — Phosphor set'inden (bkz. ../icons.ts).
+const NAV_ICON: Record<string, Icon> = {
+  matters: Folder,
+  clients: Users,
+  finance: Wallet,
+  tasks: CheckSquare,
+  calendar: CalendarBlank,
+  docs: FileText,
+  customize: FileDashed,
+};
+
 function NavIcon({ name }: { name: string }) {
-  const p = {
-    width: 18,
-    height: 18,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.75,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-    className: "shrink-0",
-  };
-  switch (name) {
-    case "matters":
-      return (
-        <svg {...p}>
-          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
-        </svg>
-      );
-    case "clients":
-      return (
-        <svg {...p}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "finance":
-      return (
-        <svg {...p}>
-          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-          <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-          <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-        </svg>
-      );
-    case "tasks":
-      return (
-        <svg {...p}>
-          <path d="m9 11 3 3L22 4" />
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-        </svg>
-      );
-    case "calendar":
-      return (
-        <svg {...p}>
-          <rect width="18" height="18" x="3" y="4" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-      );
-    case "docs":
-      return (
-        <svg {...p}>
-          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-          <path d="M14 2v5h5" />
-          <path d="M16 13H8M16 17H8M10 9H8" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const Ikon = NAV_ICON[name];
+  return Ikon ? <Ikon size={18} aria-hidden className="shrink-0" /> : null;
 }
 
 type SidebarView =
@@ -130,7 +112,7 @@ const VIEW_PATH: Record<SidebarView, string> = {
   chats: "/",
   docs: "/belgeler",
   settings: "/ayarlar",
-  customize: "/ozellestir",
+  customize: "/sablonlar",
   matters: "/dosyalar",
   clients: "/muvekkiller",
   finance: "/mali",
@@ -142,17 +124,42 @@ function viewFromPath(path: string): SidebarView {
   const hit = (Object.entries(VIEW_PATH) as [SidebarView, string][]).find(
     ([v, p]) => v !== "chats" && (path === p || path.startsWith(`${p}/`)),
   );
-  return hit ? hit[0] : "chats";
+  return hit ? hit[0] : "chats"; // "/" ve /sohbet/... → chats
 }
+
+// /sohbet/:id ve /sohbet/:id/belge — açık sohbet ve editör paneli URL'den okunur.
+function chatRoute(path: string): { id: number; pane: "chat" | "document" } | null {
+  const doc = matchPath("/sohbet/:id/belge", path);
+  const m = doc ?? matchPath("/sohbet/:id", path);
+  if (!m) return null;
+  const id = Number(m.id);
+  return Number.isFinite(id) ? { id, pane: doc ? "document" : "chat" } : null;
+}
+
+const VIEW_TITLE: Record<SidebarView, string> = {
+  chats: "Sohbet",
+  docs: "Belgeler",
+  settings: "Ayarlar",
+  customize: "Şablonlar",
+  matters: "Dosyalar",
+  clients: "Müvekkiller",
+  finance: "Mali",
+  tasks: "Görevler",
+  calendar: "Takvim",
+};
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
   const [sessionsTotal, setSessionsTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [docs, setDocs] = useState<DocBrief[]>([]);
+  const [homeTasks, setHomeTasks] = useState<Task[]>([]); // ana ekrandaki açık görevler
   const path = usePath();
   const view = viewFromPath(path);
-  const [currentId, setCurrentId] = useState<number | null>(null);
+  // Açık sohbet ve panel URL'den türer — state değil (URL tek gerçek kaynak).
+  const route = view === "chats" ? chatRoute(path) : null;
+  const currentId = route?.id ?? null;
+  const pane: "chat" | "document" = route?.pane ?? "chat";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [text, setText] = useState("");
@@ -161,10 +168,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sendingId, setSendingId] = useState<number | null>(null); // which chat the in-flight send is for
   const [activity, setActivity] = useState<string | null>(null); // current tool step, while waiting
   const [streaming, setStreaming] = useState(false); // answer tokens are landing in the last bubble
+  // Masaüstünde açık başlar; mobilde kapalı (drawer olarak açılır).
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
-  const [pane, setPane] = useState<"chat" | "document">("chat");
   const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -189,6 +196,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   // is what stops a still-arriving answer from being painted into a chat the user switched to —
   // the reply is always persisted server-side under its own conversation, never mixed here.
   const currentIdRef = useRef<number | null>(null);
+  // Mesajları en son yüklenen sohbet — gönderim sırasında yaratılan oturumun URL'e yazılması
+  // yeniden yükleme tetiklemesin diye (iyimser mesajlar ezilmesin).
+  const loadedIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -199,19 +209,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       }
       checkHealth();
       loadDocs();
+      loadHomeTasks();
       try {
         const page = await api.sessions(SESSION_PAGE, 0);
         setSessions(page.items);
         setSessionsTotal(page.total);
-        // Loads the latest chat in the background regardless of which page we landed on — but
-        // must not steal a deep link (e.g. /ayarlar/model) by forcing the view back to "chats".
-        if (page.items.length) await openSession(page.items[0].id, { switchView: false });
-        else newChat({ switchView: false });
       } catch {
-        newChat({ switchView: false });
+        /* best effort — ana ekran (karşılama) zaten açık */
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -222,6 +228,41 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   useEffect(() => {
     currentIdRef.current = currentId;
   }, [currentId]);
+
+  // Ana ekrana dönüşte önceki sohbetin mesajları kalmasın — render sırasında state uyarlama
+  // deseni (React'ın "adjust state when props change" önerisi); efekt içinde setState'ten kaçınır.
+  const routeKey = view !== "chats" ? null : route ? `sohbet:${route.id}` : "home";
+  const [viewedKey, setViewedKey] = useState(routeKey);
+  if (routeKey !== null && routeKey !== viewedKey) {
+    setViewedKey(routeKey);
+    if (routeKey === "home") {
+      setMessages([]);
+      loadedIdRef.current = null;
+    }
+  }
+
+  // URL'deki sohbetin mesajlarını yükle — /sohbet/:id'e her geliş (tıklama, reload, back/forward)
+  // buradan geçer; aksiyonlar yalnızca navigate eder.
+  useEffect(() => {
+    if (currentId === null || loadedIdRef.current === currentId) return;
+    loadedIdRef.current = currentId;
+    api
+      .getSession(currentId)
+      .then((detail) => {
+        if (currentIdRef.current !== currentId) return; // bu arada başka sohbete geçildi
+        setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
+      })
+      .catch(() => {
+        if (currentIdRef.current !== currentId) return;
+        setMessages([greeting(coverage, user.office)]);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId]);
+
+  // Sekme başlığı görünümü izler.
+  useEffect(() => {
+    document.title = `${VIEW_TITLE[view]} · ${user.office ?? "Korkut"}`;
+  }, [view, user.office]);
 
   function closeSidebarOnMobile() {
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
@@ -244,27 +285,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  async function openSession(id: number, opts: { switchView?: boolean } = {}) {
-    currentIdRef.current = id; // synchronously, so an in-flight stream stops painting this view
-    setCurrentId(id);
-    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
-    setPane("chat");
+  function openSession(id: number) {
     closeSidebarOnMobile();
-    try {
-      const detail = await api.getSession(id);
-      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
-    } catch {
-      setMessages([greeting(coverage, user.office)]);
-    }
+    navigate(`/sohbet/${id}`); // yükleme URL efektinde
   }
 
-  function newChat(opts: { switchView?: boolean } = {}) {
-    currentIdRef.current = null;
-    setCurrentId(null);
-    setMessages([greeting(coverage, user.office)]);
-    if (opts.switchView !== false) navigate(VIEW_PATH.chats);
-    setPane("chat");
+  function newChat() {
     closeSidebarOnMobile();
+    navigate(VIEW_PATH.chats); // "/" → URL efekti ana ekranı kurar
+    loadHomeTasks();
   }
 
   async function loadDocs() {
@@ -275,18 +304,29 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  async function openDocFromList(d: DocBrief) {
-    currentIdRef.current = d.conversation_id;
-    setCurrentId(d.conversation_id);
-    navigate(VIEW_PATH.chats);
-    setPane("document");
-    closeSidebarOnMobile();
+  async function loadHomeTasks() {
     try {
-      const detail = await api.getSession(d.conversation_id);
-      setMessages(detail.messages.length ? detail.messages : [greeting(coverage, user.office)]);
+      setHomeTasks((await api.tasks("open")).items);
     } catch {
-      setMessages([greeting(coverage, user.office)]);
+      /* best effort — kart görünmez */
     }
+  }
+
+  async function toggleHomeTask(t: Task) {
+    // İyimser: satırı hemen işaretle, sonra sunucuya yaz.
+    setHomeTasks((ts) =>
+      ts.map((x) => (x.id === t.id ? { ...x, status: x.status === "done" ? "open" : "done" } : x)),
+    );
+    try {
+      await api.updateTask(t.id, { status: t.status === "done" ? "open" : "done" });
+    } catch {
+      loadHomeTasks(); // geri al
+    }
+  }
+
+  function openDocFromList(d: DocBrief) {
+    closeSidebarOnMobile();
+    navigate(`/sohbet/${d.conversation_id}/belge`);
   }
 
   async function cloneChat(id: number) {
@@ -296,7 +336,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       setSessions((s) => [created, ...s]);
       setSessionsTotal((t) => t + 1);
       loadDocs();
-      await openSession(created.id);
+      openSession(created.id);
     } catch {
       /* ignore */
     }
@@ -372,11 +412,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       if (targetId === null) {
         const created = await api.createSession();
         targetId = created.id;
+        // navigate'ten ÖNCE: yükleme efekti bu oturumu "yüklü" saysın, iyimser mesajlar ezilmesin.
         currentIdRef.current = targetId;
-        setCurrentId(targetId);
+        loadedIdRef.current = targetId;
         setSendingId(targetId);
         setSessions((s) => [created, ...s]);
         setSessionsTotal((tot) => tot + 1);
+        navigate(`/sohbet/${targetId}`, { replace: true }); // ana ekrandan sohbete geçen URL
       }
       let res: {
         reply: string;
@@ -427,7 +469,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         }
       }
       if (!file && showsThisChat() && res.open_document) {
-        setPane("document");
+        navigate(`/sohbet/${targetId}/belge`); // editör paneli URL'de — Back sohbete döner
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
@@ -464,46 +506,38 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  if (view === "settings") {
-    return <Settings user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
-  }
-
-  if (view === "customize") {
-    return <Customize user={user} onClose={() => navigate(VIEW_PATH.chats)} />;
-  }
-
-  // The document editor takes the full screen (no sidebar/drawer), like Settings/Customize.
-  if (view !== "docs" && pane === "document" && currentId !== null) {
-    return (
-      <DocumentPanel
-        key={currentId}
-        sessionId={currentId}
-        refreshKey={docRefresh}
-        onClose={() => setPane("chat")}
-      />
-    );
-  }
-
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
       {pendingEmailId !== null && (
         <MailConfirm id={pendingEmailId} onClose={() => setPendingEmailId(null)} />
       )}
-      <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
+      {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
+      <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
         <button
           onClick={() => setSidebarOpen((o) => !o)}
-          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100"
+          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
           title="Sohbet geçmişi"
         >
-          ☰
+          <List size={20} aria-hidden />
         </button>
         <div className="flex items-center gap-2">
-          <img
-            src="/korkut-logo.svg"
-            alt="Korkut"
-            className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
-          />
-          <span className="font-bold">Korkut</span>
+          {/* Marka ana sayfaya döner — Ayarlar/Şablonlar gibi ekranların ayrı "Geri" düğmesi yok. */}
+          <a
+            href={VIEW_PATH.chats}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(VIEW_PATH.chats);
+            }}
+            title="Ana sayfa"
+            className="flex items-center gap-2 rounded-md hover:opacity-75"
+          >
+            <img
+              src="/korkut-logo.svg"
+              alt="Korkut"
+              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
+            />
+            <span className="font-bold">Korkut</span>
+          </a>
           {user.office && (
             <span className="hidden border-l border-zinc-200 pl-2 text-sm text-zinc-500 sm:inline">
               {user.office}
@@ -511,9 +545,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           )}
         </div>
         {view === "chats" && currentId !== null && (
-          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg bg-zinc-100 p-1 text-[13px] font-medium">
+          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
             <button
-              onClick={() => setPane("chat")}
+              onClick={() => navigate(`/sohbet/${currentId}`)}
               className={
                 "rounded-md px-4 py-1 " +
                 (pane === "chat" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
@@ -522,7 +556,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               Sohbet
             </button>
             <button
-              onClick={() => setPane("document")}
+              onClick={() => navigate(`/sohbet/${currentId}/belge`)}
               className={
                 "rounded-md px-4 py-1 " +
                 (pane === "document" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
@@ -533,10 +567,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </div>
         )}
         <div className="ml-auto flex items-center gap-3">
-          <div className="relative border-l border-zinc-200 pl-3">
+          <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-md py-1 pl-1 pr-1.5 hover:bg-zinc-100"
+              className="flex items-center gap-2 rounded-md py-1 pl-1 pr-1.5 hover:bg-zinc-200/70"
             >
               <span className="hidden text-sm font-medium text-zinc-800 sm:inline">
                 {user.full_name ?? user.username}
@@ -544,7 +578,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-900 text-[12px] font-bold text-white">
                 {initials(user)}
               </span>
-              <span className="text-[10px] text-zinc-400">▾</span>
+              <CaretDown size={12} aria-hidden className="text-zinc-400" />
             </button>
             {menuOpen && (
               <>
@@ -568,15 +602,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     Ayarlar
                   </button>
                   <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigate(VIEW_PATH.customize);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    Özelleştir
-                  </button>
-                  <button
                     onClick={onLogout}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
@@ -591,7 +616,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
       {health && !health.connected && (
         <div className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-[13px] text-amber-800">
-          <span className="text-base leading-none">⚠️</span>
+          <Warning size={18} weight="fill" aria-hidden className="shrink-0" />
           <span className="min-w-0 flex-1">{health.detail}</span>
           <button
             onClick={() => navigate(VIEW_PATH.settings)}
@@ -604,7 +629,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
             title="Yeniden dene"
           >
-            ↻
+            <ArrowClockwise size={14} aria-hidden />
           </button>
         </div>
       )}
@@ -627,11 +652,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       { key: "tasks", label: "Görevler" },
                       { key: "calendar", label: "Takvim" },
                       { key: "docs", label: "Belgeler" },
+                      { key: "customize", label: "Şablonlar" },
                     ] as { key: SidebarView; label: string }[]
                   ).map((it) => (
-                    <button
+                    <a
                       key={it.key}
-                      onClick={() => {
+                      href={VIEW_PATH[it.key]}
+                      onClick={(e) => {
+                        e.preventDefault();
                         navigate(VIEW_PATH[it.key]);
                         if (it.key === "docs") loadDocs();
                         closeSidebarOnMobile();
@@ -647,7 +675,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         <NavIcon name={it.key} />
                       </span>
                       {it.label}
-                    </button>
+                    </a>
                   ))}
                 </nav>
               </div>
@@ -661,9 +689,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   title="Yeni sohbet"
                   className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
+                  <Plus size={18} aria-hidden />
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto px-2 pb-2">
@@ -688,12 +714,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none focus:border-zinc-900"
                       />
                     ) : (
-                      <button onClick={() => openSession(s.id)} className="min-w-0 flex-1 text-left" title={s.title}>
+                      <a
+                        href={`/sohbet/${s.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openSession(s.id);
+                        }}
+                        className="min-w-0 flex-1 text-left"
+                        title={s.title}
+                      >
                         <div className="truncate text-zinc-800">{s.title}</div>
                         <div className="truncate text-[11px] text-zinc-400">
                           {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
                         </div>
-                      </button>
+                      </a>
                     )}
                     <button
                       onClick={() => setRowMenuId((id) => (id === s.id ? null : s.id))}
@@ -703,7 +737,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       }
                       title="Seçenekler"
                     >
-                      ⋯
+                      <DotsThree size={18} weight="bold" aria-hidden />
                     </button>
                     {rowMenuId === s.id && (
                       <>
@@ -748,7 +782,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         )}
 
         <div className="relative flex min-w-0 flex-1">
-        {view === "docs" ? (
+        {view === "settings" ? (
+          <Settings user={user} />
+        ) : view === "customize" ? (
+          <Customize user={user} />
+        ) : view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
         ) : view === "matters" ? (
           <MattersPanel user={user} onOpenSession={(id) => openSession(id)} />
@@ -760,8 +798,67 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <TasksPanel />
         ) : view === "calendar" ? (
           <CalendarPanel />
+        ) : pane === "document" && currentId !== null ? (
+          <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         ) : (
         <div className="flex min-w-0 flex-1 flex-col">
+          {currentId === null && messages.length === 0 ? (
+            // Ana ekran: saate göre karşılama + açık görevler.
+            <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-8 overflow-y-auto px-4 py-8">
+              <div className="text-center">
+                <h2 className="text-3xl font-semibold tracking-tight text-zinc-900">
+                  {timeGreeting()}, {firstName(user)}
+                </h2>
+                <p className="mt-2 text-[15px] text-zinc-500">Size nasıl yardımcı olabilirim?</p>
+              </div>
+              {homeTasks.length > 0 && (
+                <div className="mx-auto w-full max-w-xl">
+                  <div className="mb-2 flex items-baseline justify-between px-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                      Görevleriniz
+                    </span>
+                    <button
+                      onClick={() => navigate(VIEW_PATH.tasks)}
+                      className="text-xs text-zinc-500 hover:text-zinc-900"
+                    >
+                      Tümünü gör
+                    </button>
+                  </div>
+                  <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+                    {homeTasks.slice(0, 5).map((t) => (
+                      <label
+                        key={t.id}
+                        className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm hover:bg-zinc-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={t.status === "done"}
+                          onChange={() => toggleHomeTask(t)}
+                          className="shrink-0"
+                        />
+                        <span
+                          className={
+                            "min-w-0 flex-1 truncate " +
+                            (t.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800")
+                          }
+                        >
+                          {t.title}
+                        </span>
+                        <span className="shrink-0 text-[12px] text-zinc-400">
+                          {[t.assignee_name, whenLabel(t.due_date)].filter(Boolean).join(" · ")}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {homeTasks.length > 5 && (
+                    <div className="mt-1.5 px-1 text-center text-[12px] text-zinc-400">
+                      +{homeTasks.length - 5} görev daha
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          ) : (
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
@@ -785,6 +882,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             )}
             <div ref={endRef} />
           </section>
+          )}
 
           {attachment && (
             <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-2 text-[13px] text-zinc-500">
@@ -808,9 +906,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               title="Dosya ekle (PDF, DOCX, TXT, PNG, JPG)"
               className="shrink-0 rounded-[10px] border border-zinc-300 bg-white px-3 py-3 leading-none text-zinc-600 hover:border-zinc-900"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
+              <Paperclip size={18} aria-hidden />
             </button>
             <textarea
               ref={taRef}

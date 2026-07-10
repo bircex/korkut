@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type CalendarEvent, type ClientBrief, type MatterBrief } from "../api";
+import { ArrowsClockwise, Bell, CaretLeft, CaretRight } from "../icons";
+import { navigate, useSearch } from "../router";
 import { Modal } from "./Modal";
 
 // Takvim — the office calendar. Every dated thing (duruşma, süre, randevu, hatırlatma) is a single
@@ -106,9 +108,25 @@ function buildRrule(repeat: string, until: string): string | null {
   return rule;
 }
 
+// Görünüm ↔ URL sözlüğü: /takvim?mod=hafta&g=2026-07-15 paylaşılabilir/yenilenebilir olsun.
+const MODE_TO_SLUG: Record<Mode, string> = { month: "ay", week: "hafta", day: "gun", agenda: "ajanda" };
+const SLUG_TO_MODE: Record<string, Mode> = { ay: "month", hafta: "week", gun: "day", ajanda: "agenda" };
+
+function parseYmd(s: string | null): Date | null {
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+
 export function CalendarPanel() {
-  const [mode, setMode] = useState<Mode>("month");
-  const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
+  // Görünüm modu ve tarih imleci URL query'sinden türer — state değil.
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const mode: Mode = SLUG_TO_MODE[params.get("mod") ?? ""] ?? "month";
+  const gParam = params.get("g");
+  const cursor = useMemo(() => parseYmd(gParam) ?? startOfDay(new Date()), [gParam]);
+  const setView = (nextMode: Mode, nextCursor: Date) =>
+    navigate(`/takvim?mod=${MODE_TO_SLUG[nextMode]}&g=${ymdOf(nextCursor)}`, { replace: true });
   const [filter, setFilter] = useState("");
   const [items, setItems] = useState<CalendarEvent[]>([]);
   const [matters, setMatters] = useState<MatterBrief[]>([]);
@@ -158,9 +176,9 @@ export function CalendarPanel() {
   }, []);
 
   function step(delta: number) {
-    if (mode === "day") setCursor((c) => addDays(c, delta));
-    else if (mode === "week") setCursor((c) => addDays(c, delta * 7));
-    else setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
+    if (mode === "day") setView(mode, addDays(cursor, delta));
+    else if (mode === "week") setView(mode, addDays(cursor, delta * 7));
+    else setView(mode, new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   }
 
   function openFormOn(day?: string) {
@@ -239,7 +257,7 @@ export function CalendarPanel() {
           ).map(([m, lbl]) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
+              onClick={() => setView(m, cursor)}
               className={`px-3 py-1.5 ${
                 mode === m ? "bg-zinc-900 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50"
               }`}
@@ -254,10 +272,10 @@ export function CalendarPanel() {
             onClick={() => step(-1)}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
           >
-            ‹
+            <CaretLeft size={14} aria-hidden />
           </button>
           <button
-            onClick={() => setCursor(startOfDay(new Date()))}
+            onClick={() => setView(mode, startOfDay(new Date()))}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
           >
             Bugün
@@ -266,7 +284,7 @@ export function CalendarPanel() {
             onClick={() => step(1)}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-700 hover:border-zinc-900"
           >
-            ›
+            <CaretRight size={14} aria-hidden />
           </button>
         </div>
         <span className="min-w-40 text-sm font-medium text-zinc-800">{label}</span>
@@ -429,8 +447,8 @@ export function CalendarPanel() {
             todayYmd={todayYmd}
             byDay={byDay}
             onPickDay={(day) => {
-              setCursor(new Date(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10))));
-              setMode("day");
+              const d = parseYmd(day);
+              if (d) setView("day", d);
             }}
             onAdd={openFormOn}
           />
@@ -534,7 +552,9 @@ function MonthGrid({
                       {!e.all_day && fmtTime(e.start_at, false) !== ""
                         ? `${fmtTime(e.start_at, false)} `
                         : ""}
-                      {e.recurring ? "↻ " : ""}
+                      {e.recurring && (
+                        <ArrowsClockwise size={11} aria-hidden className="mr-0.5 inline align-[-1px]" />
+                      )}
                       {e.title}
                     </span>
                   </button>
@@ -713,8 +733,16 @@ function EventRow({
             e.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
           }`}
         >
-          {e.recurring && <span title="Tekrarlayan">↻ </span>}
-          {e.remind_before_min != null && <span title="Hatırlatma açık">🔔 </span>}
+          {e.recurring && (
+            <span title="Tekrarlayan" className="mr-1">
+              <ArrowsClockwise size={12} aria-hidden className="inline align-[-1px]" />
+            </span>
+          )}
+          {e.remind_before_min != null && (
+            <span title="Hatırlatma açık" className="mr-1">
+              <Bell size={12} aria-hidden className="inline align-[-1px]" />
+            </span>
+          )}
           {e.title}
         </div>
         <div className="truncate text-[12px] text-zinc-400">

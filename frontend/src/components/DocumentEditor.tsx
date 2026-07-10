@@ -1,9 +1,10 @@
 import { useRef, useState, type ReactNode } from "react";
 import { type Editor } from "ckeditor5";
+import { ArrowLeft } from "../icons";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { ExportMenu } from "./ExportMenu";
 
-// The one and only editor frame used everywhere in the app (document Canvas, Özelleştir, …):
+// The one and only editor frame used everywhere in the app (document Canvas, Şablonlar, …):
 // a UYAP-like A4 page (MarkdownEditor) under a consistent header — back, title, Save, Export.
 // Callers only supply their own data + actions; the editing surface is identical every time.
 export function DocumentEditor({
@@ -45,14 +46,14 @@ export function DocumentEditor({
   }
 
   return (
-    <div className="flex h-dvh min-w-0 flex-col bg-white">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <header className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2">
         {onClose && (
           <button
             onClick={onClose}
-            className="shrink-0 rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+            className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
           >
-            ← Geri
+            <ArrowLeft size={14} aria-hidden /> Geri
           </button>
         )}
         <div className="min-w-0 flex-1">

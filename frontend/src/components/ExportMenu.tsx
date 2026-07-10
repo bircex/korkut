@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, type ExportFormat } from "../api";
+import { CaretDown } from "../icons";
 
 const FORMATS: { value: ExportFormat; label: string }[] = [
   { value: "udf", label: "UYAP (UDF)" },
@@ -42,7 +43,7 @@ export function ExportMenu({ title, getMarkdown }: { title: string; getMarkdown:
         disabled={busy}
         className="flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
       >
-        {busy ? "…" : "Dışa aktar"} <span className="text-[10px] opacity-70">▾</span>
+        {busy ? "…" : "Dışa aktar"} <CaretDown size={12} aria-hidden className="opacity-70" />
       </button>
       {open && (
         <>
