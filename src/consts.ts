@@ -2,11 +2,8 @@
 // Kendi alan adınıza göre `url` değerini güncelleyin.
 
 export const SITE = {
-  // Sitenin yayınlandığı origin. Şu an GitHub Pages proje sayfası:
-  // https://recepkizilarslan.com/korkut/ (alt yol `base` ile astro.config.mjs'te verilir).
-  // Özel alan adına (ör. korkut.dev) geçince: burayı "https://korkut.dev" yapın ve
-  // astro.config.mjs'teki `base` değerini "/" yapın — gerisi kendiliğinden çalışır.
-  url: "https://recepkizilarslan.com",
+  // Sitenin yayınlandığı origin — özel alan adı (apex). astro.config.mjs'te base "/".
+  url: "https://korkutai.com",
   name: "Korkut",
   title: "Korkut — Avukatlar için açık kaynak yapay zeka asistanı",
   description:
@@ -18,12 +15,12 @@ export const SITE = {
     "hukuk yapay zeka, avukat asistanı, içtihat arama, mevzuat arama, dilekçe taslağı, Yargıtay, Danıştay, self-hosted hukuk yazılımı, açık kaynak hukuk asistanı, KVKK",
 } as const;
 
-export const GITHUB_URL = "https://github.com/recepkizilarslan/korkut";
+export const GITHUB_URL = "https://github.com/recepkizilarslan/korkut-backend";
 export const CONTACT_EMAIL = "recepkizilarslan@gmail.com";
 export const DOCS_URL = `${GITHUB_URL}/tree/main/docs`;
 export const INSTALL_DOCS_URL = `${GITHUB_URL}/blob/main/docs/INSTALL.md`;
 export const CLONE_CMD =
-  "git clone https://github.com/recepkizilarslan/korkut.git && cd korkut";
+  "git clone https://github.com/recepkizilarslan/korkut-backend.git && cd korkut-backend";
 
 // Sıkça sorulan sorular — hem FAQ bölümü hem de FAQPage yapılandırılmış verisi.
 export const FAQS = [
