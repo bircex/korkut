@@ -127,9 +127,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sendingId, setSendingId] = useState<number | null>(null); // which chat the in-flight send is for
   const [activity, setActivity] = useState<string | null>(null); // current tool step, while waiting
   const [streaming, setStreaming] = useState(false); // answer tokens are landing in the last bubble
-  const [sidebarOpen, setSidebarOpen] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 640 : true,
-  );
+  // Varsayılan kapalı — navbar'daki hamburger ile açılır.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pane, setPane] = useState<"chat" | "document">("chat");
   const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
@@ -430,10 +429,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  // Every page renders below the persistent navbar with the sidebar; only the document editor
-  // goes full-width (an A4 canvas needs the room, and its Sohbet/Editör switch lives in the navbar).
-  const editorOpen = view !== "docs" && pane === "document" && currentId !== null;
-
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
       {pendingEmailId !== null && (
@@ -441,15 +436,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       )}
       {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
       <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
-        {!editorOpen && (
-          <button
-            onClick={() => setSidebarOpen((o) => !o)}
-            className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
-            title="Sohbet geçmişi"
-          >
-            <List size={20} aria-hidden />
-          </button>
-        )}
+        <button
+          onClick={() => setSidebarOpen((o) => !o)}
+          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
+          title="Sohbet geçmişi"
+        >
+          <List size={20} aria-hidden />
+        </button>
         <div className="flex items-center gap-2">
           {/* Marka ana sayfaya döner — Ayarlar/Özelleştir gibi ekranların ayrı "Geri" düğmesi yok. */}
           <button
@@ -569,11 +562,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
       )}
 
-      {editorOpen && currentId !== null ? (
-        <div className="min-h-0 flex-1">
-          <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
-        </div>
-      ) : (
       <div className="flex min-h-0 flex-1">
         {sidebarOpen && (
           <>
@@ -727,6 +715,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <TasksPanel />
         ) : view === "calendar" ? (
           <CalendarPanel />
+        ) : pane === "document" && currentId !== null ? (
+          <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         ) : (
         <div className="flex min-w-0 flex-1 flex-col">
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
@@ -807,16 +797,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         )}
         </div>
       </div>
-      )}
 
-      {!editorOpen && (
-        <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
-          {coverage > 0
-            ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
-            : ""}
-          © {user.office ?? "Korkut"}
-        </footer>
-      )}
+      <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
+        {coverage > 0
+          ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
+          : ""}
+        © {user.office ?? "Korkut"}
+      </footer>
     </div>
   );
 }
