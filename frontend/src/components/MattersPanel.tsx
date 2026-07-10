@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
 import { ArrowLeft, CaretRight } from "../icons";
+import { matchPath, navigate, usePath } from "../router";
 import { Modal } from "./Modal";
 
 // Minimal "Dosyalar" (matters) workspace: browse the office's case files, open one to see its
@@ -22,7 +23,11 @@ export function MattersPanel({
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
   const [agenda, setAgenda] = useState<AgendaItem[]>([]);
-  const [detail, setDetail] = useState<MatterDetail | null>(null); // null → list view
+  const [detail, setDetail] = useState<MatterDetail | null>(null); // /dosyalar/:id yüklenince dolar
+  const path = usePath();
+  // Açık dosya URL'den okunur: /dosyalar → liste, /dosyalar/:id → detay.
+  const midParam = matchPath("/dosyalar/:id", path)?.id;
+  const routeMid = midParam !== undefined && Number.isFinite(Number(midParam)) ? Number(midParam) : null;
   const [adding, setAdding] = useState<"matter" | "hearing" | "deadline" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +53,27 @@ export function MattersPanel({
     refresh();
   }, [refresh]);
 
-  async function openMatter(id: number) {
-    setError(null);
-    try {
-      setDetail(await api.getMatter(id));
-    } catch {
-      setError("Dosya açılamadı.");
-    }
+  // Listeye dönüşte (URL /dosyalar olunca) detay kapanır — render sırasında state uyarlama deseni.
+  const [viewedMid, setViewedMid] = useState<number | null>(routeMid);
+  if (routeMid !== viewedMid) {
+    setViewedMid(routeMid);
+    if (routeMid === null) setDetail(null);
+  }
+
+  // URL'deki dosyayı yükle — tıklama, reload ve back/forward hep buradan geçer.
+  useEffect(() => {
+    if (routeMid === null || detail?.id === routeMid) return;
+    api
+      .getMatter(routeMid)
+      .then((d) => {
+        setDetail(d);
+        setError(null);
+      })
+      .catch(() => setError("Dosya açılamadı."));
+  }, [routeMid, detail?.id]);
+
+  function openMatter(id: number) {
+    navigate(`/dosyalar/${id}`); // yükleme URL efektinde
   }
 
   async function createMatter() {
@@ -72,7 +91,8 @@ export function MattersPanel({
       setNm({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
       setAdding(null);
       await refresh();
-      setDetail(d);
+      setDetail(d); // navigate'ten önce — URL efekti aynı dosyayı yeniden çekmesin
+      navigate(`/dosyalar/${d.id}`);
     } catch {
       setError("Dosya oluşturulamadı.");
     } finally {
@@ -139,7 +159,7 @@ export function MattersPanel({
     if (!detail) return;
     if (!confirm(`'${detail.title}' dosyası silinsin mi? Bu işlem geri alınamaz.`)) return;
     await api.deleteMatter(detail.id);
-    setDetail(null);
+    navigate("/dosyalar", { replace: true }); // silinen dosyanın URL'i geride kalmasın
     refresh();
   }
 
@@ -154,12 +174,16 @@ export function MattersPanel({
     return (
       <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
         <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-          <button
-            onClick={() => setDetail(null)}
+          <a
+            href="/dosyalar"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/dosyalar");
+            }}
             className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
           >
             <ArrowLeft size={14} aria-hidden /> Dosyalar
-          </button>
+          </a>
           <h1 className="text-base font-semibold text-zinc-900">{detail.title}</h1>
           <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>
         </header>

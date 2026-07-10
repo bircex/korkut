@@ -40,9 +40,13 @@ function Section({
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {slice.map((d) => (
-              <button
+              <a
                 key={d.id}
-                onClick={() => onOpen(d)}
+                href={`/sohbet/${d.conversation_id}/belge`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpen(d);
+                }}
                 title={d.title}
                 className={
                   "group flex h-32 flex-col rounded-xl border bg-white p-3 text-left transition hover:shadow-md " +
@@ -55,7 +59,7 @@ function Section({
                   {d.title}
                 </span>
                 <span className="mt-1 text-[11px] text-zinc-400">{whenLabel(d.updated_at)}</span>
-              </button>
+              </a>
             ))}
           </div>
           {pages > 1 && (

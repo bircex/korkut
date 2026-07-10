@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Member, type Task } from "../api";
+import { navigate, useSearch } from "../router";
 import { Modal } from "./Modal";
 
 // Görevler — to-dos assigned to office members, optionally due-dated. A first slice: create,
@@ -15,7 +16,10 @@ function fmtDate(iso: string | null): string {
 }
 
 export function TasksPanel() {
-  const [showAll, setShowAll] = useState(false);
+  // "Tamamlananları da göster" filtresi URL'de yaşar: /gorevler?tum=1.
+  const search = useSearch();
+  const showAll = new URLSearchParams(search).has("tum");
+  const setShowAll = (v: boolean) => navigate(v ? "/gorevler?tum=1" : "/gorevler", { replace: true });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [adding, setAdding] = useState(false);
