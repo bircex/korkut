@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* dark: variant'ı OS medya sorgusuna değil <html data-theme="dark"> attribute'una bakar —
+   tema navbar'daki seçiciden (Açık/Koyu/Sistem) yönetilir, bkz. theme.ts. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   color-scheme: light;
   --bg: #f4f4f5;
@@ -126,13 +130,12 @@ body {
 .ck-content h3 { font-size: 1.1em; }
 
 /* ---------------- karanlık tema ----------------
-   Sistem tercihini izler (prefers-color-scheme) — elle anahtar yok.
-   Tailwind 4 renk utility'leri CSS değişkenine derlendiği için palet burada,
-   kontrast oranları korunarak yeniden eşlenir: sayfa en koyu, kartlar bir tık
-   açık, birincil buton/metin (zinc-900) beyaza yakın; text-white koyuya döner
+   <html data-theme="dark"> iken devreye girer (seçici: navbar; "Sistem" modunda theme.ts
+   OS tercihini izleyip attribute'u günceller). Tailwind 4 renk utility'leri CSS değişkenine
+   derlendiği için palet burada, kontrast oranları korunarak yeniden eşlenir: sayfa en koyu,
+   kartlar bir tık açık, birincil buton/metin (zinc-900) beyaza yakın; text-white koyuya döner
    ki "koyu zemin + beyaz yazı" çiftleri otomatik "açık zemin + koyu yazı" olsun. */
-@media (prefers-color-scheme: dark) {
-  :root {
+  :root[data-theme="dark"] {
     color-scheme: dark;
     /* eski tema değişkenleri (body bunları kullanır) */
     --bg: #17171a;
@@ -184,31 +187,31 @@ body {
   }
 
   /* Koyu temada gölge yok — katmanlar çizgiyle ayrılır. */
-  .shadow-sm,
-  .shadow-lg,
-  .shadow-xl,
-  .hover\:shadow-md:hover {
+  [data-theme="dark"] .shadow-sm,
+  [data-theme="dark"] .shadow-lg,
+  [data-theme="dark"] .shadow-xl,
+  [data-theme="dark"] .hover\:shadow-md:hover {
     box-shadow: none;
   }
 
   /* Rendered markdown koyu eşlenikleri. */
-  .md a { color: #93b4ff; }
-  .md blockquote { border-left-color: #43434c; color: #9d9da8; }
-  .md code { background: #26262b; border-color: #3a3a42; }
-  .md pre { background: #26262b; border-color: #3a3a42; }
-  .md th { background: #26262b; }
-  .md th, .md td { border-color: #43434c; }
-  .md hr { border-top-color: #33333a; }
+  [data-theme="dark"] .md a { color: #93b4ff; }
+  [data-theme="dark"] .md blockquote { border-left-color: #43434c; color: #9d9da8; }
+  [data-theme="dark"] .md code { background: #26262b; border-color: #3a3a42; }
+  [data-theme="dark"] .md pre { background: #26262b; border-color: #3a3a42; }
+  [data-theme="dark"] .md th { background: #26262b; }
+  [data-theme="dark"] .md th,
+  [data-theme="dark"] .md td { border-color: #43434c; }
+  [data-theme="dark"] .md hr { border-top-color: #33333a; }
 
   /* Belge kanvası: zemin koyulaşır, A4 sayfa kağıt-beyaz kalır (baskı sadakati). */
-  .doc-canvas,
-  .doc-canvas .ck.ck-editor,
-  .doc-canvas .ck-editor__main {
+  [data-theme="dark"] .doc-canvas,
+  [data-theme="dark"] .doc-canvas .ck.ck-editor,
+  [data-theme="dark"] .doc-canvas .ck-editor__main {
     background: #101012;
   }
-  .doc-canvas .ck.ck-editor__editable,
-  .doc-canvas .ck-editor__editable:focus {
+  [data-theme="dark"] .doc-canvas .ck.ck-editor__editable,
+  [data-theme="dark"] .doc-canvas .ck-editor__editable:focus {
     border-color: #000000;
     box-shadow: none;
   }
-}
