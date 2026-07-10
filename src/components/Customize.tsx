@@ -5,6 +5,7 @@ import {
   type TemplateDetail,
   type TemplateKind,
   type TemplateScope,
+  type TemplateTypeRow,
   type User,
 } from "../api";
 import { DocumentEditor } from "./DocumentEditor";
@@ -23,10 +24,29 @@ function contentFor(detail: TemplateDetail, scope: TemplateScope): string {
   return override ?? detail.effective ?? detail.default ?? "";
 }
 
+// kişisel/ofis rozetleri — her liste varyantında aynı.
+function TypeBadges({ t }: { t: TemplateTypeRow }) {
+  return (
+    <>
+      {t.hasUserOverride && (
+        <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-600">
+          kişisel
+        </span>
+      )}
+      {t.hasOfficeOverride && (
+        <span className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] text-sky-600">
+          ofis
+        </span>
+      )}
+    </>
+  );
+}
+
 export function Customize({ user }: { user: User }) {
   const [kind, setKind] = useState<TemplateKind>("dilekce");
   const [cats, setCats] = useState<TemplateCategory[]>([]);
   const [query, setQuery] = useState("");
+  const [catFilter, setCatFilter] = useState<string | null>(null); // null → tüm kategoriler
   const [detail, setDetail] = useState<TemplateDetail | null>(null); // null → list view
   const [scope, setScope] = useState<TemplateScope>("user");
   const [content, setContent] = useState(""); // feeds the editor (re-fed on type/scope change)
@@ -48,6 +68,7 @@ export function Customize({ user }: { user: User }) {
   function chooseKind(next: TemplateKind) {
     if (next === kind) return;
     setKind(next);
+    setCatFilter(null); // diğer türün kategorileri farklı — rayı "Tümü"ne döndür
   }
 
   async function openType(id: string) {
@@ -188,43 +209,69 @@ export function Customize({ user }: { user: User }) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-4">
+      <div className="flex min-h-0 flex-1">
+        <aside className="w-56 shrink-0 overflow-y-auto border-r border-zinc-100 p-3">
+          <button
+            onClick={() => setCatFilter(null)}
+            className={
+              "flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm " +
+              (catFilter === null
+                ? "bg-zinc-100 font-medium text-zinc-900"
+                : "text-zinc-600 hover:bg-zinc-50")
+            }
+          >
+            Tümü
+            <span className="text-xs text-zinc-400">
+              {filtered.reduce((n, c) => n + c.tipler.length, 0)}
+            </span>
+          </button>
           {filtered.map((c) => (
-            <div key={c.kategori} className="mb-6">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                {c.kategori}
-              </div>
-              <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-                {c.tipler.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => openType(t.id)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm text-zinc-800">{t.ad}</div>
-                      {t.ref && <div className="truncate text-xs text-zinc-400">{t.ref}</div>}
-                    </div>
-                    {t.hasUserOverride && (
-                      <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-600">
-                        kişisel
-                      </span>
-                    )}
-                    {t.hasOfficeOverride && (
-                      <span className="shrink-0 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] text-sky-600">
-                        ofis
-                      </span>
-                    )}
-                    <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
-                  </button>
-                ))}
-              </div>
-            </div>
+            <button
+              key={c.kategori}
+              onClick={() => setCatFilter(c.kategori)}
+              className={
+                "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-sm " +
+                (catFilter === c.kategori
+                  ? "bg-zinc-100 font-medium text-zinc-900"
+                  : "text-zinc-600 hover:bg-zinc-50")
+              }
+            >
+              <span className="truncate">{c.kategori}</span>
+              <span className="shrink-0 text-xs text-zinc-400">{c.tipler.length}</span>
+            </button>
           ))}
-          {filtered.length === 0 && (
-            <div className="px-3 py-12 text-center text-sm text-zinc-400">Sonuç yok</div>
-          )}
+        </aside>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="px-6 py-4">
+            {filtered
+              .filter((c) => catFilter === null || c.kategori === catFilter)
+              .map((c) => (
+                <div key={c.kategori} className="mb-6">
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                    {c.kategori}
+                  </div>
+                  <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+                    {c.tipler.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => openType(t.id)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm text-zinc-800">{t.ad}</div>
+                          {t.ref && <div className="truncate text-xs text-zinc-400">{t.ref}</div>}
+                        </div>
+                        <TypeBadges t={t} />
+                        <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            {filtered.length === 0 && (
+              <div className="px-3 py-12 text-center text-sm text-zinc-400">Sonuç yok</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
