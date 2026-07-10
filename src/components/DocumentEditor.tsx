@@ -4,7 +4,7 @@ import { ArrowLeft } from "../icons";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { ExportMenu } from "./ExportMenu";
 
-// The one and only editor frame used everywhere in the app (document Canvas, Özelleştir, …):
+// The one and only editor frame used everywhere in the app (document Canvas, Şablonlar, …):
 // a UYAP-like A4 page (MarkdownEditor) under a consistent header — back, title, Save, Export.
 // Callers only supply their own data + actions; the editing surface is identical every time.
 export function DocumentEditor({

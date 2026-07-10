@@ -62,7 +62,7 @@ import {
 import translations from "ckeditor5/translations/tr.js";
 import "ckeditor5/ckeditor5.css";
 
-// The single rich-text editor used across the app — the document Canvas and the Özelleştir theme
+// The single rich-text editor used across the app — the document Canvas and the Şablonlar theme
 // editor — styled as a UYAP-like A4 page (see `.doc-canvas` in styles.css). Loaded with the full
 // set of CKEditor open-source plugins. GeneralHtmlSupport lets rich formatting (colour, font,
 // alignment) survive the Markdown round-trip as inline HTML. `data` is markdown; `getData()`

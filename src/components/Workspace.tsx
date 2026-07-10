@@ -28,6 +28,7 @@ import {
   CaretDown,
   CheckSquare,
   DotsThree,
+  FileDashed,
   FileText,
   Folder,
   List,
@@ -71,6 +72,7 @@ const NAV_ICON: Record<string, Icon> = {
   tasks: CheckSquare,
   calendar: CalendarBlank,
   docs: FileText,
+  customize: FileDashed,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -96,7 +98,7 @@ const VIEW_PATH: Record<SidebarView, string> = {
   chats: "/",
   docs: "/belgeler",
   settings: "/ayarlar",
-  customize: "/ozellestir",
+  customize: "/sablonlar",
   matters: "/dosyalar",
   clients: "/muvekkiller",
   finance: "/mali",
@@ -446,7 +448,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <List size={20} aria-hidden />
         </button>
         <div className="flex items-center gap-2">
-          {/* Marka ana sayfaya döner — Ayarlar/Özelleştir gibi ekranların ayrı "Geri" düğmesi yok. */}
+          {/* Marka ana sayfaya döner — Ayarlar/Şablonlar gibi ekranların ayrı "Geri" düğmesi yok. */}
           <button
             onClick={() => navigate(VIEW_PATH.chats)}
             title="Ana sayfa"
@@ -523,15 +525,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     Ayarlar
                   </button>
                   <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigate(VIEW_PATH.customize);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                  >
-                    Özelleştir
-                  </button>
-                  <button
                     onClick={onLogout}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
                   >
@@ -582,6 +575,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       { key: "tasks", label: "Görevler" },
                       { key: "calendar", label: "Takvim" },
                       { key: "docs", label: "Belgeler" },
+                      { key: "customize", label: "Şablonlar" },
                     ] as { key: SidebarView; label: string }[]
                   ).map((it) => (
                     <button

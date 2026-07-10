@@ -11,6 +11,7 @@ export {
   CheckSquare,
   CalendarBlank,
   FileText,
+  FileDashed,
   // Ayarlar sekmeleri
   User,
   Sparkle,
