@@ -402,6 +402,84 @@ export function MattersPanel({
   }
 
   // ---- List view ----
+  // uioption varyantlarının paylaştığı parçalar: durum rozeti, ajanda kartı, satır listesi.
+  const statusBadge = (m: MatterBrief) => (
+    <span
+      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
+        m.status === "closed" ? "bg-zinc-200 text-zinc-500" : "bg-emerald-500/15 text-emerald-600"
+      }`}
+    >
+      {STATUS_LABEL[m.status] ?? m.status}
+    </span>
+  );
+
+  const agendaCard = (limit: number) =>
+    agenda.length > 0 && (
+      <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+          Yaklaşan ({agenda.length})
+        </div>
+        <div className="space-y-0.5">
+          {agenda.slice(0, limit).map((a) => (
+            <button
+              key={`${a.kind}-${a.id}`}
+              onClick={() => openMatter(a.matter_id)}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-amber-100/60"
+            >
+              <span className="font-medium text-amber-900">
+                {a.date}
+                {a.time ? ` ${a.time}` : ""}
+              </span>
+              <span className="truncate text-amber-800">
+                {a.kind === "deadline" ? a.title : a.type ?? "Duruşma"}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+
+  const errorNote = error && <div className="mb-3 text-xs text-red-600">{error}</div>;
+
+  const matterTable = () =>
+    matters.length === 0 ? (
+      <div className="px-4 py-12 text-center text-sm text-zinc-400">Henüz dosya yok.</div>
+    ) : (
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-zinc-200 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            <th className="py-2 pr-3 font-semibold">Dosya</th>
+            <th className="hidden py-2 pr-3 font-semibold sm:table-cell">Müvekkil</th>
+            <th className="hidden py-2 pr-3 font-semibold md:table-cell">Mahkeme</th>
+            <th className="hidden py-2 pr-3 font-semibold lg:table-cell">Tür</th>
+            <th className="py-2 font-semibold">Durum</th>
+          </tr>
+        </thead>
+        <tbody>
+          {matters.map((m) => (
+            <tr
+              key={m.id}
+              onClick={() => openMatter(m.id)}
+              className="cursor-pointer border-b border-zinc-100 hover:bg-zinc-50"
+            >
+              <td className="py-2.5 pr-3">
+                <div className="font-medium text-zinc-800">{m.title}</div>
+                {m.file_no && <div className="text-xs text-zinc-400">{m.file_no}</div>}
+              </td>
+              <td className="hidden py-2.5 pr-3 text-zinc-600 sm:table-cell">
+                {m.client_name ?? "—"}
+              </td>
+              <td className="hidden py-2.5 pr-3 text-zinc-500 md:table-cell">{m.court ?? "—"}</td>
+              <td className="hidden py-2.5 pr-3 text-zinc-500 lg:table-cell">
+                {m.case_type ?? "—"}
+              </td>
+              <td className="py-2.5">{statusBadge(m)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
@@ -415,61 +493,20 @@ export function MattersPanel({
         </button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-4">
-          {error && <div className="mb-3 text-xs text-red-600">{error}</div>}
-
-          {agenda.length > 0 && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                Yaklaşan ({agenda.length})
-              </div>
-              <div className="space-y-0.5">
-                {agenda.slice(0, 6).map((a) => (
-                  <button
-                    key={`${a.kind}-${a.id}`}
-                    onClick={() => openMatter(a.matter_id)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-amber-100/60"
-                  >
-                    <span className="font-medium text-amber-900">
-                      {a.date}
-                      {a.time ? ` ${a.time}` : ""}
-                    </span>
-                    <span className="truncate text-amber-800">
-                      {a.kind === "deadline" ? a.title : a.type ?? "Duruşma"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-            {matters.length === 0 && (
-              <div className="px-4 py-12 text-center text-sm text-zinc-400">Henüz dosya yok.</div>
-            )}
-            {matters.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => openMatter(m.id)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-zinc-800">{m.title}</div>
-                  <div className="truncate text-xs text-zinc-400">
-                    {[m.client_name, m.court].filter(Boolean).join(" · ") || "—"}
-                  </div>
-                </div>
-                <span
-                  className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
-                    m.status === "closed" ? "bg-zinc-200 text-zinc-500" : "bg-emerald-500/15 text-emerald-600"
-                  }`}
-                >
-                  {STATUS_LABEL[m.status] ?? m.status}
-                </span>
-                <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
-              </button>
-            ))}
+        <div className="mx-auto flex max-w-5xl items-start gap-6 px-4 py-4">
+          <div className="min-w-0 flex-1">
+            {errorNote}
+            {matterTable()}
           </div>
+          <aside className="sticky top-4 hidden w-72 shrink-0 lg:block">
+            {agenda.length > 0 ? (
+              agendaCard(10)
+            ) : (
+              <div className="rounded-xl border border-zinc-200 p-3 text-center text-xs text-zinc-400">
+                Yaklaşan duruşma/süre yok.
+              </div>
+            )}
+          </aside>
         </div>
       </div>
 
