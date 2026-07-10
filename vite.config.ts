@@ -2,12 +2,13 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// Build output goes into the API package's static dir, which FastAPI serves (index.html at /,
-// hashed assets at /assets). `npm run dev` proxies the API to the Python server on :8080.
+// Build output goes into ./dist (this repo is standalone since the split from the backend repo).
+// Deploy step copies dist/ into the backend's static dir (or serve it from any static host).
+// `npm run dev` proxies /api to the Python server on :8080.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: "../backend/src/korkut/api/static",
+    outDir: "dist",
     emptyOutDir: true,
     assetsDir: "assets",
   },
