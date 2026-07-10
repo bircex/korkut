@@ -35,4 +35,8 @@ export {
   Bell,
   Check,
   X,
+  // Tema seçici
+  Sun,
+  Moon,
+  Monitor,
 } from "@phosphor-icons/react";
