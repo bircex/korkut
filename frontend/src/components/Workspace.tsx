@@ -22,19 +22,24 @@ import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
 import { MailConfirm } from "./MailConfirm";
 import { matchPath, navigate, usePath } from "../router";
+import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
   ArrowClockwise,
   CalendarBlank,
   CaretDown,
+  Check,
   CheckSquare,
   DotsThree,
   FileDashed,
   FileText,
   Folder,
   List,
+  Monitor,
+  Moon,
   Paperclip,
   Plus,
+  Sun,
   Users,
   Wallet,
   Warning,
@@ -92,6 +97,54 @@ const NAV_ICON: Record<string, Icon> = {
 function NavIcon({ name }: { name: string }) {
   const Ikon = NAV_ICON[name];
   return Ikon ? <Ikon size={18} aria-hidden className="shrink-0" /> : null;
+}
+
+// Sağ üstteki tema seçici: Açık / Koyu / Sistem (seçim theme.ts üzerinden kalıcı).
+const THEME_OPTIONS: { mode: ThemeMode; label: string; Ikon: Icon }[] = [
+  { mode: "light", label: "Açık", Ikon: Sun },
+  { mode: "dark", label: "Koyu", Ikon: Moon },
+  { mode: "system", label: "Sistem", Ikon: Monitor },
+];
+
+function ThemeMenu() {
+  const mode = useThemeMode();
+  const [open, setOpen] = useState(false);
+  const current = THEME_OPTIONS.find((o) => o.mode === mode) ?? THEME_OPTIONS[2];
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Tema"
+        className="rounded-md px-2 py-1.5 text-zinc-600 hover:bg-zinc-200/70"
+      >
+        <current.Ikon size={18} aria-hidden />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-40 mt-2 w-36 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+            {THEME_OPTIONS.map(({ mode: m, label, Ikon }) => (
+              <button
+                key={m}
+                onClick={() => {
+                  setThemeMode(m);
+                  setOpen(false);
+                }}
+                className={
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50 " +
+                  (m === mode ? "font-medium text-zinc-900" : "text-zinc-600")
+                }
+              >
+                <Ikon size={15} aria-hidden />
+                {label}
+                {m === mode && <Check size={12} weight="bold" aria-hidden className="ml-auto" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 type SidebarView =
@@ -534,7 +587,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             <img
               src="/korkut-logo.svg"
               alt="Korkut"
-              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
+              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5 dark:hidden"
+            />
+            <img
+              src="/korkut-logo-dark.svg"
+              alt="Korkut"
+              className="hidden h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5 dark:block"
             />
             <span className="font-bold">Korkut</span>
           </a>
@@ -566,7 +624,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </button>
           </div>
         )}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeMenu />
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
