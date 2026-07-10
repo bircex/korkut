@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { type Editor } from "ckeditor5";
+import { ArrowLeft } from "../icons";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { ExportMenu } from "./ExportMenu";
 
@@ -50,9 +51,9 @@ export function DocumentEditor({
         {onClose && (
           <button
             onClick={onClose}
-            className="shrink-0 rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+            className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
           >
-            ← Geri
+            <ArrowLeft size={14} aria-hidden /> Geri
           </button>
         )}
         <div className="min-w-0 flex-1">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type ModelData, type ModelHealth } from "../api";
+import { Check, X } from "../icons";
 
 // Office model picker (Ayarlar → Model, owner-only). Fully on-prem: every endpoint is local, so
 // there is no cloud/redaction choice — the server just talks to the chosen OpenAI-compatible
@@ -259,8 +260,14 @@ export function ModelSettings() {
           {testing ? "Test ediliyor…" : "Bağlantıyı test et"}
         </button>
         {health && (
-          <span className={`text-xs ${health.connected ? "text-emerald-600" : "text-red-600"}`}>
-            {health.connected ? "✓ " : "✗ "}
+          <span
+            className={`inline-flex items-center gap-1 text-xs ${health.connected ? "text-emerald-600" : "text-red-600"}`}
+          >
+            {health.connected ? (
+              <Check size={12} weight="bold" aria-hidden />
+            ) : (
+              <X size={12} weight="bold" aria-hidden />
+            )}
             {health.detail}
           </span>
         )}
@@ -273,7 +280,11 @@ export function ModelSettings() {
 
       {canEdit && (
         <div className="mt-5 flex items-center gap-3">
-          {saved && <span className="text-xs text-emerald-600">Kaydedildi ✓</span>}
+          {saved && (
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+              Kaydedildi <Check size={12} weight="bold" aria-hidden />
+            </span>
+          )}
           <div className="ml-auto flex gap-2">
             {data?.enabled && (
               <button

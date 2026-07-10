@@ -8,6 +8,7 @@ import {
   type User,
 } from "../api";
 import { DocumentEditor } from "./DocumentEditor";
+import { ArrowLeft, CaretRight, Check } from "../icons";
 
 // Turkish-aware fold for the search box (diacritics → ascii), mirroring the backend.
 const FOLD: Record<string, string> = {
@@ -125,7 +126,11 @@ export function Customize({ user, onClose }: { user: User; onClose: () => void }
               : "Ofis özelleştirmesi aktif."
             : "Varsayılan tema gösteriliyor."}
         </span>
-        {saved && <span className="text-xs text-emerald-600">Kaydedildi ✓</span>}
+        {saved && (
+          <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+            Kaydedildi <Check size={12} weight="bold" aria-hidden />
+          </span>
+        )}
         {hasOverride && (
           <button
             onClick={revert}
@@ -155,8 +160,11 @@ export function Customize({ user, onClose }: { user: User; onClose: () => void }
   return (
     <div className="flex h-dvh flex-col bg-white">
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-        <button onClick={onClose} className="text-sm text-zinc-500 hover:text-zinc-900">
-          ← Geri
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
+        >
+          <ArrowLeft size={14} aria-hidden /> Geri
         </button>
         <h1 className="text-base font-semibold text-zinc-900">Özelleştir — Şablon temaları</h1>
         <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>
@@ -214,7 +222,7 @@ export function Customize({ user, onClose }: { user: User; onClose: () => void }
                         ofis
                       </span>
                     )}
-                    <span className="shrink-0 text-zinc-300">›</span>
+                    <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
                   </button>
                 ))}
               </div>

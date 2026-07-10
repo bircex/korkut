@@ -1,6 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, ApiError, type Member, type StyleFields, type User } from "../api";
 import { navigate, usePath } from "../router";
+import {
+  type Icon,
+  BookmarkSimple,
+  Cpu,
+  EnvelopeSimple,
+  LinkSimple,
+  PencilSimpleLine,
+  Sparkle,
+  User as UserIcon,
+  Users,
+} from "../icons";
 import { EmailSettings } from "./EmailSettings";
 import { IntegrationsSettings } from "./IntegrationsSettings";
 import { MemorySettings } from "./MemorySettings";
@@ -440,77 +451,21 @@ const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Sistem", ids: ["integrations", "model", "email"] },
 ];
 
+// Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
+const TAB_ICON: Record<Tab, Icon> = {
+  account: UserIcon,
+  members: Users,
+  persona: Sparkle,
+  memory: BookmarkSimple,
+  style: PencilSimpleLine,
+  integrations: LinkSimple,
+  model: Cpu,
+  email: EnvelopeSimple,
+};
+
 function TabIcon({ id }: { id: Tab }) {
-  const p = {
-    width: 17,
-    height: 17,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.75,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-    className: "shrink-0",
-  };
-  switch (id) {
-    case "account":
-      return (
-        <svg {...p}>
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-        </svg>
-      );
-    case "members":
-      return (
-        <svg {...p}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "persona":
-      return (
-        <svg {...p}>
-          <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" />
-        </svg>
-      );
-    case "memory":
-      return (
-        <svg {...p}>
-          <path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
-        </svg>
-      );
-    case "style":
-      return (
-        <svg {...p}>
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-        </svg>
-      );
-    case "integrations":
-      return (
-        <svg {...p}>
-          <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
-          <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
-        </svg>
-      );
-    case "model":
-      return (
-        <svg {...p}>
-          <rect x="6" y="6" width="12" height="12" rx="2" />
-          <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2" />
-        </svg>
-      );
-    case "email":
-      return (
-        <svg {...p}>
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="m3 7 9 6 9-6" />
-        </svg>
-      );
-  }
+  const Ikon = TAB_ICON[id];
+  return <Ikon size={17} aria-hidden className="shrink-0" />;
 }
 
 export function Settings({ user, onClose }: { user: User; onClose: () => void }) {
