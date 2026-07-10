@@ -490,7 +490,7 @@ export function Settings({ user, onClose }: { user: User; onClose: () => void })
   ];
 
   return (
-    <div className="flex h-dvh flex-col bg-white text-zinc-900 lg:flex-row">
+    <div className="flex h-full flex-col bg-white text-zinc-900 lg:flex-row">
       <div className="flex items-center gap-2 border-b border-zinc-950/10 bg-white p-3 lg:hidden">
         <button
           type="button"
