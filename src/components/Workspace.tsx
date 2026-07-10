@@ -452,12 +452,19 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </button>
         )}
         <div className="flex items-center gap-2">
-          <img
-            src="/korkut-logo.svg"
-            alt="Korkut"
-            className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
-          />
-          <span className="font-bold">Korkut</span>
+          {/* Marka ana sayfaya döner — Ayarlar/Özelleştir gibi ekranların ayrı "Geri" düğmesi yok. */}
+          <button
+            onClick={() => navigate(VIEW_PATH.chats)}
+            title="Ana sayfa"
+            className="flex items-center gap-2 rounded-md hover:opacity-75"
+          >
+            <img
+              src="/korkut-logo.svg"
+              alt="Korkut"
+              className="h-7 w-7 rounded-lg border border-zinc-200 bg-white p-0.5"
+            />
+            <span className="font-bold">Korkut</span>
+          </button>
           {user.office && (
             <span className="hidden border-l border-zinc-200 pl-2 text-sm text-zinc-500 sm:inline">
               {user.office}
@@ -565,20 +572,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
       {view === "settings" ? (
         <div className="min-h-0 flex-1">
-          <Settings user={user} onClose={() => navigate(VIEW_PATH.chats)} />
+          <Settings user={user} />
         </div>
       ) : view === "customize" ? (
         <div className="min-h-0 flex-1">
-          <Customize user={user} onClose={() => navigate(VIEW_PATH.chats)} />
+          <Customize user={user} />
         </div>
       ) : editorOpen && currentId !== null ? (
         <div className="min-h-0 flex-1">
-          <DocumentPanel
-            key={currentId}
-            sessionId={currentId}
-            refreshKey={docRefresh}
-            onClose={() => setPane("chat")}
-          />
+          <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         </div>
       ) : (
       <div className="flex min-h-0 flex-1">

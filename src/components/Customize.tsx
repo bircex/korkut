@@ -8,7 +8,7 @@ import {
   type User,
 } from "../api";
 import { DocumentEditor } from "./DocumentEditor";
-import { ArrowLeft, CaretRight, Check } from "../icons";
+import { CaretRight, Check } from "../icons";
 
 // Turkish-aware fold for the search box (diacritics → ascii), mirroring the backend.
 const FOLD: Record<string, string> = {
@@ -23,7 +23,7 @@ function contentFor(detail: TemplateDetail, scope: TemplateScope): string {
   return override ?? detail.effective ?? detail.default ?? "";
 }
 
-export function Customize({ user, onClose }: { user: User; onClose: () => void }) {
+export function Customize({ user }: { user: User }) {
   const [kind, setKind] = useState<TemplateKind>("dilekce");
   const [cats, setCats] = useState<TemplateCategory[]>([]);
   const [query, setQuery] = useState("");
@@ -160,12 +160,6 @@ export function Customize({ user, onClose }: { user: User; onClose: () => void }
   return (
     <div className="flex h-full flex-col bg-white">
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
-        <button
-          onClick={onClose}
-          className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
-        >
-          <ArrowLeft size={14} aria-hidden /> Geri
-        </button>
         <h1 className="text-base font-semibold text-zinc-900">Özelleştir — Şablon temaları</h1>
         <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>
       </header>

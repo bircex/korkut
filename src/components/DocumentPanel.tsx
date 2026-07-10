@@ -5,11 +5,9 @@ import { DocumentEditor } from "./DocumentEditor";
 export function DocumentPanel({
   sessionId,
   refreshKey,
-  onClose,
 }: {
   sessionId: number;
   refreshKey: number;
-  onClose: () => void;
 }) {
   const [doc, setDoc] = useState<DocumentData | null>(null);
   const [title, setTitle] = useState("");
@@ -41,7 +39,6 @@ export function DocumentPanel({
       title={title}
       titleEditable
       onTitleChange={setTitle}
-      onClose={onClose}
       onSave={save}
       exportTitle={title}
       headerExtra={
