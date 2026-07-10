@@ -430,10 +430,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
-  // Settings / Customize / the document editor render below the persistent navbar but without
-  // the chat sidebar (they bring their own inner navigation); everything else gets the sidebar.
+  // Every page renders below the persistent navbar with the sidebar; only the document editor
+  // goes full-width (an A4 canvas needs the room, and its Sohbet/Editör switch lives in the navbar).
   const editorOpen = view !== "docs" && pane === "document" && currentId !== null;
-  const chromeless = view === "settings" || view === "customize" || editorOpen;
 
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
@@ -442,7 +441,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       )}
       {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
       <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
-        {!chromeless && (
+        {!editorOpen && (
           <button
             onClick={() => setSidebarOpen((o) => !o)}
             className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
@@ -570,15 +569,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
       )}
 
-      {view === "settings" ? (
-        <div className="min-h-0 flex-1">
-          <Settings user={user} />
-        </div>
-      ) : view === "customize" ? (
-        <div className="min-h-0 flex-1">
-          <Customize user={user} />
-        </div>
-      ) : editorOpen && currentId !== null ? (
+      {editorOpen && currentId !== null ? (
         <div className="min-h-0 flex-1">
           <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         </div>
@@ -720,7 +711,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         )}
 
         <div className="relative flex min-w-0 flex-1">
-        {view === "docs" ? (
+        {view === "settings" ? (
+          <Settings user={user} />
+        ) : view === "customize" ? (
+          <Customize user={user} />
+        ) : view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
         ) : view === "matters" ? (
           <MattersPanel user={user} onOpenSession={(id) => openSession(id)} />
@@ -814,7 +809,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       </div>
       )}
 
-      {!chromeless && (
+      {!editorOpen && (
         <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
           {coverage > 0
             ? `${coverage.toLocaleString("tr-TR")} yargı kararı + tüm yürürlükteki mevzuata canlı erişim · `
