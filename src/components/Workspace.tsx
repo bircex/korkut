@@ -455,10 +455,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       {pendingEmailId !== null && (
         <MailConfirm id={pendingEmailId} onClose={() => setPendingEmailId(null)} />
       )}
-      <header className="relative flex items-center gap-3 border-b border-zinc-200 bg-white px-3 py-2">
+      {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
+      <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
         <button
           onClick={() => setSidebarOpen((o) => !o)}
-          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100"
+          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-200/70"
           title="Sohbet geçmişi"
         >
           <List size={20} aria-hidden />
@@ -477,7 +478,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           )}
         </div>
         {view === "chats" && currentId !== null && (
-          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg bg-zinc-100 p-1 text-[13px] font-medium">
+          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
             <button
               onClick={() => setPane("chat")}
               className={
@@ -499,10 +500,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </div>
         )}
         <div className="ml-auto flex items-center gap-3">
-          <div className="relative border-l border-zinc-200 pl-3">
+          <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-md py-1 pl-1 pr-1.5 hover:bg-zinc-100"
+              className="flex items-center gap-2 rounded-md py-1 pl-1 pr-1.5 hover:bg-zinc-200/70"
             >
               <span className="hidden text-sm font-medium text-zinc-800 sm:inline">
                 {user.full_name ?? user.username}
