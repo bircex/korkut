@@ -1,17 +1,8 @@
-# Korkut web app image — builds the React SPA, then runs the FastAPI chat UI + brain.
-# Self-hosted; the office's data never leaves the machine.
+# Korkut web app image — runs the FastAPI chat UI + brain. The React SPA is prebuilt in the
+# korkut-ui repo and committed under backend/src/korkut/api/static, so this image just ships it
+# (no Node build here). Self-hosted; the office's data never leaves the machine.
 # Build context is the repository root (see deploy/docker-compose.yml: build.context = ..).
 
-# 1) Build the single-page app. vite.config.ts emits to ../backend/src/korkut/api/static,
-#    so with WORKDIR /app/frontend the output lands at /app/backend/src/korkut/api/static.
-FROM node:26-alpine AS frontend
-WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
-COPY frontend/ ./
-RUN npm run build
-
-# 2) Python runtime.
 FROM python:3.14-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
@@ -27,8 +18,6 @@ RUN apt-get update \
 COPY backend ./backend
 COPY config ./config
 COPY templates ./templates
-# Built SPA from the frontend stage (the gitignored static dir).
-COPY --from=frontend /app/backend/src/korkut/api/static ./backend/src/korkut/api/static
 # Keep a copy outside the bind-mount path so entrypoint.sh can re-seed static/ when the compose
 # volume mount shadows it with an empty host dir (see deploy/docker-compose.yml).
 RUN cp -r ./backend/src/korkut/api/static /opt/korkut-static-seed

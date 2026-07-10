@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Set a single CalVer version (YYYY.M.PATCH) in backend/pyproject.toml and frontend/package.json.
+"""Set a single CalVer version (YYYY.M.PATCH) in backend/pyproject.toml.
 
-One source of truth, written to both files so the release pipeline stays in sync.
+One source of truth for the release pipeline.
 
 Usage:
     python scripts/bump_version.py 2026.7.0
@@ -32,8 +32,7 @@ def main() -> None:
     if not CALVER.fullmatch(version):
         raise SystemExit(f"not a CalVer YYYY.M.PATCH version: {version!r}")
     _replace(ROOT / "backend" / "pyproject.toml", r'^version = ".*"', f'version = "{version}"')
-    _replace(ROOT / "frontend" / "package.json", r'^(\s*"version":\s*)".*"', rf'\g<1>"{version}"')
-    print(f"Set version to {version} in pyproject.toml and package.json")
+    print(f"Set version to {version} in pyproject.toml")
 
 
 if __name__ == "__main__":

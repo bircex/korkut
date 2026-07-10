@@ -31,12 +31,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
       # 1. Resolve the CalVer version: use the manual input if given, else auto-generate
       #    the next YYYY.M.PATCH from the month's existing tags.
       - name: Resolve version
@@ -62,13 +56,6 @@ jobs:
           mypy
           pytest
 
-      - name: Frontend lint and build
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run lint
-          npm run build
-
       # 3. Stamp the CalVer version into both manifests + the changelog.
       - name: Set version
         run: python scripts/bump_version.py "${{ steps.version.outputs.value }}"
@@ -81,7 +68,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/pyproject.toml frontend/package.json CHANGELOG.md
+          git add backend/pyproject.toml CHANGELOG.md
           git commit -m "Release v${{ steps.version.outputs.value }}"
           git tag "v${{ steps.version.outputs.value }}"
           git push origin HEAD --follow-tags

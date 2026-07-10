@@ -19,8 +19,8 @@ services:
       - "8090:8090"
     volumes:
       - ../data:/app/data
-      # Serve the locally-built SPA (frontend/ `npm run build` output) directly, so UI changes
-      # show after a plain `docker compose up -d korkut` — no image rebuild needed.
+      # Serve the committed SPA (backend/src/korkut/api/static, refreshed via `make ui`) directly,
+      # so UI changes show after a plain `docker compose up -d korkut` — no image rebuild needed.
       - ../backend/src/korkut/api/static:/app/backend/src/korkut/api/static
 
   # Scheduled-send worker: flushes due outbound messages (e.g. "X tarihinde gönder") every minute.

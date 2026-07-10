@@ -48,6 +48,12 @@ answers under that office's identity.
 
 Then create a user and start the server — full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
+## Repositories
+
+Korkut is split across three repos: **korkut-backend** (this repo — API + brain + tools),
+**korkut-ui** (the React SPA), and **korkut-website** (the Astro landing/marketing site). This repo
+ships the prebuilt SPA under `backend/src/korkut/api/static`.
+
 ## Documentation
 
 Start with the **[documentation index](docs/README.md)**:

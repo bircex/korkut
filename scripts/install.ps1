@@ -68,10 +68,7 @@ if (-not $python) { Die "Python not found. Install Python 3.12 or newer." }
 $pyv = & $python.Source -c "import sys; print('%d.%d' % sys.version_info[:2])"
 & $python.Source -c "import sys; raise SystemExit(0 if sys.version_info[:2] >= (3,12) else 1)"
 if ($LASTEXITCODE -ne 0) { Die "Python 3.12+ required (found $pyv)." }
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Die "node not found. Install Node 20 or newer." }
-$nodeMajor = [int](node -p "process.versions.node.split('.')[0]")
-if ($nodeMajor -lt 20) { Die "Node 20+ required (found $(node -v))." }
-Info "Python $pyv, Node $(node -v) - OK"
+Info "Python $pyv - OK"
 
 if (-not (Test-Path ".venv")) {
   Info "Creating virtual environment (.venv)"
@@ -82,11 +79,7 @@ Info "Installing the backend (editable, app + dev extras)"
 & $venvPy -m pip install --upgrade pip | Out-Null
 & $venvPy -m pip install -e "backend[app,dev]"
 
-Info "Installing and building the frontend SPA"
-Push-Location frontend
-npm ci
-npm run build
-Pop-Location
+# The SPA is already committed under backend/src/korkut/api/static (built in the korkut-ui repo).
 
 Write-Env
 

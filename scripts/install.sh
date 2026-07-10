@@ -78,11 +78,7 @@ command -v python3 >/dev/null 2>&1 || die "python3 not found. Install Python 3.1
 PYV="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
 python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' \
   || die "Python 3.12+ required (found $PYV)."
-command -v node >/dev/null 2>&1 || die "node not found. Install Node 20 or newer."
-NODEV="$(node -p 'process.versions.node.split(".")[0]')"
-[ "$NODEV" -ge 20 ] || die "Node 20+ required (found $(node -v))."
-command -v npm >/dev/null 2>&1 || die "npm not found. Install Node.js (includes npm)."
-info "Python $PYV, Node $(node -v) — OK"
+info "Python $PYV — OK"
 
 if [ ! -d .venv ]; then
   info "Creating virtual environment (.venv)"
@@ -92,8 +88,7 @@ info "Installing the backend (editable, app + dev extras)"
 ./.venv/bin/python -m pip install --upgrade pip >/dev/null
 ./.venv/bin/python -m pip install -e "backend[app,dev]"
 
-info "Installing and building the frontend SPA"
-( cd frontend && npm ci && npm run build )
+# The SPA is already committed under backend/src/korkut/api/static (built in the korkut-ui repo).
 
 write_env
 

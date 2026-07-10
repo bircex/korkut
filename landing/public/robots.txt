@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://recepkizilarslan.com/korkut/sitemap-index.xml

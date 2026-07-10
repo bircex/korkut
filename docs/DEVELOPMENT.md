@@ -14,12 +14,15 @@ backend/                Python package (src-layout) + tests
     tools/              legal-database search/fetch tools (auto-discovered)
     messaging/          outbound channels (e-mail now)
     integrations/       inbound two-way connectors (Telegram/WhatsApp/e-mail)
-frontend/               React + Vite single-page chat UI
+    api/static/         the prebuilt SPA (committed; source lives in the korkut-ui repo)
 deploy/                 Dockerfile, docker-compose(.prod).yml, cron
 config/                 model-routing, redaction rules, tool tiers
 templates/              petition/contract examples + intake schemas
 scripts/                install + release helpers
 ```
+
+The React SPA now lives in the separate **korkut-ui** repo and the Astro landing site in
+**korkut-website**. This backend only ships the prebuilt SPA under `backend/src/korkut/api/static`.
 
 ## Running the dev servers
 
@@ -29,14 +32,15 @@ Two terminals:
 # 1) API server on :8080
 cd backend && ../.venv/bin/python -m korkut.api
 
-# 2) Vite dev server on :5173 (proxies /api -> :8080, hot reload)
-cd frontend && npm run dev
+# 2) Vite dev server on :5173 (proxies /api -> :8080, hot reload) — from the sibling korkut-ui repo
+cd ../korkut-ui && npm run dev
 ```
 
-Build the production SPA into the backend's static dir (served by FastAPI at `/`):
+Rebuild the production SPA from the sibling korkut-ui repo into the backend's static dir (served by
+FastAPI at `/`):
 
 ```bash
-cd frontend && npm run build
+make ui
 ```
 
 ## Quality gates
@@ -45,8 +49,8 @@ Run before every commit (CI enforces the same — `.github/workflows/ci.yml`):
 
 ```bash
 make test     # backend: pytest + ruff check + mypy
-make lint     # backend ruff (check + format) + frontend eslint
-make build    # frontend tsc + vite build
+make lint     # backend ruff (check + format)
+make ui       # rebuild the SPA from ../korkut-ui into the backend static dir
 ```
 
 Or directly:
@@ -54,7 +58,6 @@ Or directly:
 ```bash
 cd backend && ../.venv/bin/ruff check . && ../.venv/bin/ruff format --check . \
   && ../.venv/bin/mypy && ../.venv/bin/python -m pytest
-cd frontend && npm run lint && npm run build
 ```
 
 Keep the tree **ruff-clean**, **mypy-clean**, and free of dead code. New code needs tests; CI fails

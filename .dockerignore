@@ -18,13 +18,8 @@ coverage.xml
 data
 *.db
 
-# Frontend deps and the local build output (the image builds the SPA in its own stage).
-frontend/node_modules
-frontend/dist
-backend/src/korkut/api/static
 **/*.egg-info
 **/*.tsbuildinfo
 
 # Not needed at runtime.
 docs
-landing

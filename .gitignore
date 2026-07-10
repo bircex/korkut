@@ -8,11 +8,8 @@ secrets/
 *.key
 *.pem
 
-# Frontend build artifacts (the SPA is built from frontend/ into the API's static dir)
-frontend/node_modules/
-frontend/dist/
-frontend/*.tsbuildinfo
-backend/src/korkut/api/static/
+# The built SPA is committed under backend/src/korkut/api/static (produced in the korkut-ui
+# repo, copied in via `make ui`). Intentionally NOT ignored so the image ships a ready UI.
 
 # Runtime data (SQLite DB, generated coverage snapshots)
 data/

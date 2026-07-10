@@ -7,7 +7,6 @@ For day-to-day development, see [DEVELOPMENT.md](DEVELOPMENT.md). For production
 ## Prerequisites
 
 - **Python 3.12+**
-- **Node 20+** (with npm) â€” to build the web UI
 - A model endpoint: a cloud key (`GROQ_API_KEY` or `ANTHROPIC_API_KEY`) **or** a local
   OpenAI-compatible server such as [LM Studio](https://lmstudio.ai) or Ollama.
 - *(Docker path only)* Docker with Compose v2.
@@ -24,9 +23,10 @@ Run the install script for your OS from the repository root. It is idempotent â€
 ./scripts/install.ps1
 ```
 
-The script creates `.venv`, installs the backend, builds the frontend SPA into the backend's static
-directory, and writes a `.env` with a generated `KORKUT_SECRET` (defaulting to a local SQLite
-database under `data/`).
+The script creates `.venv`, installs the backend, and writes a `.env` with a generated
+`KORKUT_SECRET` (defaulting to a local SQLite database under `data/`). The web UI is a prebuilt SPA
+committed under `backend/src/korkut/api/static` (its source lives in the separate **korkut-ui**
+repo), so no Node build is needed here.
 
 Then:
 
@@ -83,9 +83,11 @@ If you'd rather not use the script:
 ```bash
 python3 -m venv .venv
 ./.venv/bin/python -m pip install -e "backend[app,dev]"
-( cd frontend && npm ci && npm run build )
 cp .env.example .env   # then set KORKUT_SECRET and unset/SQLite KORKUT_DB_URL
 ```
+
+The web UI ships prebuilt under `backend/src/korkut/api/static`. To rebuild it from source, clone the
+**korkut-ui** repo as a sibling of this repo and run `make ui`.
 
 Generate a session secret with:
 

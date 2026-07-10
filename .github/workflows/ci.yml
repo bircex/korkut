@@ -57,28 +57,3 @@ jobs:
           name: coverage-xml
           path: backend/coverage.xml
           if-no-files-found: ignore
-
-  frontend:
-    name: Frontend (build)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint (eslint)
-        run: npm run lint
-
-      - name: Type check + build
-        run: npm run build

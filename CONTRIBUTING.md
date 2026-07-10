@@ -33,14 +33,11 @@ push and pull request; run them locally first:
 ../.venv/bin/python -m pytest
 ```
 
-**Frontend** (from `frontend/`):
+**Frontend** — the React SPA now lives in the separate **korkut-ui** repo. Make UI changes there;
+this repo only ships the prebuilt SPA under `backend/src/korkut/api/static`. To refresh it from a
+sibling `korkut-ui` checkout, run `make ui`.
 
-```bash
-npm run lint
-npm run build   # tsc -b && vite build
-```
-
-Or use the shortcuts: `make test`, `make lint`, `make build`.
+Or use the shortcuts: `make test`, `make lint`.
 
 - New code needs tests. The backend keeps a coverage floor (CI fails under it).
 - Keep the codebase **ruff-clean** and **mypy-clean** — no new lint or type errors, no dead code.
