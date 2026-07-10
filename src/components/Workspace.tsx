@@ -8,6 +8,7 @@ import {
   type DocBrief,
   type ModelHealth,
   type SessionBrief,
+  type Task,
   type User,
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
@@ -57,6 +58,19 @@ function greeting(total: number, office: string | null): ChatMessage {
 
 function whenLabel(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" }) : "";
+}
+
+// Ana ekrandaki karşılama — günün saatine göre.
+function timeGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return "İyi geceler";
+  if (h < 12) return "Günaydın";
+  if (h < 18) return "İyi günler";
+  return "İyi akşamlar";
+}
+
+function firstName(u: User): string {
+  return (u.full_name ?? u.username).trim().split(/\s+/)[0];
 }
 
 function initials(u: User): string {
@@ -118,6 +132,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sessionsTotal, setSessionsTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [docs, setDocs] = useState<DocBrief[]>([]);
+  const [homeTasks, setHomeTasks] = useState<Task[]>([]); // ana ekrandaki açık görevler
   const path = usePath();
   const view = viewFromPath(path);
   const [currentId, setCurrentId] = useState<number | null>(null);
@@ -168,19 +183,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       }
       checkHealth();
       loadDocs();
+      loadHomeTasks();
       try {
         const page = await api.sessions(SESSION_PAGE, 0);
         setSessions(page.items);
         setSessionsTotal(page.total);
-        // Loads the latest chat in the background regardless of which page we landed on — but
-        // must not steal a deep link (e.g. /ayarlar/model) by forcing the view back to "chats".
-        if (page.items.length) await openSession(page.items[0].id, { switchView: false });
-        else newChat({ switchView: false });
       } catch {
-        newChat({ switchView: false });
+        /* best effort — ana ekran (karşılama) zaten açık */
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -230,10 +241,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   function newChat(opts: { switchView?: boolean } = {}) {
     currentIdRef.current = null;
     setCurrentId(null);
-    setMessages([greeting(coverage, user.office)]);
+    setMessages([]); // boş sohbet karşılama (ana) ekranını gösterir
     if (opts.switchView !== false) navigate(VIEW_PATH.chats);
     setPane("chat");
     closeSidebarOnMobile();
+    loadHomeTasks();
   }
 
   async function loadDocs() {
@@ -241,6 +253,26 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       setDocs(await api.documents());
     } catch {
       /* best effort */
+    }
+  }
+
+  async function loadHomeTasks() {
+    try {
+      setHomeTasks((await api.tasks("open")).items);
+    } catch {
+      /* best effort — kart görünmez */
+    }
+  }
+
+  async function toggleHomeTask(t: Task) {
+    // İyimser: satırı hemen işaretle, sonra sunucuya yaz.
+    setHomeTasks((ts) =>
+      ts.map((x) => (x.id === t.id ? { ...x, status: x.status === "done" ? "open" : "done" } : x)),
+    );
+    try {
+      await api.updateTask(t.id, { status: t.status === "done" ? "open" : "done" });
+    } catch {
+      loadHomeTasks(); // geri al
     }
   }
 
@@ -715,6 +747,63 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         ) : (
         <div className="flex min-w-0 flex-1 flex-col">
+          {currentId === null && messages.length === 0 ? (
+            // Ana ekran: saate göre karşılama + açık görevler.
+            <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-8 overflow-y-auto px-4 py-8">
+              <div className="text-center">
+                <h2 className="text-3xl font-semibold tracking-tight text-zinc-900">
+                  {timeGreeting()}, {firstName(user)}
+                </h2>
+                <p className="mt-2 text-[15px] text-zinc-500">Size nasıl yardımcı olabilirim?</p>
+              </div>
+              {homeTasks.length > 0 && (
+                <div className="mx-auto w-full max-w-xl">
+                  <div className="mb-2 flex items-baseline justify-between px-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                      Görevleriniz
+                    </span>
+                    <button
+                      onClick={() => navigate(VIEW_PATH.tasks)}
+                      className="text-xs text-zinc-500 hover:text-zinc-900"
+                    >
+                      Tümünü gör
+                    </button>
+                  </div>
+                  <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+                    {homeTasks.slice(0, 5).map((t) => (
+                      <label
+                        key={t.id}
+                        className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm hover:bg-zinc-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={t.status === "done"}
+                          onChange={() => toggleHomeTask(t)}
+                          className="shrink-0"
+                        />
+                        <span
+                          className={
+                            "min-w-0 flex-1 truncate " +
+                            (t.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800")
+                          }
+                        >
+                          {t.title}
+                        </span>
+                        <span className="shrink-0 text-[12px] text-zinc-400">
+                          {[t.assignee_name, whenLabel(t.due_date)].filter(Boolean).join(" · ")}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {homeTasks.length > 5 && (
+                    <div className="mt-1.5 px-1 text-center text-[12px] text-zinc-400">
+                      +{homeTasks.length - 5} görev daha
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          ) : (
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
@@ -738,6 +827,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             )}
             <div ref={endRef} />
           </section>
+          )}
 
           {attachment && (
             <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-2 text-[13px] text-zinc-500">
