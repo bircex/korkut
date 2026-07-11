@@ -43,6 +43,7 @@ class Office(Base):
     __tablename__ = "offices"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
+    slug: Mapped[str | None] = mapped_column(String(200), unique=True, index=True, default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
@@ -58,8 +59,18 @@ class StyleProfile(TenantMixin, Base):
     """
 
     __tablename__ = "style_profiles"
+    __table_args__ = (
+        Index(
+            "uq_style_office_default", "office_id", unique=True,
+            sqlite_where=text("user_id IS NULL"), postgresql_where=text("user_id IS NULL"),
+        ),
+        Index(
+            "uq_style_office_user", "office_id", "user_id", unique=True,
+            sqlite_where=text("user_id IS NOT NULL"), postgresql_where=text("user_id IS NOT NULL"),
+        ),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), unique=True, default=None)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     letterhead: Mapped[str] = mapped_column(Text, default="")  # antet (deterministik, üstte)
     signature: Mapped[str] = mapped_column(
         Text, default=""
@@ -129,9 +140,10 @@ class MemoryItem(TenantMixin, Base):
 
 class User(TenantMixin, Base):
     __tablename__ = "users"
+    __table_args__ = (UniqueConstraint("office_id", "username", name="uq_user_office_username"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
-    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(64), index=True)
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
     bar_registry_no: Mapped[str | None] = mapped_column(String(32), default=None)  # baro sicil no
     password_hash: Mapped[str] = mapped_column(String(255))
@@ -283,11 +295,20 @@ class TemplateOverride(TenantMixin, Base):
         # One personal override per (user, type).
         Index(
             "uq_tpl_override_user",
+            "office_id",
             "user_id",
             "type_id",
             unique=True,
             sqlite_where=text("user_id IS NOT NULL"),
             postgresql_where=text("user_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_tpl_override_office",
+            "office_id",
+            "type_id",
+            unique=True,
+            sqlite_where=text("user_id IS NULL"),
+            postgresql_where=text("user_id IS NULL"),
         ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -306,7 +327,7 @@ class OfficeChannel(TenantMixin, Base):
     """
 
     __tablename__ = "office_channels"
-    __table_args__ = (UniqueConstraint("kind", name="uq_office_channel"),)
+    __table_args__ = (UniqueConstraint("office_id", "kind", name="uq_office_channel"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     kind: Mapped[str] = mapped_column(String(32))  # "email", "telegram", …
     enabled: Mapped[bool] = mapped_column(default=False)
@@ -357,7 +378,9 @@ class IntegrationLink(TenantMixin, Base):
     """
 
     __tablename__ = "integration_links"
-    __table_args__ = (UniqueConstraint("channel", "external_id", name="uq_integration_external"),)
+    __table_args__ = (
+        UniqueConstraint("office_id", "channel", "external_id", name="uq_integration_external"),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     channel: Mapped[str] = mapped_column(String(32))  # "telegram" | "whatsapp" | "email"
@@ -375,7 +398,9 @@ class IntegrationThread(TenantMixin, Base):
     """
 
     __tablename__ = "integration_threads"
-    __table_args__ = (UniqueConstraint("channel", "thread_id", name="uq_integration_thread"),)
+    __table_args__ = (
+        UniqueConstraint("office_id", "channel", "thread_id", name="uq_integration_thread"),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     channel: Mapped[str] = mapped_column(String(32))
     thread_id: Mapped[str] = mapped_column(String(190))
