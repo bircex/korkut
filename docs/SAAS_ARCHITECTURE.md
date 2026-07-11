@@ -87,10 +87,19 @@ Request → resolve session (Google-issued) → office_id in signed session
   `sub`, `email`, `email_verified`, `hd` (Workspace domain).
 - **No passwords, TOTP, recovery codes, or lockout machinery** — delete `api/totp.py`, the password
   columns, and the brute-force code in `api/app.py`. 2FA is Google's responsibility.
-- Session: signed cookie (existing HMAC scheme) carrying `user_id + office_id + token_epoch`; server
-  revocation via `token_epoch`. `KORKUT_SECRET` stays (operator-global, stable, from secrets).
+- **Session = backend-minted JWT** (we mint our own after verifying Google; Google's ID token is
+  used only at login). Claims: `sub`=user_id, `office_id`, `role`, `epoch`, `iat`, `exp`. Signed with
+  a stable operator key (EdDSA/HS256 from secrets). The signed `office_id`/`role` are **tamper-proof**
+  — never re-read from a param/body/header.
+  - **Delivery**: JWT lives in an **HttpOnly, Secure, SameSite=Strict cookie** (not localStorage —
+    avoids XSS token theft). CSRF token on state-changing requests.
+  - **Revocation** (JWTs are stateless): short-lived **access** token (~15 min) + a revocable,
+    server-stored **refresh** token; every request also checks the token's `epoch` against the user's
+    current `token_epoch` (cached in Redis) so a logout / role-or-office change / compromise
+    invalidates live tokens immediately. `office_id` change ⇒ new token required.
 - A Google identity with no matching `users` row can only proceed by redeeming an invite token
-  (§6) — otherwise 403. This keeps the SaaS closed.
+  (§6) — otherwise 403. This keeps the SaaS closed. **Note:** the JWT makes the tenant claim
+  tamper-proof but does **not** by itself stop IDOR — object access is defended in depth per §15.
 
 ## 5. Model routing — operator-controlled
 
@@ -241,6 +250,25 @@ build phase must satisfy the items in its area; CI enforces the isolation + role
 - **Workers** (`dispatch_due`, reminders, integrations runner): iterate offices and use
   `tenant_session(office_id)` per office (a global query returns nothing under RLS — fail closed).
 
+### IDOR → zero (Phase 1/2)
+A signed JWT tenant claim is necessary but **not sufficient** — it stops office-switching, not
+guessing another object's id. IDOR is driven to zero by layered defense; no single miss leaks:
+1. **RLS is the backstop (cross-tenant)**: `GET /matters/{id}` for another office's id runs
+   `s.get(Matter, id)` under the tenant GUC → the row is invisible → `None` → **404**. Cross-tenant
+   IDOR is dead at the DB layer even if a handler forgets to check.
+2. **JWT-signed `office_id`** drives that GUC — tamper-proof, so the tenant can't be switched.
+3. **Non-enumerable identifiers**: every externally-referenced id is a random **UUIDv7 / ULID**, not
+   a sequential int — existence/counts can't be enumerated or guessed. (Internal PKs may stay bigint;
+   the *exposed* id is the UUID.)
+4. **Centralized authorization (intra-tenant)**: no raw `s.get(Model, id)` in handlers. A single
+   `load_owned(Model, id, *, policy)` dependency (a) fetches under tenant context (cross-tenant →
+   404), (b) applies role/ownership policy for user-private resources (RLS scopes by office, not by
+   user), (c) audit-logs the access. Every object endpoint goes through it.
+5. **Inputs never carry authority**: `office_id`/`user_id` are always taken from the JWT/context,
+   never from the request body/params; writes auto-stamp `office_id` (RLS `WITH CHECK` enforces).
+6. **CI IDOR suite**: as office A / user A, iterate other tenants' and other users' ids across every
+   object endpoint → must all be 404/403. Blocks deploy on any pass-through.
+
 ### Pre-tenant lookups (Phase 1/2)
 Three lookups must run *before* an office is known and therefore cross tenants — handled by tightly
 scoped **`SECURITY DEFINER`** functions that return only an `office_id` (never table rows):
@@ -251,9 +279,11 @@ The app has no direct cross-tenant `SELECT` grant.
 - **Google OIDC**: Authorization Code + **PKCE**, CSRF **`state`**, replay **`nonce`**, full
   ID-token validation (signature via **JWKS**, `iss`, `aud`, `exp`), and **`email_verified == true`**
   required. Reject otherwise.
-- **Signed session**: `office_id` is part of the **HMAC-signed** cookie payload
-  (`user_id.office_id.epoch.ts.sig`) — never trusted from an unsigned param/header. Cookies
-  `HttpOnly; Secure; SameSite=Strict`; CSRF token on state-changing POSTs; revoke via `token_epoch`.
+- **JWT session**: `office_id`, `role`, `sub`, `epoch`, `exp` are **signed claims** in a
+  backend-minted JWT — never re-read from an unsigned param/body/header. Short-lived access (~15 min)
+  + revocable server-stored refresh; `epoch` checked vs the user's `token_epoch` (Redis) each request
+  for instant revocation. Delivered in an **`HttpOnly; Secure; SameSite=Strict`** cookie (not
+  localStorage); CSRF token on state-changing requests.
 - **Subdomain ↔ session**: if a request's subdomain office ≠ the session's `office_id`, reject.
   Multi-office people get one user row per office; a workspace switch mints a new session.
 - **Invites & link tokens** (office invites, member invites, telegram link tokens): ≥128-bit
