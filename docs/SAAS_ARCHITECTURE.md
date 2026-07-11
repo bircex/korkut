@@ -129,14 +129,35 @@ Request → resolve session (Google-issued) → office_id in signed session
 
 ## 8. Agent runtime — tenant-safe for 200 concurrent
 
+**Tenant safety (required now):**
 - Kill the process-wide singletons (`brain/agent.py::_router`, redactor/registry caches). Router and
   redactor are built **per request** from tenant context; the tool registry's *discovery* is cached
   (immutable) but *availability/keys* come from operator config, not env-at-import.
-- `agent.answer(...)`, `resilience.guarded_answer(...)`, `integrations/gateway.handle(...)` all take
-  an explicit `office_id`; nothing reads "the office" implicitly.
-- Concurrency: async endpoints, a sized Postgres pool (e.g. PgBouncer in front for 200 tenants),
-  per-office in-flight/rate caps in **Redis** (shared across app instances), and a bounded worker
-  pool so one noisy tenant can't starve others.
+- `agent.answer(office_id, ...)`, `resilience.guarded_answer(...)`, `integrations/gateway.handle(...)`
+  all take an explicit `office_id`; nothing reads "the office" implicitly.
+
+**Deployment boundary — same repo, process-level split:**
+- The agent lives in **`korkut-backend`** (shared domain/store/tenant-context — one source of truth
+  for `office_id`/RLS discipline). It is *not* a separate repo and *not* a second language.
+- It sits behind a clean module boundary (`answer(office_id, …)`) so it can be promoted to its own
+  **process/entrypoint** and scaled independently (like `dispatcher`/`integrations` already are:
+  one image, different `command:`), without a repo split.
+
+**Concurrency — no queue yet (start simple):**
+- Chat runs are **synchronous + streamed** in-request (SSE/websocket); the agent runs **in-process**
+  (async). No message broker/queue now — it would add producer/consumer, serialization, result
+  delivery, and retry machinery we don't need pre-launch.
+- Noisy-neighbor is handled by **admission control, not a queue**: a global bounded concurrency
+  semaphore + **per-office concurrency cap and LLM token budget in Redis**; breach → `429`/backpressure.
+- Postgres pool sized for the fleet (PgBouncer transaction pooling in front, compatible with the
+  `SET LOCAL` tenant GUC).
+- The naturally-async workers (`dispatcher` scheduled sends, `integrations` inbound) stay as DB
+  **poll-loops** — they don't need a broker either.
+
+**Add a queue + separate agent-worker later**, only when a concrete trigger appears: (a) genuinely
+async/background agent work (jobs beyond an HTTP timeout, batch, integrations at scale), or
+(b) measured load where admission control isn't enough and the agent must scale independently of the
+API. The clean boundary makes this a cheap, deferred step (Redis/NATS + a `korkut.agent.worker`).
 
 ## 9. Secrets & encryption (max data security)
 
