@@ -26,9 +26,11 @@ layers** so a forgotten `WHERE` can never leak data:
 
 1. **Postgres Row-Level Security (RLS)** — every tenant table has `ENABLE` **and
    `FORCE ROW LEVEL SECURITY`** plus a policy with **both `USING` and `WITH CHECK`** on
-   `office_id = current_setting('app.current_office', true)::bigint`. The **two-argument**
-   `current_setting(..., true)` returns NULL (not an error) when unset, so a missing tenant context
-   matches **zero rows — fail closed**. `WITH CHECK` blocks writing another tenant's `office_id`. The
+   `office_id = NULLIF(current_setting('app.current_office', true), '')::bigint`. The `NULLIF(…, '')`
+   is required (proven on real Postgres): a custom GUC reverts to the **empty string** after a
+   `SET LOCAL` ends, and `''::bigint` *raises* — `NULLIF` collapses both unset(NULL) and reverted('')
+   to NULL, so a missing tenant context matches **zero rows — fail closed — and never errors**.
+   `WITH CHECK` blocks writing another tenant's `office_id`. The
    app connects as a dedicated **non-owner, non-superuser role without `BYPASSRLS`** (a table owner
    bypasses RLS unless it is `FORCE`d — we do both). Per request, **inside the transaction**, we
    `SET LOCAL app.current_office = :oid` (transaction-scoped → auto-resets on commit/rollback, safe
@@ -231,8 +233,10 @@ Concrete requirements distilled from a three-lens adversarial review (isolation 
 build phase must satisfy the items in its area; CI enforces the isolation + role checks.
 
 ### Data isolation (Phase 1)
-- **Fail-closed RLS**: `current_setting('app.current_office', true)` (two-arg) + `USING` **and**
-  `WITH CHECK`; `ENABLE` + `FORCE ROW LEVEL SECURITY` on every tenant table.
+- **Fail-closed RLS**: `NULLIF(current_setting('app.current_office', true), '')::bigint` (the
+  `NULLIF(…,'')` matters — see §1) + `USING` **and** `WITH CHECK`; `ENABLE` + `FORCE ROW LEVEL
+  SECURITY` on every tenant table. Codified in `core/tenancy.py::rls_policy_ddl`, proven by
+  `tests/test_tenancy_rls.py` against real Postgres.
 - **DB roles**: app connects as a **non-owner, non-superuser role, `NOBYPASSRLS`**, granted only
   DML. A CI/post-deploy smoke test asserts `current_user` is that role and
   `rolbypassrls = false` — deploy fails otherwise.
