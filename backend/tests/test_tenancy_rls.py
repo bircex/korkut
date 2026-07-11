@@ -37,8 +37,8 @@ def _app_url(super_url: str) -> str:
 def _setup(super_url: str) -> None:
     ddl = rls_policy_ddl("items")
     with psycopg.connect(super_url, autocommit=True) as cn:
-        cn.execute("DROP TABLE IF EXISTS items")
-        cn.execute("DROP TABLE IF EXISTS offices")
+        cn.execute("DROP TABLE IF EXISTS items CASCADE")
+        cn.execute("DROP TABLE IF EXISTS offices CASCADE")
         cn.execute(
             f"DO $$ BEGIN "
             f"IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='{APP_ROLE}') THEN "

@@ -8,6 +8,14 @@ See docs/SAAS_ARCHITECTURE.md §1 and §15 for the design.
 from __future__ import annotations
 
 import contextvars
+import uuid
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Uuid, event, select
+from sqlalchemy.orm import Mapped, mapped_column, with_loader_criteria
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
 
 # Postgres session variable that RLS policies read. Set per transaction via ``SET LOCAL`` so it is
 # transaction-scoped and cannot leak across transactions on a pooled connection.
@@ -68,3 +76,71 @@ def set_local_office_sql(office_id: int) -> str:
     params), which also makes it injection-safe.
     """
     return f"SET LOCAL {TENANT_GUC} = '{int(office_id)}'"
+
+
+# ---------------------------------------------------------------------------
+# SQLAlchemy integration
+# ---------------------------------------------------------------------------
+
+
+class TenantMixin:
+    """Mixin for every tenant-owned model: an ``office_id`` FK (auto-stamped from the request
+    context) and a non-enumerable external ``uid`` (UUID) — internal PKs stay ``bigint``, but the
+    id exposed in URLs/APIs is the random ``uid``, which kills id-guessing (IDOR). See §15."""
+
+    office_id: Mapped[int] = mapped_column(
+        ForeignKey("offices.id", ondelete="CASCADE"),
+        index=True,
+        default=require_current_office,
+    )
+    uid: Mapped[uuid.UUID] = mapped_column(Uuid, default=uuid.uuid4, unique=True, index=True)
+
+
+def install_tenant_guc(session_factory: sessionmaker[Session]) -> None:
+    """On Postgres, set the RLS GUC at the start of every transaction from the request context, so
+    every query on the session is scoped by RLS. No-op on SQLite (no RLS)."""
+
+    @event.listens_for(session_factory, "after_begin")
+    def _after_begin(session, transaction, connection):
+        if connection.dialect.name == "postgresql":
+            oid = get_current_office()
+            if oid is not None:
+                connection.exec_driver_sql(set_local_office_sql(oid))
+
+
+def install_tenant_filter(session_factory: sessionmaker[Session]) -> None:
+    """App-layer belt-and-suspenders filter: scope every SELECT of a ``TenantMixin`` entity to the
+    current office. Covers the SQLite dev/test path (which has no RLS) and fails closed (no context
+    ⇒ matches nothing). Bypass for a deliberate cross-tenant query via
+    ``execution_options(skip_tenant_filter=True)`` — used only by cross-tenant resolvers."""
+
+    @event.listens_for(session_factory, "do_orm_execute")
+    def _scope(state):
+        if state.is_select and not state.execution_options.get("skip_tenant_filter"):
+            # Read the context OUTSIDE the lambda — SQLAlchemy's lambda-SQL system extracts bound
+            # values without invoking closures, so a call inside the lambda is rejected. `oid` is a
+            # fresh closure value per execution, so the filter stays dynamic (and fail-closed: a
+            # None oid yields `office_id IS NULL`, which matches nothing on a NOT NULL column).
+            oid = get_current_office()
+            state.statement = state.statement.options(
+                with_loader_criteria(
+                    TenantMixin,
+                    lambda cls: cls.office_id == oid,
+                    include_aliases=True,
+                )
+            )
+
+
+class NotOwned(LookupError):
+    """Raised by ``load_owned`` when the object is absent or belongs to another tenant. The API
+    layer maps this to 404 (never 403 — we don't confirm existence across tenants)."""
+
+
+def load_owned[M: TenantMixin](session: Session, model: type[M], uid: uuid.UUID | str) -> M:
+    """Fetch a tenant object by its external ``uid`` under the current tenant scope, or raise
+    ``NotOwned``. The single funnel for object access — no raw ``session.get(Model, id)`` in
+    handlers — so RLS + the app filter guarantee cross-tenant ids resolve to 404."""
+    obj = session.scalars(select(model).where(model.uid == uid)).first()
+    if obj is None:
+        raise NotOwned(f"{model.__name__} {uid} not in current tenant")
+    return obj
