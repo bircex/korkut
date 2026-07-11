@@ -29,8 +29,14 @@ permissions:
 
 jobs:
   build-push:
-    # Only deploy a green build (workflow_dispatch has no workflow_run and passes this guard).
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Deploy ONLY a green CI run that was a direct push to main. This blocks a fork PR's CI run
+    # (workflow_run fires for PR CI too) from ever triggering a production deploy of unreviewed code.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.event == 'push' &&
+           github.event.workflow_run.head_branch == 'main' &&
+           github.event.workflow_run.head_repository.full_name == github.repository) }}
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.meta.outputs.image }}

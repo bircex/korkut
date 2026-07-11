@@ -10,7 +10,7 @@ x-korkut: &korkut
   env_file: ../.env
   environment:
     KORKUT_DB_URL: ${KORKUT_DB_URL:-postgresql+psycopg://korkut:${POSTGRES_PASSWORD:-korkut}@db:5432/korkut}
-    KORKUT_REDIS_URL: ${KORKUT_REDIS_URL:-redis://redis:6379/0}
+    KORKUT_REDIS_URL: ${KORKUT_REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
     KORKUT_HOST: "0.0.0.0"
     KORKUT_PORT: "8080"
     KORKUT_SECURE_COOKIES: "1"
@@ -40,11 +40,15 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+    # $$ escapes compose interpolation so the password is read from the container env at runtime
+    # (never rendered into the compose command, so it doesn't leak via `docker inspect`).
+    command: sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes --save "60 1"'
     volumes:
       - korkut-redis:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,6 +57,14 @@ services:
     <<: *korkut
     ports:
       - "127.0.0.1:8080:8080"
+    healthcheck:
+      # TODO(phase1): swap to a dedicated /api/health that also checks DB + RLS role. For now `/`
+      # (the SPA index) is an unauthenticated 200 liveness probe.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/').status==200 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   dispatcher:
     <<: *korkut

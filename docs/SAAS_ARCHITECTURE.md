@@ -24,11 +24,15 @@ Supersedes the "one office per install" model in [ARCHITECTURE.md](ARCHITECTURE.
 One Postgres database. Every tenant-owned row carries `office_id`. Isolation is enforced at **two
 layers** so a forgotten `WHERE` can never leak data:
 
-1. **Postgres Row-Level Security (RLS)** — every tenant table has a policy
-   `USING (office_id = current_setting('app.current_office')::bigint)`. The app connects as a
-   **non-superuser** role (RLS is not bypassed). Per request we run
-   `SET LOCAL app.current_office = :oid` inside the transaction; every query is then automatically
-   scoped by Postgres itself.
+1. **Postgres Row-Level Security (RLS)** — every tenant table has `ENABLE` **and
+   `FORCE ROW LEVEL SECURITY`** plus a policy with **both `USING` and `WITH CHECK`** on
+   `office_id = current_setting('app.current_office', true)::bigint`. The **two-argument**
+   `current_setting(..., true)` returns NULL (not an error) when unset, so a missing tenant context
+   matches **zero rows — fail closed**. `WITH CHECK` blocks writing another tenant's `office_id`. The
+   app connects as a dedicated **non-owner, non-superuser role without `BYPASSRLS`** (a table owner
+   bypasses RLS unless it is `FORCE`d — we do both). Per request, **inside the transaction**, we
+   `SET LOCAL app.current_office = :oid` (transaction-scoped → auto-resets on commit/rollback, safe
+   with PgBouncer *transaction* pooling) and verify it was set. Full rules in §15.
 2. **Application scoping** — a request-scoped tenant context + SQLAlchemy `with_loader_criteria`
    global filter (also covers the SQLite dev path, which has no RLS).
 
@@ -190,3 +194,83 @@ Cloudflare. Per-tenant prefixes + signed URLs; never a shared bucket path.
 4. **Telegram single-bot** — token linking + per-office routing; then WhatsApp/email.
 5. **Docs/UI/Website** — R2 documents, UI login+workspace, website SaaS reframe, admin console.
 6. **Hardening** — audit, backups, export/erasure, isolation-test suite, load test at 200 tenants.
+
+## 15. Security hardening (from adversarial review)
+
+Concrete requirements distilled from a three-lens adversarial review (isolation / auth / ops). Each
+build phase must satisfy the items in its area; CI enforces the isolation + role checks.
+
+### Data isolation (Phase 1)
+- **Fail-closed RLS**: `current_setting('app.current_office', true)` (two-arg) + `USING` **and**
+  `WITH CHECK`; `ENABLE` + `FORCE ROW LEVEL SECURITY` on every tenant table.
+- **DB roles**: app connects as a **non-owner, non-superuser role, `NOBYPASSRLS`**, granted only
+  DML. A CI/post-deploy smoke test asserts `current_user` is that role and
+  `rolbypassrls = false` — deploy fails otherwise.
+- **Connection pooling**: `SET LOCAL` only ever runs inside an open transaction; `tenant_session()`
+  sets it and verifies (`SHOW`) before use; reject `office_id <= 0`. Compatible with PgBouncer
+  transaction mode.
+- **Composite foreign keys**: cross-row references use `(office_id, id)` composite FKs (e.g. a
+  matter's `created_by`/`client_id`), so Postgres refuses a reference into another office.
+- **`ON DELETE CASCADE`** on every `office_id` FK → office erasure removes all child rows.
+- **Shared reference tables** (e.g. `template_defaults`): `SELECT` policy `USING (true)`, writes
+  denied to the app role (operator-only). No `office_id`.
+- **SQLite/dev + tests**: app-layer `with_loader_criteria` global filter as belt-and-suspenders; the
+  **cross-tenant isolation test-suite runs against Postgres** (SQLite has no RLS) — office A must get
+  0 rows for office B, on read *and* write, before any deploy.
+- **Workers** (`dispatch_due`, reminders, integrations runner): iterate offices and use
+  `tenant_session(office_id)` per office (a global query returns nothing under RLS — fail closed).
+
+### Pre-tenant lookups (Phase 1/2)
+Three lookups must run *before* an office is known and therefore cross tenants — handled by tightly
+scoped **`SECURITY DEFINER`** functions that return only an `office_id` (never table rows):
+`resolve_office_by_google(sub)`, invite-token redemption, `resolve_office_by_telegram(external_id)`.
+The app has no direct cross-tenant `SELECT` grant.
+
+### Auth & onboarding (Phase 2)
+- **Google OIDC**: Authorization Code + **PKCE**, CSRF **`state`**, replay **`nonce`**, full
+  ID-token validation (signature via **JWKS**, `iss`, `aud`, `exp`), and **`email_verified == true`**
+  required. Reject otherwise.
+- **Signed session**: `office_id` is part of the **HMAC-signed** cookie payload
+  (`user_id.office_id.epoch.ts.sig`) — never trusted from an unsigned param/header. Cookies
+  `HttpOnly; Secure; SameSite=Strict`; CSRF token on state-changing POSTs; revoke via `token_epoch`.
+- **Subdomain ↔ session**: if a request's subdomain office ≠ the session's `office_id`, reject.
+  Multi-office people get one user row per office; a workspace switch mints a new session.
+- **Invites & link tokens** (office invites, member invites, telegram link tokens): ≥128-bit
+  (`secrets.token_urlsafe(32)`), stored **hashed** (SHA-256), **single-use** (`redeemed_at`/`used_at`
+  checked), **expiring**, **redemption rate-limited** (Redis, per IP). Office/member invites bound to
+  `email` (and optional Workspace `hd`); telegram tokens bound to `(office_id, user_id)` and resolved
+  by hash → the token's **stored** office (never a caller-supplied one).
+- **Owner/operator scope**: office-invite issuance is **operator-only** (admin CLI/console); member
+  invites require `role == owner`; enforced server-side + audited.
+- **Account recovery**: a Google-account-loss path — operator-assisted re-bind of `google_sub` for a
+  verified owner (backup contact on the office). Documented in ToS.
+
+### Secrets, encryption, storage (Phase 0/5)
+- **No secrets in the image**: `config/` is **policy only** (routing/redaction/tool tiers) — never
+  keys; `.dockerignore` keeps `.env`/`data` out. CI greps built image config for secret patterns.
+- **Master key** for envelope encryption lives in a **secrets manager / KMS, not in the DB or
+  `.env`**; per-office data keys are derived and wrap ciphertext stored in the DB. Encrypted fields:
+  integration/channel secrets, any stored tokens, PII such as TCKN; documents in R2 with **SSE**.
+  Annual/on-demand key rotation.
+- **Rotation policy** documented for `KORKUT_SECRET`, DB password, provider keys, `GHCR_PAT`,
+  `VPS_SSH_KEY` (quarterly / on personnel change / on leak).
+- **R2**: private bucket (public access blocked), per-office key prefix `office/{id}/...`,
+  short-lived (≤1h) scoped **signed URLs**, SSE at rest.
+- **Postgres/Redis**: encrypted volume (LUKS/provider), Redis **`requirepass` + AOF**, both bound to
+  the private compose network only. **Encrypted, off-box, tested** nightly `pg_dump` backups.
+
+### Deploy pipeline (Phase 0)
+- Deploy triggers **only** on a *successful CI run that was a push to `main` of this repo* — fork-PR
+  CI runs cannot trigger a deploy (guarded in `deploy.yml`). Image is built from that exact SHA.
+- `GHCR_PAT` scoped to `read:packages`; `VPS_SSH_KEY` least-privilege (ideally short-lived SSH certs
+  + runner-IP allowlist); secrets never baked into layers.
+
+### Availability & compliance (Phase 3/6)
+- **Per-office** Redis rate/concurrency caps + LLM **token budget** (noisy-neighbor isolation), on
+  top of per-IP limits. `429` on breach.
+- **Audit**: per-office append-only `audit_events` (login, export, delete, doc access, invite,
+  key access) under RLS; retention ≥2y; isolation-tested.
+- **KVKK**: TR/EU data residency; per-office **export** and **erasure** endpoints (cascade DB + R2 +
+  scheduled backup purge, audit retained per law); DPA + aydınlatma metni; operator = *veri işleyen*.
+- **Health/hardening**: real `/api/health` (DB + RLS-role check) for the container healthcheck;
+  reverse proxy sets HSTS + security headers.
