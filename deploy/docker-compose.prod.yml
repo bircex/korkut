@@ -5,17 +5,20 @@
 # Put Korkut behind a TLS-terminating reverse proxy (nginx/Caddy/Traefik); it listens on
 # 127.0.0.1:8080 here, with secure cookies and X-Forwarded-For trust enabled. See docs/DEPLOYMENT.md.
 x-korkut: &korkut
-  image: ${KORKUT_IMAGE:-ghcr.io/recepkizilarslan/korkut:latest}
+  image: ${KORKUT_IMAGE:-ghcr.io/recepkizilarslan/korkut-backend:latest}
   restart: unless-stopped
   env_file: ../.env
   environment:
     KORKUT_DB_URL: ${KORKUT_DB_URL:-postgresql+psycopg://korkut:${POSTGRES_PASSWORD:-korkut}@db:5432/korkut}
+    KORKUT_REDIS_URL: ${KORKUT_REDIS_URL:-redis://redis:6379/0}
     KORKUT_HOST: "0.0.0.0"
     KORKUT_PORT: "8080"
     KORKUT_SECURE_COOKIES: "1"
     KORKUT_TRUST_PROXY: "1"
   depends_on:
     db:
+      condition: service_healthy
+    redis:
       condition: service_healthy
 
 services:
@@ -34,6 +37,18 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    volumes:
+      - korkut-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   korkut:
     <<: *korkut
     ports:
@@ -43,9 +58,12 @@ services:
     <<: *korkut
     command: sh -c "while true; do python -m korkut.api.dispatcher; sleep 60; done"
 
+  # Single shared Telegram/WhatsApp/e-mail poller for ALL offices. It resolves each inbound
+  # message to its office via integration_links before answering (see docs/SAAS_ARCHITECTURE.md §7).
   integrations:
     <<: *korkut
     command: sh -c "while true; do python -m korkut.integrations.runner; sleep 5; done"
 
 volumes:
   korkut-db:
+  korkut-redis:

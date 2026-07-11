@@ -90,14 +90,14 @@ jobs:
           file: deploy/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}
-            ghcr.io/${{ github.repository_owner }}/korkut:latest
+            ghcr.io/${{ github.repository_owner }}/korkut-backend:v${{ steps.version.outputs.value }}
+            ghcr.io/${{ github.repository_owner }}/korkut-backend:latest
 
       # 6. Scan the published image (report-only; does not block the release).
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/korkut-backend:v${{ steps.version.outputs.value }}
           format: table
           ignore-unfixed: true
           exit-code: "0"
@@ -110,4 +110,4 @@ jobs:
           name: v${{ steps.version.outputs.value }}
           generate_release_notes: true
           body: |
-            Container image: `ghcr.io/${{ github.repository_owner }}/korkut:v${{ steps.version.outputs.value }}`
+            Container image: `ghcr.io/${{ github.repository_owner }}/korkut-backend:v${{ steps.version.outputs.value }}`
