@@ -34,6 +34,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from korkut.core.db import Base
+from korkut.core.tenancy import TenantMixin
 
 
 class Office(Base):
@@ -45,7 +46,7 @@ class Office(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
-class StyleProfile(Base):
+class StyleProfile(TenantMixin, Base):
     """A drafting-style profile for the office OR a single lawyer.
 
     The office profile is the row with `user_id IS NULL`; a personal profile sets `user_id`.
@@ -68,7 +69,7 @@ class StyleProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class OfficeModel(Base):
+class OfficeModel(TenantMixin, Base):
     """The office's custom LLM, defined by the owner in Özelleştir (a singleton row).
 
     When `enabled`, every chat/draft routes to this model instead of the built-in default.
@@ -87,7 +88,7 @@ class OfficeModel(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class Persona(Base):
+class Persona(TenantMixin, Base):
     """The office's configurable assistant persona (the Kişilik UI). A singleton row.
 
     Augments — never replaces — the locked core persona in `brain/persona.py`. `tone` sets the
@@ -104,7 +105,7 @@ class Persona(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class MemoryItem(Base):
+class MemoryItem(TenantMixin, Base):
     """A durable note the office wants Korkut to keep in mind (the Hafıza UI).
 
     Office-wide, durable knowledge — house preferences, standing facts, reminders — injected into
@@ -126,7 +127,7 @@ class MemoryItem(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
-class User(Base):
+class User(TenantMixin, Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
@@ -161,7 +162,7 @@ class User(Base):
         return self.totp_secret is not None and self.totp_confirmed_at is not None
 
 
-class RecoveryCode(Base):
+class RecoveryCode(TenantMixin, Base):
     __tablename__ = "recovery_codes"
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -171,7 +172,7 @@ class RecoveryCode(Base):
     user: Mapped[User] = relationship(back_populates="recovery_codes")
 
 
-class Conversation(Base):
+class Conversation(TenantMixin, Base):
     """A chat session, shared across the whole office (any user can open any session)."""
 
     __tablename__ = "conversations"
@@ -191,7 +192,7 @@ class Conversation(Base):
     )
 
 
-class Message(Base):
+class Message(TenantMixin, Base):
     __tablename__ = "messages"
     id: Mapped[int] = mapped_column(primary_key=True)
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
@@ -203,7 +204,7 @@ class Message(Base):
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
-class Document(Base):
+class Document(TenantMixin, Base):
     """A legal document (petition draft) attached to a session — the Canvas content.
 
     One document per session in v1. `content_md` is the current accepted markdown (source of
@@ -226,7 +227,7 @@ class Document(Base):
     )
 
 
-class DocumentVersion(Base):
+class DocumentVersion(TenantMixin, Base):
     """An accepted snapshot of a document (history / undo / audit)."""
 
     __tablename__ = "document_versions"
@@ -240,7 +241,7 @@ class DocumentVersion(Base):
     document: Mapped[Document] = relationship(back_populates="versions")
 
 
-class ProposedEdit(Base):
+class ProposedEdit(TenantMixin, Base):
     """Korkut's proposed new content, pending the lawyer's accept/revert (one pending at a time)."""
 
     __tablename__ = "proposed_edits"
@@ -270,7 +271,7 @@ class TemplateDefault(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class TemplateOverride(Base):
+class TemplateOverride(TenantMixin, Base):
     """An office- or lawyer-customized theme for one type. Never touched by the file sync.
 
     The office override is the row with `user_id IS NULL` for a `type_id`; a personal override
@@ -296,7 +297,7 @@ class TemplateOverride(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class OfficeChannel(Base):
+class OfficeChannel(TenantMixin, Base):
     """The office's credentials for one outbound channel (email now; Telegram/SMTP/… later).
 
     Generic by design: `config` is a JSON blob whose keys are channel-specific (e.g. email:
@@ -313,7 +314,7 @@ class OfficeChannel(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class OutboundMessage(Base):
+class OutboundMessage(TenantMixin, Base):
     """A message Korkut proposed to send — the channel-agnostic outbox + schedule queue.
 
     Lifecycle: ``draft`` (proposed, awaiting the lawyer's confirm) → ``queued`` (confirmed,
@@ -341,7 +342,7 @@ class OutboundMessage(Base):
     sent_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
-class IntegrationLink(Base):
+class IntegrationLink(TenantMixin, Base):
     """Binds a messaging-channel sender to a korkut `User`, so two-way integrations know which
     lawyer is talking (`korkut.integrations`).
 
@@ -367,7 +368,7 @@ class IntegrationLink(Base):
     linked_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
-class IntegrationThread(Base):
+class IntegrationThread(TenantMixin, Base):
     """Maps one channel conversation (a Telegram/WhatsApp chat, or an e-mail correspondent) to a
     korkut `Conversation`, so an incoming chat keeps its history and shows up in the web UI like
     any other session. Keyed by (channel, thread_id) — the channel's own chat identifier.
@@ -388,7 +389,7 @@ class IntegrationThread(Base):
 # /api/matters.
 
 
-class Client(Base):
+class Client(TenantMixin, Base):
     """A client (müvekkil) of the office."""
 
     __tablename__ = "clients"
@@ -403,7 +404,7 @@ class Client(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
-class Matter(Base):
+class Matter(TenantMixin, Base):
     """A legal matter/file (dava/dosya). The office's work attaches here.
 
     `client_id` optionally links the müvekkil; `status` is open|closed (free text for now).
@@ -433,7 +434,7 @@ class Matter(Base):
     )
 
 
-class CalendarEvent(Base):
+class CalendarEvent(TenantMixin, Base):
     """A single entry on the office calendar (takvim) — the unified event primitive.
 
     One table for every kind of dated thing a law office tracks, distinguished by `category` and a
@@ -484,7 +485,7 @@ class CalendarEvent(Base):
     assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
 
 
-class Invoice(Base):
+class Invoice(TenantMixin, Base):
     """A client invoice / serbest meslek makbuzu — draft-first, like the rest of Korkut.
 
     `amount` is the net (KDV hariç) figure and `vat_rate` the KDV percent; the gross is derived.
@@ -508,7 +509,7 @@ class Invoice(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
-class Expense(Base):
+class Expense(TenantMixin, Base):
     """A case expense or advance (masraf/avans) — harç, posta, bilirkişi, yol, etc.
 
     Optionally filed under a matter and/or client, so it can roll up into a client's account.
@@ -529,7 +530,7 @@ class Expense(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
-class Task(Base):
+class Task(TenantMixin, Base):
     """A to-do assigned to an office member (görev). Optionally tied to a matter and due-dated.
 
     `status` is open|done. A due-dated open task can surface in the office agenda alongside
@@ -554,7 +555,7 @@ class Task(Base):
     assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
 
 
-class DocumentRecord(Base):
+class DocumentRecord(TenantMixin, Base):
     """A document-register (evrak) entry — incoming/outgoing correspondence and internal notes.
 
     A metadata log of the paper/e-documents on a matter (gelen/giden/iç), not file storage: title,

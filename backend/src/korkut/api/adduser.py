@@ -24,6 +24,7 @@ from sqlalchemy import delete, select
 from korkut.api import auth
 from korkut.api.models import Office, RecoveryCode, User
 from korkut.api.store import session
+from korkut.core.tenancy import set_current_office
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -92,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
                 s.flush()
             else:
                 office_name = office.name
+            # Scope inserts to this office so the new user (and any tenant rows) are stamped.
+            set_current_office(office.id)
             # First user overall owns the office; later users join as "member".
             has_members = s.scalar(select(User)) is not None
             s.add(

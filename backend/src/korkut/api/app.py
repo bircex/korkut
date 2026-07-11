@@ -19,6 +19,7 @@ HttpOnly + SameSite=Strict (+ Secure behind TLS) cookies. See SECURITY.md.
 
 from __future__ import annotations
 
+import contextvars
 import difflib
 import json
 import logging
@@ -1913,7 +1914,10 @@ def session_chat_stream(
         finally:
             events.put(("end", None))
 
-    threading.Thread(target=_worker, daemon=True).start()
+    # Run the worker in a copy of the request context so the tenant (office) scoping propagates
+    # into the thread — worker threads do not inherit contextvars automatically.
+    ctx = contextvars.copy_context()
+    threading.Thread(target=lambda: ctx.run(_worker), daemon=True).start()
 
     def _gen():
         while True:
