@@ -50,14 +50,10 @@ def engine():
         if url.startswith("sqlite") and "memory" not in url:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
-        if "memory" in url:
-            # In-memory test databases are ephemeral: build the schema straight from the models.
-            db.init_db(_engine)
-        else:
-            # Real (file SQLite / Postgres) databases are migrated so schema changes never drift.
-            from korkut.core.migrate import run_migrations
-
-            run_migrations(_engine)
+        # From-scratch schema for the multi-tenant rebuild: the models are the single source of
+        # truth and `create_all` builds them. No migrations yet — a single Alembic baseline will be
+        # regenerated once the multi-tenant schema settles (see docs/SAAS_ARCHITECTURE.md).
+        db.init_db(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         sync_template_defaults(
             _engine
