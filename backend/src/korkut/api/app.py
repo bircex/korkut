@@ -30,8 +30,10 @@ import threading
 import time
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from http.cookies import SimpleCookie
 from pathlib import Path
 
+import anyio
 from fastapi import Cookie, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -75,10 +77,12 @@ from korkut.api.store import (
     get_office,
     get_persona,
     office_model_cfg,
+    resolve_office_for_user,
     send_outbound_message,
     session,
 )
 from korkut.brain import activity, resilience
+from korkut.core.tenancy import reset_current_office, set_current_office
 from korkut.core.tool_registry import ToolSpec
 
 logger = logging.getLogger("korkut.api")
@@ -112,6 +116,60 @@ _TICKET_COOKIE = "korkut_ticket"
 _DUMMY_HASH = auth.hash_secret("x" * 24)
 
 app = FastAPI(title="Korkut", docs_url=None, redoc_url=None)
+
+
+def _office_for_request(cookie_header: str) -> int | None:
+    """Resolve the tenant for a request from its session cookie, before any handler runs.
+
+    Only the signed session cookie establishes ambient context. The pre-session auth endpoints
+    (login / register / 2FA-ticket) carry no session yet, so they run with no context and manage
+    their own scoping explicitly. Returns None when there is no valid session (fail-closed).
+    """
+    if not cookie_header:
+        return None
+    jar: SimpleCookie = SimpleCookie()
+    try:
+        jar.load(cookie_header)
+    except Exception:
+        return None
+    morsel = jar.get(auth.COOKIE_NAME)
+    if morsel is None:
+        return None
+    parsed = auth.read_session_token(morsel.value, now=int(time.time()))
+    if parsed is None:
+        return None
+    uid, _epoch = parsed
+    with session() as s:
+        return resolve_office_for_user(s, uid)
+
+
+class TenantContextMiddleware:
+    """Pin the request's tenant context from its authenticated session, for the whole request.
+
+    Every DB session opened downstream (handlers, and the streaming worker via ``copy_context``)
+    inherits this office, so RLS + the app-layer filter scope every read/write to it. This is the
+    single seam that turns the signed session into the ambient tenant; without it the app is
+    fail-closed (tenant tables return nothing). The office is resolved off the event loop.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        headers = dict(scope.get("headers") or [])
+        cookie_header = headers.get(b"cookie", b"").decode("latin-1")
+        office_id = await anyio.to_thread.run_sync(_office_for_request, cookie_header)
+        tok = set_current_office(office_id)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            reset_current_office(tok)
+
+
+app.add_middleware(TenantContextMiddleware)
 
 _ip_hits: dict[str, list[float]] = defaultdict(list)
 
@@ -546,9 +604,14 @@ def _ticket_user(s: Session, ticket: str | None, purpose: str) -> User:
     uid = auth.read_ticket(ticket, purpose, now=int(time.time()))
     if uid is None:
         raise HTTPException(status_code=401, detail="Doğrulama süresi doldu, baştan giriş yapın")
-    user = s.get(User, uid)
+    # A ticket is pre-session (2FA not finished), so no tenant context is set yet: look the user up
+    # with the filter bypassed, then pin the context to their office so this request's writes scope.
+    user = s.scalars(
+        select(User).where(User.id == uid).execution_options(skip_tenant_filter=True)
+    ).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Geçersiz oturum")
+    set_current_office(user.office_id)
     return user
 
 
@@ -581,11 +644,16 @@ def register(body: RegisterBody, request: Request, response: Response):
                 status_code=409,
                 detail="Ofis zaten kurulmuş; üye eklemek için sahibinize başvurun.",
             )
-        if s.scalar(select(User).where(User.username == username)):
+        if s.scalar(
+            select(User).where(User.username == username).execution_options(skip_tenant_filter=True)
+        ):
             raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
         office = Office(name=office_name[:200])
         s.add(office)
         s.flush()
+        # The office is the tenant root; pin the context to it so the owner (and every later write
+        # in this request) is stamped and scoped to the new office.
+        set_current_office(office.id)
         user = User(
             role="owner",
             username=username,
@@ -906,7 +974,13 @@ def login(body: LoginBody, request: Request, response: Response):
 
     username = body.username.strip().lower()
     with session() as s:
-        user = s.scalar(select(User).where(User.username == username))
+        # Pre-session: no tenant context yet, so find the user with the filter bypassed, then pin
+        # the context to their office so failure tracking / session issue below scope to it.
+        user = s.scalar(
+            select(User).where(User.username == username).execution_options(skip_tenant_filter=True)
+        )
+        if user is not None:
+            set_current_office(user.office_id)
 
         if user and _is_locked(user):
             _audit(s, "login_locked", username=username, ip=ip)
