@@ -76,3 +76,21 @@ def test_persistent_transient_error_gives_up_with_friendly_detail():
         resilience.guarded_answer("soru")
     assert ei.value.detail == resilience.MODEL_DOWN_DETAIL
     assert isinstance(ei.value.cause, _Timeout)
+
+
+def test_no_retry_after_side_effects():
+    calls = {"n": 0}
+
+    def _fail(*a, **k):
+        calls["n"] += 1
+        exc = _Timeout("blip after a write")  # transient by name, but flagged non-retriable
+        exc._korkut_no_retry = True
+        raise exc
+
+    with (
+        patch("korkut.brain.agent.answer", side_effect=_fail),
+        patch("korkut.brain.resilience.time.sleep"),
+        pytest.raises(resilience.ModelError),
+    ):
+        resilience.guarded_answer("soru")
+    assert calls["n"] == 1  # flagged non-retriable -> called once, no retry

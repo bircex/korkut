@@ -11,10 +11,10 @@ Classification is by exception *name* + *text*, not by importing each provider S
 types — the providers already vary (OpenAI-compatible for Groq/local, Anthropic for Claude) and a
 string match keeps this provider-agnostic (the same convention the router uses).
 
-Retry is intentionally coarse — it re-runs the whole `answer()` (tool loop included). That is safe
-here because Korkut's tools are read-only research calls (search/fetch public case-law), so a
-repeat has no side effects; and retry only triggers on *transient* faults (connection/timeout/
-rate-limit), never on a permanent one like a context overflow.
+Retry re-runs the whole `answer()` (tool loop included), so it fires only on *transient* faults
+(connection/timeout/rate-limit) AND only when no tool has run yet this turn: once a tool executes
+(some are WRITE tools — create_matter, add_invoice, …) the agent loop flags the failure
+non-retriable, because a re-run would duplicate those side effects.
 """
 
 from __future__ import annotations
@@ -101,7 +101,11 @@ def guarded_answer(*args, **kwargs) -> str:
             return agent.answer(*args, **kwargs)
         except Exception as exc:  # provider/tool failure — classify and maybe retry
             last = exc
-            if attempt < _MAX_RETRIES and _is_transient(exc):
+            if (
+                attempt < _MAX_RETRIES
+                and _is_transient(exc)
+                and not getattr(exc, "_korkut_no_retry", False)
+            ):
                 delay = _BACKOFF_SECONDS[min(attempt, len(_BACKOFF_SECONDS) - 1)]
                 logger.warning("model call transient failure (attempt %d): %s", attempt + 1, exc)
                 time.sleep(delay)

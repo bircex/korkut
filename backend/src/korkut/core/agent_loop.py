@@ -72,13 +72,22 @@ def run(
     convo: list[dict[str, Any]] = list(messages)
     result = StepResult()
     can_stream = on_event is not None and hasattr(provider, "step_stream")
+    executed_tool = False
     for _ in range(max_iters):
-        if can_stream:
-            result = provider.step_stream(  # type: ignore[attr-defined]
-                convo, tools, on_token=lambda t: emit({"type": "token", "text": t})
-            )
-        else:
-            result = provider.step(convo, tools)
+        try:
+            if can_stream:
+                result = provider.step_stream(  # type: ignore[attr-defined]
+                    convo, tools, on_token=lambda t: emit({"type": "token", "text": t})
+                )
+            else:
+                result = provider.step(convo, tools)
+        except Exception as exc:
+            # If a tool already ran this turn (some are WRITE tools: create_matter,
+            # add_invoice, …), a full re-run of answer() would duplicate its side effects —
+            # mark the failure non-retriable so resilience.guarded_answer does not retry.
+            if executed_tool:
+                exc._korkut_no_retry = True  # type: ignore[attr-defined]
+            raise
         if not result.tool_calls:
             return result.text
         for call in result.tool_calls:
@@ -107,4 +116,5 @@ def run(
                 }
             )
         convo.append({"role": "tool", "tool_results": tool_results})
+        executed_tool = True
     return result.text
