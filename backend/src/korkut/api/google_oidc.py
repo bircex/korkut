@@ -76,11 +76,14 @@ def verify_id_token(
             audience=client_id,
             options={"require": ["aud", "iss", "exp", "sub"]},
         )
-    except jwt.InvalidTokenError as exc:
+    # PyJWKClientError (unknown kid / JWKS fetch failure) is a PyJWTError but NOT an
+    # InvalidTokenError, so catch the base class — otherwise it escapes as a 500.
+    except jwt.PyJWTError as exc:
         raise GoogleAuthError(f"invalid Google ID token: {exc}") from exc
     if claims.get("iss") not in _GOOGLE_ISS:
         raise GoogleAuthError("unexpected issuer")
-    if claims.get("email_verified") is not True:
+    # Google normally sends a bool; accept the string form some IdPs use, reject everything else.
+    if claims.get("email_verified") not in (True, "true"):
         raise GoogleAuthError("email not verified")
     email = claims.get("email")
     if not email:

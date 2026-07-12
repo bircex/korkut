@@ -80,3 +80,19 @@ def test_config_absent_and_present(monkeypatch):
     cfg = g.config()
     assert cfg is not None and cfg.client_id == "cid"
     assert cfg.token_endpoint.startswith("https://oauth2.googleapis.com")
+
+
+def test_jwks_lookup_failure_becomes_google_auth_error(keypair):
+    # unknown kid / JWKS fetch failure raises jwt.PyJWKClientError (NOT an InvalidTokenError);
+    # it must be converted to GoogleAuthError, not escape as a 500.
+    def _raise(_t):
+        raise jwt.PyJWKClientError("no matching key")
+
+    bad = SimpleNamespace(get_signing_key_from_jwt=_raise)
+    with pytest.raises(g.GoogleAuthError):
+        g.verify_id_token(_token(keypair), CLIENT_ID, jwk_client=bad)
+
+
+def test_email_verified_string_true_accepted(keypair, jwk):
+    ident = g.verify_id_token(_token(keypair, email_verified="true"), CLIENT_ID, jwk_client=jwk)
+    assert ident.email == "avukat@firma.com"

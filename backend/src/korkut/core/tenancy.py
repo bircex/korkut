@@ -109,14 +109,17 @@ def install_tenant_guc(session_factory: sessionmaker[Session]) -> None:
 
 
 def install_tenant_filter(session_factory: sessionmaker[Session]) -> None:
-    """App-layer belt-and-suspenders filter: scope every SELECT of a ``TenantMixin`` entity to the
-    current office. Covers the SQLite dev/test path (which has no RLS) and fails closed (no context
-    ⇒ matches nothing). Bypass for a deliberate cross-tenant query via
-    ``execution_options(skip_tenant_filter=True)`` — used only by cross-tenant resolvers."""
+    """App-layer belt-and-suspenders filter: scope every SELECT / UPDATE / DELETE of a
+    ``TenantMixin`` entity to the current office. Covers the SQLite dev/test path (which has no
+    RLS) and fails closed (no context ⇒ matches nothing). Bypass for a deliberate cross-tenant
+    query via
+    ``execution_options(skip_tenant_filter=True)`` — reserved for the Phase 2 cross-tenant
+    resolvers (login by Google sub, invite/telegram lookups) that run before an office is known."""
 
     @event.listens_for(session_factory, "do_orm_execute")
     def _scope(state):
-        if state.is_select and not state.execution_options.get("skip_tenant_filter"):
+        scoped = state.is_select or state.is_update or state.is_delete
+        if scoped and not state.execution_options.get("skip_tenant_filter"):
             # Read the context OUTSIDE the lambda — SQLAlchemy's lambda-SQL system extracts bound
             # values without invoking closures, so a call inside the lambda is rejected. `oid` is a
             # fresh closure value per execution, so the filter stays dynamic (and fail-closed: a

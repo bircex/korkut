@@ -99,7 +99,9 @@ _THEME_DIRS = {"petition": "dilekce", "contract": "sozlesme"}
 
 
 def get_office(s: Session) -> Office | None:
-    """The single office identity row (singleton), or None before bootstrap."""
+    """The office identity row. NOTE: still returns the first office (single-office era);
+    Phase 2 scopes this to the request's office via the tenant context (Office is the tenant
+    root, so it is not covered by RLS / the app filter)."""
     return s.scalar(select(Office))
 
 

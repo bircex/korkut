@@ -1,6 +1,6 @@
 """Korkut's system persona — its voice and guardrails (see docs/ARCHITECTURE.md §7).
 
-The persona is built for the office: the office name comes from the singleton office row so
+The persona is built for the office: the office name comes from the request's office so
 Korkut introduces itself with the right firm. `build_persona(None)` yields a neutral identity
 (used by the CLI and any context without a known office).
 

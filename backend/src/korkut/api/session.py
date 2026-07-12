@@ -16,7 +16,6 @@ import jwt
 
 from korkut.api import auth
 
-COOKIE_NAME = auth.COOKIE_NAME
 SESSION_TTL = 60 * 60 * 12  # 12h absolute lifetime (matches the legacy session)
 _ALG = "HS256"
 

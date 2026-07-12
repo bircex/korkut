@@ -44,6 +44,22 @@ def main(argv: list[str] | None = None) -> int:
 
     username = args.username.strip().lower()
 
+    # Resolve (or, on a fresh DB, bootstrap) the office FIRST and set the tenant context BEFORE any
+    # tenant-model query. Otherwise the tenant filter + RLS scope every query to nothing and every
+    # existing-user op fails. Office is the tenant root, so it is not itself scoped.
+    with session() as s:
+        office = s.scalar(select(Office))
+        if office is None:
+            if args.disable or args.reset_2fa or args.unlock:
+                print(f"Kullanıcı yok: {username}", file=sys.stderr)
+                return 1
+            office_name = (args.office or f"{username} ofisi").strip()
+            office = Office(name=office_name[:200])
+            s.add(office)
+            s.commit()
+        office_id, office_display = office.id, office.name
+    set_current_office(office_id)
+
     with session() as s:
         user = s.scalar(select(User).where(User.username == username))
 
@@ -83,17 +99,6 @@ def main(argv: list[str] | None = None) -> int:
             action = "güncellendi"
             office_name = None
         else:
-            # Bootstrap the office on first run; --office only names it then.
-            office = s.scalar(select(Office))
-            if office is None:
-                office_name = (args.office or f"{username} ofisi").strip()
-                office = Office(name=office_name[:200])
-                s.add(office)
-                s.flush()
-            else:
-                office_name = office.name
-            # Scope inserts to this office so the new user (and any tenant rows) are stamped.
-            set_current_office(office.id)
             # First user overall owns the office; later users join as "member".
             has_members = s.scalar(select(User)) is not None
             s.add(
@@ -105,9 +110,10 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             action = "oluşturuldu"
+            office_name = office_display
         s.commit()
 
-    suffix = f" — ofis: {office_name}" if office_name else ""
+    suffix = f", ofis: {office_name}" if office_name else ""
     print(f"Kullanıcı {action}: {username}{suffix} (ilk girişte 2FA kurulumu gerekecek)")
     return 0
 
