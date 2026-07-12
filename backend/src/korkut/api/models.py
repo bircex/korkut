@@ -141,7 +141,10 @@ class MemoryItem(TenantMixin, Base):
 
 class User(TenantMixin, Base):
     __tablename__ = "users"
-    __table_args__ = (UniqueConstraint("office_id", "username", name="uq_user_office_username"),)
+    __table_args__ = (
+        UniqueConstraint("office_id", "username", name="uq_user_office_username"),
+        UniqueConstraint("office_id", "id", name="uq_users_office_id"),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
     username: Mapped[str] = mapped_column(String(64), index=True)
@@ -189,6 +192,7 @@ class Conversation(TenantMixin, Base):
     """A chat session, shared across the whole office (any user can open any session)."""
 
     __tablename__ = "conversations"
+    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_conversations_office_id"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     # Optional link to a matter (dosya): a chat can belong to a case file. Null = unfiled.
     matter_id: Mapped[int | None] = mapped_column(
@@ -225,6 +229,7 @@ class Document(TenantMixin, Base):
     """
 
     __tablename__ = "documents"
+    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_documents_office_id"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     conversation_id: Mapped[int] = mapped_column(
         ForeignKey("conversations.id"), unique=True, index=True
@@ -419,6 +424,7 @@ class Client(TenantMixin, Base):
     """A client (müvekkil) of the office."""
 
     __tablename__ = "clients"
+    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_clients_office_id"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     full_name: Mapped[str] = mapped_column(String(200))
     national_id: Mapped[str | None] = mapped_column(String(11), default=None)
@@ -438,6 +444,7 @@ class Matter(TenantMixin, Base):
     """
 
     __tablename__ = "matters"
+    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_matters_office_id"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
     title: Mapped[str] = mapped_column(String(200))
