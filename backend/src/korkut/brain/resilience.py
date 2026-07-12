@@ -86,7 +86,7 @@ def friendly_detail(exc: Exception) -> str:
         return MODEL_DOWN_DETAIL
     if "context length" in text or "context window" in text or "tokens to keep" in text:
         return MODEL_CONTEXT_DETAIL
-    return f"Yapay zeka modeli isteği yanıtlayamadı. Ayrıntı: {str(exc)[:200]}"
+    return "Yapay zeka modeli isteği şu an yanıtlayamadı, lütfen tekrar deneyin."
 
 
 def guarded_answer(*args, **kwargs) -> str:

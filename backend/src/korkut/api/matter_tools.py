@@ -19,9 +19,12 @@ from korkut.core.tool_registry import ToolSpec
 
 def _int(value: Any) -> int | None:
     try:
-        return int(value)
+        v = int(value)
     except (TypeError, ValueError):
         return None
+    # ids are positive and fit a signed 64-bit column; out-of-range -> "not found",
+    # not a DB DataError.
+    return v if 0 < v < 2**63 else None
 
 
 def build_matter_tools(user: Any) -> tuple[list[ToolSpec], dict[str, Callable[[dict], Any]]]:

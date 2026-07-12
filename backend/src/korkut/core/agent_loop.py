@@ -19,12 +19,16 @@ ToolResult = {"id": str, "name": str, "output": str}   # output is a JSON string
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from korkut.core import tool_registry
+from korkut.core.tenancy import TenantContextError
 from korkut.core.tool_registry import ToolSpec
+
+logger = logging.getLogger("korkut.agent_loop")
 
 
 @dataclass
@@ -88,8 +92,13 @@ def run(
                     output = handlers[call["name"]](args)
                 else:
                     output = tool_registry.run(call["name"], args)
-            except Exception as exc:
-                output = {"error": type(exc).__name__, "detail": str(exc)}
+            except TenantContextError:
+                raise  # isolation failure — never mask as a tool result
+            except Exception:
+                # Log the detail; hand the model only a generic marker so no internal error
+                # text (SQL fragments, paths) leaks into the reply.
+                logger.exception("tool %s failed", call["name"])
+                output = {"error": "tool_failed", "name": call["name"]}
             tool_results.append(
                 {
                     "id": call["id"],

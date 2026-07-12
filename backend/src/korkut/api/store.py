@@ -30,7 +30,7 @@ from korkut.api.models import (
 from korkut.brain.persona import PersonaCfg
 from korkut.core import db
 from korkut.core.router import ModelCfg
-from korkut.core.tenancy import install_tenant_filter, install_tenant_guc
+from korkut.core.tenancy import get_current_office, install_tenant_filter, install_tenant_guc
 from korkut.messaging import OutboundDraft, SendResult, build_channel
 from korkut.paths import DATA_DIR, TEMPLATES_DIR
 
@@ -99,10 +99,11 @@ _THEME_DIRS = {"petition": "dilekce", "contract": "sozlesme"}
 
 
 def get_office(s: Session) -> Office | None:
-    """The office identity row. NOTE: still returns the first office (single-office era);
-    Phase 2 scopes this to the request's office via the tenant context (Office is the tenant
-    root, so it is not covered by RLS / the app filter)."""
-    return s.scalar(select(Office))
+    """The current tenant's office (from the request context), or None if unset/absent.
+    Office is the tenant root, so it is not covered by RLS / the app filter; we key it by the
+    context explicitly to avoid returning another tenant's office."""
+    oid = get_current_office()
+    return s.get(Office, oid) if oid is not None else None
 
 
 def effective_theme(s: Session, user_id: int | None, type_id: str) -> str | None:

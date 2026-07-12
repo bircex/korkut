@@ -29,7 +29,7 @@ def test_friendly_detail_maps_each_failure_kind():
     )
     assert resilience.friendly_detail(_RateLimitError("429")) == resilience.MODEL_BUSY_DETAIL
     other = resilience.friendly_detail(ValueError("weird"))
-    assert other.startswith("Yapay zeka modeli isteği yanıtlayamadı")
+    assert "weird" not in other and "yanıtlayamadı" in other
 
 
 def test_transient_error_is_retried_then_succeeds():

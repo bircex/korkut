@@ -49,3 +49,17 @@ def test_wrong_secret_is_rejected(monkeypatch):
 def test_garbage_is_rejected():
     assert session.read("not-a-jwt") is None
     assert session.read("") is None
+
+
+def test_alg_none_token_rejected():
+    # an unsigned 'none'-algorithm token must never be accepted (algorithm-confusion attack)
+    forged = jwt.encode(
+        {"sub": "7", "oid": 3, "role": "owner", "ep": 1, "exp": 9999999999}, None, algorithm="none"
+    )
+    assert session.read(forged) is None
+
+
+def test_missing_claims_rejected():
+    # a validly-signed token that omits the office/epoch claims is not a usable session
+    tok = jwt.encode({"sub": "7", "iat": 0, "exp": 9999999999}, auth._secret(), algorithm="HS256")
+    assert session.read(tok) is None

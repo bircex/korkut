@@ -60,6 +60,7 @@ def test_tool_error_is_fed_back_not_raised(monkeypatch):
     )
     out = agent_loop.run(provider, [{"role": "user", "content": "x"}], [SPEC])
     assert out == "handled"
-    # the tool result fed back carried the error
+    # the tool error is fed back as a generic marker, without the raw exception text (no leak)
     tool_turn = next(m for m in provider.seen[1] if m["role"] == "tool")
-    assert "nope" in tool_turn["tool_results"][0]["output"]
+    out_json = tool_turn["tool_results"][0]["output"]
+    assert "tool_failed" in out_json and "nope" not in out_json

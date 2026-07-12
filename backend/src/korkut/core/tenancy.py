@@ -41,11 +41,16 @@ def get_current_office() -> int | None:
     return _current_office.get()
 
 
+class TenantContextError(RuntimeError):
+    """No tenant context is set where one is required. Must never be masked as a tool result —
+    it signals a broken isolation wiring and has to surface loudly."""
+
+
 def require_current_office() -> int:
     """Return the current tenant or raise — callers that touch tenant data must have one set."""
     oid = _current_office.get()
     if oid is None:
-        raise RuntimeError("no tenant context set (require_current_office)")
+        raise TenantContextError("no tenant context set")
     return oid
 
 

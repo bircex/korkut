@@ -519,7 +519,7 @@ def _effective_style(s: Session, user: User) -> dict:
 def _require_conv(s: Session, user: User, cid: int) -> Conversation:
     """Fetch a conversation, enforcing it belongs to the caller's office (else 404, not 403)."""
     conv = s.get(Conversation, cid)
-    if not conv:
+    if conv is None or conv.office_id != user.office_id:
         raise HTTPException(status_code=404, detail="Sohbet bulunamadı")
     return conv
 
@@ -527,7 +527,7 @@ def _require_conv(s: Session, user: User, cid: int) -> Conversation:
 def _require_matter(s: Session, user: User, mid: int) -> Matter:
     """Fetch a matter, or 404 if it does not exist."""
     m = s.get(Matter, mid)
-    if not m:
+    if m is None or m.office_id != user.office_id:
         raise HTTPException(status_code=404, detail="Dosya bulunamadı")
     return m
 
@@ -535,10 +535,8 @@ def _require_matter(s: Session, user: User, mid: int) -> Matter:
 def _require_doc(s: Session, user: User, doc_id: int) -> Document:
     """Fetch a document, or 404 if it does not exist."""
     doc = s.get(Document, doc_id)
-    if doc is not None:
-        conv = s.get(Conversation, doc.conversation_id)
-        if conv is not None:
-            return doc
+    if doc is not None and doc.office_id == user.office_id:
+        return doc
     raise HTTPException(status_code=404, detail="Belge bulunamadı")
 
 
@@ -578,7 +576,7 @@ def register(body: RegisterBody, request: Request, response: Response):
         raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalı")
 
     with session() as s:
-        if get_office(s) is not None:
+        if s.scalar(select(Office.id).limit(1)) is not None:
             raise HTTPException(
                 status_code=409,
                 detail="Ofis zaten kurulmuş; üye eklemek için sahibinize başvurun.",
