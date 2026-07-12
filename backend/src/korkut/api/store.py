@@ -12,7 +12,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
@@ -55,6 +55,7 @@ def engine():
         # truth and `create_all` builds them. No migrations yet — a single Alembic baseline will be
         # regenerated once the multi-tenant schema settles (see docs/SAAS_ARCHITECTURE.md).
         db.init_db(_engine)
+        apply_tenant_rls(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         # Every session is tenant-scoped: the GUC drives Postgres RLS, and the app-layer filter
         # scopes ORM reads by office (and covers SQLite, which has no RLS). Both fail closed.
@@ -64,6 +65,35 @@ def engine():
             _engine
         )  # refresh built-in themes from files (never touches overrides)
     return _engine
+
+
+def tenant_table_names() -> list[str]:
+    """Every table whose model carries a tenant (inherits TenantMixin)."""
+    from korkut.core.tenancy import TenantMixin
+
+    return sorted(
+        m.local_table.name
+        for m in db.Base.registry.mappers
+        if issubclass(m.class_, TenantMixin)
+    )
+
+
+def apply_tenant_rls(eng) -> None:
+    """Put fail-closed RLS on every tenant table (Postgres only; SQLite relies on the app filter).
+
+    Idempotent. Production must connect as a **non-superuser** role for RLS to apply (a superuser
+    bypasses RLS even under FORCE) — see docs/SAAS_ARCHITECTURE.md §15 and the DB provisioning.
+    """
+    if eng.dialect.name != "postgresql":
+        return
+    from korkut.core.tenancy import rls_policy_ddl
+
+    with eng.begin() as cn:
+        for tbl in tenant_table_names():
+            cn.execute(text(f"DROP POLICY IF EXISTS {tbl}_tenant ON {tbl}"))
+            for stmt in rls_policy_ddl(tbl).split(";\n"):
+                if stmt.strip():
+                    cn.execute(text(stmt))
 
 
 # Folder (under templates/) → catalog `kind`. Example files are named "<type_id>.md".
