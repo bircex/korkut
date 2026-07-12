@@ -13,8 +13,8 @@
 
 Korkut is a **self-hosted, single-tenant AI assistant for a Turkish law office**. It manages case
 files, does live legal research, drafts petitions, and handles correspondence — through a chat web
-app that **keeps client data on the office's own machine**. Each office self-registers and Korkut
-answers under that office's identity.
+app that **keeps client data on the office's own machine**. Korkut answers under that office's
+identity.
 
 ## Features
 
@@ -29,7 +29,7 @@ answers under that office's identity.
   Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
   passed through **best-effort** redaction first — a mitigation, **not a guarantee**
   (see [DISCLAIMER.md](DISCLAIMER.md)).
-- **Self-hosted, 2FA** — mandatory TOTP 2FA; each install serves one office. Overall
+- **Self-hosted, Google sign-in** — Google OIDC only, no passwords; each install serves one office. Overall
   security depends on how *you* deploy it (TLS, backups, updates); provided as-is, with
   no warranty.
 

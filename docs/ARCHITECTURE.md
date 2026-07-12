@@ -13,7 +13,7 @@ Browser (React SPA)
       │  /api/*
       ▼
 FastAPI app (korkut.api.app)
-      ├─ auth + mandatory TOTP 2FA (single office per install)
+      ├─ auth (Google OIDC sign-in; session is a signed JWT)
       ├─ matters / clients / hearings / deadlines  (the case-file domain)
       ├─ chat  ──►  brain.agent.answer(...)
       │                 ├─ persona (per office)
@@ -27,10 +27,12 @@ SQLite (trial) or Postgres (production)  +  config/ + templates/
 
 ## One office per install
 
-Korkut is single-tenant: each self-hosted install serves exactly one law office. The first person to
-register creates that office and becomes its `owner`; the owner then adds members (usernames are
-unique). Registration is a one-time bootstrap — once the office exists, `/api/register` returns 409 and
-further users are added by the owner. Domain rows carry no `office_id`: everything belongs to the one
+Korkut is single-tenant: each self-hosted install serves exactly one law office. The office is
+provisioned from the admin side (`python -m korkut.api.adduser <email>`) and its first user becomes
+the `owner`; the owner then adds members by pre-provisioning their e-mail or issuing a one-time invite
+(`POST /api/invites`; usernames are unique). Sign-in is Google OIDC only (`GET /api/auth/google/start`
+→ `/api/auth/google/callback`), and a person's row binds to their Google account on first sign-in.
+Domain rows carry no `office_id`: everything belongs to the one
 office, so the data-access layer (`api/matters_store.py`, `api/store.py`) is office-implicit. `Office`
 remains as a singleton identity row (its name drives the persona) and `User.role` is `owner`/`member`.
 

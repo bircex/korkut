@@ -33,16 +33,16 @@ Then:
 1. **Add a model.** Put a key in `.env` (`GROQ_API_KEY` or `ANTHROPIC_API_KEY`), or after first login
    point Korkut at a local endpoint from **Settings → Model** (e.g. LM Studio at
    `http://localhost:1234/v1`).
-2. **Create the first user** (you'll be prompted for a password):
+2. **Create the first user** (they sign in with Google; provision their e-mail here):
    ```bash
-   cd backend && ../.venv/bin/python -m korkut.api.adduser avukat --name "Av. Name"
+   cd backend && ../.venv/bin/python -m korkut.api.adduser avukat@ornek.av.tr --username avukat --name "Av. Name"
    ```
 3. **Start the server:**
    ```bash
    cd backend && ../.venv/bin/python -m korkut.api
    ```
-   Open <http://localhost:8080>. First login enrols TOTP 2FA — scan the QR and save the recovery
-   codes.
+   Open <http://localhost:8080> and sign in with Google. The account binds to that Google user on
+   first sign-in.
 
 ## Docker
 
@@ -61,7 +61,7 @@ create the first user inside the container:
 
 ```bash
 docker compose -f deploy/docker-compose.yml exec korkut \
-  python -m korkut.api.adduser avukat --name "Av. Name"
+  python -m korkut.api.adduser avukat@ornek.av.tr --username avukat --name "Av. Name"
 ```
 
 Equivalently, without the script:

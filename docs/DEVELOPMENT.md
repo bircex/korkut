@@ -8,7 +8,7 @@ system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 ```
 backend/                Python package (src-layout) + tests
   src/korkut/
-    api/                FastAPI app, auth/2FA, matters, documents, dispatcher, adduser
+    api/                FastAPI app, Google-OIDC auth + invites, matters, documents, dispatcher, adduser
     core/               agent loop, tool registry, model router, providers, redactor, DB
     brain/              agent entry point (answer) + office persona
     tools/              legal-database search/fetch tools (auto-discovered)
@@ -68,7 +68,7 @@ under the coverage floor.
 ```bash
 python -m korkut                       # terminal chat (brain only, no UI)
 python -m korkut.api                   # FastAPI web server (:8080)
-python -m korkut.api.adduser <user>    # create/manage users, reset 2FA, unlock
+python -m korkut.api.adduser <email>   # create/manage users (--google-sub to bind, --disable)
 python -m korkut.api.dispatcher        # flush queued outbound messages (cron)
 python -m korkut.integrations.runner   # poll connectors, answer inbound (cron)
 python -m korkut.tools.<name> --query "..."   # run a single legal-database tool

@@ -30,7 +30,7 @@ docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
 
 # 3. Create the first user
 docker compose -f deploy/docker-compose.prod.yml exec korkut \
-  python -m korkut.api.adduser avukat --name "Av. Name"
+  python -m korkut.api.adduser avukat@ornek.av.tr --username avukat --name "Av. Name"
 ```
 
 The image is published by the release pipeline as
@@ -68,7 +68,7 @@ local OpenAI-compatible endpoint from **Settings → Model** (then no PII leaves
 
 ## Security
 
-- Mandatory TOTP 2FA on every account; recovery codes are issued at enrolment.
+- Sign-in is Google OIDC only (no passwords); the session is a signed JWT and logout revokes every session server-side.
 - PII is redacted before any cloud model call and restored in the reply (`core/redactor.py`). A
   local model endpoint skips redaction because text never leaves the machine.
 - Never commit `.env`, `data/`, or backups (enforced by `.gitignore`).

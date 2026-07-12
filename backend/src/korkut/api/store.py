@@ -51,12 +51,18 @@ def engine():
         if url.startswith("sqlite") and "memory" not in url:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
         _engine = db.make_engine(url)
-        # From-scratch schema for the multi-tenant rebuild: the models are the single source of
-        # truth and `create_all` builds them. No migrations yet — a single Alembic baseline will be
-        # regenerated once the multi-tenant schema settles (see docs/SAAS_ARCHITECTURE.md).
-        db.init_db(_engine)
-        apply_tenant_rls(_engine)
-        setup_pg_resolvers(_engine)
+        if _engine.dialect.name == "postgresql":
+            # Production Postgres: a privileged bootstrap (korkut.api.bootstrap) has already built
+            # the schema, RLS, and resolvers. The app connects as a NON-superuser role (so RLS is
+            # enforced) and cannot run that DDL itself — it only reads/writes.
+            pass
+        else:
+            # SQLite (local/dev/tests): the app owns its single file, so build it in-process.
+            # From-scratch schema (create_all is the source of truth, no migrations yet — see
+            # docs/SAAS_ARCHITECTURE.md). apply_tenant_rls / setup_pg_resolvers no-op off Postgres.
+            db.init_db(_engine)
+            apply_tenant_rls(_engine)
+            setup_pg_resolvers(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         # Every session is tenant-scoped: the GUC drives Postgres RLS, and the app-layer filter
         # scopes ORM reads by office (and covers SQLite, which has no RLS). Both fail closed.
