@@ -22,10 +22,11 @@ import logging
 import os
 import queue
 import re
+import secrets
 import threading
 import time
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from http.cookies import SimpleCookie
 from pathlib import Path
 
@@ -35,6 +36,7 @@ from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from korkut.api import auth, extract, google_auth, google_oidc, office_tools, petitions
@@ -55,6 +57,7 @@ from korkut.api.models import (
     MemoryItem,
     Message,
     OfficeChannel,
+    OfficeInvite,
     OfficeModel,
     OutboundMessage,
     Persona,
@@ -74,6 +77,7 @@ from korkut.api.store import (
     get_office,
     get_persona,
     office_model_cfg,
+    resolve_office_for_invite,
     resolve_office_for_signin,
     send_outbound_message,
     session,
@@ -103,6 +107,10 @@ _HISTORY_TURNS = 20
 # Per-IP rate limit (in-memory) on the auth callback.
 _IP_WINDOW = 300
 _IP_MAX = 15
+
+# Carries an invite token through the Google round-trip (kept out of URLs / the Google request).
+_INVITE_COOKIE = "korkut_invite"
+_INVITE_TTL_DAYS = 7
 
 app = FastAPI(title="Korkut", docs_url=None, redoc_url=None)
 
@@ -177,6 +185,11 @@ class MemberBody(BaseModel):
     username: str
     full_name: str
     bar_registry_no: str | None = None
+
+
+class InviteBody(BaseModel):
+    email: str | None = None  # optional: pin the invite to one email
+    role: str = "member"
 
 
 class MeBody(BaseModel):
@@ -535,17 +548,15 @@ def _require_doc(s: Session, user: User, doc_id: int) -> Document:
 # ---------------- auth endpoints (Google OIDC) ----------------
 
 
-def _google_signin(identity: google_oidc.GoogleIdentity) -> User:
-    """Resolve a verified Google identity to an office user, binding the sub on first sign-in.
-
-    Two-phase because the office is unknown until resolved: first map sub/email -> office_id with
-    the tenant filter bypassed (pre-context), then open a session pinned to that office to load and
-    (on first sign-in) bind the row. Raises 403 when no active account matches.
+def _resolve_signin_user(identity: google_oidc.GoogleIdentity) -> User | None:
+    """Resolve a verified Google identity to an EXISTING office user, binding the sub on first
+    sign-in. Two-phase: map sub/email -> office_id with the filter bypassed (pre-context), then a
+    session pinned to that office loads/binds the row. Returns None when no active account matches.
     """
     with session() as s:
         oid = resolve_office_for_signin(s, identity.sub, identity.email)
     if oid is None:
-        raise HTTPException(status_code=403, detail="Bu Google hesabına bağlı aktif bir ofis yok")
+        return None
     set_current_office(oid)
     with session() as s:
         user = s.scalar(
@@ -557,9 +568,7 @@ def _google_signin(identity: google_oidc.GoogleIdentity) -> User:
             )
         )
         if user is None or not user.is_active:
-            raise HTTPException(
-                status_code=403, detail="Bu Google hesabına bağlı aktif bir ofis yok"
-            )
+            return None
         if user.google_sub is None:
             user.google_sub = identity.sub  # bind this person's Google account on first sign-in
             s.commit()
@@ -567,19 +576,91 @@ def _google_signin(identity: google_oidc.GoogleIdentity) -> User:
         return user
 
 
+def _unique_username(s: Session, base: str) -> str:
+    """A per-office-unique username derived from `base` (context already pinned to the office)."""
+    base = re.sub(r"[^a-z0-9._-]", "", base.lower())[:56] or "kullanici"
+    name, i = base, 1
+    while s.scalar(select(User.id).where(User.username == name)):
+        i += 1
+        name = f"{base}{i}"
+    return name
+
+
+def _redeem_invite(token: str | None, identity: google_oidc.GoogleIdentity) -> User | None:
+    """Join the invite's office as a NEW user (pre-context), or None if the invite can't be used.
+
+    Resolve the invite's office from its token hash with the filter bypassed, pin the context, then
+    (in-office) re-check freshness, create the user, and stamp the invite redeemed.
+    """
+    if not token:
+        return None
+    th = auth.token_hash(token)
+    with session() as s:
+        oid = resolve_office_for_invite(s, th)
+    if oid is None:
+        return None
+    set_current_office(oid)
+    with session() as s:
+        inv = s.scalar(
+            select(OfficeInvite).where(
+                OfficeInvite.token_hash == th, OfficeInvite.redeemed_at.is_(None)
+            )
+        )
+        if inv is None or inv.expires_at <= _utcnow():
+            return None
+        if inv.email and inv.email.lower() != identity.email.lower():
+            raise HTTPException(status_code=403, detail="Bu davet farklı bir e-posta için")
+        user = User(
+            role=inv.role,
+            email=identity.email,
+            google_sub=identity.sub,
+            username=_unique_username(s, identity.email.split("@")[0]),
+        )
+        s.add(user)
+        inv.redeemed_at = _utcnow()
+        try:
+            s.commit()
+        except IntegrityError:  # email already belongs to another office (global unique)
+            raise HTTPException(status_code=409, detail="Bu e-posta zaten kayıtlı") from None
+        s.refresh(user)
+        s.expunge(user)
+        return user
+
+
 @app.get("/api/auth/google/start")
-def google_start():
-    """Redirect the browser to Google's consent screen (503 until OAuth is provisioned)."""
+def google_start(invite: str | None = None):
+    """Redirect the browser to Google's consent screen (503 until OAuth is provisioned).
+
+    An optional invite token is stashed in a short same-site cookie so it survives the round-trip
+    to Google without ever appearing in a Google-bound URL.
+    """
     cfg = google_oidc.config()
     if cfg is None:
         raise HTTPException(status_code=503, detail="Google girişi henüz yapılandırılmadı")
-    url = google_auth.build_auth_url(cfg, google_auth.make_state())
-    return RedirectResponse(url, status_code=307)
+    redirect = RedirectResponse(
+        google_auth.build_auth_url(cfg, google_auth.make_state()), status_code=307
+    )
+    if invite:
+        redirect.set_cookie(
+            _INVITE_COOKIE,
+            invite,
+            max_age=600,
+            httponly=True,
+            samesite="lax",
+            secure=_secure_cookies(),
+            path="/api/auth",
+        )
+    return redirect
 
 
 @app.get("/api/auth/google/callback")
-def google_callback(request: Request, code: str | None = None, state: str | None = None):
-    """Google's redirect target: verify state, exchange the code, sign the user in, land the SPA."""
+def google_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    korkut_invite: str | None = Cookie(default=None),
+):
+    """Google's redirect target: verify state, exchange the code, sign in (or redeem an invite)."""
     ip = _client_ip(request)
     if not _ip_allowed(ip):
         raise HTTPException(status_code=429, detail="Çok fazla deneme. Biraz sonra tekrar deneyin.")
@@ -596,11 +677,21 @@ def google_callback(request: Request, code: str | None = None, state: str | None
     except google_oidc.GoogleAuthError as exc:
         logger.info("google sign-in rejected: %s", exc)
         raise HTTPException(status_code=401, detail="Google doğrulaması başarısız") from exc
-    user = _google_signin(identity)
+
+    user = _resolve_signin_user(identity)
+    joined = False
+    if user is None:
+        user = _redeem_invite(korkut_invite, identity)
+        joined = user is not None
+    if user is None:
+        raise HTTPException(status_code=403, detail="Bu Google hesabına bağlı aktif bir ofis yok")
+
     redirect = RedirectResponse("/", status_code=303)
     _set_session_cookie(redirect, user)
+    if korkut_invite:
+        redirect.delete_cookie(_INVITE_COOKIE, path="/api/auth")
     with session() as s:
-        _audit(s, "login_google", username=user.username, ip=ip)
+        _audit(s, "join_google" if joined else "login_google", username=user.username, ip=ip)
     return redirect
 
 
@@ -669,6 +760,62 @@ def remove_member(uid: int, korkut_session: str | None = Cookie(default=None)):
             raise HTTPException(status_code=400, detail="Kendinizi çıkaramazsınız")
         target.is_active = False
         target.token_epoch += 1  # revoke any outstanding session
+        s.commit()
+        return {"ok": True}
+
+
+def _invite_public(inv: OfficeInvite) -> dict:
+    return {
+        "id": inv.id,
+        "email": inv.email,
+        "role": inv.role,
+        "expires_at": inv.expires_at.isoformat(),
+        "redeemed": inv.redeemed_at is not None,
+    }
+
+
+@app.post("/api/invites")
+def create_invite(body: InviteBody, korkut_session: str | None = Cookie(default=None)):
+    """Owner issues a one-time invite; the raw token is returned ONCE (only its hash is stored)."""
+    if body.role not in ("owner", "member"):
+        raise HTTPException(status_code=400, detail="Geçersiz rol")
+    with session() as s:
+        owner = _require_owner(s, korkut_session)
+        token = secrets.token_urlsafe(24)
+        inv = OfficeInvite(
+            token_hash=auth.token_hash(token),
+            email=(body.email or "").strip().lower() or None,
+            role=body.role,
+            expires_at=_utcnow() + timedelta(days=_INVITE_TTL_DAYS),
+            created_by=owner.id,
+        )
+        s.add(inv)
+        s.commit()
+        return {
+            **_invite_public(inv),
+            "token": token,  # shown once; the caller builds the shareable link from it
+            "path": f"/api/auth/google/start?invite={token}",
+        }
+
+
+@app.get("/api/invites")
+def list_invites(korkut_session: str | None = Cookie(default=None)):
+    """Owner views this office's invites (any office sees only its own — the filter scopes them)."""
+    with session() as s:
+        _require_owner(s, korkut_session)
+        rows = s.scalars(select(OfficeInvite).order_by(OfficeInvite.id.desc())).all()
+        return [_invite_public(i) for i in rows]
+
+
+@app.delete("/api/invites/{invite_id}")
+def revoke_invite(invite_id: int, korkut_session: str | None = Cookie(default=None)):
+    """Owner revokes an invite (a get scoped by the filter can never touch another office's)."""
+    with session() as s:
+        _require_owner(s, korkut_session)
+        inv = s.get(OfficeInvite, invite_id)
+        if inv is None:
+            raise HTTPException(status_code=404, detail="Davet bulunamadı")
+        s.delete(inv)
         s.commit()
         return {"ok": True}
 

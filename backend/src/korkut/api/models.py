@@ -176,6 +176,26 @@ class User(TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
+class OfficeInvite(TenantMixin, Base):
+    """A one-time link that lets a new person join THIS office via Google sign-in.
+
+    ``token_hash`` is a deterministic HMAC of the high-entropy token (equality-lookup key; the raw
+    token is shown once, never stored). Optionally pinned to an ``email``. Redeeming creates the
+    user in the issuing office and stamps ``redeemed_at``.
+    """
+
+    __tablename__ = "office_invites"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_invite_token_hash"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), index=True)
+    email: Mapped[str | None] = mapped_column(String(320), default=None)  # optional pinned email
+    role: Mapped[str] = mapped_column(String(16), default="member")
+    expires_at: Mapped[datetime] = mapped_column()
+    redeemed_at: Mapped[datetime | None] = mapped_column(default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)  # owner who issued it
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+
 class Conversation(TenantMixin, Base):
     """A chat session, shared across the whole office (any user can open any session)."""
 

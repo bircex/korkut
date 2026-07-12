@@ -8,6 +8,7 @@ unless KORKUT_TEST_PG_URL points at a Postgres superuser DSN.
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from urllib.parse import urlsplit, urlunsplit
 
 import pytest
@@ -17,6 +18,7 @@ from sqlalchemy.orm import sessionmaker
 from korkut.api import models
 from korkut.api.store import (
     apply_tenant_rls,
+    resolve_office_for_invite,
     resolve_office_for_signin,
     setup_pg_resolvers,
     tenant_table_names,
@@ -84,6 +86,9 @@ def app_sf():
         cn.execute(
             text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_signin(text, text) TO {APP_ROLE}")
         )
+        cn.execute(
+            text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_invite(text) TO {APP_ROLE}")
+        )
     # seed two offices + a client and a user each (admin bypasses RLS; office_id passed explicitly)
     admin_sf = sessionmaker(admin, expire_on_commit=False)
     with admin_sf() as s:
@@ -95,12 +100,16 @@ def app_sf():
             office_id=oa.id, username="a-owner", email="a@x.co", google_sub="sub-a", role="owner"
         )
         ub = models.User(office_id=ob.id, username="b-owner", email="b@x.co", role="owner")
+        future = datetime(2099, 1, 1)
         s.add_all(
             [
                 models.Client(office_id=oa.id, full_name="Ahmet (A)"),
                 models.Client(office_id=ob.id, full_name="Mehmet (B)"),
                 ua,
                 ub,
+                models.OfficeInvite(
+                    office_id=oa.id, token_hash="hash-a", role="member", expires_at=future
+                ),
             ]
         )
         s.commit()
@@ -208,5 +217,17 @@ def test_resolver_is_not_a_cross_tenant_read_hole(app_sf):
         with sf() as s:
             rows = s.query(models.User).all()
             assert [u.username for u in rows] == ["a-owner"]  # never b-owner
+    finally:
+        reset_current_office(tok)
+
+
+def test_invite_resolver_maps_token_to_office_without_context(app_sf):
+    # invite redemption is pre-tenant too: the token hash resolves to its office, unknown -> None
+    sf, (a_id, _b_id), _ = app_sf
+    tok = set_current_office(None)
+    try:
+        with sf() as s:
+            assert resolve_office_for_invite(s, "hash-a") == a_id
+            assert resolve_office_for_invite(s, "no-such-hash") is None
     finally:
         reset_current_office(tok)

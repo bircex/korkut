@@ -54,6 +54,16 @@ def verify_secret(value: str, stored: str) -> bool:
     return hmac.compare_digest(dk.hex(), hash_hex)
 
 
+def token_hash(token: str) -> str:
+    """Deterministic HMAC of a HIGH-ENTROPY bearer token (invite tokens), for equality lookup.
+
+    Unlike ``hash_secret`` (salted PBKDF2, for low-entropy passwords), this is unsalted so the same
+    token always hashes the same way — required to look an invite up by its token. Safe because the
+    token itself is 24 random bytes; a single keyed hash is not brute-forceable.
+    """
+    return hmac.new(_secret(), token.encode(), hashlib.sha256).hexdigest()
+
+
 # ---------- signing (OAuth `state` CSRF token) ----------
 
 

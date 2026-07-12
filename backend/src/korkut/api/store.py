@@ -144,6 +144,20 @@ def setup_pg_resolvers(eng) -> None:
         # single-role dev model: the connecting role IS the app role. When bootstrap/runtime roles
         # are split for prod, grant EXECUTE to the app role instead (see PROVISIONING.md).
         cn.execute(text(f"GRANT EXECUTE ON FUNCTION {fn} TO current_user"))
+        # invite redemption is also pre-tenant: map an invite token hash -> its office
+        cn.execute(text(f"GRANT SELECT ON office_invites TO {role}"))
+        cn.execute(
+            text(
+                "CREATE OR REPLACE FUNCTION resolve_office_for_invite(p_hash text) RETURNS bigint "
+                "LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS "
+                "'SELECT office_id FROM office_invites WHERE token_hash = p_hash "
+                "AND redeemed_at IS NULL LIMIT 1'"
+            )
+        )
+        inv = "resolve_office_for_invite(text)"
+        cn.execute(text(f"ALTER FUNCTION {inv} OWNER TO {role}"))
+        cn.execute(text(f"REVOKE ALL ON FUNCTION {inv} FROM PUBLIC"))
+        cn.execute(text(f"GRANT EXECUTE ON FUNCTION {inv} TO current_user"))
 
 
 def resolve_office_for_signin(s: Session, sub: str, email: str) -> int | None:
@@ -168,6 +182,25 @@ def resolve_office_for_signin(s: Session, sub: str, email: str) -> int | None:
             ),
         )
         .order_by((models.User.google_sub == sub).desc())
+        .limit(1)
+        .execution_options(skip_tenant_filter=True)
+    ).scalar()
+
+
+def resolve_office_for_invite(s: Session, token_hash: str) -> int | None:
+    """Map an invite token hash -> its office, pre-context (the redeemer is in no office yet).
+
+    Routes through the SECURITY DEFINER function on Postgres, filter-bypassed read on SQLite. Only
+    checks the invite is unredeemed here; expiry is verified in-context once the office is pinned.
+    """
+    if s.bind is not None and s.bind.dialect.name == "postgresql":
+        return s.execute(text("SELECT resolve_office_for_invite(:h)"), {"h": token_hash}).scalar()
+    return s.execute(
+        select(models.OfficeInvite.office_id)
+        .where(
+            models.OfficeInvite.token_hash == token_hash,
+            models.OfficeInvite.redeemed_at.is_(None),
+        )
         .limit(1)
         .execution_options(skip_tenant_filter=True)
     ).scalar()
