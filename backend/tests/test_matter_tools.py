@@ -25,7 +25,7 @@ def seeded(tmp_path, monkeypatch):
         office = Office(name="A")
         s.add(office)
         s.flush()
-        ua = User(username="a", password_hash="x", role="owner")
+        ua = User(username="a", email="a@x.co", role="owner")
         s.add(ua)
         s.commit()
         # Lightweight stand-in (the factory only reads id).

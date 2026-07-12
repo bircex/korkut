@@ -12,7 +12,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
-from sqlalchemy import select, text
+from sqlalchemy import and_, or_, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from korkut.api import models
@@ -100,15 +100,24 @@ def apply_tenant_rls(eng) -> None:
 _RESOLVER_ROLE = "korkut_resolver"
 
 
+# Matches a Google sign-in to its office: a row already bound to this `sub`, else an active row
+# pre-provisioned with this email and not yet bound (google_sub IS NULL). sub is preferred.
+_SIGNIN_SQL = (
+    "SELECT office_id FROM users "
+    "WHERE is_active AND (google_sub = p_sub OR (google_sub IS NULL AND email = p_email)) "
+    "ORDER BY (google_sub = p_sub) DESC NULLS LAST LIMIT 1"
+)
+
+
 def setup_pg_resolvers(eng) -> None:
     """Install the pre-tenant SECURITY DEFINER resolver (Postgres only; idempotent).
 
-    Login and the request middleware must map a session's ``user_id -> office_id`` BEFORE any
+    The Google callback must map a sign-in (``sub``/``email``) to its ``office_id`` BEFORE any
     tenant context exists. Under FORCE RLS the app role cannot read across offices, so a dedicated
-    NOLOGIN/BYPASSRLS role owns ``resolve_office_for_user(bigint)`` which returns only the office_id
-    (never row data); the connecting role gets EXECUTE. The app role still cannot read another
-    office's rows directly — proven in tests/test_tenant_rls_real_schema.py. Needs a privileged
-    bootstrap connection (CREATE ROLE), like apply_tenant_rls; see docs/SAAS_ARCHITECTURE.md §15.
+    NOLOGIN/BYPASSRLS role owns ``resolve_office_for_signin(text, text)`` which returns only the
+    office_id (never row data); the connecting role gets EXECUTE. The app role still cannot read
+    another office's rows directly — proven in tests/test_tenant_rls_real_schema.py. Needs a
+    privileged bootstrap connection (CREATE ROLE), like apply_tenant_rls; see SAAS_ARCHITECTURE §15.
     """
     if eng.dialect.name != "postgresql":
         return
@@ -120,36 +129,46 @@ def setup_pg_resolvers(eng) -> None:
                 f" THEN CREATE ROLE {role} NOLOGIN NOSUPERUSER BYPASSRLS; END IF; END $$;"
             )
         )
-        cn.execute(text(f"GRANT USAGE ON SCHEMA public TO {_RESOLVER_ROLE}"))
-        cn.execute(text(f"GRANT SELECT ON users TO {_RESOLVER_ROLE}"))
+        cn.execute(text(f"GRANT USAGE ON SCHEMA public TO {role}"))
+        cn.execute(text(f"GRANT SELECT ON users TO {role}"))
         cn.execute(
             text(
-                "CREATE OR REPLACE FUNCTION resolve_office_for_user(p_uid bigint) RETURNS bigint "
-                "LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public "
-                "AS 'SELECT office_id FROM users WHERE id = p_uid'"
+                "CREATE OR REPLACE FUNCTION resolve_office_for_signin(p_sub text, p_email text) "
+                "RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public "
+                f"AS $$ {_SIGNIN_SQL} $$"
             )
         )
-        cn.execute(text(f"ALTER FUNCTION resolve_office_for_user(bigint) OWNER TO {role}"))
-        cn.execute(text("REVOKE ALL ON FUNCTION resolve_office_for_user(bigint) FROM PUBLIC"))
+        fn = "resolve_office_for_signin(text, text)"
+        cn.execute(text(f"ALTER FUNCTION {fn} OWNER TO {role}"))
+        cn.execute(text(f"REVOKE ALL ON FUNCTION {fn} FROM PUBLIC"))
         # single-role dev model: the connecting role IS the app role. When bootstrap/runtime roles
         # are split for prod, grant EXECUTE to the app role instead (see PROVISIONING.md).
-        cn.execute(
-            text("GRANT EXECUTE ON FUNCTION resolve_office_for_user(bigint) TO current_user")
-        )
+        cn.execute(text(f"GRANT EXECUTE ON FUNCTION {fn} TO current_user"))
 
 
-def resolve_office_for_user(s: Session, user_id: int) -> int | None:
-    """Map ``user_id -> office_id`` with no tenant context set yet (login / request middleware).
+def resolve_office_for_signin(s: Session, sub: str, email: str) -> int | None:
+    """Map a Google sign-in (``sub``/``email``) to its office, with no tenant context set yet.
 
-    Postgres routes through the SECURITY DEFINER ``resolve_office_for_user`` function so the read
+    Postgres routes through the SECURITY DEFINER ``resolve_office_for_signin`` function so the read
     crosses offices safely (see setup_pg_resolvers). SQLite has no RLS, so it reads the column with
-    the app-layer tenant filter bypassed. Returns None for an unknown/absent user (fail-closed).
+    the app-layer tenant filter bypassed. Prefers a row already bound to ``sub``; otherwise an
+    active row pre-provisioned with ``email`` and not yet bound. Returns None if nothing matches.
     """
     if s.bind is not None and s.bind.dialect.name == "postgresql":
-        return s.execute(text("SELECT resolve_office_for_user(:uid)"), {"uid": user_id}).scalar()
+        return s.execute(
+            text("SELECT resolve_office_for_signin(:sub, :email)"), {"sub": sub, "email": email}
+        ).scalar()
     return s.execute(
         select(models.User.office_id)
-        .where(models.User.id == user_id)
+        .where(
+            models.User.is_active.is_(True),
+            or_(
+                models.User.google_sub == sub,
+                and_(models.User.google_sub.is_(None), models.User.email == email),
+            ),
+        )
+        .order_by((models.User.google_sub == sub).desc())
+        .limit(1)
         .execution_options(skip_tenant_filter=True)
     ).scalar()
 

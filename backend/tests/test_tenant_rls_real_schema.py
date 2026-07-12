@@ -17,7 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from korkut.api import models
 from korkut.api.store import (
     apply_tenant_rls,
-    resolve_office_for_user,
+    resolve_office_for_signin,
     setup_pg_resolvers,
     tenant_table_names,
 )
@@ -81,15 +81,20 @@ def app_sf():
         cn.execute(text(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {APP_ROLE}"))
         # prod bootstrap grants the resolver to the app role (setup_pg_resolvers granted it to the
         # bootstrapping admin under the single-role dev model)
-        cn.execute(text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_user(bigint) TO {APP_ROLE}"))
+        cn.execute(
+            text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_signin(text, text) TO {APP_ROLE}")
+        )
     # seed two offices + a client and a user each (admin bypasses RLS; office_id passed explicitly)
     admin_sf = sessionmaker(admin, expire_on_commit=False)
     with admin_sf() as s:
         oa, ob = models.Office(name="A"), models.Office(name="B")
         s.add_all([oa, ob])
         s.flush()
-        ua = models.User(office_id=oa.id, username="a-owner", password_hash="x", role="owner")
-        ub = models.User(office_id=ob.id, username="b-owner", password_hash="x", role="owner")
+        # ua is already bound to a Google sub; ub is pre-provisioned by email, not yet bound
+        ua = models.User(
+            office_id=oa.id, username="a-owner", email="a@x.co", google_sub="sub-a", role="owner"
+        )
+        ub = models.User(office_id=ob.id, username="b-owner", email="b@x.co", role="owner")
         s.add_all(
             [
                 models.Client(office_id=oa.id, full_name="Ahmet (A)"),
@@ -179,15 +184,18 @@ def test_composite_fk_rejects_cross_office_reference(app_sf):
         reset_current_office(tok)
 
 
-def test_resolver_maps_user_to_office_without_context(app_sf):
-    # the request middleware resolves office from user_id BEFORE any tenant context exists
-    sf, (a_id, b_id), (a_uid, b_uid) = app_sf
+def test_resolver_maps_signin_to_office_without_context(app_sf):
+    # the Google callback resolves office from sub/email BEFORE any tenant context exists
+    sf, (a_id, b_id), _ = app_sf
     tok = set_current_office(None)
     try:
         with sf() as s:
-            assert resolve_office_for_user(s, a_uid) == a_id
-            assert resolve_office_for_user(s, b_uid) == b_id
-            assert resolve_office_for_user(s, 10**9) is None  # unknown user -> None (fail-closed)
+            # bound account: matched by its Google sub (email irrelevant)
+            assert resolve_office_for_signin(s, "sub-a", "who@x.co") == a_id
+            # pre-provisioned account: matched by email while google_sub IS NULL
+            assert resolve_office_for_signin(s, "unbound-sub", "b@x.co") == b_id
+            # nothing matches -> None (fail-closed)
+            assert resolve_office_for_signin(s, "nope", "nobody@x.co") is None
     finally:
         reset_current_office(tok)
 

@@ -7,7 +7,7 @@ the same toolset). Every handler closes over the authenticated `user`, opens its
 delegates to the store modules.
 
 Scope: create / read / update only. Deletion stays UI-only (a chat/WhatsApp message must not be
-able to destroy records), and user/account settings (2FA, personas, model, channels, membership)
+able to destroy records), and user/account settings (personas, model, channels, membership)
 are intentionally NOT exposed here.
 """
 

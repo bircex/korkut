@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def client_and_spy(tmp_path, monkeypatch):
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
-    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable")
+    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable-0123456789abcdef")
     import importlib
 
     import korkut.api.auth as auth_mod
@@ -29,12 +29,23 @@ def client_and_spy(tmp_path, monkeypatch):
     importlib.reload(app_mod)
     import korkut.api.adduser as adduser
 
-    adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
+    adduser.main(["avukat@x.co", "--username", "avukat", "--name", "Av. Test"])
     spy = MagicMock(return_value="yanıt")
     with patch("korkut.brain.agent.answer", spy):
         c = TestClient(app_mod.app)
-        # 2FA is off by default, so the password alone yields a full session.
-        c.post("/api/login", json={"username": "avukat", "password": "parola123"})
+        # authenticate with a minted session cookie (Google OIDC is the only real sign-in)
+        from sqlalchemy import select
+
+        from korkut.api import auth, session
+        from korkut.api.models import User
+
+        with store_mod.session() as s:
+            u = s.scalar(
+                select(User)
+                .where(User.email == "avukat@x.co")
+                .execution_options(skip_tenant_filter=True)
+            )
+        c.cookies.set(auth.COOKIE_NAME, session.mint(u.id, u.office_id, u.role, u.token_epoch))
         yield c, spy
 
 

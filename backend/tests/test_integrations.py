@@ -415,8 +415,8 @@ def store_db(tmp_path, monkeypatch):
         user = User(
             role="owner",
             username="av",
+            email="av@x.co",
             full_name="Av. Test",
-            password_hash="x",
             is_active=True,
         )
         s.add(user)

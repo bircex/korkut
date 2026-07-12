@@ -152,66 +152,28 @@ class MemoryItem(TenantMixin, Base):
 class User(TenantMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
+        # A Google identity maps to exactly one user; email is the pre-provision key (an owner
+        # creates a member by email, and first sign-in binds that person's Google `sub` to the row).
+        # Both are global uniques — the tenant root is resolved FROM them at sign-in.
+        UniqueConstraint("google_sub", name="uq_user_google_sub"),
+        UniqueConstraint("email", name="uq_user_email"),
         UniqueConstraint("office_id", "username", name="uq_user_office_username"),
         UniqueConstraint("office_id", "id", name="uq_users_office_id"),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     role: Mapped[str] = mapped_column(String(16), default="member")  # "owner" | "member"
-    username: Mapped[str] = mapped_column(String(64), index=True)
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    # NULL until the user's first Google sign-in binds their stable Google `sub`; unique once set.
+    google_sub: Mapped[str | None] = mapped_column(String(255), default=None)
+    username: Mapped[str] = mapped_column(String(64), index=True)  # per-office display handle
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
     bar_registry_no: Mapped[str | None] = mapped_column(String(32), default=None)  # baro sicil no
-    password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    # Two-factor (TOTP). Optional per user: the owner toggles `require_2fa`; when on, a user with
-    # no confirmed secret must enrol before chatting, otherwise password alone signs them in.
-    require_2fa: Mapped[bool] = mapped_column(default=False)
-    totp_secret: Mapped[str | None] = mapped_column(String(64), default=None)
-    totp_confirmed_at: Mapped[datetime | None] = mapped_column(default=None)
-    totp_last_counter: Mapped[int] = mapped_column(default=0)  # anti-replay
-
-    # Server-side session revocation: bumping this invalidates every outstanding cookie.
+    # Server-side session revocation: bumping this invalidates every outstanding token.
     token_epoch: Mapped[int] = mapped_column(default=1)
 
-    # Brute-force throttling (persisted so a restart can't reset a lockout).
-    failed_attempts: Mapped[int] = mapped_column(default=0)
-    locked_until: Mapped[datetime | None] = mapped_column(default=None)
-
     created_at: Mapped[datetime] = mapped_column(default=func.now())
-
-    recovery_codes: Mapped[list[RecoveryCode]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-        primaryjoin=(
-            "and_(User.office_id == RecoveryCode.office_id, User.id == RecoveryCode.user_id)"
-        ),
-        foreign_keys="[RecoveryCode.office_id, RecoveryCode.user_id]",
-        overlaps="office_id",
-    )
-
-    @property
-    def has_2fa(self) -> bool:
-        return self.totp_secret is not None and self.totp_confirmed_at is not None
-
-
-class RecoveryCode(TenantMixin, Base):
-    __tablename__ = "recovery_codes"
-    __table_args__ = (
-        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
-    )
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(index=True)
-    code_hash: Mapped[str] = mapped_column(String(255))
-    used_at: Mapped[datetime | None] = mapped_column(default=None)
-
-    user: Mapped[User] = relationship(
-        back_populates="recovery_codes",
-        primaryjoin=(
-            "and_(RecoveryCode.office_id == User.office_id, RecoveryCode.user_id == User.id)"
-        ),
-        foreign_keys="[RecoveryCode.office_id, RecoveryCode.user_id]",
-        overlaps="office_id",
-    )
 
 
 class Conversation(TenantMixin, Base):

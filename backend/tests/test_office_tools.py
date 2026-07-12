@@ -23,7 +23,7 @@ def seeded(tmp_path, monkeypatch):
     with store_mod.session() as s:
         s.add(Office(name="A"))
         s.flush()
-        ua = User(username="a", password_hash="x", role="owner", full_name="Av. A")
+        ua = User(username="a", email="a@x.co", role="owner", full_name="Av. A")
         s.add(ua)
         s.commit()
         user_a = types.SimpleNamespace(id=ua.id)

@@ -31,7 +31,7 @@ def two_offices(monkeypatch, tmp_path):
         tok = set_current_office(oid)
         try:
             with store.session() as s:
-                u = User(username=f"{name}-user", password_hash="x", role="owner")
+                u = User(username=f"{name}-user", email=f"{name.lower()}@x.co", role="owner")
                 s.add(u)
                 s.add(Client(full_name=f"{name}-client"))
                 s.commit()

@@ -1,7 +1,7 @@
 """Identity binding — map a channel sender to a korkut `User`.
 
-The whole security model of Korkut is per-user (username + password + mandatory TOTP, office
-scoping, per-author audit). A Telegram/WhatsApp/e-mail sender carries none of that, so before the
+The whole security model of Korkut is per-user (Google OIDC sign-in, office scoping, per-author
+audit). A Telegram/WhatsApp/e-mail sender carries none of that, so before the
 gateway will act on a message it must know *which lawyer* sent it. That mapping is an
 `IntegrationLink`:
 

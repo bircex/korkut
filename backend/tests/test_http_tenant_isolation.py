@@ -9,7 +9,6 @@ guarantee the app-layer filter + RLS only deliver once the middleware pins the c
 from __future__ import annotations
 
 import importlib
-import time
 from unittest.mock import patch
 
 import pytest
@@ -19,9 +18,10 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def two_office_client(tmp_path, monkeypatch):
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
-    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable")
+    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable-0123456789abcdef")
 
     import korkut.api.auth as auth_mod
+    import korkut.api.session as session_mod
     import korkut.api.store as store_mod
 
     importlib.reload(store_mod)
@@ -42,7 +42,9 @@ def two_office_client(tmp_path, monkeypatch):
         tok = set_current_office(oid)
         try:
             with store_mod.session() as s:
-                u = User(username=f"{name.lower()}-owner", password_hash="x", role="owner")
+                u = User(
+                    username=f"{name.lower()}-owner", email=f"{name.lower()}@x.co", role="owner"
+                )
                 s.add(u)
                 s.commit()
                 uid, epoch = u.id, u.token_epoch
@@ -52,7 +54,7 @@ def two_office_client(tmp_path, monkeypatch):
                 first_mid = s.scalars(store_mod.select(Matter)).first().id
         finally:
             reset_current_office(tok)
-        cookie = auth_mod.make_session_token(uid, epoch, now=int(time.time()))
+        cookie = session_mod.mint(uid, oid, "owner", epoch)
         return {"office_id": oid, "matter_id": first_mid, "cookie": cookie}
 
     a = seed("A", matters=1)

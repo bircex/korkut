@@ -1,7 +1,7 @@
 """HTTP endpoint tests for the matter domain (/api/matters, /api/clients, /api/calendar).
 
-Mirrors test_web_auth.py: a fresh SQLite file per run, the brain patched offline, and a password
-login to authenticate (2FA is off by default). Covers CRUD and the chat↔matter link.
+A fresh SQLite file per run, the brain patched offline, and a minted session cookie to
+authenticate (Google OIDC is the only real sign-in). Covers CRUD and the chat↔matter link.
 """
 
 from datetime import date, datetime, timedelta
@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def app_mod(tmp_path, monkeypatch):
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
-    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable")
+    monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable-0123456789abcdef")
     import importlib
 
     import korkut.api.auth as auth_mod
@@ -28,19 +28,24 @@ def app_mod(tmp_path, monkeypatch):
 
     import korkut.api.adduser as adduser
 
-    adduser.main(["avukat", "--password", "parola123", "--name", "Av. Test"])
+    adduser.main(["avukat@x.co", "--username", "avukat", "--name", "Av. Test"])
     with patch("korkut.brain.agent.answer", return_value="DRAFT yanıt."):
         yield app_mod
 
 
-def _enroll(c: TestClient, username: str, password: str) -> None:
-    """Sign in to a full session; 2FA is off by default, so the password alone authenticates."""
-    c.post("/api/login", json={"username": username, "password": password})
+def _existing(app_mod, email: str = "avukat@x.co") -> TestClient:
+    """A client carrying a minted session cookie for the bootstrapped owner."""
+    from sqlalchemy import select
 
+    from korkut.api import auth, session, store
+    from korkut.api.models import User
 
-def _existing(app_mod) -> TestClient:
     c = TestClient(app_mod.app)
-    _enroll(c, "avukat", "parola123")
+    with store.session() as s:
+        u = s.scalar(
+            select(User).where(User.email == email).execution_options(skip_tenant_filter=True)
+        )
+    c.cookies.set(auth.COOKIE_NAME, session.mint(u.id, u.office_id, u.role, u.token_epoch))
     return c
 
 
