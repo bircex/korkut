@@ -671,20 +671,26 @@ def google_callback(
         raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş giriş isteği")
     if not code:
         raise HTTPException(status_code=400, detail="Yetkilendirme kodu yok")
+    # This endpoint is browser-facing, so a failure lands the user back on the sign-in screen with
+    # an error code (not a raw JSON error). State/config/rate-limit stay as hard errors above.
     try:
         id_token = google_auth.exchange_code(cfg, code)
         identity = google_oidc.verify_id_token(id_token, cfg.client_id)
     except google_oidc.GoogleAuthError as exc:
         logger.info("google sign-in rejected: %s", exc)
-        raise HTTPException(status_code=401, detail="Google doğrulaması başarısız") from exc
+        return RedirectResponse("/giris?error=verify", status_code=303)
 
-    user = _resolve_signin_user(identity)
     joined = False
+    try:
+        user = _resolve_signin_user(identity)
+        if user is None:
+            user = _redeem_invite(korkut_invite, identity)
+            joined = user is not None
+    except HTTPException as exc:
+        logger.info("sign-in rejected: %s", exc.detail)
+        return RedirectResponse("/giris?error=invite", status_code=303)
     if user is None:
-        user = _redeem_invite(korkut_invite, identity)
-        joined = user is not None
-    if user is None:
-        raise HTTPException(status_code=403, detail="Bu Google hesabına bağlı aktif bir ofis yok")
+        return RedirectResponse("/giris?error=no_office", status_code=303)
 
     redirect = RedirectResponse("/", status_code=303)
     _set_session_cookie(redirect, user)

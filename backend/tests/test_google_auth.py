@@ -154,12 +154,13 @@ def test_callback_binds_sub_and_starts_a_working_session(tmp_path, monkeypatch):
         reset_current_office(tok)
 
 
-def test_callback_unknown_account_is_forbidden(tmp_path, monkeypatch):
+def test_callback_unknown_account_redirects_to_signin(tmp_path, monkeypatch):
     app_mod, store_mod = _fresh(tmp_path, monkeypatch)
     _seed_owner(store_mod, email="owner@x.co")
     identity = google_oidc.GoogleIdentity(sub="x", email="stranger@x.co", hd=None)
     _c, r = _callback(app_mod, identity)
-    assert r.status_code == 403
+    assert r.status_code == 303
+    assert "error=no_office" in r.headers["location"]
 
 
 def test_callback_rejects_bad_state(tmp_path, monkeypatch):

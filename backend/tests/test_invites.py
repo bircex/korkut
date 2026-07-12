@@ -125,7 +125,7 @@ def test_email_pinned_invite_rejects_other_email(tmp_path, monkeypatch):
     owner, _ = _owner_client(app_mod, store_mod)
     token = owner.post("/api/invites", json={"email": "pinned@a.co"}).json()["token"]
     _c, r = _redeem(app_mod, token, sub="s", email="someone-else@a.co")
-    assert r.status_code == 403
+    assert r.status_code == 303 and "error=invite" in r.headers["location"]
 
 
 def test_redeemed_invite_cannot_be_reused(tmp_path, monkeypatch):
@@ -133,9 +133,9 @@ def test_redeemed_invite_cannot_be_reused(tmp_path, monkeypatch):
     owner, _ = _owner_client(app_mod, store_mod)
     token = owner.post("/api/invites", json={}).json()["token"]
     _c1, r1 = _redeem(app_mod, token, sub="s1", email="first@a.co")
-    assert r1.status_code == 303
+    assert r1.status_code == 303 and r1.headers["location"] == "/"
     _c2, r2 = _redeem(app_mod, token, sub="s2", email="second@a.co")
-    assert r2.status_code == 403  # single-use
+    assert r2.status_code == 303 and "error=no_office" in r2.headers["location"]  # single-use
 
 
 def test_expired_invite_is_not_redeemable(tmp_path, monkeypatch):
@@ -144,7 +144,7 @@ def test_expired_invite_is_not_redeemable(tmp_path, monkeypatch):
     token = owner.post("/api/invites", json={}).json()["token"]
     _force_expire(store_mod, oid)
     _c, r = _redeem(app_mod, token, sub="s", email="late@a.co")
-    assert r.status_code == 403
+    assert r.status_code == 303 and "error=no_office" in r.headers["location"]
 
 
 def test_invites_are_office_scoped(tmp_path, monkeypatch):
