@@ -1,26 +1,30 @@
-export type LoginStep = "mfa" | "enroll";
 export type User = {
   username: string;
+  email: string;
   full_name: string | null;
   bar_registry_no: string | null;
   role: "owner" | "member";
   office: string | null;
-  has_2fa?: boolean;
-  require_2fa?: boolean;
 };
-// Login/register either hand back a full session ("done") or ask for a 2FA step.
-export type LoginResult = { step: LoginStep } | { step: "done"; user: User };
 export type Member = {
   id: number;
   username: string;
+  email: string;
   full_name: string | null;
   bar_registry_no: string | null;
   role: "owner" | "member";
   is_active: boolean;
-  enrolled: boolean;
-  mfa_required: boolean;
+  bound: boolean; // has completed a first Google sign-in
   is_self: boolean;
 };
+export type Invite = {
+  id: number;
+  email: string | null;
+  role: "owner" | "member";
+  expires_at: string;
+  redeemed: boolean;
+};
+export type NewInvite = Invite & { token: string; path: string };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type SessionBrief = {
   id: number;
@@ -358,8 +362,6 @@ export type HearingInput = {
   type?: string | null;
   notes?: string | null;
 };
-export type Provision = { secret: string; otpauth_uri: string; qr: string };
-export type EnrollResult = User & { recovery_codes: string[] };
 export type Coverage = {
   total_decisions: number;
   by_court: { label: string; total: number }[];
@@ -398,29 +400,22 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 export const api = {
   me: () => request<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
-  login: (username: string, password: string) =>
-    request<LoginResult>("/api/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    }),
-  register: (office_name: string, full_name: string, username: string, password: string) =>
-    request<LoginResult>("/api/register", {
-      method: "POST",
-      body: JSON.stringify({ office_name, full_name, username, password }),
-    }),
+  // Google OIDC is the only sign-in: a full-page redirect the browser navigates to.
+  googleSignInUrl: (invite?: string) =>
+    `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
   members: () => request<Member[]>("/api/members"),
-  addMember: (username: string, full_name: string, password: string, bar_registry_no?: string) =>
+  addMember: (email: string, username: string, full_name: string, bar_registry_no?: string) =>
     request<Member>("/api/members", {
       method: "POST",
-      body: JSON.stringify({ username, full_name, password, bar_registry_no }),
+      body: JSON.stringify({ email, username, full_name, bar_registry_no }),
     }),
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
-  setMember2fa: (id: number, required: boolean) =>
-    request<Member>(`/api/members/${id}/2fa`, {
-      method: "POST",
-      body: JSON.stringify({ required }),
-    }),
+  invites: () => request<Invite[]>("/api/invites"),
+  createInvite: (input: { email?: string | null; role?: "owner" | "member" }) =>
+    request<NewInvite>("/api/invites", { method: "POST", body: JSON.stringify(input) }),
+  revokeInvite: (id: number) =>
+    request<{ ok: boolean }>(`/api/invites/${id}`, { method: "DELETE" }),
   updateMe: (patch: { full_name?: string; bar_registry_no?: string | null }) =>
     request<User>("/api/me", { method: "PATCH", body: JSON.stringify(patch) }),
   getStyle: () => request<StyleData>("/api/style"),
@@ -553,17 +548,6 @@ export const api = {
     if (!res.ok) throw new ApiError(res.status, "Dışa aktarma başarısız");
     return res.blob();
   },
-  provision: () => request<Provision>("/api/2fa/provision"),
-  enroll: (code: string) =>
-    request<EnrollResult>("/api/2fa/enroll", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    }),
-  verify: (code: string) =>
-    request<User & { used_recovery: boolean }>("/api/2fa/verify", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    }),
   logout: () => request<{ ok: boolean }>("/api/logout", { method: "POST" }),
   sessions: (limit = 20, offset = 0) =>
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),

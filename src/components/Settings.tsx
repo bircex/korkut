@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { api, ApiError, type Member, type StyleFields, type User } from "../api";
+import { api, ApiError, type Invite, type Member, type StyleFields, type User } from "../api";
 import { navigate, usePath } from "../router";
 import {
   type Icon,
@@ -99,16 +99,20 @@ function BarNoField({ initial }: { initial: string | null }) {
 
 function Members({ isOwner }: { isOwner: boolean }) {
   const [members, setMembers] = useState<Member[]>([]);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
-  const [password, setPassword] = useState("");
   const [barNo, setBarNo] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [newLink, setNewLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     api.members().then(setMembers).catch(() => {});
-  }, []);
+    if (isOwner) api.invites().then(setInvites).catch(() => {});
+  }, [isOwner]);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -116,15 +120,15 @@ function Members({ isOwner }: { isOwner: boolean }) {
     setBusy(true);
     try {
       const m = await api.addMember(
+        email.trim(),
         username.trim(),
         fullName.trim(),
-        password,
         barNo.trim() || undefined,
       );
       setMembers((list) => [...list, m]);
+      setEmail("");
       setUsername("");
       setFullName("");
-      setPassword("");
       setBarNo("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Üye eklenemedi");
@@ -143,22 +147,45 @@ function Members({ isOwner }: { isOwner: boolean }) {
     }
   }
 
-  async function toggle2fa(m: Member) {
-    const turnOn = !(m.mfa_required || m.enrolled);
-    if (!turnOn && !confirm(`${m.full_name ?? m.username} için 2FA kapatılsın mı?`)) return;
+  async function createInvite() {
+    setError("");
+    setBusy(true);
+    setCopied(false);
     try {
-      const updated = await api.setMember2fa(m.id, turnOn);
-      setMembers((list) => list.map((x) => (x.id === m.id ? updated : x)));
+      const inv = await api.createInvite({ role: "member" });
+      setInvites((list) => [inv, ...list]);
+      const link = window.location.origin + inv.path;
+      setNewLink(link);
+      try {
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+      } catch {
+        /* clipboard blocked — the field is still selectable */
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Davet oluşturulamadı");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function revoke(id: number) {
+    try {
+      await api.revokeInvite(id);
+      setInvites((list) => list.filter((x) => x.id !== id));
     } catch {
       /* ignore */
     }
   }
 
-  function twoFaLabel(m: Member): string {
-    if (m.enrolled) return "2FA açık";
-    if (m.mfa_required) return "2FA zorunlu · kurulum bekliyor";
-    return "2FA kapalı";
+  function memberStatus(m: Member): string {
+    if (!m.is_active) return "pasif";
+    return m.bound ? "Google bağlı" : "davet bekliyor";
   }
+
+  const pendingInvites = invites.filter((i) => !i.redeemed);
+  const inputCls =
+    "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900";
 
   return (
     <div>
@@ -174,18 +201,9 @@ function Members({ isOwner }: { isOwner: boolean }) {
                 {m.is_self && <span className="text-zinc-400"> (siz)</span>}
               </span>
               <span className="block truncate text-[12px] text-zinc-400">
-                @{m.username} · {m.role === "owner" ? "Sahip" : "Üye"}
-                {!m.is_active ? " · pasif" : ` · ${twoFaLabel(m)}`}
+                {m.email} · {m.role === "owner" ? "Sahip" : "Üye"} · {memberStatus(m)}
               </span>
             </span>
-            {isOwner && m.is_active && (
-              <button
-                onClick={() => toggle2fa(m)}
-                className="shrink-0 rounded-md px-2 py-1 text-[12px] text-zinc-600 hover:bg-zinc-100"
-              >
-                {m.mfa_required || m.enrolled ? "2FA'yı kapat" : "2FA iste"}
-              </button>
-            )}
             {isOwner && !m.is_self && m.is_active && (
               <button
                 onClick={() => remove(m)}
@@ -199,50 +217,110 @@ function Members({ isOwner }: { isOwner: boolean }) {
       </div>
 
       {isOwner ? (
-        <form onSubmit={add} className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-          <p className="m-0 text-[13px] font-medium text-zinc-700">Yeni üye ekle</p>
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Ad Soyad"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          />
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Kullanıcı adı"
-            autoComplete="off"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Geçici parola (en az 8 karakter)"
-            autoComplete="new-password"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          />
-          <input
-            value={barNo}
-            onChange={(e) => setBarNo(e.target.value)}
-            placeholder="Baro sicil no (opsiyonel)"
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          />
-          <button
-            type="submit"
-            disabled={busy || !fullName.trim() || !username.trim() || password.length < 8}
-            className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+        <>
+          <form
+            onSubmit={add}
+            className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3"
           >
-            {busy ? "Ekleniyor…" : "Üye ekle"}
-          </button>
-          {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
-          <p className="m-0 text-[12px] text-zinc-400">
-            Üye, verdiğiniz kullanıcı adı + geçici parola ile giriş yapar. 2FA varsayılan kapalıdır;
-            yukarıdaki listeden bir üye için “2FA iste” diyerek zorunlu kılabilirsiniz.
-          </p>
-        </form>
+            <p className="m-0 text-[13px] font-medium text-zinc-700">Yeni üye ekle</p>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Ad Soyad"
+              className={inputCls}
+            />
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="Google e-postası"
+              autoComplete="off"
+              className={inputCls}
+            />
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Kullanıcı adı"
+              autoComplete="off"
+              className={inputCls}
+            />
+            <input
+              value={barNo}
+              onChange={(e) => setBarNo(e.target.value)}
+              placeholder="Baro sicil no (opsiyonel)"
+              className={inputCls}
+            />
+            <button
+              type="submit"
+              disabled={busy || !fullName.trim() || !username.trim() || !email.trim()}
+              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Ekleniyor…" : "Üye ekle"}
+            </button>
+            {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
+            <p className="m-0 text-[12px] text-zinc-400">
+              Üye bu e-postayla Google’a giriş yaptığında hesabı otomatik bağlanır. Parola yoktur.
+            </p>
+          </form>
+
+          <div className="mt-3 flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <div className="flex items-center justify-between">
+              <p className="m-0 text-[13px] font-medium text-zinc-700">Davet bağlantıları</p>
+              <button
+                onClick={createInvite}
+                disabled={busy}
+                className="rounded-md bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                Davet oluştur
+              </button>
+            </div>
+            {newLink && (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5">
+                <input
+                  readOnly
+                  value={newLink}
+                  onFocus={(e) => e.target.select()}
+                  className="min-w-0 flex-1 bg-transparent text-[12px] text-emerald-800 outline-none"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(newLink);
+                    setCopied(true);
+                  }}
+                  className="shrink-0 text-[12px] font-medium text-emerald-700 hover:underline"
+                >
+                  {copied ? "Kopyalandı" : "Kopyala"}
+                </button>
+              </div>
+            )}
+            {pendingInvites.length > 0 && (
+              <div className="divide-y divide-zinc-100">
+                {pendingInvites.map((i) => (
+                  <div key={i.id} className="flex items-center gap-2 py-1.5 text-[12px]">
+                    <span className="min-w-0 flex-1 truncate text-zinc-600">
+                      {i.email ?? "herkese açık"} · {i.role === "owner" ? "Sahip" : "Üye"} ·{" "}
+                      {new Date(i.expires_at).toLocaleDateString("tr-TR")} tarihine kadar
+                    </span>
+                    <button
+                      onClick={() => revoke(i.id)}
+                      className="shrink-0 rounded px-1.5 py-0.5 text-red-600 hover:bg-red-50"
+                    >
+                      İptal
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="m-0 text-[12px] text-zinc-400">
+              Bağlantıyı yeni üyeye gönderin; tıklayıp Google ile giriş yapınca ofise katılır. Tek
+              kullanımlıktır ve 7 gün geçerlidir.
+            </p>
+          </div>
+        </>
       ) : (
-        <p className="m-0 text-[13px] text-zinc-400">Üye eklemek/çıkarmak yalnızca ofis sahibine açık.</p>
+        <p className="m-0 text-[13px] text-zinc-400">
+          Üye eklemek/çıkarmak yalnızca ofis sahibine açık.
+        </p>
       )}
     </div>
   );
@@ -559,14 +637,13 @@ export function Settings({ user }: { user: User }) {
                 <Row label="Hukuk bürosu" value={user.office ?? "—"} />
                 <Row label="Rol" value={<RoleBadge role={user.role} />} />
                 <Row label="Kullanıcı adı" value={user.username} />
+                <Row label="E-posta" value={user.email} />
                 <Row label="Ad Soyad" value={user.full_name ?? "—"} />
               </dl>
               <BarNoField initial={user.bar_registry_no} />
               <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
-                <p className="m-0 text-[13px] text-zinc-600">İki adımlı doğrulama (2FA)</p>
-                <StatusBadge tone={user.has_2fa ? "success" : user.require_2fa ? "warning" : "neutral"}>
-                  {user.has_2fa ? "Açık" : user.require_2fa ? "Kurulum bekliyor" : "Kapalı"}
-                </StatusBadge>
+                <p className="m-0 text-[13px] text-zinc-600">Giriş yöntemi</p>
+                <StatusBadge tone="success">Google</StatusBadge>
               </div>
             </div>
           )}
