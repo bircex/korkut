@@ -1,16 +1,17 @@
-"""Web-app data models — office users, shared chat sessions, 2FA, the matter domain, and audit.
+"""Web-app data models — offices (tenants), users, chat sessions, the matter domain, and audit.
 
-All models share `core.db.Base`, so `core.db.init_db(engine)` creates them in one metadata. The
-app is SINGLE-TENANT: there is one `Office`, a singleton identity row (id, name). The first person
-to register (becoming `owner`) names it and adds members; usernames stay globally unique so login
-is username+password.
+All models share `core.db.Base`, so `core.db.init_db(engine)` builds them in one metadata via
+`create_all` (from scratch — no migrations). The app is **multi-tenant**: every tenant-owned model
+inherits `core.tenancy.TenantMixin` (an `office_id` FK auto-stamped from the request context + a
+non-enumerable `uid`), and isolation is enforced by Postgres RLS plus an app-layer filter. Each
+`Office` is a tenant; usernames are unique per office (`(office_id, username)`).
 
 The matter domain (`Client`, `Matter`, `CalendarEvent`) is the spine of the lawyer's work —
 research, drafts and calendar events hang off a matter. Exposed to the agent via
 `korkut.api.matter_tools`.
 
-Chat sessions are shared: every member sees and can open every session (Conversation). Messages
-belong to a Conversation, not to a single user.
+Chat sessions are shared across an office's members (any member can open any Conversation in their
+office); messages belong to a Conversation, not to a single user.
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ from korkut.core.tenancy import TenantMixin
 
 
 class Office(Base):
-    """The law office — a singleton identity row. Members share every session/document."""
+    """A law office — the tenant root. Members share every session/document within it."""
 
     __tablename__ = "offices"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -81,7 +82,7 @@ class StyleProfile(TenantMixin, Base):
 
 
 class OfficeModel(TenantMixin, Base):
-    """The office's custom LLM, defined by the owner in Özelleştir (a singleton row).
+    """The office's custom LLM, defined by the owner in Özelleştir (one row per office).
 
     When `enabled`, every chat/draft routes to this model instead of the built-in default.
     `is_local` True means the endpoint runs on-prem (Ollama etc.) → the router skips redaction
@@ -100,7 +101,7 @@ class OfficeModel(TenantMixin, Base):
 
 
 class Persona(TenantMixin, Base):
-    """The office's configurable assistant persona (the Kişilik UI). A singleton row.
+    """The office's configurable assistant persona (the Kişilik UI). One row per office.
 
     Augments — never replaces — the locked core persona in `brain/persona.py`. `tone` sets the
     assistant's voice, `expertise` names the office's focus areas, and `extra_rules` are house

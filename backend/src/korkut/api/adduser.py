@@ -1,7 +1,6 @@
-"""Create or update a user — an admin path alongside in-app self-registration.
-
-Single-tenant: there is one Office (a singleton identity row). The first bootstrap names it (from
---office or a default); the first user created becomes the owner, later users are members.
+"""Create or update a user — an admin bootstrap path (superseded by invite-token onboarding
+in Phase 2). Creates the office on first run (--office names it) and its owner; later users on
+that office join as members. Multi-tenant: rows are stamped with the office via the tenant context.
 
 Usage:
     python -m web.adduser <username> --office "Örnek Hukuk" --name "Ad Soyad"  # prompts for pw
@@ -35,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--office",
         default=None,
-        help="office name; used only on first bootstrap to name the singleton office "
+        help="office name; used only on first bootstrap to name the new office "
         "(ignored afterwards). Defaults to '<username> ofisi'. The first user is the owner.",
     )
     p.add_argument("--disable", action="store_true", help="deactivate this user + revoke sessions")
@@ -84,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
             action = "güncellendi"
             office_name = None
         else:
-            # Bootstrap the singleton office on first run; --office only names it then.
+            # Bootstrap the office on first run; --office only names it then.
             office = s.scalar(select(Office))
             if office is None:
                 office_name = (args.office or f"{username} ofisi").strip()
