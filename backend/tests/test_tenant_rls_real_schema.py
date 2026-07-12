@@ -86,9 +86,7 @@ def app_sf():
         cn.execute(
             text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_signin(text, text) TO {APP_ROLE}")
         )
-        cn.execute(
-            text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_invite(text) TO {APP_ROLE}")
-        )
+        cn.execute(text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_invite(text) TO {APP_ROLE}"))
     # seed two offices + a client and a user each (admin bypasses RLS; office_id passed explicitly)
     admin_sf = sessionmaker(admin, expire_on_commit=False)
     with admin_sf() as s:
