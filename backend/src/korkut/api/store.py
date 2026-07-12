@@ -15,7 +15,7 @@ from urllib.parse import urlsplit, urlunsplit
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from korkut.api import models  # noqa: F401  (registers the models on Base.metadata)
+from korkut.api import models
 from korkut.api.models import (
     CalendarEvent,
     MemoryItem,
@@ -56,6 +56,7 @@ def engine():
         # regenerated once the multi-tenant schema settles (see docs/SAAS_ARCHITECTURE.md).
         db.init_db(_engine)
         apply_tenant_rls(_engine)
+        setup_pg_resolvers(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
         # Every session is tenant-scoped: the GUC drives Postgres RLS, and the app-layer filter
         # scopes ORM reads by office (and covers SQLite, which has no RLS). Both fail closed.
@@ -92,6 +93,65 @@ def apply_tenant_rls(eng) -> None:
             for stmt in rls_policy_ddl(tbl).split(";\n"):
                 if stmt.strip():
                     cn.execute(text(stmt))
+
+
+# Owns the pre-tenant resolver functions: NOLOGIN so it cannot connect, BYPASSRLS so a
+# SECURITY DEFINER function it owns can read across offices. The app role only gets EXECUTE.
+_RESOLVER_ROLE = "korkut_resolver"
+
+
+def setup_pg_resolvers(eng) -> None:
+    """Install the pre-tenant SECURITY DEFINER resolver (Postgres only; idempotent).
+
+    Login and the request middleware must map a session's ``user_id -> office_id`` BEFORE any
+    tenant context exists. Under FORCE RLS the app role cannot read across offices, so a dedicated
+    NOLOGIN/BYPASSRLS role owns ``resolve_office_for_user(bigint)`` which returns only the office_id
+    (never row data); the connecting role gets EXECUTE. The app role still cannot read another
+    office's rows directly — proven in tests/test_tenant_rls_real_schema.py. Needs a privileged
+    bootstrap connection (CREATE ROLE), like apply_tenant_rls; see docs/SAAS_ARCHITECTURE.md §15.
+    """
+    if eng.dialect.name != "postgresql":
+        return
+    with eng.begin() as cn:
+        role = _RESOLVER_ROLE
+        cn.execute(
+            text(
+                f"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='{role}')"
+                f" THEN CREATE ROLE {role} NOLOGIN NOSUPERUSER BYPASSRLS; END IF; END $$;"
+            )
+        )
+        cn.execute(text(f"GRANT USAGE ON SCHEMA public TO {_RESOLVER_ROLE}"))
+        cn.execute(text(f"GRANT SELECT ON users TO {_RESOLVER_ROLE}"))
+        cn.execute(
+            text(
+                "CREATE OR REPLACE FUNCTION resolve_office_for_user(p_uid bigint) RETURNS bigint "
+                "LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public "
+                "AS 'SELECT office_id FROM users WHERE id = p_uid'"
+            )
+        )
+        cn.execute(text(f"ALTER FUNCTION resolve_office_for_user(bigint) OWNER TO {role}"))
+        cn.execute(text("REVOKE ALL ON FUNCTION resolve_office_for_user(bigint) FROM PUBLIC"))
+        # single-role dev model: the connecting role IS the app role. When bootstrap/runtime roles
+        # are split for prod, grant EXECUTE to the app role instead (see PROVISIONING.md).
+        cn.execute(
+            text("GRANT EXECUTE ON FUNCTION resolve_office_for_user(bigint) TO current_user")
+        )
+
+
+def resolve_office_for_user(s: Session, user_id: int) -> int | None:
+    """Map ``user_id -> office_id`` with no tenant context set yet (login / request middleware).
+
+    Postgres routes through the SECURITY DEFINER ``resolve_office_for_user`` function so the read
+    crosses offices safely (see setup_pg_resolvers). SQLite has no RLS, so it reads the column with
+    the app-layer tenant filter bypassed. Returns None for an unknown/absent user (fail-closed).
+    """
+    if s.bind is not None and s.bind.dialect.name == "postgresql":
+        return s.execute(text("SELECT resolve_office_for_user(:uid)"), {"uid": user_id}).scalar()
+    return s.execute(
+        select(models.User.office_id)
+        .where(models.User.id == user_id)
+        .execution_options(skip_tenant_filter=True)
+    ).scalar()
 
 
 # Folder (under templates/) → catalog `kind`. Example files are named "<type_id>.md".

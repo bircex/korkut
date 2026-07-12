@@ -15,7 +15,12 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from korkut.api import models
-from korkut.api.store import apply_tenant_rls, tenant_table_names
+from korkut.api.store import (
+    apply_tenant_rls,
+    resolve_office_for_user,
+    setup_pg_resolvers,
+    tenant_table_names,
+)
 from korkut.core import db
 from korkut.core.tenancy import (
     install_tenant_filter,
@@ -65,34 +70,43 @@ def app_sf():
         cn.execute(
             text(f"CREATE ROLE {APP_ROLE} LOGIN PASSWORD '{APP_PW}' NOSUPERUSER NOBYPASSRLS")
         )
-    # admin builds the real schema + RLS
+    # admin builds the real schema + RLS + the pre-tenant resolver
     db.init_db(admin)
     apply_tenant_rls(admin)
+    setup_pg_resolvers(admin)
     with admin.begin() as cn:
         dml = "SELECT, INSERT, UPDATE, DELETE"
         cn.execute(text(f"GRANT USAGE ON SCHEMA public TO {APP_ROLE}"))
         cn.execute(text(f"GRANT {dml} ON ALL TABLES IN SCHEMA public TO {APP_ROLE}"))
         cn.execute(text(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {APP_ROLE}"))
-    # seed two offices + a client each (admin bypasses RLS; office_id passed explicitly)
+        # prod bootstrap grants the resolver to the app role (setup_pg_resolvers granted it to the
+        # bootstrapping admin under the single-role dev model)
+        cn.execute(text(f"GRANT EXECUTE ON FUNCTION resolve_office_for_user(bigint) TO {APP_ROLE}"))
+    # seed two offices + a client and a user each (admin bypasses RLS; office_id passed explicitly)
     admin_sf = sessionmaker(admin, expire_on_commit=False)
     with admin_sf() as s:
         oa, ob = models.Office(name="A"), models.Office(name="B")
         s.add_all([oa, ob])
         s.flush()
+        ua = models.User(office_id=oa.id, username="a-owner", password_hash="x", role="owner")
+        ub = models.User(office_id=ob.id, username="b-owner", password_hash="x", role="owner")
         s.add_all(
             [
                 models.Client(office_id=oa.id, full_name="Ahmet (A)"),
                 models.Client(office_id=ob.id, full_name="Mehmet (B)"),
+                ua,
+                ub,
             ]
         )
         s.commit()
         ids = (oa.id, ob.id)
+        uids = (ua.id, ub.id)
 
     app = create_engine(_app_url(SUPER))
     sf = sessionmaker(app, expire_on_commit=False)
     install_tenant_guc(sf)
     install_tenant_filter(sf)
-    yield sf, ids
+    yield sf, ids, uids
     app.dispose()
     admin.dispose()
 
@@ -114,13 +128,13 @@ def test_tenant_table_names_cover_the_domain():
 
 
 def test_real_schema_isolates_clients(app_sf):
-    sf, (a_id, b_id) = app_sf
+    sf, (a_id, b_id), _ = app_sf
     assert _client_names(sf, a_id) == ["Ahmet (A)"]
     assert _client_names(sf, b_id) == ["Mehmet (B)"]
 
 
 def test_real_schema_fail_closed_without_context(app_sf):
-    sf, _ = app_sf
+    sf, _, _ = app_sf
     tok = set_current_office(None)  # override the autouse conftest context
     try:
         with sf() as s:
@@ -132,7 +146,7 @@ def test_real_schema_fail_closed_without_context(app_sf):
 def test_real_schema_with_check_blocks_cross_office_insert(app_sf):
     from sqlalchemy.exc import ProgrammingError
 
-    sf, (a_id, b_id) = app_sf
+    sf, (a_id, b_id), _ = app_sf
     tok = set_current_office(a_id)
     try:
         with sf() as s:
@@ -147,7 +161,7 @@ def test_composite_fk_rejects_cross_office_reference(app_sf):
     """A matter in office A cannot reference office B's client — the composite FK rejects it."""
     from sqlalchemy.exc import IntegrityError
 
-    sf, (a_id, b_id) = app_sf
+    sf, (a_id, b_id), _ = app_sf
     tok = set_current_office(b_id)
     try:
         with sf() as s:
@@ -161,5 +175,30 @@ def test_composite_fk_rejects_cross_office_reference(app_sf):
             s.add(models.Matter(office_id=a_id, title="x", client_id=b_client_id))
             with pytest.raises(IntegrityError):
                 s.commit()
+    finally:
+        reset_current_office(tok)
+
+
+def test_resolver_maps_user_to_office_without_context(app_sf):
+    # the request middleware resolves office from user_id BEFORE any tenant context exists
+    sf, (a_id, b_id), (a_uid, b_uid) = app_sf
+    tok = set_current_office(None)
+    try:
+        with sf() as s:
+            assert resolve_office_for_user(s, a_uid) == a_id
+            assert resolve_office_for_user(s, b_uid) == b_id
+            assert resolve_office_for_user(s, 10**9) is None  # unknown user -> None (fail-closed)
+    finally:
+        reset_current_office(tok)
+
+
+def test_resolver_is_not_a_cross_tenant_read_hole(app_sf):
+    # the SECURITY DEFINER resolver must not let the app role read another office's rows directly
+    sf, (a_id, _b_id), _ = app_sf
+    tok = set_current_office(a_id)
+    try:
+        with sf() as s:
+            rows = s.query(models.User).all()
+            assert [u.username for u in rows] == ["a-owner"]  # never b-owner
     finally:
         reset_current_office(tok)
