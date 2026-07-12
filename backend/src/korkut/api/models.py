@@ -24,6 +24,7 @@ from sqlalchemy import (
     JSON,
     Date,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Numeric,
     String,
@@ -69,9 +70,10 @@ class StyleProfile(TenantMixin, Base):
             "uq_style_office_user", "office_id", "user_id", unique=True,
             sqlite_where=text("user_id IS NOT NULL"), postgresql_where=text("user_id IS NOT NULL"),
         ),
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    user_id: Mapped[int | None] = mapped_column(default=None)
     letterhead: Mapped[str] = mapped_column(Text, default="")  # antet (deterministik, üstte)
     signature: Mapped[str] = mapped_column(
         Text, default=""
@@ -130,11 +132,14 @@ class MemoryItem(TenantMixin, Base):
     """
 
     __tablename__ = "memory_items"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     kind: Mapped[str] = mapped_column(String(16), default="note")  # "note" | "fact" | "preference"
     text: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(16), default="active")  # "active" | "pending"
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
@@ -192,14 +197,16 @@ class Conversation(TenantMixin, Base):
     """A chat session, shared across the whole office (any user can open any session)."""
 
     __tablename__ = "conversations"
-    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_conversations_office_id"),)
+    __table_args__ = (
+        UniqueConstraint("office_id", "id", name="uq_conversations_office_id"),
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     # Optional link to a matter (dosya): a chat can belong to a case file. Null = unfiled.
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
-    )
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     title: Mapped[str] = mapped_column(String(120), default="Yeni sohbet")
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     created_by_name: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
@@ -211,9 +218,12 @@ class Conversation(TenantMixin, Base):
 
 class Message(TenantMixin, Base):
     __tablename__ = "messages"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
+    user_id: Mapped[int | None] = mapped_column(default=None)  # author
     role: Mapped[str] = mapped_column(String(16))  # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
@@ -229,11 +239,14 @@ class Document(TenantMixin, Base):
     """
 
     __tablename__ = "documents"
-    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_documents_office_id"),)
-    id: Mapped[int] = mapped_column(primary_key=True)
-    conversation_id: Mapped[int] = mapped_column(
-        ForeignKey("conversations.id"), unique=True, index=True
+    __table_args__ = (
+        UniqueConstraint("office_id", "id", name="uq_documents_office_id"),
+        ForeignKeyConstraint(
+            ["office_id", "conversation_id"], ["conversations.office_id", "conversations.id"]
+        ),
     )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(unique=True, index=True)
     title: Mapped[str] = mapped_column(String(200), default="Belge")
     content_md: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(30), default="draft")
@@ -263,8 +276,13 @@ class ProposedEdit(TenantMixin, Base):
     """Korkut's proposed new content, pending the lawyer's accept/revert (one pending at a time)."""
 
     __tablename__ = "proposed_edits"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["office_id", "document_id"], ["documents.office_id", "documents.id"]
+        ),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
+    document_id: Mapped[int] = mapped_column(index=True)
     content_md: Mapped[str] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(String(300), default=None)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|reverted
@@ -316,9 +334,10 @@ class TemplateOverride(TenantMixin, Base):
             sqlite_where=text("user_id IS NULL"),
             postgresql_where=text("user_id IS NULL"),
         ),
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    user_id: Mapped[int | None] = mapped_column(index=True, default=None)
     type_id: Mapped[str] = mapped_column(String(80), index=True)
     content: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
@@ -351,12 +370,14 @@ class OutboundMessage(TenantMixin, Base):
     """
 
     __tablename__ = "outbound_messages"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)  # author
-    # Optional link to a matter (dosya): correspondence filed under a case file. Null = unfiled.
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
     )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(default=None)  # author
+    # Optional link to a matter (dosya): correspondence filed under a case file. Null = unfiled.
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     kind: Mapped[str] = mapped_column(String(32), default="email")
     to_addr: Mapped[str] = mapped_column(String(320))
     subject: Mapped[str] = mapped_column(String(500), default="")
@@ -386,9 +407,10 @@ class IntegrationLink(TenantMixin, Base):
     __tablename__ = "integration_links"
     __table_args__ = (
         UniqueConstraint("office_id", "channel", "external_id", name="uq_integration_external"),
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[int] = mapped_column(index=True)
     channel: Mapped[str] = mapped_column(String(32))  # "telegram" | "whatsapp" | "email"
     external_id: Mapped[str | None] = mapped_column(String(320), default=None, index=True)
     code: Mapped[str | None] = mapped_column(String(16), default=None)  # one-time, while pending
@@ -406,11 +428,14 @@ class IntegrationThread(TenantMixin, Base):
     __tablename__ = "integration_threads"
     __table_args__ = (
         UniqueConstraint("office_id", "channel", "thread_id", name="uq_integration_thread"),
+        ForeignKeyConstraint(
+            ["office_id", "conversation_id"], ["conversations.office_id", "conversations.id"]
+        ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     channel: Mapped[str] = mapped_column(String(32))
     thread_id: Mapped[str] = mapped_column(String(190))
-    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
+    conversation_id: Mapped[int] = mapped_column(index=True)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
@@ -444,9 +469,12 @@ class Matter(TenantMixin, Base):
     """
 
     __tablename__ = "matters"
-    __table_args__ = (UniqueConstraint("office_id", "id", name="uq_matters_office_id"),)
+    __table_args__ = (
+        UniqueConstraint("office_id", "id", name="uq_matters_office_id"),
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     title: Mapped[str] = mapped_column(String(200))
     client_id: Mapped[int | None] = mapped_column(
         ForeignKey("clients.id"), default=None, index=True
@@ -486,6 +514,9 @@ class CalendarEvent(TenantMixin, Base):
     """
 
     __tablename__ = "calendar_events"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     category: Mapped[str] = mapped_column(String(20), default="appointment", index=True)
     type: Mapped[str | None] = mapped_column(String(100), default=None)  # finer subtype
@@ -510,7 +541,7 @@ class CalendarEvent(TenantMixin, Base):
     remind_channel: Mapped[str | None] = mapped_column(String(32), default=None)  # email|whatsapp…
     rrule: Mapped[str | None] = mapped_column(String(300), default=None)  # phase: recurrence
     notes: Mapped[str | None] = mapped_column(Text, default=None)
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     matter: Mapped[Matter | None] = relationship(back_populates="events")
@@ -527,13 +558,13 @@ class Invoice(TenantMixin, Base):
     """
 
     __tablename__ = "invoices"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "client_id"], ["clients.office_id", "clients.id"]),
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    client_id: Mapped[int | None] = mapped_column(
-        ForeignKey("clients.id"), default=None, index=True
-    )
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
-    )
+    client_id: Mapped[int | None] = mapped_column(default=None, index=True)
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0)  # net tutar (KDV hariç)
     vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=20)  # KDV %
     description: Mapped[str | None] = mapped_column(String(300), default=None)
@@ -549,13 +580,13 @@ class Expense(TenantMixin, Base):
     """
 
     __tablename__ = "expenses"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+        ForeignKeyConstraint(["office_id", "client_id"], ["clients.office_id", "clients.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
-    )
-    client_id: Mapped[int | None] = mapped_column(
-        ForeignKey("clients.id"), default=None, index=True
-    )
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
+    client_id: Mapped[int | None] = mapped_column(default=None, index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0)
     kind: Mapped[str | None] = mapped_column(String(40), default=None)  # harç, posta, bilirkişi…
     description: Mapped[str | None] = mapped_column(String(300), default=None)
@@ -571,18 +602,20 @@ class Task(TenantMixin, Base):
     """
 
     __tablename__ = "tasks"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, default=None)
     assignee_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"), default=None, index=True
     )
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
-    )
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     status: Mapped[str] = mapped_column(String(16), default="open")  # open | done
     due_date: Mapped[_date | None] = mapped_column(Date, default=None, index=True)
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
@@ -597,17 +630,19 @@ class DocumentRecord(TenantMixin, Base):
     """
 
     __tablename__ = "document_records"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+        ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
     )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     # incoming | outgoing | internal
     direction: Mapped[str] = mapped_column(String(16), default="incoming")
     title: Mapped[str] = mapped_column(String(200))
     reference_no: Mapped[str | None] = mapped_column(String(100), default=None)  # sayı/referans
     doc_date: Mapped[_date | None] = mapped_column(Date, default=None)  # evrak tarihi
     notes: Mapped[str | None] = mapped_column(Text, default=None)
-    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
+    created_by: Mapped[int | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
