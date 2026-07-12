@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { SITE, GITHUB_URL, FAQS } from "../consts";
+import { SITE, FAQS } from "../consts";
 
 interface Props {
   title?: string;
@@ -24,7 +24,7 @@ const {
 const canonical = new URL(path, SITE.url).toString();
 const ogImage = new URL(image, SITE.url).toString();
 
-// JSON-LD yapılandırılmış veri — arama motorları için zengin sonuç.
+// JSON-LD yapılandırılmış veri: arama motorları için zengin sonuç.
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -32,22 +32,23 @@ const jsonLd = {
       "@type": "SoftwareApplication",
       name: SITE.name,
       applicationCategory: "BusinessApplication",
-      operatingSystem: "Linux, macOS, Windows",
+      operatingSystem: "Web",
       description: SITE.description,
       url: canonical,
       inLanguage: "tr-TR",
-      license: "https://opensource.org/licenses/MIT",
-      isAccessibleForFree: true,
       offers: {
         "@type": "Offer",
-        price: "0",
+        availability: "https://schema.org/InStock",
         priceCurrency: "TRY",
       },
       author: {
-        "@type": "Person",
+        "@type": "Organization",
         name: SITE.author,
       },
-      codeRepository: GITHUB_URL,
+      publisher: {
+        "@type": "Organization",
+        name: SITE.author,
+      },
     },
     {
       "@type": "WebSite",
@@ -96,7 +97,7 @@ const jsonLd = {
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Korkut — açık kaynak hukuk asistanı" />
+    <meta property="og:image:alt" content="Korkut: avukatlar için yapay zeka asistanı" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />

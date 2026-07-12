@@ -1,0 +1,302 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { CONTACT_EMAIL, DEMO_PATH } from "../consts";
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout
+  title="Demo iste"
+  description="Büronuz için Korkut demosu talep edin. Kısa bir form doldurun, size ihtiyacınıza uygun kurulumla birlikte dönüş yapalım."
+  path={`${base}${DEMO_PATH}`}
+>
+  <Nav />
+  <main>
+    <section class="demo">
+      <div class="wrap">
+        <div class="demo-grid">
+          <!-- Sol: anlatım -->
+          <div class="demo-intro">
+            <span class="eyebrow">Demo iste</span>
+            <h1>Büronuz için bir demo ayarlayalım</h1>
+            <p>
+              Formu doldurun, en kısa sürede size dönüş yapalım. Görüşmede
+              Korkut'u canlı gösterir, büronuzun ihtiyacına uygun kurulumu
+              birlikte belirleriz.
+            </p>
+            <ul class="demo-points">
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span>Canlı, büronuza özel gösterim</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span>Kurulum ve büronuza uyarlamayı birlikte planlayalım</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span>Bağlayıcı değil, ücretsiz</span>
+              </li>
+            </ul>
+            <p class="demo-alt">
+              Dilerseniz doğrudan
+              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+              adresine de yazabilirsiniz.
+            </p>
+          </div>
+
+          <!-- Sağ: form -->
+          <div class="demo-card">
+            <form id="demo-form" novalidate>
+              <div class="field">
+                <label for="office">Büro adı</label>
+                <input id="office" name="office" type="text" required autocomplete="organization" />
+              </div>
+              <div class="field">
+                <label for="name">Ad soyad</label>
+                <input id="name" name="name" type="text" required autocomplete="name" />
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="email">E-posta</label>
+                  <input id="email" name="email" type="email" required autocomplete="email" />
+                </div>
+                <div class="field">
+                  <label for="phone">Telefon <span class="opt">(isteğe bağlı)</span></label>
+                  <input id="phone" name="phone" type="tel" autocomplete="tel" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="size">Avukat sayısı</label>
+                <select id="size" name="size">
+                  <option value="1">1</option>
+                  <option value="2-5" selected>2-5</option>
+                  <option value="6-10">6-10</option>
+                  <option value="11-25">11-25</option>
+                  <option value="25+">25+</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="message">Mesaj <span class="opt">(isteğe bağlı)</span></label>
+                <textarea id="message" name="message" rows="4"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg btn-block">
+                Demo talebini gönder
+              </button>
+
+              <p id="demo-status" class="demo-status" role="status" aria-live="polite"></p>
+              <p class="demo-privacy">
+                Bilgileriniz yalnızca size dönüş yapmak için kullanılır.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .demo {
+    padding: 72px 0 88px;
+  }
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .demo-grid {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+  }
+  .demo-intro h1 {
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.024em;
+    font-weight: 800;
+    margin: 12px 0 16px;
+  }
+  .demo-intro > p {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 460px;
+  }
+  .demo-points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 26px 0;
+  }
+  .demo-points li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 15px;
+  }
+  .tick {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+  .demo-alt {
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .demo-alt a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .demo-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px;
+  }
+  @media (max-width: 480px) {
+    .demo-card {
+      padding: 24px 20px;
+    }
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 480px) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+  label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .opt {
+    color: var(--muted);
+    font-weight: 400;
+  }
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    width: 100%;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  textarea {
+    resize: vertical;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input:user-invalid,
+  select:user-invalid {
+    border-color: #d64545;
+  }
+  .btn-block {
+    justify-content: center;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .demo-status {
+    margin-top: 14px;
+    font-size: 14.5px;
+    font-weight: 600;
+    display: none;
+  }
+  .demo-status.show {
+    display: block;
+  }
+  .demo-status.ok {
+    color: #1f7a4d;
+  }
+  .demo-status.err {
+    color: #d64545;
+  }
+  .demo-privacy {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+
+<script define:vars={{ contact: CONTACT_EMAIL }}>
+  // Statik site: form gönderimi, alanlardan derlenmiş bir e-posta taslağı açar.
+  // İleride bir uç noktaya (Formspree, kendi API'niz) bağlamak için fetch ekleyin.
+  const form = document.getElementById("demo-form");
+  const status = document.getElementById("demo-status");
+
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    const data = new FormData(form);
+    const g = (k) => (data.get(k) || "").toString().trim();
+
+    const lines = [
+      "Merhaba,",
+      "",
+      "Büromuz için Korkut demosu talep ediyoruz.",
+      "",
+      `Büro adı: ${g("office")}`,
+      `İlgili kişi: ${g("name")}`,
+      `E-posta: ${g("email")}`,
+      `Telefon: ${g("phone") || "-"}`,
+      `Avukat sayısı: ${g("size")}`,
+      "",
+      `Mesaj: ${g("message") || "-"}`,
+      "",
+    ];
+
+    const subject = `Korkut demo talebi: ${g("office")}`;
+    const href =
+      `mailto:${contact}?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(lines.join("\n"))}`;
+
+    window.location.href = href;
+
+    status.textContent =
+      "Talebiniz e-posta uygulamanızda hazırlandı. Göndererek tamamlayabilirsiniz.";
+    status.classList.add("show", "ok");
+    status.classList.remove("err");
+  });
+</script>

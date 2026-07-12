@@ -1,5 +1,5 @@
 ---
-// Yetenekler — iki grup (Hukuk / Ofis), her biri attacklens.io "Discover and
+// Yetenekler: iki grup (Hukuk / Ofis), her biri attacklens.io "Discover and
 // assess" tarzı sekmeli showcase. Sekmelerin sağ paneline ss/video gelecek:
 //   shot: "/shots/arastirma.png"  → görsel
 //   video: "/shots/dilekce.mp4"   → video
@@ -9,7 +9,7 @@ const groups = [
     key: "hukuk",
     eyebrow: "Hukuk yetenekleri",
     title: "Davanın hukuki tarafı",
-    lead: "İçtihattan dilekçeye, belge incelemesine — hukuki işin ağır yükünü Korkut taşır, siz onaylarsınız.",
+    lead: "İçtihattan dilekçeye, belge incelemesine kadar hukuki işin ağır yükünü Korkut taşır, siz onaylarsınız.",
     tabs: [
       {
         id: "arastirma",
@@ -43,7 +43,7 @@ const groups = [
         title: "Belge inceleme & çıkarım",
         body: "Yüklenen evrağın metnini yerelde, güvenle çıkarır. Dosya diske yazılmaz; içerik 'güvenilmez veri' olarak izole edilir.",
         points: [
-          "Yerelde metin çıkarımı — bayt içeriği diske yazılmaz",
+          "Yerelde metin çıkarımı (bayt içeriği diske yazılmaz)",
           "Katı dosya doğrulama (magic-number) ve boyut sınırı",
           "Prompt injection'a karşı içerik izolasyonu",
         ],
@@ -56,7 +56,7 @@ const groups = [
     key: "ofis",
     eyebrow: "Ofis yetenekleri",
     title: "Büronun günlük işleyişi",
-    lead: "Dosya, takvim, görev, bütçe ve yazışma — büronun idari tarafı da aynı asistanda, aynı onay akışında.",
+    lead: "Dosya, takvim, görev, bütçe ve yazışma dahil, büronun idari tarafı da aynı asistanda ve aynı onay akışında.",
     tabs: [
       {
         id: "dosya",
@@ -90,7 +90,7 @@ const groups = [
         title: "Duruşma takvimi & etkinlikler",
         body: "Duruşmaları ekler ve listeler; tekrarlayan etkinlikleri (rrule) destekler, yaklaşan işleri önden gösterir.",
         points: [
-          "Duruşma ekle/listele — tarih, saat, yer, tür",
+          "Duruşma ekle/listele (tarih, saat, yer, tür)",
           "Tekrarlayan etkinlikler (rrule) desteği",
           "Yaklaşan 14/365 günlük gündem görünümü",
         ],
@@ -114,7 +114,7 @@ const groups = [
         id: "butce",
         tab: "Bütçe & cari",
         title: "Fatura, masraf & cari takibi",
-        body: "Fatura ve masrafları kaydeder; müvekkil bazında cari hesabı — faturalanan, tahsil edilen, kalan bakiye — özetler.",
+        body: "Fatura ve masrafları kaydeder; müvekkil bazında cari hesabı (faturalanan, tahsil edilen, kalan bakiye) özetler.",
         points: [
           "Fatura & masraf kaydı",
           "Cari hesap: faturalanan / tahsilat / bakiye",
@@ -142,7 +142,7 @@ const groups = [
     key: "ozellestir",
     eyebrow: "Özelleştirme",
     title: "Büronuza göre uyarlayın",
-    lead: "Korkut'un üslubunu, hafızasını ve belge stilini büronuzun çalışma biçimine göre ayarlayın — çekirdek güvenlik, atıf ve onay kuralları sabit kalır.",
+    lead: "Korkut'un üslubunu, hafızasını ve belge stilini büronuzun çalışma biçimine göre ayarlayın; çekirdek güvenlik, atıf ve onay kuralları sabit kalır.",
     tabs: [
       {
         id: "kisilik",
@@ -270,6 +270,12 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
     }
   </div>
 </section>
+
+<!-- Tam ekran görüntü (lightbox). Ekran görüntüsüne tıklayınca büyür. -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" type="button" aria-label="Kapat">×</button>
+  <img class="lightbox-img" src="" alt="" />
+</div>
 
 <style>
   #ozellikler {
@@ -401,6 +407,10 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
     object-fit: cover;
     display: block;
   }
+  /* Ekran görüntüsü tıklanınca büyür. */
+  .frame-body img {
+    cursor: zoom-in;
+  }
   .placeholder {
     width: 100%;
     height: 100%;
@@ -427,6 +437,62 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
   .placeholder span {
     font-size: 13px;
   }
+
+  /* Tam ekran görüntü (lightbox) */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vmin;
+    background: rgba(10, 10, 10, 0.86);
+    backdrop-filter: blur(4px);
+    cursor: zoom-out;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .lightbox[hidden] {
+    display: none;
+  }
+  .lightbox.open {
+    opacity: 1;
+  }
+  .lightbox-img {
+    max-width: 92vw;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    cursor: default;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s ease;
+  }
+  .lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox {
+      transition: none;
+    }
+  }
 </style>
 
 <script>
@@ -446,5 +512,64 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
         panels[i]?.classList.add("is-active");
       });
     });
+  });
+</script>
+
+<script>
+  // Ekran görüntüsüne tıklayınca tam ekran gösterim (lightbox).
+  const lb = document.getElementById("lightbox") as HTMLElement | null;
+  const lbImg = lb?.querySelector<HTMLImageElement>(".lightbox-img");
+  const lbClose = lb?.querySelector<HTMLButtonElement>(".lightbox-close");
+  let lastFocus: HTMLElement | null = null;
+
+  const openLightbox = (src: string, alt: string) => {
+    if (!lb || !lbImg) return;
+    lastFocus = document.activeElement as HTMLElement;
+    lbImg.src = src;
+    lbImg.alt = alt;
+    lb.hidden = false;
+    // Görünürlüğe geçmeden bir kare bekleyip geçiş animasyonunu tetikle.
+    requestAnimationFrame(() => lb.classList.add("open"));
+    document.body.style.overflow = "hidden";
+    lbClose?.focus();
+  };
+
+  const closeLightbox = () => {
+    if (!lb || !lbImg) return;
+    lb.classList.remove("open");
+    document.body.style.overflow = "";
+    const done = () => {
+      lb.hidden = true;
+      lbImg.src = "";
+      lb.removeEventListener("transitionend", done);
+    };
+    lb.addEventListener("transitionend", done);
+    // Animasyon çalışmazsa yine de kapat.
+    setTimeout(done, 220);
+    lastFocus?.focus();
+  };
+
+  document
+    .querySelectorAll<HTMLImageElement>("#ozellikler .frame-body img")
+    .forEach((img) => {
+      img.setAttribute("role", "button");
+      img.setAttribute("tabindex", "0");
+      img.setAttribute("aria-label", `${img.alt} (büyütmek için tıklayın)`);
+      img.addEventListener("click", () => openLightbox(img.currentSrc || img.src, img.alt));
+      img.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openLightbox(img.currentSrc || img.src, img.alt);
+        }
+      });
+    });
+
+  // Görselin dışına tıklama, kapat düğmesi ve Esc ile kapanır.
+  lb?.addEventListener("click", (e) => {
+    if (e.target === lb) closeLightbox();
+  });
+  lbClose?.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && lb && !lb.hidden) closeLightbox();
   });
 </script>

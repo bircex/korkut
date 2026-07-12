@@ -1,20 +1,20 @@
 ---
 const items = [
   {
-    title: "Kendi sunucunuzda barındırılır",
-    body: "Sohbet uygulaması ve veritabanı sizin makinenizde çalışır. Üçüncü taraf bir platforma bağımlı değilsiniz.",
-  },
-  {
-    title: "Yerelde hiçbir veri dışarı çıkmaz",
-    body: "Yerel bir modele bağlandığınızda tüm veri makinede kalır. Proje hiçbir telemetri veya analitik göndermez.",
+    title: "Her büro tamamen izole",
+    body: "Her büro veritabanı düzeyinde (satır düzeyi güvenlik ile) ayrılır ve hassas alanlar şifrelenir. Hiçbir büro bir diğerinin verisini göremez.",
   },
   {
     title: "Buluta giderken en iyi çaba ile rumuzlama",
-    body: "Bulut model seçerseniz giden metin önce rumuzlanır — bir güvence değil, azaltıcı bir önlemdir (bkz. DISCLAIMER).",
+    body: "Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgiler önce rumuzlanır. Bu bir güvence değil, azaltıcı bir önlemdir (bkz. DISCLAIMER).",
   },
   {
-    title: "Onaysız kalıcı işlem yok, zorunlu 2FA",
-    body: "Duruşma, dilekçe ya da veri — siz onaylamadan kaydedilmez. Zorunlu TOTP iki adımlı doğrulama, tek büroya özel kurulum.",
+    title: "Onaysız kalıcı işlem yok",
+    body: "Siz onaylamadan hiçbir duruşma, dilekçe ya da veri kaydedilmez ya da gönderilmez. Her giden mesaj önce önünüze gelir.",
+  },
+  {
+    title: "Google ile güçlü kimlik doğrulama",
+    body: "Giriş Google üzerinden yapılır; iki adımlı doğrulama Google tarafında yönetilir. Her kurulum tek büroya hizmet eder.",
   },
 ];
 ---
@@ -23,7 +23,7 @@ const items = [
   <div class="wrap band-grid">
     <div>
       <span class="eyebrow">Gizlilik &amp; Güvenlik</span>
-      <h2>Veriler ofisten çıkmaz</h2>
+      <h2>Veriler kontrolünüzde kalır</h2>
       <p class="section-lead">
         Müvekkil verisi en hassas varlığınızdır. Korkut baştan sona bu ilkeyle
         tasarlandı; KVKK sorumluluğu sizde, kontrol de sizde kalır.

@@ -1,5 +1,5 @@
 ---
-import { GITHUB_URL, DOCS_URL } from "../consts";
+import { DEMO_PATH, CONTACT_EMAIL, APP_URL } from "../consts";
 const year = 2026;
 const base = import.meta.env.BASE_URL;
 ---
@@ -17,17 +17,18 @@ const base = import.meta.env.BASE_URL;
     </div>
 
     <p class="muted tagline">
-      Hukuk büroları için, veriyi ofiste tutan açık kaynak yapay zeka asistanı.
+      Hukuk büroları için, her büroyu izole tutan yapay zeka asistanı.
     </p>
 
     <nav class="foot-links" aria-label="Alt menü">
-      <a href={GITHUB_URL} target="_blank" rel="noopener">GitHub</a>
-      <a href={DOCS_URL} target="_blank" rel="noopener">Dokümantasyon</a>
-      <a href={`${GITHUB_URL}/blob/main/LICENSE`} target="_blank" rel="noopener">MIT Lisansı</a>
+      <a href={APP_URL}>Giriş yap</a>
+      <a href={`${base}${DEMO_PATH}`}>Demo iste</a>
+      <a href={`${base}#guvenlik`}>Güvenlik</a>
+      <a href={`mailto:${CONTACT_EMAIL}`}>İletişim</a>
     </nav>
   </div>
   <div class="wrap foot-bottom">
-    <span class="muted">© {year} Korkut · Recep Kızılarslan</span>
+    <span class="muted">© {year} Korkut</span>
     <span class="muted"
       >Hukuki tavsiye değildir. “OLDUĞU GİBİ”, garanti verilmeksizin sunulur.</span
     >

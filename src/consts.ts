@@ -1,60 +1,62 @@
-// Merkezî site sabitleri — SEO ve içerik burada tek yerden yönetilir.
+// Merkezî site sabitleri: SEO ve içerik burada tek yerden yönetilir.
 // Kendi alan adınıza göre `url` değerini güncelleyin.
 
 export const SITE = {
-  // Sitenin yayınlandığı origin — özel alan adı (apex). astro.config.mjs'te base "/".
+  // Sitenin yayınlandığı origin (özel alan adı, apex). astro.config.mjs'te base "/".
   url: "https://korkutai.com",
   name: "Korkut",
-  title: "Korkut — Avukatlar için açık kaynak yapay zeka asistanı",
+  title: "Korkut: Avukatlar için yapay zeka asistanı",
   description:
-    "Avukatlar ve hukuk büroları için Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve bütçeyi takip eder, yazışmaları yürütür. Kendi sunucunuzda çalışır, veriler ofiste kalır. MIT lisanslı, açık kaynak.",
+    "Avukatlar ve hukuk büroları için Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve bütçeyi takip eder, yazışmaları yürütür. Bulutta her büro tamamen izole ve verileriniz güvende kalır.",
   locale: "tr_TR",
   lang: "tr",
-  author: "Recep Kızılarslan",
+  author: "Korkut",
   keywords:
-    "hukuk yapay zeka, avukat asistanı, içtihat arama, mevzuat arama, dilekçe taslağı, Yargıtay, Danıştay, self-hosted hukuk yazılımı, açık kaynak hukuk asistanı, KVKK",
+    "hukuk yapay zeka, avukat asistanı, içtihat arama, mevzuat arama, dilekçe taslağı, Yargıtay, Danıştay, bulut hukuk asistanı, kurumsal hukuk yapay zeka, KVKK",
 } as const;
 
-export const GITHUB_URL = "https://github.com/recepkizilarslan/korkut-backend";
-export const CONTACT_EMAIL = "recepkizilarslan@gmail.com";
-export const DOCS_URL = `${GITHUB_URL}/tree/main/docs`;
-export const INSTALL_DOCS_URL = `${GITHUB_URL}/blob/main/docs/INSTALL.md`;
-export const CLONE_CMD =
-  "git clone https://github.com/recepkizilarslan/korkut-backend.git && cd korkut-backend";
+// Uygulama girişi (bulut): Google ile giriş app subdomain'inde yapılır.
+export const APP_URL = "https://app.korkutai.com";
 
-// Sıkça sorulan sorular — hem FAQ bölümü hem de FAQPage yapılandırılmış verisi.
+// İletişim: büro erişimi demo talebi veya iletişim ile açılır.
+export const CONTACT_EMAIL = "iletisim@korkutai.com";
+
+// Demo talep formu (ayrı sayfa) ve e-posta yedeği.
+export const DEMO_PATH = "demo";
+export const DEMO_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+  "Korkut demo talebi",
+)}`;
+
+// Sıkça sorulan sorular: hem FAQ bölümü hem de FAQPage yapılandırılmış verisi.
 export const FAQS = [
   {
     q: "Verilerim nerede tutuluyor?",
-    a: "Tüm veriler (sohbetler, belgeler, hesaplar) sizin kendi sunucunuzda kalır. Yerel bir modele bağlandığınızda hiçbir şey makineden çıkmaz. Proje hiçbir telemetri veya analitik göndermez.",
+    a: "Her büro veritabanı düzeyinde tamamen izole edilir (satır düzeyi güvenlik ile) ve hassas alanlar şifrelenir; hiçbir büro bir diğerinin verisini göremez.",
   },
   {
-    q: "Korkut açık kaynak mı?",
-    a: "Evet. Korkut MIT lisanslı, tamamen açık kaynak bir yazılımdır. Kaynak kodunun tamamı GitHub'da; inceleyebilir, değiştirebilir ve kendi büronuza uyarlayabilirsiniz.",
+    q: "Nasıl başlıyorum, kuruluma gerek var mı?",
+    a: "Bulutta teknik kurulum yoktur: demo sonrası büronuza bir davet bağlantısı iletilir, Google ile giriş yaparak dakikalar içinde başlarsınız. Bakım ve güncellemeler bize aittir.",
   },
   {
-    q: "Hangi yapay zeka modellerini kullanabilirim?",
-    a: "OpenAI uyumlu her modele bağlanabilirsiniz: LM Studio veya Ollama ile yerelde çalıştırın ya da OpenAI, Anthropic, Google Gemini gibi bulut sağlayıcılara bağlanın. Sağlayıcı bağımsızdır, tek satır ayarla değişir.",
+    q: "Korkut hangi yapay zeka modellerini kullanıyor?",
+    a: "Korkut, hukuki işe uygun üst düzey modellerle çalışacak biçimde yapılandırılır. Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgilerin yerine önce en iyi çaba ile takma değer konur.",
   },
   {
-    q: "Bulut model kullanırsam verilerim güvende mi?",
-    a: "Bulut model seçerseniz giden metin önce en iyi çaba ile rumuzlanır (isim, T.C. kimlik no, dosya no → token). Bu bir azaltıcı önlemdir, garanti değildir. Sınır ötesi veri aktarımı (KVKK md. 9) sorumluluğu size aittir.",
-  },
-  {
-    q: "Kurulum için ne gerekiyor?",
-    a: "Tek komutla kurulur; macOS, Linux ve Windows desteklenir. İsterseniz Docker ile yerel Python/Node kurmadan da çalıştırabilirsiniz. Zorunlu TOTP iki adımlı doğrulama ile her kurulum tek büroya hizmet eder.",
+    q: "Verilerim güvende mi?",
+    a: "Modele giden metin önce en iyi çaba ile rumuzlanır ve her büro veritabanında izole tutulur. Rumuzlama azaltıcı bir önlemdir, garanti değildir; sınır ötesi veri aktarımı (KVKK md. 9) sorumluluğu size aittir.",
   },
   {
     q: "Korkut hukuki tavsiye veriyor mu?",
-    a: "Hayır. Korkut hukuki danışmanlık veya temsil sağlamaz. Her çıktı — araştırma, özet, dilekçe/sözleşme taslağı — nitelikli bir avukatın gözden geçirmesi gereken bir taslaktır. Çıktının doğruluğunu teyit etmek kullanıcının sorumluluğundadır.",
+    a: "Hayır. Korkut hukuki danışmanlık veya temsil sağlamaz. Araştırma, özet, dilekçe ve sözleşme taslağı dahil her çıktı, nitelikli bir avukatın gözden geçirmesi gereken bir taslaktır. Çıktının doğruluğunu teyit etmek kullanıcının sorumluluğundadır.",
   },
 ] as const;
 
-// Navigasyon bağlantıları
+// Navigasyon bağlantıları. "#..." olanlar ana sayfa bölümleridir (alt sayfalarda
+// otomatik olarak "/#..." biçimine çözülür); diğerleri ayrı sayfa yollarıdır.
 export const NAV_LINKS = [
   { href: "#ozellikler", label: "Özellikler" },
-  { href: "#modeller", label: "Modeller" },
+  { href: "#entegrasyonlar", label: "Entegrasyonlar" },
   { href: "#kaynaklar", label: "Veri kaynakları" },
-  { href: "#kurulum", label: "Kurulum" },
-  { href: "#acik-kaynak", label: "Açık kaynak" },
+  { href: "#guvenlik", label: "Güvenlik" },
+  { href: "#sss", label: "SSS" },
 ] as const;
