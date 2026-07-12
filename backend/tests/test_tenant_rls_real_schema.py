@@ -141,3 +141,25 @@ def test_real_schema_with_check_blocks_cross_office_insert(app_sf):
                 s.commit()
     finally:
         reset_current_office(tok)
+
+
+def test_composite_fk_rejects_cross_office_reference(app_sf):
+    """A matter in office A cannot reference office B's client — the composite FK rejects it."""
+    from sqlalchemy.exc import IntegrityError
+
+    sf, (a_id, b_id) = app_sf
+    tok = set_current_office(b_id)
+    try:
+        with sf() as s:
+            b_client_id = s.query(models.Client).one().id
+    finally:
+        reset_current_office(tok)
+
+    tok = set_current_office(a_id)
+    try:
+        with sf() as s:
+            s.add(models.Matter(office_id=a_id, title="x", client_id=b_client_id))
+            with pytest.raises(IntegrityError):
+                s.commit()
+    finally:
+        reset_current_office(tok)

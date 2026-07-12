@@ -72,9 +72,7 @@ def tenant_table_names() -> list[str]:
     from korkut.core.tenancy import TenantMixin
 
     return sorted(
-        m.local_table.name
-        for m in db.Base.registry.mappers
-        if issubclass(m.class_, TenantMixin)
+        m.local_table.name for m in db.Base.registry.mappers if issubclass(m.class_, TenantMixin)
     )
 
 

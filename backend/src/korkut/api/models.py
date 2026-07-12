@@ -23,7 +23,6 @@ from decimal import Decimal
 from sqlalchemy import (
     JSON,
     Date,
-    ForeignKey,
     ForeignKeyConstraint,
     Index,
     Numeric,
@@ -63,12 +62,19 @@ class StyleProfile(TenantMixin, Base):
     __tablename__ = "style_profiles"
     __table_args__ = (
         Index(
-            "uq_style_office_default", "office_id", unique=True,
-            sqlite_where=text("user_id IS NULL"), postgresql_where=text("user_id IS NULL"),
+            "uq_style_office_default",
+            "office_id",
+            unique=True,
+            sqlite_where=text("user_id IS NULL"),
+            postgresql_where=text("user_id IS NULL"),
         ),
         Index(
-            "uq_style_office_user", "office_id", "user_id", unique=True,
-            sqlite_where=text("user_id IS NOT NULL"), postgresql_where=text("user_id IS NOT NULL"),
+            "uq_style_office_user",
+            "office_id",
+            "user_id",
+            unique=True,
+            sqlite_where=text("user_id IS NOT NULL"),
+            postgresql_where=text("user_id IS NOT NULL"),
         ),
         ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
     )
@@ -175,7 +181,13 @@ class User(TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     recovery_codes: Mapped[list[RecoveryCode]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        back_populates="user",
+        cascade="all, delete-orphan",
+        primaryjoin=(
+            "and_(User.office_id == RecoveryCode.office_id, User.id == RecoveryCode.user_id)"
+        ),
+        foreign_keys="[RecoveryCode.office_id, RecoveryCode.user_id]",
+        overlaps="office_id",
     )
 
     @property
@@ -185,12 +197,22 @@ class User(TenantMixin, Base):
 
 class RecoveryCode(TenantMixin, Base):
     __tablename__ = "recovery_codes"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[int] = mapped_column(index=True)
     code_hash: Mapped[str] = mapped_column(String(255))
     used_at: Mapped[datetime | None] = mapped_column(default=None)
 
-    user: Mapped[User] = relationship(back_populates="recovery_codes")
+    user: Mapped[User] = relationship(
+        back_populates="recovery_codes",
+        primaryjoin=(
+            "and_(RecoveryCode.office_id == User.office_id, RecoveryCode.user_id == User.id)"
+        ),
+        foreign_keys="[RecoveryCode.office_id, RecoveryCode.user_id]",
+        overlaps="office_id",
+    )
 
 
 class Conversation(TenantMixin, Base):
@@ -212,7 +234,15 @@ class Conversation(TenantMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     messages: Mapped[list[Message]] = relationship(
-        back_populates="conversation", cascade="all, delete-orphan", order_by="Message.id"
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="Message.id",
+        primaryjoin=(
+            "and_(Conversation.office_id == Message.office_id, "
+            "Conversation.id == Message.conversation_id)"
+        ),
+        foreign_keys="[Message.office_id, Message.conversation_id]",
+        overlaps="office_id",
     )
 
 
@@ -220,15 +250,26 @@ class Message(TenantMixin, Base):
     __tablename__ = "messages"
     __table_args__ = (
         ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
+        ForeignKeyConstraint(
+            ["office_id", "conversation_id"], ["conversations.office_id", "conversations.id"]
+        ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"), index=True)
+    conversation_id: Mapped[int] = mapped_column(index=True)
     user_id: Mapped[int | None] = mapped_column(default=None)  # author
     role: Mapped[str] = mapped_column(String(16))  # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    conversation: Mapped[Conversation] = relationship(back_populates="messages")
+    conversation: Mapped[Conversation] = relationship(
+        back_populates="messages",
+        primaryjoin=(
+            "and_(Message.office_id == Conversation.office_id, "
+            "Message.conversation_id == Conversation.id)"
+        ),
+        foreign_keys="[Message.office_id, Message.conversation_id]",
+        overlaps="office_id",
+    )
 
 
 class Document(TenantMixin, Base):
@@ -254,7 +295,15 @@ class Document(TenantMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     versions: Mapped[list[DocumentVersion]] = relationship(
-        back_populates="document", cascade="all, delete-orphan", order_by="DocumentVersion.id"
+        back_populates="document",
+        cascade="all, delete-orphan",
+        order_by="DocumentVersion.id",
+        primaryjoin=(
+            "and_(Document.office_id == DocumentVersion.office_id, "
+            "Document.id == DocumentVersion.document_id)"
+        ),
+        foreign_keys="[DocumentVersion.office_id, DocumentVersion.document_id]",
+        overlaps="office_id",
     )
 
 
@@ -262,14 +311,25 @@ class DocumentVersion(TenantMixin, Base):
     """An accepted snapshot of a document (history / undo / audit)."""
 
     __tablename__ = "document_versions"
+    __table_args__ = (
+        ForeignKeyConstraint(["office_id", "document_id"], ["documents.office_id", "documents.id"]),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
+    document_id: Mapped[int] = mapped_column(index=True)
     content_md: Mapped[str] = mapped_column(Text)
     author: Mapped[str] = mapped_column(String(64))  # "korkut" | "<username>"
     note: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    document: Mapped[Document] = relationship(back_populates="versions")
+    document: Mapped[Document] = relationship(
+        back_populates="versions",
+        primaryjoin=(
+            "and_(DocumentVersion.office_id == Document.office_id, "
+            "DocumentVersion.document_id == Document.id)"
+        ),
+        foreign_keys="[DocumentVersion.office_id, DocumentVersion.document_id]",
+        overlaps="office_id",
+    )
 
 
 class ProposedEdit(TenantMixin, Base):
@@ -277,9 +337,7 @@ class ProposedEdit(TenantMixin, Base):
 
     __tablename__ = "proposed_edits"
     __table_args__ = (
-        ForeignKeyConstraint(
-            ["office_id", "document_id"], ["documents.office_id", "documents.id"]
-        ),
+        ForeignKeyConstraint(["office_id", "document_id"], ["documents.office_id", "documents.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(index=True)
@@ -472,13 +530,12 @@ class Matter(TenantMixin, Base):
     __table_args__ = (
         UniqueConstraint("office_id", "id", name="uq_matters_office_id"),
         ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+        ForeignKeyConstraint(["office_id", "client_id"], ["clients.office_id", "clients.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     created_by: Mapped[int | None] = mapped_column(default=None)
     title: Mapped[str] = mapped_column(String(200))
-    client_id: Mapped[int | None] = mapped_column(
-        ForeignKey("clients.id"), default=None, index=True
-    )
+    client_id: Mapped[int | None] = mapped_column(default=None, index=True)
     file_no: Mapped[str | None] = mapped_column(String(50), default=None)  # esas no
     court: Mapped[str | None] = mapped_column(String(200), default=None)  # mahkeme
     case_type: Mapped[str | None] = mapped_column(String(100), default=None)  # dava türü
@@ -489,9 +546,21 @@ class Matter(TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
-    client: Mapped[Client | None] = relationship()
+    client: Mapped[Client | None] = relationship(
+        primaryjoin="and_(Matter.office_id == Client.office_id, Matter.client_id == Client.id)",
+        foreign_keys="[Matter.office_id, Matter.client_id]",
+        overlaps="events,office_id",
+    )
     events: Mapped[list[CalendarEvent]] = relationship(
-        back_populates="matter", cascade="all, delete-orphan", order_by="CalendarEvent.start_at"
+        back_populates="matter",
+        cascade="all, delete-orphan",
+        order_by="CalendarEvent.start_at",
+        primaryjoin=(
+            "and_(Matter.office_id == CalendarEvent.office_id, "
+            "Matter.id == CalendarEvent.matter_id)"
+        ),
+        foreign_keys="[CalendarEvent.office_id, CalendarEvent.matter_id]",
+        overlaps="client,office_id",
     )
 
 
@@ -516,6 +585,9 @@ class CalendarEvent(TenantMixin, Base):
     __tablename__ = "calendar_events"
     __table_args__ = (
         ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+        ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
+        ForeignKeyConstraint(["office_id", "client_id"], ["clients.office_id", "clients.id"]),
+        ForeignKeyConstraint(["office_id", "assignee_id"], ["users.office_id", "users.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     category: Mapped[str] = mapped_column(String(20), default="appointment", index=True)
@@ -524,15 +596,9 @@ class CalendarEvent(TenantMixin, Base):
     start_at: Mapped[datetime] = mapped_column(index=True)
     end_at: Mapped[datetime | None] = mapped_column(default=None)
     all_day: Mapped[bool] = mapped_column(default=False)
-    matter_id: Mapped[int | None] = mapped_column(
-        ForeignKey("matters.id"), default=None, index=True
-    )
-    client_id: Mapped[int | None] = mapped_column(
-        ForeignKey("clients.id"), default=None, index=True
-    )
-    assignee_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id"), default=None, index=True
-    )
+    matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
+    client_id: Mapped[int | None] = mapped_column(default=None, index=True)
+    assignee_id: Mapped[int | None] = mapped_column(default=None, index=True)
     location: Mapped[str | None] = mapped_column(String(200), default=None)
     status: Mapped[str] = mapped_column(String(20), default="planned")  # planned|done|cancelled
     result: Mapped[str | None] = mapped_column(Text, default=None)  # duruşma sonucu vb.
@@ -544,9 +610,30 @@ class CalendarEvent(TenantMixin, Base):
     created_by: Mapped[int | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    matter: Mapped[Matter | None] = relationship(back_populates="events")
-    client: Mapped[Client | None] = relationship()
-    assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
+    matter: Mapped[Matter | None] = relationship(
+        back_populates="events",
+        primaryjoin=(
+            "and_(CalendarEvent.office_id == Matter.office_id, "
+            "CalendarEvent.matter_id == Matter.id)"
+        ),
+        foreign_keys="[CalendarEvent.office_id, CalendarEvent.matter_id]",
+        overlaps="client,assignee,events,office_id",
+    )
+    client: Mapped[Client | None] = relationship(
+        primaryjoin=(
+            "and_(CalendarEvent.office_id == Client.office_id, "
+            "CalendarEvent.client_id == Client.id)"
+        ),
+        foreign_keys="[CalendarEvent.office_id, CalendarEvent.client_id]",
+        overlaps="matter,assignee,events,office_id",
+    )
+    assignee: Mapped[User | None] = relationship(
+        primaryjoin=(
+            "and_(CalendarEvent.office_id == User.office_id, CalendarEvent.assignee_id == User.id)"
+        ),
+        foreign_keys="[CalendarEvent.office_id, CalendarEvent.assignee_id]",
+        overlaps="matter,client,events,office_id",
+    )
 
 
 class Invoice(TenantMixin, Base):
@@ -605,20 +692,23 @@ class Task(TenantMixin, Base):
     __table_args__ = (
         ForeignKeyConstraint(["office_id", "matter_id"], ["matters.office_id", "matters.id"]),
         ForeignKeyConstraint(["office_id", "created_by"], ["users.office_id", "users.id"]),
+        ForeignKeyConstraint(["office_id", "assignee_id"], ["users.office_id", "users.id"]),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, default=None)
-    assignee_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id"), default=None, index=True
-    )
+    assignee_id: Mapped[int | None] = mapped_column(default=None, index=True)
     matter_id: Mapped[int | None] = mapped_column(default=None, index=True)
     status: Mapped[str] = mapped_column(String(16), default="open")  # open | done
     due_date: Mapped[_date | None] = mapped_column(Date, default=None, index=True)
     created_by: Mapped[int | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    assignee: Mapped[User | None] = relationship(foreign_keys=[assignee_id])
+    assignee: Mapped[User | None] = relationship(
+        primaryjoin="and_(Task.office_id == User.office_id, Task.assignee_id == User.id)",
+        foreign_keys="[Task.office_id, Task.assignee_id]",
+        overlaps="office_id",
+    )
 
 
 class DocumentRecord(TenantMixin, Base):
