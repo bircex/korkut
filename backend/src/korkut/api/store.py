@@ -30,6 +30,7 @@ from korkut.api.models import (
 from korkut.brain.persona import PersonaCfg
 from korkut.core import db
 from korkut.core.router import ModelCfg
+from korkut.core.tenancy import install_tenant_filter, install_tenant_guc
 from korkut.messaging import OutboundDraft, SendResult, build_channel
 from korkut.paths import DATA_DIR, TEMPLATES_DIR
 
@@ -55,6 +56,10 @@ def engine():
         # regenerated once the multi-tenant schema settles (see docs/SAAS_ARCHITECTURE.md).
         db.init_db(_engine)
         _Session = sessionmaker(_engine, expire_on_commit=False)
+        # Every session is tenant-scoped: the GUC drives Postgres RLS, and the app-layer filter
+        # scopes ORM reads by office (and covers SQLite, which has no RLS). Both fail closed.
+        install_tenant_guc(_Session)
+        install_tenant_filter(_Session)
         sync_template_defaults(
             _engine
         )  # refresh built-in themes from files (never touches overrides)
