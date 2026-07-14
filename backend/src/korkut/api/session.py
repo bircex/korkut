@@ -16,6 +16,16 @@ import jwt
 
 from korkut.api import auth
 
+__all__ = [
+    "SESSION_TTL",
+    "SIGNUP_TTL",
+    "Session",
+    "mint",
+    "mint_signup_ticket",
+    "read",
+    "read_signup_ticket",
+]
+
 SESSION_TTL = 60 * 60 * 12  # 12h absolute lifetime (matches the legacy session)
 _ALG = "HS256"
 
@@ -49,5 +59,34 @@ def read(token: str) -> Session | None:
     try:
         c = jwt.decode(token, auth._secret(), algorithms=[_ALG])
         return Session(int(c["sub"]), int(c["oid"]), str(c["role"]), int(c["ep"]))
+    except (jwt.InvalidTokenError, KeyError, ValueError, TypeError):
+        return None
+
+
+# ---- signup ticket: a Google-VERIFIED identity waiting to create a new office (self-serve) ----
+
+SIGNUP_TTL = 15 * 60  # the "name your office" step must finish within 15 minutes
+
+
+def mint_signup_ticket(sub: str, email: str, *, now: int | None = None) -> str:
+    """Sign a short-lived ticket proving Google verified this ``sub``/``email`` — no account yet."""
+    issued = int(now if now is not None else time.time())
+    claims = {
+        "typ": "signup",
+        "sub": sub,
+        "email": email,
+        "iat": issued,
+        "exp": issued + SIGNUP_TTL,
+    }
+    return jwt.encode(claims, auth._secret(), algorithm=_ALG)
+
+
+def read_signup_ticket(token: str) -> tuple[str, str] | None:
+    """Return the verified ``(sub, email)`` from a signup ticket, or None if invalid/expired."""
+    try:
+        c = jwt.decode(token, auth._secret(), algorithms=[_ALG])
+        if c.get("typ") != "signup":
+            return None
+        return str(c["sub"]), str(c["email"])
     except (jwt.InvalidTokenError, KeyError, ValueError, TypeError):
         return None

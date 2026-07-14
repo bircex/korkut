@@ -727,3 +727,22 @@ class AuthEvent(Base):
     ip: Mapped[str | None] = mapped_column(String(64), default=None)
     detail: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(default=func.now(), index=True)
+
+
+class SignupCode(Base):
+    """A self-serve office-signup code (GLOBAL / pre-tenant — not tenant-scoped).
+
+    Admin-issued; the raw code is shown once and only its HMAC hash is stored. Redeeming it creates
+    a NEW office and its owner. ``max_uses`` 0 means unlimited; ``used_count`` tracks redemptions.
+    """
+
+    __tablename__ = "signup_codes"
+    __table_args__ = (UniqueConstraint("code_hash", name="uq_signup_code_hash"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code_hash: Mapped[str] = mapped_column(String(64), index=True)
+    label: Mapped[str | None] = mapped_column(String(120), default=None)
+    max_uses: Mapped[int] = mapped_column(default=1)  # 0 = unlimited
+    used_count: Mapped[int] = mapped_column(default=0)
+    expires_at: Mapped[datetime | None] = mapped_column(default=None)
+    disabled: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())

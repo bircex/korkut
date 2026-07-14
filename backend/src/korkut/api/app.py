@@ -56,19 +56,21 @@ from korkut.api.models import (
     Matter,
     MemoryItem,
     Message,
+    Office,
     OfficeChannel,
     OfficeInvite,
     OfficeModel,
     OutboundMessage,
     Persona,
     ProposedEdit,
+    SignupCode,
     StyleProfile,
     Task,
     TemplateDefault,
     TemplateOverride,
     User,
 )
-from korkut.api.session import SESSION_TTL
+from korkut.api.session import SESSION_TTL, SIGNUP_TTL, mint_signup_ticket, read_signup_ticket
 from korkut.api.session import mint as mint_session
 from korkut.api.session import read as read_session
 from korkut.api.store import (
@@ -111,6 +113,9 @@ _IP_MAX = 15
 # Carries an invite token through the Google round-trip (kept out of URLs / the Google request).
 _INVITE_COOKIE = "korkut_invite"
 _INVITE_TTL_DAYS = 7
+
+# Holds a Google-verified identity between sign-in and the "name your office" self-serve step.
+_SIGNUP_COOKIE = "korkut_signup"
 
 app = FastAPI(title="Korkut", docs_url=None, redoc_url=None)
 
@@ -190,6 +195,12 @@ class MemberBody(BaseModel):
 class InviteBody(BaseModel):
     email: str | None = None  # optional: pin the invite to one email
     role: str = "member"
+
+
+class SignupBody(BaseModel):
+    code: str
+    office_name: str
+    full_name: str | None = None
 
 
 class MeBody(BaseModel):
@@ -690,6 +701,22 @@ def google_callback(
         logger.info("sign-in rejected: %s", exc.detail)
         return RedirectResponse("/giris?error=invite", status_code=303)
     if user is None:
+        # No account and no invite. If self-serve signup is on, hand the browser a Google-verified
+        # ticket and send it to the "name your office" screen; otherwise it's a closed door.
+        if _signup_enabled():
+            redirect = RedirectResponse("/kayit", status_code=303)
+            redirect.set_cookie(
+                _SIGNUP_COOKIE,
+                mint_signup_ticket(identity.sub, identity.email),
+                max_age=SIGNUP_TTL,
+                httponly=True,
+                samesite="lax",
+                secure=_secure_cookies(),
+                path="/",
+            )
+            if korkut_invite:
+                redirect.delete_cookie(_INVITE_COOKIE, path="/api/auth")
+            return redirect
         return RedirectResponse("/giris?error=no_office", status_code=303)
 
     redirect = RedirectResponse("/", status_code=303)
@@ -699,6 +726,93 @@ def google_callback(
     with session() as s:
         _audit(s, "join_google" if joined else "login_google", username=user.username, ip=ip)
     return redirect
+
+
+def _signup_enabled() -> bool:
+    """Self-serve signup is off unless KORKUT_ALLOW_SIGNUP=1 (and it still needs a valid code)."""
+    return os.getenv("KORKUT_ALLOW_SIGNUP", "0") == "1"
+
+
+def _consume_signup_code(s: Session, code: str) -> bool:
+    """Validate a signup code and bump its use count (caller commits). Codes are global/pre-tenant.
+
+    True only if the code exists, is enabled, unexpired, and has a remaining use (max_uses 0 = ∞).
+    """
+    row = s.scalar(select(SignupCode).where(SignupCode.code_hash == auth.token_hash(code.strip())))
+    if row is None or row.disabled:
+        return False
+    if row.expires_at is not None and row.expires_at <= _utcnow():
+        return False
+    if row.max_uses and row.used_count >= row.max_uses:
+        return False
+    row.used_count += 1
+    return True
+
+
+@app.get("/api/signup/pending")
+def signup_pending(korkut_signup: str | None = Cookie(default=None)):
+    """The Google-verified email waiting to create an office (for the name-your-office screen)."""
+    if not _signup_enabled():
+        raise HTTPException(status_code=404, detail="Kayıt kapalı")
+    parsed = read_signup_ticket(korkut_signup or "")
+    if parsed is None:
+        raise HTTPException(status_code=401, detail="Kayıt oturumu yok, baştan giriş yapın")
+    return {"email": parsed[1]}
+
+
+@app.post("/api/signup")
+def signup(
+    body: SignupBody,
+    request: Request,
+    response: Response,
+    korkut_signup: str | None = Cookie(default=None),
+):
+    """Create a NEW office + owner for a Google-verified identity, gated by a valid signup code."""
+    ip = _client_ip(request)
+    if not _ip_allowed(ip):
+        raise HTTPException(status_code=429, detail="Çok fazla deneme. Biraz sonra tekrar deneyin.")
+    if not _signup_enabled():
+        raise HTTPException(status_code=404, detail="Kayıt kapalı")
+    parsed = read_signup_ticket(korkut_signup or "")
+    if parsed is None:
+        raise HTTPException(status_code=401, detail="Kayıt oturumu doldu, baştan giriş yapın")
+    sub, email = parsed
+    office_name = body.office_name.strip()
+    if not office_name:
+        raise HTTPException(status_code=400, detail="Ofis adı zorunlu")
+
+    with session() as s:
+        # a person belongs to one office — reject if this Google account/email already exists
+        if s.scalar(
+            select(User.id)
+            .where(or_(User.google_sub == sub, User.email == email))
+            .execution_options(skip_tenant_filter=True)
+        ):
+            raise HTTPException(status_code=409, detail="Bu Google hesabı zaten kayıtlı")
+        if not _consume_signup_code(s, body.code):
+            _audit(s, "signup_code_fail", username=email, ip=ip)
+            raise HTTPException(status_code=403, detail="Kayıt kodu geçersiz veya kullanılmış")
+        office = Office(name=office_name[:200])
+        s.add(office)
+        s.flush()
+        # the office is the tenant root; pin the context so the owner is stamped and scoped to it
+        set_current_office(office.id)
+        owner = User(
+            role="owner",
+            email=email,
+            google_sub=sub,
+            username=_unique_username(s, email.split("@")[0]),
+            full_name=(body.full_name or "").strip() or None,
+        )
+        s.add(owner)
+        try:
+            s.commit()
+        except IntegrityError:  # raced another signup with the same account
+            raise HTTPException(status_code=409, detail="Bu Google hesabı zaten kayıtlı") from None
+        _set_session_cookie(response, owner)
+        response.delete_cookie(_SIGNUP_COOKIE, path="/")
+        _audit(s, "signup_ok", username=owner.username, ip=ip, detail=office_name[:100])
+        return {"user": _user_public(s, owner)}
 
 
 def _member_public(u: User, *, self_id: int | None) -> dict:
