@@ -1,5 +1,5 @@
-"""Shared model-call resilience — the one place a provider failure becomes a friendly,
-actionable Turkish message, with bounded retry on transient errors.
+"""Shared model-call resilience — the one place a provider failure becomes a single generic
+Turkish message, with bounded retry on transient errors.
 
 Every channel answers through the same brain (`agent.answer`), so every channel should fail the
 same way. Before this module the web app mapped failures to a helpful 503 while the chat channels
@@ -26,19 +26,9 @@ from korkut.brain import agent
 
 logger = logging.getLogger("korkut.resilience")
 
-# Shown when a model call fails (endpoint down, wrong URL, no key) instead of a raw 500, so the
-# user is pointed at the fix rather than a stack trace.
-MODEL_DOWN_DETAIL = (
-    "Yapay zeka modeline ulaşılamadı. Modelin (örn. yerel sunucunuz) çalıştığından emin olun "
-    "veya Ayarlar → Model'den bağlantıyı kontrol edin."
-)
-MODEL_CONTEXT_DETAIL = (
-    "İstek, modelin context penceresinden uzun. Modeli daha büyük 'Context Length' "
-    "(örn. 16384 veya üzeri) ile yeniden yükleyin ya da sohbeti kısaltıp tekrar deneyin."
-)
-MODEL_BUSY_DETAIL = (
-    "Yapay zeka modeli şu an yoğun (hız sınırı). Birkaç saniye sonra tekrar deneyin."
-)
+# One generic, ChatGPT-style message for EVERY failure. We never expose the cause (model down,
+# rate-limit, context, config) — the worst case a user sees is "too busy, try again".
+GENERIC_DETAIL = "Şu an yoğunluk nedeniyle cevap veremiyorum, lütfen birazdan tekrar deneyin."
 
 # Bounded retry for transient faults. Kept short: a lawyer is waiting on the other end.
 _MAX_RETRIES = 2
@@ -76,17 +66,9 @@ def _is_transient(exc: Exception) -> bool:
     )
 
 
-def friendly_detail(exc: Exception) -> str:
-    """Map a provider failure to an actionable Turkish message (busy / down / context / other)."""
-    name = type(exc).__name__.lower()
-    text = str(exc).lower()
-    if "ratelimit" in name or "rate limit" in text or "429" in text or "overloaded" in text:
-        return MODEL_BUSY_DETAIL
-    if "connection" in name or "timeout" in name:
-        return MODEL_DOWN_DETAIL
-    if "context length" in text or "context window" in text or "tokens to keep" in text:
-        return MODEL_CONTEXT_DETAIL
-    return "Yapay zeka modeli isteği şu an yanıtlayamadı, lütfen tekrar deneyin."
+def friendly_detail(_exc: Exception) -> str:
+    """Every failure surfaces the SAME generic message — the cause is only logged, never shown."""
+    return GENERIC_DETAIL
 
 
 def guarded_answer(*args, **kwargs) -> str:

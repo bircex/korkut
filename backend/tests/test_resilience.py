@@ -21,15 +21,11 @@ class _RateLimitError(Exception):
     pass
 
 
-def test_friendly_detail_maps_each_failure_kind():
-    assert resilience.friendly_detail(_Timeout("read timed out")) == resilience.MODEL_DOWN_DETAIL
-    assert (
-        resilience.friendly_detail(ValueError("This model's maximum context length is 4096 tokens"))
-        == resilience.MODEL_CONTEXT_DETAIL
-    )
-    assert resilience.friendly_detail(_RateLimitError("429")) == resilience.MODEL_BUSY_DETAIL
-    other = resilience.friendly_detail(ValueError("weird"))
-    assert "weird" not in other and "yanıtlayamadı" in other
+def test_every_failure_gets_the_same_generic_message():
+    # no matter the cause, the user only ever sees the one generic line (no internals leak)
+    for exc in (_Timeout("read timed out"), _RateLimitError("429"), ValueError("weird 500 detail")):
+        assert resilience.friendly_detail(exc) == resilience.GENERIC_DETAIL
+    assert "weird" not in resilience.GENERIC_DETAIL and "yoğunluk" in resilience.GENERIC_DETAIL
 
 
 def test_transient_error_is_retried_then_succeeds():
@@ -64,7 +60,7 @@ def test_context_overflow_is_not_retried():
     ):
         resilience.guarded_answer("uzun sohbet")
     assert calls["n"] == 1
-    assert ei.value.detail == resilience.MODEL_CONTEXT_DETAIL
+    assert ei.value.detail == resilience.GENERIC_DETAIL
 
 
 def test_persistent_transient_error_gives_up_with_friendly_detail():
@@ -74,7 +70,7 @@ def test_persistent_transient_error_gives_up_with_friendly_detail():
         pytest.raises(resilience.ModelError) as ei,
     ):
         resilience.guarded_answer("soru")
-    assert ei.value.detail == resilience.MODEL_DOWN_DETAIL
+    assert ei.value.detail == resilience.GENERIC_DETAIL
     assert isinstance(ei.value.cause, _Timeout)
 
 
