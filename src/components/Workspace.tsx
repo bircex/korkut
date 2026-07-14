@@ -6,7 +6,6 @@ import {
   ApiError,
   type ChatMessage,
   type DocBrief,
-  type ModelHealth,
   type SessionBrief,
   type Task,
   type User,
@@ -25,7 +24,6 @@ import { matchPath, navigate, usePath } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
-  ArrowClockwise,
   CalendarBlank,
   CaretDown,
   Check,
@@ -42,7 +40,6 @@ import {
   Sun,
   Users,
   Wallet,
-  Warning,
 } from "../icons";
 
 const SESSION_PAGE = 20;
@@ -231,16 +228,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameText, setRenameText] = useState("");
-  const [health, setHealth] = useState<ModelHealth | null>(null);
-
-  // Best-effort model-reachability check → drives the warning banner. Never throws.
-  async function checkHealth() {
-    try {
-      setHealth(await api.modelHealth());
-    } catch {
-      /* leave the banner as-is on a transient failure */
-    }
-  }
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -260,7 +247,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       } catch {
         /* best effort */
       }
-      checkHealth();
       loadDocs();
       loadHomeTasks();
       try {
@@ -549,7 +535,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       if (showsThisChat()) {
         setMessages((m) => [...m, { role: "assistant", content: `Hata: ${detail}` }]);
       }
-      if (err instanceof ApiError && err.status === 503) checkHealth(); // model down → refresh banner
     } finally {
       setSending(false);
       setSendingId(null);
@@ -668,25 +653,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         </div>
       </header>
 
-      {health && !health.connected && (
-        <div className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-[13px] text-amber-800">
-          <Warning size={18} weight="fill" aria-hidden className="shrink-0" />
-          <span className="min-w-0 flex-1">{health.detail}</span>
-          <button
-            onClick={() => navigate(VIEW_PATH.settings)}
-            className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
-          >
-            Ayarlar → Model
-          </button>
-          <button
-            onClick={checkHealth}
-            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
-            title="Yeniden dene"
-          >
-            <ArrowClockwise size={14} aria-hidden />
-          </button>
-        </div>
-      )}
 
       <div className="flex min-h-0 flex-1">
         {sidebarOpen && (

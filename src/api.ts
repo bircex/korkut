@@ -141,23 +141,6 @@ export type OutboxEdit = {
   body: string;
   send_at: string | null;
 };
-export type ModelData = {
-  enabled: boolean;
-  is_local: boolean;
-  model: string;
-  base_url: string;
-  hasApiKey: boolean;
-  can_edit: boolean;
-};
-export type ModelInput = {
-  enabled: boolean;
-  is_local: boolean;
-  model: string;
-  base_url: string;
-  api_key: string | null; // null → keep stored key; "" → clear it
-};
-export type ModelHealth = { connected: boolean; configured: boolean; detail: string };
-
 export type PersonaData = {
   tone: string;
   expertise: string;
@@ -445,11 +428,6 @@ export const api = {
     request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}?scope=${scope}`, {
       method: "DELETE",
     }),
-  getModel: () => request<ModelData>("/api/model"),
-  saveModel: (input: ModelInput) =>
-    request<ModelData>("/api/model", { method: "PUT", body: JSON.stringify(input) }),
-  deleteModel: () => request<{ ok: boolean }>("/api/model", { method: "DELETE" }),
-  modelHealth: () => request<ModelHealth>("/api/model/health"),
   getPersona: () => request<PersonaData>("/api/persona"),
   savePersona: (input: PersonaInput) =>
     request<PersonaData>("/api/persona", { method: "PUT", body: JSON.stringify(input) }),
