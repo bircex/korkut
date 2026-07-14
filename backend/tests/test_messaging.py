@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from korkut.api.models import OfficeChannel, OutboundMessage
+from korkut.api.models import OutboundMessage
 from korkut.core.db import init_db, make_engine
 from korkut.messaging import OutboundDraft, build_channel
 from korkut.messaging.gmail import GmailChannel
@@ -70,14 +70,11 @@ def test_build_channel_email_and_unknown():
         build_channel("sms", {})
 
 
-def test_models_create_and_defaults():
+def test_outbound_message_defaults():
     engine = make_engine("sqlite+pysqlite:///:memory:")
     init_db(engine)
     with Session(engine) as s:
-        s.add(OfficeChannel(kind="email", enabled=True, config={"from_address": "a@x"}))
         msg = OutboundMessage(kind="email", to_addr="b@y.com", subject="S", body="B")
         s.add(msg)
         s.commit()
-        assert msg.status == "draft" and msg.attempts == 0 and msg.send_at is None
-        ch = s.get(OfficeChannel, 1)
-        assert ch.config["from_address"] == "a@x"
+        assert msg.attempts == 0 and msg.send_at is None

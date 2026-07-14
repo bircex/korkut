@@ -51,13 +51,11 @@ from korkut.api.models import (
     DocumentRecord,
     DocumentVersion,
     Expense,
-    IntegrationLink,
     Invoice,
     Matter,
     MemoryItem,
     Message,
     Office,
-    OfficeChannel,
     OfficeInvite,
     OutboundMessage,
     Persona,
@@ -232,31 +230,6 @@ class ExportBody(BaseModel):
     format: str  # "udf" | "docx"
     title: str = "belge"
     markdown: str
-
-
-class ChannelBody(BaseModel):
-    enabled: bool = False
-    from_address: str = ""
-    from_name: str = ""
-    app_password: str | None = None  # None → keep stored password; "" → clear it
-
-
-class TelegramChannelBody(BaseModel):
-    enabled: bool = False
-    bot_token: str | None = None  # None → keep stored token; "" → clear it
-
-
-class WhatsAppChannelBody(BaseModel):
-    enabled: bool = False
-    base_url: str = ""
-    token: str | None = None  # shared secret with the sidecar; None → keep stored
-
-
-class OutboxBody(BaseModel):
-    to_addr: str
-    subject: str = ""
-    body: str = ""
-    send_at: str | None = None  # ISO 8601; null/past → send on confirm
 
 
 class MatterBody(BaseModel):
@@ -1794,10 +1767,7 @@ def _session_chat_impl(
             "sohbete yalnızca tek cümlelik kısa bir bilgilendirme yaz.",
         }
 
-    # Korkut may propose an email; we persist it as a DRAFT and surface a confirmation card.
-    # Nothing is ever sent here — the lawyer approves via /api/outbox/{id}/confirm.
-    pending_email = {"id": None}
-
+    # Korkut sends the email straight away (operator SMTP from env) and logs it. No draft/confirm.
     def _send_email(args: dict):
         to = (args.get("to") or "").strip()
         if not to:
@@ -1818,17 +1788,15 @@ def _session_chat_impl(
                 to_addr=to,
                 subject=(args.get("subject") or "").strip(),
                 body=args.get("body") or "",
-                send_at=_parse_dt(args.get("send_at")),
-                status="draft",
+                status="queued",
             )
             s.add(msg)
+            s.flush()
+            result = send_outbound_message(s, msg)  # send now (auto)
             s.commit()
-            pending_email["id"] = msg.id
-        return {
-            "ok": True,
-            "note": "E-posta taslağı hazırlandı; avukatın onayını bekliyor. Sohbete tek "
-            "cümlelik kısa bir bilgilendirme yaz (içeriği tekrar yazma).",
-        }
+        if result.ok:
+            return {"ok": True, "note": "E-posta gönderildi. Sohbete tek cümlelik kısa bilgi yaz."}
+        return {"ok": False, "note": "E-posta şu an gönderilemedi."}
 
     # Korkut may notice a durable preference worth keeping; it PROPOSES it (status "pending"),
     # never saves it silently — the lawyer approves it in the Hafıza tab.
@@ -1904,7 +1872,6 @@ def _session_chat_impl(
         "reply": reply,
         "title": title,
         "open_document": open_document,
-        "pending_email": pending_email["id"],
     }
 
 
@@ -2326,307 +2293,18 @@ def get_or_create_document(cid: int, korkut_session: str | None = Cookie(default
         return _doc_brief(doc, _pending(s, doc.id))
 
 
-# ---------------- messaging (outbound channels) ----------------
-
-
-def _parse_dt(raw: str | None) -> datetime | None:
-    """Parse an ISO 8601 string to naive UTC, or None if empty/invalid."""
-    if not raw or not raw.strip():
-        return None
-    try:
-        dt = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(UTC).replace(tzinfo=None)
-    return dt
-
-
-def _channel_public(row: OfficeChannel | None, *, can_edit: bool) -> dict:
-    cfg = (row.config if row else None) or {}
-    return {
-        "kind": "email",
-        "enabled": bool(row and row.enabled),
-        "from_address": cfg.get("from_address", ""),
-        "from_name": cfg.get("from_name", ""),
-        "hasPassword": bool(cfg.get("app_password")),
-        "can_edit": can_edit,
-    }
-
-
-@app.get("/api/channels/email")
-def get_email_channel(korkut_session: str | None = Cookie(default=None)):
-    """The office's Gmail config (password hidden). Any member views; only the owner edits."""
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        row = s.scalar(select(OfficeChannel).where(OfficeChannel.kind == "email"))
-        return _channel_public(row, can_edit=user.role == "owner")
-
-
-@app.put("/api/channels/email")
-def save_email_channel(body: ChannelBody, korkut_session: str | None = Cookie(default=None)):
-    """Owner-only Gmail (SMTP) config upsert. `app_password` None keeps the stored one."""
-    with session() as s:
-        _require_owner(s, korkut_session)
-        if body.enabled and not body.from_address.strip():
-            raise HTTPException(status_code=400, detail="Gönderen e-posta adresi zorunludur.")
-        row = s.scalar(select(OfficeChannel).where(OfficeChannel.kind == "email"))
-        if row is None:
-            row = OfficeChannel(kind="email", config={})
-            s.add(row)
-        cfg = dict(row.config or {})
-        cfg["from_address"] = body.from_address.strip()
-        cfg["from_name"] = body.from_name.strip()
-        if body.app_password is not None:
-            cfg["app_password"] = body.app_password.strip()
-        row.config = cfg
-        row.enabled = body.enabled
-        s.commit()
-        return _channel_public(row, can_edit=True)
-
-
-# ---------------- two-way integrations (Telegram / WhatsApp / e-mail chat) ----------------
-# Owners configure each channel's connector; any member links their own account to a channel with
-# a one-time code, then chats with Korkut. See korkut.integrations and docs/ARCHITECTURE.md.
-
-_INTEGRATION_KINDS = ("telegram", "whatsapp", "email")
-
-
-def _office_channel(s: Session, kind: str) -> OfficeChannel | None:
-    return s.scalar(select(OfficeChannel).where(OfficeChannel.kind == kind))
-
-
-def _channel_configured(kind: str, cfg: dict) -> bool:
-    """Does this channel have the minimum config to actually run?"""
-    if kind == "telegram":
-        return bool(cfg.get("bot_token"))
-    if kind == "whatsapp":
-        return bool(cfg.get("token"))
-    if kind == "email":  # two-way e-mail reuses the Gmail SMTP creds for IMAP
-        return bool(cfg.get("from_address") and cfg.get("app_password"))
-    return False
-
-
-def _my_link(s: Session, user: User, kind: str) -> IntegrationLink | None:
-    return s.scalar(
-        select(IntegrationLink).where(
-            IntegrationLink.user_id == user.id,
-            IntegrationLink.channel == kind,
-            IntegrationLink.status == "active",
-        )
-    )
-
-
-def _mask(external_id: str | None) -> str:
-    if not external_id:
-        return ""
-    return external_id if len(external_id) <= 6 else f"{external_id[:3]}…{external_id[-2:]}"
-
-
-@app.get("/api/integrations")
-def list_integrations(korkut_session: str | None = Cookie(default=None)):
-    """Per-channel connector status (owner-configurable) + the caller's own link state."""
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        can_edit = user.role == "owner"
-        out = []
-        for kind in _INTEGRATION_KINDS:
-            row = _office_channel(s, kind)
-            cfg = (row.config if row else None) or {}
-            link = _my_link(s, user, kind)
-            out.append(
-                {
-                    "kind": kind,
-                    "enabled": bool(row and row.enabled),
-                    "configured": _channel_configured(kind, cfg),
-                    "base_url": cfg.get("base_url", "") if kind == "whatsapp" else "",
-                    "linked": link is not None,
-                    "linked_id": _mask(link.external_id) if link else "",
-                    "can_edit": can_edit,
-                }
-            )
-        return {"channels": out}
-
-
-@app.put("/api/channels/telegram")
-def save_telegram_channel(
-    body: TelegramChannelBody, korkut_session: str | None = Cookie(default=None)
-):
-    """Owner-only Telegram bot config. `bot_token` None keeps the stored token; "" clears it."""
-    with session() as s:
-        _require_owner(s, korkut_session)
-        row = _office_channel(s, "telegram")
-        if row is None:
-            row = OfficeChannel(kind="telegram", config={})
-            s.add(row)
-        cfg = dict(row.config or {})
-        if body.bot_token is not None:
-            cfg["bot_token"] = body.bot_token.strip()
-        if body.enabled and not cfg.get("bot_token"):
-            raise HTTPException(status_code=400, detail="Telegram bot token zorunludur.")
-        row.config = cfg
-        row.enabled = body.enabled
-        s.commit()
-        return {"ok": True, "configured": _channel_configured("telegram", cfg)}
-
-
-@app.put("/api/channels/whatsapp")
-def save_whatsapp_channel(
-    body: WhatsAppChannelBody, korkut_session: str | None = Cookie(default=None)
-):
-    """Owner-only WhatsApp sidecar config. `token` None keeps the stored secret; "" clears it."""
-    with session() as s:
-        _require_owner(s, korkut_session)
-        row = _office_channel(s, "whatsapp")
-        if row is None:
-            row = OfficeChannel(kind="whatsapp", config={})
-            s.add(row)
-        cfg = dict(row.config or {})
-        cfg["base_url"] = body.base_url.strip() or "http://127.0.0.1:8099"
-        if body.token is not None:
-            cfg["token"] = body.token.strip()
-        if body.enabled and not cfg.get("token"):
-            raise HTTPException(status_code=400, detail="Sidecar paylaşılan anahtarı zorunludur.")
-        row.config = cfg
-        row.enabled = body.enabled
-        s.commit()
-        return {"ok": True, "configured": _channel_configured("whatsapp", cfg)}
-
-
-@app.post("/api/integrations/{kind}/link")
-def create_integration_link(kind: str, korkut_session: str | None = Cookie(default=None)):
-    """Generate a one-time code; the caller sends it from the channel to bind their account."""
-    if kind not in _INTEGRATION_KINDS:
-        raise HTTPException(status_code=404, detail="Bilinmeyen kanal")
-    from korkut.integrations import identity
-
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        code = identity.generate_code(s, user.id, kind)
-    return {"code": code, "kind": kind}
-
-
-@app.delete("/api/integrations/{kind}/link")
-def delete_integration_link(kind: str, korkut_session: str | None = Cookie(default=None)):
-    """Unlink the caller's account from a channel (removes their active + pending links)."""
-    if kind not in _INTEGRATION_KINDS:
-        raise HTTPException(status_code=404, detail="Bilinmeyen kanal")
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        links = s.scalars(
-            select(IntegrationLink).where(
-                IntegrationLink.user_id == user.id, IntegrationLink.channel == kind
-            )
-        ).all()
-        for link in links:
-            s.delete(link)
-        s.commit()
-        return {"ok": True}
-
-
-def _outbox_public(m: OutboundMessage) -> dict:
-    return {
-        "id": m.id,
-        "kind": m.kind,
-        "to": m.to_addr,
-        "subject": m.subject,
-        "body": m.body,
-        "send_at": m.send_at.isoformat() if m.send_at else None,
-        "status": m.status,
-        "error": m.error,
-        "created_at": m.created_at.isoformat() if m.created_at else None,
-        "sent_at": m.sent_at.isoformat() if m.sent_at else None,
-    }
-
-
-def _require_outbox(s: Session, user: User, mid: int) -> OutboundMessage:
-    msg = s.get(OutboundMessage, mid)
-    if msg is None:
-        raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
-    return msg
-
-
-@app.get("/api/outbox")
-def list_outbox(korkut_session: str | None = Cookie(default=None)):
-    with session() as s:
-        _require_user(s, korkut_session)
-        rows = s.scalars(
-            select(OutboundMessage).order_by(OutboundMessage.id.desc()).limit(50)
-        ).all()
-        return [_outbox_public(m) for m in rows]
-
-
-@app.get("/api/outbox/{mid}")
-def get_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        return _outbox_public(_require_outbox(s, user, mid))
-
-
-@app.put("/api/outbox/{mid}")
-def edit_outbox(mid: int, body: OutboxBody, korkut_session: str | None = Cookie(default=None)):
-    """Edit a draft before confirming (recipient / subject / body / schedule)."""
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        msg = _require_outbox(s, user, mid)
-        if msg.status != "draft":
-            raise HTTPException(status_code=400, detail="Yalnızca taslak düzenlenebilir.")
-        msg.to_addr = body.to_addr.strip()
-        msg.subject = body.subject
-        msg.body = body.body
-        msg.send_at = _parse_dt(body.send_at)
-        s.commit()
-        return _outbox_public(msg)
-
-
-@app.post("/api/outbox/{mid}/confirm")
-def confirm_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
-    """Approve a draft: send now (immediate) or queue it (future send_at)."""
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        msg = _require_outbox(s, user, mid)
-        if msg.status != "draft":
-            raise HTTPException(status_code=400, detail="Bu mesaj zaten işlenmiş.")
-        if not msg.to_addr.strip():
-            raise HTTPException(status_code=400, detail="Alıcı adresi gerekli.")
-        if msg.send_at and msg.send_at > _utcnow():
-            msg.status = "queued"
-            s.commit()
-            return _outbox_public(msg)
-        send_outbound_message(s, msg)
-        s.commit()
-        return _outbox_public(msg)
-
-
-@app.post("/api/outbox/{mid}/cancel")
-def cancel_outbox(mid: int, korkut_session: str | None = Cookie(default=None)):
-    with session() as s:
-        user = _require_user(s, korkut_session)
-        msg = _require_outbox(s, user, mid)
-        if msg.status in ("draft", "queued"):
-            msg.status = "cancelled"
-            s.commit()
-        return _outbox_public(msg)
-
-
 _SEND_EMAIL_TOOL = ToolSpec(
     name="send_email",
     description=(
         "Avukat bir E-POSTA göndermeni istediğinde bu aracı çağır (ör. 'şu müvekkile mail at', "
-        "'karşı tarafa ihtar gönder'). E-postayı SEN göndermezsin: taslağı hazırlarsın, avukat "
-        "gözden geçirip onaylar ve gönderir. Alıcı (to), konu (subject) ve gövdeyi (body) net "
-        "doldur. Avukat 'X tarihinde/saatinde gönder' derse send_at'a ISO 8601 yaz; demezse boş "
-        "bırak. Çağırdıktan sonra sohbete yalnızca tek cümlelik kısa bilgilendirme yaz."
+        "'karşı tarafa ihtar gönder'). E-postayı bu araç HEMEN gönderir. Alıcı (to), konu "
+        "(subject) ve gövdeyi (body) net doldur. Çağırdıktan sonra sohbete yalnızca tek cümlelik "
+        "kısa bilgilendirme yaz."
     ),
     parameters={
         "to": {"type": "string", "required": True, "description": "Alıcı e-posta adresi"},
         "subject": {"type": "string", "required": True, "description": "E-posta konusu"},
         "body": {"type": "string", "required": True, "description": "E-posta gövdesi (düz metin)"},
-        "send_at": {
-            "type": "string",
-            "required": False,
-            "description": "İsteğe bağlı gönderim zamanı (ISO 8601). Boşsa onayla hemen gider.",
-        },
         "matter_id": {
             "type": "integer",
             "required": False,

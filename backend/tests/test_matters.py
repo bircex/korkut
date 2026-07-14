@@ -479,19 +479,13 @@ def test_recurring_events_expand_within_the_window(app_mod):
 
 def test_event_reminder_is_dispatched_once(app_mod, monkeypatch):
     from korkut.api import store
-    from korkut.api.models import CalendarEvent, OfficeChannel
+    from korkut.api.models import CalendarEvent
     from korkut.messaging import SendResult
 
+    # Outbound e-mail is now operator-level (env SMTP), not a per-office channel.
+    monkeypatch.setenv("KORKUT_SMTP_FROM", "ofis@x.tr")
+    monkeypatch.setenv("KORKUT_SMTP_PASSWORD", "pw")
     c = _existing(app_mod)
-    with store.session() as s:
-        s.add(
-            OfficeChannel(
-                kind="email",
-                enabled=True,
-                config={"from_address": "ofis@x.tr", "app_password": "pw"},
-            )
-        )
-        s.commit()
 
     # An event starting in 5 minutes with a 60-minute reminder → the reminder moment has passed.
     start = (datetime.now() + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S")

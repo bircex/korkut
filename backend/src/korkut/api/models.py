@@ -21,7 +21,6 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    JSON,
     Date,
     ForeignKeyConstraint,
     Index,
@@ -385,23 +384,6 @@ class TemplateOverride(TenantMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class OfficeChannel(TenantMixin, Base):
-    """The office's credentials for one outbound channel (email now; Telegram/SMTP/… later).
-
-    Generic by design: `config` is a JSON blob whose keys are channel-specific (e.g. email:
-    from_address, from_name, app_password, host, port), so new integrations need no schema change.
-    See `korkut.messaging`. Stored on the office's own DB (self-hosted), like `OfficeModel`.
-    """
-
-    __tablename__ = "office_channels"
-    __table_args__ = (UniqueConstraint("office_id", "kind", name="uq_office_channel"),)
-    id: Mapped[int] = mapped_column(primary_key=True)
-    kind: Mapped[str] = mapped_column(String(32))  # "email", "telegram", …
-    enabled: Mapped[bool] = mapped_column(default=False)
-    config: Mapped[dict] = mapped_column(JSON, default=dict)
-    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
-
-
 class OutboundMessage(TenantMixin, Base):
     """A message Korkut proposed to send — the channel-agnostic outbox + schedule queue.
 
@@ -430,55 +412,6 @@ class OutboundMessage(TenantMixin, Base):
     attempts: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     sent_at: Mapped[datetime | None] = mapped_column(default=None)
-
-
-class IntegrationLink(TenantMixin, Base):
-    """Binds a messaging-channel sender to a korkut `User`, so two-way integrations know which
-    lawyer is talking (`korkut.integrations`).
-
-    A lawyer cannot just message the bot and be trusted — Telegram/WhatsApp/email all hand us only
-    an opaque sender id, never korkut credentials. So linking is an explicit proof-of-ownership:
-    the lawyer generates a one-time `code` in the web UI (a `pending` row), then sends that code
-    FROM the channel; the gateway captures the sender's `external_id` and flips the row to
-    `active`. Inbound auth is then a lookup by (channel, external_id) among active links.
-
-    `external_id` is channel-specific: Telegram numeric user id, WhatsApp jid, or the sender's
-    e-mail address (lower-cased). One external identity maps to at most one user.
-    """
-
-    __tablename__ = "integration_links"
-    __table_args__ = (
-        UniqueConstraint("office_id", "channel", "external_id", name="uq_integration_external"),
-        ForeignKeyConstraint(["office_id", "user_id"], ["users.office_id", "users.id"]),
-    )
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(index=True)
-    channel: Mapped[str] = mapped_column(String(32))  # "telegram" | "whatsapp" | "email"
-    external_id: Mapped[str | None] = mapped_column(String(320), default=None, index=True)
-    code: Mapped[str | None] = mapped_column(String(16), default=None)  # one-time, while pending
-    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending | active
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
-    linked_at: Mapped[datetime | None] = mapped_column(default=None)
-
-
-class IntegrationThread(TenantMixin, Base):
-    """Maps one channel conversation (a Telegram/WhatsApp chat, or an e-mail correspondent) to a
-    korkut `Conversation`, so an incoming chat keeps its history and shows up in the web UI like
-    any other session. Keyed by (channel, thread_id) — the channel's own chat identifier.
-    """
-
-    __tablename__ = "integration_threads"
-    __table_args__ = (
-        UniqueConstraint("office_id", "channel", "thread_id", name="uq_integration_thread"),
-        ForeignKeyConstraint(
-            ["office_id", "conversation_id"], ["conversations.office_id", "conversations.id"]
-        ),
-    )
-    id: Mapped[int] = mapped_column(primary_key=True)
-    channel: Mapped[str] = mapped_column(String(32))
-    thread_id: Mapped[str] = mapped_column(String(190))
-    conversation_id: Mapped[int] = mapped_column(index=True)
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
 # ---------------- matter domain (dosya/dava omurgası) ----------------

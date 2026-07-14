@@ -20,7 +20,6 @@ from korkut.api.models import (
     CalendarEvent,
     MemoryItem,
     Office,
-    OfficeChannel,
     OfficeModel,
     OutboundMessage,
     Persona,
@@ -306,12 +305,20 @@ def office_model_cfg(s: Session) -> ModelCfg | None:
     )
 
 
-def office_channel_config(s: Session, kind: str) -> dict | None:
-    """The office's config dict for an enabled outbound channel (`kind`), or None if unset/off."""
-    row = s.scalar(select(OfficeChannel).where(OfficeChannel.kind == kind))
-    if row is None or not row.enabled:
+def _email_config() -> dict | None:
+    """Outbound e-mail (SMTP) config from the OPERATOR's env, or None if not set. There is no
+    per-office e-mail integration anymore — mail is sent from one operator-controlled account."""
+    frm = os.getenv("KORKUT_SMTP_FROM") or os.getenv("KORKUT_SMTP_USER")
+    pw = os.getenv("KORKUT_SMTP_PASSWORD")
+    if not (frm and pw):
         return None
-    return dict(row.config or {})
+    return {
+        "from_address": frm,
+        "from_name": os.getenv("KORKUT_SMTP_FROM_NAME", "Korkut"),
+        "app_password": pw,
+        "host": os.getenv("KORKUT_SMTP_HOST", "smtp.gmail.com"),
+        "port": int(os.getenv("KORKUT_SMTP_PORT", "587")),
+    }
 
 
 def _utcnow() -> datetime:
@@ -323,7 +330,7 @@ def send_outbound_message(s: Session, msg: OutboundMessage) -> SendResult:
 
     Shared by the confirm endpoint (immediate sends) and the dispatcher (scheduled sends).
     """
-    cfg = office_channel_config(s, msg.kind)
+    cfg = _email_config()
     msg.attempts += 1
     if cfg is None:
         msg.status = "failed"
@@ -391,7 +398,7 @@ def dispatch_due_reminders(limit: int = 100) -> int:
     processed = 0
     now = datetime.now()
     with session() as s:
-        cfg = office_channel_config(s, "email")
+        cfg = _email_config()
         due = s.scalars(
             select(CalendarEvent)
             .where(
