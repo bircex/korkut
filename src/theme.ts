@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// Tema modu: kullanıcı seçimi localStorage'da yaşar; "system" OS tercihini izler.
+// Tema modu: kullanıcı seçimi localStorage'da yaşar. Varsayılan "light"; "system" OS tercihini izler.
 // Uygulanan tema <html data-theme="light|dark"> attribute'udur — styles.css'teki koyu palet
 // ve Tailwind'in dark: variant'ı bu attribute'a bakar. İlk boyamada FOUC olmasın diye aynı
 // mantığın minik bir kopyası index.html'de inline script olarak da çalışır.
@@ -13,9 +13,10 @@ const listeners = new Set<() => void>();
 function stored(): ThemeMode {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "light" || v === "dark" ? v : "system";
+    // Seçim yoksa açık tema varsayılan — "system" ancak kullanıcı bilerek seçerse geçerli.
+    return v === "light" || v === "dark" || v === "system" ? v : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 

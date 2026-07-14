@@ -18,7 +18,6 @@ export {
   BookmarkSimple,
   PencilSimpleLine,
   LinkSimple,
-  Cpu,
   EnvelopeSimple,
   // Genel arayüz
   List,
