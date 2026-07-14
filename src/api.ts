@@ -24,7 +24,7 @@ export type Invite = {
   expires_at: string;
   redeemed: boolean;
 };
-export type PublicConfig = { signup_enabled: boolean; google_configured: boolean };
+export type PublicConfig = { demo_enabled: boolean; google_configured: boolean };
 export type NewInvite = Invite & { token: string; path: string };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type SessionBrief = {
@@ -405,12 +405,13 @@ export const api = {
   // Google OIDC is the only sign-in: a full-page redirect the browser navigates to.
   googleSignInUrl: (invite?: string) =>
     `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
-  // Self-serve office signup (after a Google-verified redirect to /kayit).
+  // Self-serve demo request (after a Google-verified redirect to /kayit). Creates a DISABLED office
+  // pending a superadmin's approval; no session is issued.
   signupPending: () => request<{ email: string }>("/api/signup/pending"),
-  signup: (code: string, office_name: string, full_name?: string) =>
-    request<{ user: User }>("/api/signup", {
+  demoRequest: (office_name: string, full_name?: string) =>
+    request<{ pending: boolean }>("/api/demo-request", {
       method: "POST",
-      body: JSON.stringify({ code, office_name, full_name }),
+      body: JSON.stringify({ office_name, full_name }),
     }),
   members: () => request<Member[]>("/api/members"),
   addMember: (email: string, username: string, full_name: string, bar_registry_no?: string) =>

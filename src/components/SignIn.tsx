@@ -7,6 +7,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   verify: "Google doğrulaması tamamlanamadı. Lütfen tekrar deneyin.",
   no_office: "Bu Google hesabına bağlı aktif bir ofis yok. Ofis sahibinizden davet isteyin.",
   invite: "Davet kullanılamadı: süresi dolmuş, kullanılmış ya da farklı bir e-posta için olabilir.",
+  pending: "Büronuz henüz onaylanmadı. Onaylandığında giriş yapabilirsiniz.",
 };
 
 export function SignIn() {
@@ -16,7 +17,7 @@ export function SignIn() {
     if (!code) return null;
     return ERROR_MESSAGES[code] ?? "Giriş yapılamadı. Lütfen tekrar deneyin.";
   });
-  const [signupOn, setSignupOn] = useState(false);
+  const [demoOn, setDemoOn] = useState(false);
 
   useEffect(() => {
     // Drop the ?error param so a refresh is clean (side effect only — no setState here).
@@ -25,7 +26,7 @@ export function SignIn() {
     }
     api
       .config()
-      .then((c) => setSignupOn(c.signup_enabled))
+      .then((c) => setDemoOn(c.demo_enabled))
       .catch(() => {});
   }, []);
 
@@ -46,12 +47,12 @@ export function SignIn() {
         <GoogleMark />
         Google ile giriş yap
       </a>
-      {signupOn && (
+      {demoOn && (
         <a
           href={api.googleSignInUrl()}
           className="text-center text-[13px] font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
         >
-          Yeni firma mısınız? Firmanızı oluşturun
+          Yeni firma mısınız? Demo talep edin
         </a>
       )}
       <p className="mt-1 text-center text-[13px] text-zinc-500">
