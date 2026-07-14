@@ -68,8 +68,13 @@ def read(token: str) -> Session | None:
 SIGNUP_TTL = 15 * 60  # the "name your office" step must finish within 15 minutes
 
 
-def mint_signup_ticket(sub: str, email: str, *, now: int | None = None) -> str:
-    """Sign a short-lived ticket proving Google verified this ``sub``/``email`` — no account yet."""
+def mint_signup_ticket(
+    sub: str, email: str, picture: str | None = None, *, now: int | None = None
+) -> str:
+    """Sign a short-lived ticket proving Google verified this ``sub``/``email`` — no account yet.
+
+    Carries the Google ``picture`` URL too, so the owner row created at demo-request time already
+    has a profile photo (no need to wait for their first post-approval sign-in)."""
     issued = int(now if now is not None else time.time())
     claims = {
         "typ": "signup",
@@ -78,15 +83,20 @@ def mint_signup_ticket(sub: str, email: str, *, now: int | None = None) -> str:
         "iat": issued,
         "exp": issued + SIGNUP_TTL,
     }
+    if picture:
+        claims["pic"] = picture
     return jwt.encode(claims, auth._secret(), algorithm=_ALG)
 
 
-def read_signup_ticket(token: str) -> tuple[str, str] | None:
-    """Return the verified ``(sub, email)`` from a signup ticket, or None if invalid/expired."""
+def read_signup_ticket(token: str) -> tuple[str, str, str | None] | None:
+    """Return the verified ``(sub, email, picture)`` from a signup ticket, or None if invalid.
+
+    ``picture`` is None for old tickets minted before the claim existed."""
     try:
         c = jwt.decode(token, auth._secret(), algorithms=[_ALG])
         if c.get("typ") != "signup":
             return None
-        return str(c["sub"]), str(c["email"])
+        pic = c.get("pic")
+        return str(c["sub"]), str(c["email"]), (str(pic) if pic else None)
     except (jwt.InvalidTokenError, KeyError, ValueError, TypeError):
         return None

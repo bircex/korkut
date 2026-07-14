@@ -81,6 +81,7 @@ from korkut.api.store import (
     session,
 )
 from korkut.brain import activity, resilience
+from korkut.core import usage
 from korkut.core.tenancy import reset_current_office, set_current_office
 from korkut.core.tool_registry import ToolSpec
 
@@ -179,13 +180,18 @@ class RenameBody(BaseModel):
     title: str
 
 
+# Hukuk bürosunda kullanılan ünvanlar (form dropdown'ı ile birebir; sunucu da bununla doğrular).
+MEMBER_TITLES = ("Avukat", "Stajyer Avukat", "Arabulucu", "Hukuk Müşaviri", "Sekreter", "Muhasebe")
+
+
 class MemberBody(BaseModel):
     # An owner pre-provisions a member by email; the row binds to their Google account on first
-    # sign-in. No password — Google is the only credential.
+    # sign-in. No password — Google is the only credential. Username is derived from the email.
+    first_name: str
+    last_name: str
     email: str
-    username: str
-    full_name: str
-    bar_registry_no: str | None = None
+    title: str
+    phone: str | None = None
 
 
 class InviteBody(BaseModel):
@@ -458,7 +464,12 @@ def _user_public(s: Session, user: User) -> dict:
     """The user payload the SPA gets — identity plus their office + role for tenant-aware UI."""
     return {
         "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "full_name": user.full_name,
+        "phone": user.phone,
+        "title": user.title,
+        "picture": user.picture,
         "bar_registry_no": user.bar_registry_no,
         "role": user.role,
         "email": user.email,
@@ -541,8 +552,14 @@ def _resolve_signin_user(identity: google_oidc.GoogleIdentity) -> User | None:
         )
         if user is None or not user.is_active:
             return None
+        changed = False
         if user.google_sub is None:
             user.google_sub = identity.sub  # bind this person's Google account on first sign-in
+            changed = True
+        if identity.picture and user.picture != identity.picture:
+            user.picture = identity.picture  # profil fotoğrafını her girişte güncel tut
+            changed = True
+        if changed:
             s.commit()
         s.expunge(user)
         return user
@@ -587,6 +604,7 @@ def _redeem_invite(token: str | None, identity: google_oidc.GoogleIdentity) -> U
             email=identity.email,
             google_sub=identity.sub,
             username=_unique_username(s, identity.email.split("@")[0]),
+            picture=identity.picture,
         )
         s.add(user)
         inv.redeemed_at = _utcnow()
@@ -669,7 +687,7 @@ def google_callback(
             redirect = RedirectResponse("/kayit", status_code=303)
             redirect.set_cookie(
                 _SIGNUP_COOKIE,
-                mint_signup_ticket(identity.sub, identity.email),
+                mint_signup_ticket(identity.sub, identity.email, identity.picture),
                 max_age=SIGNUP_TTL,
                 httponly=True,
                 samesite="lax",
@@ -734,7 +752,7 @@ def demo_request(
     parsed = read_signup_ticket(korkut_signup or "")
     if parsed is None:
         raise HTTPException(status_code=401, detail="Kayıt oturumu doldu, baştan giriş yapın")
-    sub, email = parsed
+    sub, email, picture = parsed
     office_name = body.office_name.strip()
     if not office_name:
         raise HTTPException(status_code=400, detail="Ofis adı zorunlu")
@@ -757,6 +775,7 @@ def demo_request(
             google_sub=sub,
             username=_unique_username(s, email.split("@")[0]),
             full_name=(body.full_name or "").strip() or None,
+            picture=picture,
         )
         s.add(owner)
         try:
@@ -781,7 +800,12 @@ def _member_public(u: User, *, self_id: int | None) -> dict:
     return {
         "id": u.id,
         "username": u.username,
+        "first_name": u.first_name,
+        "last_name": u.last_name,
         "full_name": u.full_name,
+        "phone": u.phone,
+        "title": u.title,
+        "picture": u.picture,
         "bar_registry_no": u.bar_registry_no,
         "role": u.role,
         "email": u.email,
@@ -804,15 +828,18 @@ def list_members(korkut_session: str | None = Cookie(default=None)):
 def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=None)):
     """Owner pre-provisions an office member by email; the row binds to their Google account on
     first sign-in. Global email uniqueness means a person can belong to only one office."""
-    full_name = body.full_name.strip()
-    username = body.username.strip().lower()
+    first_name = body.first_name.strip()
+    last_name = body.last_name.strip()
     email = body.email.strip().lower()
-    if not full_name or not username or not email:
-        raise HTTPException(status_code=400, detail="Ad, kullanıcı adı ve e-posta zorunlu")
+    title = body.title.strip()
+    phone = (body.phone or "").strip() or None
+    if not first_name or not last_name or not email:
+        raise HTTPException(status_code=400, detail="Ad, soyad ve e-posta zorunlu")
+    if title not in MEMBER_TITLES:
+        raise HTTPException(status_code=400, detail="Geçersiz ünvan")
+    full_name = f"{first_name} {last_name}".strip()
     with session() as s:
         _require_owner(s, korkut_session)
-        if s.scalar(select(User).where(User.username == username)):
-            raise HTTPException(status_code=409, detail="Bu kullanıcı adı alınmış")
         # email uniqueness is global (across offices); check with the tenant filter bypassed
         if s.scalar(
             select(User.id).where(User.email == email).execution_options(skip_tenant_filter=True)
@@ -820,10 +847,13 @@ def add_member(body: MemberBody, korkut_session: str | None = Cookie(default=Non
             raise HTTPException(status_code=409, detail="Bu e-posta zaten kayıtlı")
         member = User(
             role="member",
-            username=username,
+            username=_unique_username(s, email.split("@")[0]),  # e-postadan otomatik türer
             email=email,
+            first_name=first_name[:100],
+            last_name=last_name[:100],
             full_name=full_name[:200],
-            bar_registry_no=(body.bar_registry_no or "").strip() or None,
+            phone=phone,
+            title=title,
         )
         s.add(member)
         s.commit()
@@ -1823,6 +1853,7 @@ def _session_chat_impl(
     # over `user`. Same toolset the messaging integrations use, so the agent can run the practice
     # from any surface (create/read/update only; delete and account settings stay off-limits).
     m_tools, m_handlers = office_tools.build_office_tools(user)
+    usage.reset()
     reply = _safe_answer(
         text,
         office_name=office_name,
@@ -1840,10 +1871,19 @@ def _session_chat_impl(
         memory=memory,
         on_event=on_event,
     )
+    tok = usage.snapshot()
 
     with session() as s:
         conv = s.get(Conversation, cid)
-        s.add(Message(conversation_id=cid, role="assistant", content=reply))
+        s.add(
+            Message(
+                conversation_id=cid,
+                role="assistant",
+                content=reply,
+                prompt_tokens=tok["prompt"] or None,
+                completion_tokens=tok["completion"] or None,
+            )
+        )
         conv.updated_at = _utcnow()
         s.commit()
         title = conv.title
@@ -2036,6 +2076,7 @@ def session_upload(
         persona_cfg = get_persona(s)
         memory = collect_memory(s)
 
+    usage.reset()
     reply = _safe_answer(
         model_input,
         office_name=office_name,
@@ -2045,10 +2086,19 @@ def session_upload(
         persona_cfg=persona_cfg,
         memory=memory,
     )
+    tok = usage.snapshot()
 
     with session() as s:
         conv = s.get(Conversation, cid)
-        s.add(Message(conversation_id=cid, role="assistant", content=reply))
+        s.add(
+            Message(
+                conversation_id=cid,
+                role="assistant",
+                content=reply,
+                prompt_tokens=tok["prompt"] or None,
+                completion_tokens=tok["completion"] or None,
+            )
+        )
         conv.updated_at = _utcnow()
         s.commit()
         title = conv.title

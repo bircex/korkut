@@ -50,6 +50,7 @@ def main() -> int:
 
     # 1. schema + fail-closed RLS + pre-tenant resolvers, all owned by the admin
     db.init_db(eng)
+    store.ensure_added_columns(eng)  # idempotent ALTERs for columns added after a table exists
     store.apply_tenant_rls(eng)
     store.setup_pg_resolvers(eng)
 

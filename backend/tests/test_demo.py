@@ -32,9 +32,9 @@ def _fresh(tmp_path, monkeypatch, *, demo: bool = True):
     return app_mod, store_mod
 
 
-def _callback(app_mod, *, sub, email):
+def _callback(app_mod, *, sub, email, picture=None):
     c = TestClient(app_mod.app)
-    identity = google_oidc.GoogleIdentity(sub=sub, email=email, hd=None)
+    identity = google_oidc.GoogleIdentity(sub=sub, email=email, hd=None, picture=picture)
     state = google_auth.make_state()
     with (
         patch("korkut.api.app.google_auth.exchange_code", return_value="idtok"),
@@ -85,6 +85,28 @@ def test_demo_request_creates_a_disabled_office_and_no_session(tmp_path, monkeyp
         with store_mod.session() as s:
             u = s.scalars(store_mod.select(User)).one()
             assert u.role == "owner" and u.email == "founder@firm.co"
+    finally:
+        reset_current_office(tok)
+
+
+def test_demo_owner_gets_google_picture_at_creation(tmp_path, monkeypatch):
+    # The Google profile photo rides the signup ticket, so the owner row has it immediately —
+    # no need to wait for the first post-approval sign-in.
+    app_mod, store_mod = _fresh(tmp_path, monkeypatch, demo=True)
+    pic = "https://lh3.googleusercontent.com/a/founder-photo"
+    c, _ = _callback(app_mod, sub="s1", email="founder@firm.co", picture=pic)
+    c.post("/api/demo-request", json={"office_name": "Yeni Hukuk"})
+
+    from korkut.api.models import Office, User
+    from korkut.core.tenancy import reset_current_office, set_current_office
+
+    with store_mod.session() as s:
+        oid = s.scalars(store_mod.select(Office)).one().id
+    tok = set_current_office(oid)
+    try:
+        with store_mod.session() as s:
+            u = s.scalars(store_mod.select(User)).one()
+            assert u.picture == pic
     finally:
         reset_current_office(tok)
 
