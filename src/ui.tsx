@@ -6,12 +6,7 @@ export function Brand({ title = "Korkut", subtitle }: { title?: string; subtitle
       <img
         src="/korkut-logo.svg"
         alt="Korkut"
-        className="h-12 w-12 rounded-xl border border-zinc-200 bg-white p-1 dark:hidden"
-      />
-      <img
-        src="/korkut-logo-dark.svg"
-        alt="Korkut"
-        className="hidden h-12 w-12 rounded-xl border border-zinc-200 bg-white p-1 dark:block"
+        className="h-12 w-12 rounded-xl bg-[#ffffff] p-1 ring-1 ring-black/10"
       />
       <div>
         <h1 className="m-0 text-xl font-bold text-zinc-900">{title}</h1>

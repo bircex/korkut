@@ -6,7 +6,7 @@
     <script>
       (function () {
         try {
-          var m = localStorage.getItem("korkut:theme") || "system";
+          var m = localStorage.getItem("korkut:theme") || "light";
           var dark =
             m === "dark" ||
             (m !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);

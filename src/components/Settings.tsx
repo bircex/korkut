@@ -4,7 +4,6 @@ import { navigate, usePath } from "../router";
 import {
   type Icon,
   BookmarkSimple,
-  Cpu,
   EnvelopeSimple,
   LinkSimple,
   PencilSimpleLine,
@@ -15,7 +14,6 @@ import {
 import { EmailSettings } from "./EmailSettings";
 import { IntegrationsSettings } from "./IntegrationsSettings";
 import { MemorySettings } from "./MemorySettings";
-import { ModelSettings } from "./ModelSettings";
 import { PersonaSettings } from "./PersonaSettings";
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
@@ -490,7 +488,6 @@ type Tab =
   | "memory"
   | "style"
   | "integrations"
-  | "model"
   | "email";
 
 const TAB_TITLE: Record<Tab, string> = {
@@ -500,7 +497,6 @@ const TAB_TITLE: Record<Tab, string> = {
   memory: "Hafıza",
   style: "Yazım stili",
   integrations: "Entegrasyonlar",
-  model: "Model",
   email: "E-posta",
 };
 
@@ -512,7 +508,6 @@ const TAB_SLUG: Record<Tab, string> = {
   memory: "hafiza",
   style: "stil",
   integrations: "entegrasyonlar",
-  model: "model",
   email: "e-posta",
 };
 
@@ -526,7 +521,7 @@ function tabFromPath(path: string): Tab {
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Hesap", ids: ["account", "members"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
-  { label: "Sistem", ids: ["integrations", "model", "email"] },
+  { label: "Sistem", ids: ["integrations", "email"] },
 ];
 
 // Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
@@ -537,7 +532,6 @@ const TAB_ICON: Record<Tab, Icon> = {
   memory: BookmarkSimple,
   style: PencilSimpleLine,
   integrations: LinkSimple,
-  model: Cpu,
   email: EnvelopeSimple,
 };
 
@@ -558,13 +552,8 @@ export function Settings({ user }: { user: User }) {
     { id: "style", label: "Stil" },
     // Every member can link their own account; channel config inside is owner-gated.
     { id: "integrations", label: "Entegrasyonlar" },
-    // Model + e-posta are office-wide settings — owner only.
-    ...(user.role === "owner"
-      ? [
-          { id: "model" as Tab, label: "Model" },
-          { id: "email" as Tab, label: "E-posta" },
-        ]
-      : []),
+    // E-posta is an office-wide setting — owner only.
+    ...(user.role === "owner" ? [{ id: "email" as Tab, label: "E-posta" }] : []),
   ];
 
   return (
@@ -652,7 +641,6 @@ export function Settings({ user }: { user: User }) {
           {tab === "memory" && <MemorySettings />}
           {tab === "style" && <StyleTab />}
           {tab === "integrations" && <IntegrationsSettings />}
-          {tab === "model" && user.role === "owner" && <ModelSettings />}
           {tab === "email" && user.role === "owner" && <EmailSettings />}
         </div>
       </div>
