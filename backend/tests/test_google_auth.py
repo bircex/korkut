@@ -18,6 +18,7 @@ from korkut.api import google_auth, google_oidc
 def _fresh(tmp_path, monkeypatch, *, configured: bool = True):
     monkeypatch.setenv("KORKUT_DB_URL", f"sqlite+pysqlite:///{tmp_path / 't.db'}")
     monkeypatch.setenv("KORKUT_SECRET", "test-secret-stable-0123456789abcdef")
+    monkeypatch.setenv("KORKUT_ALLOW_DEMO", "0")
     if configured:
         monkeypatch.setenv("GOOGLE_CLIENT_ID", "cid")
         monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "csecret")

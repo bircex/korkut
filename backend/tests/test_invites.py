@@ -20,6 +20,7 @@ def _fresh(tmp_path, monkeypatch):
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "cid")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "csecret")
     monkeypatch.setenv("GOOGLE_REDIRECT_URI", "https://korkut.test/api/auth/google/callback")
+    monkeypatch.setenv("KORKUT_ALLOW_DEMO", "0")
 
     import korkut.api.auth as auth_mod
     import korkut.api.store as store_mod

@@ -63,7 +63,6 @@ from korkut.api.models import (
     OutboundMessage,
     Persona,
     ProposedEdit,
-    SignupCode,
     StyleProfile,
     Task,
     TemplateDefault,
@@ -197,8 +196,7 @@ class InviteBody(BaseModel):
     role: str = "member"
 
 
-class SignupBody(BaseModel):
-    code: str
+class DemoBody(BaseModel):
     office_name: str
     full_name: str | None = None
 
@@ -701,9 +699,10 @@ def google_callback(
         logger.info("sign-in rejected: %s", exc.detail)
         return RedirectResponse("/giris?error=invite", status_code=303)
     if user is None:
-        # No account and no invite. If self-serve signup is on, hand the browser a Google-verified
-        # ticket and send it to the "name your office" screen; otherwise it's a closed door.
-        if _signup_enabled():
+        # No account and no invite. Offer a self-serve DEMO REQUEST: a Google-verified ticket + the
+        # request screen. The office it creates stays DISABLED until a superadmin approves it. If
+        # demo requests are off, it's a closed door.
+        if _demo_enabled():
             redirect = RedirectResponse("/kayit", status_code=303)
             redirect.set_cookie(
                 _SIGNUP_COOKIE,
@@ -719,6 +718,10 @@ def google_callback(
             return redirect
         return RedirectResponse("/giris?error=no_office", status_code=303)
 
+    # An existing account whose office isn't approved yet (or was disabled) cannot sign in.
+    if _office_disabled(user.office_id):
+        return RedirectResponse("/giris?error=pending", status_code=303)
+
     redirect = RedirectResponse("/", status_code=303)
     _set_session_cookie(redirect, user)
     if korkut_invite:
@@ -728,31 +731,22 @@ def google_callback(
     return redirect
 
 
-def _signup_enabled() -> bool:
-    """Self-serve signup is off unless KORKUT_ALLOW_SIGNUP=1 (and it still needs a valid code)."""
-    return os.getenv("KORKUT_ALLOW_SIGNUP", "0") == "1"
+def _demo_enabled() -> bool:
+    """Self-serve demo requests: on unless KORKUT_ALLOW_DEMO=0 (a superadmin approves each one)."""
+    return os.getenv("KORKUT_ALLOW_DEMO", "1") == "1"
 
 
-def _consume_signup_code(s: Session, code: str) -> bool:
-    """Validate a signup code and bump its use count (caller commits). Codes are global/pre-tenant.
-
-    True only if the code exists, is enabled, unexpired, and has a remaining use (max_uses 0 = ∞).
-    """
-    row = s.scalar(select(SignupCode).where(SignupCode.code_hash == auth.token_hash(code.strip())))
-    if row is None or row.disabled:
-        return False
-    if row.expires_at is not None and row.expires_at <= _utcnow():
-        return False
-    if row.max_uses and row.used_count >= row.max_uses:
-        return False
-    row.used_count += 1
-    return True
+def _office_disabled(office_id: int) -> bool:
+    """True if the office is missing or not enabled. Office is the tenant root (unscoped by RLS)."""
+    with session() as s:
+        office = s.get(Office, office_id)
+    return office is None or office.disabled
 
 
 @app.get("/api/signup/pending")
 def signup_pending(korkut_signup: str | None = Cookie(default=None)):
-    """The Google-verified email waiting to create an office (for the name-your-office screen)."""
-    if not _signup_enabled():
+    """The Google-verified email waiting to request a demo (drives the request screen)."""
+    if not _demo_enabled():
         raise HTTPException(status_code=404, detail="Kayıt kapalı")
     parsed = read_signup_ticket(korkut_signup or "")
     if parsed is None:
@@ -760,18 +754,19 @@ def signup_pending(korkut_signup: str | None = Cookie(default=None)):
     return {"email": parsed[1]}
 
 
-@app.post("/api/signup")
-def signup(
-    body: SignupBody,
+@app.post("/api/demo-request")
+def demo_request(
+    body: DemoBody,
     request: Request,
     response: Response,
     korkut_signup: str | None = Cookie(default=None),
 ):
-    """Create a NEW office + owner for a Google-verified identity, gated by a valid signup code."""
+    """A Google-verified new firm requests access: creates a DISABLED office + owner pending a
+    superadmin's approval. No session is issued — the owner signs in once the office is enabled."""
     ip = _client_ip(request)
     if not _ip_allowed(ip):
         raise HTTPException(status_code=429, detail="Çok fazla deneme. Biraz sonra tekrar deneyin.")
-    if not _signup_enabled():
+    if not _demo_enabled():
         raise HTTPException(status_code=404, detail="Kayıt kapalı")
     parsed = read_signup_ticket(korkut_signup or "")
     if parsed is None:
@@ -789,14 +784,10 @@ def signup(
             .execution_options(skip_tenant_filter=True)
         ):
             raise HTTPException(status_code=409, detail="Bu Google hesabı zaten kayıtlı")
-        if not _consume_signup_code(s, body.code):
-            _audit(s, "signup_code_fail", username=email, ip=ip)
-            raise HTTPException(status_code=403, detail="Kayıt kodu geçersiz veya kullanılmış")
-        office = Office(name=office_name[:200])
+        office = Office(name=office_name[:200], disabled=True)  # pending a superadmin's approval
         s.add(office)
         s.flush()
-        # the office is the tenant root; pin the context so the owner is stamped and scoped to it
-        set_current_office(office.id)
+        set_current_office(office.id)  # pin the context so the owner is stamped to the new office
         owner = User(
             role="owner",
             email=email,
@@ -807,19 +798,18 @@ def signup(
         s.add(owner)
         try:
             s.commit()
-        except IntegrityError:  # raced another signup with the same account
+        except IntegrityError:  # raced another request with the same account
             raise HTTPException(status_code=409, detail="Bu Google hesabı zaten kayıtlı") from None
-        _set_session_cookie(response, owner)
-        response.delete_cookie(_SIGNUP_COOKIE, path="/")
-        _audit(s, "signup_ok", username=owner.username, ip=ip, detail=office_name[:100])
-        return {"user": _user_public(s, owner)}
+        _audit(s, "demo_request", username=owner.username, ip=ip, detail=office_name[:100])
+    response.delete_cookie(_SIGNUP_COOKIE, path="/")
+    return {"pending": True}  # no session — the owner waits for approval
 
 
 @app.get("/api/config")
 def public_config():
     """Public bootstrap flags for the sign-in screen (no auth)."""
     return {
-        "signup_enabled": _signup_enabled(),
+        "demo_enabled": _demo_enabled(),
         "google_configured": google_oidc.config() is not None,
     }
 
