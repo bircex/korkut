@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { api, type User } from "./api";
 import { SignIn } from "./components/SignIn";
+import { Signup } from "./components/Signup";
 import { Workspace } from "./components/Workspace";
-import { navigate } from "./router";
+import { navigate, usePath } from "./router";
 
 // A deep link visited while signed out (e.g. /dosyalar/12). Google sign-in is a full-page
 // round-trip that lands back on "/", so we stash the target and restore it once authed.
 const NEXT_KEY = "korkut:next";
 
 export function App() {
+  const path = usePath();
   const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
 
@@ -63,5 +65,6 @@ export function App() {
   if (status === "authed" && user) {
     return <Workspace user={user} onLogout={logout} />;
   }
-  return <SignIn />;
+  // Anonymous: the self-serve "create your firm" step lives at /kayit; everything else is sign-in.
+  return path.startsWith("/kayit") ? <Signup /> : <SignIn />;
 }

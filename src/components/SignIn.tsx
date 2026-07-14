@@ -16,12 +16,17 @@ export function SignIn() {
     if (!code) return null;
     return ERROR_MESSAGES[code] ?? "Giriş yapılamadı. Lütfen tekrar deneyin.";
   });
+  const [signupOn, setSignupOn] = useState(false);
 
   useEffect(() => {
     // Drop the ?error param so a refresh is clean (side effect only — no setState here).
     if (new URLSearchParams(window.location.search).get("error")) {
       window.history.replaceState(null, "", "/giris");
     }
+    api
+      .config()
+      .then((c) => setSignupOn(c.signup_enabled))
+      .catch(() => {});
   }, []);
 
   return (
@@ -41,6 +46,14 @@ export function SignIn() {
         <GoogleMark />
         Google ile giriş yap
       </a>
+      {signupOn && (
+        <a
+          href={api.googleSignInUrl()}
+          className="text-center text-[13px] font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Yeni firma mısınız? Firmanızı oluşturun
+        </a>
+      )}
       <p className="mt-1 text-center text-[13px] text-zinc-500">
         Ofisinize davet edildiyseniz davet bağlantısındaki giriş düğmesini kullanın.
       </p>
