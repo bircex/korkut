@@ -55,5 +55,25 @@ services:
       # Serve the committed SPA directly, so a refreshed UI shows without an image rebuild.
       - ../backend/src/korkut/api/static:/app/backend/src/korkut/api/static
 
+  # Superadmin console (separate project ../../korkut-admin). Connects as the ADMIN role, so it sees
+  # across offices. Google + KORKUT_SUPERADMIN_EMAILS allowlist. http://localhost:8091
+  admin:
+    build:
+      context: ../../korkut-admin
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      KORKUT_ADMIN_HOST: "0.0.0.0"
+      KORKUT_ADMIN_PORT: "8091"
+      KORKUT_ADMIN_DB_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/korkut"
+    ports:
+      - "8092:8091"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    volumes:
+      - ../../korkut-admin/backend/src/korkut_admin/static:/app/backend/src/korkut_admin/static
+
 volumes:
   pgdata:
