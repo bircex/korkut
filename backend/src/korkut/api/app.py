@@ -815,6 +815,15 @@ def signup(
         return {"user": _user_public(s, owner)}
 
 
+@app.get("/api/config")
+def public_config():
+    """Public bootstrap flags for the sign-in screen (no auth)."""
+    return {
+        "signup_enabled": _signup_enabled(),
+        "google_configured": google_oidc.config() is not None,
+    }
+
+
 def _member_public(u: User, *, self_id: int | None) -> dict:
     return {
         "id": u.id,
