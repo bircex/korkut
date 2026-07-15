@@ -362,6 +362,29 @@ def _email_config() -> dict | None:
     }
 
 
+def send_simple_email(to_addr: str, subject: str, body: str) -> SendResult:
+    """Send a one-off operator notification e-mail, bypassing the OutboundMessage queue.
+
+    Best-effort: returns a failed SendResult (never raises) if SMTP isn't configured, so callers
+    can notify without risking the main flow. Used for demo-request alerts and the like.
+    """
+    cfg = _email_config()
+    if cfg is None:
+        return SendResult(ok=False, detail="SMTP yapılandırılmamış")
+    try:
+        return build_channel("email", cfg).send(
+            OutboundDraft(to_addr=to_addr, subject=subject, body=body)
+        )
+    except Exception as exc:  # never let a notification break the caller
+        return SendResult(ok=False, detail=str(exc))
+
+
+def admin_notify_addresses() -> list[str]:
+    """Operator addresses that get demo-request alerts (KORKUT_ADMIN_NOTIFY_EMAIL, comma-sep)."""
+    raw = os.getenv("KORKUT_ADMIN_NOTIFY_EMAIL", "")
+    return [a.strip() for a in raw.split(",") if a.strip()]
+
+
 def _utcnow() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 

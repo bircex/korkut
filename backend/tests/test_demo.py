@@ -89,6 +89,40 @@ def test_demo_request_creates_a_disabled_office_and_no_session(tmp_path, monkeyp
         reset_current_office(tok)
 
 
+def test_demo_request_alerts_the_operator(tmp_path, monkeypatch):
+    monkeypatch.setenv("KORKUT_ADMIN_NOTIFY_EMAIL", "ops@korkut.test, second@korkut.test")
+    app_mod, _ = _fresh(tmp_path, monkeypatch, demo=True)
+    from korkut.messaging import SendResult
+
+    sent: list[tuple] = []
+
+    def _fake(to_addr, subject, body):
+        sent.append((to_addr, subject, body))
+        return SendResult(ok=True)
+
+    monkeypatch.setattr(app_mod, "send_simple_email", _fake)
+    c, _ = _callback(app_mod, sub="s1", email="founder@firm.co")
+    r = c.post("/api/demo-request", json={"office_name": "Yeni Hukuk"})
+    assert r.status_code == 200
+    # both operators alerted, and the office/e-mail appear in the body
+    assert [x[0] for x in sent] == ["ops@korkut.test", "second@korkut.test"]
+    assert "Yeni Hukuk" in sent[0][2] and "founder@firm.co" in sent[0][2]
+
+
+def test_demo_request_without_notify_env_sends_nothing(tmp_path, monkeypatch):
+    monkeypatch.delenv("KORKUT_ADMIN_NOTIFY_EMAIL", raising=False)
+    app_mod, _ = _fresh(tmp_path, monkeypatch, demo=True)
+    from korkut.messaging import SendResult
+
+    calls: list = []
+    monkeypatch.setattr(
+        app_mod, "send_simple_email", lambda *a: calls.append(a) or SendResult(ok=True)
+    )
+    c, _ = _callback(app_mod, sub="s1", email="founder@firm.co")
+    assert c.post("/api/demo-request", json={"office_name": "Yeni Hukuk"}).status_code == 200
+    assert calls == []
+
+
 def test_demo_owner_gets_google_picture_at_creation(tmp_path, monkeypatch):
     # The Google profile photo rides the signup ticket, so the owner row has it immediately —
     # no need to wait for the first post-approval sign-in.

@@ -70,6 +70,7 @@ from korkut.api.session import SESSION_TTL, SIGNUP_TTL, mint_signup_ticket, read
 from korkut.api.session import mint as mint_session
 from korkut.api.session import read as read_session
 from korkut.api.store import (
+    admin_notify_addresses,
     collect_memory,
     effective_theme,
     get_office,
@@ -78,6 +79,7 @@ from korkut.api.store import (
     resolve_office_for_invite,
     resolve_office_for_signin,
     send_outbound_message,
+    send_simple_email,
     session,
 )
 from korkut.brain import activity, resilience
@@ -784,7 +786,27 @@ def demo_request(
             raise HTTPException(status_code=409, detail="Bu Google hesabı zaten kayıtlı") from None
         _audit(s, "demo_request", username=owner.username, ip=ip, detail=office_name[:100])
     response.delete_cookie(_SIGNUP_COOKIE, path="/")
+    # Best-effort alert to the operator(s) so a request doesn't sit unnoticed in the console.
+    _notify_admins_new_demo(office_name, email)
     return {"pending": True}  # no session — the owner waits for approval
+
+
+def _notify_admins_new_demo(office_name: str, email: str) -> None:
+    """E-mail the operator allowlist that a demo request is waiting for approval (best-effort)."""
+    addrs = admin_notify_addresses()
+    if not addrs:
+        return
+    subject = "Yeni Korkut demo talebi"
+    body = (
+        f"Yeni bir demo talebi geldi ve onay bekliyor.\n\n"
+        f"Ofis: {office_name}\n"
+        f"E-posta: {email}\n\n"
+        f"Admin konsolundan onaylayabilirsin."
+    )
+    for addr in addrs:
+        result = send_simple_email(addr, subject, body)
+        if not result.ok:
+            logger.warning("demo alert to %s failed: %s", addr, result.detail)
 
 
 @app.get("/api/config")
