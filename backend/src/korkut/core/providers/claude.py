@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from korkut.core import tool_registry
+from korkut.core import tool_registry, usage
 from korkut.core.agent_loop import StepResult
 from korkut.core.tool_registry import ToolSpec
 
@@ -74,6 +74,9 @@ class ClaudeProvider:
         if tools:
             kwargs["tools"] = tool_registry.to_anthropic_tools(tools)
         message = client.messages.create(**kwargs)
+        u = getattr(message, "usage", None)
+        if u is not None:  # Anthropic reports input/output tokens per call
+            usage.add(getattr(u, "input_tokens", 0) or 0, getattr(u, "output_tokens", 0) or 0)
 
         if message.stop_reason == "refusal":
             return StepResult(text="Bu isteği güvenlik nedeniyle yanıtlayamıyorum.")

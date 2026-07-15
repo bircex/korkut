@@ -23,6 +23,7 @@ from korkut.api.models import (
     OfficeModel,
     OutboundMessage,
     Persona,
+    RegisteredModel,
     TemplateDefault,
     TemplateOverride,
 )
@@ -98,6 +99,41 @@ def apply_tenant_rls(eng) -> None:
             for stmt in rls_policy_ddl(tbl).split(";\n"):
                 if stmt.strip():
                     cn.execute(text(stmt))
+
+
+# Lightweight forward-migration for columns added to existing tables. `create_all` only creates
+# missing tables (never ALTERs), and there is no migration framework yet, so new nullable columns on
+# a live Postgres DB are added here idempotently. Run by the admin bootstrap after init_db; SQLite
+# (tests) gets the columns from create_all directly. Keep each column NULLable so existing rows are
+# untouched. See docs/SAAS_ARCHITECTURE.md (create_all is the source of truth, no migrations yet).
+def ensure_added_columns(eng) -> None:
+    if eng.dialect.name != "postgresql":
+        return
+    stmts = (
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(100)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(100)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(40)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS title VARCHAR(40)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS picture VARCHAR(500)",
+        # Real token accounting (admin per-office totals) — nullable, so existing rows are fine.
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER",
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS completion_tokens INTEGER",
+        "ALTER TABLE proposed_edits ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER",
+        "ALTER TABLE proposed_edits ADD COLUMN IF NOT EXISTS completion_tokens INTEGER",
+        # Model catalog: offices now point at a registered model instead of inline config.
+        "ALTER TABLE office_models ADD COLUMN IF NOT EXISTS model_id INTEGER",
+        # Drop the old inline-config columns now that assignment is by model_id. Guarded so it's a
+        # no-op on a fresh DB (create_all already built the new shape) and idempotent on re-run.
+        "DO $$ BEGIN"
+        " IF EXISTS (SELECT 1 FROM information_schema.columns"
+        "   WHERE table_name='office_models' AND column_name='model') THEN"
+        "   ALTER TABLE office_models DROP COLUMN model, DROP COLUMN base_url,"
+        "     DROP COLUMN api_key, DROP COLUMN is_local;"
+        " END IF; END $$",
+    )
+    with eng.begin() as cn:
+        for stmt in stmts:
+            cn.execute(text(stmt))
 
 
 # Owns the pre-tenant resolver functions: NOLOGIN so it cannot connect, BYPASSRLS so a
@@ -293,15 +329,22 @@ def _docker_host_rewrite(base_url: str) -> str:
 
 
 def office_model_cfg(s: Session) -> ModelCfg | None:
-    """The office's custom model as a router `ModelCfg`, or None if unset/disabled (→ default)."""
+    """The office's assigned model as a router `ModelCfg`, or None if unset/disabled (→ default).
+
+    The office row (RLS-scoped) points at a globally-registered model; the catalog has no RLS, so
+    the assigned `RegisteredModel` is readable here even though it isn't tenant-owned.
+    """
     row = s.scalar(select(OfficeModel))
-    if row is None or not row.enabled or not row.model or not row.base_url:
+    if row is None or not row.enabled or row.model_id is None:
+        return None
+    reg = s.get(RegisteredModel, row.model_id)
+    if reg is None or not reg.model or not reg.base_url:
         return None
     return ModelCfg(
-        model=row.model,
-        base_url=_docker_host_rewrite(row.base_url),
-        api_key=row.api_key or None,
-        local=row.is_local,
+        model=reg.model,
+        base_url=_docker_host_rewrite(reg.base_url),
+        api_key=reg.api_key or None,
+        local=reg.is_local,
     )
 
 
@@ -319,6 +362,29 @@ def _email_config() -> dict | None:
         "host": os.getenv("KORKUT_SMTP_HOST", "smtp.gmail.com"),
         "port": int(os.getenv("KORKUT_SMTP_PORT", "587")),
     }
+
+
+def send_simple_email(to_addr: str, subject: str, body: str) -> SendResult:
+    """Send a one-off operator notification e-mail, bypassing the OutboundMessage queue.
+
+    Best-effort: returns a failed SendResult (never raises) if SMTP isn't configured, so callers
+    can notify without risking the main flow. Used for demo-request alerts and the like.
+    """
+    cfg = _email_config()
+    if cfg is None:
+        return SendResult(ok=False, detail="SMTP yapılandırılmamış")
+    try:
+        return build_channel("email", cfg).send(
+            OutboundDraft(to_addr=to_addr, subject=subject, body=body)
+        )
+    except Exception as exc:  # never let a notification break the caller
+        return SendResult(ok=False, detail=str(exc))
+
+
+def admin_notify_addresses() -> list[str]:
+    """Operator addresses that get demo-request alerts (KORKUT_ADMIN_NOTIFY_EMAIL, comma-sep)."""
+    raw = os.getenv("KORKUT_ADMIN_NOTIFY_EMAIL", "")
+    return [a.strip() for a in raw.split(",") if a.strip()]
 
 
 def _utcnow() -> datetime:

@@ -90,22 +90,40 @@ class StyleProfile(TenantMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
-class OfficeModel(TenantMixin, Base):
-    """The office's custom LLM, defined by the owner in Özelleştir (one row per office).
+class RegisteredModel(Base):
+    """An admin-registered LLM endpoint, defined ONCE in the admin console and assigned to offices.
 
-    When `enabled`, every chat/draft routes to this model instead of the built-in default.
-    `is_local` True means the endpoint runs on-prem (Ollama etc.) → the router skips redaction
-    (data never leaves the machine); False means an external endpoint, so cloud-bound text is
-    still redacted. Any OpenAI-compatible Chat Completions endpoint works.
+    Global (not tenant-scoped): the superadmin curates the catalog, then assigns a model to an
+    office via `OfficeModel.model_id`. `is_local` True means the endpoint runs on-prem (Ollama)
+    → the router skips redaction (data never leaves the machine); False means an external endpoint,
+    so cloud-bound text is still redacted. Any OpenAI-compatible Chat Completions endpoint works.
+    Readable by the app role (no RLS) so the tenant runtime can resolve an office's assigned model.
+    """
+
+    __tablename__ = "models"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(120))  # console display name, e.g. "DeepSeek V3"
+    model: Mapped[str] = mapped_column(String(200))  # wire model id, e.g. "deepseek-chat"
+    base_url: Mapped[str] = mapped_column(String(500))  # OpenAI-compatible /v1 URL
+    api_key: Mapped[str] = mapped_column(Text, default="")  # blank for keyless local endpoints
+    is_local: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+
+class OfficeModel(TenantMixin, Base):
+    """Which registered model an office uses (one row per office). Admin-managed.
+
+    `model_id` points at a `RegisteredModel`; when `enabled` and set, every chat routes to it
+    instead of the built-in default. Tenants can no longer define their own model — the superadmin
+    assigns one from the catalog in the admin console.
     """
 
     __tablename__ = "office_models"
+    __table_args__ = (ForeignKeyConstraint(["model_id"], ["models.id"], ondelete="SET NULL"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     enabled: Mapped[bool] = mapped_column(default=False)
-    is_local: Mapped[bool] = mapped_column(default=False)
-    model: Mapped[str] = mapped_column(String(200), default="")  # e.g. "llama-3.3-70b-versatile"
-    base_url: Mapped[str] = mapped_column(String(500), default="")  # OpenAI-compatible /v1 URL
-    api_key: Mapped[str] = mapped_column(Text, default="")  # blank for keyless local endpoints
+    model_id: Mapped[int | None] = mapped_column(default=None)
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
 
@@ -168,7 +186,14 @@ class User(TenantMixin, Base):
     # NULL until the user's first Google sign-in binds their stable Google `sub`; unique once set.
     google_sub: Mapped[str | None] = mapped_column(String(255), default=None)
     username: Mapped[str] = mapped_column(String(64), index=True)  # per-office display handle
+    # İsim iki parça olarak tutulur (Ad/Soyad); `full_name` ikisinden türetilir (görünen ad, baş
+    # harfler, selamlama hep bunu kullanır). Eski kayıtlarda ad/soyad boş olabilir, full_name dolu.
+    first_name: Mapped[str | None] = mapped_column(String(100), default=None)  # Ad
+    last_name: Mapped[str | None] = mapped_column(String(100), default=None)  # Soyad
     full_name: Mapped[str | None] = mapped_column(String(200), default=None)
+    phone: Mapped[str | None] = mapped_column(String(40), default=None)  # telefon
+    title: Mapped[str | None] = mapped_column(String(40), default=None)  # ünvan (Avukat…)
+    picture: Mapped[str | None] = mapped_column(String(500), default=None)  # Google profil foto
     bar_registry_no: Mapped[str | None] = mapped_column(String(32), default=None)  # baro sicil no
     is_active: Mapped[bool] = mapped_column(default=True)
 
@@ -243,6 +268,10 @@ class Message(TenantMixin, Base):
     role: Mapped[str] = mapped_column(String(16))  # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
+    # Real token usage for assistant turns (summed across the turn's provider calls); None on user
+    # messages and on turns whose model reported no usage. Powers the admin per-office token totals.
+    prompt_tokens: Mapped[int | None] = mapped_column(default=None)
+    completion_tokens: Mapped[int | None] = mapped_column(default=None)
 
     conversation: Mapped[Conversation] = relationship(
         back_populates="messages",
@@ -328,6 +357,9 @@ class ProposedEdit(TenantMixin, Base):
     summary: Mapped[str | None] = mapped_column(String(300), default=None)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|reverted
     created_at: Mapped[datetime] = mapped_column(default=func.now())
+    # Token usage for the drafting call (counts toward the office's admin token total).
+    prompt_tokens: Mapped[int | None] = mapped_column(default=None)
+    completion_tokens: Mapped[int | None] = mapped_column(default=None)
 
 
 class TemplateDefault(Base):

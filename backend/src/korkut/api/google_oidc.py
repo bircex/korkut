@@ -36,6 +36,7 @@ class GoogleIdentity(NamedTuple):
     sub: str
     email: str
     hd: str | None  # Workspace domain, if any
+    picture: str | None = None  # profil foto URL'i (profile scope'u ile gelir)
 
 
 class GoogleAuthError(Exception):
@@ -88,4 +89,10 @@ def verify_id_token(
     email = claims.get("email")
     if not email:
         raise GoogleAuthError("no email in token")
-    return GoogleIdentity(sub=str(claims["sub"]), email=str(email), hd=claims.get("hd"))
+    picture = claims.get("picture")
+    return GoogleIdentity(
+        sub=str(claims["sub"]),
+        email=str(email),
+        hd=claims.get("hd"),
+        picture=str(picture) if picture else None,
+    )

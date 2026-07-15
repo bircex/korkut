@@ -12,9 +12,20 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from korkut.core import tool_registry
+from korkut.core import tool_registry, usage
 from korkut.core.agent_loop import StepResult
 from korkut.core.tool_registry import ToolSpec
+
+
+def _record_usage(u: Any) -> None:
+    """Add one API response's token usage to the request-scoped accumulator (if reported)."""
+    if u is None:
+        return
+    usage.add(
+        getattr(u, "prompt_tokens", 0) or 0,
+        getattr(u, "completion_tokens", 0) or 0,
+    )
+
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
@@ -63,7 +74,9 @@ class GptProvider:
         kwargs: dict[str, Any] = {"model": self._model, "messages": self._to_wire(messages)}
         if tools:
             kwargs["tools"] = tool_registry.to_openai_tools(tools)
-        message = client.chat.completions.create(**kwargs).choices[0].message
+        resp = client.chat.completions.create(**kwargs)
+        _record_usage(getattr(resp, "usage", None))
+        message = resp.choices[0].message
         calls = [
             {
                 "id": tc.id,
@@ -93,6 +106,8 @@ class GptProvider:
             "model": self._model,
             "messages": self._to_wire(messages),
             "stream": True,
+            # Ask the server to append a final usage-only chunk so streamed turns are counted too.
+            "stream_options": {"include_usage": True},
         }
         if tools:
             kwargs["tools"] = tool_registry.to_openai_tools(tools)
@@ -100,8 +115,11 @@ class GptProvider:
         text_parts: list[str] = []
         frags: dict[int, dict[str, Any]] = {}
         for chunk in client.chat.completions.create(**kwargs):
+            # The trailing usage-only chunk carries no choices; record it and move on.
+            if getattr(chunk, "usage", None):
+                _record_usage(chunk.usage)
             if not chunk.choices:
-                continue  # some servers send a trailing usage-only chunk with no choices
+                continue
             delta = chunk.choices[0].delta
             if getattr(delta, "content", None):
                 text_parts.append(delta.content)
