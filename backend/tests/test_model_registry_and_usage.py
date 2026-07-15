@@ -33,6 +33,29 @@ def test_usage_windows_are_isolated_per_context():
     assert usage.snapshot() == {"prompt": 1, "completion": 1}
 
 
+def test_claude_provider_records_usage():
+    # The built-in default (Claude) path must feed the same accumulator as the OpenAI-compat path.
+    from types import SimpleNamespace
+
+    from korkut.core.providers.claude import ClaudeProvider
+
+    class FakeMessages:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                stop_reason="end_turn",
+                content=[SimpleNamespace(type="text", text="merhaba")],
+                usage=SimpleNamespace(input_tokens=42, output_tokens=8),
+            )
+
+    fake_client = SimpleNamespace(messages=FakeMessages())
+    provider = ClaudeProvider(client=fake_client)
+
+    usage.reset()
+    result = provider.step([{"role": "user", "content": "selam"}], [])
+    assert result.text == "merhaba"
+    assert usage.snapshot() == {"prompt": 42, "completion": 8}
+
+
 # ---- registry-backed office model resolution ----
 
 

@@ -118,6 +118,8 @@ def ensure_added_columns(eng) -> None:
         # Real token accounting (admin per-office totals) — nullable, so existing rows are fine.
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER",
         "ALTER TABLE messages ADD COLUMN IF NOT EXISTS completion_tokens INTEGER",
+        "ALTER TABLE proposed_edits ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER",
+        "ALTER TABLE proposed_edits ADD COLUMN IF NOT EXISTS completion_tokens INTEGER",
         # Model catalog: offices now point at a registered model instead of inline config.
         "ALTER TABLE office_models ADD COLUMN IF NOT EXISTS model_id INTEGER",
         # Drop the old inline-config columns now that assignment is by model_id. Guarded so it's a

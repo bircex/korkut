@@ -2520,6 +2520,7 @@ def _make_draft(
         "ÇIKTI KURALI: SADECE belgenin tam ve güncel halini markdown olarak yaz. Sohbet, "
         "açıklama, ön/son söz EKLEME. Başlıklar için #/##, vurgu için **...** kullan."
     )
+    usage.reset()
     proposed = _strip_fences(
         _safe_answer(
             prompt,
@@ -2531,6 +2532,7 @@ def _make_draft(
             memory=memory,
         )
     )
+    tok = usage.snapshot()
     # Letterhead/signature are deterministic and PII-bearing → add them on the FIRST draft only,
     # after the cloud call (so they never leave the machine). Later edits keep them via the
     # redaction round-trip on `current`.
@@ -2546,7 +2548,11 @@ def _make_draft(
         if heading and not current:  # name the doc from its heading on the first draft
             doc.title = heading[:200]
         pe = ProposedEdit(
-            document_id=doc_id, content_md=proposed, summary=f"+{added} / -{removed} satır"
+            document_id=doc_id,
+            content_md=proposed,
+            summary=f"+{added} / -{removed} satır",
+            prompt_tokens=tok["prompt"] or None,
+            completion_tokens=tok["completion"] or None,
         )
         s.add(pe)
         s.commit()

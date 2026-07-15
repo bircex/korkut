@@ -359,6 +359,9 @@ class ProposedEdit(TenantMixin, Base):
     summary: Mapped[str | None] = mapped_column(String(300), default=None)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|reverted
     created_at: Mapped[datetime] = mapped_column(default=func.now())
+    # Token usage for the drafting call (counts toward the office's admin token total).
+    prompt_tokens: Mapped[int | None] = mapped_column(default=None)
+    completion_tokens: Mapped[int | None] = mapped_column(default=None)
 
 
 class TemplateDefault(Base):
