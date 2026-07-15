@@ -26,6 +26,7 @@ def _record_usage(u: Any) -> None:
         getattr(u, "completion_tokens", 0) or 0,
     )
 
+
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
 

@@ -120,9 +120,7 @@ class OfficeModel(TenantMixin, Base):
     """
 
     __tablename__ = "office_models"
-    __table_args__ = (
-        ForeignKeyConstraint(["model_id"], ["models.id"], ondelete="SET NULL"),
-    )
+    __table_args__ = (ForeignKeyConstraint(["model_id"], ["models.id"], ondelete="SET NULL"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     enabled: Mapped[bool] = mapped_column(default=False)
     model_id: Mapped[int | None] = mapped_column(default=None)
