@@ -465,6 +465,7 @@ def _office_name(s: Session) -> str | None:
 def _user_public(s: Session, user: User) -> dict:
     """The user payload the SPA gets — identity plus their office + role for tenant-aware UI."""
     return {
+        "id": user.id,
         "username": user.username,
         "first_name": user.first_name,
         "last_name": user.last_name,
@@ -1148,14 +1149,42 @@ def coverage_stats(korkut_session: str | None = Cookie(default=None)):
 # ---------------- chat sessions (shared office workspace) ----------------
 
 
-def _conv_brief(c: Conversation) -> dict:
+def _conv_brief(c: Conversation, contributors: list[dict] | None = None) -> dict:
     return {
         "id": c.id,
         "title": c.title,
         "matter_id": c.matter_id,
         "created_by_name": c.created_by_name,
         "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+        "contributors": contributors or [],
     }
+
+
+def _contributors_by_conv(s: Session, conv_ids: list[int]) -> dict[int, list[dict]]:
+    """Distinct authors of "user"-role messages per conversation, first-seen order.
+
+    Powers the sidebar avatar stack (who has written in this shared session) — a plain Python
+    dedupe instead of SQL DISTINCT so it works the same on SQLite (dev) and Postgres (prod).
+    """
+    if not conv_ids:
+        return {}
+    rows = s.execute(
+        select(Message.conversation_id, User.id, User.full_name, User.username, User.picture)
+        .join(User, User.id == Message.user_id)
+        .where(Message.conversation_id.in_(conv_ids), Message.role == "user")
+        .order_by(Message.id)
+    ).all()
+    out: dict[int, list[dict]] = {}
+    seen: dict[int, set[int]] = {}
+    for conv_id, uid, full_name, username, picture in rows:
+        s_seen = seen.setdefault(conv_id, set())
+        if uid in s_seen:
+            continue
+        s_seen.add(uid)
+        out.setdefault(conv_id, []).append(
+            {"id": uid, "full_name": full_name or username, "picture": picture}
+        )
+    return out
 
 
 @app.get("/api/sessions")
@@ -1174,7 +1203,11 @@ def list_sessions(
             .limit(limit)
             .offset(offset)
         ).all()
-        return {"items": [_conv_brief(c) for c in rows], "total": total}
+        contrib = _contributors_by_conv(s, [c.id for c in rows])
+        return {
+            "items": [_conv_brief(c, contrib.get(c.id)) for c in rows],
+            "total": total,
+        }
 
 
 @app.post("/api/sessions")
@@ -1199,9 +1232,21 @@ def get_session(cid: int, korkut_session: str | None = Cookie(default=None)):
     with session() as s:
         user = _require_user(s, korkut_session)
         conv = _require_conv(s, user, cid)
+        contrib = _contributors_by_conv(s, [cid]).get(cid, [])
+        authors = {c["id"]: c for c in contrib}
+
+        def _msg(m: Message) -> dict:
+            out = {"role": m.role, "content": m.content}
+            author = authors.get(m.user_id) if m.user_id is not None else None
+            if author is not None:
+                out["user_id"] = author["id"]
+                out["user_name"] = author["full_name"]
+                out["user_picture"] = author["picture"]
+            return out
+
         return {
-            **_conv_brief(conv),
-            "messages": [{"role": m.role, "content": m.content} for m in conv.messages],
+            **_conv_brief(conv, contrib),
+            "messages": [_msg(m) for m in conv.messages],
         }
 
 
