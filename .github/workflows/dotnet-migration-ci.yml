@@ -1,0 +1,44 @@
+name: .NET Migration CI
+
+# KDM-005 — build + architecture + smoke tests for the .NET solution on every PR
+# into dotnet-migration that touches dotnet/**. Path-aware so it stays fast and
+# only runs when the .NET code changes. Read-only permissions; no secrets used.
+
+on:
+  pull_request:
+    branches: [dotnet-migration]
+    paths:
+      - "dotnet/**"
+      - ".github/workflows/dotnet-migration-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dotnet-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: dotnet
+
+jobs:
+  dotnet:
+    name: Restore, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore Korkut.slnx
+
+      - name: Build (warnings-as-errors, analyzers, nullable)
+        run: dotnet build Korkut.slnx -c Release --no-restore
+
+      - name: Test (architecture + smoke + unit)
+        run: dotnet test Korkut.slnx -c Release --no-build --verbosity normal

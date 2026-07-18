@@ -1,0 +1,25 @@
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8-bom
+
+# Analyzer policy. Warnings are errors solution-wide (Directory.Build.props);
+# the entries below are *intentional* rule tuning, not blanket suppression.
+
+# CA1716: type/member names must not match VB/F# reserved keywords. Korkut's .NET
+# code is C#-only and never consumed from VB, and `Error`/`Result` are deliberate
+# domain-primitive names. Disable this cross-language-naming rule specifically.
+dotnet_diagnostic.CA1716.severity = none
+
+# Namespaces intentionally do not always mirror folder structure (feature/module
+# grouping); keep the build clean without weakening real correctness analyzers.
+dotnet_diagnostic.IDE0130.severity = none
+
+# Test projects use the idiomatic `Method_does_thing` naming; underscores in test
+# member names are intentional and readable. Relax CA1707 for tests only.
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none

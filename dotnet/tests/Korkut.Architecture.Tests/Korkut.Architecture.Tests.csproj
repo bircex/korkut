@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Korkut.Api\Korkut.Api.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Worker\Korkut.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Migrator\Korkut.Migrator.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>
