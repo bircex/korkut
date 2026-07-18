@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Korkut.Api/Korkut.Api.csproj" />
+    <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
+    <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
+    <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
+    <Project Path="src/Korkut.Migrator/Korkut.Migrator.csproj" />
+    <Project Path="src/Korkut.SharedKernel/Korkut.SharedKernel.csproj" />
+    <Project Path="src/Korkut.Worker/Korkut.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
+    <Project Path="tests/Korkut.Architecture.Tests/Korkut.Architecture.Tests.csproj" />
+    <Project Path="tests/Korkut.Domain.Tests/Korkut.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
