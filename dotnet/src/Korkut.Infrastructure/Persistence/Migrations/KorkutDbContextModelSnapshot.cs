@@ -88,6 +88,81 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("job_audit", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId")
+                        .HasDatabaseName("ix_matters_office");
+
+                    b.ToTable("matters", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterHearingEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("MatterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matter_id");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<DateTimeOffset>("ScheduledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "MatterId")
+                        .HasDatabaseName("ix_matter_hearings_office_matter");
+
+                    b.ToTable("matter_hearings", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.OfficeEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("offices", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.OutboxEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -159,6 +234,16 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_status_available_at");
 
                     b.ToTable("outbox_messages", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterHearingEntity", b =>
+                {
+                    b.HasOne("Korkut.Infrastructure.Persistence.Entities.MatterEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId", "MatterId")
+                        .HasPrincipalKey("OfficeId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
