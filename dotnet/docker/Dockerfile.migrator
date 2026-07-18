@@ -1,0 +1,18 @@
+# KDM-009 — hardened Korkut.Migrator image. One-shot: applies migrations then exits
+# (chiseled runtime, non-root, digest-pinned). Runs under a separate least-privileged
+# DB identity (KDM-011); never runs inside the API/Worker.
+FROM mcr.microsoft.com/dotnet/sdk:10.0.102@sha256:6ba533cc61a5d8c5e7d4b3a3e33e2ddc2efef200b112e4d658303516bfd24255 AS build
+WORKDIR /src
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY src/ ./src/
+RUN dotnet restore src/Korkut.Migrator/Korkut.Migrator.csproj
+RUN dotnet publish src/Korkut.Migrator/Korkut.Migrator.csproj \
+    -c Release -o /app --no-restore /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/runtime:10.0-noble-chiseled@sha256:4b12cfda4e6e0b3c855ae01dc4b22544d48d0d3b4aca74ce5f9c627b0ed030b2 AS final
+WORKDIR /app
+COPY --from=build /app ./
+ENV DOTNET_EnableDiagnostics=0
+USER app
+ENTRYPOINT ["dotnet", "Korkut.Migrator.dll"]
+CMD ["info"]
