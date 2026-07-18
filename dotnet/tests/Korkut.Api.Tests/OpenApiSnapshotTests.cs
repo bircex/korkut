@@ -17,14 +17,18 @@ public class OpenApiSnapshotTests(WebApplicationFactory<Program> factory)
     public async Task OpenApi_document_matches_snapshot()
     {
         var live = Normalize(await factory.CreateClient().GetStringAsync("/openapi/v1.json"));
-        var path = SnapshotPath();
 
         if (Environment.GetEnvironmentVariable("KORKUT_OPENAPI_UPDATE") == "1")
         {
-            await File.WriteAllTextAsync(path, live + "\n");
+            // Regeneration is a local dev action; CallerFilePath is a real path locally
+            // (CI never runs update mode, where source paths are deterministically remapped).
+            await File.WriteAllTextAsync(SourcePath(), live + "\n");
             return;
         }
 
+        // Comparison reads the snapshot copied next to the test assembly, so it works
+        // regardless of deterministic source-path remapping on CI.
+        var path = Path.Combine(AppContext.BaseDirectory, "Snapshots", "openapi.v1.json");
         Assert.True(File.Exists(path), $"OpenAPI snapshot missing at {path}; regenerate with KORKUT_OPENAPI_UPDATE=1.");
         var committed = Normalize(await File.ReadAllTextAsync(path));
         Assert.True(
@@ -54,6 +58,6 @@ public class OpenApiSnapshotTests(WebApplicationFactory<Program> factory)
         _ => null,
     };
 
-    private static string SnapshotPath([CallerFilePath] string thisFile = "")
+    private static string SourcePath([CallerFilePath] string thisFile = "")
         => Path.Combine(Path.GetDirectoryName(thisFile)!, "Snapshots", "openapi.v1.json");
 }
