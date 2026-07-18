@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Errors;
 
@@ -19,6 +20,11 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
         var (status, detail) = exception switch
         {
             ApiException api => (api.StatusCode, api.Detail),
+            // Optimistic-concurrency conflict: never a silent overwrite — the client is
+            // told to refresh and retry (KDM-014).
+            DbUpdateConcurrencyException => (
+                StatusCodes.Status409Conflict,
+                "Kayıt başka bir işlem tarafından değiştirildi. Lütfen yenileyip tekrar deneyin."),
             _ => (StatusCodes.Status500InternalServerError, "Beklenmeyen bir hata oluştu."),
         };
 

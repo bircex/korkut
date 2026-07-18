@@ -17,6 +17,7 @@ public static class TenantMatrix
         {
             ["matters"] = (1, 2),
             ["matter_hearings"] = (1, 2),
+            ["audit_events"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

@@ -24,6 +24,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<MatterHearingEntity> MatterHearings => Set<MatterHearingEntity>();
 
+    public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -84,6 +86,22 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             // tenant-aware FK target that makes cross-office links impossible.
             b.HasAlternateKey(x => new { x.OfficeId, x.Id });
             b.HasIndex(x => x.OfficeId).HasDatabaseName("ix_matters_office");
+            // Optimistic concurrency via Postgres' system xmin column — a stale update
+            // raises a concurrency conflict instead of silently overwriting (KDM-014).
+            b.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
+        });
+
+        modelBuilder.Entity<AuditEventEntity>(b =>
+        {
+            b.ToTable("audit_events");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Action).HasMaxLength(100);
+            b.Property(x => x.EntityType).HasMaxLength(100);
+            b.Property(x => x.SessionId).HasMaxLength(200);
+            b.Property(x => x.CorrelationId).HasMaxLength(200);
+            b.HasIndex(x => new { x.OfficeId, x.At }).HasDatabaseName("ix_audit_events_office_at");
+            b.HasIndex(x => new { x.EntityType, x.EntityId }).HasDatabaseName("ix_audit_events_entity");
         });
 
         modelBuilder.Entity<MatterHearingEntity>(b =>

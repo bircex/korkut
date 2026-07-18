@@ -52,7 +52,9 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await using var db = NewContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE korkut.outbox_messages, korkut.inbox_entries, korkut.job_audit RESTART IDENTITY");
+            "TRUNCATE korkut.outbox_messages, korkut.inbox_entries, korkut.job_audit, " +
+            "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events " +
+            "RESTART IDENTITY CASCADE");
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
