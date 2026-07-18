@@ -1,0 +1,224 @@
+{
+  "auth_calendar_upcoming": {
+    "method": "GET",
+    "path_template": "/api/calendar/upcoming",
+    "shape": {
+      "days": "int",
+      "items": [
+        "<empty>"
+      ]
+    },
+    "status": 200
+  },
+  "auth_clients": {
+    "method": "GET",
+    "path_template": "/api/clients",
+    "shape": {
+      "items": [
+        "<empty>"
+      ]
+    },
+    "status": 200
+  },
+  "auth_matter_get": {
+    "method": "GET",
+    "path_template": "/api/matters/{A_matter}",
+    "shape": {
+      "case_type": "null",
+      "client": "null",
+      "client_name": "null",
+      "counterparty": "null",
+      "court": "null",
+      "deadlines": [
+        "<empty>"
+      ],
+      "documents": [
+        "<empty>"
+      ],
+      "file_no": "null",
+      "hearings": [
+        "<empty>"
+      ],
+      "id": "int",
+      "notes": "null",
+      "opened_at": "null",
+      "status": "str",
+      "title": "str",
+      "updated_at": "str"
+    },
+    "status": 200
+  },
+  "auth_matters_list": {
+    "method": "GET",
+    "path_template": "/api/matters",
+    "shape": {
+      "items": [
+        {
+          "case_type": "null",
+          "client_name": "null",
+          "counterparty": "null",
+          "court": "null",
+          "file_no": "null",
+          "id": "int",
+          "opened_at": "null",
+          "status": "str",
+          "title": "str",
+          "updated_at": "str"
+        },
+        "...x1"
+      ],
+      "total": "int"
+    },
+    "status": 200
+  },
+  "auth_me": {
+    "method": "GET",
+    "path_template": "/api/me",
+    "shape": {
+      "bar_registry_no": "null",
+      "email": "str",
+      "first_name": "null",
+      "full_name": "null",
+      "last_name": "null",
+      "office": "str",
+      "phone": "null",
+      "picture": "null",
+      "role": "str",
+      "title": "null",
+      "username": "str"
+    },
+    "status": 200
+  },
+  "auth_members": {
+    "method": "GET",
+    "path_template": "/api/members",
+    "shape": [
+      {
+        "bar_registry_no": "null",
+        "bound": "bool",
+        "email": "str",
+        "first_name": "null",
+        "full_name": "null",
+        "id": "int",
+        "is_active": "bool",
+        "is_self": "bool",
+        "last_name": "null",
+        "phone": "null",
+        "picture": "null",
+        "role": "str",
+        "title": "null",
+        "username": "str"
+      },
+      "...x1"
+    ],
+    "status": 200
+  },
+  "auth_persona": {
+    "method": "GET",
+    "path_template": "/api/persona",
+    "shape": {
+      "can_edit": "bool",
+      "expertise": "str",
+      "extra_rules": "str",
+      "tone": "str"
+    },
+    "status": 200
+  },
+  "auth_sessions": {
+    "method": "GET",
+    "path_template": "/api/sessions",
+    "shape": {
+      "items": [
+        "<empty>"
+      ],
+      "total": "int"
+    },
+    "status": 200
+  },
+  "auth_style": {
+    "method": "GET",
+    "path_template": "/api/style",
+    "shape": {
+      "can_edit_office": "bool",
+      "effective": {
+        "boilerplate": "str",
+        "letterhead": "str",
+        "signature": "str",
+        "tone": "str"
+      },
+      "office": {
+        "boilerplate": "str",
+        "letterhead": "str",
+        "signature": "str",
+        "tone": "str"
+      },
+      "user": {
+        "boilerplate": "str",
+        "letterhead": "str",
+        "signature": "str",
+        "tone": "str"
+      }
+    },
+    "status": 200
+  },
+  "error_matter_bad_body": {
+    "method": "POST",
+    "path_template": "/api/matters",
+    "shape": {
+      "detail": [
+        {
+          "input": {},
+          "loc": [
+            "str",
+            "...x2"
+          ],
+          "msg": "str",
+          "type": "str"
+        },
+        "...x1"
+      ]
+    },
+    "status": 422
+  },
+  "error_matter_not_found": {
+    "method": "GET",
+    "path_template": "/api/matters/999999",
+    "shape": {
+      "detail": "str"
+    },
+    "status": 404
+  },
+  "idor_cross_office_matter": {
+    "method": "GET",
+    "path_template": "/api/matters/{B_matter}",
+    "shape": {
+      "detail": "str"
+    },
+    "status": 404
+  },
+  "public_config": {
+    "method": "GET",
+    "path_template": "/api/config",
+    "shape": {
+      "demo_enabled": "bool",
+      "google_configured": "bool"
+    },
+    "status": 200
+  },
+  "unauth_matters": {
+    "method": "GET",
+    "path_template": "/api/matters",
+    "shape": {
+      "detail": "str"
+    },
+    "status": 401
+  },
+  "unauth_me": {
+    "method": "GET",
+    "path_template": "/api/me",
+    "shape": {
+      "detail": "str"
+    },
+    "status": 401
+  }
+}
