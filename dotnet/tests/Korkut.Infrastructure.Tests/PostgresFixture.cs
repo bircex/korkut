@@ -16,6 +16,9 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public string ConnectionString { get; private set; } = string.Empty;
 
+    /// <summary>Connection string for the least-privileged app role (subject to RLS).</summary>
+    public string AppConnectionString { get; private set; } = string.Empty;
+
     public KorkutDbContext NewContext()
     {
         var options = new DbContextOptionsBuilder<KorkutDbContext>()
@@ -31,6 +34,17 @@ public sealed class PostgresFixture : IAsyncLifetime
         ConnectionString = _container.GetConnectionString();
         await using var db = NewContext();
         await db.Database.MigrateAsync();
+
+        // The migration creates korkut_app NOLOGIN; provision a test-only login so we
+        // can connect AS the non-superuser app role (RLS is bypassed by superusers).
+        await db.Database.ExecuteSqlRawAsync("ALTER ROLE korkut_app WITH LOGIN PASSWORD 'approle_test'");
+        AppConnectionString = new Npgsql.NpgsqlConnectionStringBuilder(ConnectionString)
+        {
+            Username = "korkut_app",
+            Password = "approle_test",
+            Pooling = true,
+            MaxPoolSize = 1, // force pooled-connection reuse for the leakage test
+        }.ConnectionString;
     }
 
     /// <summary>Truncate all job tables so each test starts from a clean, isolated state.</summary>

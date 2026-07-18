@@ -18,6 +18,12 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<JobAuditEntity> JobAudit => Set<JobAuditEntity>();
 
+    public DbSet<OfficeEntity> Offices => Set<OfficeEntity>();
+
+    public DbSet<MatterEntity> Matters => Set<MatterEntity>();
+
+    public DbSet<MatterHearingEntity> MatterHearings => Set<MatterHearingEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -58,6 +64,40 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.At }).HasDatabaseName("ix_job_audit_office_at");
             // Query: trace all events for a specific message.
             b.HasIndex(x => x.MessageId).HasDatabaseName("ix_job_audit_message");
+        });
+
+        modelBuilder.Entity<OfficeEntity>(b =>
+        {
+            b.ToTable("offices");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Name).HasMaxLength(300);
+        });
+
+        modelBuilder.Entity<MatterEntity>(b =>
+        {
+            b.ToTable("matters");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Title).HasMaxLength(500);
+            // Composite alternate key so children can reference (office_id, id) — the
+            // tenant-aware FK target that makes cross-office links impossible.
+            b.HasAlternateKey(x => new { x.OfficeId, x.Id });
+            b.HasIndex(x => x.OfficeId).HasDatabaseName("ix_matters_office");
+        });
+
+        modelBuilder.Entity<MatterHearingEntity>(b =>
+        {
+            b.ToTable("matter_hearings");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            // Tenant-aware composite FK: (office_id, matter_id) -> matters(office_id, id).
+            b.HasOne<MatterEntity>()
+                .WithMany()
+                .HasForeignKey(x => new { x.OfficeId, x.MatterId })
+                .HasPrincipalKey(m => new { m.OfficeId, m.Id })
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_matter_hearings_office_matter");
         });
 
         // snake_case all columns (Postgres convention; matches the Python schema and
