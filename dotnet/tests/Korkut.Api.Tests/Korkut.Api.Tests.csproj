@@ -15,4 +15,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Korkut.Api\Korkut.Api.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Snapshot travels to the output dir so tests read it via AppContext.BaseDirectory
+         (robust under deterministic CI source-path remapping). -->
+    <Content Include="Snapshots\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

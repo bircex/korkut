@@ -20,6 +20,12 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <!-- Worker host -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <!-- API foundation (KDM-006) -->
+    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <!-- Transitive-pin Microsoft.OpenApi to a patched version (NU1903: 2.0.0 has a
+         known high-severity advisory GHSA-v5pm-xwqc-g5wc). -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
   </ItemGroup>
 
 </Project>
