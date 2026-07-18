@@ -33,6 +33,25 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         await db.SaveChangesAsync();
         await SeedMattersAndHearings(db, _a, 1);
         await SeedMattersAndHearings(db, _b, 2);
+        await SeedAudit(db, _a, 1);
+        await SeedAudit(db, _b, 2);
+    }
+
+    private static async Task SeedAudit(KorkutDbContext db, Guid office, int n)
+    {
+        for (var i = 0; i < n; i++)
+        {
+            db.AuditEvents.Add(new AuditEventEntity
+            {
+                Id = Guid.CreateVersion7(),
+                OfficeId = office,
+                Action = "read",
+                EntityType = "matter",
+                At = DateTimeOffset.UtcNow,
+            });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
