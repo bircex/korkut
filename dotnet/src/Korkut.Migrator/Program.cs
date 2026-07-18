@@ -1,29 +1,60 @@
-// Korkut.Migrator — the ONLY process permitted to apply database schema changes,
-// run under a separate least-privileged migrator identity (never the app role).
-// Migrations are applied explicitly by invoking this tool during deploy — the API
-// and Worker never auto-migrate on startup (per the architecture rules).
-//
-// The concrete expand/contract EF Core migration runner is implemented in KDM-011;
-// this scaffold establishes the separate host and its explicit, opt-in command
-// surface without performing any schema change yet.
+// Korkut.Migrator — the ONLY process that applies database schema changes, run
+// under a separate least-privileged migrator identity (KORKUT_ADMIN_DB_URL), never
+// the runtime app role. The API and Worker never migrate on startup (KDM-011).
+
+using Korkut.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var command = args.Length > 0 ? args[0] : "help";
+
+static KorkutDbContext BuildContext()
+{
+    var connection = Environment.GetEnvironmentVariable("KORKUT_ADMIN_DB_URL")
+        ?? throw new InvalidOperationException(
+            "KORKUT_ADMIN_DB_URL is required for the migrator (the elevated, migrator-role connection).");
+
+    var options = new DbContextOptionsBuilder<KorkutDbContext>()
+        .UseNpgsql(PersistenceSetup.ToNpgsql(connection), npgsql =>
+            npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.Schema))
+        .Options;
+    return new KorkutDbContext(options);
+}
 
 switch (command)
 {
     case "migrate":
-        Console.Error.WriteLine(
-            "Korkut.Migrator: no migrations defined yet (added in KDM-011). Nothing applied.");
+    {
+        await using var db = BuildContext();
+        var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+        if (pending.Count == 0)
+        {
+            Console.WriteLine("Korkut.Migrator: no pending migrations.");
+            return 0;
+        }
+
+        Console.WriteLine($"Korkut.Migrator: applying {pending.Count} migration(s): {string.Join(", ", pending)}");
+        await db.Database.MigrateAsync();
+        Console.WriteLine("Korkut.Migrator: done.");
         return 0;
+    }
 
     case "info":
-        Console.WriteLine("Korkut.Migrator: separate least-privileged schema-migration host.");
-        Console.WriteLine("No migrations are defined in the scaffold (KDM-005).");
+    {
+        await using var db = BuildContext();
+        var applied = (await db.Database.GetAppliedMigrationsAsync()).ToList();
+        var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+        Console.WriteLine($"Korkut.Migrator: applied={applied.Count} pending={pending.Count}");
+        foreach (var m in pending)
+        {
+            Console.WriteLine($"  pending: {m}");
+        }
+
         return 0;
+    }
 
     default:
         Console.WriteLine("Usage: Korkut.Migrator <migrate|info>");
-        Console.WriteLine("  migrate  Apply pending migrations (none until KDM-011).");
-        Console.WriteLine("  info     Print migrator status.");
+        Console.WriteLine("  migrate  Apply pending EF Core migrations (migrator role).");
+        Console.WriteLine("  info     Print applied/pending migration status.");
         return command == "help" ? 0 : 1;
 }
