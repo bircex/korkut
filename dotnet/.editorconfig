@@ -19,6 +19,12 @@ dotnet_diagnostic.CA1716.severity = none
 # grouping); keep the build clean without weakening real correctness analyzers.
 dotnet_diagnostic.IDE0130.severity = none
 
+# EF Core migration files are auto-generated; treat them as generated code so
+# style/perf analyzers (e.g. CA1861) don't fail the build on scaffolded output.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_diagnostic.CA1861.severity = none
+
 # Test projects use the idiomatic `Method_does_thing` naming; underscores in test
 # member names are intentional and readable. Relax CA1707 for tests only.
 [tests/**.cs]
