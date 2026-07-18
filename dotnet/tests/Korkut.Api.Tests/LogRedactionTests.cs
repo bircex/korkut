@@ -40,7 +40,7 @@ public class LogRedactionTests
         foreach (var record in exported)
         {
             var text = record.FormattedMessage ?? record.Body ?? string.Empty;
-            var attrs = string.Join("|", record.Attributes?.Select(a => a.Value?.ToString()) ?? []);
+            var attrs = string.Join("|", record.Attributes?.Select(a => a.Value?.ToString()) ?? Enumerable.Empty<string>());
             Assert.DoesNotContain(apiKey, text + attrs, StringComparison.Ordinal);
             Assert.DoesNotContain(tckn, text + attrs, StringComparison.Ordinal);
             Assert.DoesNotContain(email, text + attrs, StringComparison.Ordinal);
