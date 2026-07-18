@@ -23,3 +23,6 @@ dotnet_diagnostic.IDE0130.severity = none
 # member names are intentional and readable. Relax CA1707 for tests only.
 [tests/**.cs]
 dotnet_diagnostic.CA1707.severity = none
+# High-performance LoggerMessage delegates are not warranted in test code that
+# deliberately logs canary values to exercise redaction.
+dotnet_diagnostic.CA1848.severity = none

@@ -26,6 +26,14 @@
     <!-- Transitive-pin Microsoft.OpenApi to a patched version (NU1903: 2.0.0 has a
          known high-severity advisory GHSA-v5pm-xwqc-g5wc). -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
+    <!-- Observability (KDM-007) -->
+    <PackageVersion Include="OpenTelemetry" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="1.17.0" />
   </ItemGroup>
 
 </Project>
