@@ -19,6 +19,10 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next, ILogger<Correl
 
         context.Response.Headers[HeaderName] = correlationId;
 
+        // Tag the active trace with the correlation id — an opaque, tenant-safe id
+        // (never PII), so a request's logs and spans line up in the backend.
+        System.Diagnostics.Activity.Current?.SetTag("korkut.correlation_id", correlationId);
+
         using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId }))
         {
             await next(context);
