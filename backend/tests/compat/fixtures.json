@@ -1,0 +1,101 @@
+{
+  "_comment": "KDM-003 deterministic differential fixtures. NO PII, NO secrets. principal is one of anonymous|a|b (resolved to a seeded session cookie by the harness). Paths use logical handles {A_matter}/{B_matter} resolved per-runtime. capture_headers lists response headers that are part of the compared contract.",
+  "fixtures": [
+    {
+      "id": "config_public",
+      "method": "GET",
+      "path": "/api/config",
+      "principal": "anonymous",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "me_unauthenticated",
+      "method": "GET",
+      "path": "/api/me",
+      "principal": "anonymous",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matters_unauthenticated",
+      "method": "GET",
+      "path": "/api/matters",
+      "principal": "anonymous",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "me_authenticated",
+      "method": "GET",
+      "path": "/api/me",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matters_list_office_a",
+      "method": "GET",
+      "path": "/api/matters",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matter_get_office_a",
+      "method": "GET",
+      "path": "/api/matters/{A_matter}",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matter_idor_cross_office",
+      "method": "GET",
+      "path": "/api/matters/{B_matter}",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matter_not_found",
+      "method": "GET",
+      "path": "/api/matters/999999",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "matter_create_validation_error",
+      "method": "POST",
+      "path": "/api/matters",
+      "principal": "a",
+      "body": {},
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "sessions_list_office_a",
+      "method": "GET",
+      "path": "/api/sessions",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "clients_list_office_a",
+      "method": "GET",
+      "path": "/api/clients",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    },
+    {
+      "id": "calendar_upcoming_office_a",
+      "method": "GET",
+      "path": "/api/calendar/upcoming",
+      "principal": "a",
+      "body": null,
+      "capture_headers": ["content-type"]
+    }
+  ]
+}
