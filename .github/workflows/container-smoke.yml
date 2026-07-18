@@ -1,0 +1,32 @@
+name: Container smoke
+
+# KDM-009 — build the hardened API/Worker/Migrator images and run the container
+# smoke test (non-root, read-only filesystem, health, graceful SIGTERM shutdown).
+# Path-aware: runs when the Docker packaging changes. Broader release-time image
+# verification is part of KDM-035/036.
+
+on:
+  pull_request:
+    branches: [dotnet-migration]
+    paths:
+      - "dotnet/docker/**"
+      - "dotnet/global.json"
+      - ".github/workflows/container-smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dotnet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Container smoke test
+        run: bash docker/smoke-test.sh
