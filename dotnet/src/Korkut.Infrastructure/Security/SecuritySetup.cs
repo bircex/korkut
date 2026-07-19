@@ -23,6 +23,21 @@ public static class SecuritySetup
         services.AddSingleton(BindGoogleOptions(configuration));
         services.AddSingleton<IOidcFlowStore, InMemoryOidcFlowStore>();
         services.AddScoped<IGoogleUserDirectory, EfGoogleUserDirectory>();
+
+        // TOTP 2FA (KDM-017). The envelope key is operator-supplied; if it is missing
+        // and 2FA is used, resolution fails closed — never a silent random fallback.
+        services.AddSingleton<ISecretEncryptor>(sp =>
+        {
+            var key = sp.GetRequiredService<IConfiguration>()["KORKUT_TOTP_KEY"];
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new InvalidOperationException(
+                    "KORKUT_TOTP_KEY (base64, 32 bytes) is required to encrypt TOTP secrets.");
+            }
+
+            return new AesGcmSecretEncryptor(Convert.FromBase64String(key));
+        });
+        services.AddScoped<TwoFactorService>();
         return services;
     }
 

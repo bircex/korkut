@@ -30,6 +30,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<PasswordResetTokenEntity> PasswordResetTokens => Set<PasswordResetTokenEntity>();
 
+    public DbSet<UserTotpEntity> UserTotps => Set<UserTotpEntity>();
+
+    public DbSet<RecoveryCodeEntity> RecoveryCodes => Set<RecoveryCodeEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -144,6 +148,25 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.TokenHash).HasMaxLength(100);
             // Reset lookups are by (office, token hash).
             b.HasIndex(x => new { x.OfficeId, x.TokenHash }).HasDatabaseName("ix_reset_tokens_office_hash");
+        });
+
+        modelBuilder.Entity<UserTotpEntity>(b =>
+        {
+            b.ToTable("user_totp");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.EncryptedSecret).HasMaxLength(500);
+            // One TOTP enrollment per user.
+            b.HasIndex(x => new { x.OfficeId, x.UserId }).IsUnique().HasDatabaseName("ux_user_totp_office_user");
+        });
+
+        modelBuilder.Entity<RecoveryCodeEntity>(b =>
+        {
+            b.ToTable("recovery_codes");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.CodeHash).HasMaxLength(100);
+            b.HasIndex(x => new { x.OfficeId, x.UserId }).HasDatabaseName("ix_recovery_codes_office_user");
         });
 
         // snake_case all columns (Postgres convention; matches the Python schema and
