@@ -70,6 +70,9 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         await using (var db = pg.NewContext())
         {
             stored = await Service(db).StoreAsync(_office, null, new MemoryStream([1, 2, 3]), "x.bin", "application/octet-stream");
+            // Presign is only allowed once a document is proven clean (KDM-026).
+            await db.Documents.Where(x => x.Id == stored.Id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "clean"), default);
         }
 
         await using var db2 = pg.NewContext();
