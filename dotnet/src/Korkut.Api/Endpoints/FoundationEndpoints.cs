@@ -66,6 +66,10 @@ public static class FoundationEndpoints
         v1.MapGet("/sensitive-demo", () => Results.Ok(new { ok = true }))
             .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
 
+        // Permission-protected endpoint: deny-by-default, requires matters.write.
+        v1.MapPost("/matters-demo", () => Results.Ok(new { ok = true }))
+            .RequireAuthorization(Application.Security.Permissions.MattersWrite);
+
         return app;
     }
 }

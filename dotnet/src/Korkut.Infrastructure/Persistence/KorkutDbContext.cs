@@ -36,6 +36,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
 
+    public DbSet<OfficeCustomRoleEntity> OfficeCustomRoles => Set<OfficeCustomRoleEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -135,6 +137,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Email).HasMaxLength(320);
             b.Property(x => x.PasswordHash).HasMaxLength(400);
+            b.Property(x => x.Role).HasMaxLength(50);
             b.Property(x => x.GoogleSub).HasMaxLength(255);
             // Email is unique within an office (tenant-scoped identity).
             b.HasIndex(x => new { x.OfficeId, x.Email }).IsUnique().HasDatabaseName("ux_users_office_email");
@@ -179,6 +182,17 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.TokenHash).HasMaxLength(100);
             b.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("ux_refresh_tokens_hash");
             b.HasIndex(x => x.FamilyId).HasDatabaseName("ix_refresh_tokens_family");
+        });
+
+        modelBuilder.Entity<OfficeCustomRoleEntity>(b =>
+        {
+            b.ToTable("office_custom_roles");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Key).HasMaxLength(50);
+            b.Property(x => x.Name).HasMaxLength(200);
+            b.Property(x => x.Permissions).HasColumnType("text[]");
+            b.HasIndex(x => new { x.OfficeId, x.Key }).IsUnique().HasDatabaseName("ux_custom_roles_office_key");
         });
 
         // snake_case all columns (Postgres convention; matches the Python schema and
