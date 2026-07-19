@@ -57,6 +57,12 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore
         var doc = await db.Documents.AsNoTracking()
             .FirstOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
             ?? throw new InvalidOperationException("Document not found in this office.");
+        // No download/preview/OCR until the document is proven clean (KDM-026).
+        if (doc.Status != "clean")
+        {
+            throw new InvalidOperationException($"Document is not downloadable in state '{doc.Status}'.");
+        }
+
         return await objectStore.PresignGetAsync(doc.Bucket, doc.ObjectKey, expiry, ct);
     }
 
