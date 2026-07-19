@@ -50,6 +50,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Clients.Add(new ClientEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"d{i}", DueDate = new DateOnly(2026, 1, 1), CreatedAt = DateTimeOffset.UtcNow });
+            db.CommunicationNotes.Add(new CommunicationNoteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Body = $"n{i}", OccurredAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
         }
 
         await db.SaveChangesAsync();
