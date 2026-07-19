@@ -129,8 +129,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Email).HasMaxLength(320);
             b.Property(x => x.PasswordHash).HasMaxLength(400);
+            b.Property(x => x.GoogleSub).HasMaxLength(255);
             // Email is unique within an office (tenant-scoped identity).
             b.HasIndex(x => new { x.OfficeId, x.Email }).IsUnique().HasDatabaseName("ux_users_office_email");
+            // A Google identity links to exactly one account (globally unique subject).
+            b.HasIndex(x => x.GoogleSub).IsUnique().HasDatabaseName("ux_users_google_sub");
         });
 
         modelBuilder.Entity<PasswordResetTokenEntity>(b =>
