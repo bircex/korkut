@@ -38,6 +38,12 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<OfficeCustomRoleEntity> OfficeCustomRoles => Set<OfficeCustomRoleEntity>();
 
+    public DbSet<ClientEntity> Clients => Set<ClientEntity>();
+
+    public DbSet<CourtEntity> Courts => Set<CourtEntity>();
+
+    public DbSet<PartyEntity> Parties => Set<PartyEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -114,6 +120,59 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.CorrelationId).HasMaxLength(200);
             b.HasIndex(x => new { x.OfficeId, x.At }).HasDatabaseName("ix_audit_events_office_at");
             b.HasIndex(x => new { x.EntityType, x.EntityId }).HasDatabaseName("ix_audit_events_entity");
+        });
+
+        modelBuilder.Entity<ClientEntity>(b =>
+        {
+            b.ToTable("clients");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Name).HasMaxLength(400);
+            b.Property(x => x.Kind).HasMaxLength(20);
+            b.Property(x => x.Email).HasMaxLength(320);
+            b.Property(x => x.Phone).HasMaxLength(50);
+            b.HasAlternateKey(x => new { x.OfficeId, x.Id }); // composite FK target for matters
+            b.HasIndex(x => new { x.OfficeId, x.DeletedAt }).HasDatabaseName("ix_clients_office_deleted");
+        });
+
+        modelBuilder.Entity<CourtEntity>(b =>
+        {
+            b.ToTable("courts");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Name).HasMaxLength(400);
+            b.HasIndex(x => x.OfficeId).HasDatabaseName("ix_courts_office");
+        });
+
+        modelBuilder.Entity<PartyEntity>(b =>
+        {
+            b.ToTable("parties");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Role).HasMaxLength(50);
+            b.Property(x => x.Name).HasMaxLength(400);
+            // Tenant-aware composite FK to the matter.
+            b.HasOne<MatterEntity>()
+                .WithMany()
+                .HasForeignKey(x => new { x.OfficeId, x.MatterId })
+                .HasPrincipalKey(m => new { m.OfficeId, m.Id })
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_parties_office_matter");
+        });
+
+        modelBuilder.Entity<MatterEntity>(b =>
+        {
+            // Tenant-aware composite FK to the client (optional).
+            b.HasOne<ClientEntity>()
+                .WithMany()
+                .HasForeignKey(x => new { x.OfficeId, x.ClientId })
+                .HasPrincipalKey(c => new { c.OfficeId, c.Id })
+                .OnDelete(DeleteBehavior.SetNull);
+            b.Property(x => x.Status).HasMaxLength(30);
+            b.Property(x => x.FileNo).HasMaxLength(100);
+            b.Property(x => x.CaseType).HasMaxLength(100);
+            b.Property(x => x.CourtNameSnapshot).HasMaxLength(400);
+            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_matters_office_status");
         });
 
         modelBuilder.Entity<MatterHearingEntity>(b =>

@@ -24,6 +24,9 @@ public static class TenantMatrix
             ["recovery_codes"] = (1, 2),
             ["refresh_tokens"] = (1, 2),
             ["office_custom_roles"] = (1, 2),
+            ["clients"] = (1, 2),
+            ["courts"] = (1, 2),
+            ["parties"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

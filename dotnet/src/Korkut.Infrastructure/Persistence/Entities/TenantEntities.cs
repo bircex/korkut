@@ -35,6 +35,28 @@ public sealed class MatterEntity : ITenantOwned
 
     public string Title { get; set; } = string.Empty;
 
+    /// <summary>Optional tenant-aware link to the client (composite FK on (office_id, client_id)).</summary>
+    public Guid? ClientId { get; set; }
+
+    public string? FileNo { get; set; }
+
+    public string? CaseType { get; set; }
+
+    public string? Counterparty { get; set; }
+
+    /// <summary>Reference to a court row (mutable title).</summary>
+    public Guid? CourtId { get; set; }
+
+    /// <summary>IMMUTABLE snapshot of the court title at link time — never rewritten by a court rename.</summary>
+    public string? CourtNameSnapshot { get; set; }
+
+    public string Status { get; set; } = "open";
+
+    public DateTimeOffset? OpenedAt { get; set; }
+
+    /// <summary>Soft-delete for retention; excluded from normal listings.</summary>
+    public DateTimeOffset? DeletedAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 }
 

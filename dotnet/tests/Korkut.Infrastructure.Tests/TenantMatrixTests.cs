@@ -37,6 +37,22 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         await SeedAudit(db, _b, 2);
         await SeedAuth(db, _a, 1);
         await SeedAuth(db, _b, 2);
+        await SeedOfficeCore(db, _a, 1);
+        await SeedOfficeCore(db, _b, 2);
+    }
+
+    private static async Task SeedOfficeCore(KorkutDbContext db, Guid office, int n)
+    {
+        // Reuse an existing matter for the party FK so the matters count stays exact.
+        var matterId = await db.Matters.Where(m => m.OfficeId == office).Select(m => m.Id).FirstAsync();
+        for (var i = 0; i < n; i++)
+        {
+            db.Clients.Add(new ClientEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedAuth(KorkutDbContext db, Guid office, int n)
