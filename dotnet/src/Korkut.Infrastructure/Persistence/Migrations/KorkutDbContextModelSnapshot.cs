@@ -305,6 +305,96 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.PasswordResetTokenEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "TokenHash")
+                        .HasDatabaseName("ix_reset_tokens_office_hash");
+
+                    b.ToTable("password_reset_tokens", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.UserEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<int>("FailedAccessCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_access_count");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<Guid>("SecurityStamp")
+                        .HasColumnType("uuid")
+                        .HasColumnName("security_stamp");
+
+                    b.Property<int>("TokenEpoch")
+                        .HasColumnType("integer")
+                        .HasColumnName("token_epoch");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "Email")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_office_email");
+
+                    b.ToTable("users", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterHearingEntity", b =>
                 {
                     b.HasOne("Korkut.Infrastructure.Persistence.Entities.MatterEntity", null)

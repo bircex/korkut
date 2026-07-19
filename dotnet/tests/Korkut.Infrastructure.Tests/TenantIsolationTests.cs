@@ -68,7 +68,7 @@ public class TenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFi
     [Fact]
     public async Task Without_tenant_context_no_rows_are_visible()
     {
-        await using var conn = new NpgsqlConnection(pg.AppConnectionString);
+        await using var conn = new NpgsqlConnection(pg.AppConnectionStringFresh);
         await conn.OpenAsync();
         await using var tx = await conn.BeginTransactionAsync();
         // No set_config -> current_setting(..., true) is NULL -> no rows match.

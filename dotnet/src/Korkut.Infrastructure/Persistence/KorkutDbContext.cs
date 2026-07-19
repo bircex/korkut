@@ -26,6 +26,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
 
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+
+    public DbSet<PasswordResetTokenEntity> PasswordResetTokens => Set<PasswordResetTokenEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -116,6 +120,27 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
                 .HasPrincipalKey(m => new { m.OfficeId, m.Id })
                 .OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_matter_hearings_office_matter");
+        });
+
+        modelBuilder.Entity<UserEntity>(b =>
+        {
+            b.ToTable("users");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Email).HasMaxLength(320);
+            b.Property(x => x.PasswordHash).HasMaxLength(400);
+            // Email is unique within an office (tenant-scoped identity).
+            b.HasIndex(x => new { x.OfficeId, x.Email }).IsUnique().HasDatabaseName("ux_users_office_email");
+        });
+
+        modelBuilder.Entity<PasswordResetTokenEntity>(b =>
+        {
+            b.ToTable("password_reset_tokens");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.TokenHash).HasMaxLength(100);
+            // Reset lookups are by (office, token hash).
+            b.HasIndex(x => new { x.OfficeId, x.TokenHash }).HasDatabaseName("ix_reset_tokens_office_hash");
         });
 
         // snake_case all columns (Postgres convention; matches the Python schema and

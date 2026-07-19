@@ -35,6 +35,20 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         await SeedMattersAndHearings(db, _b, 2);
         await SeedAudit(db, _a, 1);
         await SeedAudit(db, _b, 2);
+        await SeedAuth(db, _a, 1);
+        await SeedAuth(db, _b, 2);
+    }
+
+    private static async Task SeedAuth(KorkutDbContext db, Guid office, int n)
+    {
+        for (var i = 0; i < n; i++)
+        {
+            var uid = Guid.CreateVersion7();
+            db.Users.Add(new UserEntity { Id = uid, OfficeId = office, Email = $"{office:N}-{i}@x.test", SecurityStamp = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow });
+            db.PasswordResetTokens.Add(new PasswordResetTokenEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"h{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddHours(1), CreatedAt = DateTimeOffset.UtcNow });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedAudit(KorkutDbContext db, Guid office, int n)
@@ -102,7 +116,10 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     [MemberData(nameof(TenantMatrix.TableNames), MemberType = typeof(TenantMatrix))]
     public async Task No_context_principal_sees_no_rows(string table)
     {
-        await using var conn = new NpgsqlConnection(pg.AppConnectionString);
+        // A genuinely fresh connection (no pooled reuse) with no tenant context must
+        // see nothing. On a *reused* connection a no-set query can observe stale RLS
+        // context, which is why the app always sets the tenant per scope (KDM-013).
+        await using var conn = new NpgsqlConnection(pg.AppConnectionStringFresh);
         await conn.OpenAsync();
         await using var tx = await conn.BeginTransactionAsync();
         Assert.Equal(0, await TenantMatrix.CountAsync(conn, tx, table));

@@ -19,6 +19,9 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// <summary>Connection string for the least-privileged app role (subject to RLS).</summary>
     public string AppConnectionString { get; private set; } = string.Empty;
 
+    /// <summary>App-role connection with pooling disabled — always a fresh physical connection.</summary>
+    public string AppConnectionStringFresh { get; private set; } = string.Empty;
+
     public KorkutDbContext NewContext()
     {
         var options = new DbContextOptionsBuilder<KorkutDbContext>()
@@ -45,6 +48,12 @@ public sealed class PostgresFixture : IAsyncLifetime
             Pooling = true,
             MaxPoolSize = 1, // force pooled-connection reuse for the leakage test
         }.ConnectionString;
+        AppConnectionStringFresh = new Npgsql.NpgsqlConnectionStringBuilder(ConnectionString)
+        {
+            Username = "korkut_app",
+            Password = "approle_test",
+            Pooling = false, // a genuinely fresh physical connection every time
+        }.ConnectionString;
     }
 
     /// <summary>Truncate all job tables so each test starts from a clean, isolated state.</summary>
@@ -53,7 +62,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         await using var db = NewContext();
         await db.Database.ExecuteSqlRawAsync(
             "TRUNCATE korkut.outbox_messages, korkut.inbox_entries, korkut.job_audit, " +
-            "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events " +
+            "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events, korkut.users, korkut.password_reset_tokens " +
             "RESTART IDENTITY CASCADE");
     }
 
