@@ -34,6 +34,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<RecoveryCodeEntity> RecoveryCodes => Set<RecoveryCodeEntity>();
 
+    public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -167,6 +169,16 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.CodeHash).HasMaxLength(100);
             b.HasIndex(x => new { x.OfficeId, x.UserId }).HasDatabaseName("ix_recovery_codes_office_user");
+        });
+
+        modelBuilder.Entity<RefreshTokenEntity>(b =>
+        {
+            b.ToTable("refresh_tokens");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.TokenHash).HasMaxLength(100);
+            b.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("ux_refresh_tokens_hash");
+            b.HasIndex(x => x.FamilyId).HasDatabaseName("ix_refresh_tokens_family");
         });
 
         // snake_case all columns (Postgres convention; matches the Python schema and

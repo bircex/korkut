@@ -93,6 +93,18 @@
           "Korkut.Api"
         ]
       }
+    },
+    "/api/v1/sensitive-demo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
     }
   },
   "servers": [
