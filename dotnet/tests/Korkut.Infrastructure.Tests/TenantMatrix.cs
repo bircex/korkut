@@ -27,6 +27,9 @@ public static class TenantMatrix
             ["clients"] = (1, 2),
             ["courts"] = (1, 2),
             ["parties"] = (1, 2),
+            ["tasks"] = (1, 2),
+            ["deadlines"] = (1, 2),
+            ["communication_notes"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()
