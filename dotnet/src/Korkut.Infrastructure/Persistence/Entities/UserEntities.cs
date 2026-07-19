@@ -13,6 +13,9 @@ public sealed class UserEntity : ITenantOwned
     /// <summary>Versioned PBKDF2 hash; null until a local password is set.</summary>
     public string? PasswordHash { get; set; }
 
+    /// <summary>Role key ('owner' | 'lawyer' | a custom role key) — a named permission set.</summary>
+    public string Role { get; set; } = "lawyer";
+
     /// <summary>Google provider subject — the stable identity link (never the email).</summary>
     public string? GoogleSub { get; set; }
 
