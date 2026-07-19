@@ -24,7 +24,8 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } } },
   ],
   webServer: {
-    command: "npm run build && npm run preview -- --port " + PORT + " --strictPort",
+    // BUILD_HARNESS=1 also emits the e2e-only feature harness pages.
+    command: "BUILD_HARNESS=1 npm run build && npm run preview -- --port " + PORT + " --strictPort",
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
