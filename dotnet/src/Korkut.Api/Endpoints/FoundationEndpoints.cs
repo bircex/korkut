@@ -70,6 +70,12 @@ public static class FoundationEndpoints
         v1.MapPost("/matters-demo", () => Results.Ok(new { ok = true }))
             .RequireAuthorization(Application.Security.Permissions.MattersWrite);
 
+        // Platform-admin endpoint: separate policy/scheme + rate limit. Office tokens
+        // are rejected here (different audience).
+        app.MapGet("/api/admin/ping", () => Results.Ok(new { admin = true }))
+            .RequireAuthorization(Auth.AdminAuthHandler.SchemeName)
+            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+
         return app;
     }
 }

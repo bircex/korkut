@@ -17,15 +17,24 @@ public static class AuthorizationSetup
         services.AddSingleton<AuthorizationService>();
 
         services.AddAuthentication(AccessTokenAuthHandler.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, AccessTokenAuthHandler>(AccessTokenAuthHandler.SchemeName, _ => { });
+            .AddScheme<AuthenticationSchemeOptions, AccessTokenAuthHandler>(AccessTokenAuthHandler.SchemeName, _ => { })
+            .AddScheme<AuthenticationSchemeOptions, AdminAuthHandler>(AdminAuthHandler.SchemeName, _ => { });
 
         var authz = services.AddAuthorizationBuilder();
         foreach (var permission in Permissions.All)
         {
+            // Office endpoints accept ONLY the office scheme (audience) — not admin tokens.
             authz.AddPolicy(permission, policy => policy
+                .AddAuthenticationSchemes(AccessTokenAuthHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(AccessTokenAuthHandler.PermissionClaim, permission));
         }
+
+        // The platform-admin policy: separate scheme (admin audience) + admin marker.
+        authz.AddPolicy(AdminAuthHandler.SchemeName, policy => policy
+            .AddAuthenticationSchemes(AdminAuthHandler.SchemeName)
+            .RequireAuthenticatedUser()
+            .RequireClaim(AdminAuthHandler.AdminClaim));
 
         return services;
     }
