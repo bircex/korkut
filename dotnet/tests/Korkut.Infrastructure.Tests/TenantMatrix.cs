@@ -32,6 +32,7 @@ public static class TenantMatrix
             ["communication_notes"] = (1, 2),
             ["documents"] = (1, 2),
             ["document_extractions"] = (1, 2),
+            ["document_relations"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

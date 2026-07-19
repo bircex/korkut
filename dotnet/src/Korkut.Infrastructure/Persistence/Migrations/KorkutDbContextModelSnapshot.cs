@@ -423,6 +423,54 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("document_extractions", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentRelationEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("document_id");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "TargetType", "TargetId")
+                        .HasDatabaseName("ix_doc_relations_target");
+
+                    b.HasIndex("OfficeId", "DocumentId", "TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_doc_relations_link");
+
+                    b.ToTable("document_relations", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.InboxEntity", b =>
                 {
                     b.Property<Guid>("OfficeId")
@@ -1067,6 +1115,16 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentExtractionEntity", b =>
+                {
+                    b.HasOne("Korkut.Infrastructure.Persistence.Entities.DocumentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId", "DocumentId")
+                        .HasPrincipalKey("OfficeId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentRelationEntity", b =>
                 {
                     b.HasOne("Korkut.Infrastructure.Persistence.Entities.DocumentEntity", null)
                         .WithMany()

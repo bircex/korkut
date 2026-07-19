@@ -47,7 +47,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         var matterId = await db.Matters.Where(m => m.OfficeId == office).Select(m => m.Id).FirstAsync();
         for (var i = 0; i < n; i++)
         {
-            db.Clients.Add(new ClientEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
+            var clientId = Guid.CreateVersion7();
+            db.Clients.Add(new ClientEntity { Id = clientId, OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });
@@ -56,6 +57,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var docId = Guid.CreateVersion7();
             db.Documents.Add(new DocumentEntity { Id = docId, OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
             db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.DocumentRelations.Add(new DocumentRelationEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, TargetType = "client", TargetId = clientId, IsPrimary = true, CreatedAt = DateTimeOffset.UtcNow });
         }
 
         await db.SaveChangesAsync();
