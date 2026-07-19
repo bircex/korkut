@@ -32,12 +32,21 @@ public sealed class DocumentEntity : ITenantOwned
     /// <summary>Lower-case hex SHA-256 of the bytes (integrity + dedup + provenance).</summary>
     public string ChecksumSha256 { get; set; } = string.Empty;
 
-    /// <summary>"quarantine" | "clean" | "rejected".</summary>
+    /// <summary>"quarantine" | "clean" | "rejected" | "tombstoned".</summary>
     public string Status { get; set; } = "quarantine";
 
     public int Version { get; set; } = 1;
 
     public DateTimeOffset? RetentionUntil { get; set; }
+
+    /// <summary>
+    /// When true the document is under legal hold: it cannot be deleted/tombstoned or
+    /// purged by retention, regardless of <see cref="RetentionUntil"/> (KDM-027).
+    /// </summary>
+    public bool LegalHold { get; set; }
+
+    /// <summary>Set when the document is tombstoned (bytes purged, metadata retained).</summary>
+    public DateTimeOffset? TombstonedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }
