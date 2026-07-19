@@ -50,6 +50,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<CommunicationNoteEntity> CommunicationNotes => Set<CommunicationNoteEntity>();
 
+    public DbSet<DocumentEntity> Documents => Set<DocumentEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -209,6 +211,22 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Channel).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_comm_notes_office_matter");
+        });
+
+        modelBuilder.Entity<DocumentEntity>(b =>
+        {
+            b.ToTable("documents");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Bucket).HasMaxLength(63);
+            b.Property(x => x.ObjectKey).HasMaxLength(100);
+            b.Property(x => x.OriginalFilename).HasMaxLength(500);
+            b.Property(x => x.ContentType).HasMaxLength(200);
+            b.Property(x => x.ChecksumSha256).HasMaxLength(64);
+            b.Property(x => x.Status).HasMaxLength(20);
+            b.HasIndex(x => x.ObjectKey).IsUnique().HasDatabaseName("ux_documents_object_key");
+            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_documents_office_matter");
+            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_documents_office_status");
         });
 
         modelBuilder.Entity<MatterHearingEntity>(b =>

@@ -30,6 +30,7 @@ public static class TenantMatrix
             ["tasks"] = (1, 2),
             ["deadlines"] = (1, 2),
             ["communication_notes"] = (1, 2),
+            ["documents"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()
