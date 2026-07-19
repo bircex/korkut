@@ -79,6 +79,7 @@ export function Signup() {
           value={officeName}
           onChange={(e) => setOfficeName(e.target.value)}
           placeholder="Büro adı"
+          aria-label="Büro adı"
           autoFocus
           className={inputCls}
         />
@@ -86,6 +87,7 @@ export function Signup() {
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Ad Soyad (opsiyonel)"
+          aria-label="Ad Soyad (opsiyonel)"
           className={inputCls}
         />
         <button

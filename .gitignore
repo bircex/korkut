@@ -17,3 +17,9 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Test / e2e artifacts
+/playwright-report/
+/test-results/
+/coverage/
+/e2e/**/*-snapshots/
