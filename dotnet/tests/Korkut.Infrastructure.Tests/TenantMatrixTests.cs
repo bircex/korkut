@@ -53,7 +53,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"d{i}", DueDate = new DateOnly(2026, 1, 1), CreatedAt = DateTimeOffset.UtcNow });
             db.CommunicationNotes.Add(new CommunicationNoteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Body = $"n{i}", OccurredAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
-            db.Documents.Add(new DocumentEntity { Id = Guid.CreateVersion7(), OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
+            var docId = Guid.CreateVersion7();
+            db.Documents.Add(new DocumentEntity { Id = docId, OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
+            db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
         }
 
         await db.SaveChangesAsync();

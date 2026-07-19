@@ -296,6 +296,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("LegalHold")
+                        .HasColumnType("boolean")
+                        .HasColumnName("legal_hold");
+
                     b.Property<Guid?>("MatterId")
                         .HasColumnType("uuid")
                         .HasColumnName("matter_id");
@@ -334,6 +338,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
+                    b.Property<DateTimeOffset?>("TombstonedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("tombstoned_at");
+
                     b.Property<int>("Version")
                         .HasColumnType("integer")
                         .HasColumnName("version");
@@ -351,6 +359,68 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_documents_office_status");
 
                     b.ToTable("documents", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentExtractionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("document_id");
+
+                    b.Property<int>("DocumentVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("document_version");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<int>("Page")
+                        .HasColumnType("integer")
+                        .HasColumnName("page");
+
+                    b.Property<string>("ParserVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("parser_version");
+
+                    b.Property<string>("SourceChecksumSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("source_checksum_sha256");
+
+                    b.Property<string>("SourceObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source_object_key");
+
+                    b.Property<int>("SpanIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("span_index");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "DocumentId", "DocumentVersion", "ParserVersion", "Page", "SpanIndex")
+                        .IsUnique()
+                        .HasDatabaseName("ux_doc_extractions_provenance");
+
+                    b.ToTable("document_extractions", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.InboxEntity", b =>
@@ -994,6 +1064,16 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ux_user_totp_office_user");
 
                     b.ToTable("user_totp", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentExtractionEntity", b =>
+                {
+                    b.HasOne("Korkut.Infrastructure.Persistence.Entities.DocumentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId", "DocumentId")
+                        .HasPrincipalKey("OfficeId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterEntity", b =>
