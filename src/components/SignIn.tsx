@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { API_MODE, signalAuthChanged } from "../session";
+import { LocalAuth } from "./LocalAuth";
 import { AuthShell, Brand } from "../ui";
 
 // The callback bounces failures back here with ?error=<code>; map each to a friendly line.
@@ -39,6 +41,18 @@ export function SignIn() {
         <div className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
           {error}
         </div>
+      )}
+      {/* .NET auth contract: local e-posta/parola + policy-driven TOTP. Behind the
+          migration flag so Python mode stays Google-only (behaviour parity). */}
+      {API_MODE === "dotnet" && (
+        <>
+          <LocalAuth onAuthed={signalAuthChanged} />
+          <div className="my-1 flex items-center gap-3 text-[12px] text-zinc-500">
+            <span className="h-px flex-1 bg-zinc-200" aria-hidden />
+            veya
+            <span className="h-px flex-1 bg-zinc-200" aria-hidden />
+          </div>
+        </>
       )}
       <a
         href={api.googleSignInUrl()}

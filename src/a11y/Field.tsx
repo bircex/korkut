@@ -39,7 +39,7 @@ export function Field({
         )}
       </label>
       {hint && (
-        <span id={hintId} className="text-[12px] text-zinc-400">
+        <span id={hintId} className="text-[12px] text-zinc-500">
           {hint}
         </span>
       )}
@@ -80,7 +80,7 @@ export function TextArea({
         )}
       </label>
       {hint && (
-        <span id={hintId} className="text-[12px] text-zinc-400">
+        <span id={hintId} className="text-[12px] text-zinc-500">
           {hint}
         </span>
       )}

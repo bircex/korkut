@@ -361,28 +361,22 @@ export class ApiError extends Error {
   }
 }
 
+// Protected calls go through the session layer: a 401 triggers exactly one
+// single-flight refresh + one retry, then hard expiry — never a loop (KDM-030).
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, {
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  });
-  if (!res.ok) {
-    let detail = "İstek başarısız";
-    try {
-      const body = await res.json();
-      if (body?.detail) detail = body.detail;
-    } catch {
-      /* keep default */
-    }
-    throw new ApiError(res.status, detail);
-  }
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  const { sessionRequest } = await import("./session");
+  return sessionRequest<T>(path, opts, { auth: true });
+}
+
+// Session probe (bootstrap): a plain call with NO refresh-retry, so a genuinely
+// anonymous visitor resolves to 401 → anon without a wasted refresh or redirect loop.
+async function probe<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  const { sessionRequest } = await import("./session");
+  return sessionRequest<T>(path, opts, { auth: false });
 }
 
 export const api = {
-  me: () => request<User>("/api/me"),
+  me: () => probe<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
   config: () => request<PublicConfig>("/api/config"),
   // Google OIDC is the only sign-in: a full-page redirect the browser navigates to.
@@ -537,6 +531,31 @@ export const api = {
     return res.blob();
   },
   logout: () => request<{ ok: boolean }>("/api/logout", { method: "POST" }),
+
+  // --- .NET auth contract (KDM-030). Gated behind API_MODE; cookie sessions only. ---
+  // Local password sign-in. Returns { totp_required: true } to demand the 2FA step,
+  // otherwise the session cookie is set and the caller is signed in.
+  login: (email: string, password: string) =>
+    probe<{ totp_required: boolean }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  // Policy-driven TOTP challenge. `recovery` accepts a single-use recovery code.
+  verifyTotp: (code: string, recovery = false) =>
+    probe<{ ok: boolean }>("/api/auth/2fa", {
+      method: "POST",
+      body: JSON.stringify(recovery ? { recovery_code: code } : { code }),
+    }),
+  requestPasswordReset: (email: string) =>
+    probe<{ ok: boolean }>("/api/auth/password/reset-request", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string) =>
+    probe<{ ok: boolean }>("/api/auth/password/reset", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    }),
   sessions: (limit = 20, offset = 0) =>
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
   createSession: (matterId?: number) =>
