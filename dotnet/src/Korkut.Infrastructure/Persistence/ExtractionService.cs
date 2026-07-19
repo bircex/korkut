@@ -88,6 +88,9 @@ public sealed class ExtractionService(
         }
 
         await db.SaveChangesAsync(ct);
+
+        // The projection is search-ready — enqueue an index event (idempotent per version).
+        await new IndexOutboxService(db, clock).EnqueueIndexAsync(officeId, documentId, doc.Version, ct);
         return new ExtractionResult(ExtractionOutcome.Extracted, spans.Count);
     }
 }

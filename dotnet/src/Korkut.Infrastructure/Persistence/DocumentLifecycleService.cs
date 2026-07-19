@@ -37,6 +37,9 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStore st
         doc.Status = "tombstoned";
         doc.TombstonedAt = clock.UtcNow;
         await db.SaveChangesAsync(ct);
+
+        // A tombstoned/revoked document must leave the search index (KDM-028).
+        await new IndexOutboxService(db, clock).EnqueueDeindexAsync(officeId, documentId, doc.Version, ct);
     }
 
     /// <summary>
@@ -67,7 +70,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStore st
                 && x.RetentionUntil < now
                 && !x.LegalHold
                 && x.Status != "tombstoned")
-            .Select(x => new { x.Id, x.Bucket, x.ObjectKey })
+            .Select(x => new { x.Id, x.Bucket, x.ObjectKey, x.Version })
             .ToListAsync(ct);
 
         foreach (var d in expired)
@@ -83,6 +86,12 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStore st
                 .ExecuteUpdateAsync(
                     s => s.SetProperty(x => x.Status, "tombstoned").SetProperty(x => x.TombstonedAt, now),
                     ct);
+
+            var index = new IndexOutboxService(db, clock);
+            foreach (var d in expired)
+            {
+                await index.EnqueueDeindexAsync(officeId, d.Id, d.Version, ct);
+            }
         }
 
         return expired.Count;

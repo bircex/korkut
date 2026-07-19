@@ -54,6 +54,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<DocumentExtractionEntity> DocumentExtractions => Set<DocumentExtractionEntity>();
 
+    public DbSet<DocumentRelationEntity> DocumentRelations => Set<DocumentRelationEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -249,6 +251,26 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.DocumentVersion, x.ParserVersion, x.Page, x.SpanIndex })
                 .IsUnique()
                 .HasDatabaseName("ux_doc_extractions_provenance");
+        });
+
+        modelBuilder.Entity<DocumentRelationEntity>(b =>
+        {
+            b.ToTable("document_relations");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.TargetType).HasMaxLength(20);
+            // Tenant-aware composite FK to the source document.
+            b.HasOne<DocumentEntity>()
+                .WithMany()
+                .HasForeignKey(x => new { x.OfficeId, x.DocumentId })
+                .HasPrincipalKey(d => new { d.OfficeId, d.Id })
+                .OnDelete(DeleteBehavior.Cascade);
+            // One link per (document, target) — makes multi-linking idempotent.
+            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.TargetType, x.TargetId })
+                .IsUnique()
+                .HasDatabaseName("ux_doc_relations_link");
+            b.HasIndex(x => new { x.OfficeId, x.TargetType, x.TargetId })
+                .HasDatabaseName("ix_doc_relations_target");
         });
 
         modelBuilder.Entity<MatterHearingEntity>(b =>
