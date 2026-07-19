@@ -13,6 +13,12 @@ public sealed class UserEntity : ITenantOwned
     /// <summary>Versioned PBKDF2 hash; null until a local password is set.</summary>
     public string? PasswordHash { get; set; }
 
+    /// <summary>Google provider subject — the stable identity link (never the email).</summary>
+    public string? GoogleSub { get; set; }
+
+    /// <summary>Whether the user has Korkut TOTP enrolled (KDM-017).</summary>
+    public bool TwoFactorEnabled { get; set; }
+
     /// <summary>Rotated on any credential/authorization change to invalidate stale sessions.</summary>
     public Guid SecurityStamp { get; set; }
 

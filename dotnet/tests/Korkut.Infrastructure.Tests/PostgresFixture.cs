@@ -22,10 +22,15 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// <summary>App-role connection with pooling disabled — always a fresh physical connection.</summary>
     public string AppConnectionStringFresh { get; private set; } = string.Empty;
 
-    public KorkutDbContext NewContext()
+    public KorkutDbContext NewContext() => NewContext(ConnectionString);
+
+    /// <summary>A DbContext connected as the least-privileged app role (subject to RLS).</summary>
+    public KorkutDbContext NewAppContext() => NewContext(AppConnectionString);
+
+    private static KorkutDbContext NewContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<KorkutDbContext>()
-            .UseNpgsql(ConnectionString, npgsql =>
+            .UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.Schema))
             .Options;
         return new KorkutDbContext(options);

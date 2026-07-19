@@ -221,6 +221,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("Disabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("disabled");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -365,6 +369,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("failed_access_count");
 
+                    b.Property<string>("GoogleSub")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("google_sub");
+
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
@@ -386,7 +395,15 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("token_epoch");
 
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("two_factor_enabled");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("GoogleSub")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_google_sub");
 
                     b.HasIndex("OfficeId", "Email")
                         .IsUnique()
