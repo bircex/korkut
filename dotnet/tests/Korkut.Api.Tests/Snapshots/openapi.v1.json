@@ -36,6 +36,18 @@
         ]
       }
     },
+    "/api/admin/ping": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/v1/config": {
       "get": {
         "responses": {

@@ -18,13 +18,15 @@ public sealed record AccessClaims(Guid UserId, Guid OfficeId, string Role, strin
 public sealed class AccessTokenService
 {
     public const string Issuer = "korkut";
-    public const string Audience = "korkut-office";
+    public const string OfficeAudience = "korkut-office";
+    public const string AdminAudience = "korkut-admin";
 
     private readonly SymmetricSecurityKey _key;
     private readonly IClock _clock;
+    private readonly string _audience;
     private readonly JsonWebTokenHandler _handler = new();
 
-    public AccessTokenService(string secret, IClock clock)
+    public AccessTokenService(string secret, IClock clock, string audience = OfficeAudience)
     {
         if (string.IsNullOrWhiteSpace(secret) || Encoding.UTF8.GetByteCount(secret) < 32)
         {
@@ -34,6 +36,7 @@ public sealed class AccessTokenService
 
         _key = new SymmetricSecurityKey(SHA256.HashData(Encoding.UTF8.GetBytes(secret)));
         _clock = clock;
+        _audience = audience;
     }
 
     public TimeSpan Lifetime { get; init; } = TimeSpan.FromMinutes(15);
@@ -44,7 +47,7 @@ public sealed class AccessTokenService
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = Issuer,
-            Audience = Audience,
+            Audience = _audience,
             IssuedAt = now,
             NotBefore = now,
             Expires = now + Lifetime,
@@ -65,7 +68,7 @@ public sealed class AccessTokenService
         var result = await _handler.ValidateTokenAsync(token, new TokenValidationParameters
         {
             ValidIssuer = Issuer,
-            ValidAudience = Audience,
+            ValidAudience = _audience,
             IssuerSigningKey = _key,
             ValidateIssuerSigningKey = true,
             ValidateLifetime = true,
