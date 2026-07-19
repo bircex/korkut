@@ -62,6 +62,10 @@ public static class FoundationEndpoints
         v1.MapGet("/not-found-demo", IResult () =>
             throw ApiException.NotFound("Kayıt bulunamadı"));
 
+        // Rate-limited endpoint (stands in for login/reset/2FA/upload/admin).
+        v1.MapGet("/sensitive-demo", () => Results.Ok(new { ok = true }))
+            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+
         return app;
     }
 }

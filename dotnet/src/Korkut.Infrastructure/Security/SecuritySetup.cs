@@ -2,6 +2,7 @@ using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Korkut.Infrastructure.Security;
 
@@ -38,6 +39,13 @@ public static class SecuritySetup
             return new AesGcmSecretEncryptor(Convert.FromBase64String(key));
         });
         services.AddScoped<TwoFactorService>();
+
+        // Sessions (KDM-018): short-lived access tokens + rotating refresh families.
+        services.TryAddSingleton<Korkut.SharedKernel.Time.IClock>(Korkut.SharedKernel.Time.SystemClock.Instance);
+        services.AddSingleton(sp => new AccessTokenService(
+            sp.GetRequiredService<IConfiguration>()["KORKUT_SECRET"] ?? string.Empty,
+            sp.GetRequiredService<Korkut.SharedKernel.Time.IClock>()));
+        services.AddScoped<RefreshTokenService>();
         return services;
     }
 

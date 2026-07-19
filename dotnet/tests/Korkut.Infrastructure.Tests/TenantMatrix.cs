@@ -22,6 +22,7 @@ public static class TenantMatrix
             ["password_reset_tokens"] = (1, 2),
             ["user_totp"] = (1, 2),
             ["recovery_codes"] = (1, 2),
+            ["refresh_tokens"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()
