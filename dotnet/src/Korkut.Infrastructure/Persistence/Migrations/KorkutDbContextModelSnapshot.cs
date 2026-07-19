@@ -231,6 +231,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("name");
 
+                    b.Property<bool>("RequireTwoFactor")
+                        .HasColumnType("boolean")
+                        .HasColumnName("require_two_factor");
+
                     b.HasKey("Id");
 
                     b.ToTable("offices", "korkut");
@@ -349,6 +353,42 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("password_reset_tokens", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.RecoveryCodeEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "UserId")
+                        .HasDatabaseName("ix_recovery_codes_office_user");
+
+                    b.ToTable("recovery_codes", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -410,6 +450,51 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ux_users_office_email");
 
                     b.ToTable("users", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.UserTotpEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("EncryptedSecret")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("encrypted_secret");
+
+                    b.Property<long>("LastUsedStep")
+                        .HasColumnType("bigint")
+                        .HasColumnName("last_used_step");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_totp_office_user");
+
+                    b.ToTable("user_totp", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.MatterHearingEntity", b =>

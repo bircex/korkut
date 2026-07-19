@@ -16,6 +16,9 @@ public sealed class OfficeEntity
     /// <summary>A disabled office cannot sign in (demo-approval / suspension gate).</summary>
     public bool Disabled { get; set; }
 
+    /// <summary>When true, every office user must complete Korkut TOTP at login (KDM-017).</summary>
+    public bool RequireTwoFactor { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 }
 

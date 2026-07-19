@@ -20,6 +20,8 @@ public static class TenantMatrix
             ["audit_events"] = (1, 2),
             ["users"] = (1, 2),
             ["password_reset_tokens"] = (1, 2),
+            ["user_totp"] = (1, 2),
+            ["recovery_codes"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

@@ -29,8 +29,7 @@ public sealed class EfGoogleUserDirectory(KorkutDbContext db) : IGoogleUserDirec
         => ScalarBoolAsync("SELECT korkut.is_office_disabled(@o)", ct, ("o", officeId));
 
     public Task<bool> OfficeRequiresTwoFactorAsync(Guid officeId, CancellationToken ct)
-        // Office-level mandatory-TOTP policy is added in KDM-017; no office forces it yet.
-        => Task.FromResult(false);
+        => ScalarBoolAsync("SELECT korkut.office_requires_two_factor(@o)", ct, ("o", officeId));
 
     public Task<bool> UserHasTwoFactorAsync(Guid userId, CancellationToken ct)
         => ScalarBoolAsync("SELECT korkut.user_has_two_factor(@u)", ct, ("u", userId));
