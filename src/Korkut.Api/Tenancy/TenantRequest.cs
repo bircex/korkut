@@ -33,6 +33,14 @@ public static class TenantRequest
     }
 
     /// <summary>
+    /// True if the token carries the given permission. Use only for shaping a response
+    /// (e.g. a <c>can_edit</c> hint) — actual access is enforced by
+    /// <c>RequireAuthorization</c>, never by an inline check.
+    /// </summary>
+    public static bool HasPermission(this ClaimsPrincipal user, string permission)
+        => user.HasClaim(AccessTokenAuthHandler.PermissionClaim, permission);
+
+    /// <summary>
     /// Run <paramref name="work"/> inside a tenant-pinned transaction and commit it.
     /// The office comes from the caller's token, so RLS scopes every query/command.
     /// </summary>

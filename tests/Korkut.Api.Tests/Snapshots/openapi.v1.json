@@ -627,6 +627,25 @@
         ],
         "type": "object"
       },
+      "MemoryCreateRequest": {
+        "properties": {
+          "kind": {
+            "maxLength": "50",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
       "NoteCreateRequest": {
         "properties": {
           "body": {
@@ -666,6 +685,23 @@
         ],
         "type": "object"
       },
+      "PersonaInput": {
+        "properties": {
+          "expertise": {
+            "maxLength": "2000",
+            "type": "string"
+          },
+          "extra_rules": {
+            "maxLength": "4000",
+            "type": "string"
+          },
+          "tone": {
+            "maxLength": "2000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ResetBody": {
         "properties": {
           "password": {
@@ -699,6 +735,45 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "StyleFieldsDto": {
+        "properties": {
+          "boilerplate": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "letterhead": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "signature": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tone": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "letterhead",
+          "signature",
+          "tone",
+          "boilerplate"
         ],
         "type": "object"
       },
@@ -1999,6 +2074,84 @@
         ]
       }
     },
+    "/api/memory": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/memory/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/memory/{id}/approve": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/notes": {
       "get": {
         "parameters": [
@@ -2026,6 +2179,94 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/NoteCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/persona": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonaInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/style": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/style/office": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleFieldsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/style/user": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleFieldsDto"
               }
             }
           },

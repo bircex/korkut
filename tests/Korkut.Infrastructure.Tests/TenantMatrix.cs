@@ -38,6 +38,9 @@ public static class TenantMatrix
             ["expenses"] = (1, 2),
             ["correspondence"] = (1, 2),
             ["calendar_events"] = (1, 2),
+            ["office_persona"] = (1, 1), // one persona row per office
+            ["style_profiles"] = (1, 2),
+            ["memory_items"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

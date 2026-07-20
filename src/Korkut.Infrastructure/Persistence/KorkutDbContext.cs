@@ -66,6 +66,12 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<CalendarEventEntity> CalendarEvents => Set<CalendarEventEntity>();
 
+    public DbSet<PersonaEntity> Personas => Set<PersonaEntity>();
+
+    public DbSet<StyleProfileEntity> StyleProfiles => Set<StyleProfileEntity>();
+
+    public DbSet<MemoryItemEntity> MemoryItems => Set<MemoryItemEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -277,6 +283,42 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Rrule).HasMaxLength(400);
             b.Property(x => x.ReminderStatus).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.StartAt }).HasDatabaseName("ix_calendar_events_office_start");
+        });
+
+        modelBuilder.Entity<PersonaEntity>(b =>
+        {
+            b.ToTable("office_persona");
+            b.HasKey(x => x.OfficeId); // exactly one persona row per office
+            b.Property(x => x.OfficeId).ValueGeneratedNever();
+            b.Property(x => x.Tone).HasMaxLength(2000);
+            b.Property(x => x.Expertise).HasMaxLength(2000);
+            b.Property(x => x.ExtraRules).HasMaxLength(4000);
+        });
+
+        modelBuilder.Entity<StyleProfileEntity>(b =>
+        {
+            b.ToTable("style_profiles");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Scope).HasMaxLength(10);
+            b.Property(x => x.Letterhead).HasMaxLength(2000);
+            b.Property(x => x.Signature).HasMaxLength(2000);
+            b.Property(x => x.Tone).HasMaxLength(2000);
+            b.Property(x => x.Boilerplate).HasMaxLength(4000);
+            // One office profile, and at most one per user, per office.
+            b.HasIndex(x => new { x.OfficeId, x.Scope, x.UserId })
+                .IsUnique().HasDatabaseName("ux_style_profiles_office_scope_user");
+        });
+
+        modelBuilder.Entity<MemoryItemEntity>(b =>
+        {
+            b.ToTable("memory_items");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Kind).HasMaxLength(50);
+            b.Property(x => x.Text).HasMaxLength(4000);
+            b.Property(x => x.Status).HasMaxLength(20);
+            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_memory_items_office_status");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>

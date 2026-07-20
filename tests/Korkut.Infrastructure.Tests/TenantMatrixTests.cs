@@ -63,6 +63,12 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Expenses.Add(new ExpenseEntity { Id = Guid.CreateVersion7(), OfficeId = office, Amount = 10, CreatedAt = DateTimeOffset.UtcNow });
             db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = $"e{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.CalendarEvents.Add(new CalendarEventEntity { Id = Guid.CreateVersion7(), OfficeId = office, Category = "appointment", Title = $"cal{i}", StartAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
+            db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
+            db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
+            if (i == 0)
+            {
+                db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
+            }
         }
 
         await db.SaveChangesAsync();
