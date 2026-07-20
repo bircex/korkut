@@ -46,6 +46,8 @@ public static class TenantMatrix
             ["conversations"] = (1, 2),
             ["chat_messages"] = (1, 2),
             ["outbound_messages"] = (1, 2),
+            ["generated_documents"] = (1, 2),
+            ["document_versions"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

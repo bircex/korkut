@@ -82,6 +82,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<OutboundMessageEntity> OutboundMessages => Set<OutboundMessageEntity>();
 
+    public DbSet<GeneratedDocumentEntity> GeneratedDocuments => Set<GeneratedDocumentEntity>();
+
+    public DbSet<DocumentVersionEntity> DocumentVersions => Set<DocumentVersionEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -384,6 +388,26 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Subject).HasMaxLength(500);
             b.Property(x => x.Status).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_outbound_messages_office_status");
+        });
+
+        modelBuilder.Entity<GeneratedDocumentEntity>(b =>
+        {
+            b.ToTable("generated_documents");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Title).HasMaxLength(300);
+            b.Property(x => x.Status).HasMaxLength(20);
+            b.HasIndex(x => new { x.OfficeId, x.ConversationId }).IsUnique().HasDatabaseName("ux_generated_documents_conversation");
+        });
+
+        modelBuilder.Entity<DocumentVersionEntity>(b =>
+        {
+            b.ToTable("document_versions");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Author).HasMaxLength(320);
+            b.Property(x => x.Note).HasMaxLength(500);
+            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.CreatedAt }).HasDatabaseName("ix_document_versions_document");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>

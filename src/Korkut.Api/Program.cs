@@ -75,6 +75,7 @@ app.MapTemplateEndpoints();
 app.MapOnboardingEndpoints();
 app.MapSessionEndpoints();
 app.MapOutboxEndpoints();
+app.MapDraftDocumentEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
 app.MapMembersEndpoints();
