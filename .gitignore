@@ -46,3 +46,16 @@ branding/*.ico
 .vscode/
 /.claude
 .mcp.json
+
+# .NET build artifacts (flattened to repo root — keep source-only)
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+*.nupkg
+project.lock.json

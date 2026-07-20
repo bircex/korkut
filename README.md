@@ -35,13 +35,13 @@ identity.
 
 ## Quick start
 
-The runtime is a **.NET 10** solution under [`dotnet/`](dotnet/) (the Python runtime was
-retired after the .NET migration — see [`dotnet/README.md`](dotnet/README.md)).
+The runtime is a **.NET 10** solution at the repository root (`Korkut.slnx`, `src/`,
+`tests/`; the Python runtime was retired after the .NET migration).
 
 ```bash
-make build     # dotnet build dotnet/Korkut.slnx
+make build     # dotnet build Korkut.slnx
 make test      # full test suite (needs Docker for Postgres/MinIO integration tests)
-make run       # start the API on :8080  (dotnet run --project dotnet/src/Korkut.Api)
+make run       # start the API on :8080  (dotnet run --project src/Korkut.Api)
 make migrate   # apply EF Core migrations via the migrator
 ```
 

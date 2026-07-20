@@ -1,14 +1,21 @@
 name: .NET Migration CI
 
 # KDM-005 — build + architecture + smoke tests for the .NET solution on every PR
-# into dotnet-migration that touches dotnet/**. Path-aware so it stays fast and
-# only runs when the .NET code changes. Read-only permissions; no secrets used.
+# into dotnet-migration that touches the .NET sources (now at the repo root). Path-
+# aware so it stays fast. Read-only permissions; no secrets used.
 
 on:
   pull_request:
     branches: [dotnet-migration]
     paths:
-      - "dotnet/**"
+      - "src/**"
+      - "tests/**"
+      - "Korkut.slnx"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "dotnet-tools.json"
+      - ".editorconfig"
       - ".github/workflows/dotnet-migration-ci.yml"
 
 permissions:
@@ -17,10 +24,6 @@ permissions:
 concurrency:
   group: dotnet-ci-${{ github.ref }}
   cancel-in-progress: true
-
-defaults:
-  run:
-    working-directory: dotnet
 
 jobs:
   dotnet:
@@ -32,7 +35,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: dotnet/global.json
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore Korkut.slnx

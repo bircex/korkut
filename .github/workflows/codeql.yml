@@ -29,7 +29,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: dotnet/global.json
+          global-json-file: global.json
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -38,7 +38,7 @@ jobs:
           queries: security-and-quality
 
       - name: Build (.NET solution — CodeQL needs a compile for C#)
-        run: dotnet build dotnet/Korkut.slnx
+        run: dotnet build Korkut.slnx
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

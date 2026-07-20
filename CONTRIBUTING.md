@@ -1,6 +1,6 @@
 # Contributing to Korkut
 
-> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** under [`dotnet/`](dotnet/). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See [`dotnet/README.md`](dotnet/README.md) and the `Makefile` (`make build|test|run|migrate`).
+> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See the `Makefile` (`make build|test|run|migrate`).
 
 Thanks for your interest in improving Korkut. This guide covers how to set up the project, the
 quality gates your change must pass, and the conventions we follow.

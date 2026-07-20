@@ -1,7 +1,7 @@
 # Korkut .NET container images (KDM-009)
 
 Hardened, minimal, reproducible images for the three .NET hosts. Build context is
-the `dotnet/` directory.
+the repository root.
 
 | Image | Dockerfile | Base (runtime) | Shape |
 |---|---|---|---|
