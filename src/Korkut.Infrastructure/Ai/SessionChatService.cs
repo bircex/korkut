@@ -1,5 +1,6 @@
 using System.Text;
 using Korkut.Application.Ai;
+using Korkut.Application.Documents;
 using Korkut.Application.Runtime;
 using Korkut.Infrastructure.Persistence;
 
@@ -7,6 +8,9 @@ namespace Korkut.Infrastructure.Ai;
 
 /// <summary>The result of a chat turn: the assistant reply, the (possibly auto-set) title, and UI hints.</summary>
 public sealed record ChatOutcome(string Reply, string Title, Guid? OpenDocument, Guid? PendingEmail);
+
+/// <summary>The result of a file-upload turn: the assistant reply, the title, and a display line for the user turn.</summary>
+public sealed record UploadOutcome(string Reply, string Title, string UserDisplay);
 
 /// <summary>
 /// Orchestrates one assistant chat turn within the caller's tenant scope: persists the
@@ -16,8 +20,58 @@ public sealed record ChatOutcome(string Reply, string Title, Guid? OpenDocument,
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    SessionStore sessions, OfficeSettingsStore settings, ILlmClient llm, RuntimeConfig config)
+    SessionStore sessions, OfficeSettingsStore settings, ILlmClient llm, RuntimeConfig config, ITextExtractor extractor)
 {
+    private const int MaxExtractedChars = 20_000;
+
+    /// <summary>
+    /// A chat turn that attaches an uploaded document: extracts its text, includes it in
+    /// the user turn so the assistant can reason over it, and returns the reply plus a
+    /// short display line for the UI. Returns null if the conversation is missing.
+    /// </summary>
+    public async Task<UploadOutcome?> UploadAsync(
+        Guid officeId, Guid userId, Guid conversationId, string fileName, string contentType, Stream content, string text, CancellationToken ct = default)
+    {
+        var conversation = await sessions.GetAsync(officeId, conversationId, ct);
+        if (conversation is null)
+        {
+            return null;
+        }
+
+        var spans = await extractor.ExtractAsync(content, contentType, ct);
+        var extracted = string.Join("\n\n", spans.Select(s => s.Text));
+        if (extracted.Length > MaxExtractedChars)
+        {
+            extracted = extracted[..MaxExtractedChars] + "\n…(kısaltıldı)";
+        }
+
+        var userDisplay = string.IsNullOrWhiteSpace(text) ? $"📎 {fileName}" : $"{text}\n📎 {fileName}";
+        var promptContent = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            promptContent.AppendLine(text).AppendLine();
+        }
+
+        promptContent.AppendLine($"[Ekli belge: {fileName}]");
+        promptContent.Append(extracted.Length > 0 ? extracted : "(belgeden metin çıkarılamadı)");
+
+        await sessions.AppendMessageAsync(officeId, conversationId, "user", promptContent.ToString(), ct);
+
+        var system = await BuildSystemPromptAsync(officeId, userId, ct);
+        var history = await sessions.MessagesAsync(officeId, conversationId, ct);
+        var reply = await llm.CompleteAsync(new LlmRequest(system, history.Select(m => new LlmMessage(m.Role, m.Content)).ToList(), config.ReplyHeadroom * 4), ct);
+        await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
+
+        var title = conversation.Title;
+        if (conversation.Title == "Yeni görüşme")
+        {
+            title = Summarize(string.IsNullOrWhiteSpace(text) ? fileName : text);
+            await sessions.SetTitleIfDefaultAsync(officeId, conversationId, title, ct);
+        }
+
+        return new UploadOutcome(reply.Text, title, userDisplay);
+    }
+
     public async Task<ChatOutcome?> ChatAsync(Guid officeId, Guid userId, Guid conversationId, string text, CancellationToken ct = default)
     {
         var conversation = await sessions.GetAsync(officeId, conversationId, ct);

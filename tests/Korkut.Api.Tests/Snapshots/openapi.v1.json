@@ -2975,6 +2975,29 @@
         ]
       }
     },
+    "/api/sessions/{id}/upload": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/signup/pending": {
       "get": {
         "responses": {

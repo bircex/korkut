@@ -123,6 +123,39 @@ public static class SessionEndpoints
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
+        sessions.MapPost("/{id:guid}/upload", async (Guid id, HttpContext http, ClaimsPrincipal user, KorkutDbContext db, SessionChatService chat, CancellationToken ct) =>
+            {
+                if (!http.Request.HasFormContentType)
+                {
+                    throw ApiException.BadRequest("multipart/form-data bekleniyor.");
+                }
+
+                var form = await http.Request.ReadFormAsync(ct);
+                var file = form.Files["file"];
+                if (file is null || file.Length == 0)
+                {
+                    throw ApiException.BadRequest("Dosya gerekli.");
+                }
+
+                var text = form["text"].ToString();
+                var uid = user.UserId();
+                try
+                {
+                    await using var stream = file.OpenReadStream();
+                    var outcome = await user.InTenantScopeAsync(db, o =>
+                        chat.UploadAsync(o, uid, id, file.FileName, file.ContentType ?? "application/octet-stream", stream, text, ct), ct);
+                    return outcome is null
+                        ? throw ApiException.NotFound("Görüşme bulunamadı.")
+                        : Results.Ok(new { reply = outcome.Reply, title = outcome.Title, user_display = outcome.UserDisplay });
+                }
+                catch (LlmUnavailableException ex)
+                {
+                    return Results.Json(new { detail = ex.Message }, statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+            })
+            .RequireAuthorization(Permissions.MattersWrite)
+            .DisableAntiforgery();
+
         sessions.MapPost("/{id:guid}/chat/stream", async (Guid id, ChatRequest body, HttpContext http, ClaimsPrincipal user, KorkutDbContext db, SessionChatService chat, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
