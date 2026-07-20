@@ -26,6 +26,7 @@ public static class DomainSetup
         services.AddScoped<FinanceStore>();
         services.AddScoped<CorrespondenceStore>();
         services.AddScoped<CalendarStore>();
+        services.AddScoped<OfficeSettingsStore>();
         services.AddScoped<MembersStore>();
         services.AddScoped<InviteStore>();
         services.AddScoped<EfInviteResolver>();
