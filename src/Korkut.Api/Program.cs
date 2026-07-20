@@ -56,6 +56,7 @@ app.MapAuthEndpoints();
 app.MapOfficeCoreEndpoints();
 app.MapDocumentEndpoints();
 app.MapOfficeOpsEndpoints();
+app.MapMembersEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();
