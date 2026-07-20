@@ -1,6 +1,210 @@
 {
   "components": {
     "schemas": {
+      "CalendarEventCreateRequest": {
+        "properties": {
+          "all_day": {
+            "type": "boolean"
+          },
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "category": {
+            "pattern": "hearing|deadline|appointment|reminder",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "remind_before_min": {
+            "format": "int32",
+            "maximum": "40320",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "rrule": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "start_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "title",
+          "start_at"
+        ],
+        "type": "object"
+      },
+      "CalendarEventPatchRequest": {
+        "properties": {
+          "all_day": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "remind_before_min": {
+            "format": "int32",
+            "maximum": "40320",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "result": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rrule": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "start_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "scheduled|done|cancelled",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "ClientWriteRequest": {
         "properties": {
           "email": {
@@ -812,6 +1016,151 @@
         },
         "tags": [
           "AuthEndpoints"
+        ]
+      }
+    },
+    "/api/calendar/events": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarEventCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/calendar/events/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarEventPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/calendar/upcoming": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
         ]
       }
     },

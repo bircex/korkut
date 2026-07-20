@@ -37,6 +37,7 @@ public static class TenantMatrix
             ["invoices"] = (1, 2),
             ["expenses"] = (1, 2),
             ["correspondence"] = (1, 2),
+            ["calendar_events"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

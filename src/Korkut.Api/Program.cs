@@ -62,6 +62,7 @@ app.MapDocumentEndpoints();
 app.MapOfficeOpsEndpoints();
 app.MapFinanceEndpoints();
 app.MapEvrakEndpoints();
+app.MapCalendarEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();
