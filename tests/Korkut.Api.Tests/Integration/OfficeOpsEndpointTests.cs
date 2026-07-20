@@ -9,7 +9,8 @@ namespace Korkut.Api.Tests;
 /// Office-ops endpoints (tasks, deadlines, notes) over the real API + real PostgreSQL
 /// with RLS (endpoint migration, slice 4).
 /// </summary>
-public class OfficeOpsEndpointTests(KorkutApiFactory factory) : IClassFixture<KorkutApiFactory>
+[Collection(Integration.IntegrationSuite.Name)]
+public class OfficeOpsEndpointTests(KorkutApiFactory factory)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

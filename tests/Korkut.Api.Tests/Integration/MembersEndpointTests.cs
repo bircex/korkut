@@ -11,7 +11,8 @@ namespace Korkut.Api.Tests;
 /// migration, slice 5): owner-only management, role change, and the office-keeps-an-
 /// owner / no-self-removal invariants.
 /// </summary>
-public class MembersEndpointTests(KorkutApiFactory factory) : IClassFixture<KorkutApiFactory>
+[Collection(Integration.IntegrationSuite.Name)]
+public class MembersEndpointTests(KorkutApiFactory factory)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

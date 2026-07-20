@@ -26,6 +26,7 @@ builder.Services.AddKorkutDomain(builder.Configuration);
 builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
+builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfResetTokenResolver>();
 
 // Object storage (MinIO) + the secure-document pipeline services (KDM-025..028).
 builder.Services.AddKorkutStorage(builder.Configuration);

@@ -12,7 +12,8 @@ namespace Korkut.Api.Tests;
 /// migration, slice 3): quarantine upload, download gated on clean, rejection of a
 /// spoofed file, and tenant isolation.
 /// </summary>
-public class DocumentEndpointTests(KorkutApiFactory factory) : IClassFixture<KorkutApiFactory>
+[Collection(Integration.IntegrationSuite.Name)]
+public class DocumentEndpointTests(KorkutApiFactory factory)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
