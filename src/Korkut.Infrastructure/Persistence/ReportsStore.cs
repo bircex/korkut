@@ -1,3 +1,5 @@
+using Korkut.Application.Features.Finance;
+using Korkut.Domain.Finance;
 using Korkut.SharedKernel.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,9 +20,9 @@ public sealed record ReportsOverview(
 /// Read-only office dashboard: counts and roll-ups across matters, clients, finance,
 /// tasks, the upcoming agenda, and the correspondence register. Tenant context is set
 /// by the caller (RLS), so every aggregate is scoped to the office. The finance block
-/// is delegated to <see cref="FinanceStore"/> so the derived gross stays consistent.
+/// is delegated to <see cref="IFinanceService"/> so the derived gross stays consistent.
 /// </summary>
-public sealed class ReportsStore(KorkutDbContext db, FinanceStore finance, IClock clock)
+public sealed class ReportsStore(KorkutDbContext db, IFinanceService finance, IClock clock)
 {
     public async Task<ReportsOverview> OverviewAsync(Guid officeId, int days, CancellationToken ct = default)
     {

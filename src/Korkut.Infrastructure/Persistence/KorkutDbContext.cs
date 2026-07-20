@@ -247,28 +247,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_comm_notes_office_matter");
         });
 
-        modelBuilder.Entity<InvoiceEntity>(b =>
-        {
-            b.ToTable("invoices");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Amount).HasColumnType("numeric(14,2)");
-            b.Property(x => x.VatRate).HasColumnType("numeric(5,4)");
-            b.Property(x => x.Description).HasMaxLength(1000);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_invoices_office_status");
-        });
-
-        modelBuilder.Entity<ExpenseEntity>(b =>
-        {
-            b.ToTable("expenses");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Amount).HasColumnType("numeric(14,2)");
-            b.Property(x => x.Kind).HasMaxLength(50);
-            b.Property(x => x.Description).HasMaxLength(1000);
-            b.HasIndex(x => new { x.OfficeId, x.SpentAt }).HasDatabaseName("ix_expenses_office_spent");
-        });
+        // Finance mappings live in Configurations/ (Clean Architecture layout); other
+        // modules move to the same pattern module-by-module.
+        modelBuilder.ApplyConfiguration(new Configurations.InvoiceConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.ExpenseConfiguration());
 
         modelBuilder.Entity<CorrespondenceEntity>(b =>
         {
