@@ -4,4 +4,4 @@
 assistant:
   name: "Korkut"
 # The per-office persona (build_persona(office_name)) is produced by the .NET runtime
-# under dotnet/; the brain port is tracked in the post-migration backlog.
+# at the repo root (src/); the brain port is tracked in the post-migration backlog.

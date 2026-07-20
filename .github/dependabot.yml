@@ -1,8 +1,8 @@
 version: 2
 updates:
-  # .NET dependencies (dotnet/Directory.Packages.props — central package management)
+  # .NET dependencies (Directory.Packages.props — central package management)
   - package-ecosystem: nuget
-    directory: /dotnet
+    directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -24,7 +24,7 @@ updates:
 
   # Base images in the .NET Dockerfiles
   - package-ecosystem: docker
-    directory: /dotnet/docker
+    directory: /docker
     schedule:
       interval: weekly
     labels: [dependencies, docker]

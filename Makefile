@@ -1,7 +1,7 @@
 .PHONY: help build test run migrate docker-up
 .DEFAULT_GOAL := help
 
-SLN := dotnet/Korkut.slnx
+SLN := Korkut.slnx
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -14,12 +14,12 @@ test:  ## Run the full .NET test suite (needs Docker for Postgres/MinIO integrat
 	dotnet test $(SLN)
 
 run:  ## Start the API server on :8080
-	dotnet run --project dotnet/src/Korkut.Api
+	dotnet run --project src/Korkut.Api
 
 migrate:  ## Apply EF Core migrations via the migrator (uses KORKUT_ADMIN_DB_URL)
-	dotnet run --project dotnet/src/Korkut.Migrator
+	dotnet run --project src/Korkut.Migrator
 
-docker-up:  ## Build the API/worker/migrator images from dotnet/docker/
-	docker build -f dotnet/docker/Dockerfile.api -t korkut-api dotnet
-	docker build -f dotnet/docker/Dockerfile.worker -t korkut-worker dotnet
-	docker build -f dotnet/docker/Dockerfile.migrator -t korkut-migrator dotnet
+docker-up:  ## Build the API/worker/migrator images from docker/
+	docker build -f docker/Dockerfile.api -t korkut-api .
+	docker build -f docker/Dockerfile.worker -t korkut-worker .
+	docker build -f docker/Dockerfile.migrator -t korkut-migrator .

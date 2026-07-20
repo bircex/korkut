@@ -1,7 +1,7 @@
 # KDM-009 — hardened Korkut.Api image.
 # Multi-stage: SDK builds/publishes; the final image is a chiseled ASP.NET runtime
 # (no shell, no package manager, non-root 'app' UID 1654 by default). Base images
-# are pinned by digest for reproducibility. Build context is the `dotnet/` dir.
+# are pinned by digest for reproducibility. Build context is the repository root.
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0.102@sha256:6ba533cc61a5d8c5e7d4b3a3e33e2ddc2efef200b112e4d658303516bfd24255 AS build

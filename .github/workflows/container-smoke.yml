@@ -9,8 +9,8 @@ on:
   pull_request:
     branches: [dotnet-migration]
     paths:
-      - "dotnet/docker/**"
-      - "dotnet/global.json"
+      - "docker/**"
+      - "global.json"
       - ".github/workflows/container-smoke.yml"
 
 permissions:
@@ -23,9 +23,6 @@ concurrency:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: dotnet
     steps:
       - uses: actions/checkout@v4
       - name: Container smoke test

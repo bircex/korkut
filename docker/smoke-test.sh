@@ -6,7 +6,7 @@
 # shuts down gracefully (exit 0) on SIGTERM. No secrets are baked in; runtime
 # config is supplied via the environment.
 #
-# Usage: docker/smoke-test.sh   (run from the dotnet/ directory)
+# Usage: docker/smoke-test.sh   (run from the repository root)
 set -uo pipefail
 
 TAG="${TAG:-kdm009smoke}"

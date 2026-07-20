@@ -1,10 +1,26 @@
-# Build context is the repository root (deploy/docker-compose.yml sets build.context = ..).
+# Build context is the repository root; the .NET Dockerfiles live under docker/ and
+# only COPY global.json + Directory.*.props + .editorconfig + src/. Everything else is
+# excluded to keep the context minimal and free of artifacts/secrets.
 .git
 .github
-.venv
-venv
+docs
+templates
+config
+assets
+tests
+data
+backups
+
+# .NET + Python build artifacts.
+**/bin/
+**/obj/
+**/TestResults/
+**/*.user
+**/.vs/
 **/__pycache__
 **/*.py[cod]
+.venv
+venv
 .pytest_cache
 .ruff_cache
 .mypy_cache
@@ -15,11 +31,7 @@ coverage.xml
 # Secrets and runtime data never go into the image.
 .env
 .env.*
-data
+!.env.example
 *.db
 
-**/*.egg-info
-**/*.tsbuildinfo
-
-# Not needed at runtime.
-docs
+*.md
