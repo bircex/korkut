@@ -66,6 +66,7 @@ app.MapCalendarEndpoints();
 app.MapSettingsEndpoints();
 app.MapReportsEndpoints();
 app.MapChannelEndpoints();
+app.MapTemplateEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();

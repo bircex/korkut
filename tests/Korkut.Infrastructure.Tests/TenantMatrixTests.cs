@@ -65,6 +65,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.CalendarEvents.Add(new CalendarEventEntity { Id = Guid.CreateVersion7(), OfficeId = office, Category = "appointment", Title = $"cal{i}", StartAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
             db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
             db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
+            db.TemplateOverrides.Add(new TemplateOverrideEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), Kind = "dilekce", TypeId = $"t{i}", Content = "x", UpdatedAt = DateTimeOffset.UtcNow });
             if (i == 0)
             {
                 db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
