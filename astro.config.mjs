@@ -13,4 +13,9 @@ export default defineConfig({
   build: {
     inlineStylesheets: "auto",
   },
+  vite: {
+    // Emit hoisted scripts as external /_astro/*.js files (never inline), so a strict
+    // `script-src 'self'` CSP holds with no inline-script hashes (KDM-032).
+    build: { assetsInlineLimit: 0 },
+  },
 });

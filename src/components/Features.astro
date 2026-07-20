@@ -4,7 +4,18 @@
 //   shot: "/shots/arastirma.png"  → görsel
 //   video: "/shots/dilekce.mp4"   → video
 // İkisi de boşsa yer tutucu (placeholder) gösterilir.
-const groups = [
+type Tab = {
+  id: string;
+  tab: string;
+  title: string;
+  body: string;
+  points: string[];
+  shot?: string | null;
+  video?: string | null;
+};
+type Group = { key: string; eyebrow: string; title: string; lead: string; tabs: Tab[] };
+
+const groups: Group[] = [
   {
     key: "hukuk",
     eyebrow: "Hukuk yetenekleri",

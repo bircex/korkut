@@ -1,4 +1,7 @@
 ---
+// Self-hosted Inter (KDM-032): no external font origin, so the CSP can forbid all
+// third-party assets and the page makes zero cross-origin requests.
+import "@fontsource-variable/inter";
 import "../styles/global.css";
 import { SITE, FAQS } from "../consts";
 
@@ -105,12 +108,15 @@ const jsonLd = {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
-    <!-- Fontlar -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
+    <!-- Fontlar: self-hosted (@fontsource-variable/inter), harici istek yok. -->
+
+    <!-- Content Security Policy: yalnizca ayni kaynak. Tum script'ler harici
+         (/_astro/*.js) oldugundan 'unsafe-inline' script gerekmez. style-src, Astro'nun
+         inline scoped stilleri icin 'unsafe-inline' icerir. frame-ancestors / HSTS gibi
+         meta ile uygulanamayan yonergeler public/_headers ile servis edilir. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
     />
 
     <link rel="sitemap" href={`${base}sitemap-index.xml`} />

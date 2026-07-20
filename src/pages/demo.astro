@@ -49,7 +49,7 @@ const base = import.meta.env.BASE_URL;
 
           <!-- Sağ: form -->
           <div class="demo-card">
-            <form id="demo-form" novalidate>
+            <form id="demo-form" data-contact={CONTACT_EMAIL} novalidate>
               <div class="field">
                 <label for="office">Büro adı</label>
                 <input id="office" name="office" type="text" required autocomplete="organization" />
@@ -103,12 +103,21 @@ const base = import.meta.env.BASE_URL;
 <style>
   .demo {
     padding: 72px 0 88px;
+    /* Guard against sub-pixel/inline (letter-spacing) phantom overflow at ≤320px.
+       All real content fits within the viewport; this only clips the trailing
+       fraction so no horizontal scrollbar appears (WCAG 1.4.10, KDM-032). */
+    overflow-x: clip;
   }
   .demo-grid {
     display: grid;
     grid-template-columns: 1fr 1.05fr;
     gap: 56px;
     align-items: start;
+  }
+  /* Grid items default to min-width:auto, so a wide child (form inputs) can force a
+     track wider than the viewport. Allow them to shrink → no 320px overflow (KDM-032). */
+  .demo-grid > * {
+    min-width: 0;
   }
   @media (max-width: 880px) {
     .demo-grid {
@@ -257,10 +266,11 @@ const base = import.meta.env.BASE_URL;
   }
 </style>
 
-<script define:vars={{ contact: CONTACT_EMAIL }}>
+<script>
   // Statik site: form gönderimi, alanlardan derlenmiş bir e-posta taslağı açar.
   // İleride bir uç noktaya (Formspree, kendi API'niz) bağlamak için fetch ekleyin.
-  const form = document.getElementById("demo-form");
+  const form = document.getElementById("demo-form") as HTMLFormElement | null;
+  const contact = form?.dataset.contact ?? "";
   const status = document.getElementById("demo-status");
 
   form?.addEventListener("submit", (e) => {
@@ -270,7 +280,7 @@ const base = import.meta.env.BASE_URL;
       return;
     }
     const data = new FormData(form);
-    const g = (k) => (data.get(k) || "").toString().trim();
+    const g = (k: string) => (data.get(k) || "").toString().trim();
 
     const lines = [
       "Merhaba,",
@@ -294,9 +304,11 @@ const base = import.meta.env.BASE_URL;
 
     window.location.href = href;
 
-    status.textContent =
-      "Talebiniz e-posta uygulamanızda hazırlandı. Göndererek tamamlayabilirsiniz.";
-    status.classList.add("show", "ok");
-    status.classList.remove("err");
+    if (status) {
+      status.textContent =
+        "Talebiniz e-posta uygulamanızda hazırlandı. Göndererek tamamlayabilirsiniz.";
+      status.classList.add("show", "ok");
+      status.classList.remove("err");
+    }
   });
 </script>

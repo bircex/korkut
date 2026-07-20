@@ -11,3 +11,7 @@ npm-debug.log*
 .env.production
 # macOS
 .DS_Store
+
+# Test / e2e artifacts
+/playwright-report/
+/test-results/
