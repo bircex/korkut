@@ -20,6 +20,12 @@ builder.Services.AddKorkutApi(builder.Configuration);
 // endpoints are added per module; DI here makes their services available.
 builder.Services.AddKorkutDomain(builder.Configuration);
 
+// Auth services (password/hasher/directory/AuthService/TOTP/Google/OIDC) + the
+// refresh-token + Google sign-in services the session endpoints use (KDM-012..017).
+builder.Services.AddKorkutAuth(builder.Configuration);
+builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
+builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
+
 // Access-token auth + deny-by-default permission policies (KDM-018/019).
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(
@@ -42,6 +48,7 @@ app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
 app.MapFoundationEndpoints();
+app.MapAuthEndpoints();
 app.MapOfficeCoreEndpoints();
 app.MapKorkutHealthChecks();
 

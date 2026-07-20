@@ -28,13 +28,17 @@ public sealed class AccessTokenAuthHandler(
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        // Accept the access token from the httpOnly session cookie (the SPA, KDM-030)
+        // OR a Bearer header (API clients). The cookie is never readable by JS.
         var header = Request.Headers.Authorization.ToString();
-        if (string.IsNullOrEmpty(header) || !header.StartsWith("Bearer ", StringComparison.Ordinal))
+        string? token = header.StartsWith("Bearer ", StringComparison.Ordinal) ? header["Bearer ".Length..] : null;
+        token ??= Request.Cookies[SessionManager.AccessCookie];
+        if (string.IsNullOrEmpty(token))
         {
             return AuthenticateResult.NoResult();
         }
 
-        var claims = await accessTokens.ValidateAsync(header["Bearer ".Length..]);
+        var claims = await accessTokens.ValidateAsync(token);
         if (claims is null)
         {
             return AuthenticateResult.Fail("Invalid or expired access token.");
