@@ -6,7 +6,10 @@ using Korkut.Application.Security;
 using Korkut.SharedKernel.Time;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
 using Testcontainers.Minio;
@@ -72,8 +75,41 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         // sensitive-endpoint limiter would throttle across tests. Raise it here only
         // (the dedicated rate-limit test uses its own strict host).
         builder.UseSetting("KORKUT_SENSITIVE_RATE_LIMIT", "100000");
+        // Configure Google OIDC on THIS host only (dummy creds) so start/callback work;
+        // the real HTTP exchanger + JWKS validator are replaced with deterministic fakes.
+        builder.UseSetting("GOOGLE_CLIENT_ID", "test-client-id");
+        builder.UseSetting("GOOGLE_CLIENT_SECRET", "test-client-secret");
+        builder.UseSetting("GOOGLE_REDIRECT_URI", "https://app.example.com/api/auth/google/callback");
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IOidcTokenExchanger>();
+            services.AddSingleton<IOidcTokenExchanger, FakeTokenExchanger>();
+            services.RemoveAll<IGoogleIdTokenValidator>();
+            services.AddSingleton<IGoogleIdTokenValidator, FakeIdTokenValidator>();
+        });
         builder.UseEnvironment("Testing");
     }
+
+    /// <summary>Passes the auth code straight through as the "id token".</summary>
+    private sealed class FakeTokenExchanger : IOidcTokenExchanger
+    {
+        public Task<string> ExchangeForIdTokenAsync(string code, string codeVerifier, CancellationToken ct = default)
+            => Task.FromResult(code);
+    }
+
+    /// <summary>Decodes a test id token of the form "sub|email|emailVerified|nonce".</summary>
+    private sealed class FakeIdTokenValidator : IGoogleIdTokenValidator
+    {
+        public Task<GoogleIdentity> ValidateAsync(string idToken, CancellationToken ct = default)
+        {
+            var parts = idToken.Split('|');
+            return Task.FromResult(new GoogleIdentity(parts[0], parts[1], bool.Parse(parts[2]), parts[3]));
+        }
+    }
+
+    /// <summary>Build a test id token the FakeIdTokenValidator understands.</summary>
+    public static string FakeIdToken(string sub, string email, string nonce, bool emailVerified = true)
+        => $"{sub}|{email}|{emailVerified}|{nonce}";
 
     /// <summary>Owner/superuser context for seeding (RLS bypassed) — tests only.</summary>
     public KorkutDbContext OwnerContext()
@@ -131,7 +167,10 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     }
 
     /// <summary>A cookie-aware client (no auth) — for exercising the login → cookie → /me flow.</summary>
-    public HttpClient CookieClient() => CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
+    public HttpClient CookieClient() => CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+
+    /// <summary>A cookie-aware client that does NOT follow redirects (for OAuth start/callback).</summary>
+    public HttpClient NoRedirectCookieClient() => CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true, AllowAutoRedirect = false });
 
     /// <summary>Seed an active password-reset token for a user; returns the raw token to submit.</summary>
     public async Task<string> SeedResetTokenAsync(Guid officeId, Guid userId)

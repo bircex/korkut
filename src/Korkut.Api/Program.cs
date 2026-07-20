@@ -28,6 +28,9 @@ builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>()
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
 builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfResetTokenResolver>();
 
+// Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
+builder.Services.AddGoogleOidcRuntime();
+
 // Object storage (MinIO) + the secure-document pipeline services (KDM-025..028).
 builder.Services.AddKorkutStorage(builder.Configuration);
 
@@ -58,6 +61,7 @@ app.MapOfficeCoreEndpoints();
 app.MapDocumentEndpoints();
 app.MapOfficeOpsEndpoints();
 app.MapMembersEndpoints();
+app.MapGoogleAuthEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();
