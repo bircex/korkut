@@ -58,6 +58,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Documents.Add(new DocumentEntity { Id = docId, OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
             db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.DocumentRelations.Add(new DocumentRelationEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, TargetType = "client", TargetId = clientId, IsPrimary = true, CreatedAt = DateTimeOffset.UtcNow });
+            db.Invites.Add(new InviteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Email = $"invite{i}@example.com", Role = "lawyer", TokenHash = $"hash{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(7), CreatedAt = DateTimeOffset.UtcNow });
         }
 
         await db.SaveChangesAsync();
