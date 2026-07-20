@@ -29,6 +29,8 @@ public static class DomainSetup
         services.AddScoped<OfficeSettingsStore>();
         services.AddScoped<ReportsStore>();
         services.AddScoped<ChannelStore>();
+        services.AddScoped<TemplateOverrideStore>();
+        services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<MembersStore>();
         services.AddScoped<InviteStore>();
         services.AddScoped<EfInviteResolver>();

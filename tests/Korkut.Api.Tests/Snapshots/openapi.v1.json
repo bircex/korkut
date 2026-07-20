@@ -864,6 +864,28 @@
         },
         "type": "object"
       },
+      "TemplateSaveRequest": {
+        "properties": {
+          "content": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scope": {
+            "pattern": "user|office",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "scope",
+          "content"
+        ],
+        "type": "object"
+      },
       "TotpRequest": {
         "properties": {
           "code": {
@@ -2410,6 +2432,18 @@
         ]
       }
     },
+    "/api/petition-types": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/reports/overview": {
       "get": {
         "parameters": [
@@ -2573,6 +2607,106 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TaskStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/templates/{typeId}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateSaveRequest"
               }
             }
           },

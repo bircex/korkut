@@ -9,4 +9,9 @@
     <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
   </ItemGroup>
+  <!-- Ship the static legal template catalog with the app so TemplateCatalog resolves
+       it at {BaseDirectory}/templates in published/containerized runs (KORKUT_TEMPLATES_DIR overrides). -->
+  <ItemGroup>
+    <Content Include="..\..\templates\**\*" LinkBase="templates" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

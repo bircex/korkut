@@ -1498,6 +1498,56 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("tasks", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.TemplateOverrideEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("scope");
+
+                    b.Property<string>("TypeId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfficeId", "Scope", "UserId", "Kind", "TypeId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_template_overrides_key");
+
+                    b.ToTable("template_overrides", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
