@@ -3,6 +3,7 @@ using Korkut.Api.Endpoints;
 using Korkut.Api.Observability;
 using Korkut.Api.Setup;
 using Korkut.Infrastructure.Observability;
+using Korkut.Infrastructure.Storage;
 using Korkut.Infrastructure.Security;
 using Korkut.SharedKernel.Time;
 using OpenTelemetry.Trace;
@@ -25,6 +26,9 @@ builder.Services.AddKorkutDomain(builder.Configuration);
 builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
+
+// Object storage (MinIO) + the secure-document pipeline services (KDM-025..028).
+builder.Services.AddKorkutStorage(builder.Configuration);
 
 // Access-token auth + deny-by-default permission policies (KDM-018/019).
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
@@ -50,6 +54,7 @@ app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }))
 app.MapFoundationEndpoints();
 app.MapAuthEndpoints();
 app.MapOfficeCoreEndpoints();
+app.MapDocumentEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

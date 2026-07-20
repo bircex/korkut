@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
+using Testcontainers.Minio;
 using Testcontainers.PostgreSql;
 
 namespace Korkut.Api.Tests.Integration;
@@ -23,6 +24,7 @@ namespace Korkut.Api.Tests.Integration;
 public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder("postgres:16-alpine").Build();
+    private readonly MinioContainer _minio = new MinioBuilder("minio/minio:RELEASE.2025-04-08T15-41-24Z").Build();
     private string _appConnectionString = string.Empty;
 
     private sealed class Clock : IClock
@@ -32,7 +34,7 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
     public async Task InitializeAsync()
     {
-        await _pg.StartAsync();
+        await Task.WhenAll(_pg.StartAsync(), _minio.StartAsync());
 
         // Migrate as the owner, then provision a login for the least-privileged app role.
         await using (var db = OwnerContext())
@@ -48,13 +50,18 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         }.ConnectionString;
 
         Environment.SetEnvironmentVariable("KORKUT_DB_URL", _appConnectionString);
-        // Trigger host construction now so it picks up the connection string.
+        var minioEndpoint = new Uri(_minio.GetConnectionString());
+        Environment.SetEnvironmentVariable("KORKUT_MINIO_ENDPOINT", $"{minioEndpoint.Host}:{minioEndpoint.Port}");
+        Environment.SetEnvironmentVariable("KORKUT_MINIO_ACCESS_KEY", _minio.GetAccessKey());
+        Environment.SetEnvironmentVariable("KORKUT_MINIO_SECRET_KEY", _minio.GetSecretKey());
+        // Trigger host construction now so it picks up the connection strings.
         _ = Server;
     }
 
     public new async Task DisposeAsync()
     {
         await _pg.DisposeAsync();
+        await _minio.DisposeAsync();
         await base.DisposeAsync();
     }
 

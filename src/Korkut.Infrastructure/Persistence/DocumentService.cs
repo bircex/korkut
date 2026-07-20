@@ -51,6 +51,17 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore
         return new StoredDocument(doc.Id, key, checksum, doc.Size);
     }
 
+    /// <summary>Active (non-tombstoned) documents, newest first; optionally scoped to a matter.</summary>
+    public Task<List<DocumentEntity>> ListAsync(Guid officeId, Guid? matterId = null, CancellationToken ct = default)
+        => db.Documents.AsNoTracking()
+            .Where(x => x.OfficeId == officeId && x.Status != "tombstoned" && (matterId == null || x.MatterId == matterId))
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(ct);
+
+    public Task<DocumentEntity?> GetAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
+        => db.Documents.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId && x.Status != "tombstoned", ct);
+
     /// <summary>Short-lived presigned GET. The caller MUST have checked permission first.</summary>
     public async Task<string> PresignAsync(Guid officeId, Guid documentId, TimeSpan expiry, CancellationToken ct = default)
     {
