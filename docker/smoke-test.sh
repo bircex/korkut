@@ -29,15 +29,23 @@ for img in korkut-api korkut-worker korkut-migrator; do
 done
 
 echo "== migrator one-shot =="
+# The migrator applies schema only under the elevated migrator role; without a DB URL
+# it must FAIL FAST (never migrate blindly). This DB-less smoke asserts that safe
+# one-shot behaviour on a read-only fs; real migrate/rollback is covered by KDM-035.
 out=$(docker run --rm --read-only --tmpfs /tmp korkut-migrator:$TAG info 2>&1); rc=$?
-check $rc "migrator runs one-shot and exits 0 on read-only fs"
-echo "$out" | grep -q "least-privileged"; check $? "migrator prints its status"
+[ "$rc" -ne 0 ]; check $? "migrator fails fast (exit $rc) with no KORKUT_ADMIN_DB_URL"
+echo "$out" | grep -q "KORKUT_ADMIN_DB_URL is required"; check $? "migrator prints the required-var message"
 
 echo "== api on READ-ONLY filesystem =="
+# Runtime secrets are supplied via the environment (never baked into the image).
+API_SECRET="$(openssl rand -hex 32)"       # >= 32 bytes for HS256 access tokens
+API_TOTP_KEY="$(openssl rand -base64 32)"  # base64 of 32 bytes for TOTP envelope encryption
 docker run -d --name korkut-api-smoke \
   --read-only --tmpfs /tmp \
   --cap-drop ALL --security-opt no-new-privileges \
   -e ASPNETCORE_URLS="http://+:8080" \
+  -e KORKUT_SECRET="$API_SECRET" \
+  -e KORKUT_TOTP_KEY="$API_TOTP_KEY" \
   -p $PORT:8080 korkut-api:$TAG >/dev/null; check $? "api starts read-only, cap-drop ALL"
 
 # Wait for readiness.
