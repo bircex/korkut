@@ -69,6 +69,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var convId = Guid.CreateVersion7();
             db.Conversations.Add(new ConversationEntity { Id = convId, OfficeId = office, Title = $"c{i}", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow });
             db.ChatMessages.Add(new ChatMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, ConversationId = convId, Role = "user", Content = $"m{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.OutboundMessages.Add(new OutboundMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "email", ToAddr = $"to{i}@x.test", Subject = "s", Body = "b", Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
             if (i == 0)
             {
                 db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office

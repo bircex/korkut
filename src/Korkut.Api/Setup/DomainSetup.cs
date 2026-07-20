@@ -33,6 +33,7 @@ public static class DomainSetup
         services.AddScoped<TemplateOverrideStore>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<SessionStore>();
+        services.AddScoped<OutboxStore>();
         services.AddScoped<Korkut.Infrastructure.Ai.SessionChatService>();
         services.AddKorkutAi();
         services.AddScoped<MembersStore>();
