@@ -33,6 +33,7 @@ public static class TenantMatrix
             ["documents"] = (1, 2),
             ["document_extractions"] = (1, 2),
             ["document_relations"] = (1, 2),
+            ["invites"] = (1, 2),
         };
 
     public static TheoryData<string> TableNames()

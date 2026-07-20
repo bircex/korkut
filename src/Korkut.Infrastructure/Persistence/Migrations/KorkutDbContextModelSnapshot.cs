@@ -491,6 +491,61 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("inbox_entries", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.InviteEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .HasDatabaseName("ix_invites_token_hash");
+
+                    b.HasIndex("OfficeId", "Email")
+                        .HasDatabaseName("ix_invites_office_email");
+
+                    b.ToTable("invites", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.JobAuditEntity", b =>
                 {
                     b.Property<Guid>("Id")
