@@ -22,6 +22,7 @@ public static class DomainSetup
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddScoped<OfficeCoreStore>();
+        services.AddScoped<OfficeOpsStore>();
 
         return services;
     }
