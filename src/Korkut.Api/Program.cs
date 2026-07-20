@@ -16,6 +16,10 @@ builder.AddKorkutObservability("Korkut.Api", tracing => tracing.AddAspNetCoreIns
 // API foundation: JSON contract, versioning, error mapping, CORS, OpenAPI (KDM-006).
 builder.Services.AddKorkutApi(builder.Configuration);
 
+// Domain persistence + services (app-role DbContext, office-core stores). The real
+// endpoints are added per module; DI here makes their services available.
+builder.Services.AddKorkutDomain(builder.Configuration);
+
 // Access-token auth + deny-by-default permission policies (KDM-018/019).
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(
@@ -38,6 +42,7 @@ app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
 app.MapFoundationEndpoints();
+app.MapOfficeCoreEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

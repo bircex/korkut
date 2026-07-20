@@ -10,12 +10,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Korkut.Api\Korkut.Api.csproj" />
+    <ProjectReference Include="..\..\src\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Snapshot travels to the output dir so tests read it via AppContext.BaseDirectory

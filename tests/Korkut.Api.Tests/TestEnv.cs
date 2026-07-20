@@ -13,5 +13,12 @@ internal static class TestEnv
     public static void Init()
     {
         Environment.SetEnvironmentVariable("KORKUT_SECRET", "korkut-integration-test-signing-secret-32b+");
+        // A syntactically-valid placeholder so the host boots for non-DB tests (EF is
+        // lazy — it never connects unless a query runs). DB-backed integration tests
+        // override this with a real Testcontainers Postgres connection.
+        Environment.SetEnvironmentVariable(
+            "KORKUT_DB_URL",
+            Environment.GetEnvironmentVariable("KORKUT_DB_URL")
+                ?? "Host=localhost;Port=1;Database=korkut;Username=placeholder;Password=placeholder");
     }
 }
