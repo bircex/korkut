@@ -62,6 +62,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<ExpenseEntity> Expenses => Set<ExpenseEntity>();
 
+    public DbSet<CorrespondenceEntity> Correspondence => Set<CorrespondenceEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -244,6 +246,18 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Kind).HasMaxLength(50);
             b.Property(x => x.Description).HasMaxLength(1000);
             b.HasIndex(x => new { x.OfficeId, x.SpentAt }).HasDatabaseName("ix_expenses_office_spent");
+        });
+
+        modelBuilder.Entity<CorrespondenceEntity>(b =>
+        {
+            b.ToTable("correspondence");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Direction).HasMaxLength(20);
+            b.Property(x => x.Title).HasMaxLength(500);
+            b.Property(x => x.ReferenceNo).HasMaxLength(100);
+            b.Property(x => x.Notes).HasMaxLength(2000);
+            b.HasIndex(x => new { x.OfficeId, x.Direction }).HasDatabaseName("ix_correspondence_office_direction");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>
