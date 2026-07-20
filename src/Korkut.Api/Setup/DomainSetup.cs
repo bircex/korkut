@@ -24,7 +24,11 @@ public static class DomainSetup
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddScoped<OfficeCoreStore>();
         services.AddScoped<OfficeOpsStore>();
-        services.AddScoped<FinanceStore>();
+        // Finance (Clean Architecture: repository ports + service). The pattern rolls out
+        // to the other modules incrementally.
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IInvoiceRepository, Korkut.Infrastructure.Persistence.Repositories.InvoiceRepository>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IExpenseRepository, Korkut.Infrastructure.Persistence.Repositories.ExpenseRepository>();
+        services.AddScoped<Korkut.Application.Features.Finance.IFinanceService, Korkut.Application.Features.Finance.FinanceService>();
         services.AddScoped<CorrespondenceStore>();
         services.AddScoped<CalendarStore>();
         services.AddScoped<OfficeSettingsStore>();
