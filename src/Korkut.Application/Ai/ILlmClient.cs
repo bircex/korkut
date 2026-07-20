@@ -21,4 +21,7 @@ public sealed class LlmUnavailableException(string message) : Exception(message)
 public interface ILlmClient
 {
     Task<LlmReply> CompleteAsync(LlmRequest request, CancellationToken ct = default);
+
+    /// <summary>Stream the reply as incremental text deltas. Throws <see cref="LlmUnavailableException"/> on failure.</summary>
+    IAsyncEnumerable<string> StreamAsync(LlmRequest request, CancellationToken ct = default);
 }

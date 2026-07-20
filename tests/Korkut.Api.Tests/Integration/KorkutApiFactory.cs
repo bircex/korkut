@@ -118,10 +118,18 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>A deterministic assistant: echoes the last user turn and proves the system prompt was built.</summary>
     private sealed class FakeLlmClient : ILlmClient
     {
+        private static string Reply(LlmRequest request) => $"[assistant] {request.Messages.LastOrDefault(m => m.Role == "user")?.Content ?? ""}";
+
         public Task<LlmReply> CompleteAsync(LlmRequest request, CancellationToken ct = default)
+            => Task.FromResult(new LlmReply(Reply(request)));
+
+        public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
-            var lastUser = request.Messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
-            return Task.FromResult(new LlmReply($"[assistant] {lastUser}"));
+            foreach (var word in Reply(request).Split(' '))
+            {
+                await Task.Yield();
+                yield return word + " ";
+            }
         }
     }
 
