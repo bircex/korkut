@@ -30,6 +30,21 @@ public sealed record TotpRequest
     public string? RecoveryCode { get; init; }
 }
 
+public sealed record ResetRequestBody
+{
+    [Required, EmailAddress]
+    public string? Email { get; init; }
+}
+
+public sealed record ResetBody
+{
+    [Required]
+    public string? Token { get; init; }
+
+    [Required, MinLength(10, ErrorMessage = "Parola en az 10 karakter olmalıdır.")]
+    public string? Password { get; init; }
+}
+
 /// <summary>
 /// Cookie-based auth/session on the .NET runtime (KDM-030 contract): local login →
 /// policy-driven TOTP → session; refresh with rotation; logout with family revoke;
@@ -71,7 +86,62 @@ public static class AuthEndpoints
 
         app.MapPost("/api/logout", HandleLogout).AllowAnonymous();
 
+        app.MapPost("/api/auth/password/reset-request", HandleResetRequest)
+            .AllowAnonymous()
+            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+
+        app.MapPost("/api/auth/password/reset", HandleReset)
+            .AllowAnonymous()
+            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+
         return app;
+    }
+
+    private static async Task<IResult> HandleResetRequest(
+        ResetRequestBody body, KorkutDbContext db, IGoogleUserDirectory resolver, AuthService auth, CancellationToken ct)
+    {
+        var invalid = DtoValidation.Validate(body);
+        if (invalid is not null)
+        {
+            return invalid;
+        }
+
+        // Resolve the office cross-tenant; a request for an unknown account still
+        // returns 200 (never reveal whether the account exists).
+        var email = body.Email!.Trim().ToLowerInvariant();
+        var candidates = await resolver.FindByEmailAcrossOfficesAsync(email, ct);
+        if (candidates.Count == 1)
+        {
+            var officeId = candidates[0].OfficeId;
+            await using var scope = await db.BeginTenantScopeAsync(officeId, ct);
+            await auth.RequestPasswordResetAsync(officeId, email, ct);
+            await scope.CommitAsync(ct);
+        }
+
+        return Results.Ok(new { ok = true });
+    }
+
+    private static async Task<IResult> HandleReset(
+        ResetBody body, KorkutDbContext db, EfResetTokenResolver tokens, ITokenHasher hasher, AuthService auth, CancellationToken ct)
+    {
+        var invalid = DtoValidation.Validate(body);
+        if (invalid is not null)
+        {
+            return invalid;
+        }
+
+        var owner = await tokens.ResolveAsync(hasher.Hash(body.Token!), ct);
+        if (owner is null)
+        {
+            return Results.Json(new { detail = "Bağlantı geçersiz veya süresi dolmuş." }, statusCode: 400);
+        }
+
+        await using var scope = await db.BeginTenantScopeAsync(owner.OfficeId, ct);
+        var outcome = await auth.ResetPasswordAsync(owner.OfficeId, body.Token!, body.Password!, ct);
+        await scope.CommitAsync(ct);
+        return outcome == ResetOutcome.Success
+            ? Results.Ok(new { ok = true })
+            : Results.Json(new { detail = "Bağlantı geçersiz veya süresi dolmuş." }, statusCode: 400);
     }
 
     private static async Task<IResult> HandleLogin(

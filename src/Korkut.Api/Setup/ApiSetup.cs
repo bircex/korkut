@@ -52,6 +52,9 @@ public static class ApiSetup
 
         // Rate limiting: sensitive endpoints are throttled per client IP; over-limit
         // returns 429 (abuse telemetry is the OTel request metrics from KDM-007).
+        // Strict by default; overridable via KORKUT_SENSITIVE_RATE_LIMIT so integration
+        // tests (which share one host and one client IP) aren't throttled.
+        var sensitiveLimit = int.TryParse(configuration["KORKUT_SENSITIVE_RATE_LIMIT"], out var n) ? n : 5;
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -60,7 +63,7 @@ public static class ApiSetup
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 5,
+                        PermitLimit = sensitiveLimit,
                         Window = TimeSpan.FromMinutes(5),
                         QueueLimit = 0,
                     }));

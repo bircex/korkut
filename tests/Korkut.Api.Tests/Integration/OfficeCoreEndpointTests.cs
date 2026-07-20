@@ -11,7 +11,8 @@ namespace Korkut.Api.Tests;
 /// (KDM endpoint migration). Proves the full path: HTTP → auth → tenant scope → store
 /// → DB, plus tenant isolation and deny-by-default authorization.
 /// </summary>
-public class OfficeCoreEndpointTests(KorkutApiFactory factory) : IClassFixture<KorkutApiFactory>
+[Collection(Integration.IntegrationSuite.Name)]
+public class OfficeCoreEndpointTests(KorkutApiFactory factory)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

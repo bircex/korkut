@@ -68,6 +68,10 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("KORKUT_DB_URL", _appConnectionString);
+        // This one shared host serves the whole integration suite, so the per-IP
+        // sensitive-endpoint limiter would throttle across tests. Raise it here only
+        // (the dedicated rate-limit test uses its own strict host).
+        builder.UseSetting("KORKUT_SENSITIVE_RATE_LIMIT", "100000");
         builder.UseEnvironment("Testing");
     }
 
@@ -128,6 +132,25 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
     /// <summary>A cookie-aware client (no auth) — for exercising the login → cookie → /me flow.</summary>
     public HttpClient CookieClient() => CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
+
+    /// <summary>Seed an active password-reset token for a user; returns the raw token to submit.</summary>
+    public async Task<string> SeedResetTokenAsync(Guid officeId, Guid userId)
+    {
+        var raw = "reset-" + Guid.CreateVersion7().ToString("N");
+        var hash = new Sha256TokenHasher().Hash(raw);
+        await using var db = OwnerContext();
+        db.PasswordResetTokens.Add(new PasswordResetTokenEntity
+        {
+            Id = Guid.CreateVersion7(),
+            OfficeId = officeId,
+            UserId = userId,
+            TokenHash = hash,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+        return raw;
+    }
 
     /// <summary>An HttpClient carrying a valid access token for the given office/user.</summary>
     public HttpClient ClientFor(Guid officeId, Guid userId, string role = Roles.OfficeOwner)

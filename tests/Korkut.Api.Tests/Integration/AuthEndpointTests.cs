@@ -11,7 +11,8 @@ namespace Korkut.Api.Tests;
 /// slice 2). Proves the login → session-cookie → /me → refresh → logout loop, the
 /// TOTP gate, and that tokens live only in httpOnly cookies.
 /// </summary>
-public class AuthEndpointTests(KorkutApiFactory factory) : IClassFixture<KorkutApiFactory>
+[Collection(Integration.IntegrationSuite.Name)]
+public class AuthEndpointTests(KorkutApiFactory factory)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
