@@ -5,9 +5,9 @@
 <h1 align="center">Korkut</h1>
 
 <p align="center">
-  <a href="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml"><img src="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/dotnet-migration-ci.yml"><img src="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/dotnet-migration-ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
-  <img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python 3.12+" />
+  <img src="https://img.shields.io/badge/.NET-10-blueviolet.svg" alt=".NET 10" />
   <img src="https://img.shields.io/badge/version-CalVer-blue.svg" alt="CalVer" />
 </p>
 
@@ -35,24 +35,23 @@ identity.
 
 ## Quick start
 
+The runtime is a **.NET 10** solution under [`dotnet/`](dotnet/) (the Python runtime was
+retired after the .NET migration — see [`dotnet/README.md`](dotnet/README.md)).
+
 ```bash
-# macOS / Linux
-./scripts/install.sh
-
-# Windows (PowerShell)
-./scripts/install.ps1
-
-# …or Docker (no local Python/Node needed)
-./scripts/install.sh --docker          # http://localhost:8090
+make build     # dotnet build dotnet/Korkut.slnx
+make test      # full test suite (needs Docker for Postgres/MinIO integration tests)
+make run       # start the API on :8080  (dotnet run --project dotnet/src/Korkut.Api)
+make migrate   # apply EF Core migrations via the migrator
 ```
 
-Then create a user and start the server — full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
+Full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ## Repositories
 
-Korkut is split across three repos: **korkut-backend** (this repo — API + brain + tools),
-**korkut-ui** (the React SPA), and **korkut-website** (the Astro landing/marketing site). This repo
-ships the prebuilt SPA under `backend/src/korkut/api/static`.
+Korkut is split across repos: **korkut-backend** (this repo — the .NET API + worker +
+migrator), **korkut-ui** (the React SPA), **korkut-admin** (the admin SPA), and
+**korkut-website** (the Astro landing/marketing site).
 
 ## Documentation
 

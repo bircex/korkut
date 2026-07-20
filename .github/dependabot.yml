@@ -1,17 +1,17 @@
 version: 2
 updates:
-  # Python dependencies (backend/pyproject.toml)
-  - package-ecosystem: pip
-    directory: /backend
+  # .NET dependencies (dotnet/Directory.Packages.props — central package management)
+  - package-ecosystem: nuget
+    directory: /dotnet
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
     groups:
-      python-minor-patch:
+      dotnet-minor-patch:
         update-types: [minor, patch]
-    labels: [dependencies, python]
+    labels: [dependencies, dotnet]
     commit-message:
-      prefix: "pip"
+      prefix: "nuget"
 
   # GitHub Actions used in workflows
   - package-ecosystem: github-actions
@@ -22,24 +22,11 @@ updates:
     commit-message:
       prefix: "ci"
 
-  # Base images in the deploy Dockerfile
+  # Base images in the .NET Dockerfiles
   - package-ecosystem: docker
-    directory: /deploy
+    directory: /dotnet/docker
     schedule:
       interval: weekly
     labels: [dependencies, docker]
     commit-message:
       prefix: "docker"
-
-  # WhatsApp Web (Baileys) sidecar dependencies
-  - package-ecosystem: npm
-    directory: /backend/src/korkut/integrations/sidecar
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    groups:
-      sidecar-minor-patch:
-        update-types: [minor, patch]
-    labels: [dependencies, integrations]
-    commit-message:
-      prefix: "npm"

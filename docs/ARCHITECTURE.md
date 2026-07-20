@@ -1,5 +1,7 @@
 # Architecture
 
+> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** under [`dotnet/`](../dotnet/). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See [`dotnet/README.md`](../dotnet/README.md) and the repo `Makefile` (`make build|test|run|migrate`) for current operations. Migration records live under [`docs/migration/`](migration/).
+
 Korkut is a self-hosted, single-tenant AI assistant for a Turkish law office. It is a single
 FastAPI web app that serves a React SPA, runs an agent over live legal-database tools, and keeps
 each office's data on the office's own machine.
