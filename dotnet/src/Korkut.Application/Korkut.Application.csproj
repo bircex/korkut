@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
   </ItemGroup>

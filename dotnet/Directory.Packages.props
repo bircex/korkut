@@ -45,6 +45,7 @@
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.19.2" />
     <!-- Object storage (KDM-025) -->
     <PackageVersion Include="Minio" Version="7.0.0" />
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
     <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
   </ItemGroup>
 
