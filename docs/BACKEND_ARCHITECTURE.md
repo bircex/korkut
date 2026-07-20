@@ -31,27 +31,45 @@ Architecture (ports & adapters). Supersedes the flat-`*Store` layout; the older
      connection string / `AgentDbContext`).
 5. **Stateless everywhere.** No in-process session state; SSE is per-request; auth is a
    self-contained HS256 JWT. Either host scales by adding replicas behind PgBouncer.
+6. **Single gateway.** A YARP reverse proxy (`Korkut.Gateway`) is the ONLY public entry
+   point: it validates the JWT, applies rate-limiting / CORS / TLS termination, and
+   routes to the API or agent host. Downstream services still enforce permissions + RLS
+   (defense in depth). Clients never address a host directly.
+7. **Swappable model.** The LLM sits behind a provider-agnostic port
+   (`IChatModel.Send/Stream`, `IEmbedder`); adapters for Anthropic / OpenAI / Groq /
+   OpenAI-compatible (Ollama, vLLM) implement it, and a config-driven `IModelRouter`
+   picks provider + model per request. Change the model with config, never code.
 
 ## Hosts & data
 
 ```
-┌────────────────────────────┐            ┌──────────────────────────────────┐
-│  Korkut.Api (operational)   │            │  Korkut.Agent (AI) — STATELESS     │
-│  stateless · N replicas     │            │  M replicas                        │
-│  finance, matters/cases,    │            │  chat/stream, upload, drafting,    │
-│  clients, calendar, evrak,  │            │  RAG (ingest→embed→retrieve),      │
-│  settings, reports, channels│            │  OCR, PII redaction                │
-│  templates, members, admin, │            │                                    │
-│  auth, onboarding           │            │  in-process → shared Application    │
-└──────────────┬─────────────┘            │  services (add/get client, case,   │
-               │ shared KorkutDbContext    │  agenda, read persona/style/memory)│
-               │ + Application services     └───────┬──────────────┬───────────┘
-               ▼        (RLS, korkut_app)           │ shared        │ AgentDbContext
-        ┌─────────────────────────────┐             │ operational   ▼
-        │   Operational DB (RLS)        │◄───────────┘ access   ┌──────────────────┐
-        │   one Postgres instance ──────┼───────────────────────│  Agent DB         │
-        │   (via PgBouncer)              │  same instance (now)  │  + pgvector       │
-        └─────────────────────────────┘                        └──────────────────┘
+                         Browser (cookie JWT)
+                                │  https
+                                ▼
+                   ┌─────────────────────────────┐
+                   │  Korkut.Gateway (YARP)        │  auth · rate-limit · CORS · TLS
+                   │  single public entry point    │  routes by path
+                   └───────┬──────────────┬────────┘
+        /api/* (ops)       │              │   /api/sessions/*, /chat/stream,
+                           ▼              ▼   /api/documents/*/draft…
+        ┌────────────────────────┐   ┌──────────────────────────────────┐
+        │  Korkut.Api (ops)        │   │  Korkut.Agent (AI) — STATELESS    │
+        │  stateless · N replicas  │   │  M replicas                       │
+        │  finance, matters/cases, │   │  chat/stream, upload, drafting,   │
+        │  clients, calendar,evrak,│   │  RAG (ingest→embed→retrieve),     │
+        │  settings, reports,      │   │  OCR, PII redaction               │
+        │  channels, templates,    │   │  model via IModelRouter →         │
+        │  members, admin, auth,   │   │  {Anthropic|OpenAI|Groq|local}    │
+        │  onboarding              │   │                                   │
+        └───────────┬────────────┘   │  in-process → shared Application   │
+              shared │ KorkutDbContext │  services (add/get client, case,  │
+                     │ + App services  │  agenda, read persona/style/…)    │
+                     ▼  (RLS)          └──────┬──────────────┬────────────┘
+        ┌────────────────────────┐            │ shared        │ AgentDbContext
+        │  Operational DB (RLS) ───┼───────────┘ operational   ▼
+        │  one Postgres instance   │  access        ┌──────────────────┐
+        │  (via PgBouncer)         │◄───────────────│  Agent DB + pgvector│
+        └────────────────────────┘  same instance  └──────────────────┘
    migrations: ONLY Korkut.Migrator applies BOTH schemas; neither host migrates on start.
 ```
 
@@ -69,6 +87,37 @@ Architecture (ports & adapters). Supersedes the flat-`*Store` layout; the older
   feeds ingestion and upload-to-chat.
 - **PII** — redact PII before any cloud-LLM call and restore it in the reply
   (`IPiiRedactor`); PII audit stored in the Agent DB. Critical for a legal product.
+
+## Gateway (Korkut.Gateway, YARP)
+
+The single public surface. Responsibilities:
+
+- **AuthN** — validate the JWT cookie once (with `KORKUT_SECRET`); reject anonymous on
+  protected routes. Services still enforce **authZ** (permissions) + RLS.
+- **Routing** — path-based: agent routes (`/api/sessions/**`, `/chat/stream`,
+  `/api/documents/*/draft|accept|revert|export`) → `Korkut.Agent`; all other `/api/**`
+  → `Korkut.Api`.
+- **Cross-cutting** — rate limiting, CORS, TLS termination, request-id/correlation,
+  SSE pass-through (buffering off), health aggregation.
+
+## Model providers (swappable)
+
+```
+IChatModel   Send(request) / Stream(request)      the port the agent depends on
+IEmbedder    Embed(texts)                         RAG embeddings
+   ▲
+   │ implemented by
+IModelRouter ──picks provider+model per request (config: default, per-task, per-office)
+   ├─ AnthropicModel      (ANTHROPIC_API_KEY, ANTHROPIC_MODEL)
+   ├─ OpenAiModel         (OPENAI_API_KEY, OPENAI_MODEL)
+   ├─ GroqModel           (GROQ_API_KEY, GROQ_MODEL)
+   └─ OpenAiCompatModel   (Ollama / vLLM / LM Studio — on-prem, no redaction needed)
+```
+
+The agent's `IChatService`/`IDraftingService` depend on `IChatModel`, never a concrete
+provider. `IModelRouter` selects the provider + model from config (mirrors the retired
+Python `router.py` + `model-routing.yaml`), so a model change is configuration only.
+Cloud-bound calls go through `IPiiRedactor` first; on-prem endpoints skip redaction.
 
 ## Layer & folder shape (shared libraries)
 
@@ -108,19 +157,30 @@ database** for the operational context between two hosts of one modular monolith
 outbox/event-driven document indexing · in-process domain reuse (no anti-corruption layer
 needed — same code, same DB).
 
+## Projects
+
+```
+Hosts      Korkut.Gateway (YARP)   Korkut.Api   Korkut.Agent   Korkut.Migrator   Korkut.Worker
+Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure   Korkut.SharedKernel
+```
+
 ## Build roadmap (phased PRs; suite stays green)
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke
    coverage (PR #148).
 2. **Clean foundation** — `Abstractions/Persistence` ports + `IUnitOfWork`; split
    `OnModelCreating` → `Configurations/`.
-3. **Finance reference** — the CRUD pattern: entity → Domain, `FinanceStore` →
+3. **Finance reference** — the CRUD pattern: Domain models, `FinanceStore` →
    `InvoiceRepository`/`ExpenseRepository` behind ports, `IFinanceService`, thin endpoint.
-4. **Agent DB + host** — add `AgentDbContext` (+ pgvector); move
+4. **Model provider abstraction** — `IChatModel` + `IModelRouter` + provider adapters
+   (Anthropic first, OpenAI/Groq/OpenAI-compat behind config); `IEmbedder`.
+5. **Agent DB + host** — add `AgentDbContext` (+ pgvector); move
    conversations/messages/drafts/versions to it; the agent host serves chat off the Agent
    DB and reaches domain data via the shared operational services; move agent endpoints
    off `Korkut.Api`; split agent tests onto a second `WebApplicationFactory`.
-5. **RAG + OCR + PII** — ingestion (outbox-driven), `IVectorStore` (pgvector),
+6. **Gateway** — `Korkut.Gateway` (YARP): auth + routing + rate-limit/CORS; make it the
+   only exposed host.
+7. **RAG + OCR + PII** — ingestion (outbox-driven), `IVectorStore` (pgvector),
    `IEmbedder`, real OCR, `IPiiRedactor`.
-6. **Roll out** the repository/service pattern across the remaining CRUD modules.
-7. **Deploy** — agent DB + PgBouncer + the `agent` compose service.
+8. **Roll out** the repository/service pattern across the remaining CRUD modules.
+9. **Deploy** — agent DB + PgBouncer + gateway + `agent` compose services.
