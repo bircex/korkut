@@ -48,6 +48,27 @@
         ],
         "type": "object"
       },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
       "MatterCreateRequest": {
         "properties": {
           "client_id": {
@@ -75,6 +96,23 @@
         "required": [
           "title"
         ],
+        "type": "object"
+      },
+      "TotpRequest": {
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recovery_code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
         "type": "object"
       }
     }
@@ -106,6 +144,62 @@
         },
         "tags": [
           "Korkut.Api"
+        ]
+      }
+    },
+    "/api/auth/2fa": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AuthEndpoints"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AuthEndpoints"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AuthEndpoints"
         ]
       }
     },
@@ -216,6 +310,18 @@
         ]
       }
     },
+    "/api/logout": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AuthEndpoints"
+        ]
+      }
+    },
     "/api/matters": {
       "get": {
         "responses": {
@@ -282,6 +388,18 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/me": {
+      "get": {
         "responses": {
           "200": {
             "description": "OK"
@@ -383,6 +501,9 @@
   "tags": [
     {
       "name": "Korkut.Api"
+    },
+    {
+      "name": "AuthEndpoints"
     }
   ]
 }

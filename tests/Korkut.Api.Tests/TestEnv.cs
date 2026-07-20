@@ -13,6 +13,9 @@ internal static class TestEnv
     public static void Init()
     {
         Environment.SetEnvironmentVariable("KORKUT_SECRET", "korkut-integration-test-signing-secret-32b+");
+        // TOTP envelope key (base64, 32 bytes). The host builds the ISecretEncryptor
+        // singleton at startup (ValidateOnBuild), so every test host needs a valid key.
+        Environment.SetEnvironmentVariable("KORKUT_TOTP_KEY", Convert.ToBase64String(new byte[32]));
         // A syntactically-valid placeholder so the host boots for non-DB tests (EF is
         // lazy — it never connects unless a query runs). DB-backed integration tests
         // override this with a real Testcontainers Postgres connection.

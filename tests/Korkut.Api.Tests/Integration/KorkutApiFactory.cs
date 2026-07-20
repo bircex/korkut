@@ -94,6 +94,34 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         return (officeId, userId);
     }
 
+    /// <summary>Seed an office + a user with a known password (for local-login tests).</summary>
+    public async Task<(Guid OfficeId, Guid UserId, string Email)> SeedUserWithPasswordAsync(
+        string password, string role = Roles.OfficeOwner, bool twoFactor = false)
+    {
+        var officeId = Guid.CreateVersion7();
+        var userId = Guid.CreateVersion7();
+        var email = $"user-{userId:N}@example.com";
+        var hash = new Pbkdf2PasswordHasher().Hash(password);
+        await using var db = OwnerContext();
+        db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
+        db.Users.Add(new UserEntity
+        {
+            Id = userId,
+            OfficeId = officeId,
+            Email = email,
+            PasswordHash = hash,
+            Role = role,
+            TwoFactorEnabled = twoFactor,
+            SecurityStamp = Guid.CreateVersion7(),
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+        return (officeId, userId, email);
+    }
+
+    /// <summary>A cookie-aware client (no auth) — for exercising the login → cookie → /me flow.</summary>
+    public HttpClient CookieClient() => CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
+
     /// <summary>An HttpClient carrying a valid access token for the given office/user.</summary>
     public HttpClient ClientFor(Guid officeId, Guid userId, string role = Roles.OfficeOwner)
     {
