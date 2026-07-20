@@ -1,0 +1,73 @@
+using System.Globalization;
+
+namespace Korkut.Application.Runtime;
+
+/// <summary>
+/// The LLM-provider + context-budget environment contract, ported 1:1 from the Python
+/// baseline (docs/migration/baseline/ENV_CONTRACT.md, KDM-002/033). Every variable
+/// keeps its EXACT name and default. API keys are NEVER exposed as values here — only
+/// their presence (<c>Has*Key</c>) — because keys stay operator-managed in the
+/// environment and are consumed directly by the vendor SDKs, never surfaced to DB/UI
+/// or logs.
+/// </summary>
+public sealed class RuntimeConfig(IEnvironment env)
+{
+    // --- Provider model ids + limits (exact Python names/defaults) ---
+    public string AnthropicModel => env.Get("ANTHROPIC_MODEL") ?? "claude-opus-4-8";
+
+    public int AnthropicMaxTokens => ParseInt(env.Get("ANTHROPIC_MAX_TOKENS"), 16000);
+
+    public string OpenAiModel => env.Get("OPENAI_MODEL") ?? "gpt-4o";
+
+    public string GroqModel => env.Get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+
+    // --- Context budget (tokens) ---
+    public int ContextWindow => ParseInt(env.Get("KORKUT_CONTEXT_WINDOW"), 128000);
+
+    public int LocalContextWindow => ParseInt(env.Get("KORKUT_LOCAL_CONTEXT_WINDOW"), 8192);
+
+    public int ReplyHeadroom => ParseInt(env.Get("KORKUT_REPLY_HEADROOM"), 1024);
+
+    // --- Key PRESENCE only — never the value. Consumed by the vendor SDKs from env. ---
+    public bool HasAnthropicKey => IsSet("ANTHROPIC_API_KEY");
+
+    public bool HasOpenAiKey => IsSet("OPENAI_API_KEY");
+
+    public bool HasGroqKey => IsSet("GROQ_API_KEY");
+
+    /// <summary>
+    /// Compatibility guard (KDM-033): <c>KORKUT_MODELS_FILE</c> is a documented-but-
+    /// aspirational contract that the Python runtime does NOT read. Activating it would
+    /// be a behavioural regression, so the .NET runtime treats it as inert: model
+    /// config comes from the env defaults + the DB catalog + model-routing.yaml.
+    /// Always false — even when the variable is set.
+    /// </summary>
+    public bool ModelsFileIsActive => env.Get("KORKUT_MODELS_FILE") is not null && ModelsFileActivationEnabled;
+
+    /// <summary>
+    /// Compatibility guard (KDM-033): <c>KORKUT_SUPERADMIN_EMAILS</c> is a dead
+    /// documentation variable. The platform-admin allowlist is compiled-in
+    /// (<see cref="Security.AdminAllowlist"/>); this variable grants nothing and is
+    /// never read as authorization. Always false.
+    /// </summary>
+    public bool SuperadminEnvIsActive => env.Get("KORKUT_SUPERADMIN_EMAILS") is not null && SuperadminActivationEnabled;
+
+    // Parity guards: these variables are observed (so their presence is diagnosable)
+    // but activation is compiled OFF — they can never become authoritative config.
+    private const bool ModelsFileActivationEnabled = false;
+    private const bool SuperadminActivationEnabled = false;
+
+    private bool IsSet(string name) => !string.IsNullOrWhiteSpace(env.Get(name));
+
+    private static int ParseInt(string? raw, int fallback)
+    {
+        if (raw is null)
+        {
+            return fallback;
+        }
+
+        // Parity with Python int(os.getenv(...)): a malformed value is a hard error,
+        // not a silent fallback.
+        return int.Parse(raw.Trim(), CultureInfo.InvariantCulture);
+    }
+}
