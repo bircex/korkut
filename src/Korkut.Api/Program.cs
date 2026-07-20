@@ -65,6 +65,7 @@ app.MapEvrakEndpoints();
 app.MapCalendarEndpoints();
 app.MapSettingsEndpoints();
 app.MapReportsEndpoints();
+app.MapChannelEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();

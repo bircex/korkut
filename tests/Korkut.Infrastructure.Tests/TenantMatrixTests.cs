@@ -68,6 +68,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             if (i == 0)
             {
                 db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
+                db.Channels.Add(new ChannelEntity { OfficeId = office, Kind = "email", UpdatedAt = DateTimeOffset.UtcNow }); // one per office (per-kind PK)
             }
         }
 
