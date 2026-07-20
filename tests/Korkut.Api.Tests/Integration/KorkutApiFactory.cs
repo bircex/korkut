@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
+using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.SharedKernel.Time;
 using Microsoft.AspNetCore.Hosting;
@@ -86,6 +87,9 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
             services.AddSingleton<IOidcTokenExchanger, FakeTokenExchanger>();
             services.RemoveAll<IGoogleIdTokenValidator>();
             services.AddSingleton<IGoogleIdTokenValidator, FakeIdTokenValidator>();
+            // Deterministic LLM so chat is exercised end-to-end without a provider key.
+            services.RemoveAll<ILlmClient>();
+            services.AddScoped<ILlmClient, FakeLlmClient>();
         });
         builder.UseEnvironment("Testing");
     }
@@ -110,6 +114,16 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>Build a test id token the FakeIdTokenValidator understands.</summary>
     public static string FakeIdToken(string sub, string email, string nonce, bool emailVerified = true)
         => $"{sub}|{email}|{emailVerified}|{nonce}";
+
+    /// <summary>A deterministic assistant: echoes the last user turn and proves the system prompt was built.</summary>
+    private sealed class FakeLlmClient : ILlmClient
+    {
+        public Task<LlmReply> CompleteAsync(LlmRequest request, CancellationToken ct = default)
+        {
+            var lastUser = request.Messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+            return Task.FromResult(new LlmReply($"[assistant] {lastUser}"));
+        }
+    }
 
     /// <summary>Owner/superuser context for seeding (RLS bypassed) — tests only.</summary>
     public KorkutDbContext OwnerContext()

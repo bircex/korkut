@@ -76,6 +76,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<TemplateOverrideEntity> TemplateOverrides => Set<TemplateOverrideEntity>();
 
+    public DbSet<ConversationEntity> Conversations => Set<ConversationEntity>();
+
+    public DbSet<ChatMessageEntity> ChatMessages => Set<ChatMessageEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -348,6 +352,24 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             // One override per (office, scope, user, kind, type).
             b.HasIndex(x => new { x.OfficeId, x.Scope, x.UserId, x.Kind, x.TypeId })
                 .IsUnique().HasDatabaseName("ux_template_overrides_key");
+        });
+
+        modelBuilder.Entity<ConversationEntity>(b =>
+        {
+            b.ToTable("conversations");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Title).HasMaxLength(300);
+            b.HasIndex(x => new { x.OfficeId, x.UpdatedAt }).HasDatabaseName("ix_conversations_office_updated");
+        });
+
+        modelBuilder.Entity<ChatMessageEntity>(b =>
+        {
+            b.ToTable("chat_messages");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Role).HasMaxLength(20);
+            b.HasIndex(x => new { x.OfficeId, x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_chat_messages_conversation");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>

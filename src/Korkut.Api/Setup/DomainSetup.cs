@@ -1,4 +1,5 @@
 using Korkut.Application.Auditing;
+using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
 using Korkut.SharedKernel.Time;
 
@@ -31,6 +32,9 @@ public static class DomainSetup
         services.AddScoped<ChannelStore>();
         services.AddScoped<TemplateOverrideStore>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
+        services.AddScoped<SessionStore>();
+        services.AddScoped<Korkut.Infrastructure.Ai.SessionChatService>();
+        services.AddKorkutAi();
         services.AddScoped<MembersStore>();
         services.AddScoped<InviteStore>();
         services.AddScoped<EfInviteResolver>();
