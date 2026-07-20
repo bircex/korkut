@@ -1528,6 +1528,18 @@
         ]
       }
     },
+    "/api/coverage": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/deadlines": {
       "get": {
         "parameters": [

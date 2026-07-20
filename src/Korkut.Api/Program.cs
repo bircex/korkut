@@ -68,6 +68,7 @@ app.MapReportsEndpoints();
 app.MapChannelEndpoints();
 app.MapTemplateEndpoints();
 app.MapExportEndpoints();
+app.MapCoverageEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();

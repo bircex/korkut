@@ -9,6 +9,17 @@ public sealed record CatalogType(string Id, string Ad, string? Ref, bool Sik);
 /// <summary>A category grouping of catalog types.</summary>
 public sealed record CatalogCategory(string Kategori, IReadOnlyList<CatalogType> Types);
 
+/// <summary>How many petition types target a given court.</summary>
+public sealed record CourtCoverage(string Label, int Total);
+
+/// <summary>
+/// The assistant's document/legal coverage, derived from the static catalog (there is
+/// no separate case-law corpus): the count of covered document types, a per-court
+/// breakdown of petition types, the source legislation the catalog is built on, and a
+/// one-line legislative summary.
+/// </summary>
+public sealed record CatalogCoverage(int TotalTypes, IReadOnlyList<CourtCoverage> ByCourt, IReadOnlyList<string> Sources, string Legislation);
+
 /// <summary>
 /// Loads the static legal document catalog (petition "dilekçe" + contract "sözleşme"
 /// types, and the example markdown that serves as each type's default content) from the
@@ -51,6 +62,50 @@ public sealed class TemplateCatalog
     }
 
     public bool IsKnownKind(string kind) => _catalogs.ContainsKey(kind);
+
+    /// <summary>
+    /// Coverage over the whole catalog (same for every office): total document types,
+    /// petition types per court, and the source legislation from mahkemeler.json.
+    /// </summary>
+    public CatalogCoverage Coverage()
+    {
+        var totalTypes = _catalogs.Values.Sum(cats => cats.Sum(c => c.Types.Count));
+        var byCourt = Categories(Dilekce)
+            .SelectMany(c => c.Types)
+            .Where(t => !string.IsNullOrWhiteSpace(t.Ref))
+            .GroupBy(t => t.Ref!)
+            .Select(g => new CourtCoverage(g.Key, g.Count()))
+            .OrderByDescending(x => x.Total).ThenBy(x => x.Label)
+            .ToList();
+        var sources = LoadSources();
+        var legislation = sources.Count > 0 ? sources[^1] : string.Empty; // the mahkemeler meta's condensed law list
+        return new CatalogCoverage(totalTypes, byCourt, sources, legislation);
+    }
+
+    private List<string> LoadSources()
+    {
+        var path = Path.Combine(_root, "mahkemeler.json");
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("_meta", out var meta) && meta.TryGetProperty("kaynak", out var kaynak)
+                && kaynak.ValueKind == JsonValueKind.Array)
+            {
+                return kaynak.EnumerateArray().Select(e => e.GetString() ?? "").Where(s => s.Length > 0).ToList();
+            }
+        }
+        catch (JsonException)
+        {
+            // Malformed catalog metadata → no sources; coverage still reports type counts.
+        }
+
+        return [];
+    }
 
     public IReadOnlyList<CatalogCategory> Categories(string kind) =>
         _catalogs.TryGetValue(kind, out var c) ? c : [];
