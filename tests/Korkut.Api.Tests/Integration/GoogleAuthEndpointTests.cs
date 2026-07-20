@@ -76,15 +76,16 @@ public class GoogleAuthEndpointTests(KorkutApiFactory factory)
     }
 
     [Fact]
-    public async Task An_unknown_google_account_is_redirected_with_no_office()
+    public async Task An_unknown_google_account_is_offered_self_serve_signup()
     {
         var client = factory.NoRedirectCookieClient();
         var start = await client.GetAsync("/api/auth/google/start");
         var (state, nonce) = StartChallenge(start.Headers.Location!.ToString());
-        // Email that belongs to no office → resolution rejects with no_office.
+        // A verified email that belongs to no office → eligible for signup, not an error.
         var code = KorkutApiFactory.FakeIdToken("sub-x", "stranger@nowhere.example", nonce);
         var cb = await client.GetAsync($"/api/auth/google/callback?state={state}&code={Uri.EscapeDataString(code)}");
         Assert.Equal(HttpStatusCode.SeeOther, cb.StatusCode);
-        Assert.Contains("error=", cb.Headers.Location!.ToString(), StringComparison.Ordinal);
+        Assert.Equal("/kayit", cb.Headers.Location!.ToString());
+        Assert.Contains(cb.Headers.GetValues("Set-Cookie"), c => c.StartsWith("korkut_signup=", StringComparison.Ordinal));
     }
 }

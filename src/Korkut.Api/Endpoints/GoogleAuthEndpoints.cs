@@ -1,6 +1,7 @@
 using Korkut.Api.Auth;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
+using Korkut.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Endpoints;
@@ -31,7 +32,7 @@ public static class GoogleAuthEndpoints
 
         app.MapGet("/api/auth/google/callback", async (
             string? state, string? code, string? error,
-            HttpContext http, GoogleSignInService google, SessionManager session, KorkutDbContext db, CancellationToken ct) =>
+            HttpContext http, GoogleSignInService google, SessionManager session, SignupTicketService signupTickets, KorkutDbContext db, CancellationToken ct) =>
             {
                 if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(state) || string.IsNullOrEmpty(code))
                 {
@@ -42,6 +43,13 @@ public static class GoogleAuthEndpoints
                 if (result.Status == GoogleSignInStatus.Rejected)
                 {
                     return Redirect($"/giris?error={MapError(result.Reason)}");
+                }
+
+                if (result.Status == GoogleSignInStatus.SignupEligible)
+                {
+                    // Verified email, no account yet → stash a signup ticket and land on /kayit.
+                    session.SetSignup(http.Response, signupTickets.Mint(new SignupTicket(result.Email!, result.GoogleSub!)));
+                    return Redirect("/kayit");
                 }
 
                 // Fetch the resolved user's role/stamp (tenant-scoped) to mint the session.
