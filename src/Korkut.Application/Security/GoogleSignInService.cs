@@ -80,6 +80,12 @@ public sealed class GoogleSignInService(
         }
 
         var resolution = await ResolveUserAsync(identity, ct);
+        if (resolution.Reason == "no_account")
+        {
+            // Verified email with no Korkut account → eligible for self-serve signup.
+            return GoogleSignInResult.Signup(identity.Email.Trim().ToLowerInvariant(), identity.Subject);
+        }
+
         if (resolution.Reason is not null)
         {
             return GoogleSignInResult.Reject(resolution.Reason);

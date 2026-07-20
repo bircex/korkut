@@ -97,11 +97,18 @@ public enum GoogleSignInStatus
     /// <summary>Identity verified but Korkut TOTP must be completed before a full session (KDM-017).</summary>
     TwoFactorRequired,
 
+    /// <summary>Email verified by Google but no Korkut account exists — eligible for self-serve signup.</summary>
+    SignupEligible,
+
     /// <summary>Rejected — see <see cref="GoogleSignInResult.Reason"/>.</summary>
     Rejected,
 }
 
-public sealed record GoogleSignInResult(GoogleSignInStatus Status, Guid? UserId, Guid? OfficeId, string? Reason)
+public sealed record GoogleSignInResult(
+    GoogleSignInStatus Status, Guid? UserId, Guid? OfficeId, string? Reason, string? Email = null, string? GoogleSub = null)
 {
     public static GoogleSignInResult Reject(string reason) => new(GoogleSignInStatus.Rejected, null, null, reason);
+
+    public static GoogleSignInResult Signup(string email, string googleSub) =>
+        new(GoogleSignInStatus.SignupEligible, null, null, null, email, googleSub);
 }

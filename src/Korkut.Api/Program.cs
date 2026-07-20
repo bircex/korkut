@@ -27,9 +27,14 @@ builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
 builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfResetTokenResolver>();
+builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfOfficeProvisioner>();
 
 // Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
 builder.Services.AddGoogleOidcRuntime();
+
+// Self-serve signup ticket (short-lived, own audience) — proof of a verified Google email.
+builder.Services.AddSingleton(sp => new SignupTicketService(
+    builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
 
 // Object storage (MinIO) + the secure-document pipeline services (KDM-025..028).
 builder.Services.AddKorkutStorage(builder.Configuration);
@@ -67,6 +72,7 @@ app.MapSettingsEndpoints();
 app.MapReportsEndpoints();
 app.MapChannelEndpoints();
 app.MapTemplateEndpoints();
+app.MapOnboardingEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
 app.MapMembersEndpoints();

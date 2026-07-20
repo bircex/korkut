@@ -281,6 +281,28 @@
         ],
         "type": "object"
       },
+      "DemoRequestBody": {
+        "properties": {
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "office_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "office_name"
+        ],
+        "type": "object"
+      },
       "EchoRequest": {
         "properties": {
           "title": {
@@ -1628,6 +1650,28 @@
         ]
       }
     },
+    "/api/demo-request": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/documents": {
       "get": {
         "parameters": [
@@ -2524,6 +2568,18 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/signup/pending": {
+      "get": {
         "responses": {
           "200": {
             "description": "OK"
