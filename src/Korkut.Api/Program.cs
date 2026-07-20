@@ -63,6 +63,7 @@ app.MapOfficeOpsEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();
+app.MapAdminEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

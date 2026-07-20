@@ -172,6 +172,16 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>A cookie-aware client that does NOT follow redirects (for OAuth start/callback).</summary>
     public HttpClient NoRedirectCookieClient() => CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true, AllowAutoRedirect = false });
 
+    /// <summary>An HttpClient carrying a valid PLATFORM-ADMIN token (separate audience).</summary>
+    public HttpClient AdminClient()
+    {
+        var token = new AdminAccessTokens(Environment.GetEnvironmentVariable("KORKUT_SECRET")!, new Clock())
+            .Mint(new AccessClaims(Guid.CreateVersion7(), Guid.Empty, "admin", "s1"));
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
+    }
+
     /// <summary>Seed an active password-reset token for a user; returns the raw token to submit.</summary>
     public async Task<string> SeedResetTokenAsync(Guid officeId, Guid userId)
     {
