@@ -14,16 +14,17 @@ PORT="${PORT:-18080}"
 pass=0; fail=0
 check() { if [ "$1" = "0" ]; then echo "  ok   $2"; pass=$((pass+1)); else echo "  FAIL $2"; fail=$((fail+1)); fi; }
 
-cleanup() { docker rm -f korkut-api-smoke >/dev/null 2>&1 || true; }
+cleanup() { docker rm -f korkut-api-smoke korkut-agent-smoke >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 echo "== build =="
 docker build -q -f docker/Dockerfile.api      -t korkut-api:$TAG .      >/dev/null; check $? "api image builds"
+docker build -q -f docker/Dockerfile.agent    -t korkut-agent:$TAG .    >/dev/null; check $? "agent image builds"
 docker build -q -f docker/Dockerfile.worker   -t korkut-worker:$TAG .   >/dev/null; check $? "worker image builds"
 docker build -q -f docker/Dockerfile.migrator -t korkut-migrator:$TAG . >/dev/null; check $? "migrator image builds"
 
 echo "== hardening =="
-for img in korkut-api korkut-worker korkut-migrator; do
+for img in korkut-api korkut-agent korkut-worker korkut-migrator; do
   u=$(docker image inspect $img:$TAG --format '{{.Config.User}}')
   [ "$u" = "app" ]; check $? "$img runs as non-root user ('$u')"
 done
@@ -46,7 +47,11 @@ docker run -d --name korkut-api-smoke \
   -e ASPNETCORE_URLS="http://+:8080" \
   -e KORKUT_SECRET="$API_SECRET" \
   -e KORKUT_TOTP_KEY="$API_TOTP_KEY" \
+  -e KORKUT_DB_URL="Host=127.0.0.1;Port=5432;Database=korkut;Username=korkut_app;Password=none" \
   -p $PORT:8080 korkut-api:$TAG >/dev/null; check $? "api starts read-only, cap-drop ALL"
+# The app fail-fasts without KORKUT_DB_URL (it is a required least-privileged app-role
+# connection). Health/config never open the connection (it is lazy), so a dummy value is
+# enough to boot and prove liveness/readiness/config on the read-only rootfs.
 
 # Wait for readiness.
 ready=1
@@ -67,6 +72,24 @@ docker stop -t 15 korkut-api-smoke >/dev/null 2>&1
 rc=$(docker inspect korkut-api-smoke --format '{{.State.ExitCode}}' 2>/dev/null)
 elapsed=$(( $(date +%s) - start ))
 { [ "$rc" = "0" ] && [ "$elapsed" -lt 15 ]; }; check $? "SIGTERM -> clean exit (code=$rc, ${elapsed}s < grace)"
+
+echo "== agent host (stateless) on READ-ONLY filesystem =="
+# The agent is a stateless host that shares the libraries and connects to the SAME DB;
+# the skeleton wires observability + health only, so it boots with no extra config.
+AGENT_PORT=$(( PORT + 1 ))
+docker run -d --name korkut-agent-smoke \
+  --read-only --tmpfs /tmp \
+  --cap-drop ALL --security-opt no-new-privileges \
+  -e ASPNETCORE_URLS="http://+:8080" \
+  -p $AGENT_PORT:8080 korkut-agent:$TAG >/dev/null; check $? "agent starts read-only, cap-drop ALL"
+agent_ready=1
+for _ in $(seq 1 30); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$AGENT_PORT/health/live" 2>/dev/null || true)
+  [ "$code" = "200" ] && { agent_ready=0; break; }
+  sleep 1
+done
+check $agent_ready "agent GET /health/live -> 200 (read-only rootfs)"
+docker rm -f korkut-agent-smoke >/dev/null 2>&1 || true
 
 echo
 echo "passed=$pass failed=$fail"

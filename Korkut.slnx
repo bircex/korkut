@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Korkut.Agent/Korkut.Agent.csproj" />
     <Project Path="src/Korkut.Api/Korkut.Api.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />

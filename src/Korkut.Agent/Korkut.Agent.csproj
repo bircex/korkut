@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Shared libraries — the same Application/Infrastructure the API uses. -->
+    <ProjectReference Include="..\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+  </ItemGroup>
+  <!-- The agent drafts documents, so it ships the legal template catalog too. -->
+  <ItemGroup>
+    <Content Include="..\..\templates\**\*" LinkBase="templates" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
