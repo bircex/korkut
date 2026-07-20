@@ -419,6 +419,36 @@
         },
         "type": "object"
       },
+      "ExportRequest": {
+        "properties": {
+          "format": {
+            "pattern": "docx|udf",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "markdown": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "format",
+          "title",
+          "markdown"
+        ],
+        "type": "object"
+      },
       "IFormFile": {
         "format": "binary",
         "type": "string"
@@ -1800,6 +1830,28 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/export": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
