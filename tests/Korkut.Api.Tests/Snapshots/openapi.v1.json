@@ -92,6 +92,57 @@
         ],
         "type": "object"
       },
+      "EvrakCreateRequest": {
+        "properties": {
+          "direction": {
+            "pattern": "incoming|outgoing|internal",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "doc_date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference_no": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "direction",
+          "title"
+        ],
+        "type": "object"
+      },
       "ExpenseCreateRequest": {
         "properties": {
           "amount": {
@@ -1109,6 +1160,70 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/evrak": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "direction",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvrakCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/evrak/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
