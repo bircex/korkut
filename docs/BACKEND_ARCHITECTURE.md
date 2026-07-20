@@ -1,111 +1,126 @@
 # Korkut .NET Backend — Target Architecture
 
-Status: **proposed** (agreed 2026-07-20). Guides the refactor away from concrete
-`*Store` data-access toward ports-and-adapters (Clean Architecture) and splits the AI
-**agent** into its own independently scalable, stateless host. Supersedes the flat-store
-layout; the older [ARCHITECTURE.md](ARCHITECTURE.md) describes the retired Python app.
+Status: **agreed** (2026-07-20). A modular monolith of shared libraries with **two
+stateless hosts** — the operational API and the AI **agent** — refactored to Clean
+Architecture (ports & adapters). Supersedes the flat-`*Store` layout; the older
+[ARCHITECTURE.md](ARCHITECTURE.md) describes the retired Python app.
 
 ## Principles
 
-1. **Ports & adapters.** The Application layer owns *interfaces* — one repository per
-   aggregate (`IInvoiceRepository`), one service per use-case (`IFinanceService`), plus
-   the infra ports that already exist (`ILlmClient`, `IObjectStore`, `ISecretEncryptor`,
-   …). Infrastructure implements them. Dependencies point inward:
-   `Domain ← Application ← Infrastructure ← Hosts`. Enforced by `Korkut.Architecture.Tests`.
+1. **Clean Architecture (ports & adapters).** The Application layer owns *interfaces* —
+   a repository per aggregate (`IInvoiceRepository`), a service per use-case
+   (`IFinanceService`), plus the infra ports (`ILlmClient`, `IObjectStore`,
+   `ISecretEncryptor`, `ITextExtractor`, …). Infrastructure implements them.
+   Dependencies point inward: `Domain ← Application ← Infrastructure ← Hosts`. Enforced
+   by `Korkut.Architecture.Tests`.
 2. **Feature-first organization.** Group by feature (Finance, Calendar, Agent…) inside
-   each layer instead of one flat `Persistence/` / `Endpoints/` folder.
-3. **Two stateless hosts, shared libraries.** `Korkut.Api` (CRUD) and `Korkut.Agent`
-   (AI) reference the same `Domain` / `Application` / `Infrastructure` class libraries.
-   Repositories and common services are shared; **the agent host owns every AI
-   operation** and the API host owns none of them.
-4. **Stateless everywhere.** No in-process session state. Conversation/message/document
-   state lives in Postgres; SSE streams are single requests; auth is a self-contained
-   HS256 JWT. Either host scales by adding replicas behind a load balancer.
+   each layer, not one flat `Persistence/` / `Endpoints/` folder.
+3. **Two stateless hosts, shared libraries.** `Korkut.Api` (operational CRUD) and
+   `Korkut.Agent` (AI) reference the SAME `Domain` / `Application` / `Infrastructure`
+   libraries. Because both hosts run the same Application services, sharing data access
+   duplicates no domain logic.
+4. **Two databases, one modular monolith.**
+   - **Operational DB** (Postgres + RLS): the domain. **Both hosts** connect to it
+     through the shared `KorkutDbContext` + Application services (in-process, RLS-scoped)
+     — the agent adds/gets clients and matters via the *same* services the API uses, so
+     invariants + RLS live in one place. No cross-service HTTP hop.
+   - **Agent DB** (Postgres + **pgvector**, a separate database on the same instance for
+     now): the agent's private state — conversations, messages, drafts + versions, RAG
+     chunks + embeddings, OCR extractions, PII audit, tool-call log. Only the agent host
+     connects to it. Splits to its own instance later with no code change (own
+     connection string / `AgentDbContext`).
+5. **Stateless everywhere.** No in-process session state; SSE is per-request; auth is a
+   self-contained HS256 JWT. Either host scales by adding replicas behind PgBouncer.
 
-## Layers (shared class libraries)
+## Hosts & data
 
 ```
-Korkut.Domain          entities, value objects, invariants — no EF, no I/O
-Korkut.Application     use-cases + PORTS (repository/service interfaces), DTOs, validators
-Korkut.Infrastructure  adapters: DbContext, EF configs, repositories, service impls, LLM/storage
-Korkut.SharedKernel    primitives (ids, clock, time)
+┌────────────────────────────┐            ┌──────────────────────────────────┐
+│  Korkut.Api (operational)   │            │  Korkut.Agent (AI) — STATELESS     │
+│  stateless · N replicas     │            │  M replicas                        │
+│  finance, matters/cases,    │            │  chat/stream, upload, drafting,    │
+│  clients, calendar, evrak,  │            │  RAG (ingest→embed→retrieve),      │
+│  settings, reports, channels│            │  OCR, PII redaction                │
+│  templates, members, admin, │            │                                    │
+│  auth, onboarding           │            │  in-process → shared Application    │
+└──────────────┬─────────────┘            │  services (add/get client, case,   │
+               │ shared KorkutDbContext    │  agenda, read persona/style/memory)│
+               │ + Application services     └───────┬──────────────┬───────────┘
+               ▼        (RLS, korkut_app)           │ shared        │ AgentDbContext
+        ┌─────────────────────────────┐             │ operational   ▼
+        │   Operational DB (RLS)        │◄───────────┘ access   ┌──────────────────┐
+        │   one Postgres instance ──────┼───────────────────────│  Agent DB         │
+        │   (via PgBouncer)              │  same instance (now)  │  + pgvector       │
+        └─────────────────────────────┘                        └──────────────────┘
+   migrations: ONLY Korkut.Migrator applies BOTH schemas; neither host migrates on start.
 ```
 
-### Folder shape (per feature)
+### Korkut.Agent capabilities
+
+- **Chat / streaming** — the LLM loop; SSE per request; state in the Agent DB.
+- **Domain access** — calls the shared Application services in-process (e.g.
+  `IClientService.CreateAsync`, `IMatterService.GetAsync`) against the operational DB,
+  RLS-scoped to the caller's office. The agent's "tools" are thin wrappers over these.
+- **RAG** — on a new/updated document (signalled by the operational **outbox +
+  Worker**, or pulled), OCR → chunk → embed → store vectors in the Agent DB (pgvector);
+  retrieve top-k at query time and ground the LLM. Embeddings via the provider or a
+  dedicated embedding model behind `IEmbedder`.
+- **OCR** — `ITextExtractor` (today `PlainTextExtractor`; production adds Tesseract/PDF)
+  feeds ingestion and upload-to-chat.
+- **PII** — redact PII before any cloud-LLM call and restore it in the reply
+  (`IPiiRedactor`); PII audit stored in the Agent DB. Critical for a legal product.
+
+## Layer & folder shape (shared libraries)
 
 ```
-Korkut.Domain/Finance/Invoice.cs                        entity (moves out of Infrastructure)
+Korkut.Domain/Finance/Invoice.cs                        entity (out of Infrastructure)
 Korkut.Application/
   Abstractions/Persistence/IInvoiceRepository.cs        port
   Abstractions/Persistence/IUnitOfWork.cs
-  Features/Finance/IFinanceService.cs                   use-case interface
-  Features/Finance/FinanceService.cs                    orchestration (calls repositories)
-  Features/Finance/Dtos/…                               request/response DTOs
-  Features/Finance/Validators/…
+  Abstractions/Agent/IEmbedder.cs  IPiiRedactor.cs  IVectorStore.cs
+  Features/Finance/IFinanceService.cs  FinanceService.cs  Dtos/  Validators/
+  Features/Agent/IChatService.cs  IDraftingService.cs  IRagService.cs
 Korkut.Infrastructure/
-  Persistence/KorkutDbContext.cs
-  Persistence/Configurations/InvoiceConfiguration.cs    (split out of OnModelCreating)
-  Persistence/Repositories/InvoiceRepository.cs         : IInvoiceRepository (was FinanceStore)
+  Persistence/Operational/KorkutDbContext.cs  Configurations/  Repositories/
+  Persistence/Agent/AgentDbContext.cs         Configurations/  Repositories/  (pgvector)
+  Ai/  Storage/  Security/                     adapters
 ```
 
-Endpoint flow becomes `endpoint → IFinanceService → IInvoiceRepository → DbContext`
-(today: `endpoint → FinanceStore(DbContext)`). No `DbContext` in endpoints.
+Endpoint flow: `endpoint → IFinanceService → IInvoiceRepository → DbContext` (no
+`DbContext` in endpoints).
 
-## Hosts
+## Cross-cutting
 
-```
-                         ┌───────────────────┐
-  browser (cookie JWT) ► │  Korkut.Api         │─┐  finance, matters, clients, calendar,
-                         │  N replicas         │ │  settings, reports, channels, templates,
-                         └───────────────────┘ │  export, coverage, evrak, members, admin,
-                                                │  auth, onboarding
-                         ┌───────────────────┐ ├─► Postgres (RLS, korkut_app) via PgBouncer
-  /api/sessions/*        │  Korkut.Agent       │─┘
-  /api/documents/*/draft │  M replicas         │──► Anthropic API
-  /chat/stream         ► │  (STATELESS)        │
-                         └───────────────────┘
-        both hosts reference Korkut.Application + Korkut.Infrastructure
-        migrations: ONLY Korkut.Migrator (neither host migrates on start)
-```
+- **Auth** — both hosts validate the same JWT with `KORKUT_SECRET`; each sets the RLS
+  tenant scope per request.
+- **Migrations** — `Korkut.Migrator` applies BOTH the operational and agent schemas;
+  neither host migrates on start.
+- **Scaling** — PgBouncer (transaction pooling) in front of the DB; long-lived SSE
+  streams hold connections. SSE is stateless → no sticky sessions; ingress must disable
+  response buffering for `text/event-stream`. The LLM provider rate limit is the real
+  ceiling (add a per-office concurrency cap).
 
-### Korkut.Agent (new host)
+## Named patterns
 
-Owns **all** agent operations, served *only* here:
+Clean/Hexagonal per host · DDD bounded contexts (Operational vs Agent) · **shared
+database** for the operational context between two hosts of one modular monolith ·
+**database-per-context** for the agent's private store · **Agentic RAG** ingest/retrieve ·
+outbox/event-driven document indexing · in-process domain reuse (no anti-corruption layer
+needed — same code, same DB).
 
-- `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST /{id}/clone`
-- `POST /api/sessions/{id}/chat`, `POST /api/sessions/{id}/chat/stream` (SSE)
-- `POST /api/sessions/{id}/upload`
-- `GET /api/sessions/{id}/document`, `POST /api/documents/{id}/draft|accept|revert`,
-  `PUT /api/documents/{id}`, `GET /api/documents/{id}/export`
+## Build roadmap (phased PRs; suite stays green)
 
-Application services (`IChatService`, `IDraftingService`) + their repositories
-(`ISessionRepository`, `IDraftDocumentRepository`) live in the shared libraries; the
-agent host wires and maps them. The `templates/` catalog ships in the agent image (the
-drafter reads it). Same auth handler + `KORKUT_SECRET`, same RLS tenant scope.
-
-## Scaling & operational notes
-
-- **Independent replicas.** Chat/streaming has a different profile (seconds-to-minutes
-  connections, provider-bound). Isolating it means an LLM slowdown never starves CRUD.
-- **Connection pooling.** M agent replicas × pool size must stay under Postgres
-  `max_connections` — front the DB with **PgBouncer** (transaction pooling); long-lived
-  streams hold connections.
-- **SSE is stateless** — no sticky sessions; the ingress must disable response buffering
-  for `text/event-stream`.
-- **Provider rate limit is the real ceiling** — add a per-office concurrency cap later.
-- **Observability** — both hosts use `AddKorkutObservability(<name>)`.
-
-## Migration plan (phased, each a reviewed PR; suite stays green)
-
-1. **Foundation** — `Abstractions/Persistence` ports + `IUnitOfWork`; split
-   `OnModelCreating` into `Configurations/`.
-2. **Reference feature — Finance** — Invoice/Expense: entity → Domain, `FinanceStore` →
-   `InvoiceRepository`/`ExpenseRepository` behind ports, `IFinanceService`, endpoint
-   calls the service. Proves the CRUD pattern.
-3. **Reference host — Korkut.Agent** — stand up the host; move the agent feature
-   (sessions/chat first) behind `ISessionRepository`/`IChatService`; remove agent
-   endpoints from `Korkut.Api`; split agent integration tests onto the agent host
-   (a second `WebApplicationFactory<Korkut.Agent.Program>`).
-4. **Roll out** the repository/service pattern across the remaining CRUD modules.
-5. **Move remaining agent ops** (upload, drafting, outbox) fully onto `Korkut.Agent`.
-6. **Compose/deploy** — add the `agent` service + PgBouncer to the deployment compose.
+1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke
+   coverage (PR #148).
+2. **Clean foundation** — `Abstractions/Persistence` ports + `IUnitOfWork`; split
+   `OnModelCreating` → `Configurations/`.
+3. **Finance reference** — the CRUD pattern: entity → Domain, `FinanceStore` →
+   `InvoiceRepository`/`ExpenseRepository` behind ports, `IFinanceService`, thin endpoint.
+4. **Agent DB + host** — add `AgentDbContext` (+ pgvector); move
+   conversations/messages/drafts/versions to it; the agent host serves chat off the Agent
+   DB and reaches domain data via the shared operational services; move agent endpoints
+   off `Korkut.Api`; split agent tests onto a second `WebApplicationFactory`.
+5. **RAG + OCR + PII** — ingestion (outbox-driven), `IVectorStore` (pgvector),
+   `IEmbedder`, real OCR, `IPiiRedactor`.
+6. **Roll out** the repository/service pattern across the remaining CRUD modules.
+7. **Deploy** — agent DB + PgBouncer + the `agent` compose service.
