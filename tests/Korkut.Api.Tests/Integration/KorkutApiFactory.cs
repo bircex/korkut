@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
-using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.SharedKernel.Time;
 using Microsoft.AspNetCore.Hosting;
@@ -87,9 +86,6 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
             services.AddSingleton<IOidcTokenExchanger, FakeTokenExchanger>();
             services.RemoveAll<IGoogleIdTokenValidator>();
             services.AddSingleton<IGoogleIdTokenValidator, FakeIdTokenValidator>();
-            // Deterministic LLM so chat is exercised end-to-end without a provider key.
-            services.RemoveAll<ILlmClient>();
-            services.AddScoped<ILlmClient, FakeLlmClient>();
         });
         builder.UseEnvironment("Testing");
     }
@@ -114,24 +110,6 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>Build a test id token the FakeIdTokenValidator understands.</summary>
     public static string FakeIdToken(string sub, string email, string nonce, bool emailVerified = true)
         => $"{sub}|{email}|{emailVerified}|{nonce}";
-
-    /// <summary>A deterministic assistant: echoes the last user turn and proves the system prompt was built.</summary>
-    private sealed class FakeLlmClient : ILlmClient
-    {
-        private static string Reply(LlmRequest request) => $"[assistant] {request.Messages.LastOrDefault(m => m.Role == "user")?.Content ?? ""}";
-
-        public Task<LlmReply> CompleteAsync(LlmRequest request, CancellationToken ct = default)
-            => Task.FromResult(new LlmReply(Reply(request)));
-
-        public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
-        {
-            foreach (var word in Reply(request).Split(' '))
-            {
-                await Task.Yield();
-                yield return word + " ";
-            }
-        }
-    }
 
     /// <summary>Owner/superuser context for seeding (RLS bypassed) — tests only.</summary>
     public KorkutDbContext OwnerContext()
