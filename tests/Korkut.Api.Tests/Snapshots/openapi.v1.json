@@ -2226,6 +2226,32 @@
         ]
       }
     },
+    "/api/reports/overview": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
     "/api/style": {
       "get": {
         "responses": {
