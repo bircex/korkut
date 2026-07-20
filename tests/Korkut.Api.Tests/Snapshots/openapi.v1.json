@@ -33,6 +33,50 @@
         ],
         "type": "object"
       },
+      "DeadlineCreateRequest": {
+        "properties": {
+          "due_date": {
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "pattern": "statutory|internal",
+            "type": "string"
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reminder_days_before": {
+            "format": "int32",
+            "maximum": "365",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "time_zone_id": {
+            "type": "string"
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "due_date"
+        ],
+        "type": "object"
+      },
       "EchoRequest": {
         "properties": {
           "title": {
@@ -122,6 +166,96 @@
         },
         "required": [
           "title"
+        ],
+        "type": "object"
+      },
+      "NoteCreateRequest": {
+        "properties": {
+          "body": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "TaskCreateRequest": {
+        "properties": {
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "due_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "TaskStatusRequest": {
+        "properties": {
+          "status": {
+            "pattern": "open|in_progress|done",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "status"
         ],
         "type": "object"
       },
@@ -327,6 +461,94 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/deadlines": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeadlineCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/deadlines/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/deadlines/{id}/complete": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -587,6 +809,144 @@
     },
     "/api/me": {
       "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/notes": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/tasks/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
