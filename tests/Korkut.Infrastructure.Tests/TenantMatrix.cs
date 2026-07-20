@@ -41,6 +41,7 @@ public static class TenantMatrix
             ["office_persona"] = (1, 1), // one persona row per office
             ["style_profiles"] = (1, 2),
             ["memory_items"] = (1, 2),
+            ["channels"] = (1, 1), // one channel row per office (seeded once)
         };
 
     public static TheoryData<string> TableNames()
