@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Text.Json;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
 using Korkut.Application.Ai;
@@ -39,6 +40,10 @@ public sealed record ChatResponse(string Reply, string Title, Guid? OpenDocument
 /// </summary>
 public static class SessionEndpoints
 {
+    // SSE frame payloads use the same snake_case contract as the rest of the API.
+    private static readonly JsonSerializerOptions SseJson =
+        new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
         var sessions = app.MapGroup("/api/sessions");
@@ -115,6 +120,50 @@ public static class SessionEndpoints
                     return newId is null ? null : await store.ToBriefAsync(o, (await store.GetAsync(o, newId.Value, ct))!, ct);
                 }, ct);
                 return brief is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : Results.Ok(ToBrief(brief));
+            })
+            .RequireAuthorization(Permissions.MattersWrite);
+
+        sessions.MapPost("/{id:guid}/chat/stream", async (Guid id, ChatRequest body, HttpContext http, ClaimsPrincipal user, KorkutDbContext db, SessionChatService chat, CancellationToken ct) =>
+            {
+                var invalid = DtoValidation.Validate(body);
+                if (invalid is not null)
+                {
+                    return invalid;
+                }
+
+                http.Response.Headers.ContentType = "text/event-stream";
+                http.Response.Headers.CacheControl = "no-cache";
+                var res = http.Response;
+
+                async Task Frame(string ev, object data)
+                {
+                    await res.WriteAsync($"event: {ev}\ndata: {JsonSerializer.Serialize(data, SseJson)}\n\n", ct);
+                    await res.Body.FlushAsync(ct);
+                }
+
+                var uid = user.UserId();
+                try
+                {
+                    var outcome = await user.InTenantScopeAsync(db, o => chat.ChatStreamAsync(
+                        o, uid, id, body.Text!.Trim(),
+                        label => Frame("step", new { label }),
+                        token => Frame("token", new { text = token }), ct), ct);
+
+                    if (outcome is null)
+                    {
+                        await Frame("error", new { detail = "Görüşme bulunamadı." });
+                    }
+                    else
+                    {
+                        await Frame("done", new ChatResponse(outcome.Reply, outcome.Title, outcome.OpenDocument, outcome.PendingEmail));
+                    }
+                }
+                catch (LlmUnavailableException ex)
+                {
+                    await Frame("error", new { detail = ex.Message });
+                }
+
+                return Results.Empty;
             })
             .RequireAuthorization(Permissions.MattersWrite);
 

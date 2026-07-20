@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Korkut.Application.Ai;
@@ -61,11 +62,89 @@ public sealed class AnthropicLlmClient(HttpClient http, RuntimeConfig config, IE
             : new LlmReply(text);
     }
 
+    public async IAsyncEnumerable<string> StreamAsync(LlmRequest request, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        var apiKey = env.Get("ANTHROPIC_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new LlmUnavailableException("Anthropic API anahtarı yapılandırılmamış.");
+        }
+
+        var payload = new AnthropicStreamRequest(
+            config.AnthropicModel,
+            Math.Min(request.MaxTokens, config.AnthropicMaxTokens),
+            request.System,
+            request.Messages.Select(m => new AnthropicMessage(m.Role, m.Content)).ToList(),
+            true);
+
+        using var message = new HttpRequestMessage(HttpMethod.Post, Endpoint) { Content = JsonContent.Create(payload, options: Json) };
+        message.Headers.Add("x-api-key", apiKey);
+        message.Headers.Add("anthropic-version", AnthropicVersion);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await http.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new LlmUnavailableException($"Yapay zeka sağlayıcısına ulaşılamadı: {ex.Message}");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new LlmUnavailableException($"Yapay zeka sağlayıcısı hatası ({(int)response.StatusCode}).");
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+        while (!reader.EndOfStream)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var data = line[5..].Trim();
+            if (data is "[DONE]")
+            {
+                break;
+            }
+
+            string? delta = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                if (doc.RootElement.TryGetProperty("delta", out var d) && d.TryGetProperty("text", out var t))
+                {
+                    delta = t.GetString();
+                }
+            }
+            catch (JsonException)
+            {
+                continue; // ignore keep-alive / non-JSON frames
+            }
+
+            if (!string.IsNullOrEmpty(delta))
+            {
+                yield return delta;
+            }
+        }
+    }
+
     private sealed record AnthropicRequest(
         [property: JsonPropertyName("model")] string Model,
         [property: JsonPropertyName("max_tokens")] int MaxTokens,
         [property: JsonPropertyName("system")] string System,
         [property: JsonPropertyName("messages")] IReadOnlyList<AnthropicMessage> Messages);
+
+    private sealed record AnthropicStreamRequest(
+        [property: JsonPropertyName("model")] string Model,
+        [property: JsonPropertyName("max_tokens")] int MaxTokens,
+        [property: JsonPropertyName("system")] string System,
+        [property: JsonPropertyName("messages")] IReadOnlyList<AnthropicMessage> Messages,
+        [property: JsonPropertyName("stream")] bool Stream);
 
     private sealed record AnthropicMessage(
         [property: JsonPropertyName("role")] string Role,
@@ -83,5 +162,8 @@ public sealed class AnthropicLlmClient(HttpClient http, RuntimeConfig config, IE
 public sealed class DisabledLlmClient : ILlmClient
 {
     public Task<LlmReply> CompleteAsync(LlmRequest request, CancellationToken ct = default) =>
+        throw new LlmUnavailableException("Yapay zeka sağlayıcısı yapılandırılmamış.");
+
+    public IAsyncEnumerable<string> StreamAsync(LlmRequest request, CancellationToken ct = default) =>
         throw new LlmUnavailableException("Yapay zeka sağlayıcısı yapılandırılmamış.");
 }

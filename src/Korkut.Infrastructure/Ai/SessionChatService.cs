@@ -47,6 +47,49 @@ public sealed class SessionChatService(
         return new ChatOutcome(reply.Text, title, OpenDocument: null, PendingEmail: null);
     }
 
+    /// <summary>
+    /// Streaming twin of <see cref="ChatAsync"/>: fires <paramref name="onStep"/> for
+    /// activity labels and <paramref name="onToken"/> for reply deltas as they arrive,
+    /// persists the accumulated reply, and returns the same outcome. Returns null if the
+    /// conversation is missing.
+    /// </summary>
+    public async Task<ChatOutcome?> ChatStreamAsync(
+        Guid officeId, Guid userId, Guid conversationId, string text,
+        Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default)
+    {
+        var conversation = await sessions.GetAsync(officeId, conversationId, ct);
+        if (conversation is null)
+        {
+            return null;
+        }
+
+        await onStep("Bağlam hazırlanıyor");
+        await sessions.AppendMessageAsync(officeId, conversationId, "user", text, ct);
+        var system = await BuildSystemPromptAsync(officeId, userId, ct);
+        var history = await sessions.MessagesAsync(officeId, conversationId, ct);
+        var messages = history.Select(m => new LlmMessage(m.Role, m.Content)).ToList();
+
+        await onStep("Yanıt üretiliyor");
+        var full = new StringBuilder();
+        await foreach (var delta in llm.StreamAsync(new LlmRequest(system, messages, config.ReplyHeadroom * 4), ct))
+        {
+            full.Append(delta);
+            await onToken(delta);
+        }
+
+        var replyText = full.ToString();
+        await sessions.AppendMessageAsync(officeId, conversationId, "assistant", replyText, ct);
+
+        var title = conversation.Title;
+        if (conversation.Title == "Yeni görüşme")
+        {
+            title = Summarize(text);
+            await sessions.SetTitleIfDefaultAsync(officeId, conversationId, title, ct);
+        }
+
+        return new ChatOutcome(replyText, title, OpenDocument: null, PendingEmail: null);
+    }
+
     private async Task<string> BuildSystemPromptAsync(Guid officeId, Guid userId, CancellationToken ct)
     {
         var sb = new StringBuilder();
