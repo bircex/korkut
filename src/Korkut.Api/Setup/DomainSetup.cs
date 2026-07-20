@@ -23,6 +23,7 @@ public static class DomainSetup
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddScoped<OfficeCoreStore>();
         services.AddScoped<OfficeOpsStore>();
+        services.AddScoped<MembersStore>();
 
         return services;
     }
