@@ -1,5 +1,7 @@
 # Installation
 
+> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** under [`dotnet/`](../dotnet/). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See [`dotnet/README.md`](../dotnet/README.md) and the repo `Makefile` (`make build|test|run|migrate`) for current operations. Migration records live under [`docs/migration/`](migration/).
+
 Korkut runs in two ways: a **native** install (a Python virtualenv + the built SPA) or **Docker**.
 For day-to-day development, see [DEVELOPMENT.md](DEVELOPMENT.md). For production, see
 [DEPLOYMENT.md](DEPLOYMENT.md).

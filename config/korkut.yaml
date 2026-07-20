@@ -3,4 +3,5 @@
 # registration and drives Korkut's persona at runtime (see docs/ARCHITECTURE.md §7).
 assistant:
   name: "Korkut"
-persona: backend/src/korkut/brain/persona.py   # build_persona(office_name) — identity is per-office
+# The per-office persona (build_persona(office_name)) is produced by the .NET runtime
+# under dotnet/; the brain port is tracked in the post-migration backlog.

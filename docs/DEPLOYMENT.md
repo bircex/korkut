@@ -1,5 +1,7 @@
 # Deployment
 
+> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** under [`dotnet/`](../dotnet/). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See [`dotnet/README.md`](../dotnet/README.md) and the repo `Makefile` (`make build|test|run|migrate`) for current operations. Migration records live under [`docs/migration/`](migration/).
+
 This covers running Korkut in production. For a local trial, see [INSTALL.md](INSTALL.md).
 
 Korkut is designed to run **on the office's own infrastructure** so client data never leaves it.

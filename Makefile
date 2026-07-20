@@ -1,30 +1,25 @@
-.PHONY: help setup ui test lint run docker-up
+.PHONY: help build test run migrate docker-up
 .DEFAULT_GOAL := help
 
-VENV := .venv
+SLN := dotnet/Korkut.slnx
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-setup:  ## Install backend (runs scripts/install.sh)
-	./scripts/install.sh
+build:  ## Restore + build the .NET solution
+	dotnet build $(SLN)
 
-ui:  ## Rebuild the SPA from the sibling korkut-ui repo into the backend static dir
-	cd ../korkut-ui && npm ci && npm run build
-	rm -rf backend/src/korkut/api/static
-	cp -r ../korkut-ui/dist backend/src/korkut/api/static
-
-test:  ## Run backend tests, lint and type checks
-	cd backend && ../$(VENV)/bin/python -m pytest
-	cd backend && ../$(VENV)/bin/ruff check .
-	cd backend && ../$(VENV)/bin/mypy
-
-lint:  ## Lint backend (ruff)
-	cd backend && ../$(VENV)/bin/ruff check . && ../$(VENV)/bin/ruff format --check .
+test:  ## Run the full .NET test suite (needs Docker for Postgres/MinIO integration tests)
+	dotnet test $(SLN)
 
 run:  ## Start the API server on :8080
-	cd backend && ../$(VENV)/bin/python -m korkut.api
+	dotnet run --project dotnet/src/Korkut.Api
 
-docker-up:  ## Build and start the full stack via docker compose
-	docker compose -f deploy/docker-compose.yml up -d --build
+migrate:  ## Apply EF Core migrations via the migrator (uses KORKUT_ADMIN_DB_URL)
+	dotnet run --project dotnet/src/Korkut.Migrator
+
+docker-up:  ## Build the API/worker/migrator images from dotnet/docker/
+	docker build -f dotnet/docker/Dockerfile.api -t korkut-api dotnet
+	docker build -f dotnet/docker/Dockerfile.worker -t korkut-worker dotnet
+	docker build -f dotnet/docker/Dockerfile.migrator -t korkut-migrator dotnet
