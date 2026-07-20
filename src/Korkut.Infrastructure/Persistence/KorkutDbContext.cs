@@ -58,6 +58,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<DocumentRelationEntity> DocumentRelations => Set<DocumentRelationEntity>();
 
+    public DbSet<InvoiceEntity> Invoices => Set<InvoiceEntity>();
+
+    public DbSet<ExpenseEntity> Expenses => Set<ExpenseEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -217,6 +221,29 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Channel).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_comm_notes_office_matter");
+        });
+
+        modelBuilder.Entity<InvoiceEntity>(b =>
+        {
+            b.ToTable("invoices");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Amount).HasColumnType("numeric(14,2)");
+            b.Property(x => x.VatRate).HasColumnType("numeric(5,4)");
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.Status).HasMaxLength(20);
+            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_invoices_office_status");
+        });
+
+        modelBuilder.Entity<ExpenseEntity>(b =>
+        {
+            b.ToTable("expenses");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Amount).HasColumnType("numeric(14,2)");
+            b.Property(x => x.Kind).HasMaxLength(50);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.HasIndex(x => new { x.OfficeId, x.SpentAt }).HasDatabaseName("ix_expenses_office_spent");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>

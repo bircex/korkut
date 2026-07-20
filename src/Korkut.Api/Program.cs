@@ -60,6 +60,7 @@ app.MapAuthEndpoints();
 app.MapOfficeCoreEndpoints();
 app.MapDocumentEndpoints();
 app.MapOfficeOpsEndpoints();
+app.MapFinanceEndpoints();
 app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();

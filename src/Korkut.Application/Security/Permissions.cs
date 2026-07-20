@@ -17,11 +17,12 @@ public static class Permissions
     public const string MembersManage = "members.manage";
     public const string OfficeSettings = "office.settings";
     public const string BillingRead = "billing.read";
+    public const string BillingWrite = "billing.write";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
         MattersRead, MattersWrite, MattersDelete, ClientsRead, ClientsWrite,
-        DocumentsRead, DocumentsWrite, MembersManage, OfficeSettings, BillingRead,
+        DocumentsRead, DocumentsWrite, MembersManage, OfficeSettings, BillingRead, BillingWrite,
     };
 }
 
@@ -41,6 +42,7 @@ public static class Roles
                 Permissions.MattersRead, Permissions.MattersWrite,
                 Permissions.ClientsRead, Permissions.ClientsWrite,
                 Permissions.DocumentsRead, Permissions.DocumentsWrite,
+                Permissions.BillingRead, Permissions.BillingWrite,
             },
         };
 }
