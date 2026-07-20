@@ -80,6 +80,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<ChatMessageEntity> ChatMessages => Set<ChatMessageEntity>();
 
+    public DbSet<OutboundMessageEntity> OutboundMessages => Set<OutboundMessageEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -370,6 +372,18 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Role).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_chat_messages_conversation");
+        });
+
+        modelBuilder.Entity<OutboundMessageEntity>(b =>
+        {
+            b.ToTable("outbound_messages");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Kind).HasMaxLength(20);
+            b.Property(x => x.ToAddr).HasMaxLength(400);
+            b.Property(x => x.Subject).HasMaxLength(500);
+            b.Property(x => x.Status).HasMaxLength(20);
+            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_outbound_messages_office_status");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>

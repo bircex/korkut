@@ -74,6 +74,7 @@ app.MapChannelEndpoints();
 app.MapTemplateEndpoints();
 app.MapOnboardingEndpoints();
 app.MapSessionEndpoints();
+app.MapOutboxEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
 app.MapMembersEndpoints();
