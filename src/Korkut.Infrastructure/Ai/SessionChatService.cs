@@ -1,9 +1,9 @@
 using System.Text;
 using Korkut.Application.Ai;
 using Korkut.Application.Documents;
+using Korkut.Application.Features.Agent;
 using Korkut.Application.Features.Settings;
 using Korkut.Application.Runtime;
-using Korkut.Infrastructure.Persistence;
 
 namespace Korkut.Infrastructure.Ai;
 
@@ -21,7 +21,7 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    SessionStore sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config, ITextExtractor extractor)
+    ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config, ITextExtractor extractor)
 {
     private const int MaxExtractedChars = 20_000;
 

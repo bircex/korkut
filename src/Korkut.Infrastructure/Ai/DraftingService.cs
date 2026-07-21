@@ -1,7 +1,7 @@
 using System.Text;
 using Korkut.Application.Ai;
+using Korkut.Application.Features.Agent;
 using Korkut.Application.Features.Settings;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Templates;
 
 namespace Korkut.Infrastructure.Ai;
@@ -16,7 +16,7 @@ public sealed record DraftResult(Guid PendingId, string ContentMd, string Summar
 /// full updated markdown, and stages it as a pending edit for human accept/revert.
 /// </summary>
 public sealed class DraftingService(
-    DraftDocumentStore documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModel llm)
+    IDraftDocumentService documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModel llm)
 {
     public async Task<DraftResult?> DraftAsync(
         Guid officeId, Guid userId, Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
