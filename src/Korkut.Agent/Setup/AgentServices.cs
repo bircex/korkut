@@ -8,7 +8,10 @@ using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
 using Korkut.Agent.Tools.Office;
 using Korkut.Application.Features.Finance;
+using Korkut.Application.Features.Membership;
 using Korkut.Application.Features.OfficeCore;
+using Korkut.Application.Features.OfficeOps;
+using Korkut.Application.Features.Reports;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence.Repositories;
@@ -73,6 +76,14 @@ public static class AgentServices
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IExpenseRepository, ExpenseRepository>();
         services.AddScoped<IFinanceService, FinanceService>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<IDeadlineRepository, DeadlineRepository>();
+        services.AddScoped<INoteRepository, NoteRepository>();
+        services.AddScoped<IOfficeOpsService, OfficeOpsService>();
+        services.AddScoped<IReportsRepository, ReportsRepository>();
+        services.AddScoped<IReportsService, ReportsService>();
+        services.AddScoped<IMemberRepository, MemberRepository>();
+        services.AddScoped<IMembersService, MembersService>();
         services.AddScoped<IOfficeScope, OfficeScope>();
 
         // Assistant tools + the key-gated catalog the tool-calling loop resolves them through.
@@ -88,6 +99,16 @@ public static class AgentServices
         services.AddScoped<IAgentTool, AddExpenseTool>();
         services.AddScoped<IAgentTool, ListExpensesTool>();
         services.AddScoped<IAgentTool, FinanceSummaryTool>();
+        services.AddScoped<IAgentTool, AddTaskTool>();
+        services.AddScoped<IAgentTool, ListTasksTool>();
+        services.AddScoped<IAgentTool, CompleteTaskTool>();
+        services.AddScoped<IAgentTool, AddDeadlineTool>();
+        services.AddScoped<IAgentTool, ListDeadlinesTool>();
+        services.AddScoped<IAgentTool, CompleteDeadlineTool>();
+        services.AddScoped<IAgentTool, AddNoteTool>();
+        services.AddScoped<IAgentTool, ListNotesTool>();
+        services.AddScoped<IAgentTool, OfficeOverviewTool>();
+        services.AddScoped<IAgentTool, ListMembersTool>();
         services.AddScoped<IToolCatalog, ToolCatalog>();
 
         return services;

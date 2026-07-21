@@ -22,6 +22,15 @@ internal static class ToolArgs
         return String(args, name) is { } s && Guid.TryParse(s, out value);
     }
 
+    public static int? Int(JsonElement args, string name)
+        => args.TryGetProperty(name, out var v) && v.TryGetInt32(out var n) ? n : null;
+
+    public static DateTimeOffset? DateTime(JsonElement args, string name)
+        => String(args, name) is { } s && DateTimeOffset.TryParse(s, out var d) ? d : null;
+
+    public static DateOnly? Date(JsonElement args, string name)
+        => String(args, name) is { } s && DateOnly.TryParse(s, out var d) ? d : null;
+
     /// <summary>Serialize tool output to the shared snake_case JSON the model reads.</summary>
     public static string Result(object value) => JsonSerializer.Serialize(value, Json);
 }
