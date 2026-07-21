@@ -1,5 +1,6 @@
-using Korkut.Api.Auth;
-using Korkut.Api.Errors;
+using Korkut.Web.Auth;
+using Korkut.Web;
+using Korkut.Web.Errors;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +22,7 @@ public static class AdminEndpoints
     {
         var admin = app.MapGroup("/api/admin")
             .RequireAuthorization(AdminAuthHandler.SchemeName)
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         admin.MapGet("/offices", async (KorkutDbContext db, CancellationToken ct) =>
         {

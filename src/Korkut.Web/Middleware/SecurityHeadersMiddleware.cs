@@ -1,4 +1,4 @@
-namespace Korkut.Api.Middleware;
+namespace Korkut.Web.Middleware;
 
 /// <summary>
 /// Browser security headers on every response. In the Production profile HSTS is

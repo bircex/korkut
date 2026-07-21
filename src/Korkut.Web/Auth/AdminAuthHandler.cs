@@ -4,7 +4,7 @@ using Korkut.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
-namespace Korkut.Api.Auth;
+namespace Korkut.Web.Auth;
 
 /// <summary>
 /// Separate authentication boundary for the platform-admin API: validates an

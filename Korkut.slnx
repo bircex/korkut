@@ -6,6 +6,7 @@
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
     <Project Path="src/Korkut.Migrator/Korkut.Migrator.csproj" />
+    <Project Path="src/Korkut.Web/Korkut.Web.csproj" />
     <Project Path="src/Korkut.SharedKernel/Korkut.SharedKernel.csproj" />
     <Project Path="src/Korkut.Worker/Korkut.Worker.csproj" />
   </Folder>

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Korkut.Api.Json;
+namespace Korkut.Web.Json;
 
 /// <summary>
 /// Central JSON contract for the API, bound to the Python parity baseline

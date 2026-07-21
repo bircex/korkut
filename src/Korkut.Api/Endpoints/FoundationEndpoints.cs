@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Korkut.Web;
 using Korkut.Api.Contracts;
-using Korkut.Api.Errors;
+using Korkut.Web.Errors;
 
 namespace Korkut.Api.Endpoints;
 
@@ -64,7 +65,7 @@ public static class FoundationEndpoints
 
         // Rate-limited endpoint (stands in for login/reset/2FA/upload/admin).
         v1.MapGet("/sensitive-demo", () => Results.Ok(new { ok = true }))
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         // Permission-protected endpoint: deny-by-default, requires matters.write.
         v1.MapPost("/matters-demo", () => Results.Ok(new { ok = true }))
@@ -73,8 +74,8 @@ public static class FoundationEndpoints
         // Platform-admin endpoint: separate policy/scheme + rate limit. Office tokens
         // are rejected here (different audience).
         app.MapGet("/api/admin/ping", () => Results.Ok(new { admin = true }))
-            .RequireAuthorization(Auth.AdminAuthHandler.SchemeName)
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireAuthorization(Korkut.Web.Auth.AdminAuthHandler.SchemeName)
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         return app;
     }

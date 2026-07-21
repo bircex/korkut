@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Korkut.Api.Errors;
+using Korkut.Web.Errors;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Documents;
 

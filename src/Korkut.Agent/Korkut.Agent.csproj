@@ -7,6 +7,7 @@
     <ProjectReference Include="..\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+    <ProjectReference Include="..\Korkut.Web\Korkut.Web.csproj" />
   </ItemGroup>
   <!-- The agent drafts documents, so it ships the legal template catalog too. -->
   <ItemGroup>

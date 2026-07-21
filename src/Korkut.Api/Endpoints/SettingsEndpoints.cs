@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Korkut.Api.Errors;
-using Korkut.Api.Tenancy;
+using Korkut.Web.Errors;
+using Korkut.Web.Tenancy;
 using Korkut.Application.Features.Settings;
 using Korkut.Application.Security;
 using Korkut.Domain.Settings;

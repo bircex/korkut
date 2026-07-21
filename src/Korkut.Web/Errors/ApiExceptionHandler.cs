@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Api.Errors;
+namespace Korkut.Web.Errors;
 
 /// <summary>The Python-compatible error body for handled failures: <c>{ "detail": "..." }</c>.</summary>
 public sealed record ErrorResponse(string Detail);

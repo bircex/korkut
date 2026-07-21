@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Korkut.Web.Auth;
 using Korkut.Api.Auth;
-using Korkut.Api.Errors;
+using Korkut.Web.Errors;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
 

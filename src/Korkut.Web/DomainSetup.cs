@@ -3,7 +3,7 @@ using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
 using Korkut.SharedKernel.Time;
 
-namespace Korkut.Api.Setup;
+namespace Korkut.Web;
 
 /// <summary>
 /// Registers the domain persistence + services the real endpoints use. The DbContext

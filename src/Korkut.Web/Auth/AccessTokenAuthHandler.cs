@@ -5,7 +5,7 @@ using Korkut.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
-namespace Korkut.Api.Auth;
+namespace Korkut.Web.Auth;
 
 /// <summary>
 /// Turns a Bearer access token into a ClaimsPrincipal. Minimal token claims
@@ -22,6 +22,7 @@ public sealed class AccessTokenAuthHandler(
     AuthorizationService authorization) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "korkut-access";
+    public const string AccessCookie = "korkut_at";
     public const string PermissionClaim = "perm";
     public const string OfficeClaim = "oid";
     public const string StampClaim = "stmp";
@@ -32,7 +33,7 @@ public sealed class AccessTokenAuthHandler(
         // OR a Bearer header (API clients). The cookie is never readable by JS.
         var header = Request.Headers.Authorization.ToString();
         string? token = header.StartsWith("Bearer ", StringComparison.Ordinal) ? header["Bearer ".Length..] : null;
-        token ??= Request.Cookies[SessionManager.AccessCookie];
+        token ??= Request.Cookies[AccessCookie];
         if (string.IsNullOrEmpty(token))
         {
             return AuthenticateResult.NoResult();

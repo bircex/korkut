@@ -1,9 +1,10 @@
 using System.Security.Claims;
-using Korkut.Api.Auth;
-using Korkut.Api.Errors;
+using Korkut.Web.Auth;
+using Korkut.Web.Errors;
 using Korkut.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Api.Tenancy;
+namespace Korkut.Web.Tenancy;
 
 /// <summary>
 /// Bridges an authenticated request to a tenant-pinned database scope. The office is
@@ -44,8 +45,9 @@ public static class TenantRequest
     /// Run <paramref name="work"/> inside a tenant-pinned transaction and commit it.
     /// The office comes from the caller's token, so RLS scopes every query/command.
     /// </summary>
-    public static async Task<T> InTenantScopeAsync<T>(
-        this ClaimsPrincipal user, KorkutDbContext db, Func<Guid, Task<T>> work, CancellationToken ct = default)
+    public static async Task<T> InTenantScopeAsync<TDb, T>(
+        this ClaimsPrincipal user, TDb db, Func<Guid, Task<T>> work, CancellationToken ct = default)
+        where TDb : DbContext
     {
         var office = user.OfficeId();
         await using var scope = await db.BeginTenantScopeAsync(office, ct);
