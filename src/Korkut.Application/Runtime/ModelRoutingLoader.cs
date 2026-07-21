@@ -72,4 +72,22 @@ public static class ModelRoutingLoader
 
         return Parse(File.ReadAllText(path));
     }
+
+    /// <summary>
+    /// Load routing from <c>KORKUT_MODEL_ROUTING_FILE</c> (or the default
+    /// <c>config/model-routing.yaml</c>). A MISSING file falls back to a safe default
+    /// (all specialties → cloud, cloud=claude, local=ollama) so a host still boots; a
+    /// PRESENT-but-malformed file still fails fast (that is operator error, not absence).
+    /// </summary>
+    public static ModelRouting LoadOrDefault(IEnvironment env)
+    {
+        var path = env.Get("KORKUT_MODEL_ROUTING_FILE") ?? "config/model-routing.yaml";
+        return File.Exists(path) ? Parse(File.ReadAllText(path)) : Default();
+    }
+
+    /// <summary>The built-in fallback routing used when no config file is present.</summary>
+    public static ModelRouting Default() => new(
+        new Dictionary<string, string> { ["cloud"] = "claude", ["local"] = "ollama" },
+        new Dictionary<string, string>(),
+        fallbackToCloudIfNoLocal: true);
 }
