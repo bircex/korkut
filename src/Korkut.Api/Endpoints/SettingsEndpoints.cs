@@ -2,7 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Features.Settings;
 using Korkut.Application.Security;
+using Korkut.Domain.Settings;
 using Korkut.Infrastructure.Persistence;
 
 namespace Korkut.Api.Endpoints;
@@ -68,15 +70,15 @@ public static class SettingsEndpoints
     {
         var persona = app.MapGroup("/api/persona");
 
-        persona.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        persona.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var canEdit = user.HasPermission(Permissions.OfficeSettings);
-                var p = await user.InTenantScopeAsync(db, o => store.GetPersonaAsync(o, ct), ct);
+                var p = await user.InTenantScopeAsync(db, o => svc.GetPersonaAsync(o, ct), ct);
                 return Results.Ok(new PersonaResponse(p?.Tone ?? "", p?.Expertise ?? "", p?.ExtraRules ?? "", canEdit));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
-        persona.MapPut("", async (PersonaInput body, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        persona.MapPut("", async (PersonaInput body, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -84,7 +86,7 @@ public static class SettingsEndpoints
                     return invalid;
                 }
 
-                var p = await user.InTenantScopeAsync(db, o => store.UpsertPersonaAsync(o, body.Tone, body.Expertise, body.ExtraRules, ct), ct);
+                var p = await user.InTenantScopeAsync(db, o => svc.UpsertPersonaAsync(o, body.Tone, body.Expertise, body.ExtraRules, ct), ct);
                 return Results.Ok(new PersonaResponse(p.Tone, p.Expertise, p.ExtraRules, true));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
@@ -94,19 +96,19 @@ public static class SettingsEndpoints
     {
         var style = app.MapGroup("/api/style");
 
-        style.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        style.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var uid = user.UserId();
                 var canEditOffice = user.HasPermission(Permissions.OfficeSettings);
                 var (office, self) = await user.InTenantScopeAsync(db, async o =>
-                    (await store.GetStyleAsync(o, OfficeScope, Guid.Empty, ct), await store.GetStyleAsync(o, UserScope, uid, ct)), ct);
+                    (await svc.GetStyleAsync(o, OfficeScope, Guid.Empty, ct), await svc.GetStyleAsync(o, UserScope, uid, ct)), ct);
                 var effective = self.Over(office);
                 return Results.Ok(new StyleResponse(ToDto(office), ToDto(self), ToDto(effective), canEditOffice));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
         // A user edits their OWN style (any case-worker) — writes are scoped to their user id.
-        style.MapPut("/user", async (StyleFieldsDto body, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        style.MapPut("/user", async (StyleFieldsDto body, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -115,12 +117,12 @@ public static class SettingsEndpoints
                 }
 
                 var uid = user.UserId();
-                var saved = await user.InTenantScopeAsync(db, o => store.SaveStyleAsync(o, UserScope, uid, ToFields(body), ct), ct);
+                var saved = await user.InTenantScopeAsync(db, o => svc.SaveStyleAsync(o, UserScope, uid, ToFields(body), ct), ct);
                 return Results.Ok(ToDto(saved));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
-        style.MapPut("/office", async (StyleFieldsDto body, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        style.MapPut("/office", async (StyleFieldsDto body, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -128,7 +130,7 @@ public static class SettingsEndpoints
                     return invalid;
                 }
 
-                var saved = await user.InTenantScopeAsync(db, o => store.SaveStyleAsync(o, OfficeScope, Guid.Empty, ToFields(body), ct), ct);
+                var saved = await user.InTenantScopeAsync(db, o => svc.SaveStyleAsync(o, OfficeScope, Guid.Empty, ToFields(body), ct), ct);
                 return Results.Ok(ToDto(saved));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
@@ -138,15 +140,15 @@ public static class SettingsEndpoints
     {
         var memory = app.MapGroup("/api/memory");
 
-        memory.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        memory.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
-                var items = await user.InTenantScopeAsync(db, async o => (await store.ListMemoryAsync(o, ct)).Select(ToDto).ToList(), ct);
+                var items = await user.InTenantScopeAsync(db, async o => (await svc.ListMemoryAsync(o, ct)).Select(ToDto).ToList(), ct);
                 return Results.Ok(new MemoryListResponse(items));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
         // Any case-worker can propose a memory; owners' items land active, members' pending.
-        memory.MapPost("", async (MemoryCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        memory.MapPost("", async (MemoryCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -156,21 +158,21 @@ public static class SettingsEndpoints
 
                 var uid = user.UserId();
                 var active = user.HasPermission(Permissions.OfficeSettings);
-                var created = await user.InTenantScopeAsync(db, o => store.AddMemoryAsync(o, body.Text!.Trim(), body.Kind, uid, active, ct), ct);
+                var created = await user.InTenantScopeAsync(db, o => svc.AddMemoryAsync(o, body.Text!.Trim(), body.Kind, uid, active, ct), ct);
                 return Results.Created($"/api/memory/{created.Id}", ToDto(created));
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        memory.MapPost("/{id:guid}/approve", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        memory.MapPost("/{id:guid}/approve", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
-                var approved = await user.InTenantScopeAsync(db, o => store.ApproveMemoryAsync(o, id, ct), ct);
+                var approved = await user.InTenantScopeAsync(db, o => svc.ApproveMemoryAsync(o, id, ct), ct);
                 return approved is null ? throw ApiException.NotFound("Not bulunamadı.") : Results.Ok(ToDto(approved));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
 
-        memory.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, OfficeSettingsStore store, CancellationToken ct) =>
+        memory.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IOfficeSettingsService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.DeleteMemoryAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.DeleteMemoryAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Not bulunamadı.");
             })
             .RequireAuthorization(Permissions.OfficeSettings);
@@ -181,5 +183,5 @@ public static class SettingsEndpoints
     private static StyleFields ToFields(StyleFieldsDto d) =>
         new(d.Letterhead ?? "", d.Signature ?? "", d.Tone ?? "", d.Boilerplate ?? "");
 
-    private static MemoryItemResponse ToDto(OfficeSettingsStore.MemoryView m) => new(m.Id, m.Kind, m.Text, m.Status, m.Author, m.CreatedAt);
+    private static MemoryItemResponse ToDto(MemoryItem m) => new(m.Id, m.Kind, m.Text, m.Status, m.Author, m.CreatedAt);
 }
