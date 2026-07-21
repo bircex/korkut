@@ -252,17 +252,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Configurations.InvoiceConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.ExpenseConfiguration());
 
-        modelBuilder.Entity<CorrespondenceEntity>(b =>
-        {
-            b.ToTable("correspondence");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Direction).HasMaxLength(20);
-            b.Property(x => x.Title).HasMaxLength(500);
-            b.Property(x => x.ReferenceNo).HasMaxLength(100);
-            b.Property(x => x.Notes).HasMaxLength(2000);
-            b.HasIndex(x => new { x.OfficeId, x.Direction }).HasDatabaseName("ix_correspondence_office_direction");
-        });
+        modelBuilder.ApplyConfiguration(new Configurations.CorrespondenceConfiguration());
 
         modelBuilder.Entity<CalendarEventEntity>(b =>
         {

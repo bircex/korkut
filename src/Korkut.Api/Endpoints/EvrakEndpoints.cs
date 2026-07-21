@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Features.Correspondence;
 using Korkut.Application.Security;
+using Korkut.Domain.Correspondence;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 
 namespace Korkut.Api.Endpoints;
 
@@ -41,11 +42,11 @@ public static class EvrakEndpoints
     {
         var evrak = app.MapGroup("/api/evrak");
 
-        evrak.MapGet("", async (string? direction, ClaimsPrincipal user, KorkutDbContext db, CorrespondenceStore store, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db, async o => (await store.ListAsync(o, direction, ct)).Select(ToDto).ToList(), ct)))
+        evrak.MapGet("", async (string? direction, ClaimsPrincipal user, KorkutDbContext db, ICorrespondenceService svc, CancellationToken ct) =>
+            Results.Ok(await user.InTenantScopeAsync(db, async o => (await svc.ListAsync(o, direction, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.MattersRead);
 
-        evrak.MapPost("", async (EvrakCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, CorrespondenceStore store, CancellationToken ct) =>
+        evrak.MapPost("", async (EvrakCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, ICorrespondenceService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -53,18 +54,15 @@ public static class EvrakEndpoints
                     return invalid;
                 }
 
-                var created = await user.InTenantScopeAsync(db, async o =>
-                {
-                    var id = await store.CreateAsync(o, body.Direction!, body.Title!.Trim(), body.ReferenceNo?.Trim(), body.DocDate, body.MatterId, body.Notes?.Trim(), ct);
-                    return await store.GetAsync(o, id, ct);
-                }, ct);
-                return Results.Created($"/api/evrak/{created!.Id}", ToDto(created));
+                var created = await user.InTenantScopeAsync(db, o =>
+                    svc.CreateAsync(o, body.Direction!, body.Title!.Trim(), body.ReferenceNo?.Trim(), body.DocDate, body.MatterId, body.Notes?.Trim(), ct), ct);
+                return Results.Created($"/api/evrak/{created.Id}", ToDto(created));
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        evrak.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, CorrespondenceStore store, CancellationToken ct) =>
+        evrak.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, ICorrespondenceService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.DeleteAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.DeleteAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Evrak kaydı bulunamadı.");
             })
             .RequireAuthorization(Permissions.MattersWrite);
@@ -72,6 +70,6 @@ public static class EvrakEndpoints
         return app;
     }
 
-    private static EvrakResponse ToDto(CorrespondenceEntity c) =>
+    private static EvrakResponse ToDto(CorrespondenceItem c) =>
         new(c.Id, c.MatterId, c.Direction, c.Title, c.ReferenceNo, c.DocDate, c.Notes, c.CreatedAt);
 }
