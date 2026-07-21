@@ -48,7 +48,9 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IOfficeSettingsRepository, Korkut.Infrastructure.Persistence.Repositories.OfficeSettingsRepository>();
         services.AddScoped<Korkut.Application.Features.Settings.IOfficeSettingsService, Korkut.Application.Features.Settings.OfficeSettingsService>();
         services.AddScoped<ReportsStore>();
-        services.AddScoped<ChannelStore>();
+        // Channels (Clean Architecture: repository port + service; secrets encrypted in the adapter).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IChannelRepository, Korkut.Infrastructure.Persistence.Repositories.ChannelRepository>();
+        services.AddScoped<Korkut.Application.Features.Channels.IChannelService, Korkut.Application.Features.Channels.ChannelService>();
         services.AddScoped<TemplateOverrideStore>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<OutboxStore>();
