@@ -1,4 +1,5 @@
 using Korkut.Infrastructure.Persistence;
+using Korkut.Infrastructure.Persistence.Agent;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
@@ -36,12 +37,34 @@ public sealed class PostgresFixture : IAsyncLifetime
         return new KorkutDbContext(options);
     }
 
+    /// <summary>An Agent-DB context (schema korkut_agent) as the superuser.</summary>
+    public AgentDbContext NewAgentContext() => NewAgentContext(ConnectionString);
+
+    /// <summary>An Agent-DB context connected as the least-privileged app role (subject to RLS).</summary>
+    public AgentDbContext NewAgentAppContext() => NewAgentContext(AppConnectionString);
+
+    private static AgentDbContext NewAgentContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<AgentDbContext>()
+            .UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.AgentSchema))
+            .Options;
+        return new AgentDbContext(options);
+    }
+
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
         ConnectionString = _container.GetConnectionString();
         await using var db = NewContext();
         await db.Database.MigrateAsync();
+
+        // The Agent DB shares this container (schema korkut_agent, own migration chain);
+        // apply it AFTER the operational schema so korkut_app already exists to grant to.
+        await using (var agent = NewAgentContext())
+        {
+            await agent.Database.MigrateAsync();
+        }
 
         // The migration creates korkut_app NOLOGIN; provision a test-only login so we
         // can connect AS the non-superuser app role (RLS is bypassed by superusers).
@@ -69,6 +92,15 @@ public sealed class PostgresFixture : IAsyncLifetime
             "TRUNCATE korkut.outbox_messages, korkut.inbox_entries, korkut.job_audit, " +
             "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events, korkut.users, korkut.password_reset_tokens, korkut.user_totp, korkut.recovery_codes, korkut.refresh_tokens, korkut.office_custom_roles, korkut.clients, korkut.courts, korkut.parties, korkut.tasks, korkut.deadlines, korkut.communication_notes, korkut.document_extractions, korkut.document_relations, korkut.invites, korkut.documents " +
             "RESTART IDENTITY CASCADE");
+    }
+
+    /// <summary>Truncate the Agent-DB tables so each agent test starts clean.</summary>
+    public async Task ResetAgentAsync()
+    {
+        await using var db = NewAgentContext();
+        await db.Database.ExecuteSqlRawAsync(
+            "TRUNCATE korkut_agent.chat_messages, korkut_agent.conversations, " +
+            "korkut_agent.document_versions, korkut_agent.generated_documents RESTART IDENTITY CASCADE");
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();

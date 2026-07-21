@@ -243,43 +243,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("channels", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ChatMessageEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("conversation_id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("role");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "ConversationId", "CreatedAt")
-                        .HasDatabaseName("ix_chat_messages_conversation");
-
-                    b.ToTable("chat_messages", "korkut");
-                });
-
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ClientEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -371,46 +334,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_comm_notes_office_matter");
 
                     b.ToTable("communication_notes", "korkut");
-                });
-
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ConversationEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<Guid?>("MatterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("matter_id");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "UpdatedAt")
-                        .HasDatabaseName("ix_conversations_office_updated");
-
-                    b.ToTable("conversations", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.CorrespondenceEntity", b =>
@@ -756,47 +679,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("document_relations", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentVersionEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Author")
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)")
-                        .HasColumnName("author");
-
-                    b.Property<string>("ContentMd")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content_md");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("document_id");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("note");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "DocumentId", "CreatedAt")
-                        .HasDatabaseName("ix_document_versions_document");
-
-                    b.ToTable("document_versions", "korkut");
-                });
-
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ExpenseEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -843,66 +725,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_expenses_office_spent");
 
                     b.ToTable("expenses", "korkut");
-                });
-
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.GeneratedDocumentEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ContentMd")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content_md");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("conversation_id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("PendingContentMd")
-                        .HasColumnType("text")
-                        .HasColumnName("pending_content_md");
-
-                    b.Property<Guid?>("PendingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("pending_id");
-
-                    b.Property<string>("PendingSummary")
-                        .HasColumnType("text")
-                        .HasColumnName("pending_summary");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "ConversationId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_generated_documents_conversation");
-
-                    b.ToTable("generated_documents", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.InboxEntity", b =>

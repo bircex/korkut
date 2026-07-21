@@ -11,7 +11,7 @@ namespace Korkut.Infrastructure.Persistence.Repositories;
 /// (or a direct save) snapshots an immutable <c>document_versions</c> row. Tenant context is
 /// set by the caller (RLS).
 /// </summary>
-public sealed class DraftDocumentRepository(KorkutDbContext db) : IDraftDocumentRepository
+public sealed class DraftDocumentRepository(Agent.AgentDbContext db) : IDraftDocumentRepository
 {
     public async Task<GeneratedDocument> GetOrCreateForSessionAsync(Guid officeId, Guid conversationId, string title, DateTimeOffset now, CancellationToken ct = default)
     {

@@ -43,11 +43,9 @@ public static class TenantMatrix
             ["memory_items"] = (1, 2),
             ["channels"] = (1, 1), // one channel row per office (seeded once)
             ["template_overrides"] = (1, 2),
-            ["conversations"] = (1, 2),
-            ["chat_messages"] = (1, 2),
             ["outbound_messages"] = (1, 2),
-            ["generated_documents"] = (1, 2),
-            ["document_versions"] = (1, 2),
+            // conversations / chat_messages / generated_documents / document_versions moved
+            // to the Agent DB (schema korkut_agent) — covered by AgentTenantIsolationTests.
         };
 
     public static TheoryData<string> TableNames()

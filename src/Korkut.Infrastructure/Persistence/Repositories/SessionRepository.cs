@@ -11,7 +11,7 @@ namespace Korkut.Infrastructure.Persistence.Repositories;
 /// conversations.updated_at, bumped whenever a message is appended. Tenant context is set
 /// by the caller (RLS).
 /// </summary>
-public sealed class SessionRepository(KorkutDbContext db) : ISessionRepository
+public sealed class SessionRepository(Agent.AgentDbContext db) : ISessionRepository
 {
     public async Task<Guid> CreateAsync(Guid officeId, Guid createdBy, Guid? matterId, DateTimeOffset now, CancellationToken ct = default)
     {
@@ -40,15 +40,14 @@ public sealed class SessionRepository(KorkutDbContext db) : ISessionRepository
     {
         var baseQuery = db.Conversations.AsNoTracking().Where(x => x.OfficeId == officeId);
         var total = await baseQuery.CountAsync(ct);
-        var page = await baseQuery.OrderByDescending(x => x.UpdatedAt).Skip(offset).Take(limit).ToListAsync(ct);
-        return (await ToBriefsAsync(page, ct), total);
+        var page = await baseQuery.OrderByDescending(x => x.UpdatedAt).Skip(offset).Take(limit)
+            .Select(ToBrief).ToListAsync(ct);
+        return (page, total);
     }
 
     public async Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default)
-    {
-        var c = await db.Conversations.AsNoTracking().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == id, ct);
-        return c is null ? null : (await ToBriefsAsync([c], ct))[0];
-    }
+        => await db.Conversations.AsNoTracking()
+            .Where(x => x.OfficeId == officeId && x.Id == id).Select(ToBrief).SingleOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<ChatTurn>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
         => await db.ChatMessages.AsNoTracking()
@@ -118,16 +117,8 @@ public sealed class SessionRepository(KorkutDbContext db) : ISessionRepository
     private static Conversation ToDomain(ConversationEntity c) =>
         new(c.Id, c.OfficeId, c.Title, c.MatterId, c.CreatedBy, c.CreatedAt, c.UpdatedAt);
 
-    private async Task<IReadOnlyList<SessionBrief>> ToBriefsAsync(List<ConversationEntity> conversations, CancellationToken ct)
-    {
-        var authorIds = conversations.Where(c => c.CreatedBy != null).Select(c => c.CreatedBy!.Value).Distinct().ToList();
-        var names = authorIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await db.Users.AsNoTracking().Where(u => authorIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.Email, ct);
-
-        return conversations.Select(c => new SessionBrief(
-            c.Id, c.Title, c.MatterId,
-            c.CreatedBy != null && names.TryGetValue(c.CreatedBy.Value, out var n) ? n : null,
-            c.UpdatedAt)).ToList();
-    }
+    // Projected in-DB: the Agent DB never joins operational Users; the host resolves the
+    // author id to a display name via an operational lookup when building the response.
+    private static readonly System.Linq.Expressions.Expression<Func<ConversationEntity, SessionBrief>> ToBrief =
+        c => new SessionBrief(c.Id, c.Title, c.MatterId, c.CreatedBy, c.UpdatedAt);
 }
