@@ -94,6 +94,26 @@ public class KnowledgeEndpointTests(KorkutKnowledgeFactory factory)
     }
 
     [Fact]
+    public async Task Ingested_text_is_pii_masked_before_it_reaches_the_index()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+
+        // 10000000146 is a checksum-valid test TCKN.
+        var docId = Guid.CreateVersion7();
+        await client.PostAsJsonAsync("/ingest",
+            new { document_id = docId, text = "Müvekkil ahmet@ornek.com, TCKN 10000000146 ile başvurdu." }, Json);
+
+        // The vector index must never hold raw PII — the stored chunk text is masked.
+        await using var db = factory.KnowledgeOwnerContext();
+        var stored = string.Join(" ", await db.Chunks.AsNoTracking().Where(c => c.DocumentId == docId).Select(c => c.Text).ToListAsync());
+        Assert.NotEqual("", stored);
+        Assert.DoesNotContain("ahmet@ornek.com", stored);
+        Assert.DoesNotContain("10000000146", stored);
+        Assert.Contains("[[PII_", stored);
+    }
+
+    [Fact]
     public async Task One_office_never_searches_another_offices_index()
     {
         var (officeA, userA) = await factory.SeedOfficeAsync();

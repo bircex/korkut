@@ -1,6 +1,7 @@
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
 using Korkut.Infrastructure.Runtime;
+using Korkut.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -30,27 +31,33 @@ public static class AiSetup
         services.AddSingleton<ILocalModelProbe, LocalModelUnavailable>();
         services.AddSingleton<IModelRouter, ModelRouter>();
 
+        // Turkish PII redactor — used to mask cloud-bound chat requests (below) and, in the
+        // Knowledge host, to mask document text before it is indexed (legal-product requirement).
+        services.TryAddSingleton<IPiiRedactor, PiiRedactor>();
+
         // --- Chat providers, keyed by their model-routing.yaml token, registered only when
-        //     configured so the router never resolves an unwired provider. ---
+        //     configured so the router never resolves an unwired provider. Cloud providers are
+        //     wrapped so raw PII is masked before it leaves the office; local providers are not. ---
         services.AddHttpClient("ai");
 
         if (config.HasAnthropicKey)
         {
             services.AddHttpClient<AnthropicChatProvider>();
-            services.AddTransient<IChatProvider>(sp => sp.GetRequiredService<AnthropicChatProvider>());
+            services.AddTransient<IChatProvider>(sp => Cloud(sp, sp.GetRequiredService<AnthropicChatProvider>()));
         }
 
         if (config.HasOpenAiKey)
         {
-            services.AddTransient<IChatProvider>(sp => Compat(sp, "gpt", "https://api.openai.com/v1", "OPENAI_API_KEY"));
+            services.AddTransient<IChatProvider>(sp => Cloud(sp, Compat(sp, "gpt", "https://api.openai.com/v1", "OPENAI_API_KEY")));
         }
 
         if (config.HasGroqKey)
         {
-            services.AddTransient<IChatProvider>(sp => Compat(sp, "groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY"));
+            services.AddTransient<IChatProvider>(sp => Cloud(sp, Compat(sp, "groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY")));
         }
 
-        // Local (Ollama/vLLM) only when the operator opts in with a base URL.
+        // Local (Ollama/vLLM) only when the operator opts in with a base URL. NOT wrapped: an
+        // on-prem endpoint keeps the data in-office, so redaction would only cost fidelity.
         if (env.Get("KORKUT_OLLAMA_URL") is { Length: > 0 } ollamaUrl)
         {
             services.AddTransient<IChatProvider>(sp => Compat(sp, "ollama", ollamaUrl, apiKeyEnvVar: null));
@@ -82,6 +89,11 @@ public static class AiSetup
 
         return services;
     }
+
+    // Wrap a cloud provider so PII is masked before the request leaves the office and restored in
+    // the reply. Local providers skip this — their data never leaves the cluster.
+    private static RedactingChatProvider Cloud(IServiceProvider sp, IChatProvider inner) =>
+        new(inner, sp.GetRequiredService<IPiiRedactor>());
 
     private static OpenAiCompatibleChatProvider Compat(IServiceProvider sp, string name, string baseUrl, string? apiKeyEnvVar) =>
         new(sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),

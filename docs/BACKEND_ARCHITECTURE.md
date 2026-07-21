@@ -264,11 +264,12 @@ Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure
 ## Build roadmap (phased PRs; suite stays green)
 
 **Handoff status (2026-07-21):** the operational plane is COMPLETE, the **Agent host serves
-the interactive AI endpoints**, and the **Knowledge (RAG) service is live** — ingest + pgvector
-search, with the Agent grounding chat from it over HTTP. Everything through phase 5 is on
-`dotnet-migration`; the remaining AI work is OCR/PII/Gateway (phases 6-8) and the cross-cutting
-phases 9-11. Suite: Api 158, Agent 17, Knowledge 5, Infrastructure 153, Application 40,
-Architecture 5, Domain 17, all green (395 total).
+the interactive AI endpoints**, the **Knowledge (RAG) service is live** (ingest + pgvector search,
+Agent grounds chat over HTTP), and **PII redaction is in force** (cloud chat requests + the vector
+index are masked via `Korkut.Pii`). Everything through phase 7 is on `dotnet-migration`; the
+remaining AI work is OCR + Gateway (phases 6, 8) and the cross-cutting phases 9-11. Suite: Api 158,
+Agent 17, Knowledge 6, Pii 11, Infrastructure 155, Application 40, Architecture 6, Domain 17, all
+green (410 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -314,8 +315,15 @@ Architecture 5, Domain 17, all green (395 total).
 6. **OCR service** — `Korkut.Ocr` host + HTTP contract + text-extraction port, called by
    Knowledge ingestion only for text-less documents; one warm replica. **Real Tesseract is
    a native/deploy-time dependency** — scaffold + contract in code, binary at deploy.
-7. **PII library** — `Korkut.Pii` redaction (TR: TCKN, phone, email, IBAN) + restore, used
-   in-process by Agent (chat-time) and Knowledge (index-time); unit tests; PII-safe logging.
+7. ✅ **PII library** — `Korkut.Pii` (leaf lib, like SharedKernel; arch-tested leaf) redacts TR
+   PII (e-mail, TR IBAN, TCKN with checksum guard, phone requiring +90/0 or separators so bare
+   digit runs aren't swept) → stable `[[PII_KIND_n]]` placeholders + restore, with a shared
+   `IPiiRedactionScope` so the same value maps consistently across system + messages. **Agent
+   chat-time:** `RedactingChatProvider` decorates every CLOUD `IChatProvider` in `AiSetup` (masks
+   the request, restores the reply; streaming restored via a split-placeholder carry buffer); LOCAL
+   (ollama) providers are NOT wrapped. **Knowledge index-time:** `IngestionService` masks FIRST, so
+   the vector store never holds raw PII. Tests: `Korkut.Pii.Tests` 11, `RedactingChatProviderTests`
+   2, Knowledge PII-masking integration 1. PII-safe *logging* stays with observability (phase 9).
 8. **Gateway** — `Korkut.Gateway` (YARP): single public entry, JWT validate, path routing
    (agent routes → Agent, other `/api/**` → Api; Knowledge/Ocr internal), rate-limit/CORS/
    TLS, W3C `traceparent` propagation.
@@ -329,10 +337,9 @@ Architecture 5, Domain 17, all green (395 total).
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **7 (PII library)** is the highest-value next step —
-`Korkut.Pii` (TR: TCKN, phone, email, IBAN) redaction + restore, used in-process by the Agent
-(chat-time) and Knowledge (index-time). The ingestion pipeline already has the exact seam for it
-(`IngestionService`, between chunk and embed). Phase **6 (OCR)** is mostly a deploy-time native
+**Where the next agent should start:** phase **8 (Gateway)** — `Korkut.Gateway` (YARP) as the single
+public entry, JWT validate, path routing (agent routes → Agent, other `/api/**` → Api; Knowledge/Ocr
+internal), rate-limit/CORS/TLS, W3C `traceparent`. Phase **6 (OCR)** is mostly a deploy-time native
 dependency (scaffold + `ITextExtractor` contract in code, Tesseract binary at deploy). Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with

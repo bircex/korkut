@@ -4,6 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\Korkut.Pii\Korkut.Pii.csproj" />
     <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
   </ItemGroup>
 </Project>
