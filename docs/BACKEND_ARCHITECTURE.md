@@ -263,14 +263,14 @@ Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure
 
 ## Build roadmap (phased PRs; suite stays green)
 
-**Handoff status (2026-07-21):** the operational plane is COMPLETE, the **Agent host serves
-the interactive AI endpoints**, the **Knowledge (RAG) service is live** (ingest + pgvector search,
-Agent grounds chat over HTTP), **PII redaction is in force** (cloud chat requests + the vector
-index are masked via `Korkut.Pii`), and the **Gateway (YARP) is the single public entry** (edge
-auth + path routing to Agent/Api, Knowledge/OCR internal). Phases 4c-2, 5, 7, 8 are on
-`dotnet-migration`; the remaining work is OCR (phase 6) and the cross-cutting phases 9-11. Suite:
-Api 158, Agent 17, Knowledge 6, Pii 11, Gateway 6, Infrastructure 155, Application 40,
-Architecture 6, Domain 17, all green (416 total).
+**Handoff status (2026-07-21):** the operational plane is COMPLETE and the **entire AI-plane host
+topology is now in place** — Agent (interactive endpoints), Knowledge (RAG: ingest + pgvector
+search, Agent grounds chat over HTTP), PII redaction (`Korkut.Pii` masks cloud chat + the vector
+index), Gateway (YARP single public entry), and OCR (`Korkut.Ocr` on-demand scaffold; real
+Tesseract at deploy). Phases 4c-2, 5, 6, 7, 8 are on `dotnet-migration`; the remaining work is the
+cross-cutting phases 9-11 (observability / governance / deploy). Suite: Api 158, Agent 17,
+Knowledge 6, Pii 11, Gateway 6, Ocr 5, Infrastructure 155, Application 40, Architecture 6,
+Domain 17, all green (421 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -313,9 +313,14 @@ Architecture 6, Domain 17, all green (416 total).
    **Remaining wire-up:** automatic indexing on document upload — a `document.index` outbox handler
    (the `DocumentIndexEvent` + `IndexOutboxService` signal already exists) reading `DocumentExtractionEntity`
    spans → `/ingest`; deferred with the Worker's EfOutboxStore adoption. Today `/ingest` is the seam.
-6. **OCR service** — `Korkut.Ocr` host + HTTP contract + text-extraction port, called by
-   Knowledge ingestion only for text-less documents; one warm replica. **Real Tesseract is
-   a native/deploy-time dependency** — scaffold + contract in code, binary at deploy.
+6. ✅ **OCR service** — `Korkut.Ocr` host + `POST /extract` (multipart → `{text, pages}`), guarded
+   by matters.read, internal-only (never routed by the gateway), stateless (no DB). Text-extraction
+   port `IOcrEngine` (Application/Documents) + `DisabledOcrEngine` scaffold (reports unavailable →
+   503) registered via `TryAdd` so a real adapter overrides it. **Real Tesseract is a native/
+   deploy-time dependency** — `Dockerfile.ocr` documents the non-chiseled-base + `apt-get
+   tesseract-ocr` swap. Tests: `Korkut.Ocr.Tests` with a fake engine (extract text, missing-file
+   400, anon 401, health) + the scaffold path (503) = 5. The Knowledge-calls-OCR-for-text-less-docs
+   call site lands with the deferred document-indexing pipeline (see phase 5's remaining wire-up).
 7. ✅ **PII library** — `Korkut.Pii` (leaf lib, like SharedKernel; arch-tested leaf) redacts TR
    PII (e-mail, TR IBAN, TCKN with checksum guard, phone requiring +90/0 or separators so bare
    digit runs aren't swept) → stable `[[PII_KIND_n]]` placeholders + restore, with a shared
@@ -345,11 +350,12 @@ Architecture 6, Domain 17, all green (416 total).
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **6 (OCR)** — `Korkut.Ocr` host + HTTP contract +
-text-extraction port, called by Knowledge ingestion only for text-less documents; real Tesseract is
-a native/deploy-time dependency (scaffold + contract in code, binary at deploy). Then the
-cross-cutting phases **9 (observability: per-LLM-call spans + `llm_calls` cost table + PII-safe
-logging), 10 (versioning/governance), 11 (deploy)**. Reference
+**Where the next agent should start:** phase **9 (observability)** — per-LLM-call spans
+(provider/model/tokens/cost/office) + an `llm_calls` cost table in the Agent DB; self-hosted
+backend (LGTM or Seq); health aggregation; verify no PII in logs. The `ChatUsage` seam already
+travels on every `ChatReply`/`ChatStreamEvent` for this. Then **10 (versioning/governance:
+prompt/model/embedding-version stamping, per-office token budget + concurrency cap, retry/backoff/
+circuit-breaker)** and **11 (deploy: compose + the observability stack)**. Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
 its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.

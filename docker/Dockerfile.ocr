@@ -1,0 +1,36 @@
+# KDM-009 — Korkut.Ocr image (the heavy, rare, on-demand OCR host).
+# Multi-stage: SDK builds/publishes; the final image is a chiseled ASP.NET runtime
+# (no shell, non-root 'app'). Base images pinned by digest. Build context is the repo root.
+#
+# NOTE: this ships the in-code OCR SCAFFOLD (DisabledOcrEngine → 503). The REAL engine
+# (Tesseract) is a NATIVE deploy-time dependency: to enable it, switch the final stage to a
+# non-chiseled base (e.g. mcr.microsoft.com/dotnet/aspnet:10.0-noble) and
+#   RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-tur poppler-utils
+# then register the real IOcrEngine adapter (TryAdd is overridden by the concrete registration).
+
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0.102@sha256:6ba533cc61a5d8c5e7d4b3a3e33e2ddc2efef200b112e4d658303516bfd24255 AS build
+WORKDIR /src
+
+# Restore with only the project graph + central config (better layer caching).
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY src/ ./src/
+RUN dotnet restore src/Korkut.Ocr/Korkut.Ocr.csproj
+RUN dotnet publish src/Korkut.Ocr/Korkut.Ocr.csproj \
+    -c Release -o /app --no-restore /p:UseAppHost=false
+
+# Final stage — chiseled, non-root, minimal (scaffold engine needs no native deps).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled@sha256:70d6f993bf715a031f027832a19cfb7f894df66c8b5eb40be0aaee820ad5d119 AS final
+WORKDIR /app
+COPY --from=build /app ./
+
+# Bind on 8080 (non-privileged). Runtime config comes from the environment (KORKUT_SECRET).
+ENV ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_EnableDiagnostics=0
+EXPOSE 8080
+
+# Runs as the chiseled 'app' user (UID 1654) — never root.
+USER app
+
+# Liveness/readiness via /health/live and /health/ready, probed by the orchestrator.
+ENTRYPOINT ["dotnet", "Korkut.Ocr.dll"]

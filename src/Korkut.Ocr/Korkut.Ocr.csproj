@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Shared libraries. No DB: OCR is a stateless byte→text transform. -->
+    <ProjectReference Include="..\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+    <ProjectReference Include="..\Korkut.Web\Korkut.Web.csproj" />
+  </ItemGroup>
+</Project>
