@@ -19,7 +19,8 @@ public sealed class EfLlmCallLog(AgentDbContext db, IClock clock) : ILlmCallLog
 {
     private static readonly ActivitySource Source = new(ObservabilitySetup.ActivitySourceName);
 
-    public async Task RecordAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, CancellationToken ct = default)
+    public async Task RecordAsync(
+        Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default)
     {
         var cost = ModelPricing.Cost(usage.ModelId, usage.PromptTokens, usage.CompletionTokens);
 
@@ -29,6 +30,7 @@ public sealed class EfLlmCallLog(AgentDbContext db, IClock clock) : ILlmCallLog
             {
                 span.SetTag("provider", usage.Provider);
                 span.SetTag("model_id", usage.ModelId);
+                span.SetTag("prompt_fingerprint", promptFingerprint);
                 span.SetTag("prompt_tokens", usage.PromptTokens);
                 span.SetTag("completion_tokens", usage.CompletionTokens);
                 span.SetTag("cost", (double)cost);
@@ -45,6 +47,7 @@ public sealed class EfLlmCallLog(AgentDbContext db, IClock clock) : ILlmCallLog
             Feature = feature,
             Provider = usage.Provider,
             ModelId = usage.ModelId,
+            PromptFingerprint = promptFingerprint,
             PromptTokens = usage.PromptTokens,
             CompletionTokens = usage.CompletionTokens,
             Cost = cost,

@@ -17,7 +17,8 @@ public sealed record DraftResult(Guid PendingId, string ContentMd, string Summar
 /// full updated markdown, and stages it as a pending edit for human accept/revert.
 /// </summary>
 public sealed class DraftingService(
-    IDraftDocumentService documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModel llm, ILlmCallLog callLog)
+    IDraftDocumentService documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModel llm,
+    ILlmCallLog callLog, IUsageGovernor governor)
 {
     public async Task<DraftResult?> DraftAsync(
         Guid officeId, Guid userId, Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
@@ -43,13 +44,14 @@ public sealed class DraftingService(
         prompt.AppendLine(string.IsNullOrWhiteSpace(baseContent) ? "(boş)" : baseContent);
         prompt.AppendLine().AppendLine("--- Talimat ---").AppendLine(instruction);
 
+        await using var governed = await governor.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await llm.CompleteAsync(
             new ChatRequest(system, [new ChatMessage("user", prompt.ToString())], ModelSpecialty.Petition, MaxTokens: 8000), ct);
         timer.Stop();
         try
         {
-            await callLog.RecordAsync(officeId, LlmFeature.Drafting, reply.Usage, timer.Elapsed, ct);
+            await callLog.RecordAsync(officeId, LlmFeature.Drafting, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {

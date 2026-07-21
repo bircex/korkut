@@ -100,10 +100,44 @@ public class SessionEndpointTests(KorkutAgentFactory factory)
         var id = created.GetProperty("id").GetGuid();
         await client.PostAsJsonAsync($"/api/sessions/{id}/chat", new { text = "Merhaba" }, Json);
 
-        // The model call's provider/model/tokens landed in the Agent DB cost ledger, office-scoped.
+        // The model call's provider/model/tokens landed in the Agent DB cost ledger, office-scoped,
+        // stamped with a prompt fingerprint (governance/versioning).
         await using var db = factory.AgentOwnerContext();
         var calls = await db.LlmCalls.AsNoTracking().Where(c => c.OfficeId == office).ToListAsync();
-        Assert.Contains(calls, c => c.Feature == "chat" && c.Provider == "fake" && c.PromptTokens == 12 && c.CompletionTokens == 34);
+        Assert.Contains(calls, c => c.Feature == "chat" && c.Provider == "fake"
+            && c.PromptTokens == 12 && c.CompletionTokens == 34 && !string.IsNullOrEmpty(c.PromptFingerprint));
+    }
+
+    [Fact]
+    public async Task A_chat_is_rejected_when_the_office_token_budget_is_exhausted()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+
+        // Pre-seed usage well over a tiny budget (owner context bypasses RLS).
+        await using (var seed = factory.AgentOwnerContext())
+        {
+            seed.LlmCalls.Add(new Korkut.Infrastructure.Persistence.Entities.LlmCallEntity
+            {
+                Id = Guid.CreateVersion7(), OfficeId = office, Feature = "chat", Provider = "fake", ModelId = "fake-model",
+                PromptFingerprint = "seed", PromptTokens = 1000, CompletionTokens = 1000, Cost = 0m, LatencyMs = 1,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await seed.SaveChangesAsync();
+        }
+
+        Environment.SetEnvironmentVariable("KORKUT_OFFICE_TOKEN_BUDGET", "100");
+        try
+        {
+            var client = factory.ClientFor(office, user);
+            var created = await (await client.PostAsync("/api/sessions", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+            var id = created.GetProperty("id").GetGuid();
+            var res = await client.PostAsJsonAsync($"/api/sessions/{id}/chat", new { text = "Merhaba" }, Json);
+            Assert.Equal(HttpStatusCode.TooManyRequests, res.StatusCode);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("KORKUT_OFFICE_TOKEN_BUDGET", null);
+        }
     }
 
     [Fact]

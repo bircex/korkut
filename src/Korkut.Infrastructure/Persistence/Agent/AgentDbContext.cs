@@ -73,6 +73,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
             b.Property(x => x.Feature).HasMaxLength(40);
             b.Property(x => x.Provider).HasMaxLength(40);
             b.Property(x => x.ModelId).HasMaxLength(120);
+            b.Property(x => x.PromptFingerprint).HasMaxLength(32);
             b.Property(x => x.Cost).HasColumnType("numeric(12,6)");
             b.HasIndex(x => new { x.OfficeId, x.CreatedAt }).HasDatabaseName("ix_llm_calls_office_created");
         });

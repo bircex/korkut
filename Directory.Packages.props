@@ -20,7 +20,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <!-- Worker host -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.10" />
+    <!-- Governance (Phase 10): retry/backoff + circuit-breaker around provider rate limits -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
     <!-- Gateway (Phase 8): YARP reverse proxy -->
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- API foundation (KDM-006) -->

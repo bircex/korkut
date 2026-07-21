@@ -18,6 +18,9 @@ public sealed class LlmCallEntity : ITenantOwned
 
     public string ModelId { get; set; } = string.Empty;
 
+    /// <summary>Fingerprint of the composed prompt (principle 9) — ties a call to a prompt version.</summary>
+    public string PromptFingerprint { get; set; } = string.Empty;
+
     public int PromptTokens { get; set; }
 
     public int CompletionTokens { get; set; }

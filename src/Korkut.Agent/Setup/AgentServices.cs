@@ -39,6 +39,11 @@ public static class AgentServices
         // Per-model-call cost/telemetry ledger (llm_calls in the Agent DB) + a first-class span.
         services.AddScoped<Korkut.Application.Ai.ILlmCallLog, EfLlmCallLog>();
 
+        // Governance: per-office token budget (from the ledger) + concurrency cap. The gate holds
+        // the per-office semaphores process-wide (singleton); the governor reads the ledger (scoped).
+        services.AddSingleton<OfficeConcurrencyGate>();
+        services.AddScoped<Korkut.Application.Ai.IUsageGovernor, UsageGovernor>();
+
         // AI orchestration over the model (IChatModel from AddKorkutAi) + office settings.
         services.AddScoped<SessionChatService>();
         services.AddScoped<DraftingService>();

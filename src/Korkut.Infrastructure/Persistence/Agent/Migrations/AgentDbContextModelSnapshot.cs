@@ -239,6 +239,12 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("office_id");
 
+                    b.Property<string>("PromptFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("prompt_fingerprint");
+
                     b.Property<int>("PromptTokens")
                         .HasColumnType("integer")
                         .HasColumnName("prompt_tokens");

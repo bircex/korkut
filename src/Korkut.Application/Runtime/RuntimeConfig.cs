@@ -37,6 +37,13 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public bool HasEmbedding => !string.IsNullOrWhiteSpace(EmbeddingBaseUrl);
 
+    // --- Governance (Phase 10): per-office model-usage limits. 0/unset = unlimited. ---
+    /// <summary>Per-office token budget per calendar month (prompt + completion); 0 = unlimited.</summary>
+    public int OfficeTokenBudget => ParseInt(env.Get("KORKUT_OFFICE_TOKEN_BUDGET"), 0);
+
+    /// <summary>Max concurrent in-flight model calls per office (per replica); 0 = unlimited.</summary>
+    public int OfficeConcurrency => ParseInt(env.Get("KORKUT_OFFICE_CONCURRENCY"), 0);
+
     // --- Key PRESENCE only — never the value. Consumed by the vendor SDKs from env. ---
     public bool HasAnthropicKey => IsSet("ANTHROPIC_API_KEY");
 

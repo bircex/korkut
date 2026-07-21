@@ -268,10 +268,10 @@ topology is now in place** — Agent (interactive endpoints), Knowledge (RAG: in
 search, Agent grounds chat over HTTP), PII redaction (`Korkut.Pii` masks cloud chat + the vector
 index), Gateway (YARP single public entry), and OCR (`Korkut.Ocr` on-demand scaffold; real
 Tesseract at deploy). Phases 4c-2, 5, 6, 7, 8 are on `dotnet-migration`; the remaining work is the
-cross-cutting phases 10-11 (governance / deploy); phase 9's code (per-LLM-call `llm_calls` ledger + spans) is
-done, with the observability backend + health aggregation deferred to deploy. Suite: Api 158,
-Agent 18, Knowledge 6, Pii 11, Gateway 6, Ocr 5, Infrastructure 155, Application 40,
-Architecture 6, Domain 17, all green (422 total).
+cross-cutting phase **11 (deploy)** only; every code phase (through 10) is done — phase 9's observability backend
++ health aggregation are the deploy-time remainder. Suite: Api 158, Agent 19, Knowledge 6, Pii 11,
+Gateway 6, Ocr 5, Infrastructure 155, Application 40, Architecture 6, Domain 17, all green
+(423 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -351,19 +351,27 @@ Architecture 6, Domain 17, all green (422 total).
    `llm_calls` row (fake usage 12/34); `AgentTenantIsolationTests` extended to prove `llm_calls`
    RLS. *Deploy-time:* the self-hosted backend (LGTM/Seq) + cross-host health aggregation land with
    phase 11.
-10. **Versioning & governance** — stamp prompt fingerprint + model id + `embedding_version`
-    into the LLM/RAG telemetry; per-office token budget + concurrency cap;
-    retry/backoff/circuit-breaker around provider rate limits.
+10. ✅ **Versioning & governance** — a **prompt fingerprint** (`PromptFingerprint.Of`, short SHA-256
+    of the composed system prompt) is stamped onto each `llm_calls` row + span, alongside the model
+    id (already) and `embedding_version` (already on chunks). Per-office **token budget** +
+    **concurrency cap** via `IUsageGovernor` → `UsageGovernor`: before each call it sums the office's
+    `llm_calls` tokens for the current month vs `KORKUT_OFFICE_TOKEN_BUDGET` (throws
+    `BudgetExceededException` → 429 via `ApiExceptionHandler`) and acquires a per-office semaphore
+    slot (`KORKUT_OFFICE_CONCURRENCY`, per replica; `OfficeConcurrencyGate` singleton). Both opt-in
+    (0 = unlimited). Provider **resilience**: a retry (exponential backoff + jitter) + circuit-breaker
+    handler on the AI HttpClients (`Microsoft.Extensions.Http.Resilience`) — deliberately NO short
+    attempt timeout, so long/streaming LLM calls aren't cut off. Wired into `SessionChatService` +
+    `DraftingService`. Tests: prompt-fingerprint on the ledger row; a chat is 429 when the budget is
+    exhausted.
 11. **Deploy** *(deploy-time config)* — docker-compose services + Dockerfiles
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **10 (versioning & governance)** — stamp the prompt
-fingerprint + model id + `embedding_version` into the telemetry; per-office **token budget +
-concurrency cap** enforced in the Agent (derived from the `llm_calls` ledger now in place);
-retry/backoff + circuit-breaker around provider rate limits. Then **11 (deploy: docker-compose for
-all hosts + three service DBs + PgBouncer + the LGTM/Seq observability stack + health aggregation)**.
-Reference
+**Where the next agent should start:** phase **11 (deploy)** — the only remaining phase, entirely
+deploy-time config: docker-compose for all hosts (gateway/api/agent/knowledge/ocr/worker/migrator)
++ the three service DBs + PgBouncer + the LGTM/Seq observability stack + cross-host health
+aggregation. Every host already has a `docker/Dockerfile.*` and reads its config from the
+environment. Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
 its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.

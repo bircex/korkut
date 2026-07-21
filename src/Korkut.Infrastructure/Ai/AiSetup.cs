@@ -4,6 +4,8 @@ using Korkut.Infrastructure.Runtime;
 using Korkut.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 namespace Korkut.Infrastructure.Ai;
 
@@ -38,11 +40,11 @@ public static class AiSetup
         // --- Chat providers, keyed by their model-routing.yaml token, registered only when
         //     configured so the router never resolves an unwired provider. Cloud providers are
         //     wrapped so raw PII is masked before it leaves the office; local providers are not. ---
-        services.AddHttpClient("ai");
+        services.AddHttpClient("ai").AddResilienceHandler("korkut-ai", Resilience);
 
         if (config.HasAnthropicKey)
         {
-            services.AddHttpClient<AnthropicChatProvider>();
+            services.AddHttpClient<AnthropicChatProvider>().AddResilienceHandler("korkut-anthropic", Resilience);
             services.AddTransient<IChatProvider>(sp => Cloud(sp, sp.GetRequiredService<AnthropicChatProvider>()));
         }
 
@@ -89,6 +91,19 @@ public static class AiSetup
 
         return services;
     }
+
+    // Retry (exponential backoff + jitter) + circuit-breaker around provider calls, so a rate-limit
+    // (429) or transient 5xx is retried and a failing provider trips the breaker instead of hammering
+    // it. Deliberately NO aggressive attempt timeout — LLM calls (incl. streaming) legitimately run
+    // for tens of seconds, so the standard handler's short timeouts would break them.
+    private static void Resilience(ResiliencePipelineBuilder<HttpResponseMessage> builder) => builder
+        .AddRetry(new HttpRetryStrategyOptions
+        {
+            MaxRetryAttempts = 3,
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+        })
+        .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions());
 
     // Wrap a cloud provider so PII is masked before the request leaves the office and restored in
     // the reply. Local providers skip this — their data never leaves the cluster.
