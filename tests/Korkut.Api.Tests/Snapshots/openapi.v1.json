@@ -664,6 +664,25 @@
         ],
         "type": "object"
       },
+      "MeUpdateRequest": {
+        "properties": {
+          "bar_registry_no": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "MemberCreateRequest": {
         "properties": {
           "email": {
@@ -2325,6 +2344,26 @@
     },
     "/api/me": {
       "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      },
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"

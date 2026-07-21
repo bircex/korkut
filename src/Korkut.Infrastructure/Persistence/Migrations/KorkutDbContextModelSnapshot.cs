@@ -1795,6 +1795,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BarRegistryNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bar_registry_no");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1808,6 +1813,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.Property<int>("FailedAccessCount")
                         .HasColumnType("integer")
                         .HasColumnName("failed_access_count");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("full_name");
 
                     b.Property<string>("GoogleSub")
                         .HasMaxLength(255)

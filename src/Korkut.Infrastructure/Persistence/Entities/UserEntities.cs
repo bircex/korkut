@@ -10,6 +10,12 @@ public sealed class UserEntity : ITenantOwned
     /// <summary>Normalized (trimmed, lower-cased) email — unique per office.</summary>
     public string Email { get; set; } = string.Empty;
 
+    /// <summary>Display name (Python parity: the person's full name).</summary>
+    public string? FullName { get; set; }
+
+    /// <summary>Bar registry number ("baro sicil no") — Python parity.</summary>
+    public string? BarRegistryNo { get; set; }
+
     /// <summary>Versioned PBKDF2 hash; null until a local password is set.</summary>
     public string? PasswordHash { get; set; }
 
