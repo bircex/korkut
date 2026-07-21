@@ -444,6 +444,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.Email).HasMaxLength(320);
+            b.Property(x => x.FullName).HasMaxLength(200);
+            b.Property(x => x.BarRegistryNo).HasMaxLength(50);
             b.Property(x => x.PasswordHash).HasMaxLength(400);
             b.Property(x => x.Role).HasMaxLength(50);
             b.Property(x => x.GoogleSub).HasMaxLength(255);

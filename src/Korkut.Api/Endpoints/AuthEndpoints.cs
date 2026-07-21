@@ -10,7 +10,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Endpoints;
 
-public sealed record MeResponse(string Username, string Email, string? FullName, string? Office, string Role);
+public sealed record MeResponse(string Username, string Email, string? FullName, string? BarRegistryNo, string? Office, string Role);
+
+public sealed record MeUpdateRequest
+{
+    [System.ComponentModel.DataAnnotations.MaxLength(200)]
+    public string? FullName { get; init; }
+
+    [System.ComponentModel.DataAnnotations.MaxLength(50)]
+    public string? BarRegistryNo { get; init; }
+}
 
 public sealed record LoginRequest
 {
@@ -68,7 +77,36 @@ public static class AuthEndpoints
                     }
 
                     var officeName = await db.Offices.AsNoTracking().Where(x => x.Id == office).Select(x => x.Name).SingleOrDefaultAsync(ct);
-                    return new MeResponse(u.Email, u.Email, null, officeName, u.Role);
+                    return new MeResponse(u.Email, u.Email, u.FullName, u.BarRegistryNo, officeName, u.Role);
+                }, ct);
+                return me is null ? throw ApiException.Unauthorized("Oturum bulunamadı.") : Results.Ok(me);
+            })
+            .RequireAuthorization();
+
+        // Update the caller's own profile (Python parity: updateMe).
+        app.MapPatch("/api/me", async (MeUpdateRequest body, ClaimsPrincipal user, KorkutDbContext db, CancellationToken ct) =>
+            {
+                var invalid = DtoValidation.Validate(body);
+                if (invalid is not null)
+                {
+                    return invalid;
+                }
+
+                var me = await user.InTenantScopeAsync(db, async office =>
+                {
+                    var uid = user.UserId();
+                    var affected = await db.Users.Where(x => x.OfficeId == office && x.Id == uid)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(x => x.FullName, body.FullName)
+                            .SetProperty(x => x.BarRegistryNo, body.BarRegistryNo), ct);
+                    if (affected == 0)
+                    {
+                        return null;
+                    }
+
+                    var u = await db.Users.AsNoTracking().SingleAsync(x => x.OfficeId == office && x.Id == uid, ct);
+                    var officeName = await db.Offices.AsNoTracking().Where(x => x.Id == office).Select(x => x.Name).SingleOrDefaultAsync(ct);
+                    return new MeResponse(u.Email, u.Email, u.FullName, u.BarRegistryNo, officeName, u.Role);
                 }, ct);
                 return me is null ? throw ApiException.Unauthorized("Oturum bulunamadı.") : Results.Ok(me);
             })
