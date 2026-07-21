@@ -51,7 +51,9 @@ public static class DomainSetup
         // Channels (Clean Architecture: repository port + service; secrets encrypted in the adapter).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IChannelRepository, Korkut.Infrastructure.Persistence.Repositories.ChannelRepository>();
         services.AddScoped<Korkut.Application.Features.Channels.IChannelService, Korkut.Application.Features.Channels.ChannelService>();
-        services.AddScoped<TemplateOverrideStore>();
+        // Template overrides (Clean Architecture: repository port + service).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.ITemplateOverrideRepository, Korkut.Infrastructure.Persistence.Repositories.TemplateOverrideRepository>();
+        services.AddScoped<Korkut.Application.Features.Templates.ITemplateOverrideService, Korkut.Application.Features.Templates.TemplateOverrideService>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<OutboxStore>();
         // Members (Clean Architecture: repository port + service; owner-safety in the service).
