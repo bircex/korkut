@@ -89,6 +89,51 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
     }
 
     [Fact]
+    public async Task Adding_a_hearing_surfaces_it_in_the_matter_detail()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+
+        var matterId = (await (await client.PostAsJsonAsync("/api/matters", new { title = "Duruşmalı Dosya" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        // Add a hearing (date required, time optional).
+        var add = await client.PostAsJsonAsync($"/api/matters/{matterId}/hearings",
+            new { date = "2026-09-15", time = "10:30:00", type = "Ön inceleme", location = "Ankara Adliyesi" });
+        Assert.Equal(HttpStatusCode.Created, add.StatusCode);
+        var hearing = await add.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Ön inceleme", hearing.GetProperty("type").GetString());
+        Assert.Equal("pending", hearing.GetProperty("reminder_status").GetString());
+
+        // The matter detail now lists it.
+        var detail = await client.GetFromJsonAsync<JsonElement>($"/api/matters/{matterId}");
+        var hearings = detail.GetProperty("hearings");
+        Assert.Equal(1, hearings.GetArrayLength());
+        Assert.Equal("Ankara Adliyesi", hearings[0].GetProperty("location").GetString());
+        Assert.Contains("2026-09-15T10:30", hearings[0].GetProperty("scheduled_at").GetString());
+    }
+
+    [Fact]
+    public async Task Adding_a_hearing_to_a_missing_matter_is_404()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+        var resp = await client.PostAsJsonAsync($"/api/matters/{Guid.CreateVersion7()}/hearings", new { date = "2026-09-15" });
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_hearing_without_a_date_is_422()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+        var matterId = (await (await client.PostAsJsonAsync("/api/matters", new { title = "D" }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var resp = await client.PostAsJsonAsync($"/api/matters/{matterId}/hearings", new { type = "Duruşma" });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, resp.StatusCode);
+    }
+
+    [Fact]
     public async Task Unauthenticated_requests_are_rejected()
     {
         var anon = factory.CreateClient();

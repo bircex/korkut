@@ -1164,17 +1164,43 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Location")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("location");
+
                     b.Property<Guid>("MatterId")
                         .HasColumnType("uuid")
                         .HasColumnName("matter_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
 
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid")
                         .HasColumnName("office_id");
 
+                    b.Property<string>("ReminderStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reminder_status");
+
+                    b.Property<string>("Result")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("result");
+
                     b.Property<DateTimeOffset>("ScheduledAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("scheduled_at");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type");
 
                     b.HasKey("Id");
 

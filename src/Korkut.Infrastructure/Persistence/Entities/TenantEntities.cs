@@ -73,5 +73,19 @@ public sealed class MatterHearingEntity : ITenantOwned
 
     public Guid MatterId { get; set; }
 
+    /// <summary>The hearing instant (date + optional time). Consumed by the calendar/agenda.</summary>
     public DateTimeOffset ScheduledAt { get; set; }
+
+    /// <summary>Hearing type (e.g. "ön inceleme", "tahkikat") — Python parity.</summary>
+    public string? Type { get; set; }
+
+    public string? Location { get; set; }
+
+    /// <summary>Outcome recorded after the hearing.</summary>
+    public string? Result { get; set; }
+
+    public string? Notes { get; set; }
+
+    /// <summary>"pending" | "sent" | "dismissed".</summary>
+    public string ReminderStatus { get; set; } = "pending";
 }
