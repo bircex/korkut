@@ -16,7 +16,7 @@ public sealed record DraftResult(Guid PendingId, string ContentMd, string Summar
 /// full updated markdown, and stages it as a pending edit for human accept/revert.
 /// </summary>
 public sealed class DraftingService(
-    DraftDocumentStore documents, IOfficeSettingsService settings, TemplateCatalog catalog, ILlmClient llm)
+    DraftDocumentStore documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModel llm)
 {
     public async Task<DraftResult?> DraftAsync(
         Guid officeId, Guid userId, Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
@@ -43,7 +43,7 @@ public sealed class DraftingService(
         prompt.AppendLine().AppendLine("--- Talimat ---").AppendLine(instruction);
 
         var reply = await llm.CompleteAsync(
-            new LlmRequest(system, [new LlmMessage("user", prompt.ToString())], 8000), ct);
+            new ChatRequest(system, [new ChatMessage("user", prompt.ToString())], ModelSpecialty.Petition, MaxTokens: 8000), ct);
 
         var summary = Summarize(instruction);
         var pendingId = await documents.StagePendingAsync(officeId, docId, reply.Text, summary, ct);

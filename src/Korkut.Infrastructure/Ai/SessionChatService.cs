@@ -21,7 +21,7 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    SessionStore sessions, IOfficeSettingsService settings, ILlmClient llm, RuntimeConfig config, ITextExtractor extractor)
+    SessionStore sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config, ITextExtractor extractor)
 {
     private const int MaxExtractedChars = 20_000;
 
@@ -60,7 +60,8 @@ public sealed class SessionChatService(
 
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
-        var reply = await llm.CompleteAsync(new LlmRequest(system, history.Select(m => new LlmMessage(m.Role, m.Content)).ToList(), config.ReplyHeadroom * 4), ct);
+        var reply = await llm.CompleteAsync(
+            new ChatRequest(system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
         var title = conversation.Title;
@@ -85,9 +86,9 @@ public sealed class SessionChatService(
 
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
-        var messages = history.Select(m => new LlmMessage(m.Role, m.Content)).ToList();
+        var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
-        var reply = await llm.CompleteAsync(new LlmRequest(system, messages, config.ReplyHeadroom * 4), ct);
+        var reply = await llm.CompleteAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
 
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
@@ -122,14 +123,17 @@ public sealed class SessionChatService(
         await sessions.AppendMessageAsync(officeId, conversationId, "user", text, ct);
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
-        var messages = history.Select(m => new LlmMessage(m.Role, m.Content)).ToList();
+        var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
         await onStep("Yanıt üretiliyor");
         var full = new StringBuilder();
-        await foreach (var delta in llm.StreamAsync(new LlmRequest(system, messages, config.ReplyHeadroom * 4), ct))
+        await foreach (var ev in llm.StreamAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct))
         {
-            full.Append(delta);
-            await onToken(delta);
+            if (ev.Delta is { } delta)
+            {
+                full.Append(delta);
+                await onToken(delta);
+            }
         }
 
         var replyText = full.ToString();
