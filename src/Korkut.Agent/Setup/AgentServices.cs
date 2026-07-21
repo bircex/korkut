@@ -6,6 +6,8 @@ using Korkut.Application.Features.Agent;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
+using Korkut.Agent.Tools.Office;
+using Korkut.Application.Features.OfficeCore;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence.Repositories;
@@ -60,9 +62,23 @@ public static class AgentServices
         services.AddHttpContextAccessor();
         services.AddHttpClient<IKnowledgeSearch, HttpKnowledgeSearch>();
 
+        // Operational office-core services the domain tools wrap (matters + clients), over the
+        // operational DbContext. Read/written inside a per-office tenant scope (IOfficeScope).
+        services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<IMatterRepository, MatterRepository>();
+        services.AddScoped<IHearingRepository, HearingRepository>();
+        services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<IMatterService, MatterService>();
+        services.AddScoped<IOfficeScope, OfficeScope>();
+
         // Assistant tools + the key-gated catalog the tool-calling loop resolves them through.
         // Each tool is one IAgentTool + one registration here; the loop never changes.
         services.AddScoped<IAgentTool, KnowledgeSearchTool>();
+        services.AddScoped<IAgentTool, ListMattersTool>();
+        services.AddScoped<IAgentTool, GetMatterTool>();
+        services.AddScoped<IAgentTool, CreateMatterTool>();
+        services.AddScoped<IAgentTool, ListClientsTool>();
+        services.AddScoped<IAgentTool, CreateClientTool>();
         services.AddScoped<IToolCatalog, ToolCatalog>();
 
         return services;

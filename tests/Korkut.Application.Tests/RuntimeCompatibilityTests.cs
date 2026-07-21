@@ -162,20 +162,7 @@ public class RuntimeCompatibilityTests
         Assert.DoesNotContain(red.Values, v => v is "sk-ant-abc123" or "hunter2" or "gsecret");
     }
 
-    [Fact]
-    public void Tools_requiring_an_unset_key_are_hidden_but_others_stay_available()
-    {
-        var env = new FakeEnv(new() { ["TAVILY_API_KEY"] = "tvly-set" });
-        var tools = new[]
-        {
-            new ToolManifest("web_search", "TAVILY_API_KEY"), // key present -> visible
-            new ToolManifest("case_law", "UYAP_API_KEY"),     // key absent  -> hidden
-            new ToolManifest("calculator"),                    // no key      -> always visible
-        };
-
-        var available = ToolRegistry.Available(tools, env).Select(t => t.Name).ToHashSet();
-        Assert.Contains("web_search", available);
-        Assert.Contains("calculator", available);
-        Assert.DoesNotContain("case_law", available);
-    }
+    // The tool key-gating (ported from the Python tool_registry) now lives in the Agent host
+    // (Korkut.Agent.Tools.ToolCatalog) with all other tool code, and is covered by
+    // Korkut.Agent.Tests.ToolCatalogTests — a tool is an agent concern, not an Application one.
 }
