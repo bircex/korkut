@@ -268,10 +268,11 @@ topology is now in place** — Agent (interactive endpoints), Knowledge (RAG: in
 search, Agent grounds chat over HTTP), PII redaction (`Korkut.Pii` masks cloud chat + the vector
 index), Gateway (YARP single public entry), and OCR (`Korkut.Ocr` on-demand scaffold; real
 Tesseract at deploy). Phases 4c-2, 5, 6, 7, 8 are on `dotnet-migration`; the remaining work is the
-cross-cutting phase **11 (deploy)** only; every code phase (through 10) is done — phase 9's observability backend
-+ health aggregation are the deploy-time remainder. Suite: Api 158, Agent 19, Knowledge 6, Pii 11,
-Gateway 6, Ocr 5, Infrastructure 155, Application 40, Architecture 6, Domain 17, all green
-(423 total).
+cross-cutting **nothing — the target architecture is fully realized.** Every phase (1-11) is done and on
+`dotnet-migration`: the operational plane, the whole AI plane (Agent / Knowledge / OCR / Gateway +
+PII), observability (llm_calls + spans), governance (budget/concurrency/resilience), and the deploy
+compose. Suite: Api 158, Agent 19, Knowledge 6, Pii 11, Gateway 6, Ocr 5, Infrastructure 155,
+Application 40, Architecture 6, Domain 17, all green (423 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -363,15 +364,20 @@ Gateway 6, Ocr 5, Infrastructure 155, Application 40, Architecture 6, Domain 17,
     attempt timeout, so long/streaming LLM calls aren't cut off. Wired into `SessionChatService` +
     `DraftingService`. Tests: prompt-fingerprint on the ledger row; a chat is 429 when the budget is
     exhausted.
-11. **Deploy** *(deploy-time config)* — docker-compose services + Dockerfiles
-    (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
-    Operator runs it with real secrets/infra.
+11. ✅ **Deploy** *(deploy-time config)* — root `docker-compose.yml` wiring every host
+    (gateway public :8090 → api/agent; knowledge/ocr/worker internal), the one-shot migrator, one
+    pgvector Postgres (three schemas) + PgBouncer (transaction pooling; the migrator connects
+    directly, session-mode), MinIO, and the Grafana LGTM OTLP stack (Grafana :3000). Secrets/keys
+    come from `.env` (`.env.example` documents them); `docker/init-db.sh` bootstraps the korkut_app
+    login. Every host reads its config from the environment and never migrates on start. Validated
+    with `docker compose config`; the gateway/knowledge/ocr images build clean.
 
-**Where the next agent should start:** phase **11 (deploy)** — the only remaining phase, entirely
-deploy-time config: docker-compose for all hosts (gateway/api/agent/knowledge/ocr/worker/migrator)
-+ the three service DBs + PgBouncer + the LGTM/Seq observability stack + cross-host health
-aggregation. Every host already has a `docker/Dockerfile.*` and reads its config from the
-environment. Reference
+**Where the next agent should start:** the roadmap is COMPLETE — the target architecture is fully
+built and tested (423 green) on `dotnet-migration`. What remains is not a phase but operational
+polish: an operator runs `docker compose up -d --build` with real secrets, then bring live the
+handful of explicitly-deferred seams noted above — the `document.index` outbox handler that auto-
+indexes uploads into Knowledge (with the Worker's EfOutboxStore adoption), the real Tesseract OCR
+adapter (native, deploy-time), and cross-host health aggregation. Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
 its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.
