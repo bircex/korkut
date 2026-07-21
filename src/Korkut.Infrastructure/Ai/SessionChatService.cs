@@ -24,7 +24,7 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// </summary>
 public sealed class SessionChatService(
     ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config,
-    ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLog callLog)
+    ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLog callLog, IUsageGovernor governor)
 {
     private const int MaxExtractedChars = 20_000;
 
@@ -71,11 +71,12 @@ public sealed class SessionChatService(
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         system = await WithGroundingAsync(system, string.IsNullOrWhiteSpace(text) ? fileName : text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
+        await using var governed = await governor.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await llm.CompleteAsync(
             new ChatRequest(system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
         timer.Stop();
-        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, ct);
+        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
         var title = conversation.Title;
@@ -103,10 +104,11 @@ public sealed class SessionChatService(
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
         var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
+        await using var governed = await governor.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await llm.CompleteAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
         timer.Stop();
-        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, ct);
+        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
 
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
@@ -145,6 +147,7 @@ public sealed class SessionChatService(
         var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
         await onStep("Yanıt üretiliyor");
+        await using var governed = await governor.BeginCallAsync(officeId, ct);
         var full = new StringBuilder();
         var usage = ChatUsage.None;
         var timer = Stopwatch.StartNew();
@@ -162,7 +165,7 @@ public sealed class SessionChatService(
         }
 
         timer.Stop();
-        await RecordCallAsync(officeId, LlmFeature.Chat, usage, timer.Elapsed, ct);
+        await RecordCallAsync(officeId, LlmFeature.Chat, usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
 
         var replyText = full.ToString();
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", replyText, ct);
@@ -205,11 +208,11 @@ public sealed class SessionChatService(
 
     // Record the model call for cost/telemetry. Best-effort: a telemetry failure must never break
     // the chat turn, so any error here is swallowed (cancellation still propagates).
-    private async Task RecordCallAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, CancellationToken ct)
+    private async Task RecordCallAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct)
     {
         try
         {
-            await callLog.RecordAsync(officeId, feature, usage, latency, ct);
+            await callLog.RecordAsync(officeId, feature, usage, latency, promptFingerprint, ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {

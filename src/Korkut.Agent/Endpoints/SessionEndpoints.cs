@@ -211,6 +211,10 @@ public static class SessionEndpoints
                 {
                     await Frame("error", new { detail = ex.Message });
                 }
+                catch (BudgetExceededException ex)
+                {
+                    await Frame("error", new { detail = ex.Message });
+                }
 
                 return Results.Empty;
             })

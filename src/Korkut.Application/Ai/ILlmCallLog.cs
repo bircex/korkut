@@ -9,7 +9,8 @@ namespace Korkut.Application.Ai;
 /// </summary>
 public interface ILlmCallLog
 {
-    Task RecordAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, CancellationToken ct = default);
+    Task RecordAsync(
+        Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default);
 }
 
 /// <summary>The feature (call site) that issued a model call — a span/telemetry dimension.</summary>

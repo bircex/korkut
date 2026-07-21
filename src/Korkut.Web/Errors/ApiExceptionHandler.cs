@@ -1,3 +1,4 @@
+using Korkut.Application.Ai;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,8 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
         var (status, detail) = exception switch
         {
             ApiException api => (api.StatusCode, api.Detail),
+            // Per-office model-usage budget exhausted → 429 (the client backs off / upgrades).
+            BudgetExceededException budget => (StatusCodes.Status429TooManyRequests, budget.Message),
             // Optimistic-concurrency conflict: never a silent overwrite — the client is
             // told to refresh and retry (KDM-014).
             DbUpdateConcurrencyException => (
