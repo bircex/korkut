@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Features.Reports;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 
@@ -30,10 +31,10 @@ public static class ReportsEndpoints
 {
     public static IEndpointRouteBuilder MapReportsEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/reports/overview", async (int? days, ClaimsPrincipal user, KorkutDbContext db, ReportsStore store, CancellationToken ct) =>
+        app.MapGet("/api/reports/overview", async (int? days, ClaimsPrincipal user, KorkutDbContext db, IReportsService svc, CancellationToken ct) =>
             {
                 var window = Math.Clamp(days ?? 14, 1, 365);
-                var o = await user.InTenantScopeAsync(db, office => store.OverviewAsync(office, window, ct), ct);
+                var o = await user.InTenantScopeAsync(db, office => svc.OverviewAsync(office, window, ct), ct);
                 return Results.Ok(new ReportsOverviewResponse(
                     new MatterStatsResponse(o.Matters.Total, o.Matters.ByStatus),
                     new ClientStatsResponse(o.Clients),
