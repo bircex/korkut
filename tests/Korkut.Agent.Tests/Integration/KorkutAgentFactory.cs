@@ -92,11 +92,14 @@ public sealed class KorkutAgentFactory : WebApplicationFactory<Program>, IAsyncL
     /// <summary>A deterministic assistant: echoes the last user turn (proves the prompt was built).</summary>
     private sealed class FakeChatModel : IChatModel
     {
+        // A non-empty usage so the llm_calls telemetry ledger records a meaningful row.
+        internal static readonly ChatUsage FakeUsage = new("fake", "fake-model", 12, 34);
+
         private static string Reply(ChatRequest request)
             => $"[assistant] {request.Messages.LastOrDefault(m => m.Role == "user")?.Content ?? string.Empty}";
 
         public Task<ChatReply> CompleteAsync(ChatRequest request, CancellationToken ct = default)
-            => Task.FromResult(new ChatReply(Reply(request), ChatUsage.None));
+            => Task.FromResult(new ChatReply(Reply(request), FakeUsage));
 
         public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
             ChatRequest request, [EnumeratorCancellation] CancellationToken ct = default)
@@ -107,7 +110,7 @@ public sealed class KorkutAgentFactory : WebApplicationFactory<Program>, IAsyncL
                 yield return ChatStreamEvent.Text(word + " ");
             }
 
-            yield return ChatStreamEvent.Final(ChatUsage.None);
+            yield return ChatStreamEvent.Final(FakeUsage);
         }
     }
 

@@ -21,6 +21,8 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     public DbSet<DocumentVersionEntity> DocumentVersions => Set<DocumentVersionEntity>();
 
+    public DbSet<LlmCallEntity> LlmCalls => Set<LlmCallEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
@@ -61,6 +63,18 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
             b.Property(x => x.Author).HasMaxLength(320);
             b.Property(x => x.Note).HasMaxLength(500);
             b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.CreatedAt }).HasDatabaseName("ix_document_versions_document");
+        });
+
+        modelBuilder.Entity<LlmCallEntity>(b =>
+        {
+            b.ToTable("llm_calls");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).ValueGeneratedNever();
+            b.Property(x => x.Feature).HasMaxLength(40);
+            b.Property(x => x.Provider).HasMaxLength(40);
+            b.Property(x => x.ModelId).HasMaxLength(120);
+            b.Property(x => x.Cost).HasColumnType("numeric(12,6)");
+            b.HasIndex(x => new { x.OfficeId, x.CreatedAt }).HasDatabaseName("ix_llm_calls_office_created");
         });
 
         SnakeCaseNaming.Apply(modelBuilder);

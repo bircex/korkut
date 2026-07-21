@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Agent.Tests.Integration;
+using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Agent.Tests;
 
@@ -88,6 +89,21 @@ public class SessionEndpointTests(KorkutAgentFactory factory)
         var id = created.GetProperty("id").GetGuid();
         var chat = await client.PostAsJsonAsync($"/api/sessions/{id}/chat", new { text = "Merhaba" }, Json);
         Assert.Equal(HttpStatusCode.OK, chat.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_chat_turn_is_recorded_in_the_llm_calls_ledger()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+        var created = await (await client.PostAsync("/api/sessions", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        var id = created.GetProperty("id").GetGuid();
+        await client.PostAsJsonAsync($"/api/sessions/{id}/chat", new { text = "Merhaba" }, Json);
+
+        // The model call's provider/model/tokens landed in the Agent DB cost ledger, office-scoped.
+        await using var db = factory.AgentOwnerContext();
+        var calls = await db.LlmCalls.AsNoTracking().Where(c => c.OfficeId == office).ToListAsync();
+        Assert.Contains(calls, c => c.Feature == "chat" && c.Provider == "fake" && c.PromptTokens == 12 && c.CompletionTokens == 34);
     }
 
     [Fact]

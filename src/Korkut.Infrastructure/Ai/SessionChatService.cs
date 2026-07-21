@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Ai;
@@ -23,7 +24,7 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// </summary>
 public sealed class SessionChatService(
     ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config,
-    ITextExtractor extractor, IKnowledgeSearch knowledge)
+    ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLog callLog)
 {
     private const int MaxExtractedChars = 20_000;
 
@@ -70,8 +71,11 @@ public sealed class SessionChatService(
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         system = await WithGroundingAsync(system, string.IsNullOrWhiteSpace(text) ? fileName : text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
+        var timer = Stopwatch.StartNew();
         var reply = await llm.CompleteAsync(
             new ChatRequest(system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
+        timer.Stop();
+        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, ct);
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
         var title = conversation.Title;
@@ -99,7 +103,10 @@ public sealed class SessionChatService(
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
         var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
+        var timer = Stopwatch.StartNew();
         var reply = await llm.CompleteAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
+        timer.Stop();
+        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, ct);
 
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
 
@@ -139,6 +146,8 @@ public sealed class SessionChatService(
 
         await onStep("Yanıt üretiliyor");
         var full = new StringBuilder();
+        var usage = ChatUsage.None;
+        var timer = Stopwatch.StartNew();
         await foreach (var ev in llm.StreamAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct))
         {
             if (ev.Delta is { } delta)
@@ -146,7 +155,14 @@ public sealed class SessionChatService(
                 full.Append(delta);
                 await onToken(delta);
             }
+            else if (ev.Usage is { } final)
+            {
+                usage = final;
+            }
         }
+
+        timer.Stop();
+        await RecordCallAsync(officeId, LlmFeature.Chat, usage, timer.Elapsed, ct);
 
         var replyText = full.ToString();
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", replyText, ct);
@@ -185,6 +201,20 @@ public sealed class SessionChatService(
         }
 
         return sb.ToString().TrimEnd();
+    }
+
+    // Record the model call for cost/telemetry. Best-effort: a telemetry failure must never break
+    // the chat turn, so any error here is swallowed (cancellation still propagates).
+    private async Task RecordCallAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, CancellationToken ct)
+    {
+        try
+        {
+            await callLog.RecordAsync(officeId, feature, usage, latency, ct);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            // Telemetry is best-effort; never fail a turn because the ledger write failed.
+        }
     }
 
     private async Task<string> BuildSystemPromptAsync(Guid officeId, Guid userId, CancellationToken ct)
