@@ -23,7 +23,11 @@ public static class DomainSetup
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddScoped<OfficeCoreStore>();
-        services.AddScoped<OfficeOpsStore>();
+        // Office-ops (Clean Architecture: repository ports + service).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.ITaskRepository, Korkut.Infrastructure.Persistence.Repositories.TaskRepository>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IDeadlineRepository, Korkut.Infrastructure.Persistence.Repositories.DeadlineRepository>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.INoteRepository, Korkut.Infrastructure.Persistence.Repositories.NoteRepository>();
+        services.AddScoped<Korkut.Application.Features.OfficeOps.IOfficeOpsService, Korkut.Application.Features.OfficeOps.OfficeOpsService>();
         // Finance (Clean Architecture: repository ports + service). The pattern rolls out
         // to the other modules incrementally.
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IInvoiceRepository, Korkut.Infrastructure.Persistence.Repositories.InvoiceRepository>();
