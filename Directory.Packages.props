@@ -56,6 +56,8 @@
     <PackageVersion Include="Minio" Version="7.0.0" />
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
     <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
+    <!-- Legal-source tools (Agent/Tools/Law): PDF journal/decision text extraction -->
+    <PackageVersion Include="PdfPig" Version="0.1.9" />
   </ItemGroup>
 
 </Project>

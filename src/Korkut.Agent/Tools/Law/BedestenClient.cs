@@ -1,6 +1,4 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Agent.Tools;
 
 namespace Korkut.Agent.Tools.Law;
 
@@ -18,6 +16,7 @@ public sealed class BedestenClient(
     bool supportsChamber) : ISourceClient
 {
     private const string SearchPath = "/emsal-karar/searchDocuments";
+    
     private const string DocumentPath = "/emsal-karar/getDocumentContent";
 
     public string Source => source;
@@ -104,7 +103,7 @@ public sealed class BedestenClient(
         var markdown = mime switch
         {
             "text/html" => LegalText.HtmlToMarkdown(System.Text.Encoding.UTF8.GetString(raw)),
-            "application/pdf" => $"[PDF belge — tam metin için: {sourceUrl}]",
+            "application/pdf" => LegalText.PdfToText(raw),
             _ => System.Text.Encoding.UTF8.GetString(raw),
         };
         return $"Kaynak: {sourceUrl}\n\n{markdown}";
@@ -129,6 +128,7 @@ public sealed class BedestenClient(
         {
             return date;
         }
+        
         return end ? $"{date}T23:59:59.999Z" : $"{date}T00:00:00.000Z";
     }
 }

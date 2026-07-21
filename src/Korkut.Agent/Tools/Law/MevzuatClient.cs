@@ -1,6 +1,4 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Agent.Tools;
 
 namespace Korkut.Agent.Tools.Law;
 
@@ -16,8 +14,10 @@ public sealed class MevzuatClient(IHttpClientFactory httpClientFactory) : ISourc
     private const string SearchPath = "/mevzuat/searchDocuments";
 
     public string Source => "mevzuat";
+    
     public string? RequiresKey => null;
-    public bool SupportsFetch => false;
+
+    public bool SupportsFetch => true;
 
     public async Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default)
     {
@@ -31,23 +31,28 @@ public sealed class MevzuatClient(IHttpClientFactory httpClientFactory) : ISourc
             ["sortFields"] = new[] { "RESMI_GAZETE_TARIHI" },
             ["sortDirection"] = "desc",
         };
+        
         if (!string.IsNullOrWhiteSpace(query))
         {
             data["mevzuatAdi"] = query;
         }
+        
         var types = (ToolArgs.String(args, "legislation_type") ?? string.Empty)
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(t => t.ToUpperInvariant())
             .ToArray();
+        
         if (types.Length > 0)
         {
             data["mevzuatTurList"] = types;
         }
 
         var client = httpClientFactory.CreateClient("bedesten");
+        
         using var resp = await client.PostAsJsonAsync(SearchPath,
             new { data, applicationName = "UyapMevzuat", paging = true }, ct);
         resp.EnsureSuccessStatusCode();
+        
         var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var body = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
@@ -59,13 +64,16 @@ public sealed class MevzuatClient(IHttpClientFactory httpClientFactory) : ISourc
         }
 
         var results = new List<SourceResult>(list.GetArrayLength());
+        
         foreach (var e in list.EnumerateArray())
         {
             var id = Str(e, "mevzuatId");
+            
             if (id is null)
             {
                 continue;
             }
+            
             results.Add(new SourceResult(
                 Source: "mevzuat",
                 Id: id,
@@ -78,8 +86,44 @@ public sealed class MevzuatClient(IHttpClientFactory httpClientFactory) : ISourc
         return results;
     }
 
-    public Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default) =>
-        Task.FromResult<string?>(null);
+    public async Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default)
+    {
+        // A whole piece of legislation (MEVZUAT) or, when article_id is given, a single article (MADDE).
+        var articleId = ToolArgs.String(args, "article_id");
+        var (documentId, documentType) = string.IsNullOrWhiteSpace(articleId)
+            ? (id, "MEVZUAT")
+            : (articleId!, "MADDE");
+
+        var client = httpClientFactory.CreateClient("bedesten");
+        using var resp = await client.PostAsJsonAsync("/mevzuat/getDocumentContent",
+            new { data = new { documentType, id = documentId }, applicationName = "UyapMevzuat" }, ct);
+        resp.EnsureSuccessStatusCode();
+        var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var body = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+
+        if (!body.RootElement.TryGetProperty("data", out var data))
+        {
+            return null;
+        }
+        var contentB64 = Str(data, "content");
+        if (string.IsNullOrEmpty(contentB64))
+        {
+            return null;
+        }
+
+        var mime = Str(data, "mimeType") ?? Str(data, "mimetype") ?? "text/html";
+        var raw = Convert.FromBase64String(contentB64);
+        var markdown = mime.Contains("pdf", StringComparison.OrdinalIgnoreCase)
+            ? LegalText.PdfToText(raw)
+            : mime.Contains("html", StringComparison.OrdinalIgnoreCase)
+                ? LegalText.HtmlToMarkdown(System.Text.Encoding.UTF8.GetString(raw))
+                : System.Text.Encoding.UTF8.GetString(raw);
+
+        var title = Str(data, "mevzuatAdi") ?? Str(data, "maddeBaslik") ?? Str(data, "baslik");
+        var sourceUrl = $"https://mevzuat.adalet.gov.tr/mevzuat?mevzuatId={id}";
+        var header = string.IsNullOrEmpty(title) ? $"Kaynak: {sourceUrl}" : $"{title}\nKaynak: {sourceUrl}";
+        return $"{header}\n\n{markdown}";
+    }
 
     private static string? LegislationType(JsonElement entry)
     {
@@ -87,6 +131,7 @@ public sealed class MevzuatClient(IHttpClientFactory httpClientFactory) : ISourc
         {
             return null;
         }
+        
         return tur.ValueKind switch
         {
             JsonValueKind.String => tur.GetString(),

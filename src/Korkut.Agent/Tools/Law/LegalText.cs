@@ -1,5 +1,7 @@
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
+using UglyToad.PdfPig;
 
 namespace Korkut.Agent.Tools.Law;
 
@@ -31,6 +33,56 @@ public static partial class LegalText
         text = BlankLines().Replace(text, "\n\n");
         text = TrailingSpaces().Replace(text, "\n");
         return text.Trim();
+    }
+
+    /// <summary>Extract text from a PDF (decision or journal) as plain text. Mirrors the Python
+    /// <c>pdf_to_markdown</c> (pypdf) — page texts joined by blank lines.</summary>
+    public static string PdfToText(byte[] data)
+    {
+        using var doc = PdfDocument.Open(data);
+        var sb = new StringBuilder();
+        foreach (var page in doc.GetPages())
+        {
+            var text = page.Text?.Trim();
+            if (!string.IsNullOrEmpty(text))
+            {
+                sb.Append(text).Append("\n\n");
+            }
+        }
+        return sb.ToString().Trim();
+    }
+
+    /// <summary>
+    /// Return the inner HTML of the first <c>&lt;div class="… className …"&gt;</c>, balancing nested
+    /// divs; falls back to the whole document when no matching div is found (so the caller can always
+    /// hand the result to <see cref="HtmlToMarkdown"/>). Mirrors the Python <c>extract_div_html</c>.
+    /// </summary>
+    public static string ExtractDivHtml(string html, string className)
+    {
+        if (string.IsNullOrEmpty(html))
+        {
+            return html ?? string.Empty;
+        }
+        foreach (Match open in DivOpen().Matches(html))
+        {
+            var classes = open.Groups["class"].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (Array.IndexOf(classes, className) < 0)
+            {
+                continue;
+            }
+            var start = open.Index + open.Length;
+            var depth = 1;
+            foreach (Match tag in DivAny().Matches(html, start))
+            {
+                depth += tag.Value.StartsWith("</", StringComparison.OrdinalIgnoreCase) ? -1 : 1;
+                if (depth == 0)
+                {
+                    return html[start..tag.Index].Trim();
+                }
+            }
+            return html[start..].Trim();
+        }
+        return html;
     }
 
     /// <summary>
@@ -67,4 +119,10 @@ public static partial class LegalText
 
     [GeneratedRegex(@"[ \t]+\n")]
     private static partial Regex TrailingSpaces();
+
+    [GeneratedRegex(@"<div\b[^>]*\bclass\s*=\s*[""'](?<class>[^""']*)[""'][^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex DivOpen();
+
+    [GeneratedRegex(@"</?div\b[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex DivAny();
 }

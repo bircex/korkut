@@ -162,6 +162,25 @@ public static class AgentServices
             h.Add("Referer", "https://mevzuat.adalet.gov.tr/");
         });
 
+        // Browser-headed clients for the other portals: "legal" for well-behaved HTTPS hosts;
+        // "legal-insecure" tolerates the legacy TLS stacks several government hosts still serve.
+        services.AddHttpClient("legal", ConfigureBrowser);
+        services.AddHttpClient("legal-insecure", ConfigureBrowser)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                AllowAutoRedirect = true,
+            });
+
+        // Tavily web-search (api.tavily.com): the single provider behind the key-gated sources
+        // (BDDK / KVKK / Sigorta Tahkim), which discover documents on portals with no real API.
+        services.AddHttpClient("tavily", c =>
+        {
+            c.BaseAddress = new Uri("https://api.tavily.com");
+            c.Timeout = TimeSpan.FromSeconds(60);
+        });
+        services.AddScoped<TavilyClient>();
+
         // Bedesten court cluster: one endpoint, per-court itemTypeList; chamber (birimAdi) filter
         // applies only to the higher courts. All support full-text fetch by documentId.
         services.AddScoped<ISourceClient>(sp => new BedestenClient(
@@ -172,6 +191,22 @@ public static class AgentServices
             sp.GetRequiredService<IHttpClientFactory>(), "emsal", ["YERELHUKUK", "ISTINAFHUKUK"], supportsChamber: false));
         services.AddScoped<ISourceClient>(sp => new BedestenClient(
             sp.GetRequiredService<IHttpClientFactory>(), "kyb", ["KYB"], supportsChamber: false));
-        services.AddScoped<ISourceClient, MevzuatClient>();
+        services.AddScoped<ISourceClient, MevzuatClient>();       // legislation (search + fetch)
+        services.AddScoped<ISourceClient, AnayasaClient>();       // Constitutional Court (JSON)
+        services.AddScoped<ISourceClient, GibClient>();           // tax rulings / özelge (JSON)
+        services.AddScoped<ISourceClient, BddkClient>();          // banking (Tavily + fetch)
+        services.AddScoped<ISourceClient, KvkkClient>();          // data protection (Tavily + fetch)
+        services.AddScoped<ISourceClient, SigortaTahkimClient>(); // insurance arbitration (Tavily + PDF fetch)
+
+        // Standalone legal tool: keyword search within one Sigorta Tahkim journal issue.
+        services.AddScoped<IAgentTool, SearchWithinSigortaTahkimTool>();
+    }
+
+    private static void ConfigureBrowser(HttpClient c)
+    {
+        c.Timeout = TimeSpan.FromSeconds(120);
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36");
+        c.DefaultRequestHeaders.Add("Accept-Language", "tr-TR,tr;q=0.9,en;q=0.8");
     }
 }
