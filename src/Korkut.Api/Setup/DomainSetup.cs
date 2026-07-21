@@ -44,7 +44,9 @@ public static class DomainSetup
         // Calendar (Clean Architecture: repository port + service; unified read view).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ICalendarRepository, Korkut.Infrastructure.Persistence.Repositories.CalendarRepository>();
         services.AddScoped<Korkut.Application.Features.Calendar.ICalendarService, Korkut.Application.Features.Calendar.CalendarService>();
-        services.AddScoped<OfficeSettingsStore>();
+        // Office settings (Clean Architecture: persona + style layers + memory).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IOfficeSettingsRepository, Korkut.Infrastructure.Persistence.Repositories.OfficeSettingsRepository>();
+        services.AddScoped<Korkut.Application.Features.Settings.IOfficeSettingsService, Korkut.Application.Features.Settings.OfficeSettingsService>();
         services.AddScoped<ReportsStore>();
         services.AddScoped<ChannelStore>();
         services.AddScoped<TemplateOverrideStore>();
