@@ -28,6 +28,15 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public int ReplyHeadroom => ParseInt(env.Get("KORKUT_REPLY_HEADROOM"), 1024);
 
+    // --- Embeddings (Knowledge/RAG). Prefer a fully-local endpoint (Ollama / HF-TEI) so office
+    //     data never leaves the cluster (docs/SOURCES.md); a hosted key is optional. The base URL's
+    //     presence is what enables the real embedder — no URL → embeddings stay disabled. ---
+    public string? EmbeddingBaseUrl => env.Get("KORKUT_EMBEDDING_URL")?.Trim() is { Length: > 0 } url ? url : null;
+
+    public string EmbeddingModel => env.Get("KORKUT_EMBEDDING_MODEL") ?? "nomic-embed-text";
+
+    public bool HasEmbedding => !string.IsNullOrWhiteSpace(EmbeddingBaseUrl);
+
     // --- Key PRESENCE only — never the value. Consumed by the vendor SDKs from env. ---
     public bool HasAnthropicKey => IsSet("ANTHROPIC_API_KEY");
 

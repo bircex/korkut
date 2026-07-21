@@ -2,6 +2,7 @@ using Korkut.Application.Jobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Pgvector.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;
 
@@ -12,6 +13,9 @@ public static class PersistenceSetup
 
     /// <summary>The Agent DB's own schema (own migration chain + RLS), separate from the operational schema.</summary>
     public const string AgentSchema = "korkut_agent";
+
+    /// <summary>The Knowledge (RAG) DB's own schema (own migration chain + RLS + pgvector).</summary>
+    public const string KnowledgeSchema = "korkut_knowledge";
 
     /// <summary>
     /// Register the DbContext + EF-backed job stores. Migrations are never applied
@@ -41,6 +45,22 @@ public static class PersistenceSetup
         services.AddDbContext<Agent.AgentDbContext>(options =>
             options.UseNpgsql(ToNpgsql(connectionString), npgsql =>
                 npgsql.MigrationsHistoryTable(MigrationsHistoryTable, AgentSchema)));
+        return services;
+    }
+
+    /// <summary>
+    /// Register the Knowledge DB context (RAG store, schema <c>korkut_knowledge</c>, pgvector
+    /// enabled). Own migration-history table in that schema so it never collides with the other
+    /// chains when co-located. Migrations are applied only by Korkut.Migrator, never on startup.
+    /// </summary>
+    public static IServiceCollection AddKorkutKnowledgePersistence(this IServiceCollection services, string connectionString)
+    {
+        services.AddDbContext<Knowledge.KnowledgeDbContext>(options =>
+            options.UseNpgsql(ToNpgsql(connectionString), npgsql =>
+            {
+                npgsql.MigrationsHistoryTable(MigrationsHistoryTable, KnowledgeSchema);
+                npgsql.UseVector();
+            }));
         return services;
     }
 

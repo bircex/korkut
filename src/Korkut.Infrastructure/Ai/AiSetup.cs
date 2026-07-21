@@ -65,8 +65,20 @@ public static class AiSetup
                 : new RoutingChatModel(sp.GetRequiredService<IModelRouter>(), providers);
         });
 
-        // Embeddings: the real adapter lands with the Knowledge service; disabled until then.
-        services.AddScoped<IEmbedder, DisabledEmbedder>();
+        // Embeddings (Knowledge/RAG): a real OpenAI-compatible adapter when an endpoint is
+        // configured (prefer a local Ollama/TEI URL), otherwise disabled (503 on use). Keyed on
+        // the base URL's presence; the API key is optional (local backends need none).
+        if (config.HasEmbedding)
+        {
+            services.AddScoped<IEmbedder>(sp => new OpenAiCompatibleEmbedder(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),
+                sp.GetRequiredService<IEnvironment>(),
+                config.EmbeddingModel, config.EmbeddingBaseUrl!, "KORKUT_EMBEDDING_API_KEY"));
+        }
+        else
+        {
+            services.AddScoped<IEmbedder, DisabledEmbedder>();
+        }
 
         return services;
     }

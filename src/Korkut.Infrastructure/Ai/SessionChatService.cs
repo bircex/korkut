@@ -1,4 +1,5 @@
 using System.Text;
+using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Ai;
 using Korkut.Application.Documents;
 using Korkut.Application.Features.Agent;
@@ -21,9 +22,17 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config, ITextExtractor extractor)
+    ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config,
+    ITextExtractor extractor, IKnowledgeSearch knowledge)
 {
     private const int MaxExtractedChars = 20_000;
+
+    // How many grounded chunks to pull from the Knowledge service per turn, and how much of each
+    // to show the model. Retrieval is best-effort: when Knowledge is unconfigured/unreachable the
+    // search returns nothing and the turn proceeds ungrounded.
+    private const int GroundingTopK = 6;
+
+    private const int MaxGroundingCharsPerHit = 800;
 
     /// <summary>
     /// A chat turn that attaches an uploaded document: extracts its text, includes it in
@@ -59,6 +68,7 @@ public sealed class SessionChatService(
         await sessions.AppendMessageAsync(officeId, conversationId, "user", promptContent.ToString(), ct);
 
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
+        system = await WithGroundingAsync(system, string.IsNullOrWhiteSpace(text) ? fileName : text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
         var reply = await llm.CompleteAsync(
             new ChatRequest(system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
@@ -85,6 +95,7 @@ public sealed class SessionChatService(
         await sessions.AppendMessageAsync(officeId, conversationId, "user", text, ct);
 
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
+        system = await WithGroundingAsync(system, text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
         var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
@@ -122,6 +133,7 @@ public sealed class SessionChatService(
         await onStep("Bağlam hazırlanıyor");
         await sessions.AppendMessageAsync(officeId, conversationId, "user", text, ct);
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
+        system = await WithGroundingAsync(system, text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
         var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
 
@@ -147,6 +159,32 @@ public sealed class SessionChatService(
         }
 
         return new ChatOutcome(replyText, title, OpenDocument: null, PendingEmail: null);
+    }
+
+    /// <summary>
+    /// Retrieve grounded chunks for <paramref name="query"/> from the Knowledge service and append
+    /// them to the system prompt as a clearly-labelled citation block. Best-effort: when Knowledge
+    /// is unconfigured/unreachable the search yields nothing and the original prompt is returned
+    /// unchanged, so a chat turn never fails for lack of retrieval.
+    /// </summary>
+    private async Task<string> WithGroundingAsync(string system, string query, CancellationToken ct)
+    {
+        var hits = await knowledge.SearchAsync(query, GroundingTopK, ct);
+        if (hits.Count == 0)
+        {
+            return system;
+        }
+
+        var sb = new StringBuilder(system);
+        sb.AppendLine().AppendLine();
+        sb.AppendLine("İlgili büro belgelerinden alıntılar (yalnızca ilgiliyse dayanak al, alakasızsa yok say):");
+        foreach (var hit in hits)
+        {
+            var text = hit.Text.Length > MaxGroundingCharsPerHit ? hit.Text[..MaxGroundingCharsPerHit] + "…" : hit.Text;
+            sb.Append("- ").AppendLine(text.ReplaceLineEndings(" ").Trim());
+        }
+
+        return sb.ToString().TrimEnd();
     }
 
     private async Task<string> BuildSystemPromptAsync(Guid officeId, Guid userId, CancellationToken ct)
