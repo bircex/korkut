@@ -42,7 +42,9 @@ public static class DomainSetup
         services.AddScoped<TemplateOverrideStore>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<OutboxStore>();
-        services.AddScoped<MembersStore>();
+        // Members (Clean Architecture: repository port + service; owner-safety in the service).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IMemberRepository, Korkut.Infrastructure.Persistence.Repositories.MemberRepository>();
+        services.AddScoped<Korkut.Application.Features.Membership.IMembersService, Korkut.Application.Features.Membership.MembersService>();
         services.AddScoped<InviteStore>();
         services.AddScoped<EfInviteResolver>();
 

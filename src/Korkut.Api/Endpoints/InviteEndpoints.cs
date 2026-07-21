@@ -69,7 +69,7 @@ public static class InviteEndpoints
         // Anonymous: accept an invite → create the member so they can then sign in.
         invites.MapPost("/accept", async (
             InviteAcceptRequest body, KorkutDbContext db, EfInviteResolver resolver, ITokenHasher hasher,
-            InviteStore invites, MembersStore members, CancellationToken ct) =>
+            InviteStore invites, Korkut.Application.Features.Membership.IMembersService members, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -89,7 +89,7 @@ public static class InviteEndpoints
                 var exists = await db.Users.AsNoTracking().AnyAsync(x => x.OfficeId == grant.OfficeId && x.Email == grant.Email, ct);
                 if (!exists)
                 {
-                    await members.CreateAsync(grant.OfficeId, grant.Email, grant.Role, ct);
+                    await members.CreateAsync(grant.OfficeId, grant.Email, grant.Role, null, null, ct);
                 }
 
                 await invites.MarkAcceptedAsync(grant.OfficeId, grant.Id, ct);
