@@ -6,6 +6,7 @@ using Korkut.Application.Features.Agent;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
+using Korkut.Agent.Tools.Law;
 using Korkut.Agent.Tools.Office;
 using Korkut.Application.Features.Calendar;
 using Korkut.Application.Features.Correspondence;
@@ -128,9 +129,49 @@ public static class AgentServices
         services.AddScoped<IAgentTool, SendEmailTool>();
         services.AddScoped<IAgentTool, RememberTool>();
         services.AddScoped<IAgentTool, OpenEditorTool>();
+        // Legal-external (Tools/Law): composite search/fetch over the ISourceClient adapters
+        // registered below. The adapters are added per source (Bedesten/Tavily/... — incrementally).
+        services.AddScoped<IAgentTool, SearchDecisionsTool>();
+        services.AddScoped<IAgentTool, FetchDocumentTool>();
+        AddLawSources(services);
         services.AddScoped<IToolCatalog, ToolCatalog>();
         services.AddScoped<ToolCallingLoop>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers the public-legal-database adapters the composite <c>search_decisions</c> /
+    /// <c>fetch_document</c> tools dispatch to. The Bedesten cluster (Yargıtay / Danıştay / Emsal /
+    /// KYB / Mevzuat) shares one browser-headed HttpClient against the Ministry of Justice host.
+    /// Further sources (Anayasa, GİB, KİK, Tavily-backed BDDK/KVKK/Sigorta Tahkim, …) register here.
+    /// </summary>
+    private static void AddLawSources(IServiceCollection services)
+    {
+        services.AddHttpClient("bedesten", c =>
+        {
+            c.BaseAddress = new Uri("https://bedesten.adalet.gov.tr");
+            c.Timeout = TimeSpan.FromSeconds(60);
+            var h = c.DefaultRequestHeaders;
+            h.UserAgent.ParseAdd("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36");
+            h.Add("Accept", "*/*");
+            h.Add("Accept-Language", "tr-TR,tr;q=0.9,en;q=0.8");
+            h.Add("AdaletApplicationName", "UyapMevzuat");
+            h.Add("Origin", "https://mevzuat.adalet.gov.tr");
+            h.Add("Referer", "https://mevzuat.adalet.gov.tr/");
+        });
+
+        // Bedesten court cluster: one endpoint, per-court itemTypeList; chamber (birimAdi) filter
+        // applies only to the higher courts. All support full-text fetch by documentId.
+        services.AddScoped<ISourceClient>(sp => new BedestenClient(
+            sp.GetRequiredService<IHttpClientFactory>(), "yargitay", ["YARGITAYKARARI"], supportsChamber: true));
+        services.AddScoped<ISourceClient>(sp => new BedestenClient(
+            sp.GetRequiredService<IHttpClientFactory>(), "danistay", ["DANISTAYKARAR"], supportsChamber: true));
+        services.AddScoped<ISourceClient>(sp => new BedestenClient(
+            sp.GetRequiredService<IHttpClientFactory>(), "emsal", ["YERELHUKUK", "ISTINAFHUKUK"], supportsChamber: false));
+        services.AddScoped<ISourceClient>(sp => new BedestenClient(
+            sp.GetRequiredService<IHttpClientFactory>(), "kyb", ["KYB"], supportsChamber: false));
+        services.AddScoped<ISourceClient, MevzuatClient>();
     }
 }

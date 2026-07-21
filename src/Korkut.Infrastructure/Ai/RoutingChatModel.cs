@@ -11,15 +11,15 @@ namespace Korkut.Infrastructure.Ai;
 /// </summary>
 public sealed class RoutingChatModel : IChatModel
 {
-    private readonly IModelRouter router;
-    private readonly IReadOnlyDictionary<string, IChatProvider> providers;
-    private readonly IReadOnlySet<string> providerNames;
+    private readonly IModelRouter _router;
+    private readonly IReadOnlyDictionary<string, IChatProvider> _providers;
+    private readonly IReadOnlySet<string> _providerNames;
 
     public RoutingChatModel(IModelRouter router, IEnumerable<IChatProvider> providers)
     {
-        this.router = router;
-        this.providers = providers.ToDictionary(p => p.Name);
-        this.providerNames = this.providers.Keys.ToHashSet();
+        this._router = router;
+        this._providers = providers.ToDictionary(p => p.Name);
+        this._providerNames = this._providers.Keys.ToHashSet();
     }
 
     public Task<ChatReply> CompleteAsync(ChatRequest request, CancellationToken ct = default)
@@ -36,8 +36,8 @@ public sealed class RoutingChatModel : IChatModel
 
     private (IChatProvider Provider, ModelSelection Selection) Pick(string specialty)
     {
-        var selection = router.Resolve(specialty, providerNames);
-        return providers.TryGetValue(selection.Provider, out var provider)
+        var selection = _router.Resolve(specialty, _providerNames);
+        return _providers.TryGetValue(selection.Provider, out var provider)
             ? (provider, selection)
             : throw new ModelUnavailableException($"Sağlayıcı kayıtlı değil: {selection.Provider}");
     }

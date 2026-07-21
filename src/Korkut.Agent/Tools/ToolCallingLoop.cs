@@ -11,7 +11,7 @@ namespace Korkut.Agent.Tools;
 /// </summary>
 public sealed class ToolCallingLoop(IChatModel llm, IToolCatalog catalog)
 {
-    public const int MaxIterations = 8;
+    private const int MaxIterations = 8;
 
     public async Task<string> RunAsync(
         string system, IReadOnlyList<ChatMessage> history, ToolContext context,

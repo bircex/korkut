@@ -38,6 +38,7 @@ public sealed class SendEmailTool(IOfficeScope scope, IOutboxService outbox) : I
         var to = ToolArgs.String(arguments, "to");
         var subject = ToolArgs.String(arguments, "subject");
         var body = ToolArgs.String(arguments, "body");
+        
         if (string.IsNullOrWhiteSpace(to) || string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(body))
         {
             return ToolResult.Error("'to', 'subject' ve 'body' gereklidir.");
