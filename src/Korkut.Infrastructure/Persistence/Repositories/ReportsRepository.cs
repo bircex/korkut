@@ -1,32 +1,18 @@
-using Korkut.Application.Features.Finance;
-using Korkut.Domain.Finance;
-using Korkut.SharedKernel.Time;
+using Korkut.Application.Abstractions.Persistence;
+using Korkut.Domain.Reports;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
-
-public sealed record MatterStats(int Total, IReadOnlyDictionary<string, int> ByStatus);
-
-public sealed record TaskStats(int Open, int Done, int Overdue);
-
-public sealed record AgendaStats(int Days, int HearingsUpcoming, int DeadlinesUpcoming, int DeadlinesOverdue);
-
-public sealed record EvrakStats(int Total, IReadOnlyDictionary<string, int> ByDirection);
-
-public sealed record ReportsOverview(
-    MatterStats Matters, int Clients, FinanceTotals Finance, TaskStats Tasks, AgendaStats Agenda, EvrakStats Evrak);
+namespace Korkut.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// Read-only office dashboard: counts and roll-ups across matters, clients, finance,
-/// tasks, the upcoming agenda, and the correspondence register. Tenant context is set
-/// by the caller (RLS), so every aggregate is scoped to the office. The finance block
-/// is delegated to <see cref="IFinanceService"/> so the derived gross stays consistent.
+/// EF/Postgres adapter for <see cref="IReportsRepository"/>. Every aggregate is scoped to
+/// the office (tenant context set by the caller, RLS). Finance is intentionally excluded —
+/// the service composes it from the finance domain so the derived gross stays consistent.
 /// </summary>
-public sealed class ReportsStore(KorkutDbContext db, IFinanceService finance, IClock clock)
+public sealed class ReportsRepository(KorkutDbContext db) : IReportsRepository
 {
-    public async Task<ReportsOverview> OverviewAsync(Guid officeId, int days, CancellationToken ct = default)
+    public async Task<OfficeStats> GetStatsAsync(Guid officeId, int days, DateTimeOffset now, CancellationToken ct = default)
     {
-        var now = clock.UtcNow;
         var today = DateOnly.FromDateTime(now.UtcDateTime);
         var until = today.AddDays(days);
         var untilInstant = now.AddDays(days);
@@ -41,8 +27,6 @@ public sealed class ReportsStore(KorkutDbContext db, IFinanceService finance, IC
         var matters = new MatterStats(matterRows.Sum(r => r.Count), byStatus);
 
         var clients = await db.Clients.AsNoTracking().CountAsync(c => c.OfficeId == officeId && c.DeletedAt == null, ct);
-
-        var financeTotals = await finance.SummaryAsync(officeId, ct);
 
         // Tasks: open (not done/cancelled), done, overdue (past due + still open).
         var open = await db.Tasks.CountAsync(t => t.OfficeId == officeId && t.Status != "done" && t.Status != "cancelled", ct);
@@ -65,6 +49,6 @@ public sealed class ReportsStore(KorkutDbContext db, IFinanceService finance, IC
             .ToListAsync(ct);
         var evrak = new EvrakStats(evrakRows.Sum(r => r.Count), evrakRows.ToDictionary(r => r.Direction, r => r.Count));
 
-        return new ReportsOverview(matters, clients, financeTotals, tasks, agenda, evrak);
+        return new OfficeStats(matters, clients, tasks, agenda, evrak);
     }
 }
