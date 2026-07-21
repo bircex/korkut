@@ -5,7 +5,9 @@
 
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Infrastructure.Persistence.Knowledge;
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 var command = args.Length > 0 ? args[0] : "help";
 
@@ -36,6 +38,25 @@ static AgentDbContext BuildAgentContext()
             npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.AgentSchema))
         .Options;
     return new AgentDbContext(options);
+}
+
+static KnowledgeDbContext BuildKnowledgeContext()
+{
+    // The Knowledge DB may be a separate database/instance; falls back to the operational
+    // migrator connection when co-located. pgvector must be enabled for the vector column.
+    var connection = Environment.GetEnvironmentVariable("KORKUT_KNOWLEDGE_ADMIN_DB_URL")
+        ?? Environment.GetEnvironmentVariable("KORKUT_ADMIN_DB_URL")
+        ?? throw new InvalidOperationException(
+            "KORKUT_KNOWLEDGE_ADMIN_DB_URL or KORKUT_ADMIN_DB_URL is required for the knowledge migrator connection.");
+
+    var options = new DbContextOptionsBuilder<KnowledgeDbContext>()
+        .UseNpgsql(PersistenceSetup.ToNpgsql(connection), npgsql =>
+        {
+            npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.KnowledgeSchema);
+            npgsql.UseVector();
+        })
+        .Options;
+    return new KnowledgeDbContext(options);
 }
 
 static async Task<int> MigrateAsync(DbContext db, string label)
@@ -72,6 +93,8 @@ switch (command)
         await MigrateAsync(ops, "operational");
         await using var agent = BuildAgentContext();
         await MigrateAsync(agent, "agent");
+        await using var knowledge = BuildKnowledgeContext();
+        await MigrateAsync(knowledge, "knowledge");
         return 0;
     }
 
@@ -81,6 +104,8 @@ switch (command)
         await InfoAsync(ops, "operational");
         await using var agent = BuildAgentContext();
         await InfoAsync(agent, "agent");
+        await using var knowledge = BuildKnowledgeContext();
+        await InfoAsync(knowledge, "knowledge");
         return 0;
     }
 

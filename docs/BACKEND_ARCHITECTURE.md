@@ -263,11 +263,12 @@ Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure
 
 ## Build roadmap (phased PRs; suite stays green)
 
-**Handoff status (2026-07-21):** the operational plane is COMPLETE and the AI plane's
-foundation is in place. Everything below through phase 3 plus the DB/foundation slices of
-phase 4 are merged to `dotnet-migration`. The AI stack (Agent/AI services) is wired as
-code but **not yet served by any host** — the Agent host (4c-2) is the next step. Suite:
-Api 158, Application 40, Infrastructure 146, Architecture 5, all green.
+**Handoff status (2026-07-21):** the operational plane is COMPLETE, the **Agent host serves
+the interactive AI endpoints**, and the **Knowledge (RAG) service is live** — ingest + pgvector
+search, with the Agent grounding chat from it over HTTP. Everything through phase 5 is on
+`dotnet-migration`; the remaining AI work is OCR/PII/Gateway (phases 6-8) and the cross-cutting
+phases 9-11. Suite: Api 158, Agent 17, Knowledge 5, Infrastructure 153, Application 40,
+Architecture 5, Domain 17, all green (395 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -283,19 +284,33 @@ Api 158, Application 40, Infrastructure 146, Architecture 5, all green.
      `AgentTenantIsolationTests` proves per-office RLS (PR #167).
    - ✅ **4c-1** Extract `Korkut.Web` shared foundation (auth, JSON, errors, generic
      `InTenantScopeAsync`, middleware, `WebSetup`, `DomainSetup`); both hosts reference it (PR #168).
-   - ⏳ **4c-2 (NEXT) Agent host wiring** — in `Korkut.Agent/Program.cs`: `AddKorkutWeb` +
-     `AddKorkutDomain` + `AddKorkutAgentPersistence` + `AddKorkutAi` + JWT/authorization;
-     register agent repos + services + AI services (`SessionChatService`, `DraftingService`,
-     `ITextExtractor`). Rebuild the agent endpoints removed in MainAPI-1 (sessions CRUD,
-     `POST /chat` + `/chat/stream` SSE, upload, document `draft/accept/revert/export`) using
-     the services + the generic `InTenantScopeAsync` over `AgentDbContext`. Add an operational
-     user-name lookup port to resolve `SessionBrief.CreatedBy` → display name. Split agent
-     integration tests onto a second `WebApplicationFactory<Program>`.
-5. **Knowledge service + DB** — `Korkut.Knowledge` host + `KnowledgeDbContext` (pgvector,
-   schema `korkut_knowledge`, RLS); real `IEmbedder` adapter; ingestion (metin çıkar → PII
-   mask → chunk → embed → store, `embedding_version` stamped) + `/search` (embed query +
-   top-k); Agent calls it over HTTP for retrieval. Test container needs `CREATE EXTENSION
-   vector`; add a Knowledge tenant-isolation test.
+   - ✅ **4c-2 Agent host wiring** — `Korkut.Agent/Program.cs` serves the agent surface:
+     `AddKorkutWeb` + operational `AddKorkutPersistence` (settings the assistant reads) +
+     `AddKorkutAgentPersistence` + `AddKorkutAi` + access-token auth/authorization, plus
+     `AddKorkutAgentServices` (agent repos/services + `SessionChatService`/`DraftingService` +
+     `ITextExtractor` + settings + template catalog + the user-lookup). Rebuilt the endpoints
+     removed in MainAPI-1 (sessions CRUD, `POST /chat` + `/chat/stream` SSE, upload, document
+     `draft/accept/revert/export`) over the generic `InTenantScopeAsync`. A chat/drafting turn
+     pins BOTH DbContexts (`AgentScope.InAgentAndOfficeScopeAsync`) because it writes the Agent
+     DB while reading operational settings. New `IUserLookup` port (Application) + `UserLookup`
+     adapter resolve `SessionBrief.CreatedBy`/version author → operational e-mail. Agent tests
+     live in `Korkut.Agent.Tests` on their own `WebApplicationFactory<Program>` (both schemas
+     migrated, fake `IChatModel`); 17 tests.
+5. ✅ **Knowledge service + DB** — `Korkut.Knowledge` host + `KnowledgeDbContext` (pgvector,
+   schema `korkut_knowledge`, own RLS + migration chain; `HasPostgresExtension("vector")` emits
+   `CREATE EXTENSION`). Real `IEmbedder` = `OpenAiCompatibleEmbedder` (prefers a LOCAL Ollama/TEI
+   `KORKUT_EMBEDDING_URL`, optional key; disabled → 503 when unset). Ingestion pipeline
+   (`IIngestionService`: chunk via boundary-aware `Chunker` → embed → `IVectorStore.ReplaceDocument`,
+   `embedding_version` = `model:dim` stamped; PII mask is a documented seam for phase 7) + `/ingest`
+   + `/search` (`IRetrievalService`: embed query → top-k cosine via `PgVectorStore`, `1-distance`
+   score). `Korkut.Migrator` now applies the knowledge schema too. The Agent grounds each turn via
+   `IKnowledgeSearch` → `HttpKnowledgeSearch` (forwards the caller token; `KORKUT_KNOWLEDGE_URL`;
+   returns empty → ungrounded when unset/unreachable). Tests: `Korkut.Knowledge.Tests` on a
+   `pgvector/pgvector:pg16` container with a deterministic bag-of-words fake embedder (ingest→search
+   ranking, re-index replace, empty-clears, tenant isolation, anon) = 5, plus `ChunkerTests` = 7.
+   **Remaining wire-up:** automatic indexing on document upload — a `document.index` outbox handler
+   (the `DocumentIndexEvent` + `IndexOutboxService` signal already exists) reading `DocumentExtractionEntity`
+   spans → `/ingest`; deferred with the Worker's EfOutboxStore adoption. Today `/ingest` is the seam.
 6. **OCR service** — `Korkut.Ocr` host + HTTP contract + text-extraction port, called by
    Knowledge ingestion only for text-less documents; one warm replica. **Real Tesseract is
    a native/deploy-time dependency** — scaffold + contract in code, binary at deploy.
@@ -314,7 +329,11 @@ Api 158, Application 40, Infrastructure 146, Architecture 5, all green.
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **4c-2** (Agent host). See the memory note
-`korkut-ai-model-abstraction` for the exact port names, DI wiring, and the `SessionBrief.CreatedBy`
-handoff detail. Reference pattern for any Clean refactor = Finance (PR #151); for a new
-tenant-scoped DbContext = the 4b Agent DB split (PR #167).
+**Where the next agent should start:** phase **7 (PII library)** is the highest-value next step —
+`Korkut.Pii` (TR: TCKN, phone, email, IBAN) redaction + restore, used in-process by the Agent
+(chat-time) and Knowledge (index-time). The ingestion pipeline already has the exact seam for it
+(`IngestionService`, between chunk and embed). Phase **6 (OCR)** is mostly a deploy-time native
+dependency (scaffold + `ITextExtractor` contract in code, Tesseract binary at deploy). Reference
+pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
++ `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
+its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.
