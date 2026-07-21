@@ -5,6 +5,7 @@ using Korkut.Application.Documents;
 using Korkut.Application.Features.Agent;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
+using Korkut.Agent.Tools;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence.Repositories;
@@ -58,6 +59,11 @@ public static class AgentServices
         // HTTP, forwarding the caller's token. Unconfigured (no KORKUT_KNOWLEDGE_URL) → ungrounded.
         services.AddHttpContextAccessor();
         services.AddHttpClient<IKnowledgeSearch, HttpKnowledgeSearch>();
+
+        // Assistant tools + the key-gated catalog the tool-calling loop resolves them through.
+        // Each tool is one IAgentTool + one registration here; the loop never changes.
+        services.AddScoped<IAgentTool, KnowledgeSearchTool>();
+        services.AddScoped<IToolCatalog, ToolCatalog>();
 
         return services;
     }
