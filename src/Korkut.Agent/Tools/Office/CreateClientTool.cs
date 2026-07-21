@@ -30,6 +30,7 @@ public sealed class CreateClientTool(IOfficeScope scope, IClientService clients)
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {
         var name = ToolArgs.String(arguments, "name");
+        
         if (string.IsNullOrWhiteSpace(name))
         {
             return ToolResult.Error("'name' gereklidir.");

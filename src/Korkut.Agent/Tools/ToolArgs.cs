@@ -25,6 +25,9 @@ internal static class ToolArgs
     public static int? Int(JsonElement args, string name)
         => args.TryGetProperty(name, out var v) && v.TryGetInt32(out var n) ? n : null;
 
+    public static bool Bool(JsonElement args, string name)
+        => args.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;
+
     public static DateTimeOffset? DateTime(JsonElement args, string name)
         => String(args, name) is { } s && DateTimeOffset.TryParse(s, out var d) ? d : null;
 
