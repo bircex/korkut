@@ -1,10 +1,5 @@
 namespace Korkut.Domain.Agent;
 
-/// <summary>An assistant conversation ("session") — domain model.</summary>
-public sealed record Conversation(
-    Guid Id, Guid OfficeId, string Title, Guid? MatterId, Guid? CreatedBy,
-    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
-
 /// <summary>
 /// A conversation summary (list read model). Carries the raw <see cref="CreatedBy"/> id —
 /// the author's display name lives in the operational DB, so the Agent host resolves it via

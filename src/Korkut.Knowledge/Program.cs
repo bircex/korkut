@@ -17,26 +17,18 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Observability: OTel traces/metrics + redacted logs, plus ASP.NET Core request instrumentation.
 builder.AddKorkutObservability("Korkut.Knowledge", tracing => tracing.AddAspNetCoreInstrumentation());
 
-// Web foundation shared with the other hosts: JSON contract, versioning, error mapping, CORS.
 builder.Services.AddKorkutWeb(builder.Configuration);
 
-// The Knowledge DB (chunks + embeddings), schema korkut_knowledge, own RLS + migration chain +
-// pgvector, over the least-privileged app-role connection. Applied only by Korkut.Migrator.
 var knowledgeDbUrl = builder.Configuration["KORKUT_KNOWLEDGE_DB_URL"]
     ?? throw new InvalidOperationException("KORKUT_KNOWLEDGE_DB_URL is required for the Knowledge host (the Knowledge DB app-role connection).");
 builder.Services.AddKorkutKnowledgePersistence(knowledgeDbUrl);
 
-// The embedder (real OpenAI-compatible adapter when an endpoint is configured, else disabled).
 builder.Services.AddKorkutAi();
 
-// Chunker + vector store + ingestion/retrieval use-case services.
 builder.Services.AddKorkutKnowledgeServices();
 
-// Clock (row timestamps) + access-token auth + deny-by-default permission policies (same scheme
-// as the other hosts, so a token minted by the API/Agent authenticates here too).
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(
     builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
@@ -62,5 +54,4 @@ app.MapHealthChecks("/health/ready");
 
 app.Run();
 
-// Exposed so a WebApplicationFactory<Program> can boot the knowledge host in integration tests.
 public partial class Program;
