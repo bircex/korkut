@@ -4,6 +4,7 @@
     <Project Path="src/Korkut.Api/Korkut.Api.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
+    <Project Path="src/Korkut.Gateway/Korkut.Gateway.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
     <Project Path="src/Korkut.Knowledge/Korkut.Knowledge.csproj" />
     <Project Path="src/Korkut.Migrator/Korkut.Migrator.csproj" />
@@ -14,6 +15,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Korkut.Agent.Tests/Korkut.Agent.Tests.csproj" />
+    <Project Path="tests/Korkut.Gateway.Tests/Korkut.Gateway.Tests.csproj" />
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />
     <Project Path="tests/Korkut.Pii.Tests/Korkut.Pii.Tests.csproj" />
