@@ -1,0 +1,188 @@
+# Korkut backend — full multi-host deployment (Phase 11). The single public entry is the
+# gateway (:8090); it routes to the api + agent. Knowledge + ocr are internal (never published).
+# One Postgres cluster holds the three schemas (operational / korkut_agent / korkut_knowledge);
+# PgBouncer (transaction pooling) fronts it for the runtime hosts, while the one-shot migrator
+# connects DIRECTLY (session mode) to apply schema. Telemetry (OTLP) goes to the all-in-one
+# Grafana LGTM stack (Grafana on :3000). Secrets + provider keys come from a .env file the
+# operator supplies (see .env.example) — nothing is baked into an image.
+#
+# First run:  cp .env.example .env  &&  edit .env  &&  docker compose up -d --build
+
+name: korkut
+
+x-app-env: &app-env
+  KORKUT_SECRET: ${KORKUT_SECRET}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  ASPNETCORE_ENVIRONMENT: Production
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: korkut
+      KORKUT_APP_DB_PASSWORD: ${KORKUT_APP_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/10-init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d korkut"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.23.1-p2
+    environment:
+      DB_HOST: postgres
+      DB_NAME: korkut
+      DB_USER: korkut_app
+      DB_PASSWORD: ${KORKUT_APP_DB_PASSWORD}
+      POOL_MODE: transaction
+      AUTH_TYPE: scram-sha-256
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "25"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # One-shot: applies every schema (operational + agent + knowledge) as the superuser, then exits.
+  migrator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.migrator
+    environment:
+      KORKUT_ADMIN_DB_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/korkut
+    command: ["migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Observability backend: OTLP in (4317/4318), Grafana out (:3000). A dev/small-team default;
+  # swap for a full LGTM/Seq cluster by pointing OTEL_EXPORTER_OTLP_ENDPOINT elsewhere.
+  lgtm:
+    image: grafana/otel-lgtm:0.8.1
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${KORKUT_MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${KORKUT_MINIO_SECRET_KEY}
+    volumes:
+      - miniodata:/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    environment:
+      <<: *app-env
+      KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
+      KORKUT_TOTP_KEY: ${KORKUT_TOTP_KEY}
+      KORKUT_MINIO_ENDPOINT: minio:9000
+      KORKUT_MINIO_ACCESS_KEY: ${KORKUT_MINIO_ACCESS_KEY}
+      KORKUT_MINIO_SECRET_KEY: ${KORKUT_MINIO_SECRET_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      <<: *app-env
+      KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    environment:
+      <<: *app-env
+      KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
+      KORKUT_AGENT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
+      KORKUT_KNOWLEDGE_URL: http://knowledge:8080
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      KORKUT_OLLAMA_URL: ${KORKUT_OLLAMA_URL:-}
+      KORKUT_OFFICE_TOKEN_BUDGET: ${KORKUT_OFFICE_TOKEN_BUDGET:-0}
+      KORKUT_OFFICE_CONCURRENCY: ${KORKUT_OFFICE_CONCURRENCY:-0}
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+    restart: unless-stopped
+
+  knowledge:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.knowledge
+    environment:
+      <<: *app-env
+      KORKUT_KNOWLEDGE_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
+      KORKUT_EMBEDDING_URL: ${KORKUT_EMBEDDING_URL:-}
+      KORKUT_EMBEDDING_MODEL: ${KORKUT_EMBEDDING_MODEL:-nomic-embed-text}
+      KORKUT_EMBEDDING_API_KEY: ${KORKUT_EMBEDDING_API_KEY:-}
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+    restart: unless-stopped
+
+  ocr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ocr
+    environment:
+      <<: *app-env
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gateway
+    environment:
+      <<: *app-env
+      KORKUT_API_URL: http://api:8080
+      KORKUT_AGENT_URL: http://agent:8080
+    ports:
+      - "8090:8080"
+    depends_on:
+      api:
+        condition: service_started
+      agent:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
