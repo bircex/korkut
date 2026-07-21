@@ -57,7 +57,10 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ITemplateOverrideRepository, Korkut.Infrastructure.Persistence.Repositories.TemplateOverrideRepository>();
         services.AddScoped<Korkut.Application.Features.Templates.ITemplateOverrideService, Korkut.Application.Features.Templates.TemplateOverrideService>();
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
-        services.AddScoped<OutboxStore>();
+        // Outbox review queue (Clean Architecture: repository port + service; distinct from
+        // the jobs-side IOutboxStore/EfOutboxStore that dispatches/sends).
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IOutboxRepository, Korkut.Infrastructure.Persistence.Repositories.OutboxRepository>();
+        services.AddScoped<Korkut.Application.Features.Outbox.IOutboxService, Korkut.Application.Features.Outbox.OutboxService>();
         // Members (Clean Architecture: repository port + service; owner-safety in the service).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IMemberRepository, Korkut.Infrastructure.Persistence.Repositories.MemberRepository>();
         services.AddScoped<Korkut.Application.Features.Membership.IMembersService, Korkut.Application.Features.Membership.MembersService>();
