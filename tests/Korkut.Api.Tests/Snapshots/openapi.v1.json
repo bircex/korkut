@@ -685,7 +685,21 @@
       },
       "MemberCreateRequest": {
         "properties": {
+          "bar_registry_no": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
             "type": [
               "null",
               "string"
