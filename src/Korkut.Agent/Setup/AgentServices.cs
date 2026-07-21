@@ -129,6 +129,7 @@ public static class AgentServices
         services.AddScoped<IAgentTool, RememberTool>();
         services.AddScoped<IAgentTool, OpenEditorTool>();
         services.AddScoped<IToolCatalog, ToolCatalog>();
+        services.AddScoped<ToolCallingLoop>();
 
         return services;
     }
