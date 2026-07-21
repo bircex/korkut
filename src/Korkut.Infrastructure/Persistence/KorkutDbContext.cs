@@ -217,35 +217,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_matters_office_status");
         });
 
-        modelBuilder.Entity<TaskEntity>(b =>
-        {
-            b.ToTable("tasks");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Title).HasMaxLength(500);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_tasks_office_status");
-        });
-
-        modelBuilder.Entity<DeadlineEntity>(b =>
-        {
-            b.ToTable("deadlines");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Kind).HasMaxLength(20);
-            b.Property(x => x.Title).HasMaxLength(500);
-            b.Property(x => x.TimeZoneId).HasMaxLength(60);
-            b.HasIndex(x => new { x.OfficeId, x.DueDate }).HasDatabaseName("ix_deadlines_office_due");
-        });
-
-        modelBuilder.Entity<CommunicationNoteEntity>(b =>
-        {
-            b.ToTable("communication_notes");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Channel).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_comm_notes_office_matter");
-        });
+        modelBuilder.ApplyConfiguration(new Configurations.TaskConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.DeadlineConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.CommunicationNoteConfiguration());
 
         // Finance mappings live in Configurations/ (Clean Architecture layout); other
         // modules move to the same pattern module-by-module.

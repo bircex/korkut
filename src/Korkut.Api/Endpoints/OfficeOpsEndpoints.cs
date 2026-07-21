@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Features.OfficeOps;
 using Korkut.Application.Security;
+using Korkut.Domain.OfficeOps;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 
 namespace Korkut.Api.Endpoints;
 
@@ -84,11 +85,11 @@ public static class OfficeOpsEndpoints
     {
         var tasks = app.MapGroup("/api/tasks");
 
-        tasks.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db, async o => (await store.ListTasksAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
+        tasks.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
+            Results.Ok(await user.InTenantScopeAsync(db, async o => (await svc.ListTasksAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.MattersRead);
 
-        tasks.MapPost("", async (TaskCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        tasks.MapPost("", async (TaskCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -96,16 +97,13 @@ public static class OfficeOpsEndpoints
                     return invalid;
                 }
 
-                var created = await user.InTenantScopeAsync(db, async o =>
-                {
-                    var id = await store.CreateTaskAsync(o, body.Title!.Trim(), body.MatterId, body.AssigneeId, body.DueAt, ct);
-                    return await store.GetTaskAsync(o, id, ct);
-                }, ct);
-                return Results.Created($"/api/tasks/{created!.Id}", ToDto(created));
+                var created = await user.InTenantScopeAsync(db, o =>
+                    svc.CreateTaskAsync(o, body.Title!.Trim(), body.MatterId, body.AssigneeId, body.DueAt, ct), ct);
+                return Results.Created($"/api/tasks/{created.Id}", ToDto(created));
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        tasks.MapPatch("/{id:guid}", async (Guid id, TaskStatusRequest body, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        tasks.MapPatch("/{id:guid}", async (Guid id, TaskStatusRequest body, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -113,18 +111,14 @@ public static class OfficeOpsEndpoints
                     return invalid;
                 }
 
-                var updated = await user.InTenantScopeAsync(db, async o =>
-                {
-                    var ok = await store.SetTaskStatusAsync(o, id, body.Status!, ct);
-                    return ok ? await store.GetTaskAsync(o, id, ct) : null;
-                }, ct);
+                var updated = await user.InTenantScopeAsync(db, o => svc.SetTaskStatusAsync(o, id, body.Status!, ct), ct);
                 return updated is null ? throw ApiException.NotFound("Görev bulunamadı.") : Results.Ok(ToDto(updated));
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        tasks.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        tasks.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.DeleteTaskAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.DeleteTaskAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Görev bulunamadı.");
             })
             .RequireAuthorization(Permissions.MattersWrite);
@@ -134,11 +128,11 @@ public static class OfficeOpsEndpoints
     {
         var deadlines = app.MapGroup("/api/deadlines");
 
-        deadlines.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db, async o => (await store.ListDeadlinesAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
+        deadlines.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
+            Results.Ok(await user.InTenantScopeAsync(db, async o => (await svc.ListDeadlinesAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.MattersRead);
 
-        deadlines.MapPost("", async (DeadlineCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        deadlines.MapPost("", async (DeadlineCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -146,25 +140,22 @@ public static class OfficeOpsEndpoints
                     return invalid;
                 }
 
-                var created = await user.InTenantScopeAsync(db, async o =>
-                {
-                    var id = await store.CreateDeadlineAsync(o, body.Title!.Trim(), body.DueDate, body.Kind, body.MatterId, body.TimeZoneId, body.ReminderDaysBefore, ct);
-                    return (await store.ListDeadlinesAsync(o, null, ct)).First(x => x.Id == id);
-                }, ct);
+                var created = await user.InTenantScopeAsync(db, o =>
+                    svc.CreateDeadlineAsync(o, body.Title!.Trim(), body.DueDate, body.Kind, body.MatterId, body.TimeZoneId, body.ReminderDaysBefore, ct), ct);
                 return Results.Created($"/api/deadlines/{created.Id}", ToDto(created));
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        deadlines.MapPost("/{id:guid}/complete", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        deadlines.MapPost("/{id:guid}/complete", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.CompleteDeadlineAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.CompleteDeadlineAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Süre bulunamadı veya zaten tamamlandı.");
             })
             .RequireAuthorization(Permissions.MattersWrite);
 
-        deadlines.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        deadlines.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.DeleteDeadlineAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.DeleteDeadlineAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Süre bulunamadı.");
             })
             .RequireAuthorization(Permissions.MattersWrite);
@@ -174,11 +165,11 @@ public static class OfficeOpsEndpoints
     {
         var notes = app.MapGroup("/api/notes");
 
-        notes.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db, async o => (await store.ListNotesAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
+        notes.MapGet("", async (Guid? matterId, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
+            Results.Ok(await user.InTenantScopeAsync(db, async o => (await svc.ListNotesAsync(o, matterId, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.MattersRead);
 
-        notes.MapPost("", async (NoteCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, OfficeOpsStore store, CancellationToken ct) =>
+        notes.MapPost("", async (NoteCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, IOfficeOpsService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -186,19 +177,16 @@ public static class OfficeOpsEndpoints
                     return invalid;
                 }
 
-                var created = await user.InTenantScopeAsync(db, async o =>
-                {
-                    var id = await store.CreateNoteAsync(o, body.Body!.Trim(), body.Channel, body.MatterId, body.ClientId, body.OccurredAt, ct);
-                    return (await store.ListNotesAsync(o, null, ct)).First(x => x.Id == id);
-                }, ct);
+                var created = await user.InTenantScopeAsync(db, o =>
+                    svc.CreateNoteAsync(o, body.Body!.Trim(), body.Channel, body.MatterId, body.ClientId, body.OccurredAt, ct), ct);
                 return Results.Created($"/api/notes/{created.Id}", ToDto(created));
             })
             .RequireAuthorization(Permissions.MattersWrite);
     }
 
-    private static TaskResponse ToDto(TaskEntity t) => new(t.Id, t.Title, t.Status, t.MatterId, t.AssigneeId, t.DueAt, t.CompletedAt, t.CreatedAt);
+    private static TaskResponse ToDto(WorkTask t) => new(t.Id, t.Title, t.Status, t.MatterId, t.AssigneeId, t.DueAt, t.CompletedAt, t.CreatedAt);
 
-    private static DeadlineResponse ToDto(DeadlineEntity d) => new(d.Id, d.Title, d.DueDate, d.Kind, d.MatterId, d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt);
+    private static DeadlineResponse ToDto(Deadline d) => new(d.Id, d.Title, d.DueDate, d.Kind, d.MatterId, d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt);
 
-    private static NoteResponse ToDto(CommunicationNoteEntity n) => new(n.Id, n.Body, n.Channel, n.MatterId, n.ClientId, n.OccurredAt, n.CreatedAt);
+    private static NoteResponse ToDto(CommunicationNote n) => new(n.Id, n.Body, n.Channel, n.MatterId, n.ClientId, n.OccurredAt, n.CreatedAt);
 }
