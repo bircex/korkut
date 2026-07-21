@@ -136,20 +136,13 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Name).HasMaxLength(300);
         });
 
-        modelBuilder.Entity<MatterEntity>(b =>
-        {
-            b.ToTable("matters");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Title).HasMaxLength(500);
-            // Composite alternate key so children can reference (office_id, id) — the
-            // tenant-aware FK target that makes cross-office links impossible.
-            b.HasAlternateKey(x => new { x.OfficeId, x.Id });
-            b.HasIndex(x => x.OfficeId).HasDatabaseName("ix_matters_office");
-            // Optimistic concurrency via Postgres' system xmin column — a stale update
-            // raises a concurrency conflict instead of silently overwriting (KDM-014).
-            b.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
-        });
+        // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
+        // — kept together because their tenant-aware composite FKs form one set.
+        modelBuilder.ApplyConfiguration(new Configurations.MatterConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.ClientConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.CourtConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.PartyConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.MatterHearingConfiguration());
 
         modelBuilder.Entity<AuditEventEntity>(b =>
         {
@@ -164,58 +157,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.EntityType, x.EntityId }).HasDatabaseName("ix_audit_events_entity");
         });
 
-        modelBuilder.Entity<ClientEntity>(b =>
-        {
-            b.ToTable("clients");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Name).HasMaxLength(400);
-            b.Property(x => x.Kind).HasMaxLength(20);
-            b.Property(x => x.Email).HasMaxLength(320);
-            b.Property(x => x.Phone).HasMaxLength(50);
-            b.HasAlternateKey(x => new { x.OfficeId, x.Id }); // composite FK target for matters
-            b.HasIndex(x => new { x.OfficeId, x.DeletedAt }).HasDatabaseName("ix_clients_office_deleted");
-        });
-
-        modelBuilder.Entity<CourtEntity>(b =>
-        {
-            b.ToTable("courts");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Name).HasMaxLength(400);
-            b.HasIndex(x => x.OfficeId).HasDatabaseName("ix_courts_office");
-        });
-
-        modelBuilder.Entity<PartyEntity>(b =>
-        {
-            b.ToTable("parties");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Role).HasMaxLength(50);
-            b.Property(x => x.Name).HasMaxLength(400);
-            // Tenant-aware composite FK to the matter.
-            b.HasOne<MatterEntity>()
-                .WithMany()
-                .HasForeignKey(x => new { x.OfficeId, x.MatterId })
-                .HasPrincipalKey(m => new { m.OfficeId, m.Id })
-                .OnDelete(DeleteBehavior.Cascade);
-            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_parties_office_matter");
-        });
-
-        modelBuilder.Entity<MatterEntity>(b =>
-        {
-            // Tenant-aware composite FK to the client (optional).
-            b.HasOne<ClientEntity>()
-                .WithMany()
-                .HasForeignKey(x => new { x.OfficeId, x.ClientId })
-                .HasPrincipalKey(c => new { c.OfficeId, c.Id })
-                .OnDelete(DeleteBehavior.SetNull);
-            b.Property(x => x.Status).HasMaxLength(30);
-            b.Property(x => x.FileNo).HasMaxLength(100);
-            b.Property(x => x.CaseType).HasMaxLength(100);
-            b.Property(x => x.CourtNameSnapshot).HasMaxLength(400);
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_matters_office_status");
-        });
 
         modelBuilder.ApplyConfiguration(new Configurations.TaskConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.DeadlineConfiguration());
@@ -422,20 +363,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.TokenHash).HasMaxLength(64);
             b.HasIndex(x => x.TokenHash).HasDatabaseName("ix_invites_token_hash");
             b.HasIndex(x => new { x.OfficeId, x.Email }).HasDatabaseName("ix_invites_office_email");
-        });
-
-        modelBuilder.Entity<MatterHearingEntity>(b =>
-        {
-            b.ToTable("matter_hearings");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            // Tenant-aware composite FK: (office_id, matter_id) -> matters(office_id, id).
-            b.HasOne<MatterEntity>()
-                .WithMany()
-                .HasForeignKey(x => new { x.OfficeId, x.MatterId })
-                .HasPrincipalKey(m => new { m.OfficeId, m.Id })
-                .OnDelete(DeleteBehavior.Cascade);
-            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_matter_hearings_office_matter");
         });
 
         modelBuilder.Entity<UserEntity>(b =>

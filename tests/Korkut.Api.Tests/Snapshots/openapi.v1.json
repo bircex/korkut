@@ -471,6 +471,49 @@
         ],
         "type": "object"
       },
+      "HearingCreateRequest": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "time": {
+            "format": "time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "type": "object"
+      },
       "IFormFile": {
         "format": "binary",
         "type": "string"
@@ -2346,6 +2389,39 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Korkut.Api"
+        ]
+      }
+    },
+    "/api/matters/{id}/hearings": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HearingCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"

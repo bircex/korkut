@@ -1,5 +1,7 @@
+using Korkut.Application.Features.OfficeCore;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Infrastructure.Persistence.Repositories;
 using Korkut.SharedKernel.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +27,11 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private static OfficeCoreStore Store(KorkutDbContext db) => new(db, new Clock());
+    // The office-core module is now Clean Architecture: exercise the use-case service over
+    // the real EF repositories (not a concrete store), so these tests still cover the
+    // court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
+    private static MatterService Service(KorkutDbContext db) =>
+        new(new MatterRepository(db), new HearingRepository(db), new Clock());
 
     [Fact]
     public async Task Renaming_a_court_does_not_change_a_matters_historical_snapshot()
@@ -37,7 +43,7 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
             db.Courts.Add(court);
             await db.SaveChangesAsync();
             courtId = court.Id;
-            matterId = await Store(db).CreateMatterAsync(_office, "Dava", courtId: courtId);
+            matterId = (await Service(db).CreateAsync(_office, "Dava", null, courtId)).Id;
         }
 
         // The matter captured the court's title at link time.
@@ -69,13 +75,13 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
         Guid keep, drop;
         await using (var db = pg.NewContext())
         {
-            keep = await Store(db).CreateMatterAsync(_office, "Aktif");
-            drop = await Store(db).CreateMatterAsync(_office, "Silinen");
-            await Store(db).SoftDeleteMatterAsync(_office, drop);
+            keep = (await Service(db).CreateAsync(_office, "Aktif", null, null)).Id;
+            drop = (await Service(db).CreateAsync(_office, "Silinen", null, null)).Id;
+            await Service(db).DeleteAsync(_office, drop);
         }
 
         await using var check = pg.NewContext();
-        var listed = await Store(check).ListMattersAsync(_office);
+        var listed = await Service(check).ListAsync(_office);
         Assert.Contains(listed, m => m.Id == keep);
         Assert.DoesNotContain(listed, m => m.Id == drop);
         // But the soft-deleted row is retained (not physically gone).
@@ -91,7 +97,7 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
         {
             db.Offices.Add(new OfficeEntity { Id = otherOffice, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
             await db.SaveChangesAsync();
-            matterInThisOffice = await Store(db).CreateMatterAsync(_office, "M");
+            matterInThisOffice = (await Service(db).CreateAsync(_office, "M", null, null)).Id;
         }
 
         // A party in the OTHER office referencing this office's matter has no matching
@@ -109,7 +115,7 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
         db.Clients.Add(client);
         await db.SaveChangesAsync();
 
-        var matterId = await Store(db).CreateMatterAsync(_office, "Dava", clientId: client.Id);
+        var matterId = (await Service(db).CreateAsync(_office, "Dava", client.Id, null)).Id;
         var m = await db.Matters.AsNoTracking().SingleAsync(x => x.Id == matterId);
         Assert.Equal(client.Id, m.ClientId);
     }

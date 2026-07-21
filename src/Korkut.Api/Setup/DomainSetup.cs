@@ -22,7 +22,13 @@ public static class DomainSetup
 
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, EfAuditLog>();
-        services.AddScoped<OfficeCoreStore>();
+        // Office-core (Clean Architecture: clients + matters + hearings). Owns the
+        // court-title snapshot rule in MatterService.
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IClientRepository, Korkut.Infrastructure.Persistence.Repositories.ClientRepository>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IMatterRepository, Korkut.Infrastructure.Persistence.Repositories.MatterRepository>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.IHearingRepository, Korkut.Infrastructure.Persistence.Repositories.HearingRepository>();
+        services.AddScoped<Korkut.Application.Features.OfficeCore.IClientService, Korkut.Application.Features.OfficeCore.ClientService>();
+        services.AddScoped<Korkut.Application.Features.OfficeCore.IMatterService, Korkut.Application.Features.OfficeCore.MatterService>();
         // Office-ops (Clean Architecture: repository ports + service).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ITaskRepository, Korkut.Infrastructure.Persistence.Repositories.TaskRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IDeadlineRepository, Korkut.Infrastructure.Persistence.Repositories.DeadlineRepository>();
