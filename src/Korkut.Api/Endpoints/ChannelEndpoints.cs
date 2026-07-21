@@ -2,9 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Features.Channels;
 using Korkut.Application.Security;
+using Korkut.Domain.Channels;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 
 namespace Korkut.Api.Endpoints;
 
@@ -72,15 +73,15 @@ public static class ChannelEndpoints
     {
         var channels = app.MapGroup("/api/channels");
 
-        channels.MapGet("/email", async (ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        channels.MapGet("/email", async (ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var canEdit = user.HasPermission(Permissions.OfficeSettings);
-                var c = await user.InTenantScopeAsync(db, o => store.GetAsync(o, ChannelStore.Email, ct), ct);
-                return Results.Ok(new EmailChannelResponse("email", c?.Enabled ?? false, c?.FromAddress ?? "", c?.FromName ?? "", c?.EncryptedSecret != null, canEdit));
+                var c = await user.InTenantScopeAsync(db, o => svc.GetAsync(o, ChannelKind.Email, ct), ct);
+                return Results.Ok(new EmailChannelResponse("email", c?.Enabled ?? false, c?.FromAddress ?? "", c?.FromName ?? "", c?.HasSecret ?? false, canEdit));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
-        channels.MapPut("/email", async (EmailChannelInput body, ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        channels.MapPut("/email", async (EmailChannelInput body, ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -88,19 +89,19 @@ public static class ChannelEndpoints
                     return invalid;
                 }
 
-                var c = await user.InTenantScopeAsync(db, o => store.SaveEmailAsync(o, body.Enabled, body.FromAddress, body.FromName, SecretUpdate.From(body.AppPassword), ct), ct);
-                return Results.Ok(new EmailChannelResponse("email", c.Enabled, c.FromAddress ?? "", c.FromName ?? "", c.EncryptedSecret != null, true));
+                var c = await user.InTenantScopeAsync(db, o => svc.SaveEmailAsync(o, body.Enabled, body.FromAddress, body.FromName, SecretUpdate.From(body.AppPassword), ct), ct);
+                return Results.Ok(new EmailChannelResponse("email", c.Enabled, c.FromAddress ?? "", c.FromName ?? "", c.HasSecret, true));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
 
-        channels.MapPut("/telegram", async (TelegramChannelInput body, ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        channels.MapPut("/telegram", async (TelegramChannelInput body, ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
-                var c = await user.InTenantScopeAsync(db, o => store.SaveTelegramAsync(o, body.Enabled, SecretUpdate.From(body.BotToken), ct), ct);
-                return Results.Ok(new OkConfiguredResponse(true, c.EncryptedSecret != null));
+                var c = await user.InTenantScopeAsync(db, o => svc.SaveTelegramAsync(o, body.Enabled, SecretUpdate.From(body.BotToken), ct), ct);
+                return Results.Ok(new OkConfiguredResponse(true, c.HasSecret));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
 
-        channels.MapPut("/whatsapp", async (WhatsAppChannelInput body, ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        channels.MapPut("/whatsapp", async (WhatsAppChannelInput body, ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -108,8 +109,8 @@ public static class ChannelEndpoints
                     return invalid;
                 }
 
-                var c = await user.InTenantScopeAsync(db, o => store.SaveWhatsAppAsync(o, body.Enabled, body.BaseUrl, SecretUpdate.From(body.Token), ct), ct);
-                return Results.Ok(new OkConfiguredResponse(true, c.EncryptedSecret != null));
+                var c = await user.InTenantScopeAsync(db, o => svc.SaveWhatsAppAsync(o, body.Enabled, body.BaseUrl, SecretUpdate.From(body.Token), ct), ct);
+                return Results.Ok(new OkConfiguredResponse(true, c.HasSecret));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
     }
@@ -118,35 +119,35 @@ public static class ChannelEndpoints
     {
         var integrations = app.MapGroup("/api/integrations");
 
-        integrations.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        integrations.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var canEdit = user.HasPermission(Permissions.OfficeSettings);
-                var rows = await user.InTenantScopeAsync(db, o => store.ListAsync(o, ct), ct);
+                var rows = await user.InTenantScopeAsync(db, o => svc.ListAsync(o, ct), ct);
                 var byKind = rows.ToDictionary(r => r.Kind);
-                var kinds = new[] { ChannelStore.Telegram, ChannelStore.WhatsApp, ChannelStore.Email };
+                var kinds = new[] { ChannelKind.Telegram, ChannelKind.WhatsApp, ChannelKind.Email };
                 var channels = kinds.Select(k =>
                 {
                     byKind.TryGetValue(k, out var c);
                     return new IntegrationChannelResponse(
-                        k, c?.Enabled ?? false, c?.EncryptedSecret != null, c?.BaseUrl ?? "",
+                        k, c?.Enabled ?? false, c?.HasSecret ?? false, c?.BaseUrl ?? "",
                         c?.Linked ?? false, c?.LinkedId ?? "", canEdit);
                 }).ToList();
                 return Results.Ok(new IntegrationsResponse(channels));
             })
             .RequireAuthorization(Permissions.MattersRead);
 
-        integrations.MapPost("/{kind}/link", async (string kind, ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        integrations.MapPost("/{kind}/link", async (string kind, ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var normalized = Normalize(kind);
-                var code = await user.InTenantScopeAsync(db, o => store.CreateLinkAsync(o, normalized, ct), ct);
+                var code = await user.InTenantScopeAsync(db, o => svc.CreateLinkAsync(o, normalized, ct), ct);
                 return Results.Ok(new LinkCodeResponse(code, normalized));
             })
             .RequireAuthorization(Permissions.OfficeSettings);
 
-        integrations.MapDelete("/{kind}/link", async (string kind, ClaimsPrincipal user, KorkutDbContext db, ChannelStore store, CancellationToken ct) =>
+        integrations.MapDelete("/{kind}/link", async (string kind, ClaimsPrincipal user, KorkutDbContext db, IChannelService svc, CancellationToken ct) =>
             {
                 var normalized = Normalize(kind);
-                var ok = await user.InTenantScopeAsync(db, o => store.DeleteLinkAsync(o, normalized, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.DeleteLinkAsync(o, normalized, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Bağlantı bulunamadı.");
             })
             .RequireAuthorization(Permissions.OfficeSettings);
@@ -154,9 +155,9 @@ public static class ChannelEndpoints
 
     private static string Normalize(string kind) => kind.ToLowerInvariant() switch
     {
-        ChannelStore.Telegram => ChannelStore.Telegram,
-        ChannelStore.WhatsApp => ChannelStore.WhatsApp,
-        ChannelStore.Email => ChannelStore.Email,
+        ChannelKind.Telegram => ChannelKind.Telegram,
+        ChannelKind.WhatsApp => ChannelKind.WhatsApp,
+        ChannelKind.Email => ChannelKind.Email,
         _ => throw ApiException.BadRequest("Geçersiz kanal türü."),
     };
 }
