@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Korkut.Web.Auth;
 using Korkut.Api.Auth;
-using Korkut.Api.Errors;
-using Korkut.Api.Tenancy;
+using Korkut.Web.Errors;
+using Korkut.Web.Tenancy;
+using Korkut.Web;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
@@ -114,11 +116,11 @@ public static class AuthEndpoints
 
         app.MapPost("/api/auth/login", HandleLogin)
             .AllowAnonymous()
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         app.MapPost("/api/auth/2fa", HandleTotp)
             .AllowAnonymous()
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         app.MapPost("/api/auth/refresh", HandleRefresh).AllowAnonymous();
 
@@ -126,11 +128,11 @@ public static class AuthEndpoints
 
         app.MapPost("/api/auth/password/reset-request", HandleResetRequest)
             .AllowAnonymous()
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         app.MapPost("/api/auth/password/reset", HandleReset)
             .AllowAnonymous()
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         return app;
     }

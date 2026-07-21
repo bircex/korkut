@@ -2,7 +2,7 @@ using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Korkut.Api.Auth;
+namespace Korkut.Web.Auth;
 
 /// <summary>
 /// Wires the access-token authentication scheme and a deny-by-default authorization

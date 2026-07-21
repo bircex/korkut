@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Api.Errors;
+namespace Korkut.Web.Errors;
 
 /// <summary>One field-level validation failure, matching the Python/FastAPI shape.</summary>
 public sealed record ValidationError(string Type, IReadOnlyList<string> Loc, string Msg, object? Input);

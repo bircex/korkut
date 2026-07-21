@@ -1,4 +1,4 @@
-namespace Korkut.Api.Middleware;
+namespace Korkut.Web.Middleware;
 
 /// <summary>
 /// Ensures every request/response carries a correlation id. Reuses an inbound

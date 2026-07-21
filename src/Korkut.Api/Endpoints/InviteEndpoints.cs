@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Korkut.Api.Errors;
-using Korkut.Api.Tenancy;
+using Korkut.Web.Errors;
+using Korkut.Web.Tenancy;
+using Korkut.Web;
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Features.Membership;
 using Korkut.Application.Security;
@@ -99,7 +100,7 @@ public static class InviteEndpoints
                 return Results.Ok(new { ok = true, email = grant.Email });
             })
             .AllowAnonymous()
-            .RequireRateLimiting(Setup.ApiSetup.SensitivePolicy);
+            .RequireRateLimiting(WebSetup.SensitivePolicy);
 
         return app;
     }

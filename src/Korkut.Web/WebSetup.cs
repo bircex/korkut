@@ -1,10 +1,10 @@
 using System.Threading.RateLimiting;
 using Asp.Versioning;
-using Korkut.Api.Errors;
-using Korkut.Api.Json;
+using Korkut.Web.Errors;
+using Korkut.Web.Json;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace Korkut.Api.Setup;
+namespace Korkut.Web;
 
 /// <summary>
 /// Central composition of the API foundation: JSON contract, API versioning,
@@ -12,14 +12,14 @@ namespace Korkut.Api.Setup;
 /// this in one place means every endpoint inherits the same, contract-aligned
 /// behavior (KDM-006).
 /// </summary>
-public static class ApiSetup
+public static class WebSetup
 {
     public const string DefaultCorsPolicy = "korkut-default";
 
     /// <summary>Rate-limit policy for sensitive endpoints (login/reset/2FA/upload/admin).</summary>
     public const string SensitivePolicy = "sensitive";
 
-    public static IServiceCollection AddKorkutApi(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddKorkutWeb(this IServiceCollection services, IConfiguration configuration)
     {
         // JSON: snake_case + string enums + nulls preserved (Python parity).
         services.ConfigureHttpJsonOptions(o => KorkutJson.Apply(o.SerializerOptions));
@@ -72,11 +72,11 @@ public static class ApiSetup
         return services;
     }
 
-    public static WebApplication UseKorkutApi(this WebApplication app)
+    public static WebApplication UseKorkutWeb(this WebApplication app)
     {
-        app.UseMiddleware<Korkut.Api.Middleware.SecurityHeadersMiddleware>(app.Environment.IsProduction());
+        app.UseMiddleware<Korkut.Web.Middleware.SecurityHeadersMiddleware>(app.Environment.IsProduction());
         app.UseExceptionHandler();
-        app.UseMiddleware<Korkut.Api.Middleware.CorrelationIdMiddleware>();
+        app.UseMiddleware<Korkut.Web.Middleware.CorrelationIdMiddleware>();
         app.UseCors(DefaultCorsPolicy);
         app.UseRateLimiter();
         app.MapOpenApi();

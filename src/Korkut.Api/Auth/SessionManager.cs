@@ -12,7 +12,7 @@ namespace Korkut.Api.Auth;
 /// </summary>
 public sealed class SessionManager(AccessTokenService accessTokens, RefreshTokenService refreshTokens, IConfiguration configuration)
 {
-    public const string AccessCookie = "korkut_at";
+    public const string AccessCookie = Korkut.Web.Auth.AccessTokenAuthHandler.AccessCookie;
     public const string RefreshCookie = "korkut_rt";
     public const string PendingCookie = "korkut_2fa";
     public const string SignupCookie = "korkut_signup";

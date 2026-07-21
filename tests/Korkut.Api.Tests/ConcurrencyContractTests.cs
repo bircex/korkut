@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Korkut.Api.Errors;
+using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

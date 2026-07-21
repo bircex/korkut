@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Korkut.Api.Tenancy;
+using Korkut.Web.Tenancy;
 using Korkut.Application.Features.Reports;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;

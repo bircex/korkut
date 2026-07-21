@@ -1,4 +1,4 @@
-namespace Korkut.Api.Errors;
+namespace Korkut.Web.Errors;
 
 /// <summary>
 /// An expected, client-facing failure carrying an HTTP status and a localized
