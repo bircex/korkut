@@ -32,6 +32,7 @@ public sealed class AddEvrakTool(IOfficeScope scope, ICorrespondenceService corr
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {
         var title = ToolArgs.String(arguments, "title");
+        
         if (string.IsNullOrWhiteSpace(title))
         {
             return ToolResult.Error("'title' gereklidir.");
@@ -42,6 +43,7 @@ public sealed class AddEvrakTool(IOfficeScope scope, ICorrespondenceService corr
 
         var item = await scope.RunAsync(context.OfficeId,
             c => correspondence.CreateAsync(context.OfficeId, direction, title.Trim(), ToolArgs.String(arguments, "reference_no"), ToolArgs.Date(arguments, "doc_date"), matterId, ToolArgs.String(arguments, "notes"), c), ct);
+        
         return ToolResult.Ok(ToolArgs.Result(item));
     }
 }

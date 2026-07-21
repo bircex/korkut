@@ -20,7 +20,10 @@ public sealed class FetchDocumentTool(IEnumerable<ISourceClient> clients, IEnvir
           "type": "object",
           "properties": {
             "source": { "type": "string", "enum": ["yargitay","danistay","emsal","kyb","anayasa","mevzuat","gib","kik","rekabet","sayistay","uyusmazlik","bddk","kvkk","sigorta_tahkim"], "description": "Belgenin kaynağı (search_decisions ile aynı)" },
-            "id": { "type": "string", "description": "search_decisions sonucundan gelen kimlik" }
+            "id": { "type": "string", "description": "search_decisions sonucundan gelen kimlik" },
+            "article_id": { "type": "string", "description": "mevzuat için: yalnızca tek bir maddeyi getir" },
+            "page": { "type": "integer", "description": "Uzun belgelerde sayfa (varsayılan 1)" },
+            "page_size": { "type": "integer", "description": "Sayfa başına karakter (varsayılan 5000)" }
           },
           "required": ["source", "id"]
         }
@@ -59,9 +62,16 @@ public sealed class FetchDocumentTool(IEnumerable<ISourceClient> clients, IEnvir
             return ToolResult.Error($"'{source}' kaynağı için API anahtarı yapılandırılmamış.");
         }
 
-        var text = await client.FetchAsync(id.Trim(), arguments, ct);
-        return string.IsNullOrWhiteSpace(text)
-            ? ToolResult.Ok("Belge bulunamadı.")
-            : ToolResult.Ok(text);
+        try
+        {
+            var text = await client.FetchAsync(id.Trim(), arguments, ct);
+            return string.IsNullOrWhiteSpace(text)
+                ? ToolResult.Ok("Belge bulunamadı.")
+                : ToolResult.Ok(text);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or FormatException)
+        {
+            return ToolResult.Error($"'{source}' belgesi getirilemedi: {ex.Message}");
+        }
     }
 }

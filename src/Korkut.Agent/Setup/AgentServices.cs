@@ -197,6 +197,10 @@ public static class AgentServices
         services.AddScoped<ISourceClient, BddkClient>();          // banking (Tavily + fetch)
         services.AddScoped<ISourceClient, KvkkClient>();          // data protection (Tavily + fetch)
         services.AddScoped<ISourceClient, SigortaTahkimClient>(); // insurance arbitration (Tavily + PDF fetch)
+        services.AddScoped<ISourceClient, RekabetClient>();       // competition authority (HTML scrape)
+        services.AddScoped<ISourceClient, SayistayClient>();      // court of accounts (DataTables)
+        services.AddScoped<ISourceClient, UyusmazlikClient>();    // jurisdictional disputes (WebForms + PDF)
+        services.AddScoped<ISourceClient, KikClient>();           // public procurement (WebForms)
 
         // Standalone legal tool: keyword search within one Sigorta Tahkim journal issue.
         services.AddScoped<IAgentTool, SearchWithinSigortaTahkimTool>();

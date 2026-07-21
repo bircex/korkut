@@ -25,7 +25,11 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
             "page": { "type": "integer", "description": "Sayfa (varsayılan 1)" },
             "date_start": { "type": "string", "description": "YYYY-MM-DD (yargitay/danistay/emsal/kyb/kik)" },
             "date_end": { "type": "string", "description": "YYYY-MM-DD" },
-            "chamber": { "type": "string", "description": "Daire (yargitay/danistay)" }
+            "chamber": { "type": "string", "description": "Daire (yargitay/danistay)" },
+            "decision_type": { "type": "string", "description": "rekabet/kik/sayistay için karar türü (ör. sayistay: genel_kurul/temyiz_kurulu/daire; kik: uyusmazlik/duzenleyici/mahkeme)" },
+            "application_type": { "type": "string", "description": "anayasa için: norm veya individual" },
+            "scope": { "type": "string", "description": "uyusmazlik için arama kapsamı: all/esas/karar" },
+            "legislation_type": { "type": "string", "description": "mevzuat için tür filtresi (ör. KANUN, KHK, YONETMELIK)" }
           },
           "required": ["source", "query"]
         }
@@ -58,7 +62,14 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
             return ToolResult.Error($"'{source}' kaynağı için API anahtarı yapılandırılmamış.");
         }
 
-        var results = await client.SearchAsync(query.Trim(), arguments, ct);
-        return ToolResult.Ok(ToolArgs.Result(results));
+        try
+        {
+            var results = await client.SearchAsync(query.Trim(), arguments, ct);
+            return ToolResult.Ok(ToolArgs.Result(results));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+        {
+            return ToolResult.Error($"'{source}' kaynağında arama başarısız oldu: {ex.Message}");
+        }
     }
 }

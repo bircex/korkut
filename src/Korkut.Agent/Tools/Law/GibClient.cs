@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Korkut.Agent.Tools;
 
 namespace Korkut.Agent.Tools.Law;
 
@@ -17,7 +16,7 @@ public sealed class GibClient(IHttpClientFactory httpClientFactory) : ISourceCli
     public string? RequiresKey => null;
     public bool SupportsFetch => false;
 
-    public async Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SourceResult>> SearchAsync(string? query, JsonElement args, CancellationToken ct = default)
     {
         var limit = Math.Max(1, ToolArgs.Int(args, "limit") ?? 10);
         var page = Math.Max(0, (ToolArgs.Int(args, "page") ?? 1) - 1); // API pages are 0-indexed
@@ -29,6 +28,7 @@ public sealed class GibClient(IHttpClientFactory httpClientFactory) : ISourceCli
             ["ktype"] = 99,
         };
         var term = (query ?? string.Empty).Trim();
+        
         if (term.Length > 0)
         {
             body["title"] = term;
