@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Korkut.Application.Features.OfficeCore;
+using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools.Office;
 
@@ -21,6 +22,8 @@ public sealed class CreateMatterTool(IOfficeScope scope, IMatterService matters)
     public ToolSpec Spec => new("create_matter", "Büroya yeni bir dosya (dava) açar.", Schema);
 
     public string? RequiresKey => null;
+
+    public string? RequiredPermission => Permissions.MattersWrite;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {

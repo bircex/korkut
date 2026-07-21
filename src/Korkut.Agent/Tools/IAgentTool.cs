@@ -15,5 +15,8 @@ public interface IAgentTool
     /// <summary>The environment variable this tool needs (e.g. an API key); null = always available.</summary>
     string? RequiresKey { get; }
 
+    /// <summary>The permission the caller must hold to use this tool (a <c>Permissions</c> constant); null = none.</summary>
+    string? RequiredPermission { get; }
+
     Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default);
 }

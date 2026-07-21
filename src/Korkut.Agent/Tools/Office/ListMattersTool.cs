@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Korkut.Application.Features.OfficeCore;
+using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools.Office;
 
@@ -11,6 +12,8 @@ public sealed class ListMattersTool(IOfficeScope scope, IMatterService matters) 
     public ToolSpec Spec => new("list_matters", "Bürodaki dosyaları (davaları) listeler.", Schema);
 
     public string? RequiresKey => null;
+
+    public string? RequiredPermission => Permissions.MattersRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {

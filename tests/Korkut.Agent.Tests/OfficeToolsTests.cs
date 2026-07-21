@@ -13,7 +13,8 @@ namespace Korkut.Agent.Tests;
 /// </summary>
 public class OfficeToolsTests
 {
-    private static readonly ToolContext Ctx = new(Guid.NewGuid(), Guid.NewGuid());
+    // Tools don't self-check permission (the catalog gates that); a direct-invoke test needs any set.
+    private static readonly ToolContext Ctx = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
     private static readonly JsonElement NoArgs = JsonSerializer.SerializeToElement(new { });
 
     // Runs the work directly — the real OfficeScope would open a tenant transaction; tests skip that.

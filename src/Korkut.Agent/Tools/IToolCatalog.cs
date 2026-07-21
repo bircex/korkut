@@ -9,7 +9,8 @@ namespace Korkut.Agent.Tools;
 /// </summary>
 public interface IToolCatalog
 {
-    IReadOnlyList<ToolSpec> AvailableSpecs();
+    /// <summary>The tools offered to the model for THIS caller: configured (key present) AND permitted.</summary>
+    IReadOnlyList<ToolSpec> AvailableSpecs(ToolContext context);
 
     Task<ToolResult> InvokeAsync(string name, JsonElement arguments, ToolContext context, CancellationToken ct = default);
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Korkut.Application.Features.OfficeCore;
+using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools.Office;
 
@@ -23,6 +24,8 @@ public sealed class CreateClientTool(IOfficeScope scope, IClientService clients)
     public ToolSpec Spec => new("create_client", "Büroya yeni bir müvekkil ekler.", Schema);
 
     public string? RequiresKey => null;
+
+    public string? RequiredPermission => Permissions.ClientsWrite;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {

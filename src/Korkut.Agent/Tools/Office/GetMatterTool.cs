@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Korkut.Application.Features.OfficeCore;
+using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools.Office;
 
@@ -12,6 +13,8 @@ public sealed class GetMatterTool(IOfficeScope scope, IMatterService matters) : 
     public ToolSpec Spec => new("get_matter", "Bir dosyanın ayrıntısını ve duruşmalarını getirir.", Schema);
 
     public string? RequiresKey => null;
+
+    public string? RequiredPermission => Permissions.MattersRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {

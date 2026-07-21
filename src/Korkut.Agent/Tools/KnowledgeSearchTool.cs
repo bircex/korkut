@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Korkut.Application.Abstractions.Knowledge;
+using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools;
 
@@ -31,6 +32,8 @@ public sealed class KnowledgeSearchTool(IKnowledgeSearch knowledge) : IAgentTool
         Schema);
 
     public string? RequiresKey => null;
+
+    public string? RequiredPermission => Permissions.DocumentsRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, ToolContext context, CancellationToken ct = default)
     {
