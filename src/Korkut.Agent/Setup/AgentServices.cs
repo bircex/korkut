@@ -13,6 +13,7 @@ using Korkut.Application.Features.Finance;
 using Korkut.Application.Features.Membership;
 using Korkut.Application.Features.OfficeCore;
 using Korkut.Application.Features.OfficeOps;
+using Korkut.Application.Features.Outbox;
 using Korkut.Application.Features.Reports;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
@@ -90,6 +91,8 @@ public static class AgentServices
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<ICorrespondenceRepository, CorrespondenceRepository>();
         services.AddScoped<ICorrespondenceService, CorrespondenceService>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IOutboxService, OutboxService>();
         services.AddScoped<IOfficeScope, OfficeScope>();
 
         // Assistant tools + the key-gated catalog the tool-calling loop resolves them through.
@@ -122,6 +125,9 @@ public static class AgentServices
         services.AddScoped<IAgentTool, AddHearingTool>();
         services.AddScoped<IAgentTool, AddEvrakTool>();
         services.AddScoped<IAgentTool, ListEvrakTool>();
+        services.AddScoped<IAgentTool, SendEmailTool>();
+        services.AddScoped<IAgentTool, RememberTool>();
+        services.AddScoped<IAgentTool, OpenEditorTool>();
         services.AddScoped<IToolCatalog, ToolCatalog>();
 
         return services;
