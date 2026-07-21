@@ -18,7 +18,7 @@ public static class Tenancy
     /// callers do their tenant-scoped work inside the returned scope.
     /// </summary>
     public static async Task<ITenantScope> BeginTenantScopeAsync(
-        this KorkutDbContext db, Guid officeId, CancellationToken cancellationToken = default)
+        this DbContext db, Guid officeId, CancellationToken cancellationToken = default)
     {
         var tx = await db.Database.BeginTransactionAsync(cancellationToken);
         // is_local = true → scoped to this transaction only.

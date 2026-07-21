@@ -66,13 +66,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
             db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
             db.TemplateOverrides.Add(new TemplateOverrideEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), Kind = "dilekce", TypeId = $"t{i}", Content = "x", UpdatedAt = DateTimeOffset.UtcNow });
-            var convId = Guid.CreateVersion7();
-            db.Conversations.Add(new ConversationEntity { Id = convId, OfficeId = office, Title = $"c{i}", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow });
-            db.ChatMessages.Add(new ChatMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, ConversationId = convId, Role = "user", Content = $"m{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.OutboundMessages.Add(new OutboundMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "email", ToAddr = $"to{i}@x.test", Subject = "s", Body = "b", Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
-            var genDocId = Guid.CreateVersion7();
-            db.GeneratedDocuments.Add(new GeneratedDocumentEntity { Id = genDocId, OfficeId = office, ConversationId = convId, Title = $"d{i}", ContentMd = "x", Status = "draft", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow });
-            db.DocumentVersions.Add(new DocumentVersionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = genDocId, ContentMd = "x", CreatedAt = DateTimeOffset.UtcNow });
+            // conversations/chat_messages/generated_documents/document_versions live in the
+            // Agent DB now — seeded + isolation-checked in AgentTenantIsolationTests.
             if (i == 0)
             {
                 db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office

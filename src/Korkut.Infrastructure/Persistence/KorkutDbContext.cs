@@ -76,15 +76,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<TemplateOverrideEntity> TemplateOverrides => Set<TemplateOverrideEntity>();
 
-    public DbSet<ConversationEntity> Conversations => Set<ConversationEntity>();
-
-    public DbSet<ChatMessageEntity> ChatMessages => Set<ChatMessageEntity>();
-
+    // Conversations, chat_messages, generated_documents, document_versions moved to the
+    // Agent DB (AgentDbContext, schema korkut_agent).
     public DbSet<OutboundMessageEntity> OutboundMessages => Set<OutboundMessageEntity>();
-
-    public DbSet<GeneratedDocumentEntity> GeneratedDocuments => Set<GeneratedDocumentEntity>();
-
-    public DbSet<DocumentVersionEntity> DocumentVersions => Set<DocumentVersionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -247,24 +241,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
                 .IsUnique().HasDatabaseName("ux_template_overrides_key");
         });
 
-        modelBuilder.Entity<ConversationEntity>(b =>
-        {
-            b.ToTable("conversations");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Title).HasMaxLength(300);
-            b.HasIndex(x => new { x.OfficeId, x.UpdatedAt }).HasDatabaseName("ix_conversations_office_updated");
-        });
-
-        modelBuilder.Entity<ChatMessageEntity>(b =>
-        {
-            b.ToTable("chat_messages");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Role).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_chat_messages_conversation");
-        });
-
         modelBuilder.Entity<OutboundMessageEntity>(b =>
         {
             b.ToTable("outbound_messages");
@@ -275,26 +251,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.Subject).HasMaxLength(500);
             b.Property(x => x.Status).HasMaxLength(20);
             b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_outbound_messages_office_status");
-        });
-
-        modelBuilder.Entity<GeneratedDocumentEntity>(b =>
-        {
-            b.ToTable("generated_documents");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Title).HasMaxLength(300);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.ConversationId }).IsUnique().HasDatabaseName("ux_generated_documents_conversation");
-        });
-
-        modelBuilder.Entity<DocumentVersionEntity>(b =>
-        {
-            b.ToTable("document_versions");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Author).HasMaxLength(320);
-            b.Property(x => x.Note).HasMaxLength(500);
-            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.CreatedAt }).HasDatabaseName("ix_document_versions_document");
         });
 
         modelBuilder.Entity<DocumentEntity>(b =>
@@ -432,40 +388,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.Key }).IsUnique().HasDatabaseName("ux_custom_roles_office_key");
         });
 
-        // snake_case all columns (Postgres convention; matches the Python schema and
-        // the hand-written lease SQL). Applied after per-entity config so it wins.
-        foreach (var entity in modelBuilder.Model.GetEntityTypes())
-        {
-            foreach (var property in entity.GetProperties())
-            {
-                property.SetColumnName(ToSnakeCase(property.Name));
-            }
-        }
+        SnakeCaseNaming.Apply(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
-    }
-
-    private static string ToSnakeCase(string name)
-    {
-        var sb = new System.Text.StringBuilder(name.Length + 8);
-        for (var i = 0; i < name.Length; i++)
-        {
-            var c = name[i];
-            if (char.IsUpper(c))
-            {
-                if (i > 0 && (!char.IsUpper(name[i - 1]) || (i + 1 < name.Length && !char.IsUpper(name[i + 1]))))
-                {
-                    sb.Append('_');
-                }
-
-                sb.Append(char.ToLowerInvariant(c));
-            }
-            else
-            {
-                sb.Append(c);
-            }
-        }
-
-        return sb.ToString();
     }
 }
