@@ -7,6 +7,7 @@ using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
 using Korkut.Agent.Tools.Office;
+using Korkut.Application.Features.Finance;
 using Korkut.Application.Features.OfficeCore;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
@@ -69,6 +70,9 @@ public static class AgentServices
         services.AddScoped<IHearingRepository, HearingRepository>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IMatterService, MatterService>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<IExpenseRepository, ExpenseRepository>();
+        services.AddScoped<IFinanceService, FinanceService>();
         services.AddScoped<IOfficeScope, OfficeScope>();
 
         // Assistant tools + the key-gated catalog the tool-calling loop resolves them through.
@@ -79,6 +83,11 @@ public static class AgentServices
         services.AddScoped<IAgentTool, CreateMatterTool>();
         services.AddScoped<IAgentTool, ListClientsTool>();
         services.AddScoped<IAgentTool, CreateClientTool>();
+        services.AddScoped<IAgentTool, AddInvoiceTool>();
+        services.AddScoped<IAgentTool, ListInvoicesTool>();
+        services.AddScoped<IAgentTool, AddExpenseTool>();
+        services.AddScoped<IAgentTool, ListExpensesTool>();
+        services.AddScoped<IAgentTool, FinanceSummaryTool>();
         services.AddScoped<IToolCatalog, ToolCatalog>();
 
         return services;

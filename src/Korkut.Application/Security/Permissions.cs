@@ -30,6 +30,7 @@ public static class Permissions
 public static class Roles
 {
     public const string OfficeOwner = "owner";
+    
     public const string Lawyer = "lawyer";
 
     /// <summary>OfficeOwner holds every permission; Lawyer a case-work subset (no admin/delete).</summary>
