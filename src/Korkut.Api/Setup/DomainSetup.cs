@@ -29,7 +29,8 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IInvoiceRepository, Korkut.Infrastructure.Persistence.Repositories.InvoiceRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IExpenseRepository, Korkut.Infrastructure.Persistence.Repositories.ExpenseRepository>();
         services.AddScoped<Korkut.Application.Features.Finance.IFinanceService, Korkut.Application.Features.Finance.FinanceService>();
-        services.AddScoped<CorrespondenceStore>();
+        services.AddScoped<Korkut.Application.Abstractions.Persistence.ICorrespondenceRepository, Korkut.Infrastructure.Persistence.Repositories.CorrespondenceRepository>();
+        services.AddScoped<Korkut.Application.Features.Correspondence.ICorrespondenceService, Korkut.Application.Features.Correspondence.CorrespondenceService>();
         services.AddScoped<CalendarStore>();
         services.AddScoped<OfficeSettingsStore>();
         services.AddScoped<ReportsStore>();
