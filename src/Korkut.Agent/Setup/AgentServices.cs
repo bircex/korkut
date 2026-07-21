@@ -36,6 +36,9 @@ public static class AgentServices
         services.AddScoped<IOfficeSettingsService, OfficeSettingsService>();
         services.AddSingleton(_ => new TemplateCatalog());
 
+        // Per-model-call cost/telemetry ledger (llm_calls in the Agent DB) + a first-class span.
+        services.AddScoped<Korkut.Application.Ai.ILlmCallLog, EfLlmCallLog>();
+
         // AI orchestration over the model (IChatModel from AddKorkutAi) + office settings.
         services.AddScoped<SessionChatService>();
         services.AddScoped<DraftingService>();

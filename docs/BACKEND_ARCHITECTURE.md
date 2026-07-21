@@ -268,9 +268,10 @@ topology is now in place** — Agent (interactive endpoints), Knowledge (RAG: in
 search, Agent grounds chat over HTTP), PII redaction (`Korkut.Pii` masks cloud chat + the vector
 index), Gateway (YARP single public entry), and OCR (`Korkut.Ocr` on-demand scaffold; real
 Tesseract at deploy). Phases 4c-2, 5, 6, 7, 8 are on `dotnet-migration`; the remaining work is the
-cross-cutting phases 9-11 (observability / governance / deploy). Suite: Api 158, Agent 17,
-Knowledge 6, Pii 11, Gateway 6, Ocr 5, Infrastructure 155, Application 40, Architecture 6,
-Domain 17, all green (421 total).
+cross-cutting phases 10-11 (governance / deploy); phase 9's code (per-LLM-call `llm_calls` ledger + spans) is
+done, with the observability backend + health aggregation deferred to deploy. Suite: Api 158,
+Agent 18, Knowledge 6, Pii 11, Gateway 6, Ocr 5, Infrastructure 155, Application 40,
+Architecture 6, Domain 17, all green (422 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -340,9 +341,16 @@ Domain 17, all green (421 total).
    propagates the W3C `traceparent` across the proxied hop. `Dockerfile.gateway`. Tests:
    `Korkut.Gateway.Tests` with two stub upstreams prove routing (agent vs api, method split), the
    edge auth gate, and token forwarding = 6. TLS termination is deploy-time.
-9. **Observability** — OTel is already partly wired (`AddKorkutObservability` on both hosts).
-   Complete: per-LLM-call spans (provider/model/tokens/cost/office) + an `llm_calls` cost
-   table (Agent DB); self-hosted backend (LGTM or Seq); health aggregation; verify no PII in logs.
+9. ✅ **Observability (code)** — every model call now records to an `llm_calls` ledger in the Agent
+   DB (schema `korkut_agent`, own RLS) — office_id, feature (chat/drafting), provider, model_id,
+   prompt/completion tokens, derived cost (`ModelPricing`), latency — via `ILlmCallLog` →
+   `EfLlmCallLog`, and emits a first-class `llm.call` span on the shared "Korkut" `ActivitySource`
+   with the same dimensions. Recorded best-effort (a ledger failure never breaks a turn) at each
+   call site in `SessionChatService` (chat/stream/upload) + `DraftingService`. PII-safe logging is
+   already in place (`RedactingLogProcessor`). Tests: an Agent chat writes an office-scoped
+   `llm_calls` row (fake usage 12/34); `AgentTenantIsolationTests` extended to prove `llm_calls`
+   RLS. *Deploy-time:* the self-hosted backend (LGTM/Seq) + cross-host health aggregation land with
+   phase 11.
 10. **Versioning & governance** — stamp prompt fingerprint + model id + `embedding_version`
     into the LLM/RAG telemetry; per-office token budget + concurrency cap;
     retry/backoff/circuit-breaker around provider rate limits.
@@ -350,12 +358,12 @@ Domain 17, all green (421 total).
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **9 (observability)** — per-LLM-call spans
-(provider/model/tokens/cost/office) + an `llm_calls` cost table in the Agent DB; self-hosted
-backend (LGTM or Seq); health aggregation; verify no PII in logs. The `ChatUsage` seam already
-travels on every `ChatReply`/`ChatStreamEvent` for this. Then **10 (versioning/governance:
-prompt/model/embedding-version stamping, per-office token budget + concurrency cap, retry/backoff/
-circuit-breaker)** and **11 (deploy: compose + the observability stack)**. Reference
+**Where the next agent should start:** phase **10 (versioning & governance)** — stamp the prompt
+fingerprint + model id + `embedding_version` into the telemetry; per-office **token budget +
+concurrency cap** enforced in the Agent (derived from the `llm_calls` ledger now in place);
+retry/backoff + circuit-breaker around provider rate limits. Then **11 (deploy: docker-compose for
+all hosts + three service DBs + PgBouncer + the LGTM/Seq observability stack + health aggregation)**.
+Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
 its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.
