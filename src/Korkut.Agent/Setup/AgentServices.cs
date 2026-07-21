@@ -48,12 +48,12 @@ public static class AgentServices
         services.AddSingleton(_ => new TemplateCatalog());
 
         // Per-model-call cost/telemetry ledger (llm_calls in the Agent DB) + a first-class span.
-        services.AddScoped<Korkut.Application.Ai.ILlmCallLog, EfLlmCallLog>();
+        services.AddScoped<Application.Ai.ILlmCallLog, EfLlmCallLog>();
 
         // Governance: per-office token budget (from the ledger) + concurrency cap. The gate holds
         // the per-office semaphores process-wide (singleton); the governor reads the ledger (scoped).
         services.AddSingleton<OfficeConcurrencyGate>();
-        services.AddScoped<Korkut.Application.Ai.IUsageGovernor, UsageGovernor>();
+        services.AddScoped<Application.Ai.IUsageGovernor, UsageGovernor>();
 
         // AI orchestration over the model (IChatModel from AddKorkutAi) + office settings.
         services.AddScoped<SessionChatService>();
@@ -136,6 +136,7 @@ public static class AgentServices
         AddLawSources(services);
         services.AddScoped<IToolCatalog, ToolCatalog>();
         services.AddScoped<ToolCallingLoop>();
+        services.AddScoped<Korkut.Application.Ai.IAgentToolLoop>(sp => sp.GetRequiredService<ToolCallingLoop>());
 
         return services;
     }
@@ -196,7 +197,8 @@ public static class AgentServices
         services.AddScoped<ISourceClient, GibClient>();           // tax rulings / özelge (JSON)
         services.AddScoped<ISourceClient, BddkClient>();          // banking (Tavily + fetch)
         services.AddScoped<ISourceClient, KvkkClient>();          // data protection (Tavily + fetch)
-        services.AddScoped<ISourceClient, SigortaTahkimClient>(); // insurance arbitration (Tavily + PDF fetch)
+        services.AddScoped<SigortaTahkimClient>();                // concrete: search_within_sigorta_tahkim depends on it
+        services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<SigortaTahkimClient>()); // insurance arbitration (Tavily + PDF fetch)
         services.AddScoped<ISourceClient, RekabetClient>();       // competition authority (HTML scrape)
         services.AddScoped<ISourceClient, SayistayClient>();      // court of accounts (DataTables)
         services.AddScoped<ISourceClient, UyusmazlikClient>();    // jurisdictional disputes (WebForms + PDF)

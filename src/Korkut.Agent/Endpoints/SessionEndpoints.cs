@@ -155,11 +155,12 @@ public static class SessionEndpoints
 
                 var text = form["text"].ToString();
                 var uid = user.UserId();
+                var perms = user.Permissions();
                 try
                 {
                     await using var stream = file.OpenReadStream();
                     var outcome = await user.InAgentAndOfficeScopeAsync(db, office, o =>
-                        chat.UploadAsync(o, uid, id, file.FileName, file.ContentType ?? "application/octet-stream", stream, text, ct), ct);
+                        chat.UploadAsync(o, uid, id, file.FileName, file.ContentType ?? "application/octet-stream", stream, text, perms, ct), ct);
                     return outcome is null
                         ? throw ApiException.NotFound("Görüşme bulunamadı.")
                         : Results.Ok(new { reply = outcome.Reply, title = outcome.Title, user_display = outcome.UserDisplay });
@@ -191,10 +192,11 @@ public static class SessionEndpoints
                 }
 
                 var uid = user.UserId();
+                var perms = user.Permissions();
                 try
                 {
                     var outcome = await user.InAgentAndOfficeScopeAsync(db, office, o => chat.ChatStreamAsync(
-                        o, uid, id, body.Text!.Trim(),
+                        o, uid, id, body.Text!.Trim(), perms,
                         label => Frame("step", new { label }),
                         token => Frame("token", new { text = token }), ct), ct);
 
@@ -229,9 +231,10 @@ public static class SessionEndpoints
                 }
 
                 var uid = user.UserId();
+                var perms = user.Permissions();
                 try
                 {
-                    var outcome = await user.InAgentAndOfficeScopeAsync(db, office, o => chat.ChatAsync(o, uid, id, body.Text!.Trim(), ct), ct);
+                    var outcome = await user.InAgentAndOfficeScopeAsync(db, office, o => chat.ChatAsync(o, uid, id, body.Text!.Trim(), perms, ct), ct);
                     return outcome is null
                         ? throw ApiException.NotFound("Görüşme bulunamadı.")
                         : Results.Ok(new ChatResponse(outcome.Reply, outcome.Title, outcome.OpenDocument, outcome.PendingEmail));

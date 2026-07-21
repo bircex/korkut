@@ -42,6 +42,14 @@ public static class TenantRequest
         => user.HasClaim(AccessTokenAuthHandler.PermissionClaim, permission);
 
     /// <summary>
+    /// The caller's full effective permission set from the access token. Passed to the agent tool
+    /// loop so tool RBAC matches the HTTP permission model (a tool the caller can't use is hidden and
+    /// refused). Enforcement of endpoint access still lives in <c>RequireAuthorization</c>.
+    /// </summary>
+    public static IReadOnlySet<string> Permissions(this ClaimsPrincipal user)
+        => user.FindAll(AccessTokenAuthHandler.PermissionClaim).Select(c => c.Value).ToHashSet();
+
+    /// <summary>
     /// Run <paramref name="work"/> inside a tenant-pinned transaction and commit it.
     /// The office comes from the caller's token, so RLS scopes every query/command.
     /// </summary>

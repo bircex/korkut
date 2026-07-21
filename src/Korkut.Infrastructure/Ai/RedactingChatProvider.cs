@@ -56,7 +56,13 @@ public sealed class RedactingChatProvider(IChatProvider inner, IPiiRedactor reda
     private static ChatRequest Redact(IPiiRedactionScope scope, ChatRequest request)
     {
         var system = scope.Mask(request.System);
-        var messages = request.Messages.Select(m => new ChatMessage(m.Role, scope.Mask(m.Content))).ToList();
+        // Preserve tool-call linkage (ids/names/args) so the loop stays valid; mask the tool-result
+        // content, which carries office data (names, IBANs, …) that must not reach the cloud raw.
+        var messages = request.Messages.Select(m => new ChatMessage(
+            m.Role,
+            scope.Mask(m.Content),
+            m.ToolCalls,
+            m.ToolResults?.Select(r => new ToolOutput(r.ToolCallId, scope.Mask(r.Content), r.IsError)).ToList())).ToList();
         return request with { System = system, Messages = messages };
     }
 

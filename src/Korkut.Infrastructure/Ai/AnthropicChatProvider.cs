@@ -17,7 +17,9 @@ namespace Korkut.Infrastructure.Ai;
 public sealed class AnthropicChatProvider(HttpClient http, IEnvironment env) : IChatProvider
 {
     private const string Endpoint = "https://api.anthropic.com/v1/messages";
+    
     private const string AnthropicVersion = "2023-06-01";
+    
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public string Name => "claude";
@@ -29,14 +31,20 @@ public sealed class AnthropicChatProvider(HttpClient http, IEnvironment env) : I
 
         var response = await Send(message, HttpCompletionOption.ResponseContentRead, ct);
         var body = await response.Content.ReadFromJsonAsync<AnthropicResponse>(Json, ct);
-        var text = body?.Content?.FirstOrDefault(c => c.Type == "text")?.Text;
-        if (string.IsNullOrEmpty(text))
+
+        var text = string.Concat(body?.Content?.Where(c => c.Type == "text").Select(c => c.Text) ?? []);
+        var toolCalls = body?.Content?
+            .Where(c => c.Type == "tool_use" && c.Id is not null && c.Name is not null)
+            .Select(c => new ToolInvocation(c.Id!, c.Name!, c.Input))
+            .ToList();
+
+        if (string.IsNullOrEmpty(text) && (toolCalls is null || toolCalls.Count == 0))
         {
             throw new ModelUnavailableException("Yapay zeka sağlayıcısı boş yanıt döndürdü.");
         }
 
         var usage = new ChatUsage(Name, selection.ModelId, body!.Usage?.InputTokens ?? 0, body.Usage?.OutputTokens ?? 0);
-        return new ChatReply(text, usage);
+        return new ChatReply(text, usage, toolCalls is { Count: > 0 } ? toolCalls : null);
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
@@ -128,13 +136,61 @@ public sealed class AnthropicChatProvider(HttpClient http, IEnvironment env) : I
     private static AnthropicRequest BuildPayload(ModelSelection selection, ChatRequest request, bool stream)
     {
         var maxTokens = request.MaxTokens is { } cap ? Math.Min(cap, selection.MaxTokens) : selection.MaxTokens;
+        var tools = request.Tools?.Select(t => new AnthropicTool(t.Name, t.Description, t.Schema)).ToList();
         return new AnthropicRequest(
             selection.ModelId,
             maxTokens,
             request.System,
-            request.Messages.Select(m => new AnthropicMessage(m.Role, m.Content)).ToList(),
+            request.Messages.Select(BuildMessage).ToList(),
             request.Temperature,
-            stream ? true : null);
+            stream ? true : null,
+            tools is { Count: > 0 } ? tools : null);
+    }
+
+    // Anthropic content is either a plain string or an array of typed blocks. Tool calls (assistant
+    // "tool_use") and their results (a user message with "tool_result" blocks) require the array form.
+    private static AnthropicMessage BuildMessage(ChatMessage m)
+    {
+        if (m.Role == "tool" && m.ToolResults is { Count: > 0 } outputs)
+        {
+            var blocks = outputs.Select(o =>
+            {
+                var block = new Dictionary<string, object?>
+                {
+                    ["type"] = "tool_result",
+                    ["tool_use_id"] = o.ToolCallId,
+                    ["content"] = o.Content,
+                };
+                if (o.IsError)
+                {
+                    block["is_error"] = true;
+                }
+                return (object)block;
+            }).ToList();
+            return new AnthropicMessage("user", blocks);
+        }
+
+        if (m.Role == "assistant" && m.ToolCalls is { Count: > 0 } calls)
+        {
+            var blocks = new List<object>();
+            if (!string.IsNullOrEmpty(m.Content))
+            {
+                blocks.Add(new Dictionary<string, object?> { ["type"] = "text", ["text"] = m.Content });
+            }
+            foreach (var c in calls)
+            {
+                blocks.Add(new Dictionary<string, object?>
+                {
+                    ["type"] = "tool_use",
+                    ["id"] = c.Id,
+                    ["name"] = c.Name,
+                    ["input"] = c.Arguments,
+                });
+            }
+            return new AnthropicMessage("assistant", blocks);
+        }
+
+        return new AnthropicMessage(m.Role, m.Content);
     }
 
     private static HttpRequestMessage Build(AnthropicRequest payload, string apiKey)
@@ -168,11 +224,19 @@ public sealed class AnthropicChatProvider(HttpClient http, IEnvironment env) : I
         [property: JsonPropertyName("system")] string System,
         [property: JsonPropertyName("messages")] IReadOnlyList<AnthropicMessage> Messages,
         [property: JsonPropertyName("temperature")] double? Temperature,
-        [property: JsonPropertyName("stream")] bool? Stream);
+        [property: JsonPropertyName("stream")] bool? Stream,
+        [property: JsonPropertyName("tools")] IReadOnlyList<AnthropicTool>? Tools);
 
+    // Content is `object`: a plain string for normal turns, or a list of typed blocks for tool_use /
+    // tool_result turns. System.Text.Json serializes each shape correctly.
     private sealed record AnthropicMessage(
         [property: JsonPropertyName("role")] string Role,
-        [property: JsonPropertyName("content")] string Content);
+        [property: JsonPropertyName("content")] object Content);
+
+    private sealed record AnthropicTool(
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("description")] string Description,
+        [property: JsonPropertyName("input_schema")] JsonElement InputSchema);
 
     private sealed record AnthropicResponse(
         [property: JsonPropertyName("content")] List<AnthropicContent>? Content,
@@ -180,7 +244,10 @@ public sealed class AnthropicChatProvider(HttpClient http, IEnvironment env) : I
 
     private sealed record AnthropicContent(
         [property: JsonPropertyName("type")] string Type,
-        [property: JsonPropertyName("text")] string? Text);
+        [property: JsonPropertyName("text")] string? Text,
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("input")] JsonElement Input);
 
     private sealed record AnthropicUsage(
         [property: JsonPropertyName("input_tokens")] int InputTokens,

@@ -23,8 +23,9 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    ISessionService sessions, IOfficeSettingsService settings, IChatModel llm, RuntimeConfig config,
-    ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLog callLog, IUsageGovernor governor)
+    ISessionService sessions, IOfficeSettingsService settings, RuntimeConfig config,
+    ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLog callLog, IUsageGovernor governor,
+    IAgentToolLoop toolLoop)
 {
     private const int MaxExtractedChars = 20_000;
 
@@ -41,7 +42,8 @@ public sealed class SessionChatService(
     /// short display line for the UI. Returns null if the conversation is missing.
     /// </summary>
     public async Task<UploadOutcome?> UploadAsync(
-        Guid officeId, Guid userId, Guid conversationId, string fileName, string contentType, Stream content, string text, CancellationToken ct = default)
+        Guid officeId, Guid userId, Guid conversationId, string fileName, string contentType, Stream content, string text,
+        IReadOnlySet<string> permissions, CancellationToken ct = default)
     {
         var conversation = await sessions.GetAsync(officeId, conversationId, ct);
         if (conversation is null)
@@ -71,10 +73,12 @@ public sealed class SessionChatService(
         var system = await BuildSystemPromptAsync(officeId, userId, ct);
         system = await WithGroundingAsync(system, string.IsNullOrWhiteSpace(text) ? fileName : text, ct);
         var history = await sessions.MessagesAsync(officeId, conversationId, ct);
+        var messages = history.Select(m => new ChatMessage(m.Role, m.Content)).ToList();
         await using var governed = await governor.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
-        var reply = await llm.CompleteAsync(
-            new ChatRequest(system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
+        var reply = await toolLoop.RunAsync(
+            system, messages, new AgentToolContext(officeId, userId, permissions),
+            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, ct: ct);
         timer.Stop();
         await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", reply.Text, ct);
@@ -89,7 +93,8 @@ public sealed class SessionChatService(
         return new UploadOutcome(reply.Text, title, userDisplay);
     }
 
-    public async Task<ChatOutcome?> ChatAsync(Guid officeId, Guid userId, Guid conversationId, string text, CancellationToken ct = default)
+    public async Task<ChatOutcome?> ChatAsync(
+        Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions, CancellationToken ct = default)
     {
         var conversation = await sessions.GetAsync(officeId, conversationId, ct);
         if (conversation is null)
@@ -106,7 +111,9 @@ public sealed class SessionChatService(
 
         await using var governed = await governor.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
-        var reply = await llm.CompleteAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct);
+        var reply = await toolLoop.RunAsync(
+            system, messages, new AgentToolContext(officeId, userId, permissions),
+            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, ct: ct);
         timer.Stop();
         await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
 
@@ -130,7 +137,7 @@ public sealed class SessionChatService(
     /// conversation is missing.
     /// </summary>
     public async Task<ChatOutcome?> ChatStreamAsync(
-        Guid officeId, Guid userId, Guid conversationId, string text,
+        Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions,
         Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default)
     {
         var conversation = await sessions.GetAsync(officeId, conversationId, ct);
@@ -148,26 +155,16 @@ public sealed class SessionChatService(
 
         await onStep("Yanıt üretiliyor");
         await using var governed = await governor.BeginCallAsync(officeId, ct);
-        var full = new StringBuilder();
-        var usage = ChatUsage.None;
         var timer = Stopwatch.StartNew();
-        await foreach (var ev in llm.StreamAsync(new ChatRequest(system, messages, ModelSpecialty.Dispatcher, MaxTokens: config.ReplyHeadroom * 4), ct))
-        {
-            if (ev.Delta is { } delta)
-            {
-                full.Append(delta);
-                await onToken(delta);
-            }
-            else if (ev.Usage is { } final)
-            {
-                usage = final;
-            }
-        }
-
+        // The loop reports tool activity through onStep and the final answer through onToken. When the
+        // model uses no tools, the answer arrives as a single onToken chunk (the loop resolves first).
+        var reply = await toolLoop.RunAsync(
+            system, messages, new AgentToolContext(officeId, userId, permissions),
+            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, ct);
         timer.Stop();
-        await RecordCallAsync(officeId, LlmFeature.Chat, usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
+        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
 
-        var replyText = full.ToString();
+        var replyText = reply.Text;
         await sessions.AppendMessageAsync(officeId, conversationId, "assistant", replyText, ct);
 
         var title = conversation.Title;
