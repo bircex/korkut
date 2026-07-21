@@ -263,28 +263,58 @@ Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure
 
 ## Build roadmap (phased PRs; suite stays green)
 
-1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke
-   coverage (PR #148).
-2. ✅ **Clean foundation + operational refactor** — `Abstractions/Persistence` ports;
-   `OnModelCreating` → `Configurations/`; every operational module moved to Domain models
-   + repository ports + use-case services; parity gaps closed (PRs #151-163).
-3. **Model provider abstraction** — `IChatModel` + `IModelRouter` + provider adapters
-   (Anthropic first; OpenAI/Groq/OpenAI-compat behind config); `IEmbedder`.
-4. **Agent DB + host** — add `AgentDbContext` (plain Postgres); move conversations /
-   messages / drafts / versions to it; serve chat off it; reach domain data via the shared
-   operational services; split agent tests onto a second `WebApplicationFactory`.
-5. **Knowledge service + DB** — `Korkut.Knowledge` host + `KnowledgeDbContext` (pgvector);
-   `IVectorStore`, `IEmbedder`, ingestion (outbox-driven) + `/search`; Agent calls it for
-   retrieval; `embedding_version` on every chunk.
-6. **OCR service** — `Korkut.Ocr` (Tesseract/PDF), called by Knowledge ingestion only for
-   text-less documents; scaled small with one warm replica.
-7. **PII library** — `Korkut.Pii` redaction, used in-process by Agent (chat-time) and
-   Knowledge (index-time); PII audit + PII-safe logging.
-8. **Gateway** — `Korkut.Gateway` (YARP): auth + routing + rate-limit/CORS + trace
-   propagation; the only exposed host.
-9. **Observability** — OpenTelemetry across all hosts (traces/metrics/logs, OTLP), LLM
-   spans + `llm_calls` table, self-hosted backend (LGTM/Seq), health aggregation.
-10. **Versioning & governance** — prompt/model/index version stamping into telemetry;
-    per-office token budget + concurrency cap; retry/backoff/circuit-breaker.
-11. **Deploy** — three service DBs + PgBouncer + gateway + observability stack as compose
-    services; agent/knowledge/ocr images.
+**Handoff status (2026-07-21):** the operational plane is COMPLETE and the AI plane's
+foundation is in place. Everything below through phase 3 plus the DB/foundation slices of
+phase 4 are merged to `dotnet-migration`. The AI stack (Agent/AI services) is wired as
+code but **not yet served by any host** — the Agent host (4c-2) is the next step. Suite:
+Api 158, Application 40, Infrastructure 146, Architecture 5, all green.
+
+1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
+2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
+   every operational module → Domain models + repository ports + use-case services; parity
+   gaps closed (PRs #151-163).
+3. ✅ **Model provider abstraction** — `IChatModel` + `IModelRouter` + `IChatProvider`
+   adapters (Anthropic + one OpenAI-compatible for OpenAI/Groq/Ollama), `IEmbedder`,
+   `ChatUsage` seam. Specialty-based routing; keys operator-managed in env (PR #165).
+4. **Agent DB + host** — split across sub-slices:
+   - ✅ **4a** Agent stores → Clean (Session/DraftDocument → Domain/Agent + repos + services) (PR #166).
+   - ✅ **4b** Agent DB split — `AgentDbContext` in schema `korkut_agent`, own migration
+     chain + RLS; `Korkut.Migrator` applies both schemas; `AddKorkutAgentPersistence`;
+     `AgentTenantIsolationTests` proves per-office RLS (PR #167).
+   - ✅ **4c-1** Extract `Korkut.Web` shared foundation (auth, JSON, errors, generic
+     `InTenantScopeAsync`, middleware, `WebSetup`, `DomainSetup`); both hosts reference it (PR #168).
+   - ⏳ **4c-2 (NEXT) Agent host wiring** — in `Korkut.Agent/Program.cs`: `AddKorkutWeb` +
+     `AddKorkutDomain` + `AddKorkutAgentPersistence` + `AddKorkutAi` + JWT/authorization;
+     register agent repos + services + AI services (`SessionChatService`, `DraftingService`,
+     `ITextExtractor`). Rebuild the agent endpoints removed in MainAPI-1 (sessions CRUD,
+     `POST /chat` + `/chat/stream` SSE, upload, document `draft/accept/revert/export`) using
+     the services + the generic `InTenantScopeAsync` over `AgentDbContext`. Add an operational
+     user-name lookup port to resolve `SessionBrief.CreatedBy` → display name. Split agent
+     integration tests onto a second `WebApplicationFactory<Program>`.
+5. **Knowledge service + DB** — `Korkut.Knowledge` host + `KnowledgeDbContext` (pgvector,
+   schema `korkut_knowledge`, RLS); real `IEmbedder` adapter; ingestion (metin çıkar → PII
+   mask → chunk → embed → store, `embedding_version` stamped) + `/search` (embed query +
+   top-k); Agent calls it over HTTP for retrieval. Test container needs `CREATE EXTENSION
+   vector`; add a Knowledge tenant-isolation test.
+6. **OCR service** — `Korkut.Ocr` host + HTTP contract + text-extraction port, called by
+   Knowledge ingestion only for text-less documents; one warm replica. **Real Tesseract is
+   a native/deploy-time dependency** — scaffold + contract in code, binary at deploy.
+7. **PII library** — `Korkut.Pii` redaction (TR: TCKN, phone, email, IBAN) + restore, used
+   in-process by Agent (chat-time) and Knowledge (index-time); unit tests; PII-safe logging.
+8. **Gateway** — `Korkut.Gateway` (YARP): single public entry, JWT validate, path routing
+   (agent routes → Agent, other `/api/**` → Api; Knowledge/Ocr internal), rate-limit/CORS/
+   TLS, W3C `traceparent` propagation.
+9. **Observability** — OTel is already partly wired (`AddKorkutObservability` on both hosts).
+   Complete: per-LLM-call spans (provider/model/tokens/cost/office) + an `llm_calls` cost
+   table (Agent DB); self-hosted backend (LGTM or Seq); health aggregation; verify no PII in logs.
+10. **Versioning & governance** — stamp prompt fingerprint + model id + `embedding_version`
+    into the LLM/RAG telemetry; per-office token budget + concurrency cap;
+    retry/backoff/circuit-breaker around provider rate limits.
+11. **Deploy** *(deploy-time config)* — docker-compose services + Dockerfiles
+    (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
+    Operator runs it with real secrets/infra.
+
+**Where the next agent should start:** phase **4c-2** (Agent host). See the memory note
+`korkut-ai-model-abstraction` for the exact port names, DI wiring, and the `SessionBrief.CreatedBy`
+handoff detail. Reference pattern for any Clean refactor = Finance (PR #151); for a new
+tenant-scoped DbContext = the 4b Agent DB split (PR #167).
