@@ -2,9 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Korkut.Api.Errors;
 using Korkut.Api.Tenancy;
+using Korkut.Application.Abstractions.Persistence;
+using Korkut.Application.Features.Membership;
 using Korkut.Application.Security;
+using Korkut.Domain.Membership;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Endpoints;
@@ -39,11 +41,11 @@ public static class InviteEndpoints
     {
         var invites = app.MapGroup("/api/invites");
 
-        invites.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, InviteStore store, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db, async o => (await store.ListAsync(o, ct)).Select(ToDto).ToList(), ct)))
+        invites.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IInviteService svc, CancellationToken ct) =>
+            Results.Ok(await user.InTenantScopeAsync(db, async o => (await svc.ListAsync(o, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.MembersManage);
 
-        invites.MapPost("", async (InviteCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, InviteStore store, CancellationToken ct) =>
+        invites.MapPost("", async (InviteCreateRequest body, ClaimsPrincipal user, KorkutDbContext db, IInviteService svc, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -52,24 +54,24 @@ public static class InviteEndpoints
                 }
 
                 var issued = await user.InTenantScopeAsync(db,
-                    o => store.CreateAsync(o, user.UserId(), body.Email!.Trim().ToLowerInvariant(), body.Role!, ct), ct);
+                    o => svc.CreateAsync(o, user.UserId(), body.Email!.Trim().ToLowerInvariant(), body.Role!, ct), ct);
                 // The raw token is returned ONCE so the caller can build the invite link.
                 return Results.Created($"/api/invites/{issued.Id}",
                     new InviteCreateResponse(issued.Id, body.Email!.Trim().ToLowerInvariant(), body.Role!, issued.RawToken, issued.ExpiresAt));
             })
             .RequireAuthorization(Permissions.MembersManage);
 
-        invites.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, InviteStore store, CancellationToken ct) =>
+        invites.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IInviteService svc, CancellationToken ct) =>
             {
-                var ok = await user.InTenantScopeAsync(db, o => store.RevokeAsync(o, id, ct), ct);
+                var ok = await user.InTenantScopeAsync(db, o => svc.RevokeAsync(o, id, ct), ct);
                 return ok ? Results.NoContent() : throw ApiException.NotFound("Davet bulunamadı.");
             })
             .RequireAuthorization(Permissions.MembersManage);
 
         // Anonymous: accept an invite → create the member so they can then sign in.
         invites.MapPost("/accept", async (
-            InviteAcceptRequest body, KorkutDbContext db, EfInviteResolver resolver, ITokenHasher hasher,
-            InviteStore invites, Korkut.Application.Features.Membership.IMembersService members, CancellationToken ct) =>
+            InviteAcceptRequest body, KorkutDbContext db, IInviteResolver resolver, ITokenHasher hasher,
+            IInviteService invites, IMembersService members, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -102,5 +104,5 @@ public static class InviteEndpoints
         return app;
     }
 
-    private static InviteResponse ToDto(InviteEntity i) => new(i.Id, i.Email, i.Role, i.ExpiresAt, i.CreatedAt);
+    private static InviteResponse ToDto(Invite i) => new(i.Id, i.Email, i.Role, i.ExpiresAt, i.CreatedAt);
 }

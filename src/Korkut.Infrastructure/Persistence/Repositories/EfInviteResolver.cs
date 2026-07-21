@@ -1,15 +1,17 @@
+using Korkut.Application.Abstractions.Persistence;
+using Korkut.Domain.Membership;
 using Korkut.SharedKernel.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Persistence.Repositories;
 
 /// <summary>
 /// Resolves the office/role of an opaque invite token before any session exists, via
 /// the narrow BYPASSRLS SECURITY DEFINER function <c>korkut.resolve_invite_token</c>.
 /// Returns null for an unknown, expired or already-accepted invite.
 /// </summary>
-public sealed class EfInviteResolver(KorkutDbContext db, IClock clock)
+public sealed class EfInviteResolver(KorkutDbContext db, IClock clock) : IInviteResolver
 {
     public async Task<InviteGrant?> ResolveAsync(string tokenHash, CancellationToken ct = default)
     {
