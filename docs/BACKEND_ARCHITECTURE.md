@@ -265,11 +265,12 @@ Libraries  Korkut.Domain   Korkut.Application   Korkut.Infrastructure
 
 **Handoff status (2026-07-21):** the operational plane is COMPLETE, the **Agent host serves
 the interactive AI endpoints**, the **Knowledge (RAG) service is live** (ingest + pgvector search,
-Agent grounds chat over HTTP), and **PII redaction is in force** (cloud chat requests + the vector
-index are masked via `Korkut.Pii`). Everything through phase 7 is on `dotnet-migration`; the
-remaining AI work is OCR + Gateway (phases 6, 8) and the cross-cutting phases 9-11. Suite: Api 158,
-Agent 17, Knowledge 6, Pii 11, Infrastructure 155, Application 40, Architecture 6, Domain 17, all
-green (410 total).
+Agent grounds chat over HTTP), **PII redaction is in force** (cloud chat requests + the vector
+index are masked via `Korkut.Pii`), and the **Gateway (YARP) is the single public entry** (edge
+auth + path routing to Agent/Api, Knowledge/OCR internal). Phases 4c-2, 5, 7, 8 are on
+`dotnet-migration`; the remaining work is OCR (phase 6) and the cross-cutting phases 9-11. Suite:
+Api 158, Agent 17, Knowledge 6, Pii 11, Gateway 6, Infrastructure 155, Application 40,
+Architecture 6, Domain 17, all green (416 total).
 
 1. ✅ **Foundation** — this doc + `Korkut.Agent` host skeleton + Dockerfile + smoke (PR #148).
 2. ✅ **Clean foundation + operational refactor** — ports; `OnModelCreating` → `Configurations/`;
@@ -324,9 +325,16 @@ green (410 total).
    (ollama) providers are NOT wrapped. **Knowledge index-time:** `IngestionService` masks FIRST, so
    the vector store never holds raw PII. Tests: `Korkut.Pii.Tests` 11, `RedactingChatProviderTests`
    2, Knowledge PII-masking integration 1. PII-safe *logging* stays with observability (phase 9).
-8. **Gateway** — `Korkut.Gateway` (YARP): single public entry, JWT validate, path routing
-   (agent routes → Agent, other `/api/**` → Api; Knowledge/Ocr internal), rate-limit/CORS/
-   TLS, W3C `traceparent` propagation.
+8. ✅ **Gateway** — `Korkut.Gateway` (YARP reverse proxy): the single public entry. In-memory
+   route/cluster map (`GatewayRoutes`) from env upstreams (`KORKUT_API_URL`/`KORKUT_AGENT_URL`);
+   path+method routing — agent surface (`/api/sessions/**` + document `draft|accept|revert|export`
+   + PUT save) → Agent, everything else `/api/**` → Api; Knowledge/OCR never routed (internal).
+   Edge auth: agent routes carry an `authenticated` policy (anonymous rejected at the edge); the
+   operational API routes pass through and the API enforces its own permissions + RLS (defense in
+   depth). Reuses `AddKorkutWeb` (CORS/rate-limit/errors); OTel ASP.NET + HttpClient instrumentation
+   propagates the W3C `traceparent` across the proxied hop. `Dockerfile.gateway`. Tests:
+   `Korkut.Gateway.Tests` with two stub upstreams prove routing (agent vs api, method split), the
+   edge auth gate, and token forwarding = 6. TLS termination is deploy-time.
 9. **Observability** — OTel is already partly wired (`AddKorkutObservability` on both hosts).
    Complete: per-LLM-call spans (provider/model/tokens/cost/office) + an `llm_calls` cost
    table (Agent DB); self-hosted backend (LGTM or Seq); health aggregation; verify no PII in logs.
@@ -337,10 +345,11 @@ green (410 total).
     (agent/knowledge/ocr/gateway), three service DBs + PgBouncer + the observability stack.
     Operator runs it with real secrets/infra.
 
-**Where the next agent should start:** phase **8 (Gateway)** — `Korkut.Gateway` (YARP) as the single
-public entry, JWT validate, path routing (agent routes → Agent, other `/api/**` → Api; Knowledge/Ocr
-internal), rate-limit/CORS/TLS, W3C `traceparent`. Phase **6 (OCR)** is mostly a deploy-time native
-dependency (scaffold + `ITextExtractor` contract in code, Tesseract binary at deploy). Reference
+**Where the next agent should start:** phase **6 (OCR)** — `Korkut.Ocr` host + HTTP contract +
+text-extraction port, called by Knowledge ingestion only for text-less documents; real Tesseract is
+a native/deploy-time dependency (scaffold + contract in code, binary at deploy). Then the
+cross-cutting phases **9 (observability: per-LLM-call spans + `llm_calls` cost table + PII-safe
+logging), 10 (versioning/governance), 11 (deploy)**. Reference
 pattern for a new host = the 4c-2 Agent or the phase-5 Knowledge host (`Korkut.Knowledge/Program.cs`
 + `Setup/KnowledgeServices.cs` + `Korkut.Knowledge.Tests`); for a new tenant-scoped DbContext with
 its own RLS = `KnowledgeDbContext` + `KnowledgeInitial` migration.

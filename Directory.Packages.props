@@ -21,6 +21,8 @@
     <!-- Worker host -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <!-- Gateway (Phase 8): YARP reverse proxy -->
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- API foundation (KDM-006) -->
     <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
