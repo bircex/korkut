@@ -6,6 +6,12 @@ public interface ITenantOwned
     Guid OfficeId { get; }
 }
 
+/// <summary>Marker for rows with a surrogate primary key (enables generic key-based repository ops).</summary>
+public interface IIdentifiable
+{
+    Guid Id { get; }
+}
+
 /// <summary>The tenant root (an office/firm). Not itself RLS-scoped — access is controlled separately.</summary>
 public sealed class OfficeEntity
 {

@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Korkut.Agent.Repositories.Implementations;
 
 /// <summary>EF adapter over the Agent DB <c>llm_calls</c> ledger (RLS-scoped by the surrounding unit of work).</summary>
-public sealed class LlmCallRepository(AgentDbContext db) : ILlmCallRepository
+public sealed class LlmCallRepository(AgentDbContext db) : EfRepository<LlmCallEntity>(db), ILlmCallRepository
 {
     public async Task AddAsync(LlmCallEntry entry, CancellationToken ct = default)
     {
-        db.LlmCalls.Add(new LlmCallEntity
+        Db.LlmCalls.Add(new LlmCallEntity
         {
             Id = UuidV7.NewId(),
             OfficeId = entry.OfficeId,
@@ -25,11 +25,11 @@ public sealed class LlmCallRepository(AgentDbContext db) : ILlmCallRepository
             LatencyMs = entry.LatencyMs,
             CreatedAt = entry.CreatedAt,
         });
-        await db.SaveChangesAsync(ct);
+        await Db.SaveChangesAsync(ct);
     }
 
     public Task<long> SumMonthTokensAsync(Guid officeId, DateTimeOffset monthStart, CancellationToken ct = default)
-        => db.LlmCalls
+        => Db.LlmCalls
             .Where(c => c.OfficeId == officeId && c.CreatedAt >= monthStart)
             .SumAsync(c => (long)c.PromptTokens + c.CompletionTokens, ct);
 }

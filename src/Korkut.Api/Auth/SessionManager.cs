@@ -12,10 +12,10 @@ namespace Korkut.Api.Auth;
 /// </summary>
 public sealed class SessionManager(AccessTokenService accessTokens, RefreshTokenService refreshTokens, IConfiguration configuration)
 {
-    public const string AccessCookie = Korkut.Web.Auth.AccessTokenAuthHandler.AccessCookie;
+    private const string AccessCookie = Korkut.Web.Auth.AccessTokenAuthHandler.AccessCookie;
     public const string RefreshCookie = "korkut_rt";
-    public const string PendingCookie = "korkut_2fa";
-    public const string SignupCookie = "korkut_signup";
+    private const string PendingCookie = "korkut_2fa";
+    private const string SignupCookie = "korkut_signup";
     private const string RefreshPath = "/api/auth";
 
     private static readonly TimeSpan AccessMaxAge = TimeSpan.FromMinutes(15);
