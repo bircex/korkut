@@ -1,10 +1,18 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Korkut.Agent.Application;
+using Korkut.Agent.Application.Ai;
+using Korkut.Agent.Application.Abstractions.Ai;
+using Korkut.Agent.Application.Abstractions.Persistence;
+using Korkut.Agent.Application.Abstractions.Sessions;
+using Korkut.Agent.Application.Sessions;
+using Korkut.Agent.Application.Chat;
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
-using Korkut.Agent.Infrastructure;
+using Korkut.Agent.Infrastructure.Ai;
+using Korkut.Agent.Infrastructure.Ai.Providers;
+using Korkut.Agent.Infrastructure.Ai.Routing;
+using Korkut.Agent.Infrastructure.Persistence;
 
 namespace Korkut.Infrastructure.Tests;
 

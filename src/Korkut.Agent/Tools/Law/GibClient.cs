@@ -66,6 +66,7 @@ public sealed class GibClient(IHttpClientFactory httpClientFactory) : ISourceCli
             {
                 continue;
             }
+            
             results.Add(new SourceResult(
                 Source: "gib",
                 Id: idEl.ToString(),

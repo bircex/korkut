@@ -1,4 +1,9 @@
-using Korkut.Agent.Application;
+using Korkut.Agent.Application.Ai;
+using Korkut.Agent.Application.Abstractions.Ai;
+using Korkut.Agent.Application.Abstractions.Persistence;
+using Korkut.Agent.Application.Abstractions.Sessions;
+using Korkut.Agent.Application.Sessions;
+using Korkut.Agent.Application.Chat;
 
 namespace Korkut.Agent.Tools;
 

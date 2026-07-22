@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Korkut.Agent.Tools;
 
 namespace Korkut.Agent.Tools.Law;
 
@@ -132,15 +131,20 @@ public sealed partial class KikClient(IHttpClientFactory httpClientFactory) : IS
         {
             Content = new FormUrlEncodedContent(body),
         };
+        
         request.Headers.Referrer = new Uri($"{BaseUrl}{SearchPath}");
         request.Headers.Add("Origin", BaseUrl);
+        
         using var resp = await client.SendAsync(request, ct);
         resp.EnsureSuccessStatusCode();
+        
         var text = await resp.Content.ReadAsStringAsync(ct);
+        
         if (text.Contains("Sayfada hata oluştu", StringComparison.Ordinal))
         {
             throw new InvalidOperationException("KİK arama portalı hata sayfası döndürdü; form düzeni değişmiş olabilir.");
         }
+        
         return text;
     }
 
