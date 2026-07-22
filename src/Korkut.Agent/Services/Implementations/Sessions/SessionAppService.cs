@@ -1,52 +1,54 @@
 using Korkut.Agent.Contracts.Sessions;
 using Korkut.Agent.Domain.Conversations;
+using Korkut.Agent.Repositories.Core;
 using Korkut.Agent.Services.Core;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Application.Abstractions.Directory;
-using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Web.Errors;
 
 namespace Korkut.Agent.Services.Implementations.Sessions;
 
 /// <summary>
-/// Assistant-conversation use-cases as the controller sees them: it owns the tenant scope (RLS),
-/// the domain-service calls, author-name resolution, and response-DTO mapping — so the controller
-/// only forwards the request and returns the result. Not-found is a thrown <see cref="ApiException"/>
-/// (mapped to 404 by the shared handler), never a null the controller must interpret.
+/// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit
+/// of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder), resolves author names, and
+/// maps to response DTOs. Not-found is a thrown <see cref="ApiException"/> (→ 404 by the handler).
 /// </summary>
-public sealed class SessionAppService(AgentDbContext db, ICurrentUser current, ISessionService svc, IUserLookup dir)
+public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookup dir)
+    : ISessionAppService
 {
     public async Task<SessionPageResponse> ListAsync(int? limit, int? offset, CancellationToken ct = default)
     {
+        var office = current.OfficeId;
         var take = Math.Clamp(limit ?? 20, 1, 100);
         var skip = Math.Max(offset ?? 0, 0);
-        var (items, total) = await ScopedAsync(o => svc.ListAsync(o, take, skip, ct), ct);
+        var (items, total) = await uow.InScopeAsync(office, () => svc.ListAsync(office, take, skip, ct), ct);
         var names = await ResolveNamesAsync(items, ct);
         return new SessionPageResponse(items.Select(b => ToBrief(b, names)).ToList(), total);
     }
 
     public async Task<SessionBriefResponse> CreateAsync(Guid? matterId, CancellationToken ct = default)
     {
-        var brief = await ScopedAsync(async o =>
+        var office = current.OfficeId;
+        var brief = await uow.InScopeAsync(office, async () =>
         {
-            var id = await svc.CreateAsync(o, current.UserId, matterId, ct);
-            return await svc.GetBriefAsync(o, id, ct);
+            var id = await svc.CreateAsync(office, current.UserId, matterId, ct);
+            return await svc.GetBriefAsync(office, id, ct);
         }, ct);
         return await ToBriefAsync(brief!, ct);
     }
 
     public async Task<SessionDetailResponse> GetAsync(Guid id, CancellationToken ct = default)
     {
-        var data = await ScopedAsync(async o =>
+        var office = current.OfficeId;
+        var data = await uow.InScopeAsync(office, async () =>
         {
-            var brief = await svc.GetBriefAsync(o, id, ct);
+            var brief = await svc.GetBriefAsync(office, id, ct);
             if (brief is null)
             {
                 return ((SessionBrief Brief, List<ChatMessageResponse> Messages)?)null;
             }
 
-            var messages = (await svc.MessagesAsync(o, id, ct)).Select(m => new ChatMessageResponse(m.Role, m.Content)).ToList();
+            var messages = (await svc.MessagesAsync(office, id, ct)).Select(m => new ChatMessageResponse(m.Role, m.Content)).ToList();
             return (brief, messages);
         }, ct);
 
@@ -61,14 +63,16 @@ public sealed class SessionAppService(AgentDbContext db, ICurrentUser current, I
 
     public async Task<SessionBriefResponse> RenameAsync(Guid id, string title, CancellationToken ct = default)
     {
-        var brief = await ScopedAsync(async o =>
-            await svc.RenameAsync(o, id, title.Trim(), ct) ? await svc.GetBriefAsync(o, id, ct) : null, ct);
+        var office = current.OfficeId;
+        var brief = await uow.InScopeAsync(office, async () =>
+            await svc.RenameAsync(office, id, title.Trim(), ct) ? await svc.GetBriefAsync(office, id, ct) : null, ct);
         return brief is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var ok = await ScopedAsync(o => svc.DeleteAsync(o, id, ct), ct);
+        var office = current.OfficeId;
+        var ok = await uow.InScopeAsync(office, () => svc.DeleteAsync(office, id, ct), ct);
         if (!ok)
         {
             throw ApiException.NotFound("Görüşme bulunamadı.");
@@ -77,21 +81,13 @@ public sealed class SessionAppService(AgentDbContext db, ICurrentUser current, I
 
     public async Task<SessionBriefResponse> CloneAsync(Guid id, CancellationToken ct = default)
     {
-        var brief = await ScopedAsync(async o =>
+        var office = current.OfficeId;
+        var brief = await uow.InScopeAsync(office, async () =>
         {
-            var newId = await svc.CloneAsync(o, id, current.UserId, ct);
-            return newId is null ? null : await svc.GetBriefAsync(o, newId.Value, ct);
+            var newId = await svc.CloneAsync(office, id, current.UserId, ct);
+            return newId is null ? null : await svc.GetBriefAsync(office, newId.Value, ct);
         }, ct);
         return brief is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
-    }
-
-    private async Task<T> ScopedAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)
-    {
-        var office = current.OfficeId;
-        await using var scope = await db.BeginTenantScopeAsync(office, ct);
-        var result = await work(office);
-        await scope.CommitAsync(ct);
-        return result;
     }
 
     private async Task<SessionBriefResponse> ToBriefAsync(SessionBrief b, CancellationToken ct)

@@ -1,7 +1,7 @@
 using Korkut.Agent.Services.Core;
 using Korkut.Web.Tenancy;
 
-namespace Korkut.Agent.Presentation.Identity;
+namespace Korkut.Agent.Identity;
 
 /// <summary>
 /// <see cref="ICurrentUser"/> backed by the request's <c>ClaimsPrincipal</c> (the trusted access

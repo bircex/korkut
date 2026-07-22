@@ -1,15 +1,14 @@
 using System.Text.Json;
-using Korkut.Agent.Application.Sessions;
 using Korkut.Agent.Contracts.Sessions;
-using Korkut.Agent.Services.Implementations.Chat;
-using Korkut.Agent.Services.Implementations.Sessions;
+using Korkut.Agent.Services.Core.Chat;
+using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Agent.Presentation.Controllers;
+namespace Korkut.Agent.Controllers;
 
 /// <summary>
 /// The assistant's conversations ("sessions") + chat, served by the Agent host. A thin transport:
@@ -19,7 +18,7 @@ namespace Korkut.Agent.Presentation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/sessions")]
-public sealed class SessionsController(SessionAppService sessions, ChatAppService chat) : ControllerBase
+public sealed class SessionsController(ISessionAppService sessions, IChatAppService chat) : ControllerBase
 {
     // SSE frame payloads use the same snake_case contract as the rest of the API.
     private static readonly JsonSerializerOptions SseJson =

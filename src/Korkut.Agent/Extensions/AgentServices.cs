@@ -1,3 +1,5 @@
+using Korkut.Agent.Services.Core.Documents;
+using Korkut.Agent.Services.Core.Chat;
 using Korkut.Application.Abstractions.Directory;
 using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Abstractions.Persistence;
@@ -5,6 +7,7 @@ using Korkut.Application.Documents;
 using Korkut.Agent.Application.Sessions;
 using Korkut.Agent.Domain.Conversations;
 using Korkut.Agent.Domain.Documents;
+using Korkut.Agent.Identity;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
@@ -58,24 +61,26 @@ public static class AgentServices
         services.AddSingleton(_ => new TemplateCatalog());
 
         // Per-model-call cost/telemetry ledger (llm_calls in the Agent DB) + a first-class span.
-        services.AddScoped<ILlmCallLogService, EfLlmCallLogService>();
+        services.AddScoped<ILlmCallRepository, LlmCallRepository>();
+        services.AddScoped<ILlmCallLogService, LlmCallLogService>();
 
         // Governance: per-office token budget (from the ledger) + concurrency cap. The gate holds
         // the per-office semaphores process-wide (singleton); the governor reads the ledger (scoped).
-        services.AddSingleton<OfficeConcurrencyGate>();
+        services.AddSingleton<IOfficeConcurrencyGate, OfficeConcurrencyGate>();
         services.AddScoped<IUsageGovernorService, UsageGovernorService>();
 
         // AI orchestration over the model (IChatModel from AddKorkutAi) + office settings.
-        services.AddScoped<SessionChatService>();
-        services.AddScoped<DraftingService>();
+        services.AddScoped<IAgentUnitOfWork, AgentUnitOfWork>();
+        services.AddScoped<ISessionChatService, SessionChatService>();
+        services.AddScoped<IDraftingService, DraftingService>();
 
         // Application services the controllers delegate to: they own the tenant scope, orchestration,
         // author resolution, and response-DTO mapping, so the controllers stay thin (request → result).
         // The caller identity comes from the trusted access token via ICurrentUser.
-        services.AddScoped<ICurrentUser, Korkut.Agent.Presentation.Identity.HttpCurrentUser>();
-        services.AddScoped<SessionAppService>();
-        services.AddScoped<ChatAppService>();
-        services.AddScoped<DocumentAppService>();
+        services.AddScoped<ICurrentUser, HttpCurrentUser>();
+        services.AddScoped<ISessionAppService, SessionAppService>();
+        services.AddScoped<IChatAppService, ChatAppService>();
+        services.AddScoped<IDocumentAppService, DocumentAppService>();
 
         // Upload text extraction (embedded text only; OCR is a later, separate service).
         services.AddSingleton<ITextExtractor, PlainTextExtractor>();

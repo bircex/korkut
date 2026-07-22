@@ -1,0 +1,4 @@
+namespace Korkut.Agent.Services.Core.Chat;
+
+/// <summary>The result of a file-upload turn: the assistant reply, the title, and a display line for the user turn.</summary>
+public sealed record UploadOutcome(string Reply, string Title, string UserDisplay);

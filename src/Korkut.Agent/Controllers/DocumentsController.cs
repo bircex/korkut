@@ -1,10 +1,10 @@
 using Korkut.Agent.Contracts.Documents;
-using Korkut.Agent.Services.Implementations.Documents;
+using Korkut.Agent.Services.Core.Documents;
 using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Agent.Presentation.Controllers;
+namespace Korkut.Agent.Controllers;
 
 /// <summary>
 /// AI-drafted documents (the KDM document editor), served by the Agent host. A thin transport: each
@@ -14,7 +14,7 @@ namespace Korkut.Agent.Presentation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/documents")]
-public sealed class DocumentsController(DocumentAppService docs) : ControllerBase
+public sealed class DocumentsController(IDocumentAppService docs) : ControllerBase
 {
     [HttpGet("/api/sessions/{sessionId:guid}/document")]
     [Authorize(Policy = Permissions.MattersRead)]

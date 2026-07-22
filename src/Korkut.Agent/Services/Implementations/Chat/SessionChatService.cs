@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using Korkut.Agent.Services.Core.Ai;
+using Korkut.Agent.Services.Core.Chat;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Agent.Services.Implementations.Ai;
 using Korkut.Application.Abstractions.Knowledge;
@@ -9,12 +10,6 @@ using Korkut.Application.Features.Settings;
 using Korkut.Application.Runtime;
 
 namespace Korkut.Agent.Services.Implementations.Chat;
-
-/// <summary>The result of a chat turn: the assistant reply, the (possibly auto-set) title, and UI hints.</summary>
-public sealed record ChatOutcome(string Reply, string Title, Guid? OpenDocument, Guid? PendingEmail);
-
-/// <summary>The result of a file-upload turn: the assistant reply, the title, and a display line for the user turn.</summary>
-public sealed record UploadOutcome(string Reply, string Title, string UserDisplay);
 
 /// <summary>
 /// Orchestrates one assistant chat turn within the caller's tenant scope: persists the
@@ -26,7 +21,7 @@ public sealed record UploadOutcome(string Reply, string Title, string UserDispla
 public sealed class SessionChatService(
     ISessionService sessions, IOfficeSettingsService settings, RuntimeConfig config,
     ITextExtractor extractor, IKnowledgeSearch knowledge, ILlmCallLogService callLogService, IUsageGovernorService governorService,
-    IAgentToolLoopService toolLoopService)
+    IAgentToolLoopService toolLoopService) : ISessionChatService
 {
     private const int MaxExtractedChars = 20_000;
 

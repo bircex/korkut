@@ -1,15 +1,13 @@
 using System.Diagnostics;
 using System.Text;
 using Korkut.Agent.Services.Core.Ai;
+using Korkut.Agent.Services.Core.Chat;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Agent.Services.Implementations.Ai;
 using Korkut.Application.Features.Settings;
 using Korkut.Infrastructure.Templates;
 
 namespace Korkut.Agent.Services.Implementations.Chat;
-
-/// <summary>A staged pending edit: its id, the proposed markdown, and a short summary.</summary>
-public sealed record DraftResult(Guid PendingId, string ContentMd, string Summary);
 
 /// <summary>
 /// Produces AI edits to a generated document. Builds a drafting-focused system prompt
@@ -19,7 +17,7 @@ public sealed record DraftResult(Guid PendingId, string ContentMd, string Summar
 /// </summary>
 public sealed class DraftingService(
     IDraftDocumentService documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModelService llm,
-    ILlmCallLogService callLogService, IUsageGovernorService governorService)
+    ILlmCallLogService callLogService, IUsageGovernorService governorService) : IDraftingService
 {
     public async Task<DraftResult?> DraftAsync(
         Guid officeId, Guid userId, Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
