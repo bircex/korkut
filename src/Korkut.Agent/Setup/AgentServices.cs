@@ -68,6 +68,14 @@ public static class AgentServices
         services.AddScoped<SessionChatService>();
         services.AddScoped<DraftingService>();
 
+        // Application services the controllers delegate to: they own the tenant scope, orchestration,
+        // author resolution, and response-DTO mapping, so the controllers stay thin (request → result).
+        // The caller identity comes from the trusted access token via ICurrentUser.
+        services.AddScoped<Korkut.Agent.Application.Abstractions.ICurrentUser, Korkut.Agent.Presentation.Identity.HttpCurrentUser>();
+        services.AddScoped<SessionAppService>();
+        services.AddScoped<ChatAppService>();
+        services.AddScoped<Korkut.Agent.Application.Documents.DocumentAppService>();
+
         // Upload text extraction (embedded text only; OCR is a later, separate service).
         services.AddSingleton<ITextExtractor, PlainTextExtractor>();
 

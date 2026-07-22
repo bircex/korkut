@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Agent.Presentation.Contracts.Documents;
+namespace Korkut.Agent.Application.Contracts.Documents;
 
 public sealed record DocVersionResponse(Guid Id, string? Author, string? Note, DateTimeOffset CreatedAt);
 
