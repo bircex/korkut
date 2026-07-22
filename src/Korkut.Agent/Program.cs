@@ -1,4 +1,5 @@
 using Korkut.Agent.Endpoints;
+using Korkut.Agent.Infrastructure;
 using Korkut.Agent.Setup;
 using Korkut.Web;
 using Korkut.Web.Auth;
@@ -39,9 +40,11 @@ var agentDbUrl = builder.Configuration["KORKUT_AGENT_DB_URL"]
     ?? throw new InvalidOperationException("KORKUT_AGENT_DB_URL is required for the Agent host (the Agent DB app-role connection).");
 builder.Services.AddKorkutAgentPersistence(agentDbUrl);
 
-// Swappable model runtime: providers registered only when their key is present; with none
-// configured a disabled model reports 503 and the host still boots (see AiSetup).
+// Shared AI runtime (env/config, PII redactor, "ai" HttpClient, embedder) + the Agent's own chat
+// runtime (routing, providers, IChatModel). Providers register only when their key is present; with
+// none configured a disabled model reports 503 and the host still boots.
 builder.Services.AddKorkutAi();
+builder.Services.AddKorkutChat();
 
 // The Agent host's own services: assistant stores → Clean services, AI orchestration
 // (chat/drafting), upload text extraction, operational user-name lookup.

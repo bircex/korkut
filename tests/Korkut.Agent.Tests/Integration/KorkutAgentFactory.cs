@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using Korkut.Agent.Application;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;

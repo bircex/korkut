@@ -4,10 +4,10 @@ using System.Text.Json;
 using Korkut.Agent.Tenancy;
 using Korkut.Application.Abstractions.Directory;
 using Korkut.Application.Ai;
-using Korkut.Application.Features.Agent;
+using Korkut.Agent.Application;
 using Korkut.Application.Security;
-using Korkut.Domain.Agent;
-using Korkut.Infrastructure.Ai;
+using Korkut.Agent.Domain;
+using Korkut.Agent.Infrastructure;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Web.Errors;
@@ -32,7 +32,7 @@ public sealed record RenameSessionRequest
 
 public sealed record ChatRequest
 {
-    [Required, MaxLength(20000)]
+    [Required, MaxLength(40000)]
     public string? Text { get; init; }
 }
 

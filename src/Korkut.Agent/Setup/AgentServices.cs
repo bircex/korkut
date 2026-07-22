@@ -2,7 +2,7 @@ using Korkut.Application.Abstractions.Directory;
 using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Documents;
-using Korkut.Application.Features.Agent;
+using Korkut.Agent.Application;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
 using Korkut.Agent.Tools;
@@ -16,6 +16,7 @@ using Korkut.Application.Features.OfficeCore;
 using Korkut.Application.Features.OfficeOps;
 using Korkut.Application.Features.Outbox;
 using Korkut.Application.Features.Reports;
+using Korkut.Agent.Infrastructure;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence.Repositories;
@@ -48,12 +49,12 @@ public static class AgentServices
         services.AddSingleton(_ => new TemplateCatalog());
 
         // Per-model-call cost/telemetry ledger (llm_calls in the Agent DB) + a first-class span.
-        services.AddScoped<Application.Ai.ILlmCallLog, EfLlmCallLog>();
+        services.AddScoped<ILlmCallLog, EfLlmCallLog>();
 
         // Governance: per-office token budget (from the ledger) + concurrency cap. The gate holds
         // the per-office semaphores process-wide (singleton); the governor reads the ledger (scoped).
         services.AddSingleton<OfficeConcurrencyGate>();
-        services.AddScoped<Application.Ai.IUsageGovernor, UsageGovernor>();
+        services.AddScoped<IUsageGovernor, UsageGovernor>();
 
         // AI orchestration over the model (IChatModel from AddKorkutAi) + office settings.
         services.AddScoped<SessionChatService>();
@@ -136,7 +137,7 @@ public static class AgentServices
         AddLawSources(services);
         services.AddScoped<IToolCatalog, ToolCatalog>();
         services.AddScoped<ToolCallingLoop>();
-        services.AddScoped<Korkut.Application.Ai.IAgentToolLoop>(sp => sp.GetRequiredService<ToolCallingLoop>());
+        services.AddScoped<IAgentToolLoop>(sp => sp.GetRequiredService<ToolCallingLoop>());
 
         return services;
     }

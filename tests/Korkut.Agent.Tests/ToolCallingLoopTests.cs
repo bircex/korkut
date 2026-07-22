@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Korkut.Agent.Tools;
+using Korkut.Agent.Application;
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
 
