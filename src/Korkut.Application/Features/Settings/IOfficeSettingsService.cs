@@ -1,6 +1,6 @@
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Domain.Settings;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Features.Settings;
 

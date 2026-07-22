@@ -1,4 +1,4 @@
-using Korkut.SharedKernel.Redaction;
+using Korkut.Domain.Redaction;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 

@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 

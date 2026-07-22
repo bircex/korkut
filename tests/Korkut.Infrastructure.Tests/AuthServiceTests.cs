@@ -2,7 +2,7 @@ using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

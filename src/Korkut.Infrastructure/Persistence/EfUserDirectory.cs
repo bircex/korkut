@@ -1,6 +1,6 @@
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
+using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;

@@ -1,6 +1,6 @@
 using Korkut.Application.Jobs;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;
@@ -160,7 +160,7 @@ public sealed class EfJobAudit(KorkutDbContext db) : IJobAudit
     {
         db.JobAudit.Add(new JobAuditEntity
         {
-            Id = Korkut.SharedKernel.Ids.UuidV7.NewId(),
+            Id = Korkut.Domain.Ids.UuidV7.NewId(),
             MessageId = auditEvent.MessageId,
             OfficeId = auditEvent.OfficeId,
             Type = auditEvent.Type,

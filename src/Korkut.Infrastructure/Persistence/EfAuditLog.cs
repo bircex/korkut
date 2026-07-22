@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
-using Korkut.SharedKernel.Redaction;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Ids;
+using Korkut.Domain.Redaction;
+using Korkut.Domain.Time;
 
 namespace Korkut.Infrastructure.Persistence;
 

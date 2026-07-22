@@ -1,4 +1,4 @@
-namespace Korkut.SharedKernel.Results;
+namespace Korkut.Domain.Results;
 
 /// <summary>A machine-readable error: stable <see cref="Code"/> plus a message.</summary>
 public sealed record Error(string Code, string Message)

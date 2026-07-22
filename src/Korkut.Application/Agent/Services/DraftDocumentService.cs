@@ -1,5 +1,5 @@
 using Korkut.Domain.Agent.Documents;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 

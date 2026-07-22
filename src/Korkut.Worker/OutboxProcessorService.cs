@@ -1,5 +1,5 @@
 using Korkut.Application.Jobs;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Worker;
 

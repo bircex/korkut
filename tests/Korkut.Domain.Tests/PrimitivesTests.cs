@@ -1,11 +1,11 @@
 using Korkut.Domain.Primitives;
-using Korkut.SharedKernel.Ids;
-using Korkut.SharedKernel.Results;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Ids;
+using Korkut.Domain.Results;
+using Korkut.Domain.Time;
 
 namespace Korkut.Domain.Tests;
 
-public class SharedKernelTests
+public class PrimitivesTests
 {
     [Fact]
     public void UuidV7_is_version_7_and_unique()

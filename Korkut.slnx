@@ -11,7 +11,6 @@
     <Project Path="src/Korkut.Ocr/Korkut.Ocr.csproj" />
     <Project Path="src/Korkut.Pii/Korkut.Pii.csproj" />
     <Project Path="src/Korkut.Web/Korkut.Web.csproj" />
-    <Project Path="src/Korkut.SharedKernel/Korkut.SharedKernel.csproj" />
     <Project Path="src/Korkut.Worker/Korkut.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">

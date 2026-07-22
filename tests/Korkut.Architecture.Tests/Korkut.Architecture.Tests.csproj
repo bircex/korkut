@@ -19,6 +19,5 @@
     <ProjectReference Include="..\..\src\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\src\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\src\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
   </ItemGroup>
 </Project>

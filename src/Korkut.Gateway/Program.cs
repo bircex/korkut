@@ -3,7 +3,7 @@ using Korkut.Web;
 using Korkut.Web.Auth;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using OpenTelemetry.Trace;
 
 // Korkut.Gateway — the ONLY public entry point (YARP reverse proxy). Terminates the edge

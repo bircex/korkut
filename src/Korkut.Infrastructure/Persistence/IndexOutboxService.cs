@@ -1,8 +1,8 @@
 using Korkut.Application.Documents;
 using Korkut.Application.Jobs;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Ids;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;

@@ -1,7 +1,7 @@
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Features.Finance;
 using Korkut.Domain.Finance;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Tests;
 

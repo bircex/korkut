@@ -2,8 +2,8 @@ using Korkut.Application.Auditing;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Ids;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Security;

@@ -5,7 +5,7 @@ using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

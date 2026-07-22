@@ -1,4 +1,4 @@
-using Korkut.SharedKernel.Ids;
+using Korkut.Domain.Ids;
 
 namespace Korkut.Domain.Primitives;
 
@@ -7,7 +7,7 @@ public interface IAggregateRoot;
 
 /// <summary>
 /// Base for domain entities keyed by a UUIDv7 identity. Equality is by id, so two
-/// loads of the same row compare equal. Domain code depends only on SharedKernel.
+/// loads of the same row compare equal. Domain owns these primitives and depends on nothing else.
 /// </summary>
 public abstract class Entity : IEquatable<Entity>
 {

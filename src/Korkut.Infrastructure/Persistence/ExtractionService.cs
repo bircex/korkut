@@ -2,7 +2,7 @@ using Korkut.Application.Documents;
 using Korkut.Application.Documents.OCR;
 using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;

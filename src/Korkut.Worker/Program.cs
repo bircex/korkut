@@ -1,7 +1,7 @@
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
 using Korkut.Infrastructure.Observability;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Korkut.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);

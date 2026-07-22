@@ -2,7 +2,7 @@ using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Services;
 using Korkut.Domain.Agent.Conversations;
 using Korkut.Domain.Agent.Documents;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Agent.Tests;
 

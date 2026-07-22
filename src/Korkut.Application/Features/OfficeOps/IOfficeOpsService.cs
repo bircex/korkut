@@ -1,7 +1,7 @@
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Domain.OfficeOps;
-using Korkut.SharedKernel.Ids;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Ids;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Features.OfficeOps;
 

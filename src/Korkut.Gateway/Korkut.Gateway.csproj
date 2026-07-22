@@ -8,7 +8,7 @@
     <!-- Reuses the shared web foundation (auth scheme, CORS, rate-limit, error mapping) +
          Infrastructure (observability). No Application/Domain: the gateway only routes. -->
     <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+    <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\Korkut.Web\Korkut.Web.csproj" />
   </ItemGroup>
 </Project>

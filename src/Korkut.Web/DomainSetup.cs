@@ -1,7 +1,7 @@
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Web;
 

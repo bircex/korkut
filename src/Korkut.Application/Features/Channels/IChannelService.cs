@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Domain.Channels;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Features.Channels;
 

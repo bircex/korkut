@@ -1,3 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <!-- SharedKernel: cross-cutting primitives only (ids, clock, result/error, audit). No project deps. -->
-</Project>

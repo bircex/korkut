@@ -1,6 +1,6 @@
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
+using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;

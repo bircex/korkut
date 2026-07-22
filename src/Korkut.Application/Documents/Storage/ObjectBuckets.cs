@@ -10,7 +10,7 @@ public static class ObjectBuckets
     /// <summary>An opaque key: a UUIDv7, sharded by its first byte. No filename/PII.</summary>
     public static string NewKey()
     {
-        var id = SharedKernel.Ids.UuidV7.NewId().ToString("N");
+        var id = Domain.Ids.UuidV7.NewId().ToString("N");
         return $"{id[..2]}/{id}";
     }
 }

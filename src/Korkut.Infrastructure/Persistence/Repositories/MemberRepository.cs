@@ -2,7 +2,7 @@ using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Security;
 using Korkut.Domain.Membership;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Ids;
+using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence.Repositories;

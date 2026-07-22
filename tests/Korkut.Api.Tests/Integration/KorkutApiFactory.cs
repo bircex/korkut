@@ -3,7 +3,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;

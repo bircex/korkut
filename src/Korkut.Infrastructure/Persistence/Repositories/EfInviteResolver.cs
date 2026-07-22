@@ -1,6 +1,6 @@
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Domain.Membership;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

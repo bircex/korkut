@@ -1,4 +1,4 @@
-using Korkut.SharedKernel.Redaction;
+using Korkut.Domain.Redaction;
 
 namespace Korkut.Domain.Tests;
 

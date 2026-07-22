@@ -6,7 +6,7 @@ using Korkut.Web;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Storage;
 using Korkut.Infrastructure.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);

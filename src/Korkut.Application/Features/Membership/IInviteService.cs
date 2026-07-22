@@ -1,7 +1,7 @@
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Security;
 using Korkut.Domain.Membership;
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Features.Membership;
 

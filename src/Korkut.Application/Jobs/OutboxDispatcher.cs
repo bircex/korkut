@@ -1,4 +1,4 @@
-using Korkut.SharedKernel.Time;
+using Korkut.Domain.Time;
 
 namespace Korkut.Application.Jobs;
 

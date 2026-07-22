@@ -7,7 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+    <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\Korkut.Web\Korkut.Web.csproj" />
   </ItemGroup>
   <!-- Ship the static legal template catalog with the app so TemplateCatalog resolves
