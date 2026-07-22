@@ -1,11 +1,8 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using Korkut.Agent.Application.Ai;
-using Korkut.Agent.Application.Abstractions.Ai;
-using Korkut.Agent.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Abstractions.Sessions;
 using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Application.Chat;
+using Korkut.Agent.Services.Core.Ai;
+using Korkut.Agent.Services.Implementations.Ai;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
@@ -29,7 +26,7 @@ namespace Korkut.Agent.Tests.Integration;
 /// migrated — the operational <c>korkut</c> (office settings the assistant reads) and the
 /// Agent <c>korkut_agent</c> (conversations + drafted documents). The host connects as the
 /// least-privileged <c>korkut_app</c> role, so row-level security is actually in force. A
-/// deterministic fake <see cref="IChatModel"/> stands in for the provider, so the full chat/
+/// deterministic fake <see cref="IChatModelService"/> stands in for the provider, so the full chat/
 /// drafting path runs end-to-end without a real model key.
 /// </summary>
 public sealed class KorkutAgentFactory : WebApplicationFactory<Program>, IAsyncLifetime
@@ -89,14 +86,14 @@ public sealed class KorkutAgentFactory : WebApplicationFactory<Program>, IAsyncL
         builder.ConfigureTestServices(services =>
         {
             // Deterministic model so chat/drafting is exercised end-to-end without a provider key.
-            services.RemoveAll<IChatModel>();
-            services.AddScoped<IChatModel, FakeChatModel>();
+            services.RemoveAll<IChatModelService>();
+            services.AddScoped<IChatModelService, FakeChatModelService>();
         });
         builder.UseEnvironment("Testing");
     }
 
     /// <summary>A deterministic assistant: echoes the last user turn (proves the prompt was built).</summary>
-    private sealed class FakeChatModel : IChatModel
+    private sealed class FakeChatModelService : IChatModelService
     {
         // A non-empty usage so the llm_calls telemetry ledger records a meaningful row.
         internal static readonly ChatUsage FakeUsage = new("fake", "fake-model", 12, 34);

@@ -1,16 +1,10 @@
 using System.Runtime.CompilerServices;
-using Korkut.Agent.Application.Ai;
-using Korkut.Agent.Application.Abstractions.Ai;
-using Korkut.Agent.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Abstractions.Sessions;
 using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Application.Chat;
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
-using Korkut.Agent.Infrastructure.Ai;
-using Korkut.Agent.Infrastructure.Ai.Providers;
-using Korkut.Agent.Infrastructure.Ai.Routing;
-using Korkut.Agent.Infrastructure.Persistence;
+using Korkut.Agent.Services.Implementations.Ai;
+using Korkut.Agent.Repositories.Implementations;
+using Korkut.Agent.Services.Core.Ai;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -32,7 +26,7 @@ public class AiRoutingTests
         public bool IsAvailable => available;
     }
 
-    private sealed class FakeProvider(string name, string reply) : IChatProvider
+    private sealed class FakeProviderService(string name, string reply) : IChatProviderService
     {
         public ModelSelection? LastSelection { get; private set; }
 
@@ -59,7 +53,7 @@ public class AiRoutingTests
         new Dictionary<string, string> { ["petition"] = "cloud", ["hearing"] = "local" },
         fallbackToCloudIfNoLocal: true);
 
-    private static ModelRouter Router(bool localAvailable = false) => new(
+    private static ModelRouterService Router(bool localAvailable = false) => new(
         Routing(),
         new RuntimeConfig(new FakeEnv(new() { ["ANTHROPIC_MODEL"] = "claude-opus-4-8" })),
         new FakeEnv(new()),
@@ -90,9 +84,9 @@ public class AiRoutingTests
     [Fact]
     public async Task Facade_dispatches_to_the_provider_the_router_picks()
     {
-        var claude = new FakeProvider("claude", "CLAUDE-REPLY");
-        var groq = new FakeProvider("groq", "GROQ-REPLY");
-        var model = new RoutingChatModel(Router(), new IChatProvider[] { claude, groq });
+        var claude = new FakeProviderService("claude", "CLAUDE-REPLY");
+        var groq = new FakeProviderService("groq", "GROQ-REPLY");
+        var model = new RoutingChatModelService(Router(), new IChatProviderService[] { claude, groq });
 
         var reply = await model.CompleteAsync(new ChatRequest("sys", [new ChatMessage("user", "selam")], ModelSpecialty.Petition));
 
@@ -104,12 +98,12 @@ public class AiRoutingTests
     [Fact]
     public async Task Facade_surfaces_a_routing_failure()
     {
-        var badRouter = new ModelRouter(
+        var badRouter = new ModelRouterService(
             new ModelRouting(new Dictionary<string, string> { ["cloud"] = "gpt", ["local"] = "ollama" }, new Dictionary<string, string>(), true),
             new RuntimeConfig(new FakeEnv(new())),
             new FakeEnv(new()),
             new FakeProbe(false));
-        var model = new RoutingChatModel(badRouter, new IChatProvider[] { new FakeProvider("claude", "x") });
+        var model = new RoutingChatModelService(badRouter, new IChatProviderService[] { new FakeProviderService("claude", "x") });
 
         // cloud=gpt but only claude is registered → the router refuses to resolve.
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -119,7 +113,7 @@ public class AiRoutingTests
     [Fact]
     public async Task Streaming_yields_text_deltas_then_a_terminal_usage()
     {
-        var model = new RoutingChatModel(Router(), new IChatProvider[] { new FakeProvider("claude", "MERHABA") });
+        var model = new RoutingChatModelService(Router(), new IChatProviderService[] { new FakeProviderService("claude", "MERHABA") });
 
         var deltas = new List<string>();
         ChatUsage? final = null;

@@ -1,18 +1,11 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Korkut.Agent.Application.Ai;
-using Korkut.Agent.Application.Abstractions.Ai;
-using Korkut.Agent.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Abstractions.Sessions;
 using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Application.Chat;
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
-using Korkut.Agent.Infrastructure.Ai;
-using Korkut.Agent.Infrastructure.Ai.Providers;
-using Korkut.Agent.Infrastructure.Ai.Routing;
-using Korkut.Agent.Infrastructure.Persistence;
+using Korkut.Agent.Services.Implementations.Ai;
+using Korkut.Agent.Repositories.Implementations;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -66,7 +59,7 @@ public class ProviderToolCallingTests
          "usage":{"input_tokens":5,"output_tokens":7}}
         """;
         var handler = new StubHandler(response);
-        var provider = new AnthropicChatProvider(
+        var provider = new AnthropicChatProviderService(
             new HttpClient(handler), new FakeEnv(new() { ["ANTHROPIC_API_KEY"] = "sk-test" }));
 
         var reply = await provider.CompleteAsync(new ModelSelection("claude", "claude-x", 1024), RequestWithToolTurn());
@@ -95,7 +88,7 @@ public class ProviderToolCallingTests
          "usage":{"prompt_tokens":4,"completion_tokens":6}}
         """;
         var handler = new StubHandler(response);
-        var provider = new OpenAiCompatibleChatProvider(
+        var provider = new OpenAiCompatibleChatProviderService(
             new HttpClient(handler), new FakeEnv(new() { ["OPENAI_API_KEY"] = "sk-test" }),
             "gpt", "https://api.openai.com/v1", "OPENAI_API_KEY");
 

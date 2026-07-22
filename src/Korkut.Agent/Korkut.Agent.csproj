@@ -15,4 +15,9 @@
   <ItemGroup>
     <Content Include="..\..\templates\**\*" LinkBase="templates" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <!-- Reserved for cross-cutting request middleware (currently none; the shared error handler
+       lives in Korkut.Web). Kept so the folder is present in the project layout. -->
+  <ItemGroup>
+    <Folder Include="Middlewares\" />
+  </ItemGroup>
 </Project>

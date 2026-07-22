@@ -1,10 +1,6 @@
+using Korkut.Agent.Repositories.Core;
 using Korkut.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Ai;
-using Korkut.Agent.Application.Abstractions.Ai;
-using Korkut.Agent.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Abstractions.Sessions;
 using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Application.Chat;
 using Korkut.Agent.Domain.Conversations;
 using Korkut.Agent.Domain.Documents;
 using Korkut.SharedKernel.Time;

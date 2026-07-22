@@ -1,4 +1,4 @@
-using Korkut.Agent.Setup;
+using Korkut.Agent.Extensions;
 using Korkut.Web;
 using Korkut.Web.Auth;
 using Korkut.Web.Json;

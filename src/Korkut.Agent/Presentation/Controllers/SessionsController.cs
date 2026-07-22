@@ -1,7 +1,8 @@
 using System.Text.Json;
-using Korkut.Agent.Application.Chat;
-using Korkut.Agent.Application.Contracts.Sessions;
 using Korkut.Agent.Application.Sessions;
+using Korkut.Agent.Contracts.Sessions;
+using Korkut.Agent.Services.Implementations.Chat;
+using Korkut.Agent.Services.Implementations.Sessions;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.Web.Errors;

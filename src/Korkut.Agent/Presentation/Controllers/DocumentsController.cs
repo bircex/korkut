@@ -1,5 +1,5 @@
-using Korkut.Agent.Application.Contracts.Documents;
-using Korkut.Agent.Application.Documents;
+using Korkut.Agent.Contracts.Documents;
+using Korkut.Agent.Services.Implementations.Documents;
 using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

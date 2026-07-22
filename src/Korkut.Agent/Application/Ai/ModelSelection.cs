@@ -1,4 +1,0 @@
-namespace Korkut.Agent.Application.Ai;
-
-/// <summary>A resolved provider + concrete model + token cap for one call (the router's output).</summary>
-public sealed record ModelSelection(string Provider, string ModelId, int MaxTokens);
