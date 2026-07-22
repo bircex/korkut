@@ -1,0 +1,44 @@
+using System.Diagnostics;
+using Korkut.Infrastructure.Observability;
+using Korkut.SharedKernel.Time;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
+
+namespace Korkut.Infrastructure.Agent.Ai;
+
+/// <summary>
+/// Records each model call to the <c>llm_calls</c> ledger (via <see cref="ILlmCallRepository"/>) and
+/// emits a first-class "llm.call" span carrying provider / model / tokens / cost / latency / office /
+/// feature (principle 8/9). Cost is derived from <see cref="ModelPricing"/> at record time. No
+/// DbContext here — persistence lives behind the repository.
+/// </summary>
+public sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) : ILlmCallLogService
+{
+    private static readonly ActivitySource Source = new(ObservabilitySetup.ActivitySourceName);
+
+    public async Task RecordAsync(
+        Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default)
+    {
+        var cost = ModelPricing.Cost(usage.ModelId, usage.PromptTokens, usage.CompletionTokens);
+
+        using (var span = Source.StartActivity("llm.call"))
+        {
+            if (span is not null)
+            {
+                span.SetTag("provider", usage.Provider);
+                span.SetTag("model_id", usage.ModelId);
+                span.SetTag("prompt_fingerprint", promptFingerprint);
+                span.SetTag("prompt_tokens", usage.PromptTokens);
+                span.SetTag("completion_tokens", usage.CompletionTokens);
+                span.SetTag("cost", (double)cost);
+                span.SetTag("latency_ms", latency.TotalMilliseconds);
+                span.SetTag("office_id", officeId);
+                span.SetTag("feature", feature);
+            }
+        }
+
+        await calls.AddAsync(new LlmCallEntry(
+            officeId, feature, usage.Provider, usage.ModelId, promptFingerprint,
+            usage.PromptTokens, usage.CompletionTokens, cost, (int)latency.TotalMilliseconds, clock.UtcNow), ct);
+    }
+}

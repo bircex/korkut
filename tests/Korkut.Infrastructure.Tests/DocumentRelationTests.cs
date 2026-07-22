@@ -39,7 +39,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedDocumentAsync(KorkutDbContext db)
     {
-        var stored = await new DocumentService(db, minio.Store, new Clock())
+        var stored = await new DocumentService(db, minio.StoreService, new Clock())
             .StoreAsync(_office, null, new MemoryStream("x"u8.ToArray()), "d.txt", "text/plain");
         await db.Documents.Where(x => x.Id == stored.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "clean"), default);
@@ -172,12 +172,12 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var clock = new Clock();
 
         // Extract twice (retry): still one index event (idempotent projection).
-        await new ExtractionService(db, minio.Store, new PlainTextExtractor(), clock).ExtractAsync(_office, doc);
-        await new ExtractionService(db, minio.Store, new PlainTextExtractor(), clock).ExtractAsync(_office, doc);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, doc);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, doc);
         Assert.Equal(1, await db.Outbox.CountAsync(x => x.Type == DocumentIndexEventTypes.Index));
 
         // Tombstone -> a de-index event that preserves provenance.
-        await new DocumentLifecycleService(db, minio.Store, clock).TombstoneAsync(_office, doc);
+        await new DocumentLifecycleService(db, minio.StoreService, clock).TombstoneAsync(_office, doc);
         var deindex = await db.Outbox.AsNoTracking().SingleAsync(x => x.Type == DocumentIndexEventTypes.Deindex);
         Assert.Contains(doc.ToString(), deindex.Payload, StringComparison.Ordinal);
         Assert.Contains(_office.ToString(), deindex.Payload, StringComparison.Ordinal);

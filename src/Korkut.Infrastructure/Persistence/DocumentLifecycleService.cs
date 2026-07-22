@@ -1,4 +1,5 @@
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.Storage;
 using Korkut.SharedKernel.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,7 @@ namespace Korkut.Infrastructure.Persistence;
 /// auditable marker. Legal hold is an absolute veto over both explicit deletes and
 /// retention-driven purges.
 /// </summary>
-public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStore store, IClock clock)
+public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreService storeService, IClock clock)
 {
     /// <summary>
     /// Tombstones a document: removes the object bytes and its extraction artifacts,
@@ -100,7 +101,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStore st
     private async Task PurgeArtifactsAsync(Guid officeId, Guid documentId, string bucket, string objectKey, CancellationToken ct)
     {
         // Best-effort object removal (bytes gone); metadata row is retained as a tombstone.
-        await store.RemoveAsync(bucket, objectKey, ct);
+        await storeService.RemoveAsync(bucket, objectKey, ct);
         await db.DocumentExtractions
             .Where(x => x.OfficeId == officeId && x.DocumentId == documentId)
             .ExecuteDeleteAsync(ct);

@@ -1,4 +1,5 @@
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
 using Korkut.Ocr.Endpoints;
 using Korkut.Web;
 using Korkut.Web.Auth;

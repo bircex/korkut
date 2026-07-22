@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Korkut.Agent.Contracts.Sessions;
 using Korkut.Agent.Services.Core.Chat;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Application.Ai;
@@ -7,6 +6,7 @@ using Korkut.Application.Security;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Korkut.Application.Agent.Contracts;
 
 namespace Korkut.Agent.Controllers;
 

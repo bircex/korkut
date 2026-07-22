@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.SharedKernel.Ids;
 using Korkut.SharedKernel.Time;
@@ -17,7 +18,7 @@ public sealed record ReconcileReport(IReadOnlyList<Guid> DbRowsMissingObject, IR
 /// short-lived; the caller enforces permission first. Reconciliation finds DB↔object
 /// drift so the two stores can be reconverified (KDM-025).
 /// </summary>
-public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore, IClock clock)
+public sealed class DocumentService(KorkutDbContext db, IObjectStoreService objectStoreService, IClock clock)
 {
     public async Task<StoredDocument> StoreAsync(
         Guid officeId, Guid? ownerId, Stream content, string filename, string contentType, CancellationToken ct = default)
@@ -30,7 +31,7 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore
         buffer.Position = 0;
 
         var key = ObjectBuckets.NewKey();
-        await objectStore.PutAsync(ObjectBuckets.Quarantine, key, buffer, buffer.Length, contentType, ct);
+        await objectStoreService.PutAsync(ObjectBuckets.Quarantine, key, buffer, buffer.Length, contentType, ct);
 
         var doc = new DocumentEntity
         {
@@ -74,7 +75,7 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore
             throw new InvalidOperationException($"Document is not downloadable in state '{doc.Status}'.");
         }
 
-        return await objectStore.PresignGetAsync(doc.Bucket, doc.ObjectKey, expiry, ct);
+        return await objectStoreService.PresignGetAsync(doc.Bucket, doc.ObjectKey, expiry, ct);
     }
 
     /// <summary>Find DB↔object drift for a bucket (orphan reconciliation).</summary>
@@ -87,7 +88,7 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStore objectStore
         var dbKeys = dbDocs.Select(d => d.ObjectKey).ToHashSet();
 
         var objectKeys = new HashSet<string>();
-        await foreach (var k in objectStore.ListKeysAsync(bucket, ct))
+        await foreach (var k in objectStoreService.ListKeysAsync(bucket, ct))
         {
             objectKeys.Add(k);
         }

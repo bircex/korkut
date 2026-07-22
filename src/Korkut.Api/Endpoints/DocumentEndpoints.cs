@@ -42,7 +42,7 @@ public static class DocumentEndpoints
                 async office => (await service.ListAsync(office, matterId, ct)).Select(ToDto).ToList(), ct)))
             .RequireAuthorization(Permissions.DocumentsRead);
 
-        docs.MapPost("", async (IFormFile file, ClaimsPrincipal user, KorkutDbContext db, SecureUploadService upload, DocumentService service, CancellationToken ct) =>
+        docs.MapPost("", async (IFormFile file, ClaimsPrincipal user, KorkutDbContext db, SafeUploadService upload, DocumentService service, CancellationToken ct) =>
             {
                 if (file is null || file.Length == 0)
                 {
@@ -60,7 +60,7 @@ public static class DocumentEndpoints
                 // Validation rejection (bad magic bytes / filename) never stored → 422.
                 if (dto is null)
                 {
-                    return Results.Json(new { detail = $"Yükleme reddedildi: {outcome.Rejection}." }, statusCode: 422);
+                    return Results.Json(new { detail = $"Yükleme reddedildi: {outcome.ValidatorRejection}." }, statusCode: 422);
                 }
 
                 return Results.Created($"/api/documents/{dto.Id}", dto);

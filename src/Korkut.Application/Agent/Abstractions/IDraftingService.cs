@@ -1,0 +1,10 @@
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
+namespace Korkut.Application.Agent.Abstractions;
+
+/// <summary>Composes an AI-drafted document edit (stages a pending version) within a tenant-scoped unit of work.</summary>
+public interface IDraftingService
+{
+    Task<DraftResult?> DraftAsync(
+        Guid officeId, Guid userId, Guid docId, string instruction, string? petitionType, CancellationToken ct = default);
+}

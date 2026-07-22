@@ -1,5 +1,7 @@
 using System.Text;
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
+using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -24,15 +26,15 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     }
 
     /// <summary>A second parser with a distinct version — simulates a parser upgrade.</summary>
-    private sealed class UpperExtractor : ITextExtractor
+    private sealed class UpperExtractorService : ITextExtractorService
     {
         public string ParserVersion => "plaintext-v2";
 
-        public Task<IReadOnlyList<ExtractedSpan>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
+        public Task<IReadOnlyList<TextExtractorServiceResult>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
         {
             using var r = new StreamReader(content, Encoding.UTF8, leaveOpen: true);
             var text = r.ReadToEnd().Trim().ToUpperInvariant();
-            IReadOnlyList<ExtractedSpan> spans = [new ExtractedSpan(1, 0, text)];
+            IReadOnlyList<TextExtractorServiceResult> spans = [new TextExtractorServiceResult(1, 0, text)];
             return Task.FromResult(spans);
         }
     }
@@ -55,7 +57,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     private async Task<Guid> SeedCleanDocumentAsync(string body)
     {
         await using var seed = pg.NewContext();
-        var docs = new DocumentService(seed, minio.Store, new Clock(DateTimeOffset.UtcNow));
+        var docs = new DocumentService(seed, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
         var stored = await docs.StoreAsync(_office, null, new MemoryStream(Encoding.UTF8.GetBytes(body)), "brief.txt", "text/plain");
         await seed.Documents.Where(x => x.Id == stored.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "clean"), default);
@@ -67,7 +69,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     {
         await using var db = pg.NewContext();
         var docId = await SeedCleanDocumentAsync("Sayfa bir paragraf.\n\nIkinci paragraf.\fSayfa iki.");
-        var svc = new ExtractionService(db, minio.Store, new PlainTextExtractor(), new Clock(DateTimeOffset.UtcNow));
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new Clock(DateTimeOffset.UtcNow));
 
         var result = await svc.ExtractAsync(_office, docId);
         Assert.Equal(ExtractionOutcome.Extracted, result.Outcome);
@@ -90,10 +92,10 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     public async Task Only_clean_documents_are_processed()
     {
         await using var db = pg.NewContext();
-        var docs = new DocumentService(db, minio.Store, new Clock(DateTimeOffset.UtcNow));
+        var docs = new DocumentService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
         // Left in quarantine — never promoted to clean.
         var stored = await docs.StoreAsync(_office, null, new MemoryStream("x"u8.ToArray()), "q.txt", "text/plain");
-        var svc = new ExtractionService(db, minio.Store, new PlainTextExtractor(), new Clock(DateTimeOffset.UtcNow));
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new Clock(DateTimeOffset.UtcNow));
 
         var result = await svc.ExtractAsync(_office, stored.Id);
         Assert.Equal(ExtractionOutcome.SkippedNotClean, result.Outcome);
@@ -105,7 +107,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     {
         await using var db = pg.NewContext();
         var docId = await SeedCleanDocumentAsync("Tek paragraf.");
-        var svc = new ExtractionService(db, minio.Store, new PlainTextExtractor(), new Clock(DateTimeOffset.UtcNow));
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new Clock(DateTimeOffset.UtcNow));
 
         var first = await svc.ExtractAsync(_office, docId);
         var second = await svc.ExtractAsync(_office, docId); // retry
@@ -121,8 +123,8 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         var docId = await SeedCleanDocumentAsync("metin");
         var clock = new Clock(DateTimeOffset.UtcNow);
 
-        await new ExtractionService(db, minio.Store, new PlainTextExtractor(), clock).ExtractAsync(_office, docId);
-        await new ExtractionService(db, minio.Store, new UpperExtractor(), clock).ExtractAsync(_office, docId);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, docId);
+        await new ExtractionService(db, minio.StoreService, new UpperExtractorService(), clock).ExtractAsync(_office, docId);
 
         var byParser = await db.DocumentExtractions.AsNoTracking()
             .Where(x => x.DocumentId == docId).GroupBy(x => x.ParserVersion)
@@ -137,7 +139,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     {
         await using var db = pg.NewContext();
         var docId = await SeedCleanDocumentAsync("delil");
-        var life = new DocumentLifecycleService(db, minio.Store, new Clock(DateTimeOffset.UtcNow));
+        var life = new DocumentLifecycleService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
 
         await life.SetLegalHoldAsync(_office, docId, held: true);
         await Assert.ThrowsAsync<InvalidOperationException>(() => life.TombstoneAsync(_office, docId));
@@ -152,16 +154,16 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         await using var db = pg.NewContext();
         var docId = await SeedCleanDocumentAsync("silinecek");
         var clock = new Clock(DateTimeOffset.UtcNow);
-        await new ExtractionService(db, minio.Store, new PlainTextExtractor(), clock).ExtractAsync(_office, docId);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, docId);
         var key = await db.Documents.Where(x => x.Id == docId).Select(x => x.ObjectKey).SingleAsync();
 
-        await new DocumentLifecycleService(db, minio.Store, clock).TombstoneAsync(_office, docId);
+        await new DocumentLifecycleService(db, minio.StoreService, clock).TombstoneAsync(_office, docId);
 
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == docId);
         Assert.Equal("tombstoned", doc.Status);
         Assert.NotNull(doc.TombstonedAt);
         Assert.Equal(0, await db.DocumentExtractions.CountAsync(x => x.DocumentId == docId)); // artifacts gone
-        await Assert.ThrowsAnyAsync<Exception>(() => minio.Store.GetAsync(ObjectBuckets.Quarantine, key)); // bytes gone
+        await Assert.ThrowsAnyAsync<Exception>(() => minio.StoreService.GetAsync(ObjectBuckets.Quarantine, key)); // bytes gone
     }
 
     [Fact]
@@ -179,7 +181,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.RetentionUntil, past).SetProperty(x => x.LegalHold, true), default);
         await db.Documents.Where(x => x.Id == future).ExecuteUpdateAsync(s => s.SetProperty(x => x.RetentionUntil, ahead), default);
 
-        var purged = await new DocumentLifecycleService(db, minio.Store, new Clock(DateTimeOffset.UtcNow)).PurgeExpiredAsync(_office);
+        var purged = await new DocumentLifecycleService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow)).PurgeExpiredAsync(_office);
         Assert.Equal(1, purged);
 
         Assert.Equal("tombstoned", await db.Documents.AsNoTracking().Where(x => x.Id == expired).Select(x => x.Status).SingleAsync());

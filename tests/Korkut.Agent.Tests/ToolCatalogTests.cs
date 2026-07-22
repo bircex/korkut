@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Korkut.Agent.Tools;
-using Korkut.Application.Abstractions.Knowledge;
+using Korkut.Application.Knowledge;
 using Korkut.Application.Runtime;
 using Korkut.Application.Security;
 using Korkut.Domain.Knowledge;
@@ -71,7 +71,7 @@ public class ToolCatalogTests
         Assert.True(gated.IsError); // hidden because its key is unset
     }
 
-    private sealed class FakeKnowledge(params string[] texts) : IKnowledgeSearch
+    private sealed class FakeKnowledge(params string[] texts) : IKnowledgeSearchService
     {
         public Task<IReadOnlyList<SearchHit>> SearchAsync(string query, int topK, CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<SearchHit>>(

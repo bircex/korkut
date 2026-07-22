@@ -1,4 +1,4 @@
-using Korkut.Agent.Contracts.Sessions;
+using Korkut.Application.Agent.Contracts;
 
 namespace Korkut.Agent.Services.Core.Chat;
 

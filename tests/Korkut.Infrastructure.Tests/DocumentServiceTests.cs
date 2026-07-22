@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.SharedKernel.Time;
@@ -30,7 +31,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private DocumentService Service(KorkutDbContext db) => new(db, minio.Store, new Clock());
+    private DocumentService Service(KorkutDbContext db) => new(db, minio.StoreService, new Clock());
 
     [Fact]
     public async Task Stored_document_round_trips_with_a_matching_checksum_and_opaque_key()
@@ -51,7 +52,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         Assert.DoesNotContain(_office.ToString(), stored.ObjectKey, StringComparison.OrdinalIgnoreCase);
 
         // Bytes are actually in MinIO (quarantine) and match.
-        await using var download = await minio.Store.GetAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
+        await using var download = await minio.StoreService.GetAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
         using var ms = new MemoryStream();
         await download.CopyToAsync(ms);
         Assert.Equal(bytes, ms.ToArray());
@@ -107,7 +108,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         }
 
         // Delete the object out from under the DB row -> orphan.
-        await minio.Store.RemoveAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
+        await minio.StoreService.RemoveAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
 
         await using var db2 = pg.NewContext();
         var report = await Service(db2).ReconcileAsync(ObjectBuckets.Quarantine);

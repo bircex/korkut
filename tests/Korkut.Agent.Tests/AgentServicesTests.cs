@@ -1,11 +1,10 @@
-using Korkut.Agent.Repositories.Core;
-using Korkut.Application.Abstractions.Persistence;
-using Korkut.Agent.Application.Sessions;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Services;
 using Korkut.Domain.Agent.Conversations;
 using Korkut.Domain.Agent.Documents;
 using Korkut.SharedKernel.Time;
 
-namespace Korkut.Application.Tests;
+namespace Korkut.Agent.Tests;
 
 /// <summary>
 /// Unit coverage for the agent use-case services over fake repositories: they delegate to

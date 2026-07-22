@@ -1,12 +1,12 @@
-using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Agent.Services.Core.Ai;
 using Korkut.Application.Runtime;
 using Korkut.Infrastructure.Runtime;
 using Korkut.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
+using Korkut.Infrastructure.Agent.Ai;
 
 namespace Korkut.Agent.Extensions;
 

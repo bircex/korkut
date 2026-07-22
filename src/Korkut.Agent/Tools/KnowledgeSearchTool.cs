@@ -1,16 +1,16 @@
 using System.Text;
 using System.Text.Json;
-using Korkut.Application.Abstractions.Knowledge;
+using Korkut.Application.Knowledge;
 using Korkut.Application.Security;
 
 namespace Korkut.Agent.Tools;
 
 /// <summary>
 /// RAG tool: searches the office's OWN indexed documents via the Knowledge service and returns the
-/// most relevant passages. A thin wrapper over <see cref="IKnowledgeSearch"/> (which forwards the
+/// most relevant passages. A thin wrapper over <see cref="IKnowledgeSearchService"/> (which forwards the
 /// caller's token to Korkut.Knowledge, so the office scope comes from the request, not the args).
 /// </summary>
-public sealed class KnowledgeSearchTool(IKnowledgeSearch knowledge) : IAgentTool
+public sealed class KnowledgeSearchTool(IKnowledgeSearchService knowledge) : IAgentTool
 {
     private const int DefaultTopK = 6;
 

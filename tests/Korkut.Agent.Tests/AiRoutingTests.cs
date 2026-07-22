@@ -1,12 +1,10 @@
 using System.Runtime.CompilerServices;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Application.Ai;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
 using Korkut.Application.Runtime;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Agent.Repositories.Implementations;
-using Korkut.Agent.Services.Core.Ai;
+using Korkut.Infrastructure.Agent.Ai;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Agent.Tests;
 
 /// <summary>
 /// Unit coverage for the model abstraction: the router resolves specialty → provider +

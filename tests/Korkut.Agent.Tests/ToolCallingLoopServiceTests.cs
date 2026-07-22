@@ -1,9 +1,7 @@
 using System.Text.Json;
 using Korkut.Agent.Tools;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Services.Core.Ai;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Application.Ai;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
 using Korkut.Application.Runtime;
 
 namespace Korkut.Agent.Tests;

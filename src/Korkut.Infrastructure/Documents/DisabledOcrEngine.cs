@@ -1,4 +1,4 @@
-using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
 
 namespace Korkut.Infrastructure.Documents;
 
@@ -10,8 +10,10 @@ namespace Korkut.Infrastructure.Documents;
 /// </summary>
 public sealed class DisabledOcrEngine : IOcrEngine
 {
+    private const string Error = "OCR motoru aktif değil!";
+    
     public bool IsAvailable => false;
 
-    public Task<OcrResult> ExtractAsync(Stream content, string contentType, CancellationToken ct = default) =>
-        throw new OcrUnavailableException("OCR motoru yapılandırılmamış.");
+    public Task<OcrServiceResult> ExtractAsync(Stream content, string contentType, CancellationToken ct = default) =>
+        throw new OcrUnavailableException(Error);
 }

@@ -1,4 +1,5 @@
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
 using Korkut.Application.Security;
 using Korkut.Web.Errors;
 

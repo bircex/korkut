@@ -1,9 +1,8 @@
-using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Services.Implementations.Ai;
+using Korkut.Application.Agent.Models;
 using Korkut.Application.Runtime;
 using Korkut.Application.Security;
 
-namespace Korkut.Application.Tests;
+namespace Korkut.Agent.Tests;
 
 /// <summary>
 /// Env / model / provider / tool compatibility parity with the Python baseline

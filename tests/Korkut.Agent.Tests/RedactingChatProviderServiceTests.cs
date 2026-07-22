@@ -1,12 +1,10 @@
 using System.Runtime.CompilerServices;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Application.Ai;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Agent.Repositories.Implementations;
-using Korkut.Agent.Services.Core.Ai;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
+using Korkut.Infrastructure.Agent.Ai;
 using Korkut.Pii;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Agent.Tests;
 
 /// <summary>
 /// The cloud-provider PII decorator: the inner (cloud) provider must receive MASKED text, and the

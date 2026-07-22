@@ -1,12 +1,8 @@
 using Korkut.Agent.Services.Core.Documents;
 using Korkut.Agent.Services.Core.Chat;
-using Korkut.Application.Abstractions.Directory;
-using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Abstractions.Persistence;
-using Korkut.Application.Documents;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Domain.Agent.Conversations;
-using Korkut.Domain.Agent.Documents;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Services;
 using Korkut.Agent.Identity;
 using Korkut.Application.Features.Settings;
 using Korkut.Agent.Knowledge;
@@ -21,15 +17,15 @@ using Korkut.Application.Features.OfficeCore;
 using Korkut.Application.Features.OfficeOps;
 using Korkut.Application.Features.Outbox;
 using Korkut.Application.Features.Reports;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Agent.Repositories.Core;
-using Korkut.Agent.Repositories.Implementations;
-using Korkut.Agent.Services.Core;
-using Korkut.Agent.Services.Core.Ai;
+using Korkut.Infrastructure.Agent.Ai;
+using Korkut.Infrastructure.Agent.Persistence;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.Agent.Services.Implementations.Chat;
 using Korkut.Agent.Services.Implementations.Documents;
 using Korkut.Agent.Services.Implementations.Sessions;
+using Korkut.Application.Directory;
+using Korkut.Application.Documents.OCR;
+using Korkut.Application.Knowledge;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence.Repositories;
 using Korkut.Infrastructure.Templates;
@@ -83,15 +79,15 @@ public static class AgentServices
         services.AddScoped<IDocumentAppService, DocumentAppService>();
 
         // Upload text extraction (embedded text only; OCR is a later, separate service).
-        services.AddSingleton<ITextExtractor, PlainTextExtractor>();
+        services.AddSingleton<ITextExtractorService, PlainTextExtractorService>();
 
         // Operational lookup: resolve an author id → display name/e-mail (Agent DB never joins Users).
-        services.AddScoped<IUserLookup, UserLookup>();
+        services.AddScoped<IUserLookupService, UserLookupService>();
 
         // Retrieval: the Agent grounds a chat turn by calling the internal Knowledge /search over
         // HTTP, forwarding the caller's token. Unconfigured (no KORKUT_KNOWLEDGE_URL) → ungrounded.
         services.AddHttpContextAccessor();
-        services.AddHttpClient<IKnowledgeSearch, HttpKnowledgeSearch>();
+        services.AddHttpClient<IKnowledgeSearchService, HttpKnowledgeSearchService>();
 
         // Operational office-core services the domain tools wrap (matters + clients), over the
         // operational DbContext. Read/written inside a per-office tenant scope (IOfficeScope).

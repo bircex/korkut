@@ -1,8 +1,8 @@
-using Korkut.Agent.Contracts.Sessions;
-using Korkut.Agent.Repositories.Core;
-using Korkut.Agent.Services.Core;
 using Korkut.Agent.Services.Core.Chat;
 using Korkut.Web.Errors;
+using Korkut.Application.Agent.Contracts;
+using Korkut.Application.Agent.Models;
+using Korkut.Application.Agent.Abstractions;
 
 namespace Korkut.Agent.Services.Implementations.Chat;
 

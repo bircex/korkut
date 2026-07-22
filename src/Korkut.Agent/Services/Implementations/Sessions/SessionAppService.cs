@@ -1,10 +1,10 @@
-using Korkut.Agent.Contracts.Sessions;
 using Korkut.Domain.Agent.Conversations;
-using Korkut.Agent.Repositories.Core;
-using Korkut.Agent.Services.Core;
 using Korkut.Agent.Services.Core.Sessions;
-using Korkut.Application.Abstractions.Directory;
 using Korkut.Web.Errors;
+using Korkut.Application.Agent.Contracts;
+using Korkut.Application.Agent.Models;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Directory;
 
 namespace Korkut.Agent.Services.Implementations.Sessions;
 
@@ -13,7 +13,7 @@ namespace Korkut.Agent.Services.Implementations.Sessions;
 /// of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder), resolves author names, and
 /// maps to response DTOs. Not-found is a thrown <see cref="ApiException"/> (→ 404 by the handler).
 /// </summary>
-public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookup dir)
+public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir)
     : ISessionAppService
 {
     public async Task<SessionPageResponse> ListAsync(int? limit, int? offset, CancellationToken ct = default)

@@ -1,5 +1,5 @@
-using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Features.Knowledge;
+using Korkut.Application.Knowledge;
 using Korkut.Infrastructure.Knowledge;
 
 namespace Korkut.Knowledge.Setup;
@@ -14,8 +14,8 @@ public static class KnowledgeServices
 {
     public static IServiceCollection AddKorkutKnowledgeServices(this IServiceCollection services)
     {
-        services.AddSingleton<IChunker, Chunker>();
-        services.AddScoped<IVectorStore, PgVectorStore>();
+        services.AddSingleton<IChunkerService, ChunkerService>();
+        services.AddScoped<IVectorStoreService, PgVectorStoreService>();
         services.AddScoped<IIngestionService, IngestionService>();
         services.AddScoped<IRetrievalService, RetrievalService>();
         return services;

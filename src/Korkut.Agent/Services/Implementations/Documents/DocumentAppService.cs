@@ -1,12 +1,9 @@
-using Korkut.Agent.Contracts.Documents;
-using Korkut.Agent.Repositories.Core;
-using Korkut.Agent.Services.Core;
-using Korkut.Agent.Services.Core.Chat;
 using Korkut.Agent.Services.Core.Documents;
-using Korkut.Agent.Services.Core.Sessions;
-using Korkut.Application.Abstractions.Directory;
 using Korkut.Infrastructure.Documents;
 using Korkut.Web.Errors;
+using Korkut.Application.Agent.Contracts;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Directory;
 
 namespace Korkut.Agent.Services.Implementations.Documents;
 
@@ -18,22 +15,26 @@ namespace Korkut.Agent.Services.Implementations.Documents;
 /// </summary>
 public sealed class DocumentAppService(
     IAgentUnitOfWork uow, ICurrentUser current,
-    ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting, IUserLookup dir) : IDocumentAppService
+    ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting, IUserLookupService dir) : IDocumentAppService
 {
     public async Task<DocumentDataResponse> ForSessionAsync(Guid sessionId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        
         var data = await uow.InScopeAsync(office, async () =>
         {
             var conv = await sessions.GetAsync(office, sessionId, ct);
+            
             if (conv is null)
             {
                 return null;
             }
 
             var doc = await docs.GetOrCreateForSessionAsync(office, sessionId, conv.Title, ct);
+            
             return await BuildAsync(office, doc.Id, ct);
         }, ct);
+        
         return data ?? throw ApiException.NotFound("Görüşme bulunamadı.");
     }
 
@@ -83,6 +84,7 @@ public sealed class DocumentAppService(
 
         var office = current.OfficeId;
         var doc = await uow.InScopeAsync(office, () => docs.GetAsync(office, docId, ct), ct);
+        
         if (doc is null)
         {
             throw ApiException.NotFound("Belge bulunamadı.");

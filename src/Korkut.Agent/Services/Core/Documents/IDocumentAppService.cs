@@ -1,5 +1,5 @@
-using Korkut.Agent.Contracts.Documents;
 using Korkut.Infrastructure.Documents;
+using Korkut.Application.Agent.Contracts;
 
 namespace Korkut.Agent.Services.Core.Documents;
 

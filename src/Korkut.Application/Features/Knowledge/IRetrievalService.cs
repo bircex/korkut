@@ -1,5 +1,5 @@
-using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Ai;
+using Korkut.Application.Knowledge;
 using Korkut.Domain.Knowledge;
 
 namespace Korkut.Application.Features.Knowledge;
@@ -15,7 +15,7 @@ public interface IRetrievalService
 /// query lands in the same vector space), then top-k similarity search. An empty/blank query
 /// returns nothing rather than embedding it.
 /// </summary>
-public sealed class RetrievalService(IEmbedder embedder, IVectorStore store) : IRetrievalService
+public sealed class RetrievalService(IEmbedder embedder, IVectorStoreService storeService) : IRetrievalService
 {
     public const int DefaultTopK = 6;
 
@@ -29,6 +29,6 @@ public sealed class RetrievalService(IEmbedder embedder, IVectorStore store) : I
         }
 
         var embedding = await embedder.EmbedAsync([query], ct);
-        return await store.SearchAsync(officeId, embedding.Vectors[0], Math.Clamp(topK, 1, MaxTopK), ct);
+        return await storeService.SearchAsync(officeId, embedding.Vectors[0], Math.Clamp(topK, 1, MaxTopK), ct);
     }
 }

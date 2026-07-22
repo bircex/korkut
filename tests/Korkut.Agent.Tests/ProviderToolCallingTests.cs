@@ -1,13 +1,11 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Application.Ai;
+using Korkut.Application.Agent.Models;
 using Korkut.Application.Runtime;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Agent.Repositories.Implementations;
+using Korkut.Infrastructure.Agent.Ai;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Agent.Tests;
 
 /// <summary>
 /// The chat providers' tool-calling wire mapping: a tool definition and a prior tool-result turn are

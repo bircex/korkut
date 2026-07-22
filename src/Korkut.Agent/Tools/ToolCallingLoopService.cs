@@ -1,6 +1,5 @@
-using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Services.Core.Ai;
-using Korkut.Agent.Services.Implementations.Ai;
+using Korkut.Application.Agent.Models;
+using Korkut.Application.Agent.Abstractions;
 
 namespace Korkut.Agent.Tools;
 

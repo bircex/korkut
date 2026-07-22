@@ -1,5 +1,5 @@
-using Korkut.Application.Abstractions.Knowledge;
 using Korkut.Application.Ai;
+using Korkut.Application.Knowledge;
 using Korkut.Domain.Knowledge;
 using Korkut.Pii;
 
@@ -21,16 +21,16 @@ public interface IIngestionService
 /// under a new space. The vector index therefore never holds raw PII (TCKN, phone, e-mail, IBAN):
 /// masking happens FIRST, so both the stored chunk text and its embedding are over masked content.
 /// </summary>
-public sealed class IngestionService(IChunker chunker, IEmbedder embedder, IVectorStore store, IPiiRedactor redactor) : IIngestionService
+public sealed class IngestionService(IChunkerService chunkerService, IEmbedder embedder, IVectorStoreService storeService, IPiiRedactor redactor) : IIngestionService
 {
     public async Task<int> IngestAsync(Guid officeId, Guid documentId, string text, CancellationToken ct = default)
     {
         // Mask PII before anything is chunked, embedded, or stored — the index must never hold it.
         var masked = redactor.Redact(text).Text;
-        var chunks = chunker.Chunk(masked);
+        var chunks = chunkerService.Chunk(masked);
         if (chunks.Count == 0)
         {
-            await store.DeleteDocumentAsync(officeId, documentId, ct);
+            await storeService.DeleteDocumentAsync(officeId, documentId, ct);
             return 0;
         }
 
@@ -41,7 +41,7 @@ public sealed class IngestionService(IChunker chunker, IEmbedder embedder, IVect
             items.Add(new ChunkEmbedding(i, chunks[i], embedding.Vectors[i]));
         }
 
-        await store.ReplaceDocumentAsync(officeId, documentId, items, embedding.EmbeddingVersion, ct);
+        await storeService.ReplaceDocumentAsync(officeId, documentId, items, embedding.EmbeddingVersion, ct);
         return items.Count;
     }
 }

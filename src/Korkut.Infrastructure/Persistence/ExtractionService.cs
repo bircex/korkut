@@ -1,4 +1,6 @@
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
+using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.SharedKernel.Time;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +27,7 @@ public sealed record ExtractionResult(ExtractionOutcome Outcome, int SpanCount);
 /// (KDM-027). Enforces three invariants:
 /// <list type="bullet">
 /// <item>Only <c>clean</c> documents are processed — pending/rejected/quarantine/tombstoned are skipped.</item>
-/// <item>A parser change (new <see cref="ITextExtractor.ParserVersion"/>) writes a NEW
+/// <item>A parser change (new <see cref="ITextExtractorService.ParserVersion"/>) writes a NEW
 /// artifact set and never overwrites the old one.</item>
 /// <item>Re-running the same parser over the same document version is idempotent
 /// (retry-safe): the unique provenance index turns duplicate inserts into a no-op.</item>
@@ -33,8 +35,8 @@ public sealed record ExtractionResult(ExtractionOutcome Outcome, int SpanCount);
 /// </summary>
 public sealed class ExtractionService(
     KorkutDbContext db,
-    IObjectStore store,
-    ITextExtractor extractor,
+    IObjectStoreService storeService,
+    ITextExtractorService extractorService,
     IClock clock)
 {
     public async Task<ExtractionResult> ExtractAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
@@ -55,19 +57,19 @@ public sealed class ExtractionService(
             x => x.OfficeId == officeId
                 && x.DocumentId == documentId
                 && x.DocumentVersion == doc.Version
-                && x.ParserVersion == extractor.ParserVersion,
+                && x.ParserVersion == extractorService.ParserVersion,
             ct);
         if (alreadyDone)
         {
             return new ExtractionResult(ExtractionOutcome.AlreadyExtracted, 0);
         }
 
-        await using var content = await store.GetAsync(doc.Bucket, doc.ObjectKey, ct);
+        await using var content = await storeService.GetAsync(doc.Bucket, doc.ObjectKey, ct);
         using var buffer = new MemoryStream();
         await content.CopyToAsync(buffer, ct);
         buffer.Position = 0;
 
-        var spans = await extractor.ExtractAsync(buffer, doc.ContentType, ct);
+        var spans = await extractorService.ExtractAsync(buffer, doc.ContentType, ct);
         var now = clock.UtcNow;
         foreach (var span in spans)
         {
@@ -77,7 +79,7 @@ public sealed class ExtractionService(
                 OfficeId = officeId,
                 DocumentId = documentId,
                 DocumentVersion = doc.Version,
-                ParserVersion = extractor.ParserVersion,
+                ParserVersion = extractorService.ParserVersion,
                 Page = span.Page,
                 SpanIndex = span.Index,
                 Text = span.Text,

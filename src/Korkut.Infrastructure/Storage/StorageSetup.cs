@@ -1,4 +1,7 @@
-using Korkut.Application.Documents;
+using Korkut.Application.Documents.OCR;
+using Korkut.Application.Documents.Storage;
+using Korkut.Application.Upload.Malware;
+using Korkut.Application.Upload.Validator;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -36,16 +39,16 @@ public static partial class StorageSetup
 
             return client.Build();
         });
-        services.AddSingleton<IObjectStore, MinioObjectStore>();
+        services.AddSingleton<IObjectStoreService, MinioObjectStoreService>();
 
         // Upload pipeline primitives.
-        services.AddSingleton<UploadValidator>();
-        services.AddSingleton<IMalwareScanner, SignatureMalwareScanner>();
-        services.AddSingleton<ITextExtractor, PlainTextExtractor>();
+        services.AddSingleton<IUploadValidatorService, UploadValidatorService>();
+        services.AddSingleton<IMalwareScanService, MalwareScannerService>();
+        services.AddSingleton<ITextExtractorService, PlainTextExtractorService>();
 
         // Document services (scoped — they take the per-request DbContext).
         services.AddScoped<DocumentService>();
-        services.AddScoped<SecureUploadService>();
+        services.AddScoped<SafeUploadService>();
         services.AddScoped<DocumentLifecycleService>();
         services.AddScoped<DocumentRelationService>();
         services.AddScoped<ExtractionService>();
@@ -54,13 +57,13 @@ public static partial class StorageSetup
         return services;
     }
 
-    private sealed partial class EnsureBucketsHostedService(IObjectStore store, ILogger<EnsureBucketsHostedService> logger) : IHostedService
+    private sealed partial class EnsureBucketsHostedService(IObjectStoreService storeService, ILogger<EnsureBucketsHostedService> logger) : IHostedService
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                await store.EnsureBucketsAsync(cancellationToken);
+                await storeService.EnsureBucketsAsync(cancellationToken);
             }
             catch (Exception ex)
             {

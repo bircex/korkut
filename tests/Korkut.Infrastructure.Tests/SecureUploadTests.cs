@@ -1,6 +1,11 @@
 using System.IO.Compression;
 using System.Text;
 using Korkut.Application.Documents;
+using Korkut.Application.Documents.Storage;
+using Korkut.Application.Upload;
+using Korkut.Application.Upload.Malware;
+using Korkut.Application.Upload.SafeUpload;
+using Korkut.Application.Upload.Validator;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -19,9 +24,9 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
     }
 
-    private sealed class BrokenScanner : IMalwareScanner
+    private sealed class BrokenScannerService : IMalwareScanService
     {
-        public Task<ScanResult> ScanAsync(Stream content, CancellationToken ct = default)
+        public Task<MalwareScanResult> ScanAsync(Stream content, CancellationToken ct = default)
             => throw new InvalidOperationException("scanner down");
     }
 
@@ -36,11 +41,11 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private SecureUploadService Pipeline(KorkutDbContext db, IMalwareScanner? scanner = null)
+    private SafeUploadService Pipeline(KorkutDbContext db, IMalwareScanService? scanner = null)
     {
-        var docs = new DocumentService(db, minio.Store, new Clock());
-        return new SecureUploadService(db, docs, minio.Store, new UploadValidator(),
-            scanner ?? new SignatureMalwareScanner(), new EfAuditLog(db, new Clock()));
+        var docs = new DocumentService(db, minio.StoreService, new Clock());
+        return new SafeUploadService(db, docs, minio.StoreService, new UploadValidatorService(),
+            scanner ?? new MalwareScannerService(), new EfAuditLog(db, new Clock()));
     }
 
     private static MemoryStream Pdf(byte[]? extra = null)
@@ -62,13 +67,13 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
     {
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, Pdf(), "sozlesme.pdf");
-        Assert.Equal(UploadStatus.Clean, outcome.Status);
+        Assert.Equal(SafeUploadStatus.Clean, outcome.Status);
 
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("clean", doc.Status);
         Assert.Equal(ObjectBuckets.Clean, doc.Bucket);
         // Now downloadable.
-        var url = await new DocumentService(db, minio.Store, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
+        var url = await new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
         Assert.Contains(doc.ObjectKey, url, StringComparison.Ordinal);
     }
 
@@ -79,12 +84,12 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, Pdf(eicar), "virus.pdf");
 
-        Assert.Equal(UploadStatus.Rejected, outcome.Status);
-        Assert.Equal(UploadRejection.Malware, outcome.Rejection);
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(UploadValidatorRejection.Malware, outcome.ValidatorRejection);
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("rejected", doc.Status);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentService(db, minio.Store, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 
     [Fact]
@@ -94,19 +99,19 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         var exe = new MemoryStream([0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00]);
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, exe, "document.pdf");
-        Assert.Equal(UploadStatus.Rejected, outcome.Status);
-        Assert.Equal(UploadRejection.ContentTypeMismatch, outcome.Rejection);
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(UploadValidatorRejection.ContentTypeMismatch, outcome.ValidatorRejection);
     }
 
     [Theory]
-    [InlineData("../../etc/passwd", UploadRejection.DisallowedExtension)] // leaf "passwd" has no allowed ext
-    [InlineData("x\0.pdf", UploadRejection.UnsafeFilename)]                // null byte
-    public async Task Malicious_filenames_are_rejected(string filename, UploadRejection expected)
+    [InlineData("../../etc/passwd", UploadValidatorRejection.DisallowedExtension)] // leaf "passwd" has no allowed ext
+    [InlineData("x\0.pdf", UploadValidatorRejection.UnsafeFilename)]                // null byte
+    public async Task Malicious_filenames_are_rejected(string filename, UploadValidatorRejection expected)
     {
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, Pdf(), filename);
-        Assert.Equal(UploadStatus.Rejected, outcome.Status);
-        Assert.Equal(expected, outcome.Rejection);
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(expected, outcome.ValidatorRejection);
     }
 
     [Fact]
@@ -115,7 +120,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         // A traversal-style path is neutralised to its leaf — never stored with separators.
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, Pdf(), "..\\..\\windows\\system32\\x.pdf");
-        Assert.Equal(UploadStatus.Clean, outcome.Status);
+        Assert.Equal(SafeUploadStatus.Clean, outcome.Status);
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("x.pdf", doc.OriginalFilename);
         Assert.DoesNotContain('/', doc.OriginalFilename);
@@ -137,21 +142,21 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         zipBytes.Position = 0;
         await using var db = pg.NewContext();
         var outcome = await Pipeline(db).IngestAsync(_office, null, zipBytes, "archive.zip");
-        Assert.Equal(UploadStatus.Rejected, outcome.Status);
-        Assert.Equal(UploadRejection.ArchiveTooDeepOrLarge, outcome.Rejection);
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(UploadValidatorRejection.ArchiveTooDeepOrLarge, outcome.ValidatorRejection);
     }
 
     [Fact]
     public async Task A_broken_scanner_leaves_the_upload_pending_never_clean()
     {
         await using var db = pg.NewContext();
-        var outcome = await Pipeline(db, new BrokenScanner()).IngestAsync(_office, null, Pdf(), "x.pdf");
+        var outcome = await Pipeline(db, new BrokenScannerService()).IngestAsync(_office, null, Pdf(), "x.pdf");
 
-        Assert.Equal(UploadStatus.Pending, outcome.Status); // fail-closed
+        Assert.Equal(SafeUploadStatus.Pending, outcome.Status); // fail-closed
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("quarantine", doc.Status);
         // Still not downloadable.
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentService(db, minio.Store, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 }

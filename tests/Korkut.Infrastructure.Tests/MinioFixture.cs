@@ -11,7 +11,7 @@ public sealed class MinioFixture : IAsyncLifetime
 
     public IMinioClient Client { get; private set; } = null!;
 
-    public MinioObjectStore Store { get; private set; } = null!;
+    public MinioObjectStoreService StoreService { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -22,8 +22,8 @@ public sealed class MinioFixture : IAsyncLifetime
             .WithCredentials(_container.GetAccessKey(), _container.GetSecretKey())
             .WithSSL(false)
             .Build();
-        Store = new MinioObjectStore(Client);
-        await Store.EnsureBucketsAsync();
+        StoreService = new MinioObjectStoreService(Client);
+        await StoreService.EnsureBucketsAsync();
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();

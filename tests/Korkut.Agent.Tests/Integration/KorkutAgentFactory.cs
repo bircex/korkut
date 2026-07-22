@@ -1,9 +1,7 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Services.Core.Ai;
-using Korkut.Agent.Services.Implementations.Ai;
-using Korkut.Application.Ai;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Application.Agent.Models;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Agent;
