@@ -1,5 +1,5 @@
 using Korkut.Agent.Contracts.Sessions;
-using Korkut.Agent.Domain.Conversations;
+using Korkut.Domain.Agent.Conversations;
 using Korkut.Agent.Repositories.Core;
 using Korkut.Agent.Services.Core;
 using Korkut.Agent.Services.Core.Sessions;

@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Domain.Documents;
+namespace Korkut.Domain.Agent.Documents;
 
 /// <summary>An immutable snapshot of a document's content at accept/save time.</summary>
 public sealed record DocumentVersion(

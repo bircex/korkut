@@ -1,5 +1,5 @@
 using Korkut.Agent.Repositories.Core;
-using Korkut.Agent.Domain.Documents;
+using Korkut.Domain.Agent.Documents;
 using Korkut.Agent.Services.Core.Sessions;
 using Korkut.SharedKernel.Time;
 

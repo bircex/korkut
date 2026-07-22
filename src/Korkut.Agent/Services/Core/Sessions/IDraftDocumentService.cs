@@ -1,4 +1,4 @@
-using Korkut.Agent.Domain.Documents;
+using Korkut.Domain.Agent.Documents;
 
 namespace Korkut.Agent.Services.Core.Sessions;
 

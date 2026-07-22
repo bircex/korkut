@@ -1,4 +1,4 @@
-using Korkut.Agent.Domain.Conversations;
+using Korkut.Domain.Agent.Conversations;
 
 namespace Korkut.Agent.Services.Core.Sessions;
 

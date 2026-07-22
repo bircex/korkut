@@ -1,4 +1,4 @@
-﻿namespace Korkut.Agent.Domain.Conversations;
+﻿namespace Korkut.Domain.Agent.Conversations;
 
 /// <summary>An assistant conversation ("session") — domain model.</summary>
 public sealed record Conversation(

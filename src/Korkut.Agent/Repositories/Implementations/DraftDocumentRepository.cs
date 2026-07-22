@@ -1,6 +1,6 @@
 using Korkut.Agent.Repositories.Core;
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Agent.Domain.Documents;
+using Korkut.Domain.Agent.Documents;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.SharedKernel.Ids;
 using Microsoft.EntityFrameworkCore;

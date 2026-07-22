@@ -1,4 +1,4 @@
-using Korkut.Agent.Domain.Conversations;
+using Korkut.Domain.Agent.Conversations;
 using Korkut.Agent.Repositories.Core;
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Infrastructure.Persistence.Entities;

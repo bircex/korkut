@@ -1,4 +1,4 @@
-﻿namespace Korkut.Agent.Domain.Documents;
+﻿namespace Korkut.Domain.Agent.Documents;
 
 /// <summary>
 /// An AI-drafted document tied to a conversation (domain model). A staged edit lives in the

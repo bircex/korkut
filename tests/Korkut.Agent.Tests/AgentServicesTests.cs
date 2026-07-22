@@ -1,8 +1,8 @@
 using Korkut.Agent.Repositories.Core;
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Agent.Application.Sessions;
-using Korkut.Agent.Domain.Conversations;
-using Korkut.Agent.Domain.Documents;
+using Korkut.Domain.Agent.Conversations;
+using Korkut.Domain.Agent.Documents;
 using Korkut.SharedKernel.Time;
 
 namespace Korkut.Application.Tests;
