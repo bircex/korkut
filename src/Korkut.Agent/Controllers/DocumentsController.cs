@@ -1,4 +1,4 @@
-using Korkut.Agent.Services.Core.Documents;
+using Korkut.Application.Agent.Documents;
 using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

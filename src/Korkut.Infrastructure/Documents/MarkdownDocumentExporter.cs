@@ -1,11 +1,9 @@
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
+using Korkut.Application.Documents.Export;
 
 namespace Korkut.Infrastructure.Documents;
-
-/// <summary>An exported document: its bytes, MIME type, and a suggested download filename.</summary>
-public sealed record ExportedDocument(byte[] Bytes, string ContentType, string FileName);
 
 /// <summary>
 /// Renders a markdown document to a downloadable Word (.docx, OpenXML WordprocessingML)

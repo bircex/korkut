@@ -1,17 +1,18 @@
-using Korkut.Agent.Services.Core.Documents;
+using Korkut.Application.Agent.Documents;
 using Korkut.Infrastructure.Documents;
-using Korkut.Web.Errors;
+using Korkut.Application.Documents.Export;
+using Korkut.Application.Errors;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Directory;
 
-namespace Korkut.Agent.Services.Implementations.Documents;
+namespace Korkut.Infrastructure.Agent.Documents;
 
 /// <summary>
 /// AI-drafted-document use-cases the controller forwards to: runs the domain services inside a
 /// tenant-scoped unit of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder). Drafting
 /// composes the office persona so it pins BOTH databases; the rest touch the Agent DB. Not-found /
-/// bad-format are thrown <see cref="ApiException"/>s the shared handler maps.
+/// bad-format are thrown <see cref="NotFoundException"/> / <see cref="BadRequestException"/> the shared handler maps.
 /// </summary>
 public sealed class DocumentAppService(
     IAgentUnitOfWork uow, ICurrentUser current,
@@ -35,7 +36,7 @@ public sealed class DocumentAppService(
             return await BuildAsync(office, doc.Id, ct);
         }, ct);
         
-        return data ?? throw ApiException.NotFound("Görüşme bulunamadı.");
+        return data ?? throw new NotFoundException("Görüşme bulunamadı.");
     }
 
     public async Task<PendingEditResponse> DraftAsync(Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
@@ -44,7 +45,7 @@ public sealed class DocumentAppService(
         var result = await uow.InDualScopeAsync(office,
             () => drafting.DraftAsync(office, current.UserId, docId, instruction.Trim(), petitionType, ct), ct);
         return result is null
-            ? throw ApiException.NotFound("Belge bulunamadı.")
+            ? throw new NotFoundException("Belge bulunamadı.")
             : new PendingEditResponse(result.PendingId, result.ContentMd, result.Summary);
     }
 
@@ -54,7 +55,7 @@ public sealed class DocumentAppService(
         var author = await dir.EmailAsync(office, current.UserId, ct);
         var data = await uow.InScopeAsync(office,
             async () => await docs.AcceptPendingAsync(office, docId, author, ct) ? await BuildAsync(office, docId, ct) : null, ct);
-        return data ?? throw ApiException.NotFound("Kabul edilecek taslak bulunamadı.");
+        return data ?? throw new NotFoundException("Kabul edilecek taslak bulunamadı.");
     }
 
     public async Task<DocumentDataResponse> RevertAsync(Guid docId, CancellationToken ct = default)
@@ -62,7 +63,7 @@ public sealed class DocumentAppService(
         var office = current.OfficeId;
         var data = await uow.InScopeAsync(office,
             async () => await docs.RevertPendingAsync(office, docId, ct) ? await BuildAsync(office, docId, ct) : null, ct);
-        return data ?? throw ApiException.NotFound("Belge bulunamadı.");
+        return data ?? throw new NotFoundException("Belge bulunamadı.");
     }
 
     public async Task<DocumentDataResponse> SaveAsync(Guid docId, string title, string contentMd, CancellationToken ct = default)
@@ -71,7 +72,7 @@ public sealed class DocumentAppService(
         var author = await dir.EmailAsync(office, current.UserId, ct);
         var data = await uow.InScopeAsync(office,
             async () => await docs.SaveAsync(office, docId, title.Trim(), contentMd, author, ct) ? await BuildAsync(office, docId, ct) : null, ct);
-        return data ?? throw ApiException.NotFound("Belge bulunamadı.");
+        return data ?? throw new NotFoundException("Belge bulunamadı.");
     }
 
     public async Task<ExportedDocument> ExportAsync(Guid docId, string? format, CancellationToken ct = default)
@@ -79,7 +80,7 @@ public sealed class DocumentAppService(
         var fmt = format ?? "docx";
         if (fmt is not ("docx" or "udf"))
         {
-            throw ApiException.BadRequest("format 'docx' veya 'udf' olmalıdır.");
+            throw new BadRequestException("format 'docx' veya 'udf' olmalıdır.");
         }
 
         var office = current.OfficeId;
@@ -87,7 +88,7 @@ public sealed class DocumentAppService(
         
         if (doc is null)
         {
-            throw ApiException.NotFound("Belge bulunamadı.");
+            throw new NotFoundException("Belge bulunamadı.");
         }
 
         return MarkdownDocumentExporter.Export(fmt, doc.Title, doc.ContentMd);

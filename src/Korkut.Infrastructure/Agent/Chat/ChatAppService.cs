@@ -1,10 +1,10 @@
-using Korkut.Agent.Services.Core.Chat;
-using Korkut.Web.Errors;
+using Korkut.Application.Agent.Chat;
+using Korkut.Application.Errors;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Abstractions;
 
-namespace Korkut.Agent.Services.Implementations.Chat;
+namespace Korkut.Infrastructure.Agent.Chat;
 
 /// <summary>
 /// Chat / upload / streaming as the controller sees them: runs <see cref="ISessionChatService"/>
@@ -19,7 +19,7 @@ public sealed class ChatAppService(IAgentUnitOfWork uow, ICurrentUser current, I
         var office = current.OfficeId;
         var outcome = await uow.InDualScopeAsync(office,
             () => chat.ChatAsync(office, current.UserId, id, text.Trim(), current.Permissions, ct), ct);
-        return outcome is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : Map(outcome);
+        return outcome is null ? throw new NotFoundException("Görüşme bulunamadı.") : Map(outcome);
     }
 
     public async Task<UploadResponse> UploadAsync(
@@ -29,7 +29,7 @@ public sealed class ChatAppService(IAgentUnitOfWork uow, ICurrentUser current, I
         var outcome = await uow.InDualScopeAsync(office,
             () => chat.UploadAsync(office, current.UserId, id, fileName, contentType, content, text, current.Permissions, ct), ct);
         return outcome is null
-            ? throw ApiException.NotFound("Görüşme bulunamadı.")
+            ? throw new NotFoundException("Görüşme bulunamadı.")
             : new UploadResponse(outcome.Reply, outcome.Title, outcome.UserDisplay);
     }
 

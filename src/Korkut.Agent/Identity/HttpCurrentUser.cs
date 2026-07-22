@@ -1,5 +1,4 @@
 using Korkut.Application.Agent.Abstractions;
-using Korkut.Agent.Services.Core;
 using Korkut.Web.Tenancy;
 
 namespace Korkut.Agent.Identity;

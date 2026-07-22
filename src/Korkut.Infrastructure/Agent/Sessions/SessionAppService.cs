@@ -1,17 +1,17 @@
 using Korkut.Domain.Agent.Conversations;
-using Korkut.Agent.Services.Core.Sessions;
-using Korkut.Web.Errors;
+using Korkut.Application.Agent.Sessions;
+using Korkut.Application.Errors;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Directory;
 
-namespace Korkut.Agent.Services.Implementations.Sessions;
+namespace Korkut.Infrastructure.Agent.Sessions;
 
 /// <summary>
 /// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit
 /// of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder), resolves author names, and
-/// maps to response DTOs. Not-found is a thrown <see cref="ApiException"/> (→ 404 by the handler).
+/// maps to response DTOs. Not-found is a thrown <see cref="NotFoundException"/> (→ 404 by the handler).
 /// </summary>
 public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir)
     : ISessionAppService
@@ -54,7 +54,7 @@ public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current
 
         if (data is not { } d)
         {
-            throw ApiException.NotFound("Görüşme bulunamadı.");
+            throw new NotFoundException("Görüşme bulunamadı.");
         }
 
         var name = await ResolveNameAsync(d.Brief.CreatedBy, ct);
@@ -66,7 +66,7 @@ public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current
         var office = current.OfficeId;
         var brief = await uow.InScopeAsync(office, async () =>
             await svc.RenameAsync(office, id, title.Trim(), ct) ? await svc.GetBriefAsync(office, id, ct) : null, ct);
-        return brief is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
+        return brief is null ? throw new NotFoundException("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -75,7 +75,7 @@ public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current
         var ok = await uow.InScopeAsync(office, () => svc.DeleteAsync(office, id, ct), ct);
         if (!ok)
         {
-            throw ApiException.NotFound("Görüşme bulunamadı.");
+            throw new NotFoundException("Görüşme bulunamadı.");
         }
     }
 
@@ -87,7 +87,7 @@ public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current
             var newId = await svc.CloneAsync(office, id, current.UserId, ct);
             return newId is null ? null : await svc.GetBriefAsync(office, newId.Value, ct);
         }, ct);
-        return brief is null ? throw ApiException.NotFound("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
+        return brief is null ? throw new NotFoundException("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
     }
 
     private async Task<SessionBriefResponse> ToBriefAsync(SessionBrief b, CancellationToken ct)

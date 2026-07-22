@@ -1,4 +1,5 @@
 using Korkut.Application.Ai;
+using Korkut.Application.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,10 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
         var (status, detail) = exception switch
         {
             ApiException api => (api.StatusCode, api.Detail),
+            // Application-layer resource/validation failures (thrown by code below the web layer,
+            // which cannot reference ApiException) → the same 404 / 400 { detail } contract.
+            NotFoundException notFound => (StatusCodes.Status404NotFound, notFound.Detail),
+            BadRequestException badRequest => (StatusCodes.Status400BadRequest, badRequest.Detail),
             // No model provider configured / a model call failed → 503 (the client retries later).
             ModelUnavailableException model => (StatusCodes.Status503ServiceUnavailable, model.Message),
             // Per-office model-usage budget exhausted → 429 (the client backs off / upgrades).
