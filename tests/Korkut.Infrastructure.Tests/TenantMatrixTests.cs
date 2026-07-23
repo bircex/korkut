@@ -13,6 +13,8 @@ using Korkut.Domain.Parties;
 using Korkut.Domain.Tasks;
 using Korkut.Domain.Deadlines;
 using Korkut.Domain.Notes;
+using Korkut.Domain.Invoices;
+using Korkut.Domain.Expenses;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -68,8 +70,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.DocumentRelations.Add(new DocumentRelationEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, TargetType = "client", TargetId = clientId, IsPrimary = true, CreatedAt = DateTimeOffset.UtcNow });
             db.Invites.Add(new InviteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Email = $"invite{i}@example.com", Role = "lawyer", TokenHash = $"hash{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(7), CreatedAt = DateTimeOffset.UtcNow });
-            db.Invoices.Add(new InvoiceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Amount = 100, VatRate = 0.20m, Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
-            db.Expenses.Add(new ExpenseEntity { Id = Guid.CreateVersion7(), OfficeId = office, Amount = 10, CreatedAt = DateTimeOffset.UtcNow });
+            db.Invoices.Add(new Invoice(office, 100m, 0.20m, null, null, null, "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+            db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = $"e{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.CalendarEvents.Add(new CalendarEventEntity { Id = Guid.CreateVersion7(), OfficeId = office, Category = "appointment", Title = $"cal{i}", StartAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
             db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });

@@ -46,9 +46,11 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Notes.INoteService, Korkut.Application.Notes.NoteService>();
         // Finance (Clean Architecture: repository ports + service). The pattern rolls out
         // to the other modules incrementally.
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IInvoiceRepository, Korkut.Infrastructure.Persistence.Repositories.InvoiceRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IExpenseRepository, Korkut.Infrastructure.Persistence.Repositories.ExpenseRepository>();
-        services.AddScoped<Korkut.Application.Features.Finance.IFinanceService, Korkut.Application.Features.Finance.FinanceService>();
+        services.AddScoped<Korkut.Application.Invoices.IInvoiceRepository, Korkut.Infrastructure.Invoices.InvoiceRepository>();
+        services.AddScoped<Korkut.Application.Expenses.IExpenseRepository, Korkut.Infrastructure.Expenses.ExpenseRepository>();
+        services.AddScoped<Korkut.Application.Invoices.IInvoiceService, Korkut.Application.Invoices.InvoiceService>();
+        services.AddScoped<Korkut.Application.Expenses.IExpenseService, Korkut.Application.Expenses.ExpenseService>();
+        services.AddScoped<Korkut.Application.FinanceSummary.IFinanceSummaryService, Korkut.Application.FinanceSummary.FinanceSummaryService>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ICorrespondenceRepository, Korkut.Infrastructure.Persistence.Repositories.CorrespondenceRepository>();
         services.AddScoped<Korkut.Application.Features.Correspondence.ICorrespondenceService, Korkut.Application.Features.Correspondence.CorrespondenceService>();
         // Calendar (Clean Architecture: repository port + service; unified read view).

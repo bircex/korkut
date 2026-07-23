@@ -281,6 +281,56 @@
         ],
         "type": "object"
       },
+      "CreateExpenseRequest": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "maximum": "100000000",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "spent_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "CreateHearingRequest": {
         "properties": {
           "date": {
@@ -322,6 +372,63 @@
         "required": [
           "date"
         ],
+        "type": "object"
+      },
+      "CreateInvoiceRequest": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "maximum": "100000000",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "issued_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "draft|sent|paid|cancelled",
+            "type": "string"
+          },
+          "vat_rate": {
+            "format": "double",
+            "maximum": "1",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
         "type": "object"
       },
       "CreateMatterRequest": {
@@ -538,56 +645,6 @@
         ],
         "type": "object"
       },
-      "ExpenseCreateRequest": {
-        "properties": {
-          "amount": {
-            "format": "double",
-            "maximum": "100000000",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "description": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "kind": {
-            "maxLength": "50",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "spent_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
       "ExportRequest": {
         "properties": {
           "format": {
@@ -656,86 +713,6 @@
           "email",
           "role"
         ],
-        "type": "object"
-      },
-      "InvoiceCreateRequest": {
-        "properties": {
-          "amount": {
-            "format": "double",
-            "maximum": "100000000",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "description": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "issued_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "draft|sent|paid|cancelled",
-            "type": "string"
-          },
-          "vat_rate": {
-            "format": "double",
-            "maximum": "1",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "InvoicePatchRequest": {
-        "properties": {
-          "amount": {
-            "format": "double",
-            "maximum": "100000000",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "null",
-              "number",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "draft|sent|paid|cancelled",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
         "type": "object"
       },
       "LinkRequest": {
@@ -1079,6 +1056,29 @@
         "required": [
           "name"
         ],
+        "type": "object"
+      },
+      "UpdateInvoiceRequest": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "maximum": "100000000",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "draft|sent|paid|cancelled",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
         "type": "object"
       },
       "UpdateTaskStatusRequest": {
@@ -2097,15 +2097,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Expenses"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExpenseCreateRequest"
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
               }
             }
           },
@@ -2117,7 +2127,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Expenses"
         ]
       }
     },
@@ -2140,7 +2150,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Expenses"
         ]
       }
     },
@@ -2152,15 +2162,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invoices"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvoiceCreateRequest"
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
               }
             }
           },
@@ -2172,7 +2192,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invoices"
         ]
       }
     },
@@ -2195,7 +2215,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invoices"
         ]
       },
       "patch": {
@@ -2212,9 +2232,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvoicePatchRequest"
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
               }
             }
           },
@@ -2226,7 +2256,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invoices"
         ]
       }
     },
@@ -2238,7 +2268,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "FinanceSummary"
         ]
       }
     },
@@ -3333,7 +3363,16 @@
       "name": "Matters"
     },
     {
+      "name": "Invoices"
+    },
+    {
       "name": "Hearings"
+    },
+    {
+      "name": "FinanceSummary"
+    },
+    {
+      "name": "Expenses"
     },
     {
       "name": "Deadlines"

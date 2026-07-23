@@ -1,6 +1,7 @@
-using Korkut.Domain.Finance;
-
 namespace Korkut.Domain.Reports;
+
+/// <summary>The office's money roll-up (VAT-inclusive), composed into the dashboard.</summary>
+public sealed record FinanceTotals(decimal Invoiced, decimal Paid, decimal Outstanding, decimal Expenses);
 
 public sealed record MatterStats(int Total, IReadOnlyDictionary<string, int> ByStatus);
 
