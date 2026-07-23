@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Domain.Clients;
 
 namespace Korkut.Api.Tests;
 

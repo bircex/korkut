@@ -4,7 +4,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Persistence.Repositories;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Domain.Clients;
 
 namespace Korkut.Infrastructure.Tests;
 

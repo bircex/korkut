@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.OfficeCore.Clients.Requests;
+namespace Korkut.Application.Clients.Requests;
 
 /// <summary>Body for updating a client.</summary>
 public sealed record UpdateClientRequest

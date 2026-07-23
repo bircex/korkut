@@ -24,10 +24,10 @@ public static class DomainSetup
         services.AddScoped<IAuditLog, EfAuditLog>();
         // Office-core (Clean Architecture: clients + matters + hearings). Owns the
         // court-title snapshot rule in MatterService.
-        services.AddScoped<Korkut.Application.OfficeCore.Clients.IClientRepository, Korkut.Infrastructure.OfficeCore.Clients.ClientRepository>();
+        services.AddScoped<Korkut.Application.Clients.IClientRepository, Korkut.Infrastructure.Clients.ClientRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IMatterRepository, Korkut.Infrastructure.Persistence.Repositories.MatterRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IHearingRepository, Korkut.Infrastructure.Persistence.Repositories.HearingRepository>();
-        services.AddScoped<Korkut.Application.OfficeCore.Clients.IClientService, Korkut.Application.OfficeCore.Clients.ClientService>();
+        services.AddScoped<Korkut.Application.Clients.IClientService, Korkut.Application.Clients.ClientService>();
 
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
         // every application service runs inside.

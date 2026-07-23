@@ -1,6 +1,6 @@
 # Korkut Backend — Clean Architecture (target design)
 
-Status: **proposed blueprint** — review the conventions here, then we migrate domain-by-domain (each domain a separate green commit). Agent/AI and Gateway are **deferred** (removed for now, redesigned later against these same rules).
+Status: **agreed blueprint; `Clients` implemented as the reference slice** — review the conventions here, then we migrate domain-by-domain (each domain a separate green commit). Agent/AI and Gateway are **deferred** (removed for now, redesigned later against these same rules).
 
 ---
 
@@ -24,7 +24,7 @@ Status: **proposed blueprint** — review the conventions here, then we migrate 
 
 2. **One type per file.** No more `OfficeCoreModels.cs` with 3 records, no `IOfficeCoreRepositories.cs` with 3 interfaces. Every entity, interface, service, DTO, request and response is its own file named after the type.
 
-3. **Vertical slices by domain, then by aggregate.** Every layer is split the same way: `<Context>/<Aggregate>/...`. Sub-split when an aggregate grows (Requests/, Responses/, Dtos/).
+3. **Vertical slices, one folder per domain.** Every domain is a direct top-level folder in every layer — `Domain/Clients/`, `Application/Clients/`, `Infrastructure/Clients/`, `Api/Clients/`. No umbrella/grouping level above a domain. Sub-split only inside a domain when it grows (Requests/, Responses/, Dtos/).
 
 4. **One entity, owned by the Domain.** No `record` in Domain + `*Entity` in Infrastructure + hand-written `ToDomain`. There is **one** entity class, in Domain, and EF maps it directly via a Fluent `IEntityTypeConfiguration<T>` in Infrastructure. Column/table names are preserved, so **no migration changes**.
 
@@ -71,12 +71,22 @@ public abstract class Entity : IEntity, IEquatable<Entity>
 // IRepository.cs — tenant-scoped generic persistence. officeId is always first.
 public interface IRepository<TEntity> where TEntity : Entity, ITenantOwned, IAggregateRoot
 {
-    Task<TEntity?> FindAsync(Guid officeId, Guid id, CancellationToken ct = default);
+    Task<TEntity?> FindAsync(Guid officeId, Guid id, CancellationToken ct = default);        // no-tracking read
+    Task<TEntity?> FindForUpdateAsync(Guid officeId, Guid id, CancellationToken ct = default); // tracked, for mutation
     Task<IReadOnlyList<TEntity>> ListAsync(Guid officeId, CancellationToken ct = default);
     Task AddAsync(TEntity entity, CancellationToken ct = default);
-    Task<bool> SoftDeleteAsync(Guid officeId, Guid id, CancellationToken ct = default);
+    Task<bool> RemoveAsync(Guid officeId, Guid id, CancellationToken ct = default);
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }
+
+// ISoftDeleteRepository.cs — for aggregates retired by a timestamp; its reads exclude them.
+public interface ISoftDeleteRepository<TEntity> : IRepository<TEntity>
+    where TEntity : Entity, ITenantOwned, IAggregateRoot, ISoftDeletable
+{
+    Task<bool> SoftDeleteAsync(Guid officeId, Guid id, DateTimeOffset deletedAt, CancellationToken ct = default);
+}
+
+// ICurrentUser.cs — the caller's office/user/permissions, from the trusted token only.
 
 // IUnitOfWork.cs — opens the per-request tenant scope (sets app.current_office for RLS) and commits.
 public interface IUnitOfWork
@@ -85,14 +95,11 @@ public interface IUnitOfWork
 }
 ```
 
-Per-aggregate repositories **extend** the base and add only their specific queries:
+Per-domain repositories **extend** a base and add only their specific queries (often none):
 
 ```csharp
-// Application/OfficeCore/Clients/IClientRepository.cs
-public interface IClientRepository : IRepository<Client>
-{
-    Task<bool> UpdateAsync(Guid officeId, Guid id, string name, string kind, string? email, string? phone, CancellationToken ct = default);
-}
+// Application/Clients/IClientRepository.cs
+public interface IClientRepository : ISoftDeleteRepository<Client>;
 ```
 
 ### Infrastructure/Common (the base implementation — the only place a DbContext is touched)
@@ -110,10 +117,10 @@ public abstract class Repository<TEntity>(KorkutDbContext db) : IRepository<TEnt
 ```
 
 ```csharp
-// Infrastructure/OfficeCore/Clients/ClientRepository.cs
-public sealed class ClientRepository(KorkutDbContext db) : Repository<Client>, IClientRepository { /* specific queries */ }
+// Infrastructure/Clients/ClientRepository.cs
+public sealed class ClientRepository(KorkutDbContext db) : SoftDeleteRepository<Client>(db), IClientRepository { /* specific queries */ }
 
-// Infrastructure/OfficeCore/Clients/ClientConfiguration.cs — EF maps the DOMAIN entity directly.
+// Infrastructure/Clients/ClientConfiguration.cs — EF maps the DOMAIN entity directly.
 public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 {
     public void Configure(EntityTypeBuilder<Client> b)
@@ -130,49 +137,47 @@ public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 
 ## 3. The canonical vertical slice
 
-Every aggregate looks **exactly** the same across the four layers. Example: `OfficeCore / Clients`.
+Every domain looks **exactly** the same across the four layers, and every domain is a **direct top-level folder** in its layer — there is no grouping/context level above it. Example: `Clients`.
 
 ```
 Domain/
-  OfficeCore/
-    Clients/
-      Client.cs                         // Client : Entity, ITenantOwned, ISoftDeletable, IAggregateRoot
+  Clients/
+    Client.cs                           // Client : Entity, ITenantOwned, ISoftDeletable, IAggregateRoot
 
 Application/
-  OfficeCore/
-    Clients/
-      IClientRepository.cs              // : IRepository<Client>
-      IClientService.cs                 // use-case port
-      ClientService.cs                  // use-case impl (orchestrates the repo; pure, no I/O)
-      Requests/
-        CreateClientRequest.cs
-        UpdateClientRequest.cs
-      Responses/
-        ClientResponse.cs
+  Clients/
+    IClientRepository.cs                // : IRepository<Client>
+    IClientService.cs                   // use-case port
+    ClientService.cs                    // use-case impl (orchestrates the repo; pure, no I/O)
+    Requests/
+      CreateClientRequest.cs
+      UpdateClientRequest.cs
+    Responses/
+      ClientResponse.cs
 
 Infrastructure/
-  OfficeCore/
-    Clients/
-      ClientRepository.cs               // : Repository<Client>, IClientRepository
-      ClientConfiguration.cs            // IEntityTypeConfiguration<Client>
+  Clients/
+    ClientRepository.cs                 // : Repository<Client>, IClientRepository
+    ClientConfiguration.cs              // IEntityTypeConfiguration<Client>
 
 Api/
-  OfficeCore/
-    Clients/
-      ClientsController.cs              // thin: forwards to IClientService
+  Clients/
+    ClientsController.cs                // thin: forwards to IClientService
 ```
 
 **Where each kind of type lives:**
 
 | Kind | Layer | Folder |
 |---|---|---|
-| Entity (single, EF-mapped) | Domain | `Domain/<Ctx>/<Agg>/` |
-| Repository **interface** | Application | `Application/<Ctx>/<Agg>/` |
-| Service **interface + impl** (use-case) | Application | `Application/<Ctx>/<Agg>/` |
-| Request / Response / DTO | Application | `Application/<Ctx>/<Agg>/{Requests,Responses,Dtos}/` |
-| Repository **impl** | Infrastructure | `Infrastructure/<Ctx>/<Agg>/` |
-| EF configuration | Infrastructure | `Infrastructure/<Ctx>/<Agg>/` |
-| Controller | Api | `Api/<Ctx>/<Agg>/` |
+| Entity (single, EF-mapped) | Domain | `Domain/<Domain>/` |
+| Repository **interface** | Application | `Application/<Domain>/` |
+| Service **interface + impl** (use-case) | Application | `Application/<Domain>/` |
+| Request / Response / DTO | Application | `Application/<Domain>/{Requests,Responses,Dtos}/` |
+| Repository **impl** | Infrastructure | `Infrastructure/<Domain>/` |
+| EF configuration | Infrastructure | `Infrastructure/<Domain>/` |
+| Controller | Api | `Api/<Domain>/` |
+
+Sub-split only *inside* a domain when it genuinely grows (`Requests/`, `Responses/`, or a nested aggregate folder) — never by adding a grouping layer above it.
 
 > **Use-case services are Application, not Infrastructure.** They only orchestrate repository ports + domain + `IClock`; no DbContext, no external I/O. A "service" that does direct I/O (object store, external HTTP, e-mail) is an **infrastructure adapter behind an Application port** (e.g. the upload pipeline, storage) — those stay in Infrastructure. Repository *implementations* are always Infrastructure.
 
@@ -182,25 +187,38 @@ Api/
 
 ## 4. Full target folder tree (operational scope)
 
-Contexts and their aggregates. Each cell below becomes the identical vertical slice from §3 across Domain / Application / Infrastructure / Api.
+Every domain below is its **own top-level folder** in each of Domain / Application / Infrastructure / Api, and each becomes the identical vertical slice from §3. There is no `OfficeCore`-style umbrella.
 
 ```
-Identity/        Users, Offices, RefreshTokens, Invites, TwoFactor, Roles, PasswordReset
-OfficeCore/      Clients, Matters, Hearings
-OfficeOps/       Tasks, Deadlines, Notes
-Finance/         Invoices, Expenses
-Calendar/        Events
-Correspondence/  Correspondence           (evrak)
-Channels/        Channels
-Membership/      Members                  (office-scoped membership + role assignment)
-Settings/        OfficeSettings
-Templates/       TemplateOverrides        (+ the read-only TemplateCatalog)
-Outbox/          OutboundMessages
-Documents/       Documents, Extractions, Relations, Upload(*done), Storage
-Reports/         (read-only query services — no aggregate/repo)
-Auditing/        AuditEvents
-Knowledge/       Chunks                   (RAG store, used by the Knowledge host)
-Jobs/            (infra job stores for the Worker)
+Clients/          müvekkiller                        ← done (the reference slice)
+Matters/          dosyalar
+Hearings/         duruşmalar
+Courts/           mahkeme referans verisi
+Parties/          taraflar / vekiller
+Users/            kullanıcılar
+Offices/          ofisler (tenant kökü)
+Members/          ofis üyeliği + rol atama
+Invites/          davetler
+Roles/            ofise özel roller
+Auth/             refresh token, parola sıfırlama, TOTP/2FA
+Tasks/            görevler
+Deadlines/        süreler
+Notes/            görüşme notları
+Invoices/         faturalar
+Expenses/         masraflar
+Events/           takvim
+Correspondence/   evrak
+Channels/         kanallar
+Settings/         ofis ayarları
+Templates/        şablon override'ları (+ salt-okunur katalog)
+Outbox/           giden mesajlar
+Documents/        belgeler, extraction, relation
+Upload/           validator / malware / safe-upload   ← already in this shape
+Storage/          object store portu
+Reports/          salt-okunur sorgu servisleri (entity/repo yok)
+Auditing/         denetim kayıtları
+Knowledge/        RAG chunk'ları (Knowledge host kullanır)
+Jobs/             Worker için iş kuyruğu altyapısı
 ```
 
 Cross-cutting, shared:
@@ -229,8 +247,8 @@ Web/                     ApiExceptionHandler, tenancy middleware, JSON, auth (un
 Each step is its own commit; the solution stays green (build + tests) after every one.
 
 1. **Base primitives** — move `ITenantOwned`/`ISoftDeletable` to `Domain/Common`, add `IEntity`/`Entity` usage, promote the generic `IRepository<T>` / `Repository<T>` to `Application/Common` + `Infrastructure/Common` (from the agent-only copy).
-2. **Reference slice: `OfficeCore/Clients`** — full vertical per §3 (entity + EF config + repo + service + controller + requests/responses). This is the template every other slice copies.
-3. Roll out the remaining OfficeCore aggregates (Matters, Hearings), then context by context in the §4 order.
-4. Delete the old grouped files (`*Models.cs`, `*Entities.cs`, `I*Repositories.cs`, `*Repositories.cs`, `Features/`) as each context is migrated.
+2. **Reference slice: `Clients`** — full vertical per §3 (entity + EF config + repo + service + controller + requests/responses). This is the template every other domain copies. **Done.**
+3. Roll out the rest domain by domain in the §4 order, starting with `Matters` and `Hearings`.
+4. Delete the old grouped files (`*Models.cs`, `*Entities.cs`, `I*Repositories.cs`, `*Repositories.cs`, `Features/`, `Persistence/Configurations/*`) as each domain is migrated — the `OfficeCore` folders disappear with them.
 5. Move Api from grouped minimal-API `*Endpoints.cs` to per-aggregate controllers.
 ```

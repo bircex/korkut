@@ -1,10 +1,10 @@
-using Korkut.Application.OfficeCore.Clients;
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Application.Clients;
+using Korkut.Domain.Clients;
 using Korkut.Infrastructure.Common;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.OfficeCore.Clients;
+namespace Korkut.Infrastructure.Clients;
 
 /// <summary>EF/Postgres adapter for <see cref="IClientRepository"/>: active clients, by name.</summary>
 public sealed class ClientRepository(KorkutDbContext db) : SoftDeleteRepository<Client>(db), IClientRepository

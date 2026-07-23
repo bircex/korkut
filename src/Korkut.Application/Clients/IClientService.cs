@@ -1,7 +1,7 @@
-using Korkut.Application.OfficeCore.Clients.Requests;
-using Korkut.Application.OfficeCore.Clients.Responses;
+using Korkut.Application.Clients.Requests;
+using Korkut.Application.Clients.Responses;
 
-namespace Korkut.Application.OfficeCore.Clients;
+namespace Korkut.Application.Clients;
 
 /// <summary>
 /// Client (müvekkil) use-cases. The office comes from the caller's token, so no operation

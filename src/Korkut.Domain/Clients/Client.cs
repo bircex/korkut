@@ -1,6 +1,6 @@
 using Korkut.Domain.Common;
 
-namespace Korkut.Domain.OfficeCore.Clients;
+namespace Korkut.Domain.Clients;
 
 /// <summary>
 /// A tenant-owned client / müvekkil (individual or corporate). Retired by soft delete so the

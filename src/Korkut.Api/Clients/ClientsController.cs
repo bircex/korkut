@@ -1,10 +1,10 @@
-using Korkut.Application.OfficeCore.Clients;
-using Korkut.Application.OfficeCore.Clients.Requests;
+using Korkut.Application.Clients;
+using Korkut.Application.Clients.Requests;
 using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.OfficeCore.Clients;
+namespace Korkut.Api.Clients;
 
 /// <summary>
 /// Clients (müvekkiller). A pure transport: each action forwards to <see cref="IClientService"/>,

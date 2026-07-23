@@ -1,11 +1,11 @@
 using Korkut.Application.Common;
 using Korkut.Application.Errors;
-using Korkut.Application.OfficeCore.Clients.Requests;
-using Korkut.Application.OfficeCore.Clients.Responses;
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Application.Clients.Requests;
+using Korkut.Application.Clients.Responses;
+using Korkut.Domain.Clients;
 using Korkut.Domain.Time;
 
-namespace Korkut.Application.OfficeCore.Clients;
+namespace Korkut.Application.Clients;
 
 /// <summary>
 /// Client use-cases over the repository port: every call runs inside the caller's tenant

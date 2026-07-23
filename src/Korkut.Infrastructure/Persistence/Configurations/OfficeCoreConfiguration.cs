@@ -1,4 +1,4 @@
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Domain.Clients;
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

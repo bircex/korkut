@@ -1,4 +1,4 @@
-namespace Korkut.Application.OfficeCore.Clients.Responses;
+namespace Korkut.Application.Clients.Responses;
 
 /// <summary>Transport shape for a client. Serialized snake_case by the global JSON contract.</summary>
 public sealed record ClientResponse(

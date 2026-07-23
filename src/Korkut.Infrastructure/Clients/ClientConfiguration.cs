@@ -1,8 +1,8 @@
-using Korkut.Domain.OfficeCore.Clients;
+using Korkut.Domain.Clients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.OfficeCore.Clients;
+namespace Korkut.Infrastructure.Clients;
 
 /// <summary>
 /// EF mapping for the <see cref="Client"/> aggregate. Table/column names are unchanged from
