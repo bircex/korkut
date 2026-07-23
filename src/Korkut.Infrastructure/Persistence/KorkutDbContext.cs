@@ -77,7 +77,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     // Conversations, chat_messages, generated_documents, document_versions moved to the
     // Agent DB (AgentDbContext, schema korkut_agent).
-    public DbSet<OutboundMessageEntity> OutboundMessages => Set<OutboundMessageEntity>();
+    public DbSet<Domain.Outbox.OutboundMessage> OutboundMessages => Set<Domain.Outbox.OutboundMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,17 +213,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         });
 
 
-        modelBuilder.Entity<OutboundMessageEntity>(b =>
-        {
-            b.ToTable("outbound_messages");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Kind).HasMaxLength(20);
-            b.Property(x => x.ToAddr).HasMaxLength(400);
-            b.Property(x => x.Subject).HasMaxLength(500);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_outbound_messages_office_status");
-        });
+        modelBuilder.ApplyConfiguration(new Outbox.OutboundMessageConfiguration());
 
         modelBuilder.Entity<DocumentEntity>(b =>
         {

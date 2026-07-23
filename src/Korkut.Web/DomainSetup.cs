@@ -70,8 +70,8 @@ public static class DomainSetup
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         // Outbox review queue (Clean Architecture: repository port + service; distinct from
         // the jobs-side IOutboxStore/EfOutboxStore that dispatches/sends).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IOutboxRepository, Korkut.Infrastructure.Persistence.Repositories.OutboxRepository>();
-        services.AddScoped<Korkut.Application.Features.Outbox.IOutboxService, Korkut.Application.Features.Outbox.OutboxService>();
+        services.AddScoped<Korkut.Application.Outbox.IOutboxRepository, Korkut.Infrastructure.Outbox.OutboxRepository>();
+        services.AddScoped<Korkut.Application.Outbox.IOutboxService, Korkut.Application.Outbox.OutboxService>();
         // Members (Clean Architecture: repository port + service; owner-safety in the service).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IMemberRepository, Korkut.Infrastructure.Persistence.Repositories.MemberRepository>();
         services.AddScoped<Korkut.Application.Features.Membership.IMembersService, Korkut.Application.Features.Membership.MembersService>();

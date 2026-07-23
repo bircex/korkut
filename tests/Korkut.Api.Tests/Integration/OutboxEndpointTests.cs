@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Outbox;
 
 namespace Korkut.Api.Tests;
 
@@ -19,15 +20,12 @@ public class OutboxEndpointTests(KorkutApiFactory factory)
 
     private async Task<Guid> SeedDraftAsync(Guid office)
     {
-        var id = Guid.CreateVersion7();
         await using var db = factory.OwnerContext();
-        db.OutboundMessages.Add(new OutboundMessageEntity
-        {
-            Id = id, OfficeId = office, Kind = "email", ToAddr = "muvekkil@example.com",
-            Subject = "Duruşma", Body = "Sayın müvekkil…", Status = "draft", CreatedAt = DateTimeOffset.UtcNow,
-        });
+        var message = new OutboundMessage(
+            office, "email", "muvekkil@example.com", "Duruşma", "Sayın müvekkil…", null, DateTimeOffset.UtcNow);
+        db.OutboundMessages.Add(message);
         await db.SaveChangesAsync();
-        return id;
+        return message.Id;
     }
 
     [Fact]

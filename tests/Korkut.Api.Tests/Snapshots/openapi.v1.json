@@ -517,6 +517,39 @@
         ],
         "type": "object"
       },
+      "EditOutboxMessageRequest": {
+        "properties": {
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "send_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subject": {
+            "maxLength": "500",
+            "type": "string"
+          },
+          "to_addr": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "to_addr",
+          "body"
+        ],
+        "type": "object"
+      },
       "EmailChannelInput": {
         "properties": {
           "app_password": {
@@ -739,39 +772,6 @@
         },
         "required": [
           "text"
-        ],
-        "type": "object"
-      },
-      "OutboxEditRequest": {
-        "properties": {
-          "body": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "send_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "subject": {
-            "maxLength": "500",
-            "type": "string"
-          },
-          "to_addr": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "to_addr",
-          "body"
         ],
         "type": "object"
       },
@@ -2808,7 +2808,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2831,7 +2831,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       },
       "put": {
@@ -2848,9 +2848,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/OutboxEditRequest"
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
               }
             }
           },
@@ -2862,7 +2872,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2885,7 +2895,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2908,7 +2918,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -3266,6 +3276,9 @@
     },
     {
       "name": "PetitionTypes"
+    },
+    {
+      "name": "Outbox"
     },
     {
       "name": "Notes"
