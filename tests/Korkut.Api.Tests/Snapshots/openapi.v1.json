@@ -734,7 +734,21 @@
         ],
         "type": "object"
       },
-      "ResetBody": {
+      "RequestPasswordResetRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "ResetPasswordRequest": {
         "properties": {
           "password": {
             "minLength": "10",
@@ -753,20 +767,6 @@
         "required": [
           "token",
           "password"
-        ],
-        "type": "object"
-      },
-      "ResetRequestBody": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email"
         ],
         "type": "object"
       },
@@ -1192,7 +1192,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/TotpRequest"
               }
@@ -1206,7 +1216,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1261,7 +1271,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginRequest"
               }
@@ -1275,7 +1295,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1283,9 +1303,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResetBody"
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
               }
             }
           },
@@ -1297,7 +1327,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1305,9 +1335,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResetRequestBody"
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
               }
             }
           },
@@ -1319,7 +1359,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1331,7 +1371,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -2463,7 +2503,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -3383,9 +3423,6 @@
       "name": "Korkut.Api"
     },
     {
-      "name": "AuthEndpoints"
-    },
-    {
       "name": "Profile"
     },
     {
@@ -3450,6 +3487,9 @@
     },
     {
       "name": "Calendar"
+    },
+    {
+      "name": "Auth"
     }
   ]
 }

@@ -13,6 +13,12 @@ public sealed class UserRepository(KorkutDbContext db) : Repository<User>(db), I
     public override async Task<IReadOnlyList<User>> ListAsync(Guid officeId, CancellationToken ct = default)
         => await Scoped(officeId).AsNoTracking().OrderBy(u => u.Email).ToListAsync(ct);
 
+    public Task<User?> FindByEmailAsync(Guid officeId, string email, CancellationToken ct = default)
+        => Scoped(officeId).AsNoTracking().SingleOrDefaultAsync(u => u.Email == email, ct);
+
+    public Task<User?> FindByEmailForUpdateAsync(Guid officeId, string email, CancellationToken ct = default)
+        => Scoped(officeId).SingleOrDefaultAsync(u => u.Email == email, ct);
+
     public Task<bool> ExistsWithEmailAsync(Guid officeId, string email, CancellationToken ct = default)
         => Scoped(officeId).AsNoTracking().AnyAsync(u => u.Email == email, ct);
 

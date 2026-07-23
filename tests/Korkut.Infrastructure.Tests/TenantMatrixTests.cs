@@ -22,6 +22,7 @@ using Korkut.Domain.Calendar;
 using Korkut.Domain.Outbox;
 using Korkut.Domain.Channels;
 using Korkut.Domain.Settings;
+using Korkut.Domain.Auth;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;
 
@@ -105,7 +106,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var user = new User(office, $"{office:N}-{i}@x.test", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
             var uid = user.Id;
             db.Users.Add(user);
-            db.PasswordResetTokens.Add(new PasswordResetTokenEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"h{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddHours(1), CreatedAt = DateTimeOffset.UtcNow });
+            db.PasswordResetTokens.Add(new PasswordResetToken(office, uid, $"h{office:N}{i}", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow));
             db.UserTotps.Add(new UserTotpEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, EncryptedSecret = $"enc{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.RecoveryCodes.Add(new RecoveryCodeEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, CodeHash = $"rc{office:N}{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.RefreshTokens.Add(new RefreshTokenEntity { Id = Guid.CreateVersion7(), FamilyId = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"rt{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(14), CreatedAt = DateTimeOffset.UtcNow });

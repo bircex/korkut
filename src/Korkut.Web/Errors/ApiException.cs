@@ -26,4 +26,8 @@ public sealed class ApiException(int statusCode, string detail) : Exception(deta
 
     public static ApiException Conflict(string detail) =>
         new(StatusCodes.Status409Conflict, detail);
+
+    /// <summary>423: the account is temporarily locked out after too many failed attempts.</summary>
+    public static ApiException Locked(string detail) =>
+        new(StatusCodes.Status423Locked, detail);
 }

@@ -1,10 +1,15 @@
-using Korkut.Domain.Offices;
-using Korkut.Domain.Users;
+using Korkut.Application.Auth;
+using Korkut.Application.Auth.Requests;
 using Korkut.Application.Security;
-using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Infrastructure.Security;
+using Korkut.Domain.Auth;
+using Korkut.Domain.Offices;
 using Korkut.Domain.Time;
+using Korkut.Domain.Users;
+using Korkut.Infrastructure.Auth;
+using Korkut.Infrastructure.Common;
+using Korkut.Infrastructure.Persistence;
+using Korkut.Infrastructure.Security;
+using Korkut.Infrastructure.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;
@@ -24,11 +29,21 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
     {
         public int Count { get; private set; }
 
-        public Task NotifyPasswordChangedAsync(Guid officeId, string email, CancellationToken ct)
+        public Task NotifyPasswordChangedAsync(Guid officeId, string email, CancellationToken ct = default)
         {
             Count++;
             return Task.CompletedTask;
         }
+    }
+
+    /// <summary>Nobody in these tests has 2FA enrolled; the challenge is never reached.</summary>
+    private sealed class NoTwoFactor : ITwoFactorChallenge
+    {
+        public Task<bool> VerifyCodeAsync(Guid officeId, Guid userId, string code, CancellationToken ct = default)
+            => Task.FromResult(false);
+
+        public Task<bool> UseRecoveryCodeAsync(Guid officeId, Guid userId, string rawCode, CancellationToken ct = default)
+            => Task.FromResult(false);
     }
 
     private readonly Pbkdf2PasswordHasher _hasher = new(iterations: 10_000); // faster for tests
@@ -52,13 +67,20 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
     public Task DisposeAsync() => Task.CompletedTask;
 
     private AuthService NewService(KorkutDbContext db) =>
-        new(new EfUserDirectory(db), _hasher, _tokens, _notifier, _clock) { MaxFailedAttempts = 3 };
+        new(new AccountLocator(db), new UserRepository(db), new PasswordResetTokenRepository(db),
+            new ResetTokenResolver(db, _clock), new NoTwoFactor(), _hasher, _tokens, _notifier,
+            new UnitOfWork(db), _clock)
+        { MaxFailedAttempts = 3 };
+
+    private static LoginRequest Login(string email, string password) => new() { Email = email, Password = password };
 
     [Fact]
     public async Task Correct_password_authenticates()
     {
         await using var db = pg.NewContext();
-        Assert.Equal(AuthOutcome.Success, await NewService(db).AuthenticateAsync(_office, Email, Password));
+        var result = await NewService(db).SignInAsync(Login(Email, Password));
+        Assert.Equal(AuthOutcome.Success, result.Outcome);
+        Assert.Equal(_office, result.User!.OfficeId);
     }
 
     [Fact]
@@ -66,8 +88,8 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
     {
         await using var db = pg.NewContext();
         var svc = NewService(db);
-        Assert.Equal(AuthOutcome.InvalidCredentials, await svc.AuthenticateAsync(_office, "nobody@office.test", Password));
-        Assert.Equal(AuthOutcome.InvalidCredentials, await svc.AuthenticateAsync(_office, Email, "wrong"));
+        Assert.Equal(AuthOutcome.InvalidCredentials, (await svc.SignInAsync(Login("nobody@office.test", Password))).Outcome);
+        Assert.Equal(AuthOutcome.InvalidCredentials, (await svc.SignInAsync(Login(Email, "wrong"))).Outcome);
     }
 
     [Fact]
@@ -77,19 +99,29 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
         var svc = NewService(db);
         for (var i = 0; i < 3; i++)
         {
-            Assert.Equal(AuthOutcome.InvalidCredentials, await svc.AuthenticateAsync(_office, Email, "wrong"));
+            Assert.Equal(AuthOutcome.InvalidCredentials, (await svc.SignInAsync(Login(Email, "wrong"))).Outcome);
         }
 
         // Even the correct password is refused once locked out.
-        Assert.Equal(AuthOutcome.LockedOut, await svc.AuthenticateAsync(_office, Email, Password));
+        Assert.Equal(AuthOutcome.LockedOut, (await svc.SignInAsync(Login(Email, Password))).Outcome);
     }
 
     [Fact]
     public async Task Reset_request_for_unknown_email_creates_no_token_and_does_not_throw()
     {
         await using var db = pg.NewContext();
-        await NewService(db).RequestPasswordResetAsync(_office, "ghost@office.test");
+        await NewService(db).RequestPasswordResetAsync(new RequestPasswordResetRequest { Email = "ghost@office.test" });
         Assert.Equal(0, await db.PasswordResetTokens.CountAsync());
+    }
+
+    [Fact]
+    public async Task Reset_request_for_a_real_account_stores_exactly_one_hashed_token()
+    {
+        await using var db = pg.NewContext();
+        await NewService(db).RequestPasswordResetAsync(new RequestPasswordResetRequest { Email = Email });
+        var token = await db.PasswordResetTokens.AsNoTracking().SingleAsync();
+        Assert.Equal(_office, token.OfficeId);
+        Assert.True(token.IsUsable(_clock.UtcNow));
     }
 
     [Fact]
@@ -99,13 +131,13 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
 
         await using (var db = pg.NewContext())
         {
-            Assert.Equal(ResetOutcome.Success, await NewService(db).ResetPasswordAsync(_office, raw, "New-Password-1!"));
+            Assert.Equal(ResetOutcome.Success, await NewService(db).ResetPasswordAsync(Reset(raw, "New-Password-1!")));
         }
 
         await using (var db = pg.NewContext())
         {
             // Replay of the same token must fail.
-            Assert.Equal(ResetOutcome.InvalidOrExpiredToken, await NewService(db).ResetPasswordAsync(_office, raw, "Another-1!"));
+            Assert.Equal(ResetOutcome.InvalidOrExpiredToken, await NewService(db).ResetPasswordAsync(Reset(raw, "Another-1!")));
         }
     }
 
@@ -116,7 +148,7 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
         _clock.UtcNow = _clock.UtcNow.AddHours(2); // past the 1h lifetime
 
         await using var db = pg.NewContext();
-        Assert.Equal(ResetOutcome.InvalidOrExpiredToken, await NewService(db).ResetPasswordAsync(_office, raw, "New-1!"));
+        Assert.Equal(ResetOutcome.InvalidOrExpiredToken, await NewService(db).ResetPasswordAsync(Reset(raw, "New-1!")));
     }
 
     [Fact]
@@ -133,7 +165,7 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
         var raw = await IssueResetTokenAsync();
         await using (var db = pg.NewContext())
         {
-            Assert.Equal(ResetOutcome.Success, await NewService(db).ResetPasswordAsync(_office, raw, "New-Password-2!"));
+            Assert.Equal(ResetOutcome.Success, await NewService(db).ResetPasswordAsync(Reset(raw, "New-Password-2!")));
         }
 
         await using var check = pg.NewContext();
@@ -156,14 +188,17 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
         Assert.NotEqual(raw, token.TokenHash);               // stored hashed, not raw
     }
 
+    private static ResetPasswordRequest Reset(string token, string password) =>
+        new() { Token = token, Password = password };
+
     private async Task<string> IssueResetTokenAsync()
     {
         // Reproduce what RequestPasswordReset stores, but capture the raw token here.
         var raw = _tokens.NewRawToken();
         await using var db = pg.NewContext();
         var user = await db.Users.AsNoTracking().SingleAsync(x => x.Email == Email);
-        await new EfUserDirectory(db).CreateResetTokenAsync(
-            user.Id, _office, _tokens.Hash(raw), _clock.UtcNow.AddHours(1), _clock.UtcNow, default);
+        await new PasswordResetTokenRepository(db).AddAsync(new PasswordResetToken(
+            _office, user.Id, _tokens.Hash(raw), _clock.UtcNow.AddHours(1), _clock.UtcNow));
         return raw;
     }
 }

@@ -1,4 +1,5 @@
 using Korkut.Application.Auditing;
+using Korkut.Application.Auth;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -29,7 +30,7 @@ public sealed class TwoFactorService(
     ISecretEncryptor encryptor,
     ITokenHasher tokenHasher,
     IAuditLog audit,
-    IClock clock)
+    IClock clock) : ITwoFactorChallenge
 {
     public int RecoveryCodeCount { get; init; } = 10;
 
@@ -97,6 +98,10 @@ public sealed class TwoFactorService(
         await audit.WriteAsync(new AuditEntry(officeId, userId, null, null, "2fa.enrolled", "user", userId, null, null), ct);
         return (TwoFactorResult.Success, raw);
     }
+
+    /// <summary>The sign-in port: a code is either valid right now, or it is not.</summary>
+    public async Task<bool> VerifyCodeAsync(Guid officeId, Guid userId, string code, CancellationToken ct = default)
+        => await ChallengeAsync(officeId, userId, code, ct) == TwoFactorResult.Success;
 
     public async Task<TwoFactorResult> ChallengeAsync(Guid officeId, Guid userId, string code, CancellationToken ct = default)
     {

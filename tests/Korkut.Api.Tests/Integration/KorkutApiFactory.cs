@@ -5,6 +5,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
 using Korkut.Domain.Time;
+using Korkut.Domain.Auth;
 using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -177,15 +178,8 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         var raw = "reset-" + Guid.CreateVersion7().ToString("N");
         var hash = new Sha256TokenHasher().Hash(raw);
         await using var db = OwnerContext();
-        db.PasswordResetTokens.Add(new PasswordResetTokenEntity
-        {
-            Id = Guid.CreateVersion7(),
-            OfficeId = officeId,
-            UserId = userId,
-            TokenHash = hash,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        db.PasswordResetTokens.Add(new PasswordResetToken(
+            officeId, userId, hash, DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
         return raw;
     }

@@ -28,7 +28,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Users.User> Users => Set<Domain.Users.User>();
 
-    public DbSet<PasswordResetTokenEntity> PasswordResetTokens => Set<PasswordResetTokenEntity>();
+    public DbSet<Domain.Auth.PasswordResetToken> PasswordResetTokens => Set<Domain.Auth.PasswordResetToken>();
 
     public DbSet<Domain.Invites.Invite> Invites => Set<Domain.Invites.Invite>();
 
@@ -228,15 +228,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Users.UserConfiguration());
 
-        modelBuilder.Entity<PasswordResetTokenEntity>(b =>
-        {
-            b.ToTable("password_reset_tokens");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.TokenHash).HasMaxLength(100);
-            // Reset lookups are by (office, token hash).
-            b.HasIndex(x => new { x.OfficeId, x.TokenHash }).HasDatabaseName("ix_reset_tokens_office_hash");
-        });
+        modelBuilder.ApplyConfiguration(new Auth.PasswordResetTokenConfiguration());
 
         modelBuilder.Entity<UserTotpEntity>(b =>
         {

@@ -31,7 +31,6 @@ builder.Services.AddKorkutDomain(builder.Configuration);
 builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
-builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfResetTokenResolver>();
 builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfOfficeProvisioner>();
 
 // Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
@@ -67,7 +66,6 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
 app.MapControllers();
 app.MapFoundationEndpoints();
-app.MapAuthEndpoints();
 app.MapDocumentEndpoints();
 app.MapReportsEndpoints();
 app.MapOnboardingEndpoints();

@@ -95,6 +95,32 @@ public sealed class User : Entity, ITenantOwned, IAggregateRoot
         LockoutEnd = null;
     }
 
+    /// <summary>
+    /// Replaces the stored hash with an equivalent, stronger one. The password itself did
+    /// not change, so the stamp is left alone and the person's sessions survive.
+    /// </summary>
+    public void RehashPassword(string passwordHash) => PasswordHash = passwordHash;
+
+    /// <summary>Locked out after too many failed attempts, until the lockout expires.</summary>
+    public bool IsLockedOut(DateTimeOffset now) => LockoutEnd is { } until && until > now;
+
+    /// <summary>
+    /// Counts a failed sign-in and locks the account once the allowance is used up. The
+    /// policy comes from the caller so it stays configurable per deployment.
+    /// </summary>
+    public void RegisterFailedAttempt(DateTimeOffset now, int maxAttempts, TimeSpan lockoutDuration)
+    {
+        FailedAccessCount++;
+        LockoutEnd = FailedAccessCount >= maxAttempts ? now + lockoutDuration : null;
+    }
+
+    /// <summary>Clears the failure count and any lockout after a successful sign-in.</summary>
+    public void ClearFailedAttempts()
+    {
+        FailedAccessCount = 0;
+        LockoutEnd = null;
+    }
+
     /// <summary>Links the Google identity that will sign this person in from now on.</summary>
     public void LinkGoogle(string googleSub) => GoogleSub = googleSub;
 
