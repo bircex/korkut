@@ -24,7 +24,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Hearings.Hearing> MatterHearings => Set<Domain.Hearings.Hearing>();
 
-    public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
+    public DbSet<Domain.Auditing.AuditEvent> AuditEvents => Set<Domain.Auditing.AuditEvent>();
 
     public DbSet<Domain.Users.User> Users => Set<Domain.Users.User>();
 
@@ -131,18 +131,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Parties.PartyConfiguration());
         modelBuilder.ApplyConfiguration(new Hearings.HearingConfiguration());
 
-        modelBuilder.Entity<AuditEventEntity>(b =>
-        {
-            b.ToTable("audit_events");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Action).HasMaxLength(100);
-            b.Property(x => x.EntityType).HasMaxLength(100);
-            b.Property(x => x.SessionId).HasMaxLength(200);
-            b.Property(x => x.CorrelationId).HasMaxLength(200);
-            b.HasIndex(x => new { x.OfficeId, x.At }).HasDatabaseName("ix_audit_events_office_at");
-            b.HasIndex(x => new { x.EntityType, x.EntityId }).HasDatabaseName("ix_audit_events_entity");
-        });
+        modelBuilder.ApplyConfiguration(new Auditing.AuditEventConfiguration());
 
 
         modelBuilder.ApplyConfiguration(new Tasks.TaskConfiguration());

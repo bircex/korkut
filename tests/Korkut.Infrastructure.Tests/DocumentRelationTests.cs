@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Auditing;
 using Korkut.Application.Errors;
 using Korkut.Domain.Documents;
 using Korkut.Domain.Offices;
@@ -40,7 +41,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private static DocumentRelationService Relations(KorkutDbContext db) => new(db, new EfAuditLog(db, new Clock()), new Clock());
+    private static DocumentRelationService Relations(KorkutDbContext db) => new(db, new AuditLog(db, new Clock()), new Clock());
 
     private async Task<Guid> SeedDocumentAsync(KorkutDbContext db)
     {

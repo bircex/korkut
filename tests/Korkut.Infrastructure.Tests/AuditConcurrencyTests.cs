@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence;
@@ -90,7 +91,7 @@ public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresF
     {
         var trustedActor = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        var log = new EfAuditLog(db, new Clock());
+        var log = new AuditLog(db, new Clock());
 
         // A snapshot that (maliciously) embeds a secret and a spoofed actor id.
         var secret = "sk-ant-" + new string('a', 28);

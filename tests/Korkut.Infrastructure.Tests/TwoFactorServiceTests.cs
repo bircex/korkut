@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using Korkut.Domain.Users;
 using Korkut.Application.Security;
@@ -40,7 +41,7 @@ public class TwoFactorServiceTests(PostgresFixture pg) : IClassFixture<PostgresF
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private TwoFactorService Svc(KorkutDbContext db) => new(db, _enc, _tokens, new EfAuditLog(db, _clock), _clock);
+    private TwoFactorService Svc(KorkutDbContext db) => new(db, _enc, _tokens, new AuditLog(db, _clock), _clock);
 
     private async Task<(string uri, byte[] secret)> EnrollAsync()
     {

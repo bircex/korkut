@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using System.IO.Compression;
 using System.Text;
@@ -46,7 +47,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
     {
         var docs = new DocumentStorageService(db, minio.StoreService, new Clock());
         return new SafeUploadService(db, docs, minio.StoreService, new UploadValidatorService(),
-            scanner ?? new MalwareScannerService(), new EfAuditLog(db, new Clock()));
+            scanner ?? new MalwareScannerService(), new AuditLog(db, new Clock()));
     }
 
     private static MemoryStream Pdf(byte[]? extra = null)

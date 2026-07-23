@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using Korkut.Application.Security;
 using Korkut.Application.Jobs;
@@ -23,6 +24,7 @@ using Korkut.Domain.Outbox;
 using Korkut.Domain.Channels;
 using Korkut.Domain.Settings;
 using Korkut.Domain.Auth;
+using Korkut.Domain.Auditing;
 using Korkut.Domain.Documents;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;
@@ -122,14 +124,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            db.AuditEvents.Add(new AuditEventEntity
-            {
-                Id = Guid.CreateVersion7(),
-                OfficeId = office,
-                Action = "read",
-                EntityType = "matter",
-                At = DateTimeOffset.UtcNow,
-            });
+            db.AuditEvents.Add(new AuditEvent(
+                office, null, null, null, "read", "matter", null, null, null, DateTimeOffset.UtcNow));
         }
 
         await db.SaveChangesAsync();

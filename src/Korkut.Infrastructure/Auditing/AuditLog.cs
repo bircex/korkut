@@ -1,11 +1,11 @@
 using System.Text.Json;
 using Korkut.Application.Auditing;
-using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
+using Korkut.Domain.Auditing;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Redaction;
 using Korkut.Domain.Time;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Auditing;
 
 /// <summary>
 /// Writes audit entries to the append-only <c>audit_events</c> table. Before/after
@@ -13,26 +13,16 @@ namespace Korkut.Infrastructure.Persistence;
 /// secrets/tokens/PII never land in the audit trail. The record is INSERT-only — the
 /// app role has no UPDATE/DELETE and a trigger blocks mutation.
 /// </summary>
-public sealed class EfAuditLog(KorkutDbContext db, IClock clock) : IAuditLog
+public sealed class AuditLog(KorkutDbContext db, IClock clock) : IAuditLog
 {
     private static readonly JsonSerializerOptions Json = new();
 
     public async Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
-        db.AuditEvents.Add(new AuditEventEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = entry.OfficeId,
-            ActorId = entry.ActorId,
-            SessionId = entry.SessionId,
-            CorrelationId = entry.CorrelationId,
-            Action = entry.Action,
-            EntityType = entry.EntityType,
-            EntityId = entry.EntityId,
-            BeforeJson = Redact(entry.Before),
-            AfterJson = Redact(entry.After),
-            At = clock.UtcNow,
-        });
+        db.AuditEvents.Add(new AuditEvent(
+            entry.OfficeId, entry.ActorId, entry.SessionId, entry.CorrelationId,
+            entry.Action, entry.EntityType, entry.EntityId,
+            Redact(entry.Before), Redact(entry.After), clock.UtcNow));
         await db.SaveChangesAsync(cancellationToken);
     }
 
