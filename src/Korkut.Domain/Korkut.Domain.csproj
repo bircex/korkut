@@ -1,4 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <!-- Domain: the platform's leaf layer — entities, value objects, and the cross-cutting
+<Project Sdk="Microsoft.NET.Sdk"><!-- Domain: the platform's leaf layer — entities, value objects, and the cross-cutting
        primitives (ids, clock, result/error, redaction). Depends on nothing else in the solution. -->
+
+
+  <ItemGroup>
+    <Folder Include="Ids\" />
+  </ItemGroup>
 </Project>

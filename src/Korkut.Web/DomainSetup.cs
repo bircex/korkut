@@ -82,9 +82,9 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Users.IUserRepository, Korkut.Infrastructure.Users.UserRepository>();
         services.AddScoped<Korkut.Application.Members.IMemberService, Korkut.Application.Members.MemberService>();
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IInviteRepository, Korkut.Infrastructure.Persistence.Repositories.InviteRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IInviteResolver, Korkut.Infrastructure.Persistence.Repositories.EfInviteResolver>();
-        services.AddScoped<Korkut.Application.Features.Membership.IInviteService, Korkut.Application.Features.Membership.InviteService>();
+        services.AddScoped<Korkut.Application.Invites.IInviteRepository, Korkut.Infrastructure.Invites.InviteRepository>();
+        services.AddScoped<Korkut.Application.Invites.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
+        services.AddScoped<Korkut.Application.Invites.IInviteService, Korkut.Application.Invites.InviteService>();
 
         return services;
     }

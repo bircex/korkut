@@ -30,7 +30,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<PasswordResetTokenEntity> PasswordResetTokens => Set<PasswordResetTokenEntity>();
 
-    public DbSet<InviteEntity> Invites => Set<InviteEntity>();
+    public DbSet<Domain.Invites.Invite> Invites => Set<Domain.Invites.Invite>();
 
     public DbSet<UserTotpEntity> UserTotps => Set<UserTotpEntity>();
 
@@ -230,17 +230,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
                 .HasDatabaseName("ix_doc_relations_target");
         });
 
-        modelBuilder.Entity<InviteEntity>(b =>
-        {
-            b.ToTable("invites");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Email).HasMaxLength(320);
-            b.Property(x => x.Role).HasMaxLength(20);
-            b.Property(x => x.TokenHash).HasMaxLength(64);
-            b.HasIndex(x => x.TokenHash).HasDatabaseName("ix_invites_token_hash");
-            b.HasIndex(x => new { x.OfficeId, x.Email }).HasDatabaseName("ix_invites_office_email");
-        });
+        modelBuilder.ApplyConfiguration(new Invites.InviteConfiguration());
 
         modelBuilder.ApplyConfiguration(new Users.UserConfiguration());
 

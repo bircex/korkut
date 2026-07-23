@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "AcceptInviteRequest": {
+        "properties": {
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "ChangeMemberRoleRequest": {
         "properties": {
           "role": {
@@ -334,6 +348,28 @@
         ],
         "type": "object"
       },
+      "CreateInviteRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
       "CreateInvoiceRequest": {
         "properties": {
           "amount": {
@@ -653,42 +689,6 @@
       "IFormFile": {
         "format": "binary",
         "type": "string"
-      },
-      "InviteAcceptRequest": {
-        "properties": {
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "token"
-        ],
-        "type": "object"
-      },
-      "InviteCreateRequest": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "role"
-        ],
-        "type": "object"
       },
       "LinkRequest": {
         "properties": {
@@ -2366,15 +2366,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteCreateRequest"
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
               }
             }
           },
@@ -2386,7 +2396,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -2394,9 +2404,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteAcceptRequest"
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
               }
             }
           },
@@ -2408,7 +2428,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -2431,7 +2451,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -3384,6 +3404,9 @@
     },
     {
       "name": "Invoices"
+    },
+    {
+      "name": "Invites"
     },
     {
       "name": "Hearings"
