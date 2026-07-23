@@ -4,6 +4,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Korkut.Domain.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -107,11 +108,13 @@ public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresF
     [Fact]
     public async Task Concurrent_update_raises_a_conflict_instead_of_silent_overwrite()
     {
-        var matterId = Guid.CreateVersion7();
+        Guid matterId;
         await using (var seed = pg.NewContext())
         {
-            seed.Matters.Add(new MatterEntity { Id = matterId, OfficeId = _office, Title = "orig", CreatedAt = DateTimeOffset.UtcNow });
+            var matter = new Matter(_office, "orig", null, null, null, DateTimeOffset.UtcNow);
+            seed.Matters.Add(matter);
             await seed.SaveChangesAsync();
+            matterId = matter.Id;
         }
 
         // Two independent contexts load the same row (same xmin).
@@ -120,10 +123,10 @@ public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresF
         var m1 = await ctx1.Matters.SingleAsync(x => x.Id == matterId);
         var m2 = await ctx2.Matters.SingleAsync(x => x.Id == matterId);
 
-        m1.Title = "first";
+        m1.Rename("first");
         await ctx1.SaveChangesAsync(); // bumps xmin
 
-        m2.Title = "second";
+        m2.Rename("second");
         // ctx2 holds the stale xmin -> conflict, not a silent overwrite.
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => ctx2.SaveChangesAsync());
 

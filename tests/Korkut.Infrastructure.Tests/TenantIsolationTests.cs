@@ -1,6 +1,7 @@
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Korkut.Domain.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -25,10 +26,11 @@ public class TenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFi
         await using var db = pg.NewContext();
         db.Offices.Add(new OfficeEntity { Id = _officeA, Name = "A", CreatedAt = DateTimeOffset.UtcNow });
         db.Offices.Add(new OfficeEntity { Id = _officeB, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
-        _matterA = Guid.CreateVersion7();
-        db.Matters.Add(new MatterEntity { Id = _matterA, OfficeId = _officeA, Title = "A-1", CreatedAt = DateTimeOffset.UtcNow });
-        db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = _officeB, Title = "B-1", CreatedAt = DateTimeOffset.UtcNow });
-        db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = _officeB, Title = "B-2", CreatedAt = DateTimeOffset.UtcNow });
+        var matterA = new Matter(_officeA, "A-1", null, null, null, DateTimeOffset.UtcNow);
+        _matterA = matterA.Id;
+        db.Matters.Add(matterA);
+        db.Matters.Add(new Matter(_officeB, "B-1", null, null, null, DateTimeOffset.UtcNow));
+        db.Matters.Add(new Matter(_officeB, "B-2", null, null, null, DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

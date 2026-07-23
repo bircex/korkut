@@ -6,6 +6,10 @@ using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Korkut.Domain.Clients;
+using Korkut.Domain.Matters;
+using Korkut.Domain.Hearings;
+using Korkut.Domain.Courts;
+using Korkut.Domain.Parties;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -51,8 +55,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var client = new Client(office, $"c{i}", "individual", null, null, DateTimeOffset.UtcNow);
             var clientId = client.Id;
             db.Clients.Add(client);
-            db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Courts.Add(new Court(office, $"court{i}", DateTimeOffset.UtcNow));
+            db.Parties.Add(new Party(office, matterId, "plaintiff", $"p{i}", DateTimeOffset.UtcNow));
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"d{i}", DueDate = new DateOnly(2026, 1, 1), CreatedAt = DateTimeOffset.UtcNow });
             db.CommunicationNotes.Add(new CommunicationNoteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Body = $"n{i}", OccurredAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
@@ -120,9 +124,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            var matter = new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"m{i}", CreatedAt = DateTimeOffset.UtcNow };
+            var matter = new Matter(office, $"m{i}", null, null, null, DateTimeOffset.UtcNow);
             db.Matters.Add(matter);
-            db.MatterHearings.Add(new MatterHearingEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matter.Id, ScheduledAt = DateTimeOffset.UtcNow });
+            db.MatterHearings.Add(new Hearing(office, matter.Id, DateTimeOffset.UtcNow, null, null, null));
         }
 
         await db.SaveChangesAsync();

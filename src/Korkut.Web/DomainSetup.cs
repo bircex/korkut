@@ -25,8 +25,9 @@ public static class DomainSetup
         // Office-core (Clean Architecture: clients + matters + hearings). Owns the
         // court-title snapshot rule in MatterService.
         services.AddScoped<Korkut.Application.Clients.IClientRepository, Korkut.Infrastructure.Clients.ClientRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IMatterRepository, Korkut.Infrastructure.Persistence.Repositories.MatterRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IHearingRepository, Korkut.Infrastructure.Persistence.Repositories.HearingRepository>();
+        services.AddScoped<Korkut.Application.Matters.IMatterRepository, Korkut.Infrastructure.Matters.MatterRepository>();
+        services.AddScoped<Korkut.Application.Courts.ICourtRepository, Korkut.Infrastructure.Courts.CourtRepository>();
+        services.AddScoped<Korkut.Application.Hearings.IHearingRepository, Korkut.Infrastructure.Hearings.HearingRepository>();
         services.AddScoped<Korkut.Application.Clients.IClientService, Korkut.Application.Clients.ClientService>();
 
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
@@ -34,7 +35,8 @@ public static class DomainSetup
         services.AddHttpContextAccessor();
         services.AddScoped<Korkut.Application.Common.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
         services.AddScoped<Korkut.Application.Common.IUnitOfWork, Korkut.Infrastructure.Common.UnitOfWork>();
-        services.AddScoped<Korkut.Application.Features.OfficeCore.IMatterService, Korkut.Application.Features.OfficeCore.MatterService>();
+        services.AddScoped<Korkut.Application.Matters.IMatterService, Korkut.Application.Matters.MatterService>();
+        services.AddScoped<Korkut.Application.Hearings.IHearingService, Korkut.Application.Hearings.HearingService>();
         // Office-ops (Clean Architecture: repository ports + service).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ITaskRepository, Korkut.Infrastructure.Persistence.Repositories.TaskRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IDeadlineRepository, Korkut.Infrastructure.Persistence.Repositories.DeadlineRepository>();

@@ -1,4 +1,3 @@
-using Korkut.Domain.Common;
 namespace Korkut.Domain.Common;
 
 /// <summary>

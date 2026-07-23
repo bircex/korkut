@@ -6,6 +6,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Domain.Clients;
+using Korkut.Domain.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -57,10 +58,10 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedMatterAsync(KorkutDbContext db)
     {
-        var id = Guid.CreateVersion7();
-        db.Matters.Add(new MatterEntity { Id = id, OfficeId = _office, Title = "m", Status = "open", CreatedAt = DateTimeOffset.UtcNow });
+        var matter = new Matter(_office, "m", null, null, null, DateTimeOffset.UtcNow);
+        db.Matters.Add(matter);
         await db.SaveChangesAsync();
-        return id;
+        return matter.Id;
     }
 
     [Fact]

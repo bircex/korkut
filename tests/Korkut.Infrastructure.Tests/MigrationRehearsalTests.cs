@@ -1,6 +1,7 @@
 using Korkut.Application.Differential;
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Korkut.Domain.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -28,14 +29,13 @@ public class MigrationRehearsalTests(PostgresFixture pg) : IClassFixture<Postgre
             db.Offices.Add(new OfficeEntity { Id = officeId, Name = $"Anonim Büro {o}", CreatedAt = DateTimeOffset.UtcNow });
             for (var m = 0; m < 4; m++)
             {
-                db.Matters.Add(new MatterEntity
+                var matter = new Matter(officeId, $"Anonim Dava {o}-{m}", null, null, null, DateTimeOffset.UtcNow);
+                if (m % 2 != 0)
                 {
-                    Id = Guid.CreateVersion7(),
-                    OfficeId = officeId,
-                    Title = $"Anonim Dava {o}-{m}",
-                    Status = m % 2 == 0 ? "open" : "closed",
-                    CreatedAt = DateTimeOffset.UtcNow,
-                });
+                    matter.Close();
+                }
+
+                db.Matters.Add(matter);
             }
         }
 

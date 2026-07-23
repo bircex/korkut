@@ -237,6 +237,78 @@
         ],
         "type": "object"
       },
+      "CreateHearingRequest": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "time": {
+            "format": "time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "type": "object"
+      },
+      "CreateMatterRequest": {
+        "properties": {
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "court_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
       "DeadlineCreateRequest": {
         "properties": {
           "due_date": {
@@ -471,49 +543,6 @@
         ],
         "type": "object"
       },
-      "HearingCreateRequest": {
-        "properties": {
-          "date": {
-            "format": "date",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "location": {
-            "maxLength": "300",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "time": {
-            "format": "time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "type": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "date"
-        ],
-        "type": "object"
-      },
       "IFormFile": {
         "format": "binary",
         "type": "string"
@@ -675,35 +704,6 @@
         "required": [
           "email",
           "password"
-        ],
-        "type": "object"
-      },
-      "MatterCreateRequest": {
-        "properties": {
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "court_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title"
         ],
         "type": "object"
       },
@@ -2383,15 +2383,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatterRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MatterCreateRequest"
+                "$ref": "#/components/schemas/CreateMatterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatterRequest"
               }
             }
           },
@@ -2403,7 +2413,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       }
     },
@@ -2426,7 +2436,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       },
       "get": {
@@ -2447,7 +2457,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       }
     },
@@ -2466,9 +2476,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHearingRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HearingCreateRequest"
+                "$ref": "#/components/schemas/CreateHearingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHearingRequest"
               }
             }
           },
@@ -2480,7 +2500,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Hearings"
         ]
       }
     },
@@ -3262,6 +3282,12 @@
     },
     {
       "name": "AuthEndpoints"
+    },
+    {
+      "name": "Matters"
+    },
+    {
+      "name": "Hearings"
     },
     {
       "name": "Clients"

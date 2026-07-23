@@ -20,9 +20,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<OfficeEntity> Offices => Set<OfficeEntity>();
 
-    public DbSet<MatterEntity> Matters => Set<MatterEntity>();
+    public DbSet<Domain.Matters.Matter> Matters => Set<Domain.Matters.Matter>();
 
-    public DbSet<MatterHearingEntity> MatterHearings => Set<MatterHearingEntity>();
+    public DbSet<Domain.Hearings.Hearing> MatterHearings => Set<Domain.Hearings.Hearing>();
 
     public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
 
@@ -42,9 +42,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Clients.Client> Clients => Set<Domain.Clients.Client>();
 
-    public DbSet<CourtEntity> Courts => Set<CourtEntity>();
+    public DbSet<Domain.Courts.Court> Courts => Set<Domain.Courts.Court>();
 
-    public DbSet<PartyEntity> Parties => Set<PartyEntity>();
+    public DbSet<Domain.Parties.Party> Parties => Set<Domain.Parties.Party>();
 
     public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
 
@@ -132,11 +132,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
         // — kept together because their tenant-aware composite FKs form one set.
-        modelBuilder.ApplyConfiguration(new Configurations.MatterConfiguration());
+        modelBuilder.ApplyConfiguration(new Matters.MatterConfiguration());
         modelBuilder.ApplyConfiguration(new Clients.ClientConfiguration());
-        modelBuilder.ApplyConfiguration(new Configurations.CourtConfiguration());
-        modelBuilder.ApplyConfiguration(new Configurations.PartyConfiguration());
-        modelBuilder.ApplyConfiguration(new Configurations.MatterHearingConfiguration());
+        modelBuilder.ApplyConfiguration(new Courts.CourtConfiguration());
+        modelBuilder.ApplyConfiguration(new Parties.PartyConfiguration());
+        modelBuilder.ApplyConfiguration(new Hearings.HearingConfiguration());
 
         modelBuilder.Entity<AuditEventEntity>(b =>
         {

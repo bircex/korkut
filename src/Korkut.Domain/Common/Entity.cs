@@ -11,9 +11,7 @@ public abstract class Entity : IEntity, IEquatable<Entity>
     protected Entity(Guid id) => Id = id;
 
     /// <summary>Materialization constructor for the ORM; domain code uses the id-taking one.</summary>
-    protected Entity()
-    {
-    }
+    protected Entity() { }
 
     public Guid Id { get; private set; }
 

@@ -68,7 +68,6 @@ app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }))
 app.MapControllers();
 app.MapFoundationEndpoints();
 app.MapAuthEndpoints();
-app.MapOfficeCoreEndpoints();
 app.MapDocumentEndpoints();
 app.MapOfficeOpsEndpoints();
 app.MapFinanceEndpoints();

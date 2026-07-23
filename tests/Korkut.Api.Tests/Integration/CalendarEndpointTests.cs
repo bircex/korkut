@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Matters;
+using Korkut.Domain.Hearings;
 
 namespace Korkut.Api.Tests;
 
@@ -21,15 +23,15 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
     private async Task<(Guid MatterId, Guid HearingId, Guid DeadlineId)> SeedMatterAgendaAsync(
         Guid office, DateTimeOffset hearingAt, DateOnly deadlineDue)
     {
-        var matterId = Guid.CreateVersion7();
-        var hearingId = Guid.CreateVersion7();
         var deadlineId = Guid.CreateVersion7();
         await using var db = factory.OwnerContext();
-        db.Matters.Add(new MatterEntity { Id = matterId, OfficeId = office, Title = "Dava X", CreatedAt = DateTimeOffset.UtcNow });
-        db.MatterHearings.Add(new MatterHearingEntity { Id = hearingId, OfficeId = office, MatterId = matterId, ScheduledAt = hearingAt });
-        db.Deadlines.Add(new DeadlineEntity { Id = deadlineId, OfficeId = office, MatterId = matterId, Title = "Cevap süresi", DueDate = deadlineDue, CreatedAt = DateTimeOffset.UtcNow });
+        var matter = new Matter(office, "Dava X", null, null, null, DateTimeOffset.UtcNow);
+        db.Matters.Add(matter);
+        var hearing = new Hearing(office, matter.Id, hearingAt, null, null, null);
+        db.MatterHearings.Add(hearing);
+        db.Deadlines.Add(new DeadlineEntity { Id = deadlineId, OfficeId = office, MatterId = matter.Id, Title = "Cevap süresi", DueDate = deadlineDue, CreatedAt = DateTimeOffset.UtcNow });
         await db.SaveChangesAsync();
-        return (matterId, hearingId, deadlineId);
+        return (matter.Id, hearing.Id, deadlineId);
     }
 
     [Fact]

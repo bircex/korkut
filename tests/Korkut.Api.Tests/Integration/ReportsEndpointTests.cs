@@ -4,6 +4,8 @@ using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Clients;
+using Korkut.Domain.Matters;
+using Korkut.Domain.Hearings;
 
 namespace Korkut.Api.Tests;
 
@@ -29,17 +31,21 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
         // Seed directly (owner ctx bypasses RLS) for the non-calendar/finance bits.
         await using (var db = factory.OwnerContext())
         {
-            db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "M1", Status = "open", CreatedAt = now });
-            db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "M2", Status = "open", CreatedAt = now });
-            db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "M3", Status = "closed", CreatedAt = now });
-            db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "gone", Status = "open", DeletedAt = now, CreatedAt = now }); // excluded
+            db.Matters.Add(new Matter(office, "M1", null, null, null, now));
+            db.Matters.Add(new Matter(office, "M2", null, null, null, now));
+            var closedMatter = new Matter(office, "M3", null, null, null, now);
+            closedMatter.Close();
+            db.Matters.Add(closedMatter);
+            var goneMatter = new Matter(office, "gone", null, null, null, now);
+            goneMatter.SoftDelete(now);
+            db.Matters.Add(goneMatter); // excluded
             db.Clients.Add(new Client(office, "C1", "individual", null, null, now));
 
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-open", Status = "open", CreatedAt = now });
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-overdue", Status = "open", DueAt = now.AddDays(-1), CreatedAt = now });
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-done", Status = "done", CompletedAt = now, CreatedAt = now });
 
-            db.MatterHearings.Add(new MatterHearingEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = db.Matters.Local.First().Id, ScheduledAt = now.AddDays(3) });
+            db.MatterHearings.Add(new Hearing(office, db.Matters.Local.First().Id, now.AddDays(3), null, null, null));
             db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "d-upcoming", DueDate = today.AddDays(5), CreatedAt = now });
             db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "d-overdue", DueDate = today.AddDays(-3), CreatedAt = now });
 
