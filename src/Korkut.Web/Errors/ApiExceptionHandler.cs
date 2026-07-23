@@ -29,6 +29,7 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
             UnauthorizedException unauthorized => (StatusCodes.Status401Unauthorized, unauthorized.Detail),
             ForbiddenException forbidden => (StatusCodes.Status403Forbidden, forbidden.Detail),
             ConflictException conflict => (StatusCodes.Status409Conflict, conflict.Detail),
+            UnprocessableException unprocessable => (StatusCodes.Status422UnprocessableEntity, unprocessable.Detail),
             // No model provider configured / a model call failed → 503 (the client retries later).
             ModelUnavailableException model => (StatusCodes.Status503ServiceUnavailable, model.Message),
             // Per-office model-usage budget exhausted → 429 (the client backs off / upgrades).

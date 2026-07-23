@@ -1,9 +1,12 @@
 using Korkut.Application.Documents;
+using Korkut.Application.Errors;
+using Korkut.Domain.Documents;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Application.Documents.Storage;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Documents;
 
 /// <summary>
 /// The document delete/tombstone/retention state machine (KDM-027). A tombstone
@@ -12,6 +15,7 @@ namespace Korkut.Infrastructure.Persistence;
 /// retention-driven purges.
 /// </summary>
 public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreService storeService, IClock clock)
+    : IDocumentLifecycleService
 {
     /// <summary>
     /// Tombstones a document: removes the object bytes and its extraction artifacts,
@@ -21,22 +25,21 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
     public async Task TombstoneAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
     {
         var doc = await db.Documents.SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
-            ?? throw new InvalidOperationException("Document not found.");
+            ?? throw new NotFoundException("Belge bulunamadı.");
 
         if (doc.LegalHold)
         {
-            throw new InvalidOperationException("Document is under legal hold and cannot be deleted.");
+            throw new ConflictException("Belge yasal muhafaza altında, silinemez.");
         }
 
-        if (doc.Status == "tombstoned")
+        if (doc.IsTombstoned)
         {
             return;
         }
 
         await PurgeArtifactsAsync(officeId, documentId, doc.Bucket, doc.ObjectKey, ct);
 
-        doc.Status = "tombstoned";
-        doc.TombstonedAt = clock.UtcNow;
+        doc.Tombstone(clock.UtcNow);
         await db.SaveChangesAsync(ct);
 
         // A tombstoned/revoked document must leave the search index (KDM-028).
@@ -53,7 +56,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.LegalHold, held), ct);
         if (affected == 0)
         {
-            throw new InvalidOperationException("Document not found.");
+            throw new NotFoundException("Belge bulunamadı.");
         }
     }
 
@@ -70,7 +73,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
                 && x.RetentionUntil != null
                 && x.RetentionUntil < now
                 && !x.LegalHold
-                && x.Status != "tombstoned")
+                && x.Status != DocumentStatus.Tombstoned)
             .Select(x => new { x.Id, x.Bucket, x.ObjectKey, x.Version })
             .ToListAsync(ct);
 
@@ -85,7 +88,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
             await db.Documents
                 .Where(x => x.OfficeId == officeId && ids.Contains(x.Id))
                 .ExecuteUpdateAsync(
-                    s => s.SetProperty(x => x.Status, "tombstoned").SetProperty(x => x.TombstonedAt, now),
+                    s => s.SetProperty(x => x.Status, DocumentStatus.Tombstoned).SetProperty(x => x.TombstonedAt, now),
                     ct);
 
             var index = new IndexOutboxService(db, clock);

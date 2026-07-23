@@ -1,3 +1,4 @@
+using Korkut.Application.Errors;
 using Korkut.Domain.Offices;
 using System.Text;
 using Korkut.Application.Documents;
@@ -58,7 +59,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     private async Task<Guid> SeedCleanDocumentAsync(string body)
     {
         await using var seed = pg.NewContext();
-        var docs = new DocumentService(seed, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
+        var docs = new DocumentStorageService(seed, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
         var stored = await docs.StoreAsync(_office, null, new MemoryStream(Encoding.UTF8.GetBytes(body)), "brief.txt", "text/plain");
         await seed.Documents.Where(x => x.Id == stored.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "clean"), default);
@@ -93,7 +94,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     public async Task Only_clean_documents_are_processed()
     {
         await using var db = pg.NewContext();
-        var docs = new DocumentService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
+        var docs = new DocumentStorageService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
         // Left in quarantine — never promoted to clean.
         var stored = await docs.StoreAsync(_office, null, new MemoryStream("x"u8.ToArray()), "q.txt", "text/plain");
         var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new Clock(DateTimeOffset.UtcNow));
@@ -143,7 +144,8 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         var life = new DocumentLifecycleService(db, minio.StoreService, new Clock(DateTimeOffset.UtcNow));
 
         await life.SetLegalHoldAsync(_office, docId, held: true);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => life.TombstoneAsync(_office, docId));
+        // Legal hold is an absolute veto, and the caller is told so (409, not a crash).
+        await Assert.ThrowsAsync<ConflictException>(() => life.TombstoneAsync(_office, docId));
 
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == docId);
         Assert.Equal("clean", doc.Status); // untouched

@@ -23,6 +23,7 @@ using Korkut.Domain.Outbox;
 using Korkut.Domain.Channels;
 using Korkut.Domain.Settings;
 using Korkut.Domain.Auth;
+using Korkut.Domain.Documents;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;
 
@@ -75,10 +76,11 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Tasks.Add(new WorkTask(office, $"t{i}", null, null, null, DateTimeOffset.UtcNow));
             db.Deadlines.Add(new Deadline(office, $"d{i}", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, DateTimeOffset.UtcNow));
             db.CommunicationNotes.Add(new CommunicationNote(office, $"n{i}", "note", null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
-            var docId = Guid.CreateVersion7();
-            db.Documents.Add(new DocumentEntity { Id = docId, OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
+            var document = new Document(office, null, "korkut-quarantine", $"{office:N}/doc{i}", "f.pdf", "application/pdf", 10, "abc", DateTimeOffset.UtcNow);
+            var docId = document.Id;
+            db.Documents.Add(document);
             db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.DocumentRelations.Add(new DocumentRelationEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, TargetType = "client", TargetId = clientId, IsPrimary = true, CreatedAt = DateTimeOffset.UtcNow });
+            db.DocumentRelations.Add(new DocumentRelation(office, docId, DocumentRelationTarget.Client, clientId, true, null, DateTimeOffset.UtcNow));
             db.Invites.Add(new Invite(office, $"invite{i}@example.com", Roles.Lawyer, $"hash{office:N}{i}", DateTimeOffset.UtcNow.AddDays(7), null, DateTimeOffset.UtcNow));
             db.Invoices.Add(new Invoice(office, 100m, 0.20m, null, null, null, "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));

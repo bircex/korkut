@@ -1,6 +1,8 @@
 using Korkut.Application.Documents.OCR;
+using Korkut.Application.Documents;
 using Korkut.Application.Documents.Storage;
 using Korkut.Application.Upload.Malware;
+using Korkut.Application.Upload.SafeUpload;
 using Korkut.Application.Upload.Validator;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
@@ -46,12 +48,18 @@ public static partial class StorageSetup
         services.AddSingleton<IMalwareScanService, MalwareScannerService>();
         services.AddSingleton<ITextExtractorService, PlainTextExtractorService>();
 
-        // Document services (scoped — they take the per-request DbContext).
-        services.AddScoped<DocumentService>();
+        // Document services (scoped — they take the per-request DbContext). The upload,
+        // relation and lifecycle pipelines are what the Documents use-case orchestrates.
+        services.AddScoped<DocumentStorageService>();
         services.AddScoped<SafeUploadService>();
+        services.AddScoped<ISafeUploadService>(sp => sp.GetRequiredService<SafeUploadService>());
         services.AddScoped<DocumentLifecycleService>();
+        services.AddScoped<IDocumentLifecycleService>(sp => sp.GetRequiredService<DocumentLifecycleService>());
         services.AddScoped<DocumentRelationService>();
+        services.AddScoped<IDocumentRelationService>(sp => sp.GetRequiredService<DocumentRelationService>());
         services.AddScoped<ExtractionService>();
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IDocumentFileService, DocumentFileService>();
 
         services.AddHostedService<EnsureBucketsHostedService>();
         return services;

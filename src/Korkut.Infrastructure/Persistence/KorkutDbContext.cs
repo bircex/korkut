@@ -52,11 +52,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Notes.CommunicationNote> CommunicationNotes => Set<Domain.Notes.CommunicationNote>();
 
-    public DbSet<DocumentEntity> Documents => Set<DocumentEntity>();
+    public DbSet<Domain.Documents.Document> Documents => Set<Domain.Documents.Document>();
 
     public DbSet<DocumentExtractionEntity> DocumentExtractions => Set<DocumentExtractionEntity>();
 
-    public DbSet<DocumentRelationEntity> DocumentRelations => Set<DocumentRelationEntity>();
+    public DbSet<Domain.Documents.DocumentRelation> DocumentRelations => Set<Domain.Documents.DocumentRelation>();
 
     public DbSet<Domain.Invoices.Invoice> Invoices => Set<Domain.Invoices.Invoice>();
 
@@ -168,21 +168,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Outbox.OutboundMessageConfiguration());
 
-        modelBuilder.Entity<DocumentEntity>(b =>
-        {
-            b.ToTable("documents");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Bucket).HasMaxLength(63);
-            b.Property(x => x.ObjectKey).HasMaxLength(100);
-            b.Property(x => x.OriginalFilename).HasMaxLength(500);
-            b.Property(x => x.ContentType).HasMaxLength(200);
-            b.Property(x => x.ChecksumSha256).HasMaxLength(64);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => x.ObjectKey).IsUnique().HasDatabaseName("ux_documents_object_key");
-            b.HasIndex(x => new { x.OfficeId, x.MatterId }).HasDatabaseName("ix_documents_office_matter");
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_documents_office_status");
-        });
+        modelBuilder.ApplyConfiguration(new Documents.DocumentConfiguration());
 
         modelBuilder.Entity<DocumentExtractionEntity>(b =>
         {
@@ -193,7 +179,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.SourceChecksumSha256).HasMaxLength(64);
             b.Property(x => x.SourceObjectKey).HasMaxLength(100);
             // Tenant-aware composite FK to the source document.
-            b.HasOne<DocumentEntity>()
+            b.HasOne<Domain.Documents.Document>()
                 .WithMany()
                 .HasForeignKey(x => new { x.OfficeId, x.DocumentId })
                 .HasPrincipalKey(d => new { d.OfficeId, d.Id })
@@ -204,25 +190,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
                 .HasDatabaseName("ux_doc_extractions_provenance");
         });
 
-        modelBuilder.Entity<DocumentRelationEntity>(b =>
-        {
-            b.ToTable("document_relations");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.TargetType).HasMaxLength(20);
-            // Tenant-aware composite FK to the source document.
-            b.HasOne<DocumentEntity>()
-                .WithMany()
-                .HasForeignKey(x => new { x.OfficeId, x.DocumentId })
-                .HasPrincipalKey(d => new { d.OfficeId, d.Id })
-                .OnDelete(DeleteBehavior.Cascade);
-            // One link per (document, target) — makes multi-linking idempotent.
-            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.TargetType, x.TargetId })
-                .IsUnique()
-                .HasDatabaseName("ux_doc_relations_link");
-            b.HasIndex(x => new { x.OfficeId, x.TargetType, x.TargetId })
-                .HasDatabaseName("ix_doc_relations_target");
-        });
+        modelBuilder.ApplyConfiguration(new Documents.DocumentRelationConfiguration());
 
         modelBuilder.ApplyConfiguration(new Invites.InviteConfiguration());
 

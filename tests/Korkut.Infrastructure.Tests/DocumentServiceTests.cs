@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Documents;
 using Korkut.Domain.Offices;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,7 +33,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private DocumentService Service(KorkutDbContext db) => new(db, minio.StoreService, new Clock());
+    private DocumentStorageService Service(KorkutDbContext db) => new(db, minio.StoreService, new Clock());
 
     [Fact]
     public async Task Stored_document_round_trips_with_a_matching_checksum_and_opaque_key()

@@ -44,7 +44,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
 
     private SafeUploadService Pipeline(KorkutDbContext db, IMalwareScanService? scanner = null)
     {
-        var docs = new DocumentService(db, minio.StoreService, new Clock());
+        var docs = new DocumentStorageService(db, minio.StoreService, new Clock());
         return new SafeUploadService(db, docs, minio.StoreService, new UploadValidatorService(),
             scanner ?? new MalwareScannerService(), new EfAuditLog(db, new Clock()));
     }
@@ -74,7 +74,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         Assert.Equal("clean", doc.Status);
         Assert.Equal(ObjectBuckets.Clean, doc.Bucket);
         // Now downloadable.
-        var url = await new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
+        var url = await new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
         Assert.Contains(doc.ObjectKey, url, StringComparison.Ordinal);
     }
 
@@ -90,7 +90,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("rejected", doc.Status);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 
     [Fact]
@@ -158,6 +158,6 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         Assert.Equal("quarantine", doc.Status);
         // Still not downloadable.
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 }

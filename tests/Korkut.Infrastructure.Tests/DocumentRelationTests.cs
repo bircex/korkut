@@ -1,3 +1,5 @@
+using Korkut.Application.Errors;
+using Korkut.Domain.Documents;
 using Korkut.Domain.Offices;
 using System.Text;
 using Korkut.Application.Documents;
@@ -42,7 +44,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedDocumentAsync(KorkutDbContext db)
     {
-        var stored = await new DocumentService(db, minio.StoreService, new Clock())
+        var stored = await new DocumentStorageService(db, minio.StoreService, new Clock())
             .StoreAsync(_office, null, new MemoryStream("x"u8.ToArray()), "d.txt", "text/plain");
         await db.Documents.Where(x => x.Id == stored.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "clean"), default);
@@ -73,8 +75,8 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var client = await SeedClientAsync(db);
         var matter = await SeedMatterAsync(db);
 
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, client, isPrimary: true);
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Matter, matter, isPrimary: false);
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, client, isPrimary: true);
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Matter, matter, isPrimary: false);
 
         var links = await db.DocumentRelations.AsNoTracking().Where(x => x.DocumentId == doc).ToListAsync();
         Assert.Equal(2, links.Count);
@@ -92,9 +94,9 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var a = await SeedClientAsync(db);
         var b = await SeedClientAsync(db);
 
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, a, isPrimary: true);
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, b, isPrimary: true); // steals primary
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, a, isPrimary: false); // repeat A
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, a, isPrimary: true);
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, b, isPrimary: true); // steals primary
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, a, isPrimary: false); // repeat A
 
         var links = await db.DocumentRelations.AsNoTracking().Where(x => x.DocumentId == doc).ToListAsync();
         Assert.Equal(2, links.Count); // no duplicate row for A
@@ -107,9 +109,9 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         await using var db = pg.NewContext();
         var doc = await SeedDocumentAsync(db);
         var client = await SeedClientAsync(db);
-        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, client, isPrimary: false);
+        await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, client, isPrimary: false);
 
-        await Relations(db).UnlinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, client);
+        await Relations(db).UnlinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, client);
 
         Assert.Equal(0, await db.DocumentRelations.CountAsync(x => x.DocumentId == doc));
         Assert.Equal(1, await db.AuditEvents.CountAsync(x => x.Action == "document.relation.unlinked"));
@@ -122,8 +124,8 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var doc = await SeedDocumentAsync(db);
         var strangerClient = Guid.CreateVersion7(); // never created in this office
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, strangerClient, isPrimary: false));
+        await Assert.ThrowsAsync<NotFoundException>(
+            () => Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, strangerClient, isPrimary: false));
         Assert.Equal(0, await db.DocumentRelations.CountAsync(x => x.DocumentId == doc));
     }
 
@@ -134,10 +136,10 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var d1 = await SeedDocumentAsync(db);
         var d2 = await SeedDocumentAsync(db);
         var matter = await SeedMatterAsync(db);
-        await Relations(db).LinkAsync(_office, _actor, d1, DocumentRelationTargets.Matter, matter, isPrimary: true);
-        await Relations(db).LinkAsync(_office, _actor, d2, DocumentRelationTargets.Matter, matter, isPrimary: true);
+        await Relations(db).LinkAsync(_office, _actor, d1, DocumentRelationTarget.Matter, matter, isPrimary: true);
+        await Relations(db).LinkAsync(_office, _actor, d2, DocumentRelationTarget.Matter, matter, isPrimary: true);
 
-        var reachable = await Relations(db).DocumentsForTargetAsync(_office, DocumentRelationTargets.Matter, matter);
+        var reachable = await Relations(db).DocumentsForTargetAsync(_office, DocumentRelationTarget.Matter, matter);
         Assert.Equal([d1, d2], reachable.OrderBy(x => x).ToArray().OrderBy(x => x));
         Assert.Contains(d1, reachable);
         Assert.Contains(d2, reachable);
@@ -154,7 +156,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         {
             doc = await SeedDocumentAsync(db);
             client = await SeedClientAsync(db);
-            await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTargets.Client, client, isPrimary: false);
+            await Relations(db).LinkAsync(_office, _actor, doc, DocumentRelationTarget.Client, client, isPrimary: false);
         }
 
         await using var app = pg.NewAppContext();

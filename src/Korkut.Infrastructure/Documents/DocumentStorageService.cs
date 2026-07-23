@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.Storage;
-using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
+using Korkut.Domain.Documents;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Documents;
 
 public sealed record StoredDocument(Guid Id, string ObjectKey, string ChecksumSha256, long Size);
 
@@ -18,7 +18,7 @@ public sealed record ReconcileReport(IReadOnlyList<Guid> DbRowsMissingObject, IR
 /// short-lived; the caller enforces permission first. Reconciliation finds DB↔object
 /// drift so the two stores can be reconverified (KDM-025).
 /// </summary>
-public sealed class DocumentService(KorkutDbContext db, IObjectStoreService objectStoreService, IClock clock)
+public sealed class DocumentStorageService(KorkutDbContext db, IObjectStoreService objectStoreService, IClock clock)
 {
     public async Task<StoredDocument> StoreAsync(
         Guid officeId, Guid? ownerId, Stream content, string filename, string contentType, CancellationToken ct = default)
@@ -33,35 +33,25 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStoreService obje
         var key = ObjectBuckets.NewKey();
         await objectStoreService.PutAsync(ObjectBuckets.Quarantine, key, buffer, buffer.Length, contentType, ct);
 
-        var doc = new DocumentEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            OwnerId = ownerId,
-            Bucket = ObjectBuckets.Quarantine,
-            ObjectKey = key,
-            OriginalFilename = filename, // in the DB only, never in the key
-            ContentType = contentType,
-            Size = buffer.Length,
-            ChecksumSha256 = checksum,
-            Status = "quarantine",
-            CreatedAt = clock.UtcNow,
-        };
+        var doc = new Document(
+            officeId, ownerId, ObjectBuckets.Quarantine, key,
+            filename, // in the DB only, never in the key
+            contentType, buffer.Length, checksum, clock.UtcNow);
         db.Documents.Add(doc);
         await db.SaveChangesAsync(ct);
         return new StoredDocument(doc.Id, key, checksum, doc.Size);
     }
 
     /// <summary>Active (non-tombstoned) documents, newest first; optionally scoped to a matter.</summary>
-    public Task<List<DocumentEntity>> ListAsync(Guid officeId, Guid? matterId = null, CancellationToken ct = default)
+    public Task<List<Document>> ListAsync(Guid officeId, Guid? matterId = null, CancellationToken ct = default)
         => db.Documents.AsNoTracking()
-            .Where(x => x.OfficeId == officeId && x.Status != "tombstoned" && (matterId == null || x.MatterId == matterId))
+            .Where(x => x.OfficeId == officeId && x.Status != DocumentStatus.Tombstoned && (matterId == null || x.MatterId == matterId))
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
 
-    public Task<DocumentEntity?> GetAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
+    public Task<Document?> GetAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
         => db.Documents.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId && x.Status != "tombstoned", ct);
+            .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId && x.Status != DocumentStatus.Tombstoned, ct);
 
     /// <summary>Short-lived presigned GET. The caller MUST have checked permission first.</summary>
     public async Task<string> PresignAsync(Guid officeId, Guid documentId, TimeSpan expiry, CancellationToken ct = default)
@@ -70,7 +60,7 @@ public sealed class DocumentService(KorkutDbContext db, IObjectStoreService obje
             .FirstOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
             ?? throw new InvalidOperationException("Document not found in this office.");
         // No download/preview/OCR until the document is proven clean (KDM-026).
-        if (doc.Status != "clean")
+        if (!doc.IsDownloadable)
         {
             throw new InvalidOperationException($"Document is not downloadable in state '{doc.Status}'.");
         }

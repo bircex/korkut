@@ -690,7 +690,7 @@
         "format": "binary",
         "type": "string"
       },
-      "LinkRequest": {
+      "LinkDocumentRequest": {
         "properties": {
           "is_primary": {
             "type": "boolean"
@@ -1933,7 +1933,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       },
       "post": {
@@ -1946,9 +1946,6 @@
                     "$ref": "#/components/schemas/IFormFile"
                   }
                 },
-                "required": [
-                  "file"
-                ],
                 "type": "object"
               }
             }
@@ -1961,7 +1958,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -1984,7 +1981,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -2007,7 +2004,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -2026,9 +2023,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkRequest"
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
               }
             }
           },
@@ -2040,7 +2047,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       },
       "post": {
@@ -2057,9 +2064,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkRequest"
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
               }
             }
           },
@@ -2071,7 +2088,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -3482,6 +3499,9 @@
     },
     {
       "name": "Expenses"
+    },
+    {
+      "name": "Documents"
     },
     {
       "name": "Deadlines"

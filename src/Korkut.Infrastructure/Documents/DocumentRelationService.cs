@@ -1,20 +1,12 @@
 using Korkut.Application.Auditing;
-using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
+using Korkut.Application.Documents;
+using Korkut.Application.Errors;
+using Korkut.Domain.Documents;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
-
-/// <summary>The kinds of tenant entity a document may be linked to (KDM-028).</summary>
-public static class DocumentRelationTargets
-{
-    public const string Client = "client";
-    public const string Matter = "matter";
-    public const string Party = "party";
-
-    public static bool IsValid(string type) => type is Client or Matter or Party;
-}
+namespace Korkut.Infrastructure.Documents;
 
 /// <summary>
 /// Manages typed document ⇄ (client|matter|party) relations (KDM-028). Every link and
@@ -27,7 +19,7 @@ public static class DocumentRelationTargets
 /// </list>
 /// At most one relation per document is the primary context.
 /// </summary>
-public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit, IClock clock)
+public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit, IClock clock) : IDocumentRelationService
 {
     /// <summary>
     /// Links a document to a target. Fails if either side is missing in this office.
@@ -36,9 +28,9 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
     public async Task<Guid> LinkAsync(
         Guid officeId, Guid actorId, Guid documentId, string targetType, Guid targetId, bool isPrimary, CancellationToken ct = default)
     {
-        if (!DocumentRelationTargets.IsValid(targetType))
+        if (!DocumentRelationTarget.IsValid(targetType))
         {
-            throw new ArgumentException($"Unknown target type '{targetType}'.", nameof(targetType));
+            throw new BadRequestException("Geçersiz bağlantı türü.");
         }
 
         // Authorization: both the document and the target must belong to this office.
@@ -57,7 +49,7 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
         if (existing is not null)
         {
             var before = new { existing.IsPrimary };
-            existing.IsPrimary = isPrimary;
+            existing.SetPrimary(isPrimary);
             await db.SaveChangesAsync(ct);
             await audit.WriteAsync(new AuditEntry(
                 officeId, actorId, null, null, "document.relation.updated", "document_relation", existing.Id,
@@ -65,17 +57,8 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
             return existing.Id;
         }
 
-        var relation = new DocumentRelationEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            DocumentId = documentId,
-            TargetType = targetType,
-            TargetId = targetId,
-            IsPrimary = isPrimary,
-            CreatedBy = actorId,
-            CreatedAt = clock.UtcNow,
-        };
+        var relation = new DocumentRelation(
+            officeId, documentId, targetType, targetId, isPrimary, actorId, clock.UtcNow);
         db.DocumentRelations.Add(relation);
         await db.SaveChangesAsync(ct);
 
@@ -90,7 +73,7 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
     {
         var relation = await db.DocumentRelations.SingleOrDefaultAsync(
             x => x.OfficeId == officeId && x.DocumentId == documentId && x.TargetType == targetType && x.TargetId == targetId,
-            ct) ?? throw new InvalidOperationException("Relation not found.");
+            ct) ?? throw new NotFoundException("Bağlantı bulunamadı.");
 
         db.DocumentRelations.Remove(relation);
         await db.SaveChangesAsync(ct);
@@ -120,7 +103,7 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
         var ok = await db.Documents.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == documentId, ct);
         if (!ok)
         {
-            throw new InvalidOperationException("Document not found in this office.");
+            throw new NotFoundException("Belge bulunamadı.");
         }
     }
 
@@ -128,14 +111,14 @@ public sealed class DocumentRelationService(KorkutDbContext db, IAuditLog audit,
     {
         var ok = targetType switch
         {
-            DocumentRelationTargets.Client => await db.Clients.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
-            DocumentRelationTargets.Matter => await db.Matters.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
-            DocumentRelationTargets.Party => await db.Parties.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
+            DocumentRelationTarget.Client => await db.Clients.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
+            DocumentRelationTarget.Matter => await db.Matters.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
+            DocumentRelationTarget.Party => await db.Parties.AsNoTracking().AnyAsync(x => x.OfficeId == officeId && x.Id == targetId, ct),
             _ => false,
         };
         if (!ok)
         {
-            throw new InvalidOperationException($"{targetType} target not found in this office.");
+            throw new NotFoundException("Bağlanacak kayıt bulunamadı.");
         }
     }
 }
