@@ -63,9 +63,9 @@ public static class DomainSetup
         // Reports (Clean Architecture: aggregation port + service; finance composed from IFinanceService).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IReportsRepository, Korkut.Infrastructure.Persistence.Repositories.ReportsRepository>();
         services.AddScoped<Korkut.Application.Features.Reports.IReportsService, Korkut.Application.Features.Reports.ReportsService>();
-        // Channels (Clean Architecture: repository port + service; secrets encrypted in the adapter).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IChannelRepository, Korkut.Infrastructure.Persistence.Repositories.ChannelRepository>();
-        services.AddScoped<Korkut.Application.Features.Channels.IChannelService, Korkut.Application.Features.Channels.ChannelService>();
+        // Channels (Clean Architecture: repository port + service; secrets encrypted in the service).
+        services.AddScoped<Korkut.Application.Channels.IChannelRepository, Korkut.Infrastructure.Channels.ChannelRepository>();
+        services.AddScoped<Korkut.Application.Channels.IChannelService, Korkut.Application.Channels.ChannelService>();
         // Template overrides (Clean Architecture: repository port + service).
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         // Outbox review queue (Clean Architecture: repository port + service; distinct from

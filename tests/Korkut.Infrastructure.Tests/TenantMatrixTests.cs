@@ -18,6 +18,7 @@ using Korkut.Domain.Expenses;
 using Korkut.Domain.Correspondence;
 using Korkut.Domain.Calendar;
 using Korkut.Domain.Outbox;
+using Korkut.Domain.Channels;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -85,7 +86,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             if (i == 0)
             {
                 db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
-                db.Channels.Add(new ChannelEntity { OfficeId = office, Kind = "email", UpdatedAt = DateTimeOffset.UtcNow }); // one per office (per-kind PK)
+                db.Channels.Add(new Channel(office, "email")); // one per office (per-kind PK)
             }
         }
 

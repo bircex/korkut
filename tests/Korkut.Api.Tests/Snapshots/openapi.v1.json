@@ -550,28 +550,6 @@
         ],
         "type": "object"
       },
-      "EmailChannelInput": {
-        "properties": {
-          "app_password": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "from_address": {
-            "maxLength": "320",
-            "type": "string"
-          },
-          "from_name": {
-            "maxLength": "200",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "ExportRequest": {
         "properties": {
           "format": {
@@ -828,6 +806,60 @@
         ],
         "type": "object"
       },
+      "SaveEmailChannelRequest": {
+        "properties": {
+          "app_password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "from_address": {
+            "maxLength": "320",
+            "type": "string"
+          },
+          "from_name": {
+            "maxLength": "200",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SaveTelegramChannelRequest": {
+        "properties": {
+          "bot_token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "SaveWhatsAppChannelRequest": {
+        "properties": {
+          "base_url": {
+            "maxLength": "400",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "StyleFieldsDto": {
         "properties": {
           "boilerplate": {
@@ -865,20 +897,6 @@
           "tone",
           "boilerplate"
         ],
-        "type": "object"
-      },
-      "TelegramChannelInput": {
-        "properties": {
-          "bot_token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          }
-        },
         "type": "object"
       },
       "TotpRequest": {
@@ -1072,24 +1090,6 @@
         "required": [
           "status"
         ],
-        "type": "object"
-      },
-      "WhatsAppChannelInput": {
-        "properties": {
-          "base_url": {
-            "maxLength": "400",
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
         "type": "object"
       }
     }
@@ -1514,15 +1514,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       },
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EmailChannelInput"
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
               }
             }
           },
@@ -1534,7 +1544,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -1542,9 +1552,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TelegramChannelInput"
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
               }
             }
           },
@@ -1556,7 +1576,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -1564,9 +1584,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WhatsAppChannelInput"
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
               }
             }
           },
@@ -1578,7 +1608,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -2288,7 +2318,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       }
     },
@@ -2310,7 +2340,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       },
       "post": {
@@ -2330,7 +2360,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       }
     },
@@ -3306,6 +3336,12 @@
     },
     {
       "name": "Clients"
+    },
+    {
+      "name": "Channels"
+    },
+    {
+      "name": "Integrations"
     },
     {
       "name": "Calendar"

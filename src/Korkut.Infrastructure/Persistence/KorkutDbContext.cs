@@ -72,7 +72,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<MemoryItemEntity> MemoryItems => Set<MemoryItemEntity>();
 
-    public DbSet<ChannelEntity> Channels => Set<ChannelEntity>();
+    public DbSet<Domain.Channels.Channel> Channels => Set<Domain.Channels.Channel>();
 
 
     // Conversations, chat_messages, generated_documents, document_versions moved to the
@@ -200,18 +200,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_memory_items_office_status");
         });
 
-        modelBuilder.Entity<ChannelEntity>(b =>
-        {
-            b.ToTable("channels");
-            b.HasKey(x => new { x.OfficeId, x.Kind }); // one config per kind per office
-            b.Property(x => x.Kind).HasMaxLength(20);
-            b.Property(x => x.FromAddress).HasMaxLength(320);
-            b.Property(x => x.FromName).HasMaxLength(200);
-            b.Property(x => x.BaseUrl).HasMaxLength(400);
-            b.Property(x => x.LinkedId).HasMaxLength(200);
-            b.Property(x => x.LinkCode).HasMaxLength(40);
-        });
-
+        modelBuilder.ApplyConfiguration(new Channels.ChannelConfiguration());
 
         modelBuilder.ApplyConfiguration(new Outbox.OutboundMessageConfiguration());
 
