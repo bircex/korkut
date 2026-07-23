@@ -32,11 +32,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Invites.Invite> Invites => Set<Domain.Invites.Invite>();
 
-    public DbSet<UserTotpEntity> UserTotps => Set<UserTotpEntity>();
+    public DbSet<Domain.Auth.UserTotp> UserTotps => Set<Domain.Auth.UserTotp>();
 
-    public DbSet<RecoveryCodeEntity> RecoveryCodes => Set<RecoveryCodeEntity>();
+    public DbSet<Domain.Auth.RecoveryCode> RecoveryCodes => Set<Domain.Auth.RecoveryCode>();
 
-    public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
+    public DbSet<Domain.Auth.RefreshToken> RefreshTokens => Set<Domain.Auth.RefreshToken>();
 
     public DbSet<Domain.OfficeRoles.OfficeRole> OfficeCustomRoles => Set<Domain.OfficeRoles.OfficeRole>();
 
@@ -137,34 +137,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Auth.PasswordResetTokenConfiguration());
 
-        modelBuilder.Entity<UserTotpEntity>(b =>
-        {
-            b.ToTable("user_totp");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.EncryptedSecret).HasMaxLength(500);
-            // One TOTP enrollment per user.
-            b.HasIndex(x => new { x.OfficeId, x.UserId }).IsUnique().HasDatabaseName("ux_user_totp_office_user");
-        });
+        modelBuilder.ApplyConfiguration(new Auth.UserTotpConfiguration());
 
-        modelBuilder.Entity<RecoveryCodeEntity>(b =>
-        {
-            b.ToTable("recovery_codes");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.CodeHash).HasMaxLength(100);
-            b.HasIndex(x => new { x.OfficeId, x.UserId }).HasDatabaseName("ix_recovery_codes_office_user");
-        });
+        modelBuilder.ApplyConfiguration(new Auth.RecoveryCodeConfiguration());
 
-        modelBuilder.Entity<RefreshTokenEntity>(b =>
-        {
-            b.ToTable("refresh_tokens");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.TokenHash).HasMaxLength(100);
-            b.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("ux_refresh_tokens_hash");
-            b.HasIndex(x => x.FamilyId).HasDatabaseName("ix_refresh_tokens_family");
-        });
+        modelBuilder.ApplyConfiguration(new Auth.RefreshTokenConfiguration());
 
         modelBuilder.ApplyConfiguration(new OfficeRoles.OfficeRoleConfiguration());
 

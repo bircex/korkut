@@ -114,9 +114,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var uid = user.Id;
             db.Users.Add(user);
             db.PasswordResetTokens.Add(new PasswordResetToken(office, uid, $"h{office:N}{i}", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow));
-            db.UserTotps.Add(new UserTotpEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, EncryptedSecret = $"enc{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.RecoveryCodes.Add(new RecoveryCodeEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, CodeHash = $"rc{office:N}{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.RefreshTokens.Add(new RefreshTokenEntity { Id = Guid.CreateVersion7(), FamilyId = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"rt{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(14), CreatedAt = DateTimeOffset.UtcNow });
+            db.UserTotps.Add(new UserTotp(office, uid, $"enc{i}", DateTimeOffset.UtcNow));
+            db.RecoveryCodes.Add(new RecoveryCode(office, uid, $"rc{office:N}{i}", DateTimeOffset.UtcNow));
+            db.RefreshTokens.Add(new RefreshToken(Guid.CreateVersion7(), Guid.CreateVersion7(), office, uid, $"rt{office:N}{i}", DateTimeOffset.UtcNow.AddDays(14), DateTimeOffset.UtcNow));
             db.OfficeCustomRoles.Add(new OfficeRole(office, $"role{i}", "R", ["matters.read"], DateTimeOffset.UtcNow));
         }
 

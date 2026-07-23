@@ -3,7 +3,7 @@ using Korkut.Application.Auth;
 using Korkut.Application.Security;
 using Korkut.Domain.Common;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Auth;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,19 +40,11 @@ public sealed class TwoFactorService(
         var existing = await db.UserTotps.FirstOrDefaultAsync(x => x.OfficeId == officeId && x.UserId == userId, ct);
         if (existing is null)
         {
-            db.UserTotps.Add(new UserTotpEntity
-            {
-                Id = UuidV7.NewId(), OfficeId = officeId, UserId = userId,
-                EncryptedSecret = encryptor.Encrypt(secret), Enabled = false, CreatedAt = clock.UtcNow,
-            });
-        }
-        else if (!existing.Enabled)
-        {
-            existing.EncryptedSecret = encryptor.Encrypt(secret); // re-roll pending secret
+            db.UserTotps.Add(new UserTotp(officeId, userId, encryptor.Encrypt(secret), clock.UtcNow));
         }
         else
         {
-            throw new InvalidOperationException("TOTP already enrolled; reset first.");
+            existing.ReplacePendingSecret(encryptor.Encrypt(secret)); // re-roll; refused once enrolled
         }
 
         await db.SaveChangesAsync(ct);
@@ -75,20 +67,14 @@ public sealed class TwoFactorService(
             return (TwoFactorResult.InvalidCode, []);
         }
 
-        totp.Enabled = true;
-        totp.ConfirmedAt = clock.UtcNow;
-        totp.LastUsedStep = step.Value;
+        totp.Confirm(step.Value, clock.UtcNow);
 
         var raw = new List<string>();
         for (var i = 0; i < RecoveryCodeCount; i++)
         {
             var codeRaw = tokenHasher.NewRawToken();
             raw.Add(codeRaw);
-            db.RecoveryCodes.Add(new RecoveryCodeEntity
-            {
-                Id = UuidV7.NewId(), OfficeId = officeId, UserId = userId,
-                CodeHash = tokenHasher.Hash(codeRaw), CreatedAt = clock.UtcNow,
-            });
+            db.RecoveryCodes.Add(new RecoveryCode(officeId, userId, tokenHasher.Hash(codeRaw), clock.UtcNow));
         }
 
         await db.SaveChangesAsync(ct);
@@ -118,12 +104,12 @@ public sealed class TwoFactorService(
         }
 
         // Replay guard: a code (step) already accepted cannot be used again.
-        if (step.Value <= totp.LastUsedStep)
+        if (totp.IsReplay(step.Value))
         {
             return TwoFactorResult.Replay;
         }
 
-        totp.LastUsedStep = step.Value;
+        totp.RecordAcceptedStep(step.Value);
         await db.SaveChangesAsync(ct);
         return TwoFactorResult.Success;
     }
