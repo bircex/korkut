@@ -1,7 +1,7 @@
 {
   "components": {
     "schemas": {
-      "CalendarEventCreateRequest": {
+      "CreateCalendarEventRequest": {
         "properties": {
           "all_day": {
             "type": "boolean"
@@ -97,112 +97,6 @@
           "title",
           "start_at"
         ],
-        "type": "object"
-      },
-      "CalendarEventPatchRequest": {
-        "properties": {
-          "all_day": {
-            "type": [
-              "null",
-              "boolean"
-            ]
-          },
-          "assignee_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "end_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "location": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "remind_before_min": {
-            "format": "int32",
-            "maximum": "40320",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ]
-          },
-          "result": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "rrule": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "start_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "scheduled|done|cancelled",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "type": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
         "type": "object"
       },
       "CreateClientRequest": {
@@ -1026,6 +920,112 @@
         },
         "type": "object"
       },
+      "UpdateCalendarEventRequest": {
+        "properties": {
+          "all_day": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "remind_before_min": {
+            "format": "int32",
+            "maximum": "40320",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "result": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rrule": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "start_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "scheduled|done|cancelled",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "UpdateClientRequest": {
         "properties": {
           "email": {
@@ -1404,15 +1404,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CalendarEventCreateRequest"
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
               }
             }
           },
@@ -1424,7 +1434,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -1447,7 +1457,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       },
       "patch": {
@@ -1464,9 +1474,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CalendarEventPatchRequest"
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
               }
             }
           },
@@ -1478,7 +1498,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -1504,7 +1524,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -3392,6 +3412,9 @@
     },
     {
       "name": "Clients"
+    },
+    {
+      "name": "Calendar"
     }
   ]
 }

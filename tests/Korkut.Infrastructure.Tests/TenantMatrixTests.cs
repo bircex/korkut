@@ -16,6 +16,7 @@ using Korkut.Domain.Notes;
 using Korkut.Domain.Invoices;
 using Korkut.Domain.Expenses;
 using Korkut.Domain.Correspondence;
+using Korkut.Domain.Calendar;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -74,7 +75,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Invoices.Add(new Invoice(office, 100m, 0.20m, null, null, null, "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Correspondence.Add(new CorrespondenceItem(office, "incoming", $"e{i}", null, null, null, null, DateTimeOffset.UtcNow));
-            db.CalendarEvents.Add(new CalendarEventEntity { Id = Guid.CreateVersion7(), OfficeId = office, Category = "appointment", Title = $"cal{i}", StartAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
+            db.CalendarEvents.Add(new CalendarEvent(office, "appointment", $"cal{i}", DateTimeOffset.UtcNow, null, false, null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
             db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
             db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
             db.TemplateOverrides.Add(new TemplateOverrideEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), Kind = "dilekce", TypeId = $"t{i}", Content = "x", UpdatedAt = DateTimeOffset.UtcNow });

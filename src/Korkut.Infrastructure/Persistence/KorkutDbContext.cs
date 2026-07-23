@@ -64,7 +64,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Correspondence.CorrespondenceItem> Correspondence => Set<Domain.Correspondence.CorrespondenceItem>();
 
-    public DbSet<CalendarEventEntity> CalendarEvents => Set<CalendarEventEntity>();
+    public DbSet<Domain.Calendar.CalendarEvent> CalendarEvents => Set<Domain.Calendar.CalendarEvent>();
 
     public DbSet<PersonaEntity> Personas => Set<PersonaEntity>();
 
@@ -163,22 +163,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Correspondence.CorrespondenceConfiguration());
 
-        modelBuilder.Entity<CalendarEventEntity>(b =>
-        {
-            b.ToTable("calendar_events");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Category).HasMaxLength(20);
-            b.Property(x => x.Type).HasMaxLength(100);
-            b.Property(x => x.Title).HasMaxLength(500);
-            b.Property(x => x.Location).HasMaxLength(400);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.Property(x => x.Result).HasMaxLength(1000);
-            b.Property(x => x.Notes).HasMaxLength(2000);
-            b.Property(x => x.Rrule).HasMaxLength(400);
-            b.Property(x => x.ReminderStatus).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.StartAt }).HasDatabaseName("ix_calendar_events_office_start");
-        });
+        modelBuilder.ApplyConfiguration(new Calendar.CalendarEventConfiguration());
 
         modelBuilder.Entity<PersonaEntity>(b =>
         {
