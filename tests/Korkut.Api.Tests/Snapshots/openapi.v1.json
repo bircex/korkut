@@ -237,6 +237,57 @@
         ],
         "type": "object"
       },
+      "CreateCorrespondenceRequest": {
+        "properties": {
+          "direction": {
+            "pattern": "incoming|outgoing|internal",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "doc_date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference_no": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "direction",
+          "title"
+        ],
+        "type": "object"
+      },
       "CreateDeadlineRequest": {
         "properties": {
           "due_date": {
@@ -592,57 +643,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "EvrakCreateRequest": {
-        "properties": {
-          "direction": {
-            "pattern": "incoming|outgoing|internal",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "doc_date": {
-            "format": "date",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "reference_no": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "direction",
-          "title"
-        ],
         "type": "object"
       },
       "ExportRequest": {
@@ -2020,15 +2020,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EvrakCreateRequest"
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
               }
             }
           },
@@ -2040,7 +2050,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       }
     },
@@ -2063,7 +2073,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       }
     },
@@ -3376,6 +3386,9 @@
     },
     {
       "name": "Deadlines"
+    },
+    {
+      "name": "Correspondence"
     },
     {
       "name": "Clients"

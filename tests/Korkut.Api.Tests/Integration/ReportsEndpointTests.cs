@@ -8,6 +8,7 @@ using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
 using Korkut.Domain.Tasks;
 using Korkut.Domain.Deadlines;
+using Korkut.Domain.Correspondence;
 
 namespace Korkut.Api.Tests;
 
@@ -53,9 +54,9 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
             db.Deadlines.Add(new Deadline(office, "d-upcoming", today.AddDays(5), "internal", null, "Europe/Istanbul", 0, now));
             db.Deadlines.Add(new Deadline(office, "d-overdue", today.AddDays(-3), "internal", null, "Europe/Istanbul", 0, now));
 
-            db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = "e1", CreatedAt = now });
-            db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = "e2", CreatedAt = now });
-            db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "outgoing", Title = "e3", CreatedAt = now });
+            db.Correspondence.Add(new CorrespondenceItem(office, "incoming", "e1", null, null, null, null, now));
+            db.Correspondence.Add(new CorrespondenceItem(office, "incoming", "e2", null, null, null, null, now));
+            db.Correspondence.Add(new CorrespondenceItem(office, "outgoing", "e3", null, null, null, null, now));
             await db.SaveChangesAsync();
         }
 

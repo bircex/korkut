@@ -1,13 +1,13 @@
-using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Correspondence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Persistence.Configurations;
+namespace Korkut.Infrastructure.Correspondence;
 
-/// <summary>EF mapping for the correspondence register — split out of OnModelCreating (Clean Architecture layout).</summary>
-public sealed class CorrespondenceConfiguration : IEntityTypeConfiguration<CorrespondenceEntity>
+/// <summary>EF mapping for the correspondence register (table/columns unchanged).</summary>
+public sealed class CorrespondenceConfiguration : IEntityTypeConfiguration<CorrespondenceItem>
 {
-    public void Configure(EntityTypeBuilder<CorrespondenceEntity> builder)
+    public void Configure(EntityTypeBuilder<CorrespondenceItem> builder)
     {
         builder.ToTable("correspondence");
         builder.HasKey(x => x.Id);
