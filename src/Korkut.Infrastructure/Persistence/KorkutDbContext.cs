@@ -74,7 +74,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<ChannelEntity> Channels => Set<ChannelEntity>();
 
-    public DbSet<TemplateOverrideEntity> TemplateOverrides => Set<TemplateOverrideEntity>();
 
     // Conversations, chat_messages, generated_documents, document_versions moved to the
     // Agent DB (AgentDbContext, schema korkut_agent).
@@ -213,18 +212,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.Property(x => x.LinkCode).HasMaxLength(40);
         });
 
-        modelBuilder.Entity<TemplateOverrideEntity>(b =>
-        {
-            b.ToTable("template_overrides");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Scope).HasMaxLength(10);
-            b.Property(x => x.Kind).HasMaxLength(20);
-            b.Property(x => x.TypeId).HasMaxLength(100);
-            // One override per (office, scope, user, kind, type).
-            b.HasIndex(x => new { x.OfficeId, x.Scope, x.UserId, x.Kind, x.TypeId })
-                .IsUnique().HasDatabaseName("ux_template_overrides_key");
-        });
 
         modelBuilder.Entity<OutboundMessageEntity>(b =>
         {

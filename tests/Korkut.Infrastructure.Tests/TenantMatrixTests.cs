@@ -78,7 +78,6 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.CalendarEvents.Add(new CalendarEvent(office, "appointment", $"cal{i}", DateTimeOffset.UtcNow, null, false, null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
             db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
             db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
-            db.TemplateOverrides.Add(new TemplateOverrideEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), Kind = "dilekce", TypeId = $"t{i}", Content = "x", UpdatedAt = DateTimeOffset.UtcNow });
             db.OutboundMessages.Add(new OutboundMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "email", ToAddr = $"to{i}@x.test", Subject = "s", Body = "b", Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
             // conversations/chat_messages/generated_documents/document_versions live in the
             // Agent DB now — seeded + isolation-checked in AgentTenantIsolationTests.
