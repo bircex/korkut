@@ -27,6 +27,7 @@ using Korkut.Domain.Channels;
 using Korkut.Domain.Settings;
 using Korkut.Domain.Auth;
 using Korkut.Domain.Auditing;
+using Korkut.Domain.OfficeRoles;
 using Korkut.Domain.Documents;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;
@@ -116,7 +117,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.UserTotps.Add(new UserTotpEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, EncryptedSecret = $"enc{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.RecoveryCodes.Add(new RecoveryCodeEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, CodeHash = $"rc{office:N}{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.RefreshTokens.Add(new RefreshTokenEntity { Id = Guid.CreateVersion7(), FamilyId = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"rt{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(14), CreatedAt = DateTimeOffset.UtcNow });
-            db.OfficeCustomRoles.Add(new OfficeCustomRoleEntity { Id = Guid.CreateVersion7(), OfficeId = office, Key = $"role{i}", Name = "R", Permissions = ["matters.read"], CreatedAt = DateTimeOffset.UtcNow });
+            db.OfficeCustomRoles.Add(new OfficeRole(office, $"role{i}", "R", ["matters.read"], DateTimeOffset.UtcNow));
         }
 
         await db.SaveChangesAsync();

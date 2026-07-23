@@ -38,7 +38,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
 
-    public DbSet<OfficeCustomRoleEntity> OfficeCustomRoles => Set<OfficeCustomRoleEntity>();
+    public DbSet<Domain.OfficeRoles.OfficeRole> OfficeCustomRoles => Set<Domain.OfficeRoles.OfficeRole>();
 
     public DbSet<Domain.Clients.Client> Clients => Set<Domain.Clients.Client>();
 
@@ -184,16 +184,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => x.FamilyId).HasDatabaseName("ix_refresh_tokens_family");
         });
 
-        modelBuilder.Entity<OfficeCustomRoleEntity>(b =>
-        {
-            b.ToTable("office_custom_roles");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Key).HasMaxLength(50);
-            b.Property(x => x.Name).HasMaxLength(200);
-            b.Property(x => x.Permissions).HasColumnType("text[]");
-            b.HasIndex(x => new { x.OfficeId, x.Key }).IsUnique().HasDatabaseName("ux_custom_roles_office_key");
-        });
+        modelBuilder.ApplyConfiguration(new OfficeRoles.OfficeRoleConfiguration());
 
         SnakeCaseNaming.Apply(modelBuilder);
 
