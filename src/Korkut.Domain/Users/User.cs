@@ -71,6 +71,13 @@ public sealed class User : Entity, ITenantOwned, IAggregateRoot
     /// <summary>False while the account is locked out.</summary>
     public bool IsActive => LockoutEnd is null;
 
+    /// <summary>Updates the fields a person may change about themselves.</summary>
+    public void UpdateProfile(string? fullName, string? barRegistryNo)
+    {
+        FullName = fullName;
+        BarRegistryNo = barRegistryNo;
+    }
+
     /// <summary>Changes the role; the rotated stamp revokes sessions carrying the old one.</summary>
     public void ChangeRole(string role)
     {

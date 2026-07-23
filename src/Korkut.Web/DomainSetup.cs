@@ -30,6 +30,12 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Hearings.IHearingRepository, Korkut.Infrastructure.Hearings.HearingRepository>();
         services.AddScoped<Korkut.Application.Clients.IClientService, Korkut.Application.Clients.ClientService>();
 
+        // Offices (the tenant root: platform-admin management, cross-tenant by design) and
+        // the caller's own profile.
+        services.AddScoped<Korkut.Application.Offices.IOfficeRepository, Korkut.Infrastructure.Offices.OfficeRepository>();
+        services.AddScoped<Korkut.Application.Offices.IOfficeAdminService, Korkut.Application.Offices.OfficeAdminService>();
+        services.AddScoped<Korkut.Application.Users.IProfileService, Korkut.Application.Users.ProfileService>();
+
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
         // every application service runs inside.
         services.AddHttpContextAccessor();

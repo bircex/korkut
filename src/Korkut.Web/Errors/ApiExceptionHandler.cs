@@ -26,6 +26,7 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
             // which cannot reference ApiException) → the same 404 / 400 { detail } contract.
             NotFoundException notFound => (StatusCodes.Status404NotFound, notFound.Detail),
             BadRequestException badRequest => (StatusCodes.Status400BadRequest, badRequest.Detail),
+            UnauthorizedException unauthorized => (StatusCodes.Status401Unauthorized, unauthorized.Detail),
             ForbiddenException forbidden => (StatusCodes.Status403Forbidden, forbidden.Detail),
             ConflictException conflict => (StatusCodes.Status409Conflict, conflict.Detail),
             // No model provider configured / a model call failed → 503 (the client retries later).

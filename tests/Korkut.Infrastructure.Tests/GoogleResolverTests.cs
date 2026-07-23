@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Application.Security;
@@ -24,8 +25,10 @@ public class GoogleResolverTests(PostgresFixture pg) : IClassFixture<PostgresFix
         _officeBDisabled = Guid.CreateVersion7();
 
         await using var db = pg.NewContext(); // superuser seed
-        db.Offices.Add(new OfficeEntity { Id = _officeA, Name = "A", CreatedAt = DateTimeOffset.UtcNow });
-        db.Offices.Add(new OfficeEntity { Id = _officeBDisabled, Name = "B", Disabled = true, CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_officeA, "A", DateTimeOffset.UtcNow));
+        var disabledOffice = new Office(_officeBDisabled, "B", DateTimeOffset.UtcNow);
+        disabledOffice.Disable();
+        db.Offices.Add(disabledOffice);
         var linked = new User(_officeA, "linked@x.test", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
         linked.LinkGoogle("sub-linked");
         linked.EnableTwoFactor();

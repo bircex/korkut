@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Application.Security;
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
@@ -46,8 +47,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         // Seed via superuser (RLS bypassed): A owns 1 matter+1 hearing, B owns 2+2.
         await using var db = pg.NewContext();
         db.Offices.AddRange(
-            new OfficeEntity { Id = _a, Name = "A", CreatedAt = DateTimeOffset.UtcNow },
-            new OfficeEntity { Id = _b, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
+            new Office(_a, "A", DateTimeOffset.UtcNow),
+            new Office(_b, "B", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
         await SeedMattersAndHearings(db, _a, 1);
         await SeedMattersAndHearings(db, _b, 2);

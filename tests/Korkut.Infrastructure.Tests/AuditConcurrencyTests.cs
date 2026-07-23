@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -17,7 +18,7 @@ public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresF
         await pg.ResetAsync();
         _office = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "A", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_office, "A", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

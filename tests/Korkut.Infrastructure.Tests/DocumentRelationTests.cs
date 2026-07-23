@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Infrastructure.Documents;
@@ -31,7 +32,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         _office = Guid.CreateVersion7();
         _actor = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_office, "O", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

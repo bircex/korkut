@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
@@ -25,7 +26,7 @@ public class RefreshTokenServiceTests(PostgresFixture pg) : IClassFixture<Postgr
         _office = Guid.CreateVersion7();
         _user = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = _clock.UtcNow });
+        db.Offices.Add(new Office(_office, "O", _clock.UtcNow));
         await db.SaveChangesAsync();
     }
 

@@ -18,7 +18,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<JobAuditEntity> JobAudit => Set<JobAuditEntity>();
 
-    public DbSet<OfficeEntity> Offices => Set<OfficeEntity>();
+    public DbSet<Domain.Offices.Office> Offices => Set<Domain.Offices.Office>();
 
     public DbSet<Domain.Matters.Matter> Matters => Set<Domain.Matters.Matter>();
 
@@ -121,13 +121,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => x.MessageId).HasDatabaseName("ix_job_audit_message");
         });
 
-        modelBuilder.Entity<OfficeEntity>(b =>
-        {
-            b.ToTable("offices");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Name).HasMaxLength(300);
-        });
+        modelBuilder.ApplyConfiguration(new Offices.OfficeConfiguration());
 
         // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
         // — kept together because their tenant-aware composite FKs form one set.

@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -127,7 +128,7 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     {
         var officeId = Guid.CreateVersion7();
         await using var db = OwnerContext();
-        db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
         var user = new User(officeId, $"user-{Guid.CreateVersion7():N}@example.com", role, null, null, DateTimeOffset.UtcNow);
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -141,7 +142,7 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         var officeId = Guid.CreateVersion7();
         var email = $"user-{Guid.CreateVersion7():N}@example.com";
         await using var db = OwnerContext();
-        db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
         var user = new User(officeId, email, role, null, null, DateTimeOffset.UtcNow);
         user.SetPassword(new Pbkdf2PasswordHasher().Hash(password));
         if (twoFactor)

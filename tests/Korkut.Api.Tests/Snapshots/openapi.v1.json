@@ -734,25 +734,6 @@
         ],
         "type": "object"
       },
-      "MeUpdateRequest": {
-        "properties": {
-          "bar_registry_no": {
-            "maxLength": "50",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
       "ResetBody": {
         "properties": {
           "password": {
@@ -1071,6 +1052,25 @@
         },
         "type": "object"
       },
+      "UpdateProfileRequest": {
+        "properties": {
+          "bar_registry_no": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "UpdateTaskStatusRequest": {
         "properties": {
           "status": {
@@ -1114,7 +1114,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1137,7 +1137,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1160,7 +1160,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1184,7 +1184,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -2604,15 +2604,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Profile"
         ]
       },
       "patch": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MeUpdateRequest"
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
               }
             }
           },
@@ -2624,7 +2634,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Profile"
         ]
       }
     },
@@ -3376,6 +3386,9 @@
       "name": "AuthEndpoints"
     },
     {
+      "name": "Profile"
+    },
+    {
       "name": "Tasks"
     },
     {
@@ -3392,6 +3405,9 @@
     },
     {
       "name": "Outbox"
+    },
+    {
+      "name": "AdminOffices"
     },
     {
       "name": "Notes"

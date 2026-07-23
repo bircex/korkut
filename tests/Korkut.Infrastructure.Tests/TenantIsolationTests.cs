@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -24,8 +25,8 @@ public class TenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFi
         // Seed cross-tenant data via the superuser context (RLS bypassed): A has 1
         // matter, B has 2, so counts distinguish which office a reader sees.
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _officeA, Name = "A", CreatedAt = DateTimeOffset.UtcNow });
-        db.Offices.Add(new OfficeEntity { Id = _officeB, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_officeA, "A", DateTimeOffset.UtcNow));
+        db.Offices.Add(new Office(_officeB, "B", DateTimeOffset.UtcNow));
         var matterA = new Matter(_officeA, "A-1", null, null, null, DateTimeOffset.UtcNow);
         _matterA = matterA.Id;
         db.Matters.Add(matterA);

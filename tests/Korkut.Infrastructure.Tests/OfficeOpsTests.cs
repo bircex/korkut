@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
@@ -22,7 +23,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
         await pg.ResetAsync();
         _office = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_office, "O", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

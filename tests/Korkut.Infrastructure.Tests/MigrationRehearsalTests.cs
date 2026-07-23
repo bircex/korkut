@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Application.Differential;
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ public class MigrationRehearsalTests(PostgresFixture pg) : IClassFixture<Postgre
         for (var o = 0; o < 3; o++)
         {
             var officeId = Guid.CreateVersion7();
-            db.Offices.Add(new OfficeEntity { Id = officeId, Name = $"Anonim Büro {o}", CreatedAt = DateTimeOffset.UtcNow });
+            db.Offices.Add(new Office(officeId, $"Anonim Büro {o}", DateTimeOffset.UtcNow));
             for (var m = 0; m < 4; m++)
             {
                 var matter = new Matter(officeId, $"Anonim Dava {o}-{m}", null, null, null, DateTimeOffset.UtcNow);
@@ -113,7 +114,7 @@ public class MigrationRehearsalTests(PostgresFixture pg) : IClassFixture<Postgre
     private async Task SeedFixedAsync(bool reversed)
     {
         await using var db = pg.NewContext();
-        var offices = FixedOffices.Select(o => new OfficeEntity { Id = o.Id, Name = o.Name, CreatedAt = DateTimeOffset.UnixEpoch }).ToList();
+        var offices = FixedOffices.Select(o => new Office(o.Id, o.Name, DateTimeOffset.UnixEpoch)).ToList();
         if (reversed)
         {
             offices.Reverse();

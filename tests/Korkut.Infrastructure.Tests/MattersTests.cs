@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using Korkut.Application.Common;
 using Korkut.Application.Matters;
 using Korkut.Application.Matters.Requests;
@@ -50,7 +51,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         await pg.ResetAsync();
         _office = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_office, "O", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 
@@ -124,7 +125,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         Guid matterInThisOffice;
         await using (var db = pg.NewContext())
         {
-            db.Offices.Add(new OfficeEntity { Id = otherOffice, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
+            db.Offices.Add(new Office(otherOffice, "B", DateTimeOffset.UtcNow));
             await db.SaveChangesAsync();
             matterInThisOffice = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "M" })).Id;
         }

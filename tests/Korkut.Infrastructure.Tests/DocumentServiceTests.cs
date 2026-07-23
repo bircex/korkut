@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using System.Security.Cryptography;
 using System.Text;
 using Korkut.Application.Documents;
@@ -25,7 +26,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         await pg.ResetAsync();
         _office = Guid.CreateVersion7();
         await using var db = pg.NewContext();
-        db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(_office, "O", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

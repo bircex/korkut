@@ -74,7 +74,6 @@ app.MapOnboardingEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
 app.MapGoogleAuthEndpoints();
-app.MapAdminEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

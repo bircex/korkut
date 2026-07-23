@@ -1,3 +1,4 @@
+using Korkut.Domain.Offices;
 using System.Net.Http.Headers;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
@@ -183,7 +184,7 @@ public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAs
     {
         var officeId = Guid.CreateVersion7();
         await using var db = OwnerContext();
-        db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
+        db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
         var user = new User(officeId, $"user-{Guid.CreateVersion7():N}@example.com", role, null, null, DateTimeOffset.UtcNow);
         var userId = user.Id;
         db.Users.Add(user);
