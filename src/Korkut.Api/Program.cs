@@ -1,6 +1,5 @@
 using Korkut.Web.Auth;
 using Korkut.Api.Auth;
-using Korkut.Api.Endpoints;
 using Korkut.Api.Observability;
 using Korkut.Web;
 using Korkut.Web.Controllers;
@@ -64,7 +63,6 @@ app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
 app.MapControllers();
-app.MapFoundationEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

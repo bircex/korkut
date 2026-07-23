@@ -1172,7 +1172,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminPing"
         ]
       }
     },
@@ -3375,7 +3375,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3383,7 +3383,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EchoRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchoRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/EchoRequest"
               }
@@ -3397,7 +3407,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3409,7 +3419,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3421,7 +3431,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3433,7 +3443,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3445,7 +3455,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     }
@@ -3506,6 +3516,12 @@
     },
     {
       "name": "Hearings"
+    },
+    {
+      "name": "AdminPing"
+    },
+    {
+      "name": "Foundation"
     },
     {
       "name": "FinanceSummary"
