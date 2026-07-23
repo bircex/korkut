@@ -1,3 +1,5 @@
+using Korkut.Domain.Users;
+using Korkut.Application.Security;
 using System.Security.Cryptography;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence;
@@ -29,7 +31,9 @@ public class TwoFactorServiceTests(PostgresFixture pg) : IClassFixture<PostgresF
         _user = Guid.CreateVersion7();
         await using var db = pg.NewContext();
         db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = _clock.UtcNow });
-        db.Users.Add(new UserEntity { Id = _user, OfficeId = _office, Email = "u@x.test", SecurityStamp = Guid.CreateVersion7(), CreatedAt = _clock.UtcNow });
+        var user = new User(_office, "u@x.test", Roles.Lawyer, null, null, _clock.UtcNow);
+        _user = user.Id;
+        db.Users.Add(user);
         await db.SaveChangesAsync();
     }
 

@@ -26,7 +26,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<AuditEventEntity> AuditEvents => Set<AuditEventEntity>();
 
-    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<Domain.Users.User> Users => Set<Domain.Users.User>();
 
     public DbSet<PasswordResetTokenEntity> PasswordResetTokens => Set<PasswordResetTokenEntity>();
 
@@ -242,22 +242,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
             b.HasIndex(x => new { x.OfficeId, x.Email }).HasDatabaseName("ix_invites_office_email");
         });
 
-        modelBuilder.Entity<UserEntity>(b =>
-        {
-            b.ToTable("users");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Email).HasMaxLength(320);
-            b.Property(x => x.FullName).HasMaxLength(200);
-            b.Property(x => x.BarRegistryNo).HasMaxLength(50);
-            b.Property(x => x.PasswordHash).HasMaxLength(400);
-            b.Property(x => x.Role).HasMaxLength(50);
-            b.Property(x => x.GoogleSub).HasMaxLength(255);
-            // Email is unique within an office (tenant-scoped identity).
-            b.HasIndex(x => new { x.OfficeId, x.Email }).IsUnique().HasDatabaseName("ux_users_office_email");
-            // A Google identity links to exactly one account (globally unique subject).
-            b.HasIndex(x => x.GoogleSub).IsUnique().HasDatabaseName("ux_users_google_sub");
-        });
+        modelBuilder.ApplyConfiguration(new Users.UserConfiguration());
 
         modelBuilder.Entity<PasswordResetTokenEntity>(b =>
         {

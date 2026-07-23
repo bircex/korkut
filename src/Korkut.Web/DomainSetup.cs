@@ -77,9 +77,10 @@ public static class DomainSetup
         // the jobs-side IOutboxStore/EfOutboxStore that dispatches/sends).
         services.AddScoped<Korkut.Application.Outbox.IOutboxRepository, Korkut.Infrastructure.Outbox.OutboxRepository>();
         services.AddScoped<Korkut.Application.Outbox.IOutboxService, Korkut.Application.Outbox.OutboxService>();
-        // Members (Clean Architecture: repository port + service; owner-safety in the service).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IMemberRepository, Korkut.Infrastructure.Persistence.Repositories.MemberRepository>();
-        services.AddScoped<Korkut.Application.Features.Membership.IMembersService, Korkut.Application.Features.Membership.MembersService>();
+        // Users + members (Clean Architecture: the user aggregate, viewed as the office's
+        // members; owner-safety lives in the service).
+        services.AddScoped<Korkut.Application.Users.IUserRepository, Korkut.Infrastructure.Users.UserRepository>();
+        services.AddScoped<Korkut.Application.Members.IMemberService, Korkut.Application.Members.MemberService>();
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IInviteRepository, Korkut.Infrastructure.Persistence.Repositories.InviteRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IInviteResolver, Korkut.Infrastructure.Persistence.Repositories.EfInviteResolver>();

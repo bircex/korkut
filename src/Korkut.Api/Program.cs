@@ -73,7 +73,6 @@ app.MapReportsEndpoints();
 app.MapOnboardingEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
-app.MapMembersEndpoints();
 app.MapGoogleAuthEndpoints();
 app.MapInviteEndpoints();
 app.MapAdminEndpoints();

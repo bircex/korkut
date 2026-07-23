@@ -5,6 +5,9 @@ using Korkut.Web.Tenancy;
 using Korkut.Web;
 using Korkut.Application.Abstractions.Persistence;
 using Korkut.Application.Features.Membership;
+using Korkut.Application.Users;
+using Korkut.Domain.Users;
+using Korkut.Domain.Time;
 using Korkut.Application.Security;
 using Korkut.Domain.Membership;
 using Korkut.Infrastructure.Persistence;
@@ -72,7 +75,7 @@ public static class InviteEndpoints
         // Anonymous: accept an invite → create the member so they can then sign in.
         invites.MapPost("/accept", async (
             InviteAcceptRequest body, KorkutDbContext db, IInviteResolver resolver, ITokenHasher hasher,
-            IInviteService invites, IMembersService members, CancellationToken ct) =>
+            IInviteService invites, IUserRepository users, IClock clock, CancellationToken ct) =>
             {
                 var invalid = DtoValidation.Validate(body);
                 if (invalid is not null)
@@ -92,7 +95,7 @@ public static class InviteEndpoints
                 var exists = await db.Users.AsNoTracking().AnyAsync(x => x.OfficeId == grant.OfficeId && x.Email == grant.Email, ct);
                 if (!exists)
                 {
-                    await members.CreateAsync(grant.OfficeId, grant.Email, grant.Role, null, null, ct);
+                    await users.AddAsync(new User(grant.OfficeId, grant.Email, grant.Role, null, null, clock.UtcNow), ct);
                 }
 
                 await invites.MarkAcceptedAsync(grant.OfficeId, grant.Id, ct);

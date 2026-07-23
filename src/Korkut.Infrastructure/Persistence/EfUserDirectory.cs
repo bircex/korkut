@@ -1,5 +1,6 @@
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Users;
 using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,7 +76,7 @@ public sealed class EfUserDirectory(KorkutDbContext db) : IUserDirectory
         return affected == 1;
     }
 
-    private static AuthUser? Map(UserEntity? u) => u is null
+    private static AuthUser? Map(User? u) => u is null
         ? null
         : new AuthUser(u.Id, u.OfficeId, u.Email, u.PasswordHash, u.FailedAccessCount, u.LockoutEnd, u.SecurityStamp, u.TokenEpoch);
 }

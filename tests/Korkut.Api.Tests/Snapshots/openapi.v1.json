@@ -1,6 +1,21 @@
 {
   "components": {
     "schemas": {
+      "ChangeMemberRoleRequest": {
+        "properties": {
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
       "CreateCalendarEventRequest": {
         "properties": {
           "all_day": {
@@ -405,6 +420,42 @@
         ],
         "type": "object"
       },
+      "CreateMemberRequest": {
+        "properties": {
+          "bar_registry_no": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
       "CreateMemoryRequest": {
         "properties": {
           "kind": {
@@ -700,57 +751,6 @@
             ]
           }
         },
-        "type": "object"
-      },
-      "MemberCreateRequest": {
-        "properties": {
-          "bar_registry_no": {
-            "maxLength": "50",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "role"
-        ],
-        "type": "object"
-      },
-      "MemberRoleRequest": {
-        "properties": {
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "role"
-        ],
         "type": "object"
       },
       "ResetBody": {
@@ -2616,15 +2616,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberCreateRequest"
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
               }
             }
           },
@@ -2636,7 +2646,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       }
     },
@@ -2659,7 +2669,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       },
       "patch": {
@@ -2676,9 +2686,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberRoleRequest"
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
               }
             }
           },
@@ -2690,7 +2710,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       }
     },
@@ -3355,6 +3375,9 @@
     },
     {
       "name": "Notes"
+    },
+    {
+      "name": "Members"
     },
     {
       "name": "Matters"

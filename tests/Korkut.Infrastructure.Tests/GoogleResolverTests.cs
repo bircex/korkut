@@ -1,5 +1,7 @@
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Application.Security;
+using Korkut.Domain.Users;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -20,14 +22,18 @@ public class GoogleResolverTests(PostgresFixture pg) : IClassFixture<PostgresFix
         await pg.ResetAsync();
         _officeA = Guid.CreateVersion7();
         _officeBDisabled = Guid.CreateVersion7();
-        _linkedUser = Guid.CreateVersion7();
-        _unlinkedUser = Guid.CreateVersion7();
 
         await using var db = pg.NewContext(); // superuser seed
         db.Offices.Add(new OfficeEntity { Id = _officeA, Name = "A", CreatedAt = DateTimeOffset.UtcNow });
         db.Offices.Add(new OfficeEntity { Id = _officeBDisabled, Name = "B", Disabled = true, CreatedAt = DateTimeOffset.UtcNow });
-        db.Users.Add(new UserEntity { Id = _linkedUser, OfficeId = _officeA, Email = "linked@x.test", GoogleSub = "sub-linked", TwoFactorEnabled = true, SecurityStamp = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow });
-        db.Users.Add(new UserEntity { Id = _unlinkedUser, OfficeId = _officeBDisabled, Email = "unlinked@x.test", SecurityStamp = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow });
+        var linked = new User(_officeA, "linked@x.test", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
+        linked.LinkGoogle("sub-linked");
+        linked.EnableTwoFactor();
+        _linkedUser = linked.Id;
+        var unlinked = new User(_officeBDisabled, "unlinked@x.test", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
+        _unlinkedUser = unlinked.Id;
+        db.Users.Add(linked);
+        db.Users.Add(unlinked);
         await db.SaveChangesAsync();
     }
 

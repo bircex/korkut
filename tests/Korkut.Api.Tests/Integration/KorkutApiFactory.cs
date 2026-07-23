@@ -4,6 +4,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
 using Korkut.Domain.Time;
+using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -125,20 +126,12 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     public async Task<(Guid OfficeId, Guid UserId)> SeedOfficeAsync(string role = Roles.OfficeOwner)
     {
         var officeId = Guid.CreateVersion7();
-        var userId = Guid.CreateVersion7();
         await using var db = OwnerContext();
         db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
-        db.Users.Add(new UserEntity
-        {
-            Id = userId,
-            OfficeId = officeId,
-            Email = $"user-{userId:N}@example.com",
-            Role = role,
-            SecurityStamp = Guid.CreateVersion7(),
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        var user = new User(officeId, $"user-{Guid.CreateVersion7():N}@example.com", role, null, null, DateTimeOffset.UtcNow);
+        db.Users.Add(user);
         await db.SaveChangesAsync();
-        return (officeId, userId);
+        return (officeId, user.Id);
     }
 
     /// <summary>Seed an office + a user with a known password (for local-login tests).</summary>
@@ -146,24 +139,19 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         string password, string role = Roles.OfficeOwner, bool twoFactor = false)
     {
         var officeId = Guid.CreateVersion7();
-        var userId = Guid.CreateVersion7();
-        var email = $"user-{userId:N}@example.com";
-        var hash = new Pbkdf2PasswordHasher().Hash(password);
+        var email = $"user-{Guid.CreateVersion7():N}@example.com";
         await using var db = OwnerContext();
         db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
-        db.Users.Add(new UserEntity
+        var user = new User(officeId, email, role, null, null, DateTimeOffset.UtcNow);
+        user.SetPassword(new Pbkdf2PasswordHasher().Hash(password));
+        if (twoFactor)
         {
-            Id = userId,
-            OfficeId = officeId,
-            Email = email,
-            PasswordHash = hash,
-            Role = role,
-            TwoFactorEnabled = twoFactor,
-            SecurityStamp = Guid.CreateVersion7(),
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+            user.EnableTwoFactor();
+        }
+
+        db.Users.Add(user);
         await db.SaveChangesAsync();
-        return (officeId, userId, email);
+        return (officeId, user.Id, email);
     }
 
     /// <summary>A cookie-aware client (no auth) — for exercising the login → cookie → /me flow.</summary>

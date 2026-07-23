@@ -1,3 +1,4 @@
+using Korkut.Domain.Users;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -41,15 +42,9 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
         _notifier = new NullNotifier();
         await using var db = pg.NewContext();
         db.Offices.Add(new OfficeEntity { Id = _office, Name = "O", CreatedAt = _clock.UtcNow });
-        db.Users.Add(new UserEntity
-        {
-            Id = Guid.CreateVersion7(),
-            OfficeId = _office,
-            Email = Email,
-            PasswordHash = _hasher.Hash(Password),
-            SecurityStamp = Guid.CreateVersion7(),
-            CreatedAt = _clock.UtcNow,
-        });
+        var user = new User(_office, Email, Roles.Lawyer, null, null, _clock.UtcNow);
+        user.SetPassword(_hasher.Hash(Password));
+        db.Users.Add(user);
         await db.SaveChangesAsync();
     }
 

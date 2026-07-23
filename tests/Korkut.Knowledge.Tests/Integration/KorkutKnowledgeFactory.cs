@@ -6,6 +6,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Persistence.Knowledge;
 using Korkut.Infrastructure.Security;
 using Korkut.Domain.Time;
+using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -181,18 +182,11 @@ public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAs
     public async Task<(Guid OfficeId, Guid UserId)> SeedOfficeAsync(string role = Roles.OfficeOwner)
     {
         var officeId = Guid.CreateVersion7();
-        var userId = Guid.CreateVersion7();
         await using var db = OwnerContext();
         db.Offices.Add(new OfficeEntity { Id = officeId, Name = "Test Bürosu", CreatedAt = DateTimeOffset.UtcNow });
-        db.Users.Add(new UserEntity
-        {
-            Id = userId,
-            OfficeId = officeId,
-            Email = $"user-{userId:N}@example.com",
-            Role = role,
-            SecurityStamp = Guid.CreateVersion7(),
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        var user = new User(officeId, $"user-{Guid.CreateVersion7():N}@example.com", role, null, null, DateTimeOffset.UtcNow);
+        var userId = user.Id;
+        db.Users.Add(user);
         await db.SaveChangesAsync();
         return (officeId, userId);
     }
