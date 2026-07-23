@@ -6,6 +6,8 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Clients;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
+using Korkut.Domain.Tasks;
+using Korkut.Domain.Deadlines;
 
 namespace Korkut.Api.Tests;
 
@@ -41,13 +43,15 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
             db.Matters.Add(goneMatter); // excluded
             db.Clients.Add(new Client(office, "C1", "individual", null, null, now));
 
-            db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-open", Status = "open", CreatedAt = now });
-            db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-overdue", Status = "open", DueAt = now.AddDays(-1), CreatedAt = now });
-            db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-done", Status = "done", CompletedAt = now, CreatedAt = now });
+            db.Tasks.Add(new WorkTask(office, "t-open", null, null, null, now));
+            db.Tasks.Add(new WorkTask(office, "t-overdue", null, null, now.AddDays(-1), now));
+            var doneTask = new WorkTask(office, "t-done", null, null, null, now);
+            doneTask.SetStatus("done", now);
+            db.Tasks.Add(doneTask);
 
             db.MatterHearings.Add(new Hearing(office, db.Matters.Local.First().Id, now.AddDays(3), null, null, null));
-            db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "d-upcoming", DueDate = today.AddDays(5), CreatedAt = now });
-            db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "d-overdue", DueDate = today.AddDays(-3), CreatedAt = now });
+            db.Deadlines.Add(new Deadline(office, "d-upcoming", today.AddDays(5), "internal", null, "Europe/Istanbul", 0, now));
+            db.Deadlines.Add(new Deadline(office, "d-overdue", today.AddDays(-3), "internal", null, "Europe/Istanbul", 0, now));
 
             db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = "e1", CreatedAt = now });
             db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = "e2", CreatedAt = now });

@@ -5,6 +5,7 @@ using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
+using Korkut.Domain.Deadlines;
 
 namespace Korkut.Api.Tests;
 
@@ -23,15 +24,15 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
     private async Task<(Guid MatterId, Guid HearingId, Guid DeadlineId)> SeedMatterAgendaAsync(
         Guid office, DateTimeOffset hearingAt, DateOnly deadlineDue)
     {
-        var deadlineId = Guid.CreateVersion7();
         await using var db = factory.OwnerContext();
         var matter = new Matter(office, "Dava X", null, null, null, DateTimeOffset.UtcNow);
         db.Matters.Add(matter);
         var hearing = new Hearing(office, matter.Id, hearingAt, null, null, null);
         db.MatterHearings.Add(hearing);
-        db.Deadlines.Add(new DeadlineEntity { Id = deadlineId, OfficeId = office, MatterId = matter.Id, Title = "Cevap süresi", DueDate = deadlineDue, CreatedAt = DateTimeOffset.UtcNow });
+        var deadline = new Deadline(office, "Cevap süresi", deadlineDue, "internal", matter.Id, "Europe/Istanbul", 0, DateTimeOffset.UtcNow);
+        db.Deadlines.Add(deadline);
         await db.SaveChangesAsync();
-        return (matter.Id, hearing.Id, deadlineId);
+        return (matter.Id, hearing.Id, deadline.Id);
     }
 
     [Fact]

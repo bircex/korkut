@@ -237,6 +237,50 @@
         ],
         "type": "object"
       },
+      "CreateDeadlineRequest": {
+        "properties": {
+          "due_date": {
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "pattern": "statutory|internal",
+            "type": "string"
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reminder_days_before": {
+            "format": "int32",
+            "maximum": "365",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "time_zone_id": {
+            "type": "string"
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "due_date"
+        ],
+        "type": "object"
+      },
       "CreateHearingRequest": {
         "properties": {
           "date": {
@@ -309,15 +353,24 @@
         ],
         "type": "object"
       },
-      "DeadlineCreateRequest": {
+      "CreateNoteRequest": {
         "properties": {
-          "due_date": {
-            "format": "date",
+          "body": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "channel": {
             "type": "string"
           },
-          "kind": {
-            "pattern": "statutory|internal",
-            "type": "string"
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "matter_id": {
             "format": "uuid",
@@ -326,18 +379,41 @@
               "string"
             ]
           },
-          "reminder_days_before": {
-            "format": "int32",
-            "maximum": "365",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "occurred_at": {
+            "format": "date-time",
             "type": [
-              "integer",
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "CreateTaskRequest": {
+        "properties": {
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
               "string"
             ]
           },
-          "time_zone_id": {
-            "type": "string"
+          "due_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "title": {
             "maxLength": "500",
@@ -348,8 +424,7 @@
           }
         },
         "required": [
-          "title",
-          "due_date"
+          "title"
         ],
         "type": "object"
       },
@@ -796,45 +871,6 @@
         ],
         "type": "object"
       },
-      "NoteCreateRequest": {
-        "properties": {
-          "body": {
-            "maxLength": "4000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "channel": {
-            "type": "string"
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "occurred_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "body"
-        ],
-        "type": "object"
-      },
       "OutboxEditRequest": {
         "properties": {
           "body": {
@@ -960,57 +996,6 @@
         ],
         "type": "object"
       },
-      "TaskCreateRequest": {
-        "properties": {
-          "assignee_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "due_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "type": "object"
-      },
-      "TaskStatusRequest": {
-        "properties": {
-          "status": {
-            "pattern": "open|in_progress|done",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ],
-        "type": "object"
-      },
       "TelegramChannelInput": {
         "properties": {
           "bot_token": {
@@ -1093,6 +1078,21 @@
         },
         "required": [
           "name"
+        ],
+        "type": "object"
+      },
+      "UpdateTaskStatusRequest": {
+        "properties": {
+          "status": {
+            "pattern": "open|in_progress|done",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "status"
         ],
         "type": "object"
       },
@@ -1741,15 +1741,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeadlineCreateRequest"
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
               }
             }
           },
@@ -1761,7 +1771,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -1784,7 +1794,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -1807,7 +1817,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -2718,15 +2728,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Notes"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteCreateRequest"
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
               }
             }
           },
@@ -2738,7 +2758,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Notes"
         ]
       }
     },
@@ -3010,15 +3030,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskCreateRequest"
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
               }
             }
           },
@@ -3030,7 +3060,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       }
     },
@@ -3053,7 +3083,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       },
       "patch": {
@@ -3070,9 +3100,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskStatusRequest"
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
               }
             }
           },
@@ -3084,7 +3124,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       }
     },
@@ -3284,10 +3324,19 @@
       "name": "AuthEndpoints"
     },
     {
+      "name": "Tasks"
+    },
+    {
+      "name": "Notes"
+    },
+    {
       "name": "Matters"
     },
     {
       "name": "Hearings"
+    },
+    {
+      "name": "Deadlines"
     },
     {
       "name": "Clients"

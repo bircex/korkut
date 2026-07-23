@@ -1,10 +1,12 @@
 using Korkut.Application.Jobs;
+using Korkut.Domain.Deadlines;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Ids;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Deadlines;
 
 /// <summary>
 /// Deadline reminders with explicit time-zone / business-date semantics. A due
@@ -13,10 +15,10 @@ namespace Korkut.Infrastructure.Persistence;
 /// the office's calendar day regardless of the server clock. Enqueue is idempotent
 /// (one outbox row per deadline), matching the outbox/inbox guarantees (KDM-024).
 /// </summary>
-public sealed class DeadlineService(KorkutDbContext db, IClock clock)
+public sealed class DeadlineReminderService(KorkutDbContext db, IClock clock)
 {
     /// <summary>The UTC instant at local midnight of the reminder date in the deadline's zone.</summary>
-    public static DateTimeOffset ReminderInstant(DeadlineEntity deadline)
+    public static DateTimeOffset ReminderInstant(Deadline deadline)
     {
         var tz = TimeZoneInfo.FindSystemTimeZoneById(deadline.TimeZoneId);
         var remindDate = deadline.DueDate.AddDays(-deadline.ReminderDaysBefore);
@@ -31,7 +33,7 @@ public sealed class DeadlineService(KorkutDbContext db, IClock clock)
     /// Enqueue the reminder once. A second call is a no-op (idempotent) — the same
     /// deadline never produces duplicate reminders.
     /// </summary>
-    public async Task EnsureReminderAsync(Guid officeId, DeadlineEntity deadline, CancellationToken ct = default)
+    public async Task EnsureReminderAsync(Guid officeId, Deadline deadline, CancellationToken ct = default)
     {
         var key = ReminderKey(deadline.Id);
         var exists = await db.Outbox.AsNoTracking()

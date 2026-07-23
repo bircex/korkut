@@ -38,10 +38,12 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Matters.IMatterService, Korkut.Application.Matters.MatterService>();
         services.AddScoped<Korkut.Application.Hearings.IHearingService, Korkut.Application.Hearings.HearingService>();
         // Office-ops (Clean Architecture: repository ports + service).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.ITaskRepository, Korkut.Infrastructure.Persistence.Repositories.TaskRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IDeadlineRepository, Korkut.Infrastructure.Persistence.Repositories.DeadlineRepository>();
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.INoteRepository, Korkut.Infrastructure.Persistence.Repositories.NoteRepository>();
-        services.AddScoped<Korkut.Application.Features.OfficeOps.IOfficeOpsService, Korkut.Application.Features.OfficeOps.OfficeOpsService>();
+        services.AddScoped<Korkut.Application.Tasks.ITaskRepository, Korkut.Infrastructure.Tasks.TaskRepository>();
+        services.AddScoped<Korkut.Application.Deadlines.IDeadlineRepository, Korkut.Infrastructure.Deadlines.DeadlineRepository>();
+        services.AddScoped<Korkut.Application.Notes.INoteRepository, Korkut.Infrastructure.Notes.NoteRepository>();
+        services.AddScoped<Korkut.Application.Tasks.ITaskService, Korkut.Application.Tasks.TaskService>();
+        services.AddScoped<Korkut.Application.Deadlines.IDeadlineService, Korkut.Application.Deadlines.DeadlineService>();
+        services.AddScoped<Korkut.Application.Notes.INoteService, Korkut.Application.Notes.NoteService>();
         // Finance (Clean Architecture: repository ports + service). The pattern rolls out
         // to the other modules incrementally.
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IInvoiceRepository, Korkut.Infrastructure.Persistence.Repositories.InvoiceRepository>();
