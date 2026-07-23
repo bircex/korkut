@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Korkut.Domain.Jobs;
 
 namespace Korkut.Application.Jobs.InMemory;
 
@@ -25,7 +26,7 @@ public sealed class InMemoryOutboxStore : IOutboxStore
     {
         lock (_gate)
         {
-            _messages[message.Id] = message with { Status = JobStatus.Pending };
+            _messages[message.Id] = message;
         }
 
         return Task.CompletedTask;
@@ -37,63 +38,36 @@ public sealed class InMemoryOutboxStore : IOutboxStore
         lock (_gate)
         {
             var due = _messages.Values
-                .Where(m => IsLeasable(m, now))
+                .Where(m => m.IsLeasable(now))
                 .OrderBy(m => m.AvailableAt)
                 .Take(max)
                 .ToList();
 
-            var leased = new List<OutboxMessage>(due.Count);
-            foreach (var m in due)
+            foreach (var message in due)
             {
-                var updated = m with
-                {
-                    Status = JobStatus.Leased,
-                    LeaseOwner = owner,
-                    LeaseUntil = now + leaseDuration,
-                };
-                _messages[m.Id] = updated;
-                leased.Add(updated);
+                message.Lease(owner, now + leaseDuration, now);
             }
 
-            return Task.FromResult<IReadOnlyList<OutboxMessage>>(leased);
+            return Task.FromResult<IReadOnlyList<OutboxMessage>>(due);
         }
     }
 
-    // Leasable = pending/failed and due, OR a leased message whose lease has expired (crashed worker).
-    private static bool IsLeasable(OutboxMessage m, DateTimeOffset now) =>
-        (m.Status is JobStatus.Pending or JobStatus.Failed && m.AvailableAt <= now)
-        || (m.Status is JobStatus.Leased && m.LeaseUntil is { } until && until <= now);
-
     public Task MarkCompletedAsync(Guid id, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        Mutate(id, m => m with { Status = JobStatus.Completed, LeaseOwner = null, LeaseUntil = null });
+        Mutate(id, m => m.Complete(now));
         return Task.CompletedTask;
     }
 
     public Task MarkFailedAsync(
         Guid id, int attempts, DateTimeOffset availableAt, string error, CancellationToken cancellationToken)
     {
-        Mutate(id, m => m with
-        {
-            Status = JobStatus.Failed,
-            Attempts = attempts,
-            AvailableAt = availableAt,
-            LastError = error,
-            LeaseOwner = null,
-            LeaseUntil = null,
-        });
+        Mutate(id, m => m.Fail(attempts, availableAt, error));
         return Task.CompletedTask;
     }
 
     public Task DeadLetterAsync(Guid id, string error, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        Mutate(id, m => m with
-        {
-            Status = JobStatus.DeadLettered,
-            LastError = error,
-            LeaseOwner = null,
-            LeaseUntil = null,
-        });
+        Mutate(id, m => m.DeadLetter(error, now));
         return Task.CompletedTask;
     }
 
@@ -101,32 +75,18 @@ public sealed class InMemoryOutboxStore : IOutboxStore
     {
         lock (_gate)
         {
-            if (!_messages.TryGetValue(id, out var m) || m.Status != JobStatus.DeadLettered)
-            {
-                return Task.FromResult<OutboxMessage?>(null);
-            }
-
-            var replayed = m with
-            {
-                Status = JobStatus.Pending,
-                Attempts = 0,
-                AvailableAt = now,
-                LastError = null,
-                LeaseOwner = null,
-                LeaseUntil = null,
-            };
-            _messages[id] = replayed;
-            return Task.FromResult<OutboxMessage?>(replayed);
+            return Task.FromResult(
+                _messages.TryGetValue(id, out var message) && message.Replay(now) ? message : null);
         }
     }
 
-    private void Mutate(Guid id, Func<OutboxMessage, OutboxMessage> update)
+    private void Mutate(Guid id, Action<OutboxMessage> update)
     {
         lock (_gate)
         {
-            if (_messages.TryGetValue(id, out var m))
+            if (_messages.TryGetValue(id, out var message))
             {
-                _messages[id] = update(m);
+                update(message);
             }
         }
     }

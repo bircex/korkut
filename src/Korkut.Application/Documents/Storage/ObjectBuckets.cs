@@ -1,4 +1,6 @@
-﻿namespace Korkut.Application.Documents.Storage;
+﻿using Korkut.Domain.Common;
+
+namespace Korkut.Application.Documents.Storage;
 
 /// <summary>Bucket names + opaque object-key generation (no PII).</summary>
 public static class ObjectBuckets
@@ -10,7 +12,7 @@ public static class ObjectBuckets
     /// <summary>An opaque key: a UUIDv7, sharded by its first byte. No filename/PII.</summary>
     public static string NewKey()
     {
-        var id = Domain.Ids.UuidV7.NewId().ToString("N");
+        var id = UuidV7.NewId().ToString("N");
         return $"{id[..2]}/{id}";
     }
 }

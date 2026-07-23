@@ -1,7 +1,8 @@
+using Korkut.Domain.Jobs;
 using Korkut.Application.Documents;
 using Korkut.Application.Jobs;
+using Korkut.Domain.Common;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,20 +42,10 @@ public sealed class IndexOutboxService(KorkutDbContext db, IClock clock)
         }
 
         var now = clock.UtcNow;
-        db.Outbox.Add(new OutboxEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            Type = type,
-            // Provenance-preserving payload (tenant + document + version).
-            Payload =
-                $"{{\"office_id\":\"{evt.OfficeId}\",\"document_id\":\"{evt.DocumentId}\",\"version\":{evt.DocumentVersion},\"op\":\"{evt.Op}\"}}",
-            IdempotencyKey = key,
-            Status = JobStatus.Pending,
-            AvailableAt = now,
-            CreatedAt = now,
-            UpdatedAt = now,
-        });
+        // Provenance-preserving payload (tenant + document + version).
+        var payload =
+            $"{{\"office_id\":\"{evt.OfficeId}\",\"document_id\":\"{evt.DocumentId}\",\"version\":{evt.DocumentVersion},\"op\":\"{evt.Op}\"}}";
+        db.Outbox.Add(new OutboxMessage(officeId, type, payload, key, now, now));
         await db.SaveChangesAsync(ct);
         return true;
     }

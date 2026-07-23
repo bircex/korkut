@@ -1,8 +1,9 @@
+using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
+using Korkut.Domain.Common;
 using Korkut.Domain.Deadlines;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,18 +44,9 @@ public sealed class DeadlineReminderService(KorkutDbContext db, IClock clock)
             return;
         }
 
-        db.Outbox.Add(new OutboxEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            Type = "deadline.reminder",
-            Payload = $"{{\"deadline_id\":\"{deadline.Id}\"}}",
-            IdempotencyKey = key,
-            Status = JobStatus.Pending,
-            AvailableAt = ReminderInstant(deadline),
-            CreatedAt = clock.UtcNow,
-            UpdatedAt = clock.UtcNow,
-        });
+        db.Outbox.Add(new OutboxMessage(
+            officeId, "deadline.reminder", $"{{\"deadline_id\":\"{deadline.Id}\"}}", key,
+            ReminderInstant(deadline), clock.UtcNow));
         await db.SaveChangesAsync(ct);
     }
 }

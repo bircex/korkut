@@ -1,3 +1,4 @@
+using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
 
@@ -22,15 +23,8 @@ public class OutboxDispatcherTests
             return new OutboxDispatcher(Outbox, Inbox, Audit, map, Tenant, Retry, Clock);
         }
 
-        public OutboxMessage Msg(Guid office, string type, string key) => new()
-        {
-            Id = Guid.CreateVersion7(),
-            OfficeId = office,
-            Type = type,
-            Payload = "{}",
-            IdempotencyKey = key,
-            AvailableAt = Clock.UtcNow,
-        };
+        public OutboxMessage Msg(Guid office, string type, string key)
+            => new(office, type, "{}", key, Clock.UtcNow, Clock.UtcNow);
     }
 
     [Fact]

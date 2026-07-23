@@ -12,11 +12,11 @@ namespace Korkut.Infrastructure.Persistence;
 /// </summary>
 public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) : DbContext(options)
 {
-    public DbSet<OutboxEntity> Outbox => Set<OutboxEntity>();
+    public DbSet<Domain.Jobs.OutboxMessage> Outbox => Set<Domain.Jobs.OutboxMessage>();
 
-    public DbSet<InboxEntity> Inbox => Set<InboxEntity>();
+    public DbSet<Domain.Jobs.InboxEntry> Inbox => Set<Domain.Jobs.InboxEntry>();
 
-    public DbSet<JobAuditEntity> JobAudit => Set<JobAuditEntity>();
+    public DbSet<Domain.Jobs.JobAuditRecord> JobAudit => Set<Domain.Jobs.JobAuditRecord>();
 
     public DbSet<Domain.Offices.Office> Offices => Set<Domain.Offices.Office>();
 
@@ -83,43 +83,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
     {
         modelBuilder.HasDefaultSchema("korkut");
 
-        modelBuilder.Entity<OutboxEntity>(b =>
-        {
-            b.ToTable("outbox_messages");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();          // app-assigned UUIDv7
-            b.Property(x => x.Type).HasMaxLength(200);
-            b.Property(x => x.IdempotencyKey).HasMaxLength(200);
-            b.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
-            b.Property(x => x.LeaseOwner).HasMaxLength(200);
+        modelBuilder.ApplyConfiguration(new Jobs.OutboxMessageConfiguration());
 
-            // Query: dispatcher leases due, unleased messages ordered by AvailableAt.
-            b.HasIndex(x => new { x.Status, x.AvailableAt }).HasDatabaseName("ix_outbox_status_available_at");
-            // Query: dedup / idempotency lookups are scoped by office + key.
-            b.HasIndex(x => new { x.OfficeId, x.IdempotencyKey }).HasDatabaseName("ix_outbox_office_key");
-        });
+        modelBuilder.ApplyConfiguration(new Jobs.InboxEntryConfiguration());
 
-        modelBuilder.Entity<InboxEntity>(b =>
-        {
-            b.ToTable("inbox_entries");
-            // Composite PK enforces at-most-once per (office, key) — the idempotency guarantee.
-            b.HasKey(x => new { x.OfficeId, x.IdempotencyKey });
-            b.Property(x => x.IdempotencyKey).HasMaxLength(200);
-        });
-
-        modelBuilder.Entity<JobAuditEntity>(b =>
-        {
-            b.ToTable("job_audit");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Type).HasMaxLength(200);
-            b.Property(x => x.Kind).HasConversion<string>().HasMaxLength(20);
-
-            // Query: operator audit is read per office, newest first.
-            b.HasIndex(x => new { x.OfficeId, x.At }).HasDatabaseName("ix_job_audit_office_at");
-            // Query: trace all events for a specific message.
-            b.HasIndex(x => x.MessageId).HasDatabaseName("ix_job_audit_message");
-        });
+        modelBuilder.ApplyConfiguration(new Jobs.JobAuditRecordConfiguration());
 
         modelBuilder.ApplyConfiguration(new Offices.OfficeConfiguration());
 

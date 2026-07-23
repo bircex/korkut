@@ -1,3 +1,5 @@
+using Korkut.Infrastructure.Jobs;
+using Korkut.Domain.Jobs;
 using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using Korkut.Application.Security;
@@ -240,9 +242,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         var clock = new SystemClockAdapter();
         await using var db = pg.NewContext();
-        var outbox = new EfOutboxStore(db, clock);
-        var inbox = new EfInboxStore(db, clock);
-        var audit = new EfJobAudit(db);
+        var outbox = new OutboxStore(db);
+        var inbox = new InboxStore(db, clock);
+        var audit = new JobAudit(db);
         var seenTenants = new List<Guid?>();
         var tenant = new AmbientTenantContext();
         var handler = new RecordingTenantHandler(tenant, seenTenants);
@@ -263,10 +265,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         Assert.True(await db.JobAudit.AnyAsync(x => x.OfficeId == _b));
     }
 
-    private static OutboxMessage Msg(Guid office, string key) => new()
-    {
-        Id = Guid.CreateVersion7(), OfficeId = office, Type = "email", Payload = "{}", IdempotencyKey = key,
-    };
+    private static OutboxMessage Msg(Guid office, string key)
+        => new(office, "email", "{}", key, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
     private sealed class SystemClockAdapter : IClock
     {

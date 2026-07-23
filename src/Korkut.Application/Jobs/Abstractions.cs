@@ -1,3 +1,5 @@
+using Korkut.Domain.Jobs;
+
 namespace Korkut.Application.Jobs;
 
 /// <summary>Ambient tenant scope for the currently-executing job.</summary>
@@ -44,16 +46,6 @@ public interface IInboxStore
     Task<bool> IsProcessedAsync(Guid officeId, string idempotencyKey, CancellationToken cancellationToken);
 
     Task MarkProcessedAsync(Guid officeId, string idempotencyKey, CancellationToken cancellationToken);
-}
-
-/// <summary>What happened to a job — recorded for operator audit / replay accountability.</summary>
-public enum JobAuditKind
-{
-    Completed,
-    DuplicateSkipped,
-    Retried,
-    DeadLettered,
-    Replayed,
 }
 
 public sealed record JobAuditEvent(

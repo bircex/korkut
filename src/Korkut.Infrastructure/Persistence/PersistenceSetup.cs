@@ -1,3 +1,4 @@
+using Korkut.Infrastructure.Jobs;
 using Korkut.Application.Jobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,9 +29,9 @@ public static class PersistenceSetup
             options.UseNpgsql(ToNpgsql(connectionString), npgsql =>
                 npgsql.MigrationsHistoryTable(MigrationsHistoryTable, Schema)));
 
-        services.AddScoped<IOutboxStore, EfOutboxStore>();
-        services.AddScoped<IInboxStore, EfInboxStore>();
-        services.AddScoped<IJobAudit, EfJobAudit>();
+        services.AddScoped<IOutboxStore, OutboxStore>();
+        services.AddScoped<IInboxStore, InboxStore>();
+        services.AddScoped<IJobAudit, JobAudit>();
         return services;
     }
 

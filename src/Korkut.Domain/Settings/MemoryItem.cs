@@ -9,6 +9,7 @@ namespace Korkut.Domain.Settings;
 public sealed class MemoryItem : Entity, ITenantOwned, IAggregateRoot
 {
     public const string Active = "active";
+    
     public const string Pending = "pending";
 
     public MemoryItem(Guid officeId, string text, string kind, Guid? authorId, bool active, DateTimeOffset createdAt)

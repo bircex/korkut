@@ -1,5 +1,3 @@
-using Korkut.Domain.Ids;
-
 namespace Korkut.Domain.Common;
 
 /// <summary>

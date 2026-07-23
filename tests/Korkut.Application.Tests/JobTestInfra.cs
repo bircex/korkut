@@ -1,3 +1,4 @@
+using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
 using Korkut.Domain.Time;
 

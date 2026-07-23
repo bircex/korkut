@@ -1,3 +1,5 @@
+using Korkut.Infrastructure.Jobs;
+using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
@@ -59,12 +61,12 @@ public class JobPersistenceTests(PostgresFixture pg) : IClassFixture<PostgresFix
         var office = Guid.CreateVersion7();
         await using (var db = pg.NewContext())
         {
-            db.Inbox.Add(new InboxEntity { OfficeId = office, IdempotencyKey = "k", ProcessedAt = DateTimeOffset.UtcNow });
+            db.Inbox.Add(new InboxEntry(office, "k", DateTimeOffset.UtcNow));
             await db.SaveChangesAsync();
         }
 
         await using var db2 = pg.NewContext();
-        db2.Inbox.Add(new InboxEntity { OfficeId = office, IdempotencyKey = "k", ProcessedAt = DateTimeOffset.UtcNow });
+        db2.Inbox.Add(new InboxEntry(office, "k", DateTimeOffset.UtcNow));
         await Assert.ThrowsAsync<DbUpdateException>(() => db2.SaveChangesAsync());
     }
 
@@ -76,20 +78,17 @@ public class JobPersistenceTests(PostgresFixture pg) : IClassFixture<PostgresFix
         var handler = new CompletingHandler("email");
 
         await using var db = pg.NewContext();
-        var outbox = new EfOutboxStore(db, clock);
-        var inbox = new EfInboxStore(db, clock);
-        var audit = new EfJobAudit(db);
+        var outbox = new OutboxStore(db);
+        var inbox = new InboxStore(db, clock);
+        var audit = new JobAudit(db);
         var dispatcher = new OutboxDispatcher(
             outbox, inbox, audit,
             new Dictionary<string, IJobHandler> { ["email"] = handler },
             new AmbientTenantContext(), new ExponentialRetryPolicy(), clock);
 
-        var id = Guid.CreateVersion7();
-        await outbox.EnqueueAsync(new OutboxMessage
-        {
-            Id = id, OfficeId = office, Type = "email", Payload = "{}", IdempotencyKey = "welcome",
-            AvailableAt = clock.UtcNow,
-        }, default);
+        var message = new OutboxMessage(office, "email", "{}", "welcome", clock.UtcNow, clock.UtcNow);
+        var id = message.Id;
+        await outbox.EnqueueAsync(message, default);
 
         var handled = await dispatcher.DispatchOnceAsync("test-worker", 10, TimeSpan.FromMinutes(1));
 
@@ -112,18 +111,7 @@ public class JobPersistenceTests(PostgresFixture pg) : IClassFixture<PostgresFix
         {
             for (var i = 0; i < 3000; i++)
             {
-                db.Outbox.Add(new OutboxEntity
-                {
-                    Id = Guid.CreateVersion7(),
-                    OfficeId = office,
-                    Type = "email",
-                    Payload = "{}",
-                    IdempotencyKey = $"k{i}",
-                    Status = JobStatus.Pending,
-                    AvailableAt = now.AddSeconds(i),
-                    CreatedAt = now,
-                    UpdatedAt = now,
-                });
+                db.Outbox.Add(new OutboxMessage(office, "email", "{}", $"k{i}", now.AddSeconds(i), now));
             }
 
             await db.SaveChangesAsync();

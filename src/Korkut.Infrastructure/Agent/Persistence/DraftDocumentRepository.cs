@@ -1,10 +1,10 @@
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Domain.Agent.Documents;
 using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
+using Korkut.Domain.Common;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 
@@ -19,6 +19,7 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
     {
         var existing = await Db.GeneratedDocuments.AsNoTracking()
             .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.ConversationId == conversationId, ct);
+        
         if (existing is not null)
         {
             return ToDomain(existing);
@@ -29,6 +30,7 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
             Id = UuidV7.NewId(), OfficeId = officeId, ConversationId = conversationId,
             Title = title, ContentMd = string.Empty, Status = "draft", CreatedAt = now, UpdatedAt = now,
         };
+        
         Db.GeneratedDocuments.Add(doc);
         await Db.SaveChangesAsync(ct);
         return ToDomain(doc);
@@ -92,6 +94,7 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
     public async Task<bool> SaveAsync(Guid officeId, Guid docId, string title, string contentMd, string? author, DateTimeOffset now, CancellationToken ct = default)
     {
         var doc = await Db.GeneratedDocuments.SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
+        
         if (doc is null)
         {
             return false;
@@ -100,11 +103,13 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
         doc.Title = title;
         doc.ContentMd = contentMd;
         doc.UpdatedAt = now;
+        
         Db.DocumentVersions.Add(new DocumentVersionEntity
         {
             Id = UuidV7.NewId(), OfficeId = officeId, DocumentId = docId, ContentMd = contentMd,
             Author = author, Note = "Elle kaydedildi", CreatedAt = now,
         });
+        
         await Db.SaveChangesAsync(ct);
         return true;
     }

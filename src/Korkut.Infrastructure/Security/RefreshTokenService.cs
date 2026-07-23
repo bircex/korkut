@@ -1,6 +1,6 @@
 using Korkut.Application.Security;
+using Korkut.Domain.Common;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Ids;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
