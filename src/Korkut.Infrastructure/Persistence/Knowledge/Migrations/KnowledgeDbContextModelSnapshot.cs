@@ -25,7 +25,7 @@ namespace Korkut.Infrastructure.Persistence.Knowledge.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.KnowledgeChunkEntity", b =>
+            modelBuilder.Entity("Korkut.Infrastructure.Knowledge.KnowledgeChunkEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

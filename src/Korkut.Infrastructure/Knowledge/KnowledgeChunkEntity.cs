@@ -1,13 +1,15 @@
 using Pgvector;
 using Korkut.Domain.Common;
 
-namespace Korkut.Infrastructure.Persistence.Entities;
+namespace Korkut.Infrastructure.Knowledge;
 
 /// <summary>
-/// One indexed passage of an office document in the Knowledge DB (schema
-/// <c>korkut_knowledge</c>). The <see cref="Embedding"/> is a pgvector column; the whole row is
-/// tenant-scoped by <see cref="OfficeId"/> (RLS) and stamped with the <see cref="EmbeddingVersion"/>
-/// so a re-index under a new embedder never mixes vector spaces.
+/// The stored form of a <see cref="Korkut.Domain.Knowledge.KnowledgeChunk"/> in the Knowledge DB
+/// (schema <c>korkut_knowledge</c>). This row stays in Infrastructure, not Domain, precisely
+/// because of <see cref="Embedding"/>: it is a pgvector value, and the Domain must not depend on a
+/// persistence-technology type. The row is tenant-scoped by <see cref="OfficeId"/> (RLS) and
+/// stamped with the <see cref="EmbeddingVersion"/> so a re-index under a new embedder never mixes
+/// vector spaces.
 /// </summary>
 public sealed class KnowledgeChunkEntity : ITenantOwned
 {

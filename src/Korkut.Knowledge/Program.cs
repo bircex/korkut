@@ -1,6 +1,6 @@
-using Korkut.Knowledge.Endpoints;
 using Korkut.Knowledge.Setup;
 using Korkut.Web;
+using Korkut.Web.Controllers;
 using Korkut.Web.Auth;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Observability;
@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddKorkutObservability("Korkut.Knowledge", tracing => tracing.AddAspNetCoreInstrumentation());
 
 builder.Services.AddKorkutWeb(builder.Configuration);
+builder.Services.AddKorkutControllers();
 
 var knowledgeDbUrl = builder.Configuration["KORKUT_KNOWLEDGE_DB_URL"]
     ?? throw new InvalidOperationException("KORKUT_KNOWLEDGE_DB_URL is required for the Knowledge host (the Knowledge DB app-role connection).");
@@ -48,7 +49,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Knowledge", status = "ok" }));
-app.MapKnowledgeEndpoints();
+app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 

@@ -1,4 +1,3 @@
-using Korkut.Application.Features.Knowledge;
 using Korkut.Application.Knowledge;
 using Korkut.Infrastructure.Knowledge;
 
@@ -18,6 +17,11 @@ public static class KnowledgeServices
         services.AddScoped<IVectorStoreService, PgVectorStoreService>();
         services.AddScoped<IIngestionService, IngestionService>();
         services.AddScoped<IRetrievalService, RetrievalService>();
+        // The office comes from the caller's token, and the tenant scope is opened over the
+        // Knowledge DB (its own IUnitOfWork), so the services never take an office parameter.
+        services.AddHttpContextAccessor();
+        services.AddScoped<Korkut.Application.Common.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
+        services.AddScoped<Korkut.Application.Common.IUnitOfWork, Korkut.Infrastructure.Knowledge.KnowledgeUnitOfWork>();
         return services;
     }
 }

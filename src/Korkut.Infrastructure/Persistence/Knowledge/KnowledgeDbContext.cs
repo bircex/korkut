@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Infrastructure.Knowledge;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence.Knowledge;
@@ -22,18 +22,7 @@ public sealed class KnowledgeDbContext(DbContextOptions<KnowledgeDbContext> opti
         // Emits `CREATE EXTENSION IF NOT EXISTS vector` in the migration (run by the elevated migrator).
         modelBuilder.HasPostgresExtension("vector");
 
-        modelBuilder.Entity<KnowledgeChunkEntity>(b =>
-        {
-            b.ToTable("chunks");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Text).HasColumnType("text");
-            b.Property(x => x.EmbeddingVersion).HasMaxLength(100);
-            // Dimension is left unspecified so any configured embedder fits; exact cosine search
-            // needs no fixed dimension. A fixed-dimension hnsw/ivfflat index is a later optimization.
-            b.Property(x => x.Embedding).HasColumnType("vector");
-            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.Ordinal }).HasDatabaseName("ix_chunks_document");
-        });
+        modelBuilder.ApplyConfiguration(new KnowledgeChunkConfiguration());
 
         SnakeCaseNaming.Apply(modelBuilder);
 

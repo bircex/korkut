@@ -1,7 +1,6 @@
 using Korkut.Application.Knowledge;
 using Korkut.Domain.Common;
 using Korkut.Domain.Knowledge;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Persistence.Knowledge;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
