@@ -54,7 +54,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Documents.Document> Documents => Set<Domain.Documents.Document>();
 
-    public DbSet<DocumentExtractionEntity> DocumentExtractions => Set<DocumentExtractionEntity>();
+    public DbSet<Domain.Documents.DocumentExtraction> DocumentExtractions => Set<Domain.Documents.DocumentExtraction>();
 
     public DbSet<Domain.Documents.DocumentRelation> DocumentRelations => Set<Domain.Documents.DocumentRelation>();
 
@@ -127,25 +127,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Documents.DocumentConfiguration());
 
-        modelBuilder.Entity<DocumentExtractionEntity>(b =>
-        {
-            b.ToTable("document_extractions");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.ParserVersion).HasMaxLength(50);
-            b.Property(x => x.SourceChecksumSha256).HasMaxLength(64);
-            b.Property(x => x.SourceObjectKey).HasMaxLength(100);
-            // Tenant-aware composite FK to the source document.
-            b.HasOne<Domain.Documents.Document>()
-                .WithMany()
-                .HasForeignKey(x => new { x.OfficeId, x.DocumentId })
-                .HasPrincipalKey(d => new { d.OfficeId, d.Id })
-                .OnDelete(DeleteBehavior.Cascade);
-            // Retry idempotency + immutable-per-parser: one row per source span+parser.
-            b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.DocumentVersion, x.ParserVersion, x.Page, x.SpanIndex })
-                .IsUnique()
-                .HasDatabaseName("ux_doc_extractions_provenance");
-        });
+        modelBuilder.ApplyConfiguration(new Documents.DocumentExtractionConfiguration());
 
         modelBuilder.ApplyConfiguration(new Documents.DocumentRelationConfiguration());
 

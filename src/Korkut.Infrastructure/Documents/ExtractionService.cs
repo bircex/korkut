@@ -1,11 +1,12 @@
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.OCR;
 using Korkut.Application.Documents.Storage;
-using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Documents;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Documents;
 
 /// <summary>Outcome of an extraction run (KDM-027).</summary>
 public enum ExtractionOutcome
@@ -46,7 +47,7 @@ public sealed class ExtractionService(
             ?? throw new InvalidOperationException("Document not found.");
 
         // Worker may only process objects proven clean — never pending/quarantine/rejected/tombstoned.
-        if (doc.Status != "clean")
+        if (!doc.IsDownloadable)
         {
             return new ExtractionResult(ExtractionOutcome.SkippedNotClean, 0);
         }
@@ -73,20 +74,9 @@ public sealed class ExtractionService(
         var now = clock.UtcNow;
         foreach (var span in spans)
         {
-            db.DocumentExtractions.Add(new DocumentExtractionEntity
-            {
-                Id = Guid.CreateVersion7(),
-                OfficeId = officeId,
-                DocumentId = documentId,
-                DocumentVersion = doc.Version,
-                ParserVersion = extractorService.ParserVersion,
-                Page = span.Page,
-                SpanIndex = span.Index,
-                Text = span.Text,
-                SourceChecksumSha256 = doc.ChecksumSha256,
-                SourceObjectKey = doc.ObjectKey,
-                CreatedAt = now,
-            });
+            db.DocumentExtractions.Add(new DocumentExtraction(
+                officeId, documentId, doc.Version, extractorService.ParserVersion,
+                span.Page, span.Index, span.Text, doc.ChecksumSha256, doc.ObjectKey, now));
         }
 
         await db.SaveChangesAsync(ct);
