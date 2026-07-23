@@ -1,4 +1,4 @@
-using Korkut.Domain.Primitives;
+using Korkut.Domain.Common;
 using Korkut.Domain.Ids;
 using Korkut.Domain.Results;
 using Korkut.Domain.Time;

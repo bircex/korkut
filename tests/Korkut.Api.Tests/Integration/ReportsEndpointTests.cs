@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.OfficeCore.Clients;
 
 namespace Korkut.Api.Tests;
 
@@ -32,7 +33,7 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
             db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "M2", Status = "open", CreatedAt = now });
             db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "M3", Status = "closed", CreatedAt = now });
             db.Matters.Add(new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "gone", Status = "open", DeletedAt = now, CreatedAt = now }); // excluded
-            db.Clients.Add(new ClientEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = "C1", CreatedAt = now });
+            db.Clients.Add(new Client(office, "C1", "individual", null, null, now));
 
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-open", Status = "open", CreatedAt = now });
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = "t-overdue", Status = "open", DueAt = now.AddDays(-1), CreatedAt = now });

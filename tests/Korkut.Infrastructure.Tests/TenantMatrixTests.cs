@@ -5,6 +5,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Korkut.Domain.OfficeCore.Clients;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -47,8 +48,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         var matterId = await db.Matters.Where(m => m.OfficeId == office).Select(m => m.Id).FirstAsync();
         for (var i = 0; i < n; i++)
         {
-            var clientId = Guid.CreateVersion7();
-            db.Clients.Add(new ClientEntity { Id = clientId, OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
+            var client = new Client(office, $"c{i}", "individual", null, null, DateTimeOffset.UtcNow);
+            var clientId = client.Id;
+            db.Clients.Add(client);
             db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
             db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });

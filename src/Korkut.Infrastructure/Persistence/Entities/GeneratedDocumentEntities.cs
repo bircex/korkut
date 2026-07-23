@@ -1,3 +1,4 @@
+using Korkut.Domain.Common;
 namespace Korkut.Infrastructure.Persistence.Entities;
 
 /// <summary>
@@ -6,7 +7,7 @@ namespace Korkut.Infrastructure.Persistence.Entities;
 /// and is versioned via <see cref="DocumentVersionEntity"/> on each accept/save. Distinct
 /// from <see cref="DocumentEntity"/> (uploaded files) — this is generated content.
 /// </summary>
-public sealed class GeneratedDocumentEntity : ITenantOwned, IIdentifiable
+public sealed class GeneratedDocumentEntity : ITenantOwned, IEntity
 {
     public Guid Id { get; set; }
 
@@ -35,7 +36,7 @@ public sealed class GeneratedDocumentEntity : ITenantOwned, IIdentifiable
 }
 
 /// <summary>An immutable snapshot of a generated document's content (an accepted/saved version).</summary>
-public sealed class DocumentVersionEntity : ITenantOwned, IIdentifiable
+public sealed class DocumentVersionEntity : ITenantOwned, IEntity
 {
     public Guid Id { get; set; }
 

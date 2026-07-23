@@ -4,6 +4,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Persistence.Repositories;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
+using Korkut.Domain.OfficeCore.Clients;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -111,7 +112,7 @@ public class OfficeCoreTests(PostgresFixture pg) : IClassFixture<PostgresFixture
     public async Task Client_matter_link_uses_the_tenant_aware_composite_key()
     {
         await using var db = pg.NewContext();
-        var client = new ClientEntity { Id = Guid.CreateVersion7(), OfficeId = _office, Name = "Müvekkil", CreatedAt = DateTimeOffset.UtcNow };
+        var client = new Client(_office, "Müvekkil", "individual", null, null, DateTimeOffset.UtcNow);
         db.Clients.Add(client);
         await db.SaveChangesAsync();
 

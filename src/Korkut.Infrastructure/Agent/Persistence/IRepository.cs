@@ -1,6 +1,7 @@
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
+using Korkut.Domain.Common;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 
@@ -10,7 +11,7 @@ namespace Korkut.Infrastructure.Agent.Persistence;
 /// tenant-blind query is impossible by construction. This carries the generic entity CRUD; the
 /// concrete repository interfaces add their bespoke, domain-returning queries.
 /// </summary>
-public interface IRepository<TEntity> where TEntity : class, ITenantOwned, IIdentifiable
+public interface IRepository<TEntity> where TEntity : class, ITenantOwned, IEntity
 {
     /// <summary>The office-scoped entity with this id, or null.</summary>
     Task<TEntity?> FindAsync(Guid officeId, Guid id, CancellationToken ct = default);

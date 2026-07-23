@@ -1,3 +1,4 @@
+using Korkut.Domain.Common;
 namespace Korkut.Infrastructure.Persistence.Entities;
 
 /// <summary>
@@ -5,7 +6,7 @@ namespace Korkut.Infrastructure.Persistence.Entities;
 /// <c>llm_calls</c> aggregations and per-office budgets read. Tenant-scoped by <see cref="OfficeId"/>
 /// (RLS). Cost is derived from the provider/model pricing at record time.
 /// </summary>
-public sealed class LlmCallEntity : ITenantOwned, IIdentifiable
+public sealed class LlmCallEntity : ITenantOwned, IEntity
 {
     public Guid Id { get; set; }
 

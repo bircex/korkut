@@ -3,7 +3,6 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Ids;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 

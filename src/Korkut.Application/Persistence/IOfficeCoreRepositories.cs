@@ -2,21 +2,6 @@ using Korkut.Domain.OfficeCore;
 
 namespace Korkut.Application.Abstractions.Persistence;
 
-/// <summary>Persistence port for clients.</summary>
-public interface IClientRepository
-{
-    Task<Client> AddAsync(Client client, CancellationToken ct = default);
-
-    /// <summary>Active clients (soft-deleted excluded), by name.</summary>
-    Task<IReadOnlyList<Client>> ListAsync(Guid officeId, CancellationToken ct = default);
-
-    Task<Client?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default);
-
-    Task<bool> UpdateAsync(Guid officeId, Guid id, string name, string kind, string? email, string? phone, CancellationToken ct = default);
-
-    Task<bool> SoftDeleteAsync(Guid officeId, Guid id, DateTimeOffset deletedAt, CancellationToken ct = default);
-}
-
 /// <summary>Persistence port for matters + the court-title lookup used for the snapshot rule.</summary>
 public interface IMatterRepository
 {

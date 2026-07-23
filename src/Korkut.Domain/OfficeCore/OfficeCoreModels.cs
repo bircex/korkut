@@ -1,10 +1,5 @@
 namespace Korkut.Domain.OfficeCore;
 
-/// <summary>A tenant-owned client / müvekkil (domain model).</summary>
-public sealed record Client(
-    Guid Id, Guid OfficeId, string Name, string Kind, string? Email, string? Phone,
-    DateTimeOffset? DeletedAt, DateTimeOffset CreatedAt);
-
 /// <summary>
 /// A tenant-owned case file / dosya (domain model). The court title is snapshotted onto
 /// the matter at link time (<see cref="CourtNameSnapshot"/>) so a later court rename never

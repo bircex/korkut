@@ -1,3 +1,4 @@
+using Korkut.Domain.OfficeCore.Clients;
 using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -25,7 +26,7 @@ public sealed class MatterConfiguration : IEntityTypeConfiguration<MatterEntity>
         // Optimistic concurrency via Postgres' system xmin column.
         builder.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
         // Tenant-aware composite FK to the client (optional).
-        builder.HasOne<ClientEntity>()
+        builder.HasOne<Client>()
             .WithMany()
             .HasForeignKey(x => new { x.OfficeId, x.ClientId })
             .HasPrincipalKey(c => new { c.OfficeId, c.Id })
@@ -35,23 +36,6 @@ public sealed class MatterConfiguration : IEntityTypeConfiguration<MatterEntity>
         builder.Property(x => x.CaseType).HasMaxLength(100);
         builder.Property(x => x.CourtNameSnapshot).HasMaxLength(400);
         builder.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_matters_office_status");
-    }
-}
-
-/// <summary>EF mapping for clients.</summary>
-public sealed class ClientConfiguration : IEntityTypeConfiguration<ClientEntity>
-{
-    public void Configure(EntityTypeBuilder<ClientEntity> builder)
-    {
-        builder.ToTable("clients");
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever();
-        builder.Property(x => x.Name).HasMaxLength(400);
-        builder.Property(x => x.Kind).HasMaxLength(20);
-        builder.Property(x => x.Email).HasMaxLength(320);
-        builder.Property(x => x.Phone).HasMaxLength(50);
-        builder.HasAlternateKey(x => new { x.OfficeId, x.Id }); // composite FK target for matters
-        builder.HasIndex(x => new { x.OfficeId, x.DeletedAt }).HasDatabaseName("ix_clients_office_deleted");
     }
 }
 

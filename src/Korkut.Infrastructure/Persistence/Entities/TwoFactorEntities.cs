@@ -1,3 +1,4 @@
+using Korkut.Domain.Common;
 namespace Korkut.Infrastructure.Persistence.Entities;
 
 /// <summary>A user's TOTP enrollment. Secret is envelope-encrypted at rest.</summary>

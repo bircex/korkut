@@ -3,6 +3,7 @@ using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
+using Korkut.Domain.Common;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 
@@ -13,7 +14,7 @@ namespace Korkut.Infrastructure.Agent.Persistence;
 /// inherit the context access + <see cref="Scoped"/> and add their domain-returning queries.
 /// </summary>
 public abstract class EfRepository<TEntity>(AgentDbContext db) : IRepository<TEntity>
-    where TEntity : class, ITenantOwned, IIdentifiable
+    where TEntity : class, ITenantOwned, IEntity
 {
     protected AgentDbContext Db => db;
 

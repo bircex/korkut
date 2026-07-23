@@ -5,6 +5,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
+using Korkut.Domain.OfficeCore.Clients;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -48,10 +49,10 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedClientAsync(KorkutDbContext db)
     {
-        var id = Guid.CreateVersion7();
-        db.Clients.Add(new ClientEntity { Id = id, OfficeId = _office, Name = "c", CreatedAt = DateTimeOffset.UtcNow });
+        var client = new Client(_office, "c", "individual", null, null, DateTimeOffset.UtcNow);
+        db.Clients.Add(client);
         await db.SaveChangesAsync();
-        return id;
+        return client.Id;
     }
 
     private async Task<Guid> SeedMatterAsync(KorkutDbContext db)

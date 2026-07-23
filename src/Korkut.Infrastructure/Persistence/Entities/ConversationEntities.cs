@@ -1,10 +1,11 @@
+using Korkut.Domain.Common;
 namespace Korkut.Infrastructure.Persistence.Entities;
 
 /// <summary>
 /// A tenant-owned assistant conversation ("session"): a titled thread of chat messages,
 /// optionally scoped to a matter. Ordering/recency is tracked by <see cref="UpdatedAt"/>.
 /// </summary>
-public sealed class ConversationEntity : ITenantOwned, IIdentifiable
+public sealed class ConversationEntity : ITenantOwned, IEntity
 {
     public Guid Id { get; set; }
 
@@ -23,7 +24,7 @@ public sealed class ConversationEntity : ITenantOwned, IIdentifiable
 }
 
 /// <summary>A single message in a conversation.</summary>
-public sealed class ChatMessageEntity : ITenantOwned, IIdentifiable
+public sealed class ChatMessageEntity : ITenantOwned, IEntity
 {
     public Guid Id { get; set; }
 

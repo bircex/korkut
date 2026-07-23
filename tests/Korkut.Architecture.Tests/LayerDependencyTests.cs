@@ -11,7 +11,7 @@ namespace Korkut.Architecture.Tests;
 /// </summary>
 public class LayerDependencyTests
 {
-    private static readonly Assembly Domain = typeof(Korkut.Domain.Primitives.Entity).Assembly;
+    private static readonly Assembly Domain = typeof(Korkut.Domain.Common.Entity).Assembly;
     private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
     private static readonly Assembly Pii = typeof(Korkut.Pii.PiiRedactor).Assembly;

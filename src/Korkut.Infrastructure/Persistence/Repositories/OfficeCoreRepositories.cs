@@ -5,45 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence.Repositories;
 
-/// <summary>EF/Postgres adapter for <see cref="IClientRepository"/>.</summary>
-public sealed class ClientRepository(KorkutDbContext db) : IClientRepository
-{
-    public async Task<Client> AddAsync(Client client, CancellationToken ct = default)
-    {
-        db.Clients.Add(new ClientEntity
-        {
-            Id = client.Id, OfficeId = client.OfficeId, Name = client.Name, Kind = client.Kind,
-            Email = client.Email, Phone = client.Phone, CreatedAt = client.CreatedAt,
-        });
-        await db.SaveChangesAsync(ct);
-        return client;
-    }
-
-    public async Task<IReadOnlyList<Client>> ListAsync(Guid officeId, CancellationToken ct = default)
-        => (await db.Clients.AsNoTracking()
-                .Where(x => x.OfficeId == officeId && x.DeletedAt == null).OrderBy(x => x.Name).ToListAsync(ct))
-            .Select(ToDomain).ToList();
-
-    public async Task<Client?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default)
-    {
-        var e = await db.Clients.AsNoTracking().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == id && x.DeletedAt == null, ct);
-        return e is null ? null : ToDomain(e);
-    }
-
-    public async Task<bool> UpdateAsync(Guid officeId, Guid id, string name, string kind, string? email, string? phone, CancellationToken ct = default)
-        => await db.Clients.Where(x => x.OfficeId == officeId && x.Id == id && x.DeletedAt == null)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(x => x.Name, name).SetProperty(x => x.Kind, kind)
-                .SetProperty(x => x.Email, email).SetProperty(x => x.Phone, phone), ct) > 0;
-
-    public async Task<bool> SoftDeleteAsync(Guid officeId, Guid id, DateTimeOffset deletedAt, CancellationToken ct = default)
-        => await db.Clients.Where(x => x.OfficeId == officeId && x.Id == id && x.DeletedAt == null)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DeletedAt, deletedAt), ct) > 0;
-
-    private static Client ToDomain(ClientEntity e) =>
-        new(e.Id, e.OfficeId, e.Name, e.Kind, e.Email, e.Phone, e.DeletedAt, e.CreatedAt);
-}
-
 /// <summary>EF/Postgres adapter for <see cref="IMatterRepository"/>.</summary>
 public sealed class MatterRepository(KorkutDbContext db) : IMatterRepository
 {

@@ -12,24 +12,6 @@ namespace Korkut.Api.Endpoints;
 // Transport DTOs (never domain models). Snake_case is applied by the global JSON
 // contract, so `ClientId` serializes as `client_id` to match the Python/UI contract.
 
-public sealed record ClientResponse(Guid Id, string Name, string Kind, string? Email, string? Phone, DateTimeOffset CreatedAt);
-
-public sealed record ClientWriteRequest
-{
-    [Required(ErrorMessage = "Ad zorunludur.")]
-    [MaxLength(300, ErrorMessage = "Ad en fazla 300 karakter olabilir.")]
-    public string? Name { get; init; }
-
-    [RegularExpression("individual|corporate", ErrorMessage = "Tür 'individual' veya 'corporate' olmalıdır.")]
-    public string Kind { get; init; } = "individual";
-
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta girin.")]
-    public string? Email { get; init; }
-
-    [MaxLength(50)]
-    public string? Phone { get; init; }
-}
-
 public sealed record MatterResponse(Guid Id, string Title, Guid? ClientId, string Status, string? CourtNameSnapshot, DateTimeOffset CreatedAt);
 
 /// <summary>Matter detail: the matter plus its hearings (duruşmalar), earliest first.</summary>
@@ -81,61 +63,8 @@ public static class OfficeCoreEndpoints
 {
     public static IEndpointRouteBuilder MapOfficeCoreEndpoints(this IEndpointRouteBuilder app)
     {
-        MapClients(app);
         MapMatters(app);
         return app;
-    }
-
-    private static void MapClients(IEndpointRouteBuilder app)
-    {
-        var clients = app.MapGroup("/api/clients");
-
-        clients.MapGet("", async (ClaimsPrincipal user, KorkutDbContext db, IClientService svc, CancellationToken ct) =>
-            Results.Ok(await user.InTenantScopeAsync(db,
-                async office => (await svc.ListAsync(office, ct)).Select(ToDto).ToList(), ct)))
-            .RequireAuthorization(Permissions.ClientsRead);
-
-        clients.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IClientService svc, CancellationToken ct) =>
-            {
-                var client = await user.InTenantScopeAsync(db, office => svc.GetAsync(office, id, ct), ct);
-                return client is null ? throw ApiException.NotFound("Müvekkil bulunamadı.") : Results.Ok(ToDto(client));
-            })
-            .RequireAuthorization(Permissions.ClientsRead);
-
-        clients.MapPost("", async (ClientWriteRequest body, ClaimsPrincipal user, KorkutDbContext db, IClientService svc, CancellationToken ct) =>
-            {
-                var invalid = DtoValidation.Validate(body);
-                if (invalid is not null)
-                {
-                    return invalid;
-                }
-
-                var created = await user.InTenantScopeAsync(db,
-                    office => svc.CreateAsync(office, body.Name!.Trim(), body.Kind, body.Email, body.Phone, ct), ct);
-                return Results.Created($"/api/clients/{created.Id}", ToDto(created));
-            })
-            .RequireAuthorization(Permissions.ClientsWrite);
-
-        clients.MapPatch("/{id:guid}", async (Guid id, ClientWriteRequest body, ClaimsPrincipal user, KorkutDbContext db, IClientService svc, CancellationToken ct) =>
-            {
-                var invalid = DtoValidation.Validate(body);
-                if (invalid is not null)
-                {
-                    return invalid;
-                }
-
-                var updated = await user.InTenantScopeAsync(db,
-                    office => svc.UpdateAsync(office, id, body.Name!.Trim(), body.Kind, body.Email, body.Phone, ct), ct);
-                return updated is null ? throw ApiException.NotFound("Müvekkil bulunamadı.") : Results.Ok(ToDto(updated));
-            })
-            .RequireAuthorization(Permissions.ClientsWrite);
-
-        clients.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal user, KorkutDbContext db, IClientService svc, CancellationToken ct) =>
-            {
-                var ok = await user.InTenantScopeAsync(db, office => svc.DeleteAsync(office, id, ct), ct);
-                return ok ? Results.NoContent() : throw ApiException.NotFound("Müvekkil bulunamadı.");
-            })
-            .RequireAuthorization(Permissions.ClientsWrite);
     }
 
     private static void MapMatters(IEndpointRouteBuilder app)
@@ -194,8 +123,6 @@ public static class OfficeCoreEndpoints
             })
             .RequireAuthorization(Permissions.MattersWrite);
     }
-
-    private static ClientResponse ToDto(Client c) => new(c.Id, c.Name, c.Kind, c.Email, c.Phone, c.CreatedAt);
 
     private static MatterResponse ToDto(Matter m) => new(m.Id, m.Title, m.ClientId, m.Status, m.CourtNameSnapshot, m.CreatedAt);
 

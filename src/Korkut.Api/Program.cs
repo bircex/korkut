@@ -3,6 +3,7 @@ using Korkut.Api.Auth;
 using Korkut.Api.Endpoints;
 using Korkut.Api.Observability;
 using Korkut.Web;
+using Korkut.Web.Controllers;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Storage;
 using Korkut.Infrastructure.Security;
@@ -17,6 +18,9 @@ builder.AddKorkutObservability("Korkut.Api", tracing => tracing.AddAspNetCoreIns
 
 // API foundation: JSON contract, versioning, error mapping, CORS, OpenAPI (KDM-006).
 builder.Services.AddKorkutWeb(builder.Configuration);
+
+// Controllers (per-aggregate, clean-architecture slices) on the shared JSON + 422 contract.
+builder.Services.AddKorkutControllers();
 
 // Domain persistence + services (app-role DbContext, office-core stores). The real
 // endpoints are added per module; DI here makes their services available.
@@ -61,6 +65,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
+app.MapControllers();
 app.MapFoundationEndpoints();
 app.MapAuthEndpoints();
 app.MapOfficeCoreEndpoints();

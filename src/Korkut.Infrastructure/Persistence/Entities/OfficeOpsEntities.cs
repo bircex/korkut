@@ -1,3 +1,4 @@
+using Korkut.Domain.Common;
 namespace Korkut.Infrastructure.Persistence.Entities;
 
 /// <summary>A tenant-owned task with an owner and a status lifecycle.</summary>

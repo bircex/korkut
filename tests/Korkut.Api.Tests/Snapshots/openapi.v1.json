@@ -205,7 +205,7 @@
         },
         "type": "object"
       },
-      "ClientWriteRequest": {
+      "CreateClientRequest": {
         "properties": {
           "email": {
             "type": [
@@ -1064,6 +1064,38 @@
         },
         "type": "object"
       },
+      "UpdateClientRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "pattern": "individual|corporate",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "WhatsAppChannelInput": {
         "properties": {
           "base_url": {
@@ -1560,15 +1592,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ClientWriteRequest"
+                "$ref": "#/components/schemas/CreateClientRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientRequest"
               }
             }
           },
@@ -1580,7 +1622,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       }
     },
@@ -1603,7 +1645,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "get": {
@@ -1624,7 +1666,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "patch": {
@@ -1641,9 +1683,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ClientWriteRequest"
+                "$ref": "#/components/schemas/UpdateClientRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientRequest"
               }
             }
           },
@@ -1655,7 +1707,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       }
     },
@@ -3210,6 +3262,9 @@
     },
     {
       "name": "AuthEndpoints"
+    },
+    {
+      "name": "Clients"
     }
   ]
 }

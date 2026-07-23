@@ -24,10 +24,16 @@ public static class DomainSetup
         services.AddScoped<IAuditLog, EfAuditLog>();
         // Office-core (Clean Architecture: clients + matters + hearings). Owns the
         // court-title snapshot rule in MatterService.
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IClientRepository, Korkut.Infrastructure.Persistence.Repositories.ClientRepository>();
+        services.AddScoped<Korkut.Application.OfficeCore.Clients.IClientRepository, Korkut.Infrastructure.OfficeCore.Clients.ClientRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IMatterRepository, Korkut.Infrastructure.Persistence.Repositories.MatterRepository>();
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IHearingRepository, Korkut.Infrastructure.Persistence.Repositories.HearingRepository>();
-        services.AddScoped<Korkut.Application.Features.OfficeCore.IClientService, Korkut.Application.Features.OfficeCore.ClientService>();
+        services.AddScoped<Korkut.Application.OfficeCore.Clients.IClientService, Korkut.Application.OfficeCore.Clients.ClientService>();
+
+        // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
+        // every application service runs inside.
+        services.AddHttpContextAccessor();
+        services.AddScoped<Korkut.Application.Common.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
+        services.AddScoped<Korkut.Application.Common.IUnitOfWork, Korkut.Infrastructure.Common.UnitOfWork>();
         services.AddScoped<Korkut.Application.Features.OfficeCore.IMatterService, Korkut.Application.Features.OfficeCore.MatterService>();
         // Office-ops (Clean Architecture: repository ports + service).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.ITaskRepository, Korkut.Infrastructure.Persistence.Repositories.TaskRepository>();
