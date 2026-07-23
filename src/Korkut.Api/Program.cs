@@ -69,7 +69,6 @@ app.MapControllers();
 app.MapFoundationEndpoints();
 app.MapAuthEndpoints();
 app.MapDocumentEndpoints();
-app.MapSettingsEndpoints();
 app.MapReportsEndpoints();
 app.MapOnboardingEndpoints();
 app.MapExportEndpoints();

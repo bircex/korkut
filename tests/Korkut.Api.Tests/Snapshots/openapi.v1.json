@@ -405,6 +405,25 @@
         ],
         "type": "object"
       },
+      "CreateMemoryRequest": {
+        "properties": {
+          "kind": {
+            "maxLength": "50",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
       "CreateNoteRequest": {
         "properties": {
           "body": {
@@ -734,42 +753,6 @@
         ],
         "type": "object"
       },
-      "MemoryCreateRequest": {
-        "properties": {
-          "kind": {
-            "maxLength": "50",
-            "type": "string"
-          },
-          "text": {
-            "maxLength": "4000",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "text"
-        ],
-        "type": "object"
-      },
-      "PersonaInput": {
-        "properties": {
-          "expertise": {
-            "maxLength": "2000",
-            "type": "string"
-          },
-          "extra_rules": {
-            "maxLength": "4000",
-            "type": "string"
-          },
-          "tone": {
-            "maxLength": "2000",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "ResetBody": {
         "properties": {
           "password": {
@@ -828,39 +811,24 @@
         },
         "type": "object"
       },
-      "SaveTelegramChannelRequest": {
+      "SavePersonaRequest": {
         "properties": {
-          "bot_token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "SaveWhatsAppChannelRequest": {
-        "properties": {
-          "base_url": {
-            "maxLength": "400",
+          "expertise": {
+            "maxLength": "2000",
             "type": "string"
           },
-          "enabled": {
-            "type": "boolean"
+          "extra_rules": {
+            "maxLength": "4000",
+            "type": "string"
           },
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "tone": {
+            "maxLength": "2000",
+            "type": "string"
           }
         },
         "type": "object"
       },
-      "StyleFieldsDto": {
+      "SaveStyleRequest": {
         "properties": {
           "boilerplate": {
             "maxLength": "4000",
@@ -891,12 +859,38 @@
             ]
           }
         },
-        "required": [
-          "letterhead",
-          "signature",
-          "tone",
-          "boilerplate"
-        ],
+        "type": "object"
+      },
+      "SaveTelegramChannelRequest": {
+        "properties": {
+          "bot_token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "SaveWhatsAppChannelRequest": {
+        "properties": {
+          "base_url": {
+            "maxLength": "400",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
         "type": "object"
       },
       "TotpRequest": {
@@ -2708,15 +2702,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemoryCreateRequest"
+                "$ref": "#/components/schemas/CreateMemoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryRequest"
               }
             }
           },
@@ -2728,7 +2732,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2751,7 +2755,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2774,7 +2778,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2960,15 +2964,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Persona"
         ]
       },
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePersonaRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PersonaInput"
+                "$ref": "#/components/schemas/SavePersonaRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePersonaRequest"
               }
             }
           },
@@ -2980,7 +2994,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Persona"
         ]
       }
     },
@@ -3042,7 +3056,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -3050,9 +3064,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StyleFieldsDto"
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
               }
             }
           },
@@ -3064,7 +3088,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -3072,9 +3096,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StyleFieldsDto"
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
               }
             }
           },
@@ -3086,7 +3120,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -3303,6 +3337,15 @@
     },
     {
       "name": "Tasks"
+    },
+    {
+      "name": "Memory"
+    },
+    {
+      "name": "Persona"
+    },
+    {
+      "name": "Style"
     },
     {
       "name": "PetitionTypes"

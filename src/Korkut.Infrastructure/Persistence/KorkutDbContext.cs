@@ -66,11 +66,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Calendar.CalendarEvent> CalendarEvents => Set<Domain.Calendar.CalendarEvent>();
 
-    public DbSet<PersonaEntity> Personas => Set<PersonaEntity>();
+    public DbSet<Domain.Settings.Persona> Personas => Set<Domain.Settings.Persona>();
 
-    public DbSet<StyleProfileEntity> StyleProfiles => Set<StyleProfileEntity>();
+    public DbSet<Domain.Settings.StyleProfile> StyleProfiles => Set<Domain.Settings.StyleProfile>();
 
-    public DbSet<MemoryItemEntity> MemoryItems => Set<MemoryItemEntity>();
+    public DbSet<Domain.Settings.MemoryItem> MemoryItems => Set<Domain.Settings.MemoryItem>();
 
     public DbSet<Domain.Channels.Channel> Channels => Set<Domain.Channels.Channel>();
 
@@ -164,41 +164,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Calendar.CalendarEventConfiguration());
 
-        modelBuilder.Entity<PersonaEntity>(b =>
-        {
-            b.ToTable("office_persona");
-            b.HasKey(x => x.OfficeId); // exactly one persona row per office
-            b.Property(x => x.OfficeId).ValueGeneratedNever();
-            b.Property(x => x.Tone).HasMaxLength(2000);
-            b.Property(x => x.Expertise).HasMaxLength(2000);
-            b.Property(x => x.ExtraRules).HasMaxLength(4000);
-        });
+        modelBuilder.ApplyConfiguration(new Settings.PersonaConfiguration());
 
-        modelBuilder.Entity<StyleProfileEntity>(b =>
-        {
-            b.ToTable("style_profiles");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Scope).HasMaxLength(10);
-            b.Property(x => x.Letterhead).HasMaxLength(2000);
-            b.Property(x => x.Signature).HasMaxLength(2000);
-            b.Property(x => x.Tone).HasMaxLength(2000);
-            b.Property(x => x.Boilerplate).HasMaxLength(4000);
-            // One office profile, and at most one per user, per office.
-            b.HasIndex(x => new { x.OfficeId, x.Scope, x.UserId })
-                .IsUnique().HasDatabaseName("ux_style_profiles_office_scope_user");
-        });
+        modelBuilder.ApplyConfiguration(new Settings.StyleProfileConfiguration());
 
-        modelBuilder.Entity<MemoryItemEntity>(b =>
-        {
-            b.ToTable("memory_items");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Kind).HasMaxLength(50);
-            b.Property(x => x.Text).HasMaxLength(4000);
-            b.Property(x => x.Status).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_memory_items_office_status");
-        });
+        modelBuilder.ApplyConfiguration(new Settings.MemoryItemConfiguration());
 
         modelBuilder.ApplyConfiguration(new Channels.ChannelConfiguration());
 

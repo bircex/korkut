@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using System.Text;
 using Korkut.Application.Documents;
-using Korkut.Application.Features.Settings;
+using Korkut.Application.Settings;
+using Korkut.Domain.Settings;
 using Korkut.Application.Runtime;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
@@ -18,7 +19,7 @@ namespace Korkut.Infrastructure.Agent.Ai;
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    ISessionService sessions, IOfficeSettingsService settings, RuntimeConfig config,
+    ISessionService sessions, IPersonaRepository personas, IStyleProfileRepository styles, IMemoryRepository memories, RuntimeConfig config,
     ITextExtractorService extractorService, IKnowledgeSearchService knowledge, ILlmCallLogService callLogService, IUsageGovernorService governorService,
     IAgentToolLoopService toolLoopService) : ISessionChatService
 {
@@ -218,7 +219,7 @@ public sealed class SessionChatService(
         sb.AppendLine("Sen Korkut'sun; Türk hukuku alanında çalışan bir avukatlık bürosuna yardımcı olan yapay zeka asistanısın.");
         sb.AppendLine("Yanıtların Türkçe, açık ve hukuken dikkatli olsun; kesin olmayan noktalarda uyarı ekle.");
 
-        var persona = await settings.GetPersonaAsync(officeId, ct);
+        var persona = await personas.FindAsync(officeId, ct);
         if (persona is not null)
         {
             AppendIf(sb, "Üslup", persona.Tone);
@@ -226,15 +227,15 @@ public sealed class SessionChatService(
             AppendIf(sb, "Ek kurallar", persona.ExtraRules);
         }
 
-        var office = await settings.GetStyleAsync(officeId, "office", Guid.Empty, ct);
-        var self = await settings.GetStyleAsync(officeId, "user", userId, ct);
+        var office = await StyleAsync(officeId, StyleScope.Office, Guid.Empty, ct);
+        var self = await StyleAsync(officeId, StyleScope.User, userId, ct);
         var style = self.Over(office);
         AppendIf(sb, "Antet", style.Letterhead);
         AppendIf(sb, "İmza", style.Signature);
         AppendIf(sb, "Yazım tonu", style.Tone);
         AppendIf(sb, "Standart metin", style.Boilerplate);
 
-        var memory = (await settings.ListMemoryAsync(officeId, ct)).Where(m => m.Status == "active").ToList();
+        var memory = (await memories.ListAsync(officeId, ct)).Where(m => m.Status == MemoryItem.Active).ToList();
         if (memory.Count > 0)
         {
             sb.AppendLine("Bürosuna dair hatırlanan notlar:");
@@ -246,6 +247,10 @@ public sealed class SessionChatService(
 
         return sb.ToString().TrimEnd();
     }
+
+    /// <summary>A style layer that was never set reads as empty, so the overlay always has a baseline.</summary>
+    private async Task<StyleFields> StyleAsync(Guid officeId, string scope, Guid userId, CancellationToken ct)
+        => (await styles.FindAsync(officeId, scope, userId, ct))?.Fields ?? StyleFields.Empty;
 
     private static void AppendIf(StringBuilder sb, string label, string? value)
     {

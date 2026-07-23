@@ -19,6 +19,7 @@ using Korkut.Domain.Correspondence;
 using Korkut.Domain.Calendar;
 using Korkut.Domain.Outbox;
 using Korkut.Domain.Channels;
+using Korkut.Domain.Settings;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -78,14 +79,14 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Correspondence.Add(new CorrespondenceItem(office, "incoming", $"e{i}", null, null, null, null, DateTimeOffset.UtcNow));
             db.CalendarEvents.Add(new CalendarEvent(office, "appointment", $"cal{i}", DateTimeOffset.UtcNow, null, false, null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
-            db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
-            db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
+            db.StyleProfiles.Add(new StyleProfile(office, StyleScope.User, Guid.CreateVersion7()));
+            db.MemoryItems.Add(new MemoryItem(office, $"mem{i}", "note", null, true, DateTimeOffset.UtcNow));
             db.OutboundMessages.Add(new OutboundMessage(office, "email", $"to{i}@x.test", "s", "b", null, DateTimeOffset.UtcNow));
             // conversations/chat_messages/generated_documents/document_versions live in the
             // Agent DB now — seeded + isolation-checked in AgentTenantIsolationTests.
             if (i == 0)
             {
-                db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
+                db.Personas.Add(new Persona(office)); // one per office
                 db.Channels.Add(new Channel(office, "email")); // one per office (per-kind PK)
             }
         }

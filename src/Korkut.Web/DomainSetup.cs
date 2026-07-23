@@ -57,9 +57,14 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Calendar.ICalendarEventRepository, Korkut.Infrastructure.Calendar.CalendarEventRepository>();
         services.AddScoped<Korkut.Application.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
         services.AddScoped<Korkut.Application.Calendar.ICalendarService, Korkut.Application.Calendar.CalendarService>();
-        // Office settings (Clean Architecture: persona + style layers + memory).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IOfficeSettingsRepository, Korkut.Infrastructure.Persistence.Repositories.OfficeSettingsRepository>();
-        services.AddScoped<Korkut.Application.Features.Settings.IOfficeSettingsService, Korkut.Application.Features.Settings.OfficeSettingsService>();
+        // Office settings (Clean Architecture: persona, style layers and memory, one slice each).
+        services.AddScoped<Korkut.Application.Settings.IPersonaRepository, Korkut.Infrastructure.Settings.PersonaRepository>();
+        services.AddScoped<Korkut.Application.Settings.IPersonaService, Korkut.Application.Settings.PersonaService>();
+        services.AddScoped<Korkut.Application.Settings.IStyleProfileRepository, Korkut.Infrastructure.Settings.StyleProfileRepository>();
+        services.AddScoped<Korkut.Application.Settings.IStyleService, Korkut.Application.Settings.StyleService>();
+        services.AddScoped<Korkut.Application.Settings.IMemoryRepository, Korkut.Infrastructure.Settings.MemoryRepository>();
+        services.AddScoped<Korkut.Application.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
+        services.AddScoped<Korkut.Application.Settings.IMemoryService, Korkut.Application.Settings.MemoryService>();
         // Reports (Clean Architecture: aggregation port + service; finance composed from IFinanceService).
         services.AddScoped<Korkut.Application.Abstractions.Persistence.IReportsRepository, Korkut.Infrastructure.Persistence.Repositories.ReportsRepository>();
         services.AddScoped<Korkut.Application.Features.Reports.IReportsService, Korkut.Application.Features.Reports.ReportsService>();

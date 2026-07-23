@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
-using Korkut.Application.Features.Settings;
+using Korkut.Application.Settings;
+using Korkut.Domain.Settings;
 using Korkut.Infrastructure.Templates;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
@@ -14,7 +15,7 @@ namespace Korkut.Infrastructure.Agent.Ai;
 /// full updated markdown, and stages it as a pending edit for human accept/revert.
 /// </summary>
 public sealed class DraftingService(
-    IDraftDocumentService documents, IOfficeSettingsService settings, TemplateCatalog catalog, IChatModelService llm,
+    IDraftDocumentService documents, IPersonaRepository personas, IStyleProfileRepository styles, TemplateCatalog catalog, IChatModelService llm,
     ILlmCallLogService callLogService, IUsageGovernorService governorService) : IDraftingService
 {
     public async Task<DraftResult?> DraftAsync(
@@ -66,13 +67,14 @@ public sealed class DraftingService(
         sb.AppendLine("Sen Korkut'sun; Türk hukuku alanında dilekçe ve sözleşme taslakları hazırlayan bir asistansın.");
         sb.AppendLine("Çıktı temiz, biçimli markdown olsun; standart bölümleri koru ve hukuken dikkatli yaz.");
 
-        var persona = await settings.GetPersonaAsync(officeId, ct);
+        var persona = await personas.FindAsync(officeId, ct);
         if (persona is not null && !string.IsNullOrWhiteSpace(persona.Tone))
         {
             sb.Append("Üslup: ").AppendLine(persona.Tone.Trim());
         }
 
-        var style = (await settings.GetStyleAsync(officeId, "user", userId, ct)).Over(await settings.GetStyleAsync(officeId, "office", Guid.Empty, ct));
+        var style = (await StyleAsync(officeId, StyleScope.User, userId, ct))
+            .Over(await StyleAsync(officeId, StyleScope.Office, Guid.Empty, ct));
         if (!string.IsNullOrWhiteSpace(style.Letterhead))
         {
             sb.Append("Antet: ").AppendLine(style.Letterhead.Trim());
@@ -85,6 +87,10 @@ public sealed class DraftingService(
 
         return sb.ToString().TrimEnd();
     }
+
+    /// <summary>A style layer that was never set reads as empty, so the overlay always has a baseline.</summary>
+    private async Task<StyleFields> StyleAsync(Guid officeId, string scope, Guid userId, CancellationToken ct)
+        => (await styles.FindAsync(officeId, scope, userId, ct))?.Fields ?? StyleFields.Empty;
 
     private static string Summarize(string instruction)
     {
