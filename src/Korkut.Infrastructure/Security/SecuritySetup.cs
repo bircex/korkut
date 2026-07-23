@@ -1,3 +1,4 @@
+using Korkut.Application.Auth.Google;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +29,11 @@ public static class SecuritySetup
         // Google OIDC: bind to the EXISTING exact env names (preserved from Python).
         services.AddSingleton(BindGoogleOptions(configuration));
         services.AddSingleton<IOidcFlowStore, InMemoryOidcFlowStore>();
-        services.AddScoped<IGoogleUserDirectory, EfGoogleUserDirectory>();
+        services.AddScoped<Korkut.Application.Auth.Google.IGoogleAccountDirectory, Korkut.Infrastructure.Auth.GoogleAccountDirectory>();
+        services.AddScoped<Korkut.Application.Auth.Google.IGoogleSignInService, Korkut.Application.Auth.Google.GoogleSignInService>();
+        // Self-serve onboarding: provisioning a disabled office for a verified Google identity.
+        services.AddScoped<Korkut.Application.Offices.IOfficeProvisioner, Korkut.Infrastructure.Offices.OfficeProvisioner>();
+        services.AddScoped<Korkut.Application.Onboarding.IOnboardingService, Korkut.Application.Onboarding.OnboardingService>();
 
         // TOTP 2FA (KDM-017). The envelope key is operator-supplied; if it is missing
         // and 2FA is used, resolution fails closed — never a silent random fallback.

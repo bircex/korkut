@@ -31,7 +31,6 @@ builder.Services.AddKorkutDomain(builder.Configuration);
 builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
-builder.Services.AddScoped<Korkut.Infrastructure.Persistence.EfOfficeProvisioner>();
 
 // Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
 builder.Services.AddGoogleOidcRuntime();
@@ -68,10 +67,8 @@ app.MapControllers();
 app.MapFoundationEndpoints();
 app.MapDocumentEndpoints();
 app.MapReportsEndpoints();
-app.MapOnboardingEndpoints();
 app.MapExportEndpoints();
 app.MapCoverageEndpoints();
-app.MapGoogleAuthEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();

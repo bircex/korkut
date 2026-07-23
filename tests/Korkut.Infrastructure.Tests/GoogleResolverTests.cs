@@ -1,4 +1,5 @@
 using Korkut.Domain.Offices;
+using Korkut.Infrastructure.Auth;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Application.Security;
@@ -48,27 +49,28 @@ public class GoogleResolverTests(PostgresFixture pg) : IClassFixture<PostgresFix
         // Connected as korkut_app (RLS-subject) with NO tenant context: a direct query
         // would see nothing, but the SECURITY DEFINER resolvers still find the user.
         await using var db = pg.NewAppContext();
-        var dir = new EfGoogleUserDirectory(db);
+        var dir = new GoogleAccountDirectory(db);
+        var accounts = new AccountLocator(db);
 
-        var bySub = await dir.FindByGoogleSubAsync("sub-linked", default);
+        var bySub = await dir.FindByGoogleSubAsync("sub-linked");
         Assert.NotNull(bySub);
-        Assert.Equal(_linkedUser, bySub!.Id);
+        Assert.Equal(_linkedUser, bySub!.UserId);
 
         // Only unlinked accounts are returned for first-time email linking.
-        var byEmail = await dir.FindByEmailAcrossOfficesAsync("unlinked@x.test", default);
+        var byEmail = await accounts.FindByEmailAsync("unlinked@x.test");
         Assert.Single(byEmail);
-        Assert.Empty(await dir.FindByEmailAcrossOfficesAsync("linked@x.test", default)); // already linked
+        Assert.Empty(await accounts.FindByEmailAsync("linked@x.test")); // already linked
 
-        Assert.True(await dir.IsOfficeDisabledAsync(_officeBDisabled, default));
-        Assert.False(await dir.IsOfficeDisabledAsync(_officeA, default));
-        Assert.True(await dir.UserHasTwoFactorAsync(_linkedUser, default));
+        Assert.True(await dir.IsOfficeDisabledAsync(_officeBDisabled));
+        Assert.False(await dir.IsOfficeDisabledAsync(_officeA));
+        Assert.True(await dir.UserHasTwoFactorAsync(_linkedUser));
     }
 
     [Fact]
     public async Task App_role_can_link_a_google_subject_via_the_definer_function()
     {
         await using var db = pg.NewAppContext();
-        await new EfGoogleUserDirectory(db).LinkGoogleSubAsync(_unlinkedUser, "sub-new", default);
+        await new GoogleAccountDirectory(db).LinkGoogleSubAsync(_unlinkedUser, "sub-new");
 
         await using var check = pg.NewContext();
         var u = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions

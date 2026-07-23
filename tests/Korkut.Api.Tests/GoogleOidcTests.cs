@@ -1,3 +1,7 @@
+using Korkut.Application.Auth;
+using Korkut.Domain.Auth;
+using Korkut.Application.Auth.Google;
+using Korkut.Application.Auth.Requests;
 using System.Security.Cryptography;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Security;
@@ -110,20 +114,40 @@ public class GoogleOidcTests
         public Task<GoogleIdentity> ValidateAsync(string idToken, CancellationToken ct = default) => Task.FromResult(id);
     }
 
-    private sealed class FakeDirectory : IGoogleUserDirectory
+    /// <summary>Stands in for both cross-tenant lookups: by Google subject and by e-mail.</summary>
+    private sealed class FakeDirectory : IGoogleAccountDirectory, IAccountLocator
     {
-        public List<AuthUser> BySub { get; } = [];
-        public List<AuthUser> ByEmail { get; } = [];
+        public List<AccountLocation> BySub { get; } = [];
+        public List<AccountLocation> ByEmail { get; } = [];
         public HashSet<Guid> DisabledOffices { get; } = [];
         public HashSet<Guid> TwoFactorUsers { get; } = [];
         public List<(Guid, string)> Linked { get; } = [];
 
-        public Task<AuthUser?> FindByGoogleSubAsync(string s, CancellationToken ct) => Task.FromResult(BySub.Find(u => true));
-        public Task<IReadOnlyList<AuthUser>> FindByEmailAcrossOfficesAsync(string e, CancellationToken ct) => Task.FromResult<IReadOnlyList<AuthUser>>(ByEmail);
-        public Task LinkGoogleSubAsync(Guid userId, string s, CancellationToken ct) { Linked.Add((userId, s)); return Task.CompletedTask; }
-        public Task<bool> IsOfficeDisabledAsync(Guid o, CancellationToken ct) => Task.FromResult(DisabledOffices.Contains(o));
-        public Task<bool> OfficeRequiresTwoFactorAsync(Guid o, CancellationToken ct) => Task.FromResult(false);
-        public Task<bool> UserHasTwoFactorAsync(Guid u, CancellationToken ct) => Task.FromResult(TwoFactorUsers.Contains(u));
+        public Task<AccountLocation?> FindByGoogleSubAsync(string s, CancellationToken ct = default) => Task.FromResult(BySub.Find(u => true));
+        public Task<IReadOnlyList<AccountLocation>> FindByEmailAsync(string e, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<AccountLocation>>(ByEmail);
+        public Task LinkGoogleSubAsync(Guid userId, string s, CancellationToken ct = default) { Linked.Add((userId, s)); return Task.CompletedTask; }
+        public Task<bool> IsOfficeDisabledAsync(Guid o, CancellationToken ct = default) => Task.FromResult(DisabledOffices.Contains(o));
+        public Task<bool> OfficeRequiresTwoFactorAsync(Guid o, CancellationToken ct = default) => Task.FromResult(false);
+        public Task<bool> UserHasTwoFactorAsync(Guid u, CancellationToken ct = default) => Task.FromResult(TwoFactorUsers.Contains(u));
+    }
+
+    /// <summary>Only the session lookup matters here; the local sign-in flow is tested elsewhere.</summary>
+    private sealed class FakeAuth : IAuthService
+    {
+        public Task<SessionUser?> FindSessionUserAsync(Guid officeId, Guid userId, CancellationToken ct = default)
+            => Task.FromResult<SessionUser?>(new SessionUser(officeId, userId, Roles.Lawyer, Guid.CreateVersion7(), false));
+
+        public Task<SignInResult> SignInAsync(LoginRequest request, CancellationToken ct = default)
+            => throw new NotSupportedException();
+
+        public Task<SessionUser?> CompleteTwoFactorAsync(Guid officeId, Guid userId, TotpRequest request, CancellationToken ct = default)
+            => throw new NotSupportedException();
+
+        public Task RequestPasswordResetAsync(RequestPasswordResetRequest request, CancellationToken ct = default)
+            => throw new NotSupportedException();
+
+        public Task<ResetOutcome> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+            => throw new NotSupportedException();
     }
 
     private static readonly GoogleOidcOptions Options = new()
@@ -132,9 +156,9 @@ public class GoogleOidcTests
     };
 
     private static GoogleSignInService Service(GoogleIdentity identity, FakeDirectory dir, IOidcFlowStore store, Clock clock)
-        => new(Options, store, new FakeExchanger("tok"), new FakeValidator(identity), dir, clock);
+        => new(Options, store, new FakeExchanger("tok"), new FakeValidator(identity), dir, dir, new FakeAuth(), clock);
 
-    private static AuthUser User(Guid id, Guid office) => new(id, office, "user@example.com", null, 0, null, Guid.Empty, 0);
+    private static AccountLocation User(Guid id, Guid office) => new(id, office, "user@example.com");
 
     [Fact]
     public async Task Replayed_callback_is_rejected()
@@ -143,7 +167,7 @@ public class GoogleOidcTests
         var clock = new Clock();
         var dir = new FakeDirectory();
         var svc = new GoogleSignInService(Options, store, new FakeExchanger("t"),
-            new FakeValidator(new GoogleIdentity("google-123", "user@example.com", true, "n1")), dir, clock);
+            new FakeValidator(new GoogleIdentity("google-123", "user@example.com", true, "n1")), dir, dir, new FakeAuth(), clock);
 
         var challenge = OidcChallenge.Create() with { Nonce = "n1" };
         await store.SaveAsync(challenge, clock.UtcNow.AddMinutes(5));

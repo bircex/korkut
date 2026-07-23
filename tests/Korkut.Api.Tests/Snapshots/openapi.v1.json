@@ -586,7 +586,7 @@
         ],
         "type": "object"
       },
-      "DemoRequestBody": {
+      "DemoRequestRequest": {
         "properties": {
           "full_name": {
             "maxLength": "200",
@@ -1251,7 +1251,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "GoogleAuth"
         ]
       }
     },
@@ -1263,7 +1263,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "GoogleAuth"
         ]
       }
     },
@@ -1887,9 +1887,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DemoRequestBody"
+                "$ref": "#/components/schemas/DemoRequestRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestRequest"
               }
             }
           },
@@ -1901,7 +1911,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Onboarding"
         ]
       }
     },
@@ -3134,7 +3144,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Onboarding"
         ]
       }
     },
@@ -3444,6 +3454,9 @@
       "name": "Outbox"
     },
     {
+      "name": "Onboarding"
+    },
+    {
       "name": "AdminOffices"
     },
     {
@@ -3490,6 +3503,9 @@
     },
     {
       "name": "Auth"
+    },
+    {
+      "name": "GoogleAuth"
     }
   ]
 }

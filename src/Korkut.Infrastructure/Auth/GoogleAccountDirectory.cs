@@ -1,56 +1,53 @@
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Persistence;
+using Korkut.Application.Auth.Google;
+using Korkut.Domain.Auth;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Infrastructure.Auth;
 
 /// <summary>
-/// Google sign-in resolution over PostgreSQL. Sign-in is inherently cross-tenant
-/// (the office is unknown until the identity resolves), so these lookups go through
-/// narrow <c>SECURITY DEFINER</c> resolver functions owned by a dedicated
-/// BYPASSRLS role — the explicit, auditable exception to RLS (never the app role
-/// itself). See migration GoogleOidc.
+/// Google account resolution over PostgreSQL. Sign-in is inherently cross-tenant (the
+/// office is unknown until the identity resolves), so these lookups go through narrow
+/// <c>SECURITY DEFINER</c> resolver functions owned by a dedicated BYPASSRLS role — the
+/// explicit, auditable exception to RLS, never the app role itself. See migration
+/// GoogleOidc.
 /// </summary>
-public sealed class EfGoogleUserDirectory(KorkutDbContext db) : IGoogleUserDirectory
+public sealed class GoogleAccountDirectory(KorkutDbContext db) : IGoogleAccountDirectory
 {
-    public async Task<AuthUser?> FindByGoogleSubAsync(string googleSub, CancellationToken ct)
+    public async Task<AccountLocation?> FindByGoogleSubAsync(string googleSub, CancellationToken ct = default)
     {
-        var rows = await QueryUsersAsync("SELECT * FROM korkut.resolve_user_by_google_sub(@p)", ("p", googleSub), ct);
+        var rows = await QueryAccountsAsync("SELECT * FROM korkut.resolve_user_by_google_sub(@p)", ("p", googleSub), ct);
         return rows.Count > 0 ? rows[0] : null;
     }
 
-    public async Task<IReadOnlyList<AuthUser>> FindByEmailAcrossOfficesAsync(string normalizedEmail, CancellationToken ct)
-        => await QueryUsersAsync("SELECT * FROM korkut.resolve_users_by_email(@p)", ("p", normalizedEmail), ct);
-
-    public Task LinkGoogleSubAsync(Guid userId, string googleSub, CancellationToken ct)
+    public Task LinkGoogleSubAsync(Guid userId, string googleSub, CancellationToken ct = default)
         => ExecAsync("SELECT korkut.link_google_sub(@u, @s)", ct, ("u", userId), ("s", googleSub));
 
-    public Task<bool> IsOfficeDisabledAsync(Guid officeId, CancellationToken ct)
+    public Task<bool> IsOfficeDisabledAsync(Guid officeId, CancellationToken ct = default)
         => ScalarBoolAsync("SELECT korkut.is_office_disabled(@o)", ct, ("o", officeId));
 
-    public Task<bool> OfficeRequiresTwoFactorAsync(Guid officeId, CancellationToken ct)
+    public Task<bool> OfficeRequiresTwoFactorAsync(Guid officeId, CancellationToken ct = default)
         => ScalarBoolAsync("SELECT korkut.office_requires_two_factor(@o)", ct, ("o", officeId));
 
-    public Task<bool> UserHasTwoFactorAsync(Guid userId, CancellationToken ct)
+    public Task<bool> UserHasTwoFactorAsync(Guid userId, CancellationToken ct = default)
         => ScalarBoolAsync("SELECT korkut.user_has_two_factor(@u)", ct, ("u", userId));
 
-    private async Task<IReadOnlyList<AuthUser>> QueryUsersAsync(string sql, (string, object) param, CancellationToken ct)
+    private async Task<IReadOnlyList<AccountLocation>> QueryAccountsAsync(string sql, (string, object) param, CancellationToken ct)
     {
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(conn, ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         cmd.Parameters.AddWithValue(param.Item1, param.Item2);
-        var users = new List<AuthUser>();
+        var accounts = new List<AccountLocation>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
         {
-            users.Add(new AuthUser(
-                reader.GetGuid(0), reader.GetGuid(1), reader.GetString(2),
-                null, 0, null, Guid.Empty, 0));
+            accounts.Add(new AccountLocation(reader.GetGuid(0), reader.GetGuid(1), reader.GetString(2)));
         }
 
-        return users;
+        return accounts;
     }
 
     private async Task ExecAsync(string sql, CancellationToken ct, params (string, object)[] ps)
