@@ -71,14 +71,20 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Settings.IMemoryRepository, Korkut.Infrastructure.Settings.MemoryRepository>();
         services.AddScoped<Korkut.Application.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         services.AddScoped<Korkut.Application.Settings.IMemoryService, Korkut.Application.Settings.MemoryService>();
-        // Reports (Clean Architecture: aggregation port + service; finance composed from IFinanceService).
-        services.AddScoped<Korkut.Application.Abstractions.Persistence.IReportsRepository, Korkut.Infrastructure.Persistence.Repositories.ReportsRepository>();
-        services.AddScoped<Korkut.Application.Features.Reports.IReportsService, Korkut.Application.Features.Reports.ReportsService>();
+        // Reports (Clean Architecture: read-only aggregation query + service; finance is
+        // computed from the same invoice/expense figures the finance screens use).
+        services.AddScoped<Korkut.Application.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
+        services.AddScoped<Korkut.Application.Reports.IReportsService, Korkut.Application.Reports.ReportsService>();
         // Channels (Clean Architecture: repository port + service; secrets encrypted in the service).
         services.AddScoped<Korkut.Application.Channels.IChannelRepository, Korkut.Infrastructure.Channels.ChannelRepository>();
         services.AddScoped<Korkut.Application.Channels.IChannelService, Korkut.Application.Channels.ChannelService>();
-        // Template overrides (Clean Architecture: repository port + service).
+        // The static legal catalog, and the two read-only services derived from it:
+        // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
+        services.AddScoped<Korkut.Application.Coverage.ICoverageCatalog, Korkut.Infrastructure.Coverage.CatalogCoverageReader>();
+        services.AddScoped<Korkut.Application.Coverage.ICoverageService, Korkut.Application.Coverage.CoverageService>();
+        services.AddSingleton<Korkut.Application.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
+        services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
         // Outbox review queue (Clean Architecture: repository port + service; distinct from
         // the jobs-side IOutboxStore/EfOutboxStore that dispatches/sends).
         services.AddScoped<Korkut.Application.Outbox.IOutboxRepository, Korkut.Infrastructure.Outbox.OutboxRepository>();

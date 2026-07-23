@@ -1,4 +1,4 @@
-namespace Korkut.Application.Documents.Export;
+namespace Korkut.Application.Export;
 
 /// <summary>An exported document: its bytes, MIME type, and a suggested download filename.</summary>
 public sealed record ExportedDocument(byte[] Bytes, string ContentType, string FileName);

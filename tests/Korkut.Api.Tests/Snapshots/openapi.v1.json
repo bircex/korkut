@@ -656,7 +656,7 @@
         ],
         "type": "object"
       },
-      "ExportRequest": {
+      "ExportDocumentRequest": {
         "properties": {
           "format": {
             "pattern": "docx|udf",
@@ -1781,7 +1781,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Coverage"
         ]
       }
     },
@@ -2170,9 +2170,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExportRequest"
+                "$ref": "#/components/schemas/ExportDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportDocumentRequest"
               }
             }
           },
@@ -2184,7 +2194,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Export"
         ]
       }
     },
@@ -3149,7 +3159,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Reports"
         ]
       }
     },
@@ -3465,6 +3475,9 @@
       "name": "Style"
     },
     {
+      "name": "Reports"
+    },
+    {
       "name": "PetitionTypes"
     },
     {
@@ -3498,6 +3511,9 @@
       "name": "FinanceSummary"
     },
     {
+      "name": "Export"
+    },
+    {
       "name": "Expenses"
     },
     {
@@ -3505,6 +3521,9 @@
     },
     {
       "name": "Deadlines"
+    },
+    {
+      "name": "Coverage"
     },
     {
       "name": "Correspondence"

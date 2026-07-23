@@ -1,15 +1,16 @@
-using Korkut.Application.Abstractions.Persistence;
+using Korkut.Application.Reports;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Reports;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence.Repositories;
+namespace Korkut.Infrastructure.Reports;
 
 /// <summary>
-/// EF/Postgres adapter for <see cref="IReportsRepository"/>. Every aggregate is scoped to
+/// EF/Postgres adapter for <see cref="IReportsQuery"/>. Every aggregate is scoped to
 /// the office (tenant context set by the caller, RLS). Finance is intentionally excluded —
 /// the service composes it from the finance domain so the derived gross stays consistent.
 /// </summary>
-public sealed class ReportsRepository(KorkutDbContext db) : IReportsRepository
+public sealed class ReportsQuery(KorkutDbContext db) : IReportsQuery
 {
     public async Task<OfficeStats> GetStatsAsync(Guid officeId, int days, DateTimeOffset now, CancellationToken ct = default)
     {

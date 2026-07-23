@@ -1,6 +1,6 @@
 using Korkut.Application.Agent.Documents;
 using Korkut.Infrastructure.Documents;
-using Korkut.Application.Documents.Export;
+using Korkut.Application.Export;
 using Korkut.Application.Errors;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Abstractions;

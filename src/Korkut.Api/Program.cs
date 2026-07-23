@@ -65,9 +65,6 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Api", status = "ok" }));
 app.MapControllers();
 app.MapFoundationEndpoints();
-app.MapReportsEndpoints();
-app.MapExportEndpoints();
-app.MapCoverageEndpoints();
 app.MapKorkutHealthChecks();
 
 app.Run();
