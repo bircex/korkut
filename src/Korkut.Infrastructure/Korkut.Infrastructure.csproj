@@ -20,6 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
-    <ProjectReference Include="..\Korkut.Pii\Korkut.Pii.csproj" />
   </ItemGroup>
 </Project>

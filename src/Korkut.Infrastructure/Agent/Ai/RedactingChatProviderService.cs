@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using Korkut.Application.Ai;
-using Korkut.Pii;
+using Korkut.Application.Pii;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 

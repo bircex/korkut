@@ -1,4 +1,4 @@
-namespace Korkut.Pii;
+namespace Korkut.Application.Pii;
 
 /// <summary>
 /// Redacts Turkish PII (TCKN, phone, e-mail, IBAN) out of text before it leaves the office for a

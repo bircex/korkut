@@ -1,7 +1,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Korkut.Application.Pii;
 
-namespace Korkut.Pii;
+namespace Korkut.Infrastructure.Pii;
 
 /// <summary>
 /// Regex-based Turkish PII redactor. Detects e-mail, Turkish IBAN, TCKN (with the official

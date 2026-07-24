@@ -14,7 +14,6 @@ public class LayerDependencyTests
     private static readonly Assembly Domain = typeof(Korkut.Domain.Common.Entity).Assembly;
     private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
-    private static readonly Assembly Pii = typeof(Korkut.Pii.PiiRedactor).Assembly;
 
     private static void AssertNoDependency(Assembly assembly, params string[] forbidden)
     {
@@ -72,18 +71,4 @@ public class LayerDependencyTests
         AssertNoDependency(Infrastructure, "Korkut.Api");
     }
 
-    [Fact]
-    public void Pii_is_a_leaf_and_depends_on_nothing_else_in_the_solution()
-    {
-        // Korkut.Pii is a shared leaf library (like Korkut.Domain): pure redaction logic, used
-        // in-process by the Agent and Knowledge hosts, with no dependency on any other layer.
-        AssertNoDependency(
-            Pii,
-            "Korkut.Domain",
-            "Korkut.Application",
-            "Korkut.Infrastructure",
-            "Korkut.Api",
-            "Korkut.Worker",
-            "Korkut.Migrator");
-    }
 }

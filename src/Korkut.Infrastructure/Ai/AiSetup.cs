@@ -1,7 +1,8 @@
 using Korkut.Application.Ai;
 using Korkut.Application.Runtime;
 using Korkut.Infrastructure.Runtime;
-using Korkut.Pii;
+using Korkut.Application.Pii;
+using Korkut.Infrastructure.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;

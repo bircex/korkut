@@ -4,6 +4,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
-    <ProjectReference Include="..\Korkut.Pii\Korkut.Pii.csproj" />
   </ItemGroup>
 </Project>

@@ -28,8 +28,8 @@ public sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog c
         var turn = messages.ToList();
         var prompt = 0;
         var completion = 0;
-        var provider = string.Empty;
-        var modelId = string.Empty;
+        string provider;
+        string modelId;
 
         for (var i = 0; i < MaxIterations; i++)
         {
