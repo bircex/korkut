@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Domain.Expenses;
 
 namespace Korkut.Application.Expenses;

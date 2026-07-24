@@ -1,6 +1,6 @@
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Domain.Agent.Documents;
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;

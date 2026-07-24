@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Korkut.Infrastructure.Observability;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 

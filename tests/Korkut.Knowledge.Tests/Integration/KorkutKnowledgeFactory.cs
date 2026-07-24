@@ -5,7 +5,7 @@ using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Knowledge;
 using Korkut.Infrastructure.Security;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;

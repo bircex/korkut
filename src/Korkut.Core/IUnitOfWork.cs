@@ -1,4 +1,4 @@
-namespace Korkut.Application.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// Runs a use-case inside a tenant-pinned transaction: the office is set for the duration

@@ -1,11 +1,10 @@
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Outbox;
 using Korkut.Application.Security;
 using Korkut.Domain.Outbox;
-using Korkut.Domain.Time;
 
 namespace Korkut.Infrastructure.Agent.Tools;
 

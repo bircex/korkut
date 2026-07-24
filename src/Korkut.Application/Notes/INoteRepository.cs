@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Domain.Notes;
 
 namespace Korkut.Application.Notes;

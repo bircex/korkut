@@ -3,7 +3,7 @@ using Korkut.Application.Documents;
 using Korkut.Application.Errors;
 using Korkut.Domain.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Documents;

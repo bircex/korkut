@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Knowledge;
 

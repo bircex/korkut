@@ -2,4 +2,7 @@
        primitives (ids, clock, result/error, redaction). Depends on nothing else in the solution. -->
 
 
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
 </Project>

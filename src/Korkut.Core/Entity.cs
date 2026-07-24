@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// Base for domain entities keyed by a UUIDv7 identity. Equality is by id, so two loads of the

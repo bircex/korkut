@@ -2,7 +2,7 @@ using Korkut.Infrastructure.Jobs;
 using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

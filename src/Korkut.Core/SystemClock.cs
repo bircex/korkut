@@ -1,4 +1,4 @@
-﻿namespace Korkut.Domain.Time;
+﻿namespace Korkut.Core;
 
 /// <summary>Production clock backed by the system UTC time.</summary>
 public sealed class SystemClock : IClock

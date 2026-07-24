@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Domain.Courts;
 
 namespace Korkut.Application.Courts;

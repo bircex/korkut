@@ -1,8 +1,7 @@
 using Korkut.Application.Knowledge;
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Korkut.Domain.Knowledge;
 using Korkut.Infrastructure.Persistence.Knowledge;
-using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;

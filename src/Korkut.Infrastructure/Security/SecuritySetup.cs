@@ -52,10 +52,10 @@ public static class SecuritySetup
         services.AddScoped<Korkut.Application.Auth.ITwoFactorChallenge>(sp => sp.GetRequiredService<TwoFactorService>());
 
         // Sessions (KDM-018): short-lived access tokens + rotating refresh families.
-        services.TryAddSingleton<Korkut.Domain.Time.IClock>(Korkut.Domain.Time.SystemClock.Instance);
+        services.TryAddSingleton<Korkut.Core.IClock>(Korkut.Core.SystemClock.Instance);
         services.AddSingleton(sp => new AccessTokenService(
             sp.GetRequiredService<IConfiguration>()["KORKUT_SECRET"] ?? string.Empty,
-            sp.GetRequiredService<Korkut.Domain.Time.IClock>()));
+            sp.GetRequiredService<Korkut.Core.IClock>()));
         services.AddScoped<RefreshTokenService>();
         return services;
     }

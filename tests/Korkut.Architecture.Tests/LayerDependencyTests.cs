@@ -11,7 +11,8 @@ namespace Korkut.Architecture.Tests;
 /// </summary>
 public class LayerDependencyTests
 {
-    private static readonly Assembly Domain = typeof(Korkut.Domain.Common.Entity).Assembly;
+    private static readonly Assembly Core = typeof(Korkut.Core.Entity).Assembly;
+    private static readonly Assembly Domain = typeof(Korkut.Domain.Clients.Client).Assembly;
     private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
 
@@ -26,6 +27,26 @@ public class LayerDependencyTests
             result.IsSuccessful,
             $"{assembly.GetName().Name} must not depend on [{string.Join(", ", forbidden)}]. " +
             $"Offenders: {string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>())}");
+    }
+
+    [Fact]
+    public void Core_is_the_leaf_and_depends_on_no_other_layer_or_infrastructure_framework()
+    {
+        // Core is the shared kernel (entity base, persistence ports, clock, the module system).
+        // It carries only the lightweight DI/Config abstractions a module registers against —
+        // never a domain module, a host, or a persistence framework.
+        AssertNoDependency(
+            Core,
+            "Korkut.Domain",
+            "Korkut.Application",
+            "Korkut.Infrastructure",
+            "Korkut.Api",
+            "Korkut.Worker",
+            "Korkut.Migrator",
+            "Microsoft.EntityFrameworkCore",
+            "Npgsql",
+            "Microsoft.AspNetCore",
+            "Minio");
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using Korkut.Application.Auditing;
 using Korkut.Domain.Auditing;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Redaction;
-using Korkut.Domain.Time;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Auditing;
 

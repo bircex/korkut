@@ -1,5 +1,4 @@
-using Korkut.Application.Common;
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

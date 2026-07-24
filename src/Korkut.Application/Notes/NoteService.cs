@@ -1,8 +1,7 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Notes.Requests;
 using Korkut.Application.Notes.Responses;
 using Korkut.Domain.Notes;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Notes;
 

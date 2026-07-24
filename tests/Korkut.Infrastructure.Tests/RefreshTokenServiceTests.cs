@@ -1,7 +1,7 @@
 using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

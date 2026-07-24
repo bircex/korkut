@@ -5,7 +5,7 @@ using Korkut.Application.Auth.Requests;
 using System.Security.Cryptography;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Security;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 

@@ -1,10 +1,9 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Errors;
 using Korkut.Application.Members.Requests;
 using Korkut.Application.Members.Responses;
 using Korkut.Application.Security;
 using Korkut.Application.Users;
-using Korkut.Domain.Time;
 using Korkut.Domain.Users;
 
 namespace Korkut.Application.Members;

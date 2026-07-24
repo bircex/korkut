@@ -1,9 +1,8 @@
 using Korkut.Application.Calendar.Requests;
 using Korkut.Application.Calendar.Responses;
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Errors;
 using Korkut.Domain.Calendar;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Calendar;
 

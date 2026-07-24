@@ -1,6 +1,6 @@
 using Korkut.Application.Offices;
 using Korkut.Domain.Offices;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

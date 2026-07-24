@@ -1,9 +1,8 @@
 using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Korkut.Domain.Deadlines;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Deadlines;

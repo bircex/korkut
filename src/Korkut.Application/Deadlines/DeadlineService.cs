@@ -1,9 +1,8 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Deadlines.Requests;
 using Korkut.Application.Deadlines.Responses;
 using Korkut.Application.Errors;
 using Korkut.Domain.Deadlines;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Deadlines;
 

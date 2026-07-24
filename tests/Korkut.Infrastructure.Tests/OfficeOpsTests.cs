@@ -1,6 +1,6 @@
 using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Domain.Deadlines;
 using Korkut.Domain.Tasks;

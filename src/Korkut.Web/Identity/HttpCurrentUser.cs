@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Web.Tenancy;
 using Microsoft.AspNetCore.Http;
 

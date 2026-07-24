@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// Marks the root of a consistency/transaction boundary. Repositories are defined for

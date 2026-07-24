@@ -6,7 +6,7 @@ using Korkut.Application.Documents.OCR;
 using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

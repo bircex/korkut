@@ -1,4 +1,4 @@
-using Korkut.Domain.Common;
+using Korkut.Core;
 
 namespace Korkut.Domain.Correspondence;
 

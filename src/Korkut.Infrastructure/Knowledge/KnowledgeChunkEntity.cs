@@ -1,5 +1,5 @@
 using Pgvector;
-using Korkut.Domain.Common;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Knowledge;
 

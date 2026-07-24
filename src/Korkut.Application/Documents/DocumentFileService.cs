@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Documents.Requests;
 using Korkut.Application.Documents.Responses;
 using Korkut.Application.Documents.Storage;

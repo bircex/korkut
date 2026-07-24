@@ -1,7 +1,7 @@
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Time;
+using Korkut.Core;
 
 namespace Korkut.Web;
 
@@ -39,8 +39,8 @@ public static class DomainSetup
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
         // every application service runs inside.
         services.AddHttpContextAccessor();
-        services.AddScoped<Korkut.Application.Common.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
-        services.AddScoped<Korkut.Application.Common.IUnitOfWork, Korkut.Infrastructure.Common.UnitOfWork>();
+        services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
+        services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Infrastructure.Common.UnitOfWork>();
         services.AddScoped<Korkut.Application.Matters.IMatterService, Korkut.Application.Matters.MatterService>();
         services.AddScoped<Korkut.Application.Hearings.IHearingService, Korkut.Application.Hearings.HearingService>();
         // Office-ops (Clean Architecture: repository ports + service).

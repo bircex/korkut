@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// A tenant-owned entity: every row carries its owning office. This is the platform's most

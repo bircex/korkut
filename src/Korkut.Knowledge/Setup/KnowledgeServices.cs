@@ -20,8 +20,8 @@ public static class KnowledgeServices
         // The office comes from the caller's token, and the tenant scope is opened over the
         // Knowledge DB (its own IUnitOfWork), so the services never take an office parameter.
         services.AddHttpContextAccessor();
-        services.AddScoped<Korkut.Application.Common.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
-        services.AddScoped<Korkut.Application.Common.IUnitOfWork, Korkut.Infrastructure.Knowledge.KnowledgeUnitOfWork>();
+        services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
+        services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Infrastructure.Knowledge.KnowledgeUnitOfWork>();
         return services;
     }
 }

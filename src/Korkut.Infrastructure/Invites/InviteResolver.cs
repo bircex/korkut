@@ -1,6 +1,6 @@
 using Korkut.Application.Invites;
 using Korkut.Domain.Invites;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

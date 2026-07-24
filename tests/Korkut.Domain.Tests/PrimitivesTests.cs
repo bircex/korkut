@@ -1,6 +1,5 @@
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Korkut.Domain.Results;
-using Korkut.Domain.Time;
 
 namespace Korkut.Domain.Tests;
 

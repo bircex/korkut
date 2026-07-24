@@ -1,9 +1,8 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Correspondence.Requests;
 using Korkut.Application.Correspondence.Responses;
 using Korkut.Application.Errors;
 using Korkut.Domain.Correspondence;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Correspondence;
 

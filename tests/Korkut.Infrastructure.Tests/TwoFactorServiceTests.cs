@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

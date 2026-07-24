@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
-using Korkut.Domain.Time;
+using Korkut.Core;
 using Korkut.Domain.Auth;
 using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;

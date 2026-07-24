@@ -1,5 +1,5 @@
 using Korkut.Domain.Auth;
-using Korkut.Domain.Time;
+using Korkut.Core;
 
 namespace Korkut.Application.Auth.Google;
 

@@ -1,4 +1,4 @@
-using Korkut.Domain.Time;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Security;
 

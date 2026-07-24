@@ -1,9 +1,8 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Errors;
 using Korkut.Application.Clients.Requests;
 using Korkut.Application.Clients.Responses;
 using Korkut.Domain.Clients;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Clients;
 

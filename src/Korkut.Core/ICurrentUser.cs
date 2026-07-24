@@ -1,4 +1,4 @@
-namespace Korkut.Application.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// The authenticated caller, resolved from the trusted access token only (never a DTO,

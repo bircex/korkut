@@ -1,6 +1,6 @@
 using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
-using Korkut.Domain.Time;
+using Korkut.Core;
 
 namespace Korkut.Application.Tests;
 

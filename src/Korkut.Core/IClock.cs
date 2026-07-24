@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Time;
+namespace Korkut.Core;
 
 /// <summary>
 /// Abstraction over "now" so domain/application code never reads the ambient

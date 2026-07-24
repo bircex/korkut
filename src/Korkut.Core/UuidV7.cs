@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// Single UUIDv7 identity strategy for the whole platform (per the architecture

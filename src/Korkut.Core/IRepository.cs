@@ -1,6 +1,6 @@
-using Korkut.Domain.Common;
+using Korkut.Core;
 
-namespace Korkut.Application.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// The base persistence port every aggregate repository derives from. Tenancy is mandatory,

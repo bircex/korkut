@@ -1,4 +1,4 @@
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Domain.Deadlines;
 
 namespace Korkut.Application.Deadlines;

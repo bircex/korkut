@@ -1,7 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk"><!-- Core: the shared kernel of the modular monolith — the module-registration system
-       (IModule) and (rolled in next) the base persistence ports and tenancy. References the
-       ASP.NET shared framework for the DI + routing abstractions a module registers against. -->
+<Project Sdk="Microsoft.NET.Sdk"><!-- Core: the shared kernel of the modular monolith — base entity primitives, the
+       persistence ports (IRepository/IUnitOfWork), the clock, and the module-registration
+       system (IModule). Pure abstractions; only the lightweight DI/Config abstractions a
+       module registers against. -->
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
   </ItemGroup>
 </Project>

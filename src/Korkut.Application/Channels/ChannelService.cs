@@ -2,11 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using Korkut.Application.Channels.Requests;
 using Korkut.Application.Channels.Responses;
-using Korkut.Application.Common;
+using Korkut.Core;
 using Korkut.Application.Errors;
 using Korkut.Application.Security;
 using Korkut.Domain.Channels;
-using Korkut.Domain.Time;
 
 namespace Korkut.Application.Channels;
 

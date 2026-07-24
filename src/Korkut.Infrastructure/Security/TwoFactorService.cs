@@ -1,10 +1,9 @@
 using Korkut.Application.Auditing;
 using Korkut.Application.Auth;
 using Korkut.Application.Security;
-using Korkut.Domain.Common;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Auth;
-using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Security;

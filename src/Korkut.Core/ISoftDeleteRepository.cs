@@ -1,6 +1,6 @@
-using Korkut.Domain.Common;
+using Korkut.Core;
 
-namespace Korkut.Application.Common;
+namespace Korkut.Core;
 
 /// <summary>
 /// The base port for aggregates that are retired by stamping a deletion time rather than

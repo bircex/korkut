@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Common;
+namespace Korkut.Core;
 
 /// <summary>An entity with a surrogate UUIDv7 identity. Enables generic, key-based repository operations.</summary>
 public interface IEntity
