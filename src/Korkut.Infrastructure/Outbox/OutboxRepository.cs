@@ -1,6 +1,6 @@
 using Korkut.Application.Outbox;
 using Korkut.Domain.Outbox;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

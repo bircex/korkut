@@ -1,6 +1,6 @@
 using Korkut.Application.Courts;
 using Korkut.Domain.Courts;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 
 namespace Korkut.Infrastructure.Courts;

@@ -1,13 +1,13 @@
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Common;
+namespace Korkut.Persistence;
 
 /// <summary>
 /// EF/Postgres <see cref="IUnitOfWork"/>: opens a transaction, pins
 /// <c>app.current_office</c> for its duration (RLS), runs the work and commits.
 /// </summary>
-public sealed class UnitOfWork(KorkutDbContext db) : IUnitOfWork
+public sealed class UnitOfWork(DbContext db) : IUnitOfWork
 {
     public async Task<T> InTenantScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {

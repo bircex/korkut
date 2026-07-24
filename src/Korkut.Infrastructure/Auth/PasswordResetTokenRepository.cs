@@ -1,6 +1,6 @@
 using Korkut.Application.Auth;
 using Korkut.Domain.Auth;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

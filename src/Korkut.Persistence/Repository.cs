@@ -1,18 +1,18 @@
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
+
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Common;
+namespace Korkut.Persistence;
 
 /// <summary>
 /// The EF base every aggregate repository derives from, and the only place outside its
-/// subclasses that touches a <see cref="KorkutDbContext"/>. <see cref="Scoped"/> pins the
+/// subclasses that touches a <see cref="DbContext"/>. <see cref="Scoped"/> pins the
 /// office on every query, so tenancy holds even before Postgres RLS is consulted.
 /// </summary>
-public abstract class Repository<TEntity>(KorkutDbContext db) : IRepository<TEntity>
+public abstract class Repository<TEntity>(DbContext db) : IRepository<TEntity>
     where TEntity : Entity, ITenantOwned, IAggregateRoot
 {
-    protected KorkutDbContext Db => db;
+    protected DbContext Db => db;
 
     protected DbSet<TEntity> Set => db.Set<TEntity>();
 

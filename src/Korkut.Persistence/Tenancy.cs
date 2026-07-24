@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Persistence;
 
 /// <summary>
 /// Transaction-scoped tenant context. RLS policies read

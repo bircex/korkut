@@ -1,3 +1,4 @@
+using Korkut.Persistence;
 using Korkut.Application.Directory;
 using Microsoft.EntityFrameworkCore;
 

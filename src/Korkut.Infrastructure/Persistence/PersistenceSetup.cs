@@ -29,6 +29,11 @@ public static class PersistenceSetup
             options.UseNpgsql(ToNpgsql(connectionString), npgsql =>
                 npgsql.MigrationsHistoryTable(MigrationsHistoryTable, Schema)));
 
+        // The operational context IS "the" DbContext for the request: the module-agnostic
+        // persistence base (Repository<T>/UnitOfWork over DbContext) resolves it here, so a
+        // module's repository never needs to name the concrete KorkutDbContext.
+        services.AddScoped<DbContext>(sp => sp.GetRequiredService<KorkutDbContext>());
+
         services.AddScoped<IOutboxStore, OutboxStore>();
         services.AddScoped<IInboxStore, InboxStore>();
         services.AddScoped<IJobAudit, JobAudit>();

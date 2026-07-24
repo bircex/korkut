@@ -3,6 +3,7 @@
     <Project Path="src/Korkut.Api/Korkut.Api.csproj" />
     <Project Path="src/Korkut.Contract/Korkut.Contract.csproj" />
     <Project Path="src/Korkut.Core/Korkut.Core.csproj" />
+    <Project Path="src/Korkut.Persistence/Korkut.Persistence.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />

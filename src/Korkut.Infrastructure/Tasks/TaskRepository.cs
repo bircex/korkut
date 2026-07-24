@@ -1,6 +1,6 @@
 using Korkut.Application.Tasks;
 using Korkut.Domain.Tasks;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk"><!-- Persistence: the EF Core base every module's repositories build on — the generic
+       tenant-scoped Repository<T>/SoftDeleteRepository<T>, the IUnitOfWork implementation, and
+       the tenant-scope (RLS) helper. Works over the base DbContext, so a module never references
+       a concrete context. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+</Project>

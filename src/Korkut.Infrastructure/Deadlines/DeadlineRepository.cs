@@ -1,6 +1,6 @@
 using Korkut.Application.Deadlines;
 using Korkut.Domain.Deadlines;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,3 +1,4 @@
+using Korkut.Persistence;
 using Korkut.Infrastructure.Knowledge;
 using Microsoft.EntityFrameworkCore;
 

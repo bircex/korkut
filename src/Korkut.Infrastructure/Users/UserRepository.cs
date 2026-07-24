@@ -1,7 +1,7 @@
 using Korkut.Application.Security;
 using Korkut.Application.Users;
 using Korkut.Domain.Users;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

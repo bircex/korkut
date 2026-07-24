@@ -1,3 +1,4 @@
+using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence.Agent;

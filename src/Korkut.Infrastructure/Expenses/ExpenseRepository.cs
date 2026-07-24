@@ -1,6 +1,6 @@
 using Korkut.Application.Expenses;
 using Korkut.Domain.Expenses;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

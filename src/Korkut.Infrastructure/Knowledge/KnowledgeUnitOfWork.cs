@@ -1,3 +1,4 @@
+using Korkut.Persistence;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Knowledge;

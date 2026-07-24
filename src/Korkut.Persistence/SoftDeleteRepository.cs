@@ -1,14 +1,14 @@
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
+
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Common;
+namespace Korkut.Persistence;
 
 /// <summary>
 /// EF base for soft-deletable aggregates: <see cref="Scoped"/> additionally filters out
 /// retired rows, so no caller can accidentally read a deleted record.
 /// </summary>
-public abstract class SoftDeleteRepository<TEntity>(KorkutDbContext db)
+public abstract class SoftDeleteRepository<TEntity>(DbContext db)
     : Repository<TEntity>(db), ISoftDeleteRepository<TEntity>
     where TEntity : Entity, ITenantOwned, IAggregateRoot, ISoftDeletable
 {

@@ -6,7 +6,7 @@ using Korkut.Domain.Offices;
 using Korkut.Core;
 using Korkut.Domain.Users;
 using Korkut.Infrastructure.Auth;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
 using Korkut.Infrastructure.Users;

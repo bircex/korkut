@@ -1,6 +1,6 @@
 using Korkut.Application.Hearings;
 using Korkut.Domain.Hearings;
-using Korkut.Infrastructure.Common;
+using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
