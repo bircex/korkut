@@ -1,7 +1,7 @@
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.OCR;
-using Korkut.Ocr.Endpoints;
 using Korkut.Web;
+using Korkut.Web.Controllers;
 using Korkut.Web.Auth;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Observability;
@@ -15,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddKorkutObservability("Korkut.Ocr", tracing => tracing.AddAspNetCoreInstrumentation());
 
 builder.Services.AddKorkutWeb(builder.Configuration);
+builder.Services.AddKorkutControllers();
 
 builder.Services.TryAddSingleton<IOcrEngine, DisabledOcrEngine>();
 
@@ -36,7 +37,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Ocr", status = "ok" }));
-app.MapOcrEndpoints();
+app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 

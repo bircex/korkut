@@ -1,4 +1,5 @@
 using Korkut.Application.Ai;
+using Korkut.Application.Documents.OCR;
 using Korkut.Application.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,8 @@ public sealed partial class ApiExceptionHandler(ILogger<ApiExceptionHandler> log
             UnprocessableException unprocessable => (StatusCodes.Status422UnprocessableEntity, unprocessable.Detail),
             // No model provider configured / a model call failed → 503 (the client retries later).
             ModelUnavailableException model => (StatusCodes.Status503ServiceUnavailable, model.Message),
+            // OCR requested with no engine configured → 503 (the client retries later).
+            OcrUnavailableException ocr => (StatusCodes.Status503ServiceUnavailable, ocr.Message),
             // Per-office model-usage budget exhausted → 429 (the client backs off / upgrades).
             BudgetExceededException budget => (StatusCodes.Status429TooManyRequests, budget.Message),
             // Optimistic-concurrency conflict: never a silent overwrite — the client is
