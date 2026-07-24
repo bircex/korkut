@@ -1,6 +1,14 @@
 # Korkut Backend — Clean Architecture (target design)
 
-Status: **agreed blueprint; `Clients` implemented as the reference slice** — review the conventions here, then we migrate domain-by-domain (each domain a separate green commit). Agent/AI and Gateway are **deferred** (removed for now, redesigned later against these same rules).
+Status: **rollout complete** — every domain below was migrated domain-by-domain (each its own green commit), and the conventions here now describe the code, not just the target.
+
+What landed:
+
+- Every operational domain (§4) is a full vertical slice; the old grouped `*Endpoints.cs` / `Features/` / `*Entities.cs` are gone. `Api/Endpoints` and `Infrastructure/Persistence/Entities` no longer exist — every persisted type, operational **and** Agent, is a Domain aggregate EF-mapped directly (no `record` + `*Entity` + `ToDomain` split anywhere).
+- Every host serves through controllers (Api, Knowledge, Ocr); no minimal-API endpoint groups remain.
+- Auth (local sign-in / lockout / recovery, Google OIDC, onboarding, refresh tokens, 2FA), Offices + the tenant root, Members/Invites/OfficeRoles, Auditing, Jobs, Knowledge (relocated; the pgvector chunk row stays in Infrastructure by design — Domain must not depend on pgvector), and the Agent-plane entities + use-case app-services are all on these rules.
+
+Still genuinely future work, not migration: a full **Agent host** rebuild (the Agent code is aligned to these rules but currently unwired — no host serves chat/drafting/sessions yet) and the **Gateway** (no project exists yet). Both are feature/design work against these same conventions.
 
 ---
 
