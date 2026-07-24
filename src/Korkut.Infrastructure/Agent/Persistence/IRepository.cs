@@ -1,4 +1,3 @@
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 using Korkut.Domain.Common;

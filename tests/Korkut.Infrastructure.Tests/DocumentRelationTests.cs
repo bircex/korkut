@@ -6,7 +6,6 @@ using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Domain.Clients;

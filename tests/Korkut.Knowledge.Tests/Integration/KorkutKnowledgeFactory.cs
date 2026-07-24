@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Persistence.Knowledge;
 using Korkut.Infrastructure.Security;
 using Korkut.Domain.Time;

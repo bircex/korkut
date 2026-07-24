@@ -1,6 +1,6 @@
+using Korkut.Domain.Agent.Documents;
 using Korkut.Domain.Agent.Conversations;
 using Korkut.Domain.Agent.Ledger;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -46,9 +46,10 @@ public class AgentTenantIsolationTests(PostgresFixture pg) : IClassFixture<Postg
             var convId = conversation.Id;
             db.Conversations.Add(conversation);
             db.ChatMessages.Add(new ConversationMessage(office, convId, "user", $"m{i}", DateTimeOffset.UtcNow));
-            var docId = Guid.CreateVersion7();
-            db.GeneratedDocuments.Add(new GeneratedDocumentEntity { Id = docId, OfficeId = office, ConversationId = convId, Title = $"d{i}", ContentMd = "x", Status = "draft", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow });
-            db.DocumentVersions.Add(new DocumentVersionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, ContentMd = "x", CreatedAt = DateTimeOffset.UtcNow });
+            var generated = new GeneratedDocument(office, convId, $"d{i}", DateTimeOffset.UtcNow);
+            var docId = generated.Id;
+            db.GeneratedDocuments.Add(generated);
+            db.DocumentVersions.Add(new DocumentVersion(office, docId, "x", null, null, DateTimeOffset.UtcNow));
             db.LlmCalls.Add(new LlmCall(office, "chat", "fake", "fake-model", "", 1, 1, 0m, 1, DateTimeOffset.UtcNow));
         }
 

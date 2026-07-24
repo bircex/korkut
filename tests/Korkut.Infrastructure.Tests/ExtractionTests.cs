@@ -6,7 +6,6 @@ using Korkut.Application.Documents.OCR;
 using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 

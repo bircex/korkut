@@ -10,7 +10,6 @@ using Korkut.Infrastructure.Courts;
 using Korkut.Infrastructure.Hearings;
 using Korkut.Infrastructure.Matters;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

@@ -1,5 +1,4 @@
 using Korkut.Domain.Offices;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Korkut.Domain.Matters;

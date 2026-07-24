@@ -6,7 +6,6 @@ using Korkut.Application.Security;
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

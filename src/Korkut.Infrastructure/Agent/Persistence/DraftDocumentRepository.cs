@@ -1,10 +1,9 @@
 using Korkut.Infrastructure.Persistence.Agent;
 using Korkut.Domain.Agent.Documents;
-using Korkut.Infrastructure.Persistence.Entities;
+using Korkut.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
-using Korkut.Domain.Common;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 
@@ -13,40 +12,30 @@ namespace Korkut.Infrastructure.Agent.Persistence;
 /// (or a direct save) snapshots an immutable <c>document_versions</c> row. Tenant context is
 /// set by the caller (RLS).
 /// </summary>
-public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<GeneratedDocumentEntity>(db), IDraftDocumentRepository
+public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<GeneratedDocument>(db), IDraftDocumentRepository
 {
     public async Task<GeneratedDocument> GetOrCreateForSessionAsync(Guid officeId, Guid conversationId, string title, DateTimeOffset now, CancellationToken ct = default)
     {
         var existing = await Db.GeneratedDocuments.AsNoTracking()
             .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.ConversationId == conversationId, ct);
-        
         if (existing is not null)
         {
-            return ToDomain(existing);
+            return existing;
         }
 
-        var doc = new GeneratedDocumentEntity
-        {
-            Id = UuidV7.NewId(), OfficeId = officeId, ConversationId = conversationId,
-            Title = title, ContentMd = string.Empty, Status = "draft", CreatedAt = now, UpdatedAt = now,
-        };
-        
+        var doc = new GeneratedDocument(officeId, conversationId, title, now);
         Db.GeneratedDocuments.Add(doc);
         await Db.SaveChangesAsync(ct);
-        return ToDomain(doc);
+        return doc;
     }
 
-    public async Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default)
-    {
-        var d = await Db.GeneratedDocuments.AsNoTracking().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
-        return d is null ? null : ToDomain(d);
-    }
+    public Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default)
+        => Db.GeneratedDocuments.AsNoTracking().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
 
     public async Task<IReadOnlyList<DocumentVersion>> VersionsAsync(Guid officeId, Guid docId, CancellationToken ct = default)
         => await Db.DocumentVersions.AsNoTracking()
             .Where(x => x.OfficeId == officeId && x.DocumentId == docId)
             .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new DocumentVersion(x.Id, x.DocumentId, x.ContentMd, x.Author, x.Note, x.CreatedAt))
             .ToListAsync(ct);
 
     public async Task<Guid?> StagePendingAsync(Guid officeId, Guid docId, string contentMd, string summary, DateTimeOffset now, CancellationToken ct = default)
@@ -64,21 +53,12 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
     public async Task<bool> AcceptPendingAsync(Guid officeId, Guid docId, string? author, DateTimeOffset now, CancellationToken ct = default)
     {
         var doc = await Db.GeneratedDocuments.SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
-        if (doc is null || doc.PendingContentMd is null)
+        if (doc is null || !doc.AcceptPending(now))
         {
             return false;
         }
 
-        doc.ContentMd = doc.PendingContentMd;
-        doc.PendingId = null;
-        doc.PendingContentMd = null;
-        doc.PendingSummary = null;
-        doc.UpdatedAt = now;
-        Db.DocumentVersions.Add(new DocumentVersionEntity
-        {
-            Id = UuidV7.NewId(), OfficeId = officeId, DocumentId = docId, ContentMd = doc.ContentMd,
-            Author = author, Note = "Taslak kabul edildi", CreatedAt = now,
-        });
+        Db.DocumentVersions.Add(new DocumentVersion(officeId, docId, doc.ContentMd, author, "Taslak kabul edildi", now));
         await Db.SaveChangesAsync(ct);
         return true;
     }
@@ -94,27 +74,14 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
     public async Task<bool> SaveAsync(Guid officeId, Guid docId, string title, string contentMd, string? author, DateTimeOffset now, CancellationToken ct = default)
     {
         var doc = await Db.GeneratedDocuments.SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
-        
         if (doc is null)
         {
             return false;
         }
 
-        doc.Title = title;
-        doc.ContentMd = contentMd;
-        doc.UpdatedAt = now;
-        
-        Db.DocumentVersions.Add(new DocumentVersionEntity
-        {
-            Id = UuidV7.NewId(), OfficeId = officeId, DocumentId = docId, ContentMd = contentMd,
-            Author = author, Note = "Elle kaydedildi", CreatedAt = now,
-        });
-        
+        doc.Save(title, contentMd, now);
+        Db.DocumentVersions.Add(new DocumentVersion(officeId, docId, contentMd, author, "Elle kaydedildi", now));
         await Db.SaveChangesAsync(ct);
         return true;
     }
-
-    private static GeneratedDocument ToDomain(GeneratedDocumentEntity d) =>
-        new(d.Id, d.OfficeId, d.ConversationId, d.Title, d.ContentMd, d.Status,
-            d.PendingId, d.PendingContentMd, d.PendingSummary, d.CreatedAt, d.UpdatedAt);
 }

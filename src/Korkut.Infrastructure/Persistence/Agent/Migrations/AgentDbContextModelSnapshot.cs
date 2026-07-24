@@ -100,7 +100,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                     b.ToTable("conversations", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentVersionEntity", b =>
+            modelBuilder.Entity("Korkut.Domain.Agent.Documents.DocumentVersion", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -141,7 +141,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                     b.ToTable("document_versions", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.GeneratedDocumentEntity", b =>
+            modelBuilder.Entity("Korkut.Domain.Agent.Documents.GeneratedDocument", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

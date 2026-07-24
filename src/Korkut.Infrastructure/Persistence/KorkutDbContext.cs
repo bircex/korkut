@@ -1,5 +1,4 @@
 using Korkut.Application.Jobs;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;

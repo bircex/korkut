@@ -2,7 +2,6 @@ using Korkut.Infrastructure.Auditing;
 using Korkut.Domain.Offices;
 using Korkut.Application.Auditing;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

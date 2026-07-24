@@ -1,7 +1,6 @@
 using System.Net;
 using System.Web;
 using Korkut.Api.Tests.Integration;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Tests;

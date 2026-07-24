@@ -1,6 +1,5 @@
 using Korkut.Domain.Offices;
 using Korkut.Application.Differential;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Domain.Matters;
 

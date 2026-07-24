@@ -2,7 +2,6 @@ using Korkut.Domain.Jobs;
 using Korkut.Application.Documents;
 using Korkut.Application.Jobs;
 using Korkut.Domain.Common;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Time;
 using Microsoft.EntityFrameworkCore;
 

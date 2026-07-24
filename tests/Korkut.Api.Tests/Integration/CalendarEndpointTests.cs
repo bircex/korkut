@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
 using Korkut.Domain.Deadlines;

@@ -2,7 +2,6 @@ using Korkut.Application.Auth.Google;
 using Korkut.Domain.Offices;
 using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
 using Korkut.Domain.Time;

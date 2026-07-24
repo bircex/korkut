@@ -1,7 +1,6 @@
 using Korkut.Domain.Offices;
 using Korkut.Infrastructure.Auth;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
 using Korkut.Application.Security;
 using Korkut.Domain.Users;
 
