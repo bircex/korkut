@@ -7,4 +7,8 @@ namespace Korkut.Application.Agent.Models;
 /// user, and that user's effective permission set (for tool RBAC). Built from the access token at
 /// the edge — never from a request body.
 /// </summary>
-public sealed record AgentToolContext(Guid OfficeId, Guid UserId, IReadOnlySet<string> Permissions);
+public sealed record AgentToolContext(Guid OfficeId, Guid UserId, IReadOnlySet<string> Permissions)
+{
+    /// <summary>True when the tool needs no permission, or the caller holds the required one.</summary>
+    public bool Can(string? permission) => permission is null || Permissions.Contains(permission);
+}
