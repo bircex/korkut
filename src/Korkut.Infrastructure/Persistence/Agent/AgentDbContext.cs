@@ -21,7 +21,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     public DbSet<DocumentVersionEntity> DocumentVersions => Set<DocumentVersionEntity>();
 
-    public DbSet<LlmCallEntity> LlmCalls => Set<LlmCallEntity>();
+    public DbSet<Domain.Agent.Ledger.LlmCall> LlmCalls => Set<Domain.Agent.Ledger.LlmCall>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,18 +65,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
             b.HasIndex(x => new { x.OfficeId, x.DocumentId, x.CreatedAt }).HasDatabaseName("ix_document_versions_document");
         });
 
-        modelBuilder.Entity<LlmCallEntity>(b =>
-        {
-            b.ToTable("llm_calls");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Feature).HasMaxLength(40);
-            b.Property(x => x.Provider).HasMaxLength(40);
-            b.Property(x => x.ModelId).HasMaxLength(120);
-            b.Property(x => x.PromptFingerprint).HasMaxLength(32);
-            b.Property(x => x.Cost).HasColumnType("numeric(12,6)");
-            b.HasIndex(x => new { x.OfficeId, x.CreatedAt }).HasDatabaseName("ix_llm_calls_office_created");
-        });
+        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.LlmCallConfiguration());
 
         SnakeCaseNaming.Apply(modelBuilder);
 

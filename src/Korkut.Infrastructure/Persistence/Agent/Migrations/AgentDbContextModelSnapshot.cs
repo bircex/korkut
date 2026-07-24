@@ -201,7 +201,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                     b.ToTable("generated_documents", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.LlmCallEntity", b =>
+            modelBuilder.Entity("Korkut.Domain.Agent.Ledger.LlmCall", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
