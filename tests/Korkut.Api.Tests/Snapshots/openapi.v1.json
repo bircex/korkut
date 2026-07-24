@@ -3470,97 +3470,97 @@
       "name": "Korkut.Api"
     },
     {
-      "name": "Profile"
-    },
-    {
-      "name": "Tasks"
-    },
-    {
-      "name": "Memory"
-    },
-    {
-      "name": "Persona"
-    },
-    {
-      "name": "Style"
-    },
-    {
-      "name": "Reports"
-    },
-    {
-      "name": "PetitionTypes"
-    },
-    {
-      "name": "Outbox"
-    },
-    {
-      "name": "Onboarding"
-    },
-    {
       "name": "AdminOffices"
-    },
-    {
-      "name": "Notes"
-    },
-    {
-      "name": "Members"
-    },
-    {
-      "name": "Matters"
-    },
-    {
-      "name": "Invoices"
-    },
-    {
-      "name": "Invites"
-    },
-    {
-      "name": "Hearings"
     },
     {
       "name": "AdminPing"
     },
     {
-      "name": "Foundation"
-    },
-    {
-      "name": "FinanceSummary"
-    },
-    {
-      "name": "Export"
-    },
-    {
-      "name": "Expenses"
-    },
-    {
-      "name": "Documents"
-    },
-    {
-      "name": "Deadlines"
-    },
-    {
-      "name": "Coverage"
-    },
-    {
-      "name": "Correspondence"
-    },
-    {
-      "name": "Clients"
-    },
-    {
-      "name": "Channels"
-    },
-    {
-      "name": "Integrations"
+      "name": "Auth"
     },
     {
       "name": "Calendar"
     },
     {
-      "name": "Auth"
+      "name": "Channels"
+    },
+    {
+      "name": "Clients"
+    },
+    {
+      "name": "Correspondence"
+    },
+    {
+      "name": "Coverage"
+    },
+    {
+      "name": "Deadlines"
+    },
+    {
+      "name": "Documents"
+    },
+    {
+      "name": "Expenses"
+    },
+    {
+      "name": "Export"
+    },
+    {
+      "name": "FinanceSummary"
+    },
+    {
+      "name": "Foundation"
     },
     {
       "name": "GoogleAuth"
+    },
+    {
+      "name": "Hearings"
+    },
+    {
+      "name": "Integrations"
+    },
+    {
+      "name": "Invites"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Matters"
+    },
+    {
+      "name": "Members"
+    },
+    {
+      "name": "Memory"
+    },
+    {
+      "name": "Notes"
+    },
+    {
+      "name": "Onboarding"
+    },
+    {
+      "name": "Outbox"
+    },
+    {
+      "name": "Persona"
+    },
+    {
+      "name": "PetitionTypes"
+    },
+    {
+      "name": "Profile"
+    },
+    {
+      "name": "Reports"
+    },
+    {
+      "name": "Style"
+    },
+    {
+      "name": "Tasks"
     }
   ]
 }
