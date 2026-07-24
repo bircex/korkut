@@ -6,7 +6,7 @@ using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Directory;
 
-namespace Korkut.Infrastructure.Agent.Sessions;
+namespace Korkut.Application.Agent.Sessions;
 
 /// <summary>
 /// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit

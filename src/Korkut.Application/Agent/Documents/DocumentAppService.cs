@@ -1,12 +1,11 @@
 using Korkut.Application.Agent.Documents;
-using Korkut.Infrastructure.Documents;
 using Korkut.Application.Export;
 using Korkut.Application.Errors;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Directory;
 
-namespace Korkut.Infrastructure.Agent.Documents;
+namespace Korkut.Application.Agent.Documents;
 
 /// <summary>
 /// AI-drafted-document use-cases the controller forwards to: runs the domain services inside a
@@ -16,7 +15,8 @@ namespace Korkut.Infrastructure.Agent.Documents;
 /// </summary>
 public sealed class DocumentAppService(
     IAgentUnitOfWork uow, ICurrentUser current,
-    ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting, IUserLookupService dir) : IDocumentAppService
+    ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting,
+    IUserLookupService dir, IDocumentExporter exporter) : IDocumentAppService
 {
     public async Task<DocumentDataResponse> ForSessionAsync(Guid sessionId, CancellationToken ct = default)
     {
@@ -77,8 +77,8 @@ public sealed class DocumentAppService(
 
     public async Task<ExportedDocument> ExportAsync(Guid docId, string? format, CancellationToken ct = default)
     {
-        var fmt = format ?? "docx";
-        if (fmt is not ("docx" or "udf"))
+        var fmt = format ?? ExportFormat.Docx;
+        if (!ExportFormat.IsSupported(fmt))
         {
             throw new BadRequestException("format 'docx' veya 'udf' olmalıdır.");
         }
@@ -91,7 +91,7 @@ public sealed class DocumentAppService(
             throw new NotFoundException("Belge bulunamadı.");
         }
 
-        return MarkdownDocumentExporter.Export(fmt, doc.Title, doc.ContentMd);
+        return exporter.Export(fmt, doc.Title, doc.ContentMd);
     }
 
     private async Task<DocumentDataResponse> BuildAsync(Guid officeId, Guid docId, CancellationToken ct)

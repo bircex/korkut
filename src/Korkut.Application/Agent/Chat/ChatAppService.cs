@@ -4,7 +4,7 @@ using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Abstractions;
 
-namespace Korkut.Infrastructure.Agent.Chat;
+namespace Korkut.Application.Agent.Chat;
 
 /// <summary>
 /// Chat / upload / streaming as the controller sees them: runs <see cref="ISessionChatService"/>
