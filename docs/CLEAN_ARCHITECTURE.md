@@ -32,7 +32,7 @@ Still genuinely future work, not migration: a full **Agent host** rebuild (the A
 
 2. **One type per file.** No more `OfficeCoreModels.cs` with 3 records, no `IOfficeCoreRepositories.cs` with 3 interfaces. Every entity, interface, service, DTO, request and response is its own file named after the type.
 
-3. **Vertical slices, one folder per domain.** Every domain is a direct top-level folder in every layer — `Domain/Clients/`, `Application/Clients/`, `Infrastructure/Clients/`, `Api/Clients/`. No umbrella/grouping level above a domain. Sub-split only inside a domain when it grows (Requests/, Responses/, Dtos/).
+3. **Vertical slices, one folder per domain — except the Api controllers.** Every domain is a direct top-level folder in **Domain / Application / Infrastructure** — `Domain/Clients/`, `Application/Clients/`, `Infrastructure/Clients/`. No umbrella/grouping level above a domain. Sub-split only inside a domain when it grows (Requests/, Responses/, Dtos/). The controllers are the one intentional exception: they are thin adapters with no domain logic to co-locate, so all of them live together under a single `Api/Controllers/` folder (`Korkut.Api.Controllers`), matching the Knowledge and Ocr hosts. The request/response shapes they use are in Application, so a per-domain Api folder would hold nothing but the controller anyway.
 
 4. **One entity, owned by the Domain.** No `record` in Domain + `*Entity` in Infrastructure + hand-written `ToDomain`. There is **one** entity class, in Domain, and EF maps it directly via a Fluent `IEntityTypeConfiguration<T>` in Infrastructure. Column/table names are preserved, so **no migration changes**.
 
@@ -169,8 +169,8 @@ Infrastructure/
     ClientConfiguration.cs              // IEntityTypeConfiguration<Client>
 
 Api/
-  Clients/
-    ClientsController.cs                // thin: forwards to IClientService
+  Controllers/
+    ClientsController.cs                // thin: forwards to IClientService — all controllers together here
 ```
 
 **Where each kind of type lives:**
@@ -183,7 +183,7 @@ Api/
 | Request / Response / DTO | Application | `Application/<Domain>/{Requests,Responses,Dtos}/` |
 | Repository **impl** | Infrastructure | `Infrastructure/<Domain>/` |
 | EF configuration | Infrastructure | `Infrastructure/<Domain>/` |
-| Controller | Api | `Api/<Domain>/` |
+| Controller | Api | `Api/Controllers/` (all together, not per-domain) |
 
 Sub-split only *inside* a domain when it genuinely grows (`Requests/`, `Responses/`, or a nested aggregate folder) — never by adding a grouping layer above it.
 
