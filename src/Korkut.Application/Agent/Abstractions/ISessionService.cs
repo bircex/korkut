@@ -15,7 +15,7 @@ public interface ISessionService
 
     Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default);
 
-    Task<IReadOnlyList<ChatTurn>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default);
+    Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default);
 
     Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, CancellationToken ct = default);
 

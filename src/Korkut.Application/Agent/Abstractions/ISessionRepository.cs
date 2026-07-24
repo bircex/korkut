@@ -20,7 +20,7 @@ public interface ISessionRepository
     /// <summary>A single conversation's brief, or null if missing.</summary>
     Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default);
 
-    Task<IReadOnlyList<ChatTurn>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default);
+    Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default);
 
     Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, CancellationToken ct = default);
 

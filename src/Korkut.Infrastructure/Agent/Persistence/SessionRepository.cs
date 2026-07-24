@@ -1,10 +1,8 @@
 using Korkut.Domain.Agent.Conversations;
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
-using Korkut.Domain.Common;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 
@@ -15,26 +13,17 @@ namespace Korkut.Infrastructure.Agent.Persistence;
 /// conversations.updated_at, bumped whenever a message is appended.
 /// </summary>
 public sealed class SessionRepository(AgentDbContext db)
-    : EfRepository<ConversationEntity>(db), ISessionRepository
+    : EfRepository<Conversation>(db), ISessionRepository
 {
     public async Task<Guid> CreateAsync(Guid officeId, Guid createdBy, Guid? matterId, DateTimeOffset now, CancellationToken ct = default)
     {
-        var conv = new ConversationEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            Title = Session.DefaultTitle,
-            MatterId = matterId,
-            CreatedBy = createdBy,
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
-        await InsertAsync(conv, ct);
-        return conv.Id;
+        var conversation = new Conversation(officeId, Session.DefaultTitle, matterId, createdBy, now);
+        await InsertAsync(conversation, ct);
+        return conversation.Id;
     }
 
-    public async Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default)
-        => await FindAsync(officeId, id, ct) is { } c ? ToDomain(c) : null;
+    public Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default)
+        => FindAsync(officeId, id, ct);
 
     public async Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, int limit, int offset, CancellationToken ct = default)
     {
@@ -47,24 +36,15 @@ public sealed class SessionRepository(AgentDbContext db)
     public async Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default)
         => await Scoped(officeId).Where(x => x.Id == id).Select(ToBrief).SingleOrDefaultAsync(ct);
 
-    public async Task<IReadOnlyList<ChatTurn>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
         => await Db.ChatMessages.AsNoTracking()
             .Where(x => x.OfficeId == officeId && x.ConversationId == conversationId)
             .OrderBy(x => x.CreatedAt)
-            .Select(x => new ChatTurn(x.Id, x.ConversationId, x.Role, x.Content, x.CreatedAt))
             .ToListAsync(ct);
 
     public async Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, CancellationToken ct = default)
     {
-        Db.ChatMessages.Add(new ChatMessageEntity
-        {
-            Id = UuidV7.NewId(),
-            OfficeId = officeId,
-            ConversationId = conversationId,
-            Role = role,
-            Content = content,
-            CreatedAt = now,
-        });
+        Db.ChatMessages.Add(new ConversationMessage(officeId, conversationId, role, content, now));
         await Db.Conversations.Where(x => x.OfficeId == officeId && x.Id == conversationId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedAt, now), ct);
         await Db.SaveChangesAsync(ct);
@@ -92,31 +72,21 @@ public sealed class SessionRepository(AgentDbContext db)
             return null;
         }
 
-        var newId = UuidV7.NewId();
-        Db.Conversations.Add(new ConversationEntity
-        {
-            Id = newId, OfficeId = officeId, Title = source.Title + " (kopya)", MatterId = source.MatterId,
-            CreatedBy = createdBy, CreatedAt = now, UpdatedAt = now,
-        });
+        var clone = source.CloneFor(createdBy, now);
+        Db.Conversations.Add(clone);
         var messages = await Db.ChatMessages.AsNoTracking()
             .Where(x => x.OfficeId == officeId && x.ConversationId == id).OrderBy(x => x.CreatedAt).ToListAsync(ct);
         foreach (var m in messages)
         {
-            Db.ChatMessages.Add(new ChatMessageEntity
-            {
-                Id = UuidV7.NewId(), OfficeId = officeId, ConversationId = newId, Role = m.Role, Content = m.Content, CreatedAt = m.CreatedAt,
-            });
+            Db.ChatMessages.Add(new ConversationMessage(officeId, clone.Id, m.Role, m.Content, m.CreatedAt));
         }
 
         await Db.SaveChangesAsync(ct);
-        return newId;
+        return clone.Id;
     }
-
-    private static Conversation ToDomain(ConversationEntity c) =>
-        new(c.Id, c.OfficeId, c.Title, c.MatterId, c.CreatedBy, c.CreatedAt, c.UpdatedAt);
 
     // Projected in-DB: the Agent DB never joins operational Users; the host resolves the
     // author id to a display name via an operational lookup when building the response.
-    private static readonly System.Linq.Expressions.Expression<Func<ConversationEntity, SessionBrief>> ToBrief =
+    private static readonly System.Linq.Expressions.Expression<Func<Conversation, SessionBrief>> ToBrief =
         c => new SessionBrief(c.Id, c.Title, c.MatterId, c.CreatedBy, c.UpdatedAt);
 }

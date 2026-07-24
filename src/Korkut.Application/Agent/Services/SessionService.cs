@@ -20,7 +20,7 @@ public sealed class SessionService(ISessionRepository repo, IClock clock) : ISes
     public Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default)
         => repo.GetBriefAsync(officeId, id, ct);
 
-    public Task<IReadOnlyList<ChatTurn>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
+    public Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
         => repo.MessagesAsync(officeId, conversationId, ct);
 
     public Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, CancellationToken ct = default)

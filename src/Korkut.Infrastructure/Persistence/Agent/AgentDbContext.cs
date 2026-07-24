@@ -13,9 +13,9 @@ namespace Korkut.Infrastructure.Persistence.Agent;
 /// </summary>
 public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : DbContext(options)
 {
-    public DbSet<ConversationEntity> Conversations => Set<ConversationEntity>();
+    public DbSet<Domain.Agent.Conversations.Conversation> Conversations => Set<Domain.Agent.Conversations.Conversation>();
 
-    public DbSet<ChatMessageEntity> ChatMessages => Set<ChatMessageEntity>();
+    public DbSet<Domain.Agent.Conversations.ConversationMessage> ChatMessages => Set<Domain.Agent.Conversations.ConversationMessage>();
 
     public DbSet<GeneratedDocumentEntity> GeneratedDocuments => Set<GeneratedDocumentEntity>();
 
@@ -27,23 +27,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     {
         modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
 
-        modelBuilder.Entity<ConversationEntity>(b =>
-        {
-            b.ToTable("conversations");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Title).HasMaxLength(300);
-            b.HasIndex(x => new { x.OfficeId, x.UpdatedAt }).HasDatabaseName("ix_conversations_office_updated");
-        });
+        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.ConversationConfiguration());
 
-        modelBuilder.Entity<ChatMessageEntity>(b =>
-        {
-            b.ToTable("chat_messages");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Role).HasMaxLength(20);
-            b.HasIndex(x => new { x.OfficeId, x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_chat_messages_conversation");
-        });
+        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.ConversationMessageConfiguration());
 
         modelBuilder.Entity<GeneratedDocumentEntity>(b =>
         {
