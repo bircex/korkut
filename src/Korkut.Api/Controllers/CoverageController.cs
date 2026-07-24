@@ -1,3 +1,4 @@
+using Korkut.Core;
 using Korkut.Application.Coverage;
 using Korkut.Application.Security;
 using Microsoft.AspNetCore.Authorization;

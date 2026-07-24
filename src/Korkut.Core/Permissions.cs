@@ -1,4 +1,4 @@
-namespace Korkut.Application.Security;
+namespace Korkut.Core;
 
 /// <summary>
 /// The fixed permission catalog. Authorization is by permission, never by role name

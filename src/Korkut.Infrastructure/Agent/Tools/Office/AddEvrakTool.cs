@@ -1,3 +1,4 @@
+using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Correspondence;
 using Korkut.Application.Correspondence.Requests;

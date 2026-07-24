@@ -1,3 +1,4 @@
+using Korkut.Core;
 using Korkut.Application.Notes;
 using Korkut.Application.Notes.Requests;
 using Korkut.Application.Security;

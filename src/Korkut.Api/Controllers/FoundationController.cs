@@ -1,3 +1,4 @@
+using Korkut.Core;
 using System.ComponentModel.DataAnnotations;
 using Korkut.Api.Contracts;
 using Korkut.Application.Security;

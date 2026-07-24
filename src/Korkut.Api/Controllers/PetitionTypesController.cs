@@ -1,3 +1,4 @@
+using Korkut.Core;
 using Korkut.Application.PetitionTypes.Responses;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Templates;

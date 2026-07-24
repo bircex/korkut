@@ -1,3 +1,4 @@
+using Korkut.Core;
 using Korkut.Application.Deadlines;
 using Korkut.Application.Deadlines.Requests;
 using Korkut.Application.Security;
