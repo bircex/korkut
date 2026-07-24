@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk"><!-- Contract: the cross-module surface — every module's IService interfaces, their
+       Request/Response DTOs, and the generic Result<T> envelope services return. A module
+       talks to another ONLY through this (never its internals). Depends on nothing. -->
+</Project>
