@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Entities;
 
 /// <summary>EF mapping for AI-drafted documents in the Agent DB (table/columns/index unchanged).</summary>
 public sealed class GeneratedDocumentConfiguration : IEntityTypeConfiguration<GeneratedDocument>

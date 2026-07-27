@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Entities;
 
 /// <summary>An immutable snapshot of a generated document's content at accept or save time.</summary>
 public sealed class DocumentVersion : Entity, ITenantOwned, IAggregateRoot

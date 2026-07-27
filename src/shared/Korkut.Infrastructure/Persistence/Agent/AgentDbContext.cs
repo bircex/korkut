@@ -15,9 +15,9 @@ namespace Korkut.Infrastructure.Persistence.Agent;
 /// </summary>
 public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : DbContext(options)
 {
-    public DbSet<Korkut.Agent.Drafting.GeneratedDocument> GeneratedDocuments => Set<Korkut.Agent.Drafting.GeneratedDocument>();
+    public DbSet<Korkut.Agent.Drafting.Entities.GeneratedDocument> GeneratedDocuments => Set<Korkut.Agent.Drafting.Entities.GeneratedDocument>();
 
-    public DbSet<Korkut.Agent.Drafting.DocumentVersion> DocumentVersions => Set<Korkut.Agent.Drafting.DocumentVersion>();
+    public DbSet<Korkut.Agent.Drafting.Entities.DocumentVersion> DocumentVersions => Set<Korkut.Agent.Drafting.Entities.DocumentVersion>();
 
     public DbSet<Korkut.Agent.Ledger.Entities.LlmCall> LlmCalls => Set<Korkut.Agent.Ledger.Entities.LlmCall>();
 
@@ -25,9 +25,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     {
         modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
 
-        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.GeneratedDocumentConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.Entities.GeneratedDocumentConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.DocumentVersionConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.Entities.DocumentVersionConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Ledger.Entities.LlmCallConfiguration());
 

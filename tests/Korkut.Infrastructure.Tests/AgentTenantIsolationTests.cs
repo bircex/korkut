@@ -1,4 +1,5 @@
 using Korkut.Agent.Drafting;
+using Korkut.Agent.Drafting.Entities;
 using Korkut.Agent.Ledger;
 using Korkut.Agent.Ledger.Entities;
 using Microsoft.EntityFrameworkCore;

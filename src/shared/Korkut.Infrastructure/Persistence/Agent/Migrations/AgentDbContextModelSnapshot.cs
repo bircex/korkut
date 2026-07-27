@@ -23,7 +23,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Agent.Drafting.DocumentVersion", b =>
+            modelBuilder.Entity("Korkut.Agent.Drafting.Entities.DocumentVersion", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -64,7 +64,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                     b.ToTable("document_versions", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Agent.Drafting.GeneratedDocument", b =>
+            modelBuilder.Entity("Korkut.Agent.Drafting.Entities.GeneratedDocument", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

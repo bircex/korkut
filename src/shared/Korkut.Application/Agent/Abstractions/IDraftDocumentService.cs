@@ -1,4 +1,5 @@
 using Korkut.Agent.Drafting;
+using Korkut.Agent.Drafting.Entities;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 
