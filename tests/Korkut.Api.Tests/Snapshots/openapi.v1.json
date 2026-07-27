@@ -2206,7 +2206,7 @@
           }
         },
         "tags": [
-          "Expenses"
+          "Finance"
         ]
       },
       "post": {
@@ -2236,7 +2236,7 @@
           }
         },
         "tags": [
-          "Expenses"
+          "Finance"
         ]
       }
     },
@@ -2259,7 +2259,7 @@
           }
         },
         "tags": [
-          "Expenses"
+          "Finance"
         ]
       }
     },
@@ -2271,7 +2271,7 @@
           }
         },
         "tags": [
-          "Invoices"
+          "Finance"
         ]
       },
       "post": {
@@ -2301,7 +2301,7 @@
           }
         },
         "tags": [
-          "Invoices"
+          "Finance"
         ]
       }
     },
@@ -2324,7 +2324,7 @@
           }
         },
         "tags": [
-          "Invoices"
+          "Finance"
         ]
       },
       "patch": {
@@ -2365,7 +2365,7 @@
           }
         },
         "tags": [
-          "Invoices"
+          "Finance"
         ]
       }
     },
@@ -2377,7 +2377,7 @@
           }
         },
         "tags": [
-          "FinanceSummary"
+          "Finance"
         ]
       }
     },
@@ -3488,9 +3488,6 @@
       "name": "Export"
     },
     {
-      "name": "FinanceSummary"
-    },
-    {
       "name": "Foundation"
     },
     {
@@ -3533,13 +3530,10 @@
       "name": "Deadlines"
     },
     {
-      "name": "Expenses"
+      "name": "Finance"
     },
     {
       "name": "Hearings"
-    },
-    {
-      "name": "Invoices"
     },
     {
       "name": "Matters"

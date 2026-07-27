@@ -20,8 +20,7 @@
     <Project Path="src/modules/Korkut.Courts/Korkut.Courts.csproj" />
     <Project Path="src/modules/Korkut.Matters/Korkut.Matters.csproj" />
     <Project Path="src/modules/Korkut.Hearings/Korkut.Hearings.csproj" />
-    <Project Path="src/modules/Korkut.Invoices/Korkut.Invoices.csproj" />
-    <Project Path="src/modules/Korkut.Expenses/Korkut.Expenses.csproj" />
+    <Project Path="src/modules/Korkut.Finance/Korkut.Finance.csproj" />
     <Project Path="src/modules/Korkut.Settings/Korkut.Settings.csproj" />
     <Project Path="src/modules/Korkut.Organization/Korkut.Organization.csproj" />
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />

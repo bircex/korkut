@@ -1,7 +1,5 @@
 using Korkut.Core;
-using Korkut.Expenses;
-using Korkut.Application.FinanceSummary;
-using Korkut.Invoices;
+using Korkut.Contract.Finance;
 using Korkut.Application.Reports.Responses;
 
 namespace Korkut.Application.Reports;
@@ -13,8 +11,7 @@ namespace Korkut.Application.Reports;
 /// </summary>
 public sealed class ReportsService(
     IReportsQuery query,
-    IInvoiceRepository invoices,
-    IExpenseRepository expenses,
+    IFinanceLookup finance,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IClock clock) : IReportsService
@@ -29,8 +26,7 @@ public sealed class ReportsService(
         return unitOfWork.InTenantScopeAsync(office, async () =>
         {
             var stats = await query.GetStatsAsync(office, window, clock.UtcNow, ct);
-            var totals = FinanceTotalsCalculator.Compute(
-                await invoices.ListAsync(office, ct), await expenses.ListAsync(office, ct));
+            var totals = await finance.GetTotalsAsync(office, ct);
 
             return new ReportsOverviewResponse(
                 new MatterStatsResponse(stats.Matters.Total, stats.Matters.ByStatus),

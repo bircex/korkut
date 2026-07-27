@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
   </ItemGroup>
   <!-- Mirror the Web SDK's implicit global usings, since this is a plain library that
        nonetheless builds against ASP.NET Core (FrameworkReference above). -->
@@ -37,8 +38,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Courts\Korkut.Courts.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Matters\Korkut.Matters.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Invoices\Korkut.Invoices.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Expenses\Korkut.Expenses.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Settings\Korkut.Settings.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />

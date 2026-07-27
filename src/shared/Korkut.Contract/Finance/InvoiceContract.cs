@@ -1,6 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Contract.Invoices;
+namespace Korkut.Contract.Finance;
+
+/// <summary>Transport shape for an invoice, including the VAT-inclusive gross.</summary>
+public sealed record InvoiceResponse(
+    Guid Id, Guid? ClientId, Guid? MatterId, decimal Amount, decimal VatRate, decimal Gross,
+    string? Description, string Status, DateTimeOffset? IssuedAt);
 
 /// <summary>Body for issuing an invoice.</summary>
 public sealed record CreateInvoiceRequest

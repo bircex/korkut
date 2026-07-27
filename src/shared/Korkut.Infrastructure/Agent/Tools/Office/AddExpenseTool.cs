@@ -1,13 +1,13 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Contract.Expenses;
+using Korkut.Contract.Finance;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
 /// <summary>Büroya yeni bir masraf ekler.</summary>
-public sealed class AddExpenseTool(IExpenseService expenses) : IAgentTool
+public sealed class AddExpenseTool(IFinanceService finance) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -41,7 +41,7 @@ public sealed class AddExpenseTool(IExpenseService expenses) : IAgentTool
             Description = ToolArgs.String(arguments, "description"),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var result = await expenses.CreateAsync(request, ct);
+        var result = await finance.CreateExpenseAsync(request, ct);
         if (!result.IsSuccess)
         {
             return ToolResult.Error(result.Error!.Detail);

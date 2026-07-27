@@ -1,6 +1,4 @@
-using Korkut.Application.FinanceSummary;
-using Korkut.Expenses;
-using Korkut.Invoices;
+using Korkut.Finance;
 
 namespace Korkut.Application.Tests;
 

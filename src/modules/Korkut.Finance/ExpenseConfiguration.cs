@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Expenses;
+namespace Korkut.Finance;
 
 /// <summary>EF mapping for expenses (table/columns unchanged).</summary>
 public sealed class ExpenseConfiguration : IEntityTypeConfiguration<Expense>

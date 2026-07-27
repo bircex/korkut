@@ -1,13 +1,13 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Contract.Invoices;
+using Korkut.Contract.Finance;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
 /// <summary>Faturaları listeler.</summary>
-public sealed class ListInvoicesTool(IInvoiceService invoices) : IAgentTool
+public sealed class ListInvoicesTool(IFinanceService finance) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -22,7 +22,7 @@ public sealed class ListInvoicesTool(IInvoiceService invoices) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var result = await invoices.ListAsync(ct);
+        var result = await finance.ListInvoicesAsync(ct);
         return result.IsSuccess
             ? ToolResult.Ok(ToolArgs.Result(result.Value!))
             : ToolResult.Error(result.Error!.Detail);

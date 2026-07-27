@@ -27,8 +27,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.Calendar.CalendarModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Matters.MattersModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Hearings.HearingsModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Invoices.InvoicesModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Expenses.ExpensesModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Finance.FinanceModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Settings.SettingsModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 

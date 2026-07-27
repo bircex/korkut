@@ -1,13 +1,13 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Contract.Invoices;
+using Korkut.Contract.Finance;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
 /// <summary>Büroya yeni bir fatura ekler.</summary>
-public sealed class AddInvoiceTool(IInvoiceService invoices) : IAgentTool
+public sealed class AddInvoiceTool(IFinanceService finance) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -43,7 +43,7 @@ public sealed class AddInvoiceTool(IInvoiceService invoices) : IAgentTool
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
             Description = ToolArgs.String(arguments, "description"),
         };
-        var result = await invoices.CreateAsync(request, ct);
+        var result = await finance.CreateInvoiceAsync(request, ct);
         if (!result.IsSuccess)
         {
             return ToolResult.Error(result.Error!.Detail);

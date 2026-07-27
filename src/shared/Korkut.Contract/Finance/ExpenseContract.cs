@@ -1,6 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Contract.Expenses;
+namespace Korkut.Contract.Finance;
+
+/// <summary>Transport shape for an expense.</summary>
+public sealed record ExpenseResponse(
+    Guid Id, Guid? MatterId, Guid? ClientId, decimal Amount, string? Kind, string? Description, DateTimeOffset? SpentAt);
 
 /// <summary>Body for recording an expense.</summary>
 public sealed record CreateExpenseRequest

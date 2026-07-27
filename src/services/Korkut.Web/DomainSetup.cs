@@ -46,11 +46,9 @@ public static class DomainSetup
         new Korkut.Notes.NotesModule().Register(services, configuration);
         new Korkut.Tasks.TasksModule().Register(services, configuration);
         new Korkut.Deadlines.DeadlinesModule().Register(services, configuration);
-        // Finance modules. The finance read-models (FinanceSummary, Reports) stay in
-        // Application/Infrastructure and read the modules' repository ports transitionally.
-        new Korkut.Invoices.InvoicesModule().Register(services, configuration);
-        new Korkut.Expenses.ExpensesModule().Register(services, configuration);
-        services.AddScoped<Korkut.Application.FinanceSummary.IFinanceSummaryService, Korkut.Application.FinanceSummary.FinanceSummaryService>();
+        // Finance: one module for invoices + expenses + the money roll-up (IFinanceService). The
+        // reports dashboard reads finance totals through the module's IFinanceLookup.
+        new Korkut.Finance.FinanceModule().Register(services, configuration);
         new Korkut.Correspondence.CorrespondenceModule().Register(services, configuration);
         // Calendar module. The cross-module read-model (ICalendarQuery: events ∪ deadlines ∪
         // hearings) is a host-level registration since its impl spans other modules' tables.

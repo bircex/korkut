@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Invoices;
+namespace Korkut.Finance;
 
 /// <summary>EF mapping for invoices (table/columns unchanged). Gross is computed, never stored.</summary>
 public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>

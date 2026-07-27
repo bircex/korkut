@@ -16,6 +16,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
@@ -32,8 +33,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Courts\Korkut.Courts.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Matters\Korkut.Matters.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Invoices\Korkut.Invoices.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Expenses\Korkut.Expenses.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Settings\Korkut.Settings.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />

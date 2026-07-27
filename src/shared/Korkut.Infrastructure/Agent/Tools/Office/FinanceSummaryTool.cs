@@ -1,14 +1,13 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.FinanceSummary;
+using Korkut.Contract.Finance;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
 /// <summary>Büronun mali özetini (kesilen/tahsil/bakiye/masraf) verir.</summary>
-public sealed class FinanceSummaryTool(IFinanceSummaryService finance) : IAgentTool
+public sealed class FinanceSummaryTool(IFinanceService finance) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -23,7 +22,9 @@ public sealed class FinanceSummaryTool(IFinanceSummaryService finance) : IAgentT
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var result = await finance.GetAsync(ct);
-        return ToolResult.Ok(ToolArgs.Result(result));
+        var result = await finance.GetSummaryAsync(ct);
+        return result.IsSuccess
+            ? ToolResult.Ok(ToolArgs.Result(result.Value!))
+            : ToolResult.Error(result.Error!.Detail);
     }
 }

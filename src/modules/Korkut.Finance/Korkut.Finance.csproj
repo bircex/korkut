@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Expenses module (masraflar). MatterId/ClientId are guid-only links (no EF FK). References
-       only kernel/contract/persistence/web-kernel. -->
+  <!-- Finance module (faturalar + masraflar + para roll-up): one module, one IFinanceService.
+       Invoice/Expense links (client/matter) are guid-only (no EF FK). References only kernel/
+       contract/persistence/web-kernel. -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
