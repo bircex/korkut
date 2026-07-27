@@ -31,7 +31,7 @@ public static class DomainSetup
         // (ICourtLookup, IHearingLookup, IMatterLookup).
         new Korkut.Courts.Extensions.CourtsModule().Register(services, configuration);
         new Korkut.Matters.MattersModule().Register(services, configuration);
-        new Korkut.Hearings.HearingsModule().Register(services, configuration);
+        new Korkut.Hearings.Extensions.HearingsModule().Register(services, configuration);
 
         // Modular monolith: self-registering vertical modules. Clients is the reference slice —
         // it binds its own repository + service; its EF mapping + controller are picked up by the

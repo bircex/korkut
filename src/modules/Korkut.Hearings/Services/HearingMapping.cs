@@ -1,6 +1,8 @@
+using Korkut.Hearings.Repositories;
+using Korkut.Hearings.Entities;
 using Korkut.Contract.Hearings;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Services;
 
 /// <summary>Shared Hearing → HearingResponse mapping (used by the service and the cross-module lookup).</summary>
 internal static class HearingMapping

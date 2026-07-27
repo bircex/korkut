@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Controllers;
 
 /// <summary>Hearings (duruşmalar) of a matter. Forwards to <see cref="IHearingService"/>, maps Result to HTTP.</summary>
 [ApiController]

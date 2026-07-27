@@ -1,10 +1,11 @@
+using Korkut.Hearings.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="IHearingRepository"/> over the ambient DbContext.</summary>
-public sealed class HearingRepository(DbContext db) : Repository<Hearing>(db), IHearingRepository
+internal sealed class HearingRepository(DbContext db) : Repository<Hearing>(db), IHearingRepository
 {
     public async Task<IReadOnlyList<Hearing>> ListForMatterAsync(
         Guid officeId, Guid matterId, CancellationToken ct = default)

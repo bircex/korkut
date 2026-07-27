@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Entities;
 
 /// <summary>
 /// EF mapping for hearings (table unchanged). The tenant-aware composite FK to the matter is a

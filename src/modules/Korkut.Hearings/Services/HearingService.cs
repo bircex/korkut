@@ -1,16 +1,18 @@
+using Korkut.Hearings.Repositories;
+using Korkut.Hearings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Hearings;
 using Korkut.Contract.Matters;
 using Korkut.Core;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Services;
 
 /// <summary>
 /// Hearing use-cases over the repository port. The matter must exist and be active before a hearing
 /// can be attached (checked via the cross-module <see cref="IMatterLookup"/>; the tenant-aware
 /// composite FK enforces the office on top of that). Every call RETURNS a <see cref="Result"/>.
 /// </summary>
-public sealed class HearingService(
+internal sealed class HearingService(
     IHearingRepository hearings, IMatterLookup matters, IUnitOfWork unitOfWork, ICurrentUser currentUser)
     : IHearingService
 {

@@ -432,7 +432,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("expenses", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Hearings.Hearing", b =>
+            modelBuilder.Entity("Korkut.Hearings.Entities.Hearing", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1788,7 +1788,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("user_totp", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Hearings.Hearing", b =>
+            modelBuilder.Entity("Korkut.Hearings.Entities.Hearing", b =>
                 {
                     b.HasOne("Korkut.Matters.Matter", null)
                         .WithMany()

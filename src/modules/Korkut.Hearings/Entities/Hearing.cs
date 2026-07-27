@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Hearings;
+namespace Korkut.Hearings.Entities;
 
 /// <summary>A hearing / duruşma on a matter's calendar. Reached through its matter, tenant-owned.</summary>
 public sealed class Hearing : Entity, ITenantOwned, IAggregateRoot

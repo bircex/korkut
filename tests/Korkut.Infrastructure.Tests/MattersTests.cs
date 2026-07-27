@@ -9,6 +9,8 @@ using Korkut.Courts.Repositories;
 using Korkut.Courts.Entities;
 using Korkut.Matters;
 using Korkut.Hearings;
+using Korkut.Hearings.Services;
+using Korkut.Hearings.Repositories;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
