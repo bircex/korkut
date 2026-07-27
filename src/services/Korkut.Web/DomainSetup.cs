@@ -35,7 +35,6 @@ public static class DomainSetup
 
         // Offices (the tenant root) are owned by the Organization module (registered below); the
         // caller's own profile still lives in the Users application service for now.
-        services.AddScoped<Korkut.Application.Users.IProfileService, Korkut.Application.Users.ProfileService>();
 
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
         // every application service runs inside.
@@ -76,7 +75,6 @@ public static class DomainSetup
         new Korkut.Outbox.OutboxModule().Register(services, configuration);
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
         // owned by the Organization module (registered above).
-        services.AddScoped<Korkut.Application.Members.IMemberService, Korkut.Application.Members.MemberService>();
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
         services.AddScoped<Korkut.Application.Invites.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
         services.AddScoped<Korkut.Application.Invites.IInviteService, Korkut.Application.Invites.InviteService>();

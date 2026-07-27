@@ -29,6 +29,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.Hearings.HearingsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Finance.FinanceModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Settings.SettingsModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Organization.OrganizationModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

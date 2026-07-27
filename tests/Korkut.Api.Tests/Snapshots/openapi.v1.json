@@ -3497,16 +3497,10 @@
       "name": "Invites"
     },
     {
-      "name": "Members"
-    },
-    {
       "name": "Onboarding"
     },
     {
       "name": "PetitionTypes"
-    },
-    {
-      "name": "Profile"
     },
     {
       "name": "Reports"
@@ -3555,6 +3549,12 @@
     },
     {
       "name": "Tasks"
+    },
+    {
+      "name": "Members"
+    },
+    {
+      "name": "Profile"
     }
   ]
 }
