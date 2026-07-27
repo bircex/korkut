@@ -1,5 +1,6 @@
 using Korkut.Persistence;
 using Korkut.Application.Jobs;
+using Korkut.Finance.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;
@@ -58,9 +59,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Documents.DocumentRelation> DocumentRelations => Set<Korkut.Documents.DocumentRelation>();
 
-    public DbSet<Korkut.Finance.Invoice> Invoices => Set<Korkut.Finance.Invoice>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
 
-    public DbSet<Korkut.Finance.Expense> Expenses => Set<Korkut.Finance.Expense>();
+    public DbSet<Expense> Expenses => Set<Expense>();
 
     public DbSet<Korkut.Correspondence.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.CorrespondenceItem>();
 
@@ -113,8 +114,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         // Finance mappings live in Configurations/ (Clean Architecture layout); other
         // modules move to the same pattern module-by-module.
-        modelBuilder.ApplyConfiguration(new Korkut.Finance.InvoiceConfiguration());
-        modelBuilder.ApplyConfiguration(new Korkut.Finance.ExpenseConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Finance.Entities.InvoiceConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Finance.Entities.ExpenseConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Correspondence.CorrespondenceConfiguration());
 

@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Entities;
 
 /// <summary>
 /// A tenant-owned invoice. <see cref="Amount"/> is net; <see cref="Gross"/> applies the VAT

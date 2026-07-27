@@ -24,6 +24,7 @@ using Korkut.Channels;
 using Korkut.Settings;
 using Korkut.Documents;
 using Korkut.Chat;
+using Korkut.Finance.Entities;
 
 namespace Korkut.Infrastructure.Tests;
 

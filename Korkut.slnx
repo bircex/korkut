@@ -38,6 +38,15 @@
     <Project Path="src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj" />
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
+  <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Finance.Bdd.Tests/Korkut.Finance.Bdd.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />

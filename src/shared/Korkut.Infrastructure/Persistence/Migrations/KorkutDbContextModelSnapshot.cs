@@ -384,7 +384,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("deadlines", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Finance.Expense", b =>
+            modelBuilder.Entity("Korkut.Finance.Entities.Expense", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -484,7 +484,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("matter_hearings", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Finance.Invoice", b =>
+            modelBuilder.Entity("Korkut.Finance.Entities.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

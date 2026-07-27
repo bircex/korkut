@@ -1,4 +1,5 @@
 using Korkut.Contract.Finance;
+using Korkut.Finance.Entities;
 
 namespace Korkut.Finance;
 

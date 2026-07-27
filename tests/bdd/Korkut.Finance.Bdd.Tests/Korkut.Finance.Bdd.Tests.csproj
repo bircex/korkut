@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Behaviour (BDD) specs for the Finance module. Gherkin/Reqnroll wiring lands later; for now
+       an xunit-hosted placeholder so the project + Features/ folder exist. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Finance\Korkut.Finance.csproj" />
+    <ProjectReference Include="..\..\..\src\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+</Project>

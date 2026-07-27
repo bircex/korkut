@@ -9,6 +9,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The module's internals (repositories, service impl) are hidden from other modules but
+         visible to this module's own isolated unit-test project. -->
+    <InternalsVisibleTo Include="Korkut.Finance.Unit.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
