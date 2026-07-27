@@ -223,7 +223,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("correspondence", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Domain.Courts.Court", b =>
+            modelBuilder.Entity("Korkut.Courts.Court", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

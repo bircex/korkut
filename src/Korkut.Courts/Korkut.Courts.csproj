@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Courts module (mahkeme referans verisi): reference court data. No HTTP surface; other
+       modules read a court's current name through the Contract ICourtLookup port. References only
+       kernel/contract/persistence — never another module. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+</Project>

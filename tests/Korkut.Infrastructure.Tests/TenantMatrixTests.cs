@@ -12,7 +12,7 @@ using Npgsql;
 using Korkut.Clients;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
-using Korkut.Domain.Courts;
+using Korkut.Courts;
 using Korkut.Domain.Parties;
 using Korkut.Tasks;
 using Korkut.Deadlines;

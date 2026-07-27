@@ -1,10 +1,9 @@
-using Korkut.Domain.Courts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Courts;
+namespace Korkut.Courts;
 
-/// <summary>EF mapping for courts (table/columns unchanged).</summary>
+/// <summary>EF mapping for the court reference data (table/columns unchanged).</summary>
 public sealed class CourtConfiguration : IEntityTypeConfiguration<Court>
 {
     public void Configure(EntityTypeBuilder<Court> builder)

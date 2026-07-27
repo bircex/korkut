@@ -25,7 +25,7 @@ public static class DomainSetup
         // Office-core (Clean Architecture: clients + matters + hearings). Owns the
         // court-title snapshot rule in MatterService.
         services.AddScoped<Korkut.Application.Matters.IMatterRepository, Korkut.Infrastructure.Matters.MatterRepository>();
-        services.AddScoped<Korkut.Application.Courts.ICourtRepository, Korkut.Infrastructure.Courts.CourtRepository>();
+        new Korkut.Courts.CourtsModule().Register(services, configuration);
         services.AddScoped<Korkut.Application.Hearings.IHearingRepository, Korkut.Infrastructure.Hearings.HearingRepository>();
 
         // Modular monolith: self-registering vertical modules. Clients is the reference slice —

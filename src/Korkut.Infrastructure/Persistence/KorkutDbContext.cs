@@ -41,7 +41,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Clients.Client> Clients => Set<Korkut.Clients.Client>();
 
-    public DbSet<Domain.Courts.Court> Courts => Set<Domain.Courts.Court>();
+    public DbSet<Korkut.Courts.Court> Courts => Set<Korkut.Courts.Court>();
 
     public DbSet<Domain.Parties.Party> Parties => Set<Domain.Parties.Party>();
 
@@ -94,7 +94,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         // — kept together because their tenant-aware composite FKs form one set.
         modelBuilder.ApplyConfiguration(new Matters.MatterConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Clients.ClientConfiguration());
-        modelBuilder.ApplyConfiguration(new Courts.CourtConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Courts.CourtConfiguration());
         modelBuilder.ApplyConfiguration(new Parties.PartyConfiguration());
         modelBuilder.ApplyConfiguration(new Hearings.HearingConfiguration());
 

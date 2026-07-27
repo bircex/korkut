@@ -3,9 +3,8 @@ using Korkut.Core;
 using Korkut.Application.Matters;
 using Korkut.Application.Matters.Requests;
 using Korkut.Clients;
-using Korkut.Domain.Courts;
+using Korkut.Courts;
 using Korkut.Domain.Parties;
-using Korkut.Infrastructure.Courts;
 using Korkut.Infrastructure.Hearings;
 using Korkut.Infrastructure.Matters;
 using Korkut.Infrastructure.Persistence;
@@ -58,7 +57,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     // Exercise the use-case service over the real EF repositories, so these tests still cover
     // the court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
     private MatterService Service(KorkutDbContext db) =>
-        new(new MatterRepository(db), new HearingRepository(db), new CourtRepository(db),
+        new(new MatterRepository(db), new HearingRepository(db), new CourtLookup(new CourtRepository(db)),
             new DirectUnitOfWork(), new TestCurrentUser(_office), new Clock());
 
     [Fact]

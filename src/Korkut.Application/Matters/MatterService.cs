@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Courts;
+using Korkut.Contract.Courts;
 using Korkut.Application.Errors;
 using Korkut.Application.Hearings;
 using Korkut.Application.Matters.Requests;
@@ -10,7 +10,7 @@ namespace Korkut.Application.Matters;
 
 /// <summary>Matter use-cases over the repository ports; every call runs in the caller's tenant scope.</summary>
 public sealed class MatterService(
-    IMatterRepository matters, IHearingRepository hearings, ICourtRepository courts,
+    IMatterRepository matters, IHearingRepository hearings, ICourtLookup courts,
     IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
 {
     public Task<IReadOnlyList<MatterResponse>> ListAsync(CancellationToken ct = default)
@@ -32,7 +32,7 @@ public sealed class MatterService(
         {
             // Snapshot the court's CURRENT title onto the matter; a later rename never rewrites it.
             var courtName = request.CourtId is { } courtId
-                ? (await courts.FindAsync(office, courtId, ct))?.Name
+                ? await courts.GetNameAsync(office, courtId, ct)
                 : null;
 
             var matter = new Matter(office, request.Title!.Trim(), request.ClientId, request.CourtId, courtName, clock.UtcNow);

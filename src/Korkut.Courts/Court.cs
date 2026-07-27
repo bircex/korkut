@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Courts;
+namespace Korkut.Courts;
 
 /// <summary>
 /// Reference court data with a MUTABLE display title. Matters snapshot the title at link
