@@ -1,3 +1,5 @@
+using Korkut.Channels.Entities;
+using Korkut.Channels;
 namespace Korkut.Channels;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Korkut.Channels;
 /// than a surrogate id, so this port is written out instead of deriving from
 /// <c>IRepository&lt;T&gt;</c>; the tenancy rule is the same — the office comes first on every call.
 /// </summary>
-public interface IChannelRepository
+internal interface IChannelRepository
 {
     Task<Channel?> FindAsync(Guid officeId, string kind, CancellationToken ct = default);
 

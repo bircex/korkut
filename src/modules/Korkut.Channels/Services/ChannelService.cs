@@ -1,3 +1,5 @@
+using Korkut.Channels.Entities;
+using Korkut.Channels;
 using System.Security.Cryptography;
 using System.Text;
 using Korkut.Contract;
@@ -11,7 +13,7 @@ namespace Korkut.Channels;
 /// the aggregate and the database only ever hold ciphertext; the pairing code is minted from a
 /// cryptographic RNG. Every call RETURNS a <see cref="Result"/> (unknown kind → BadRequest).
 /// </summary>
-public sealed class ChannelService(
+internal sealed class ChannelService(
     IChannelRepository repository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,

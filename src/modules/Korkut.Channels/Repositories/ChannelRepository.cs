@@ -1,3 +1,5 @@
+using Korkut.Channels.Entities;
+using Korkut.Channels;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Channels;
@@ -7,7 +9,7 @@ namespace Korkut.Channels;
 /// aggregate is keyed by (office, kind), so it cannot derive from the generic EF base; every
 /// query still pins the office before Postgres RLS is consulted.
 /// </summary>
-public sealed class ChannelRepository(DbContext db) : IChannelRepository
+internal sealed class ChannelRepository(DbContext db) : IChannelRepository
 {
     public Task<Channel?> FindAsync(Guid officeId, string kind, CancellationToken ct = default)
         => Scoped(officeId).AsNoTracking().SingleOrDefaultAsync(c => c.Kind == kind, ct);

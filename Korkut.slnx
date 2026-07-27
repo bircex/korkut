@@ -39,6 +39,7 @@
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Channels.Unit.Tests/Korkut.Channels.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Reports.Unit.Tests/Korkut.Reports.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Courts.Unit.Tests/Korkut.Courts.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Calendar.Unit.Tests/Korkut.Calendar.Unit.Tests.csproj" />
@@ -51,6 +52,7 @@
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Channels.Integration.Tests/Korkut.Channels.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Reports.Integration.Tests/Korkut.Reports.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Courts.Integration.Tests/Korkut.Courts.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Calendar.Integration.Tests/Korkut.Calendar.Integration.Tests.csproj" />
@@ -63,6 +65,7 @@
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Channels.Bdd.Tests/Korkut.Channels.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Reports.Bdd.Tests/Korkut.Reports.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Courts.Bdd.Tests/Korkut.Courts.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Calendar.Bdd.Tests/Korkut.Calendar.Bdd.Tests.csproj" />

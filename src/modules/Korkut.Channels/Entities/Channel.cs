@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Channels;
+namespace Korkut.Channels.Entities;
 
 /// <summary>
 /// A messaging-channel configuration: one row per office per kind (email / telegram /

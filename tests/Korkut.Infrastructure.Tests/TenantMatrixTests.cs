@@ -29,6 +29,7 @@ using Korkut.Calendar.Entities;
 using Korkut.Outbox;
 using Korkut.Outbox.Entities;
 using Korkut.Channels;
+using Korkut.Channels.Entities;
 using Korkut.Settings;
 using Korkut.Documents;
 using Korkut.Chat;

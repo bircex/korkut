@@ -73,7 +73,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Settings.MemoryItem> MemoryItems => Set<Korkut.Settings.MemoryItem>();
 
-    public DbSet<Korkut.Channels.Channel> Channels => Set<Korkut.Channels.Channel>();
+    public DbSet<Korkut.Channels.Entities.Channel> Channels => Set<Korkut.Channels.Entities.Channel>();
 
 
     public DbSet<Korkut.Outbox.Entities.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.Entities.OutboundMessage>();
@@ -127,7 +127,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Settings.MemoryItemConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Channels.Entities.ChannelConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Outbox.Entities.OutboundMessageConfiguration());
 

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Channels;
+namespace Korkut.Channels.Entities;
 
 /// <summary>EF mapping for messaging channels (table/columns unchanged; keyed per office per kind).</summary>
 public sealed class ChannelConfiguration : IEntityTypeConfiguration<Channel>
