@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Chat;
+namespace Korkut.Chat.Entities;
 
 /// <summary>One turn in a conversation: who spoke ("user" | "assistant") and what they said.</summary>
 public sealed class ConversationMessage : Entity, ITenantOwned, IAggregateRoot

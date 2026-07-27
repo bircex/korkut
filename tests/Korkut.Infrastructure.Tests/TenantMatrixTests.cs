@@ -34,6 +34,7 @@ using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Documents;
 using Korkut.Chat;
+using Korkut.Chat.Entities;
 using Korkut.Finance.Entities;
 
 namespace Korkut.Infrastructure.Tests;

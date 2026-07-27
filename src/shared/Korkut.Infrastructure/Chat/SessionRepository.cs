@@ -1,4 +1,5 @@
 using Korkut.Chat;
+using Korkut.Chat.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;

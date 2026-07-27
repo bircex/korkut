@@ -123,7 +123,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("calendar_events", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Chat.Conversation", b =>
+            modelBuilder.Entity("Korkut.Chat.Entities.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -163,7 +163,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("conversations", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Chat.ConversationMessage", b =>
+            modelBuilder.Entity("Korkut.Chat.Entities.ConversationMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
