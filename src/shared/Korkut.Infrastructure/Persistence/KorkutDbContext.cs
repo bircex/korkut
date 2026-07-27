@@ -74,9 +74,14 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
     public DbSet<Korkut.Channels.Channel> Channels => Set<Korkut.Channels.Channel>();
 
 
-    // Conversations, chat_messages, generated_documents, document_versions moved to the
-    // Agent DB (AgentDbContext, schema korkut_agent).
     public DbSet<Korkut.Outbox.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.OutboundMessage>();
+
+    // Chat is a general operational feature (the conversation thread is a first-class product
+    // surface, not agent plumbing) so it lives in the operational DB and can relate to
+    // matters/users. Generated drafts + versions remain in the Agent DB (AgentDbContext).
+    public DbSet<Korkut.Chat.Conversation> Conversations => Set<Korkut.Chat.Conversation>();
+
+    public DbSet<Korkut.Chat.ConversationMessage> ChatMessages => Set<Korkut.Chat.ConversationMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -123,6 +128,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Outbox.OutboundMessageConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Chat.ConversationConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Chat.ConversationMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Documents.DocumentConfiguration());
 

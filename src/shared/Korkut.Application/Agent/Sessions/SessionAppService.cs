@@ -1,4 +1,4 @@
-using Korkut.Agent.Chat;
+using Korkut.Chat;
 using Korkut.Application.Agent.Sessions;
 using Korkut.Core;
 using Korkut.Application.Agent.Contracts;

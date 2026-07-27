@@ -90,7 +90,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         await using var db = NewContext();
         await db.Database.ExecuteSqlRawAsync(
             "TRUNCATE korkut.outbox_messages, korkut.inbox_entries, korkut.job_audit, " +
-            "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events, korkut.users, korkut.password_reset_tokens, korkut.user_totp, korkut.recovery_codes, korkut.refresh_tokens, korkut.office_custom_roles, korkut.clients, korkut.courts, korkut.parties, korkut.tasks, korkut.deadlines, korkut.communication_notes, korkut.document_extractions, korkut.document_relations, korkut.invites, korkut.documents " +
+            "korkut.matter_hearings, korkut.matters, korkut.offices, korkut.audit_events, korkut.users, korkut.password_reset_tokens, korkut.user_totp, korkut.recovery_codes, korkut.refresh_tokens, korkut.office_custom_roles, korkut.clients, korkut.courts, korkut.parties, korkut.tasks, korkut.deadlines, korkut.communication_notes, korkut.document_extractions, korkut.document_relations, korkut.invites, korkut.documents, korkut.conversations, korkut.chat_messages " +
             "RESTART IDENTITY CASCADE");
     }
 
@@ -99,8 +99,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await using var db = NewAgentContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE korkut_agent.chat_messages, korkut_agent.conversations, " +
-            "korkut_agent.document_versions, korkut_agent.generated_documents RESTART IDENTITY CASCADE");
+            "TRUNCATE korkut_agent.document_versions, korkut_agent.generated_documents RESTART IDENTITY CASCADE");
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();

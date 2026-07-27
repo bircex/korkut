@@ -4,19 +4,17 @@ using Microsoft.EntityFrameworkCore;
 namespace Korkut.Infrastructure.Persistence.Agent;
 
 /// <summary>
-/// The Agent DB context — the assistant's private store (conversations, messages, drafts +
-/// versions) in its own schema (<c>korkut_agent</c>) with its own migration chain and RLS,
-/// so it can live in a separate database/instance from the operational data. Same identity
+/// The Agent DB context — the assistant's private store (generated drafts + versions, and the
+/// LLM usage/cost ledger) in its own schema (<c>korkut_agent</c>) with its own migration chain
+/// and RLS. Conversations/messages are NOT here: chat is a general operational feature that
+/// lives in <see cref="KorkutDbContext"/>. Kept separate so the AI plane can live in a
+/// separate database/instance from the operational data. Same identity
 /// + timestamp + snake_case conventions as <see cref="KorkutDbContext"/>. Tenant context is
 /// set per transaction via <see cref="Tenancy.BeginTenantScopeAsync"/> (the shared
 /// <c>app.current_office</c> GUC the RLS policies read).
 /// </summary>
 public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : DbContext(options)
 {
-    public DbSet<Korkut.Agent.Chat.Conversation> Conversations => Set<Korkut.Agent.Chat.Conversation>();
-
-    public DbSet<Korkut.Agent.Chat.ConversationMessage> ChatMessages => Set<Korkut.Agent.Chat.ConversationMessage>();
-
     public DbSet<Korkut.Agent.Drafting.GeneratedDocument> GeneratedDocuments => Set<Korkut.Agent.Drafting.GeneratedDocument>();
 
     public DbSet<Korkut.Agent.Drafting.DocumentVersion> DocumentVersions => Set<Korkut.Agent.Drafting.DocumentVersion>();
@@ -26,10 +24,6 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
-
-        modelBuilder.ApplyConfiguration(new Korkut.Agent.Chat.ConversationConfiguration());
-
-        modelBuilder.ApplyConfiguration(new Korkut.Agent.Chat.ConversationMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.GeneratedDocumentConfiguration());
 

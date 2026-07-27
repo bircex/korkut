@@ -11,14 +11,9 @@ namespace Korkut.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "chat_messages",
-                schema: "korkut");
-
-            migrationBuilder.DropTable(
-                name: "conversations",
-                schema: "korkut");
-
+            // conversations + chat_messages stay in the operational DB (chat is a general
+            // feature, not agent plumbing). Only the generated drafts + versions move out to
+            // the Agent DB (schema korkut_agent).
             migrationBuilder.DropTable(
                 name: "document_versions",
                 schema: "korkut");
@@ -31,41 +26,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "chat_messages",
-                schema: "korkut",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
-                    conversation_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_chat_messages", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "conversations",
-                schema: "korkut",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<Guid>(type: "uuid", nullable: true),
-                    matter_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    title = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_conversations", x => x.id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "document_versions",
                 schema: "korkut",
@@ -105,18 +65,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_generated_documents", x => x.id);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "ix_chat_messages_conversation",
-                schema: "korkut",
-                table: "chat_messages",
-                columns: new[] { "office_id", "conversation_id", "created_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "ix_conversations_office_updated",
-                schema: "korkut",
-                table: "conversations",
-                columns: new[] { "office_id", "updated_at" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_document_versions_document",

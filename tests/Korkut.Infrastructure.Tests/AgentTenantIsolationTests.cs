@@ -1,5 +1,4 @@
 using Korkut.Agent.Drafting;
-using Korkut.Agent.Chat;
 using Korkut.Agent.Ledger;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -9,15 +8,14 @@ namespace Korkut.Infrastructure.Tests;
 /// <summary>
 /// Tenant-isolation coverage for the Agent DB (schema korkut_agent), mirroring the
 /// operational matrix: every agent table forces RLS on the shared <c>app.current_office</c>
-/// GUC, so office A never sees office B's conversations/messages/drafts/versions. Runs as
+/// GUC, so office A never sees office B's drafts/versions/llm-calls. Conversations + messages
+/// are a general operational feature now (covered by the operational TenantMatrix). Runs as
 /// the least-privileged app role against real PostgreSQL.
 /// </summary>
 public class AgentTenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
     private static readonly (string Table, int A, int B)[] Expected =
     [
-        ("conversations", 1, 2),
-        ("chat_messages", 1, 2),
         ("generated_documents", 1, 2),
         ("document_versions", 1, 2),
         ("llm_calls", 1, 2),
@@ -42,10 +40,8 @@ public class AgentTenantIsolationTests(PostgresFixture pg) : IClassFixture<Postg
     {
         for (var i = 0; i < n; i++)
         {
-            var conversation = new Conversation(office, $"c{i}", null, null, DateTimeOffset.UtcNow);
-            var convId = conversation.Id;
-            db.Conversations.Add(conversation);
-            db.ChatMessages.Add(new ConversationMessage(office, convId, "user", $"m{i}", DateTimeOffset.UtcNow));
+            // Conversations live in the operational DB now; drafts reference one by loose id.
+            var convId = Guid.CreateVersion7();
             var generated = new GeneratedDocument(office, convId, $"d{i}", DateTimeOffset.UtcNow);
             var docId = generated.Id;
             db.GeneratedDocuments.Add(generated);

@@ -23,6 +23,7 @@ using Korkut.Outbox;
 using Korkut.Channels;
 using Korkut.Settings;
 using Korkut.Documents;
+using Korkut.Chat;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -86,8 +87,12 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.StyleProfiles.Add(new StyleProfile(office, StyleScope.User, Guid.CreateVersion7()));
             db.MemoryItems.Add(new MemoryItem(office, $"mem{i}", "note", null, true, DateTimeOffset.UtcNow));
             db.OutboundMessages.Add(new OutboundMessage(office, "email", $"to{i}@x.test", "s", "b", null, DateTimeOffset.UtcNow));
-            // conversations/chat_messages/generated_documents/document_versions live in the
-            // Agent DB now — seeded + isolation-checked in AgentTenantIsolationTests.
+            // Chat (conversations + messages) is a general operational feature and lives here.
+            // generated_documents/document_versions live in the Agent DB — seeded + isolation-
+            // checked in AgentTenantIsolationTests.
+            var conversation = new Conversation(office, $"conv{i}", null, null, DateTimeOffset.UtcNow);
+            db.Conversations.Add(conversation);
+            db.ChatMessages.Add(new ConversationMessage(office, conversation.Id, "user", $"cm{i}", DateTimeOffset.UtcNow));
             if (i == 0)
             {
                 db.Personas.Add(new Persona(office)); // one per office

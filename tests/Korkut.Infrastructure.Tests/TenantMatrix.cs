@@ -43,8 +43,11 @@ public static class TenantMatrix
             ["memory_items"] = (1, 2),
             ["channels"] = (1, 1), // one channel row per office (seeded once)
             ["outbound_messages"] = (1, 2),
-            // conversations / chat_messages / generated_documents / document_versions moved
-            // to the Agent DB (schema korkut_agent) — covered by AgentTenantIsolationTests.
+            ["conversations"] = (1, 2),
+            ["chat_messages"] = (1, 2),
+            // generated_documents / document_versions live in the Agent DB (schema korkut_agent)
+            // — covered by AgentTenantIsolationTests. Chat (conversations/messages) is a general
+            // operational feature and stays here.
         };
 
     public static TheoryData<string> TableNames()

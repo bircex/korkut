@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Chat sub-domain: assistant conversations (Conversation + ConversationMessage) and their
+       EF mappings. A general operational module (NOT part of the Agent) — the conversation
+       thread is a first-class product surface that persists in the operational DB (schema
+       korkut), so it can relate to matters/users. The agent CONSUMES conversations; it does not
+       own them. Repository + session service stay in Infrastructure/Application for now.
+       References only the kernel. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+</Project>
