@@ -2,6 +2,7 @@ using Korkut.Core;
 using Korkut.Infrastructure.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Security;

@@ -1241,7 +1241,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("memory_items", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Organization.OfficeRole", b =>
+            modelBuilder.Entity("Korkut.Organization.Entities.OfficeRole", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

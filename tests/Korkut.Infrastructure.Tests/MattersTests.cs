@@ -1,4 +1,5 @@
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Korkut.Core;
 using Korkut.Contract.Matters;
 using Korkut.Clients;

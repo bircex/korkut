@@ -1,4 +1,5 @@
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

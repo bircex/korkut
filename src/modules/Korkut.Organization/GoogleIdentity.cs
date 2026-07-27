@@ -1,3 +1,4 @@
+using Korkut.Organization.Entities;
 namespace Korkut.Organization;
 
 /// <summary>Verified claims extracted from a Google ID token.</summary>

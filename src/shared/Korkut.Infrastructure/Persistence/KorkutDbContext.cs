@@ -19,7 +19,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Jobs.JobAuditRecord> JobAudit => Set<Domain.Jobs.JobAuditRecord>();
 
-    public DbSet<Korkut.Organization.Office> Offices => Set<Korkut.Organization.Office>();
+    public DbSet<Korkut.Organization.Entities.Office> Offices => Set<Korkut.Organization.Entities.Office>();
 
     public DbSet<Korkut.Matters.Entities.Matter> Matters => Set<Korkut.Matters.Entities.Matter>();
 
@@ -27,19 +27,19 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Infrastructure.Auditing.AuditEvent> AuditEvents => Set<Korkut.Infrastructure.Auditing.AuditEvent>();
 
-    public DbSet<Korkut.Organization.User> Users => Set<Korkut.Organization.User>();
+    public DbSet<Korkut.Organization.Entities.User> Users => Set<Korkut.Organization.Entities.User>();
 
-    public DbSet<Korkut.Organization.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.PasswordResetToken>();
+    public DbSet<Korkut.Organization.Entities.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.Entities.PasswordResetToken>();
 
-    public DbSet<Korkut.Organization.Invite> Invites => Set<Korkut.Organization.Invite>();
+    public DbSet<Korkut.Organization.Entities.Invite> Invites => Set<Korkut.Organization.Entities.Invite>();
 
-    public DbSet<Korkut.Organization.UserTotp> UserTotps => Set<Korkut.Organization.UserTotp>();
+    public DbSet<Korkut.Organization.Entities.UserTotp> UserTotps => Set<Korkut.Organization.Entities.UserTotp>();
 
-    public DbSet<Korkut.Organization.RecoveryCode> RecoveryCodes => Set<Korkut.Organization.RecoveryCode>();
+    public DbSet<Korkut.Organization.Entities.RecoveryCode> RecoveryCodes => Set<Korkut.Organization.Entities.RecoveryCode>();
 
-    public DbSet<Korkut.Organization.RefreshToken> RefreshTokens => Set<Korkut.Organization.RefreshToken>();
+    public DbSet<Korkut.Organization.Entities.RefreshToken> RefreshTokens => Set<Korkut.Organization.Entities.RefreshToken>();
 
-    public DbSet<Korkut.Organization.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.OfficeRole>();
+    public DbSet<Korkut.Organization.Entities.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.Entities.OfficeRole>();
 
     public DbSet<Korkut.Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
 
@@ -95,7 +95,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Jobs.JobAuditRecordConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.OfficeConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.OfficeConfiguration());
 
         // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
         // — kept together because their tenant-aware composite FKs form one set.
@@ -141,19 +141,19 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Documents.Entities.DocumentRelationConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.InviteConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.InviteConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.UserConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.UserConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.PasswordResetTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.PasswordResetTokenConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.UserTotpConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.UserTotpConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.RecoveryCodeConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.RecoveryCodeConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.RefreshTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.RefreshTokenConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.OfficeRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.OfficeRoleConfiguration());
 
         // Cross-module FK constraints (Matter→Client, Hearing→Matter) — real DB constraints that
         // can't live in a module's own config since a module never references another's entity type.

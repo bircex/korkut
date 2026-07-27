@@ -1,4 +1,5 @@
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;

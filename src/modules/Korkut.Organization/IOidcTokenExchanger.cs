@@ -1,3 +1,4 @@
+using Korkut.Organization.Entities;
 namespace Korkut.Organization;
 
 /// <summary>Exchanges an auth code (+ PKCE verifier) for tokens at Google's token endpoint.</summary>

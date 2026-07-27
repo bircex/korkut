@@ -62,7 +62,7 @@ public static class DomainSetup
         // stays in Infrastructure (it reads the users table) and is registered here.
         new SettingsModule().Register(services, configuration);
         // Organization (identity/tenant) module — grows in stages; office roles land first.
-        new Korkut.Organization.OrganizationModule().Register(services, configuration);
+        new Korkut.Organization.Extensions.OrganizationModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         // Reports module (read-only office dashboard). The cross-module aggregation query
         // (IReportsQuery) reads other modules' tables, so its impl lives in Infrastructure and

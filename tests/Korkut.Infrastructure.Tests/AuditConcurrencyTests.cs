@@ -1,5 +1,6 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

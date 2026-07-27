@@ -1,3 +1,4 @@
+using Korkut.Organization.Entities;
 using Korkut.Core;
 
 namespace Korkut.Organization;

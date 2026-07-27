@@ -1,4 +1,6 @@
 using Korkut.Organization;
+using Korkut.Organization.Services;
+using Korkut.Organization.Entities;
 using Korkut.Contract.Organization;
 using System.Security.Cryptography;
 using Korkut.Infrastructure.Security;

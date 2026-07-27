@@ -33,7 +33,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.Hearings.Extensions.HearingsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Finance.Extensions.FinanceModule).Assembly)
             .AddApplicationPart(typeof(SettingsModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Organization.OrganizationModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Organization.Extensions.OrganizationModule).Assembly)
             .AddApplicationPart(typeof(ReportsModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 

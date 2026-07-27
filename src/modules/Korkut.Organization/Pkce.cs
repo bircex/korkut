@@ -1,3 +1,4 @@
+using Korkut.Organization.Entities;
 using System.Security.Cryptography;
 using System.Text;
 

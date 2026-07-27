@@ -1,5 +1,6 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using System.IO.Compression;
 using System.Text;
 using Korkut.Application.Documents;

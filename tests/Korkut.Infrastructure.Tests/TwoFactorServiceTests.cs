@@ -1,5 +1,6 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Korkut.Infrastructure.Security;
 using System.Security.Cryptography;
 using Korkut.Core;

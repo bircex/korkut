@@ -1,5 +1,6 @@
 using Korkut.Core;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.OCR;
