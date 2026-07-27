@@ -17,6 +17,7 @@ using Korkut.Courts;
 using Korkut.Tasks;
 using Korkut.Deadlines;
 using Korkut.Notes;
+using Korkut.Notes.Entities;
 using Korkut.Finance;
 using Korkut.Correspondence;
 using Korkut.Calendar;

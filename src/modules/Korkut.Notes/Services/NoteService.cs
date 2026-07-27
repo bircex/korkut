@@ -1,3 +1,4 @@
+using Korkut.Notes.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Notes;
 using Korkut.Core;
@@ -8,7 +9,7 @@ namespace Korkut.Notes;
 /// Note use-cases over the repository port; an omitted occurrence time defaults to now. Every call
 /// runs in the caller's tenant scope and RETURNS a <see cref="Result"/>.
 /// </summary>
-public sealed class NoteService(
+internal sealed class NoteService(
     INoteRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : INoteService
 {
     public Task<Result<IReadOnlyList<NoteResponse>>> ListAsync(Guid? matterId, CancellationToken ct = default)

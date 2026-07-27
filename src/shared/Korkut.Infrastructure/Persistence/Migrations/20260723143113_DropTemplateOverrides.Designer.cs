@@ -543,7 +543,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("matters", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Notes.CommunicationNote", b =>
+            modelBuilder.Entity("Korkut.Notes.Entities.CommunicationNote", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

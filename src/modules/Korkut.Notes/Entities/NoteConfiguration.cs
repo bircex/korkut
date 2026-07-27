@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Entities;
 
 /// <summary>EF mapping for communication notes (table/columns unchanged).</summary>
 public sealed class NoteConfiguration : IEntityTypeConfiguration<CommunicationNote>

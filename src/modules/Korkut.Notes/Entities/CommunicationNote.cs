@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Entities;
 
 /// <summary>A record of contact with a client or about a matter (call, e-mail, meeting, note).</summary>
 public sealed class CommunicationNote : Entity, ITenantOwned, IAggregateRoot
