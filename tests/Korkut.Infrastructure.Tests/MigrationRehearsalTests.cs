@@ -1,4 +1,4 @@
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using Korkut.Application.Differential;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Matters;

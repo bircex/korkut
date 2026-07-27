@@ -1,7 +1,7 @@
 using Korkut.Infrastructure.Jobs;
 using Korkut.Domain.Jobs;
 using Korkut.Infrastructure.Auditing;
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using Korkut.Application.Security;
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
@@ -25,7 +25,6 @@ using Korkut.Channels;
 using Korkut.Settings;
 using Korkut.Domain.Auth;
 using Korkut.Domain.Auditing;
-using Korkut.Organization;
 using Korkut.Domain.Documents;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;

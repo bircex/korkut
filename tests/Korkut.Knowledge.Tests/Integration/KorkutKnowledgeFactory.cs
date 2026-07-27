@@ -1,4 +1,4 @@
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using System.Net.Http.Headers;
 using Korkut.Application.Ai;
 using Korkut.Application.Security;

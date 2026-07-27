@@ -1,6 +1,7 @@
-using Korkut.Application.Offices;
+using Korkut.Contract.Offices;
 using Korkut.Web;
 using Korkut.Web.Auth;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -20,23 +21,17 @@ public sealed class AdminOfficesController(IOfficeAdminService offices) : Contro
 {
     [HttpGet("offices")]
     public async Task<IActionResult> List(CancellationToken ct)
-        => Ok(await offices.ListAsync(ct));
+        => (await offices.ListAsync(ct)).ToActionResult();
 
     [HttpPost("offices/{id:guid}/enable")]
     public async Task<IActionResult> Enable(Guid id, CancellationToken ct)
-    {
-        await offices.SetDisabledAsync(id, disabled: false, ct);
-        return NoContent();
-    }
+        => (await offices.SetDisabledAsync(id, disabled: false, ct)).ToActionResult();
 
     [HttpPost("offices/{id:guid}/disable")]
     public async Task<IActionResult> Disable(Guid id, CancellationToken ct)
-    {
-        await offices.SetDisabledAsync(id, disabled: true, ct);
-        return NoContent();
-    }
+        => (await offices.SetDisabledAsync(id, disabled: true, ct)).ToActionResult();
 
     [HttpGet("stats")]
     public async Task<IActionResult> Stats(CancellationToken ct)
-        => Ok(await offices.StatsAsync(ct));
+        => (await offices.StatsAsync(ct)).ToActionResult();
 }

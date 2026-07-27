@@ -1,5 +1,5 @@
 using Korkut.Infrastructure.Documents;
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using System.Security.Cryptography;
 using System.Text;
 using Korkut.Application.Documents;

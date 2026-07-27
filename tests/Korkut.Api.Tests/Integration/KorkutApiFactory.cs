@@ -1,5 +1,5 @@
 using Korkut.Application.Auth.Google;
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;

@@ -1,12 +1,9 @@
-using Korkut.Domain.Offices;
-
-namespace Korkut.Application.Offices;
+namespace Korkut.Organization;
 
 /// <summary>
-/// Persistence port for offices. Unlike every other repository this one is NOT
-/// office-scoped: offices are the tenant root, so there is no outer tenant to scope them
-/// by. Its callers are platform-admin use-cases (cross-tenant by design) and the caller's
-/// own office lookup.
+/// Persistence port for offices. Unlike every other repository this one is NOT office-scoped:
+/// offices are the tenant root, so there is no outer tenant to scope them by. Callers are
+/// platform-admin use-cases (cross-tenant) and the caller's own office lookup.
 /// </summary>
 public interface IOfficeRepository
 {

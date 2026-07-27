@@ -1,8 +1,7 @@
-using Korkut.Domain.Offices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Offices;
+namespace Korkut.Organization;
 
 /// <summary>EF mapping for offices, the tenant root (table/columns unchanged).</summary>
 public sealed class OfficeConfiguration : IEntityTypeConfiguration<Office>

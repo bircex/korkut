@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Offices;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A law office: the tenant root. Every other aggregate is owned by one of these, which is

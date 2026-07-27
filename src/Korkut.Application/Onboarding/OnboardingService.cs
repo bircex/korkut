@@ -1,5 +1,5 @@
 using Korkut.Application.Errors;
-using Korkut.Application.Offices;
+using Korkut.Contract.Offices;
 using Korkut.Application.Onboarding.Requests;
 using Korkut.Application.Onboarding.Responses;
 

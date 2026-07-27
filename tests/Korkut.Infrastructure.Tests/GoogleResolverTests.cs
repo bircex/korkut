@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Domain.Offices;
+using Korkut.Organization;
 using Korkut.Infrastructure.Auth;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Application.Security;

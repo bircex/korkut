@@ -1,5 +1,4 @@
-using Korkut.Application.Offices;
-using Korkut.Domain.Offices;
+using Korkut.Contract.Offices;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

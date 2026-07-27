@@ -34,10 +34,8 @@ public static class DomainSetup
         // shared context and MVC application parts (see AddKorkutControllers).
         new Korkut.Clients.ClientsModule().Register(services, configuration);
 
-        // Offices (the tenant root: platform-admin management, cross-tenant by design) and
-        // the caller's own profile.
-        services.AddScoped<Korkut.Application.Offices.IOfficeRepository, Korkut.Infrastructure.Offices.OfficeRepository>();
-        services.AddScoped<Korkut.Application.Offices.IOfficeAdminService, Korkut.Application.Offices.OfficeAdminService>();
+        // Offices (the tenant root) are owned by the Organization module (registered below); the
+        // caller's own profile still lives in the Users application service for now.
         services.AddScoped<Korkut.Application.Users.IProfileService, Korkut.Application.Users.ProfileService>();
 
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work

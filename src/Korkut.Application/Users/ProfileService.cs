@@ -1,6 +1,6 @@
 using Korkut.Core;
 using Korkut.Application.Errors;
-using Korkut.Application.Offices;
+using Korkut.Organization;
 using Korkut.Application.Users.Requests;
 using Korkut.Application.Users.Responses;
 using Korkut.Domain.Users;
