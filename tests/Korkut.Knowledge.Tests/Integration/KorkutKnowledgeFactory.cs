@@ -3,7 +3,8 @@ using System.Net.Http.Headers;
 using Korkut.Core;
 using Korkut.Infrastructure.Security;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Knowledge;
+using Korkut.Knowledge;
+using Korkut.Knowledge.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -168,7 +169,7 @@ public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAs
         var options = new DbContextOptionsBuilder<KnowledgeDbContext>()
             .UseNpgsql(_pg.GetConnectionString(), npgsql =>
             {
-                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.KnowledgeSchema);
+                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, KnowledgeSetup.KnowledgeSchema);
                 npgsql.UseVector();
             })
             .Options;

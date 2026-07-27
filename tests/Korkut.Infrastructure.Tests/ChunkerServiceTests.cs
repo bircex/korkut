@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Knowledge;
+using Korkut.Knowledge;
 
 namespace Korkut.Infrastructure.Tests;
 

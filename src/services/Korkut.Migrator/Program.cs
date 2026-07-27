@@ -5,7 +5,8 @@
 
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Infrastructure.Persistence.Knowledge;
+using Korkut.Knowledge;
+using Korkut.Knowledge.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 
@@ -50,9 +51,9 @@ static KnowledgeDbContext BuildKnowledgeContext()
             "KORKUT_KNOWLEDGE_ADMIN_DB_URL or KORKUT_ADMIN_DB_URL is required for the knowledge migrator connection.");
 
     var options = new DbContextOptionsBuilder<KnowledgeDbContext>()
-        .UseNpgsql(PersistenceSetup.ToNpgsql(connection), npgsql =>
+        .UseNpgsql(KnowledgeSetup.ToNpgsql(connection), npgsql =>
         {
-            npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.KnowledgeSchema);
+            npgsql.MigrationsHistoryTable(KnowledgeSetup.MigrationsHistoryTable, KnowledgeSetup.KnowledgeSchema);
             npgsql.UseVector();
         })
         .Options;
