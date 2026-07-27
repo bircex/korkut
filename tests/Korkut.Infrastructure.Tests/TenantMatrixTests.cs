@@ -21,7 +21,7 @@ using Korkut.Domain.Invoices;
 using Korkut.Domain.Expenses;
 using Korkut.Correspondence;
 using Korkut.Domain.Calendar;
-using Korkut.Domain.Outbox;
+using Korkut.Outbox;
 using Korkut.Channels;
 using Korkut.Domain.Settings;
 using Korkut.Domain.Auth;

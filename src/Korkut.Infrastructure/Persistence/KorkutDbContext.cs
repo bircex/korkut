@@ -76,7 +76,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     // Conversations, chat_messages, generated_documents, document_versions moved to the
     // Agent DB (AgentDbContext, schema korkut_agent).
-    public DbSet<Domain.Outbox.OutboundMessage> OutboundMessages => Set<Domain.Outbox.OutboundMessage>();
+    public DbSet<Korkut.Outbox.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.OutboundMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -122,7 +122,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Outbox.OutboundMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Outbox.OutboundMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Documents.DocumentConfiguration());
 

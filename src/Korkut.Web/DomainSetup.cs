@@ -82,10 +82,8 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Coverage.ICoverageService, Korkut.Application.Coverage.CoverageService>();
         services.AddSingleton<Korkut.Application.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
         services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
-        // Outbox review queue (Clean Architecture: repository port + service; distinct from
-        // the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
-        services.AddScoped<Korkut.Application.Outbox.IOutboxRepository, Korkut.Infrastructure.Outbox.OutboxRepository>();
-        services.AddScoped<Korkut.Application.Outbox.IOutboxService, Korkut.Application.Outbox.OutboxService>();
+        // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
+        new Korkut.Outbox.OutboxModule().Register(services, configuration);
         // Users + members (Clean Architecture: the user aggregate, viewed as the office's
         // members; owner-safety lives in the service).
         services.AddScoped<Korkut.Application.Users.IUserRepository, Korkut.Infrastructure.Users.UserRepository>();

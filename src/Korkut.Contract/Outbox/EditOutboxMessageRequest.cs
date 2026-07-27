@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Outbox.Requests;
+namespace Korkut.Contract.Outbox;
 
 /// <summary>Body for editing a draft before it is confirmed.</summary>
 public sealed record EditOutboxMessageRequest

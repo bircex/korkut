@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Outbox;
+namespace Korkut.Outbox;
 
 /// <summary>
 /// A message the assistant drafted for a human to review before it leaves the office.

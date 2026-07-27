@@ -1,4 +1,4 @@
-namespace Korkut.Application.Outbox.Responses;
+namespace Korkut.Contract.Outbox;
 
 /// <summary>Transport shape for a queued/draft outbound message.</summary>
 public sealed record OutboxMessageResponse(

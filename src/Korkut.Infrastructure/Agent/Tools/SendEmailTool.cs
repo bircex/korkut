@@ -2,9 +2,7 @@ using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 using Korkut.Core;
-using Korkut.Application.Outbox;
-using Korkut.Application.Security;
-using Korkut.Domain.Outbox;
+using Korkut.Outbox;
 
 namespace Korkut.Infrastructure.Agent.Tools;
 

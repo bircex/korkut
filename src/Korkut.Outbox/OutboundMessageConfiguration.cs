@@ -1,8 +1,7 @@
-using Korkut.Domain.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Outbox;
+namespace Korkut.Outbox;
 
 /// <summary>EF mapping for outbound messages (table/columns unchanged).</summary>
 public sealed class OutboundMessageConfiguration : IEntityTypeConfiguration<OutboundMessage>

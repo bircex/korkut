@@ -3524,9 +3524,6 @@
       "name": "Onboarding"
     },
     {
-      "name": "Outbox"
-    },
-    {
       "name": "Persona"
     },
     {
@@ -3558,6 +3555,9 @@
     },
     {
       "name": "Notes"
+    },
+    {
+      "name": "Outbox"
     },
     {
       "name": "Tasks"
