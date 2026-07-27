@@ -12,6 +12,7 @@
     <Project Path="src/Korkut.Channels/Korkut.Channels.csproj" />
     <Project Path="src/Korkut.Correspondence/Korkut.Correspondence.csproj" />
     <Project Path="src/Korkut.Outbox/Korkut.Outbox.csproj" />
+    <Project Path="src/Korkut.Calendar/Korkut.Calendar.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />

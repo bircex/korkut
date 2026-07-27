@@ -33,5 +33,6 @@
     <ProjectReference Include="..\Korkut.Channels\Korkut.Channels.csproj" />
     <ProjectReference Include="..\Korkut.Correspondence\Korkut.Correspondence.csproj" />
     <ProjectReference Include="..\Korkut.Outbox\Korkut.Outbox.csproj" />
+    <ProjectReference Include="..\Korkut.Calendar\Korkut.Calendar.csproj" />
   </ItemGroup>
 </Project>

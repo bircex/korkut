@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Calendar;
+namespace Korkut.Calendar;
 
 /// <summary>
 /// An editable calendar entry. Hearings and deadlines also appear on the calendar, but they

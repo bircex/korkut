@@ -1,17 +1,15 @@
+using Korkut.Contract.Calendar;
 using Korkut.Core;
-using Korkut.Application.Calendar;
-using Korkut.Application.Calendar.Requests;
-using Korkut.Application.Security;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.Controllers;
+namespace Korkut.Calendar;
 
 /// <summary>
 /// The office calendar. <c>GET /events</c> is a UNIFIED read view — editable events plus the
-/// office's real hearings and deadlines, read-only, so the calendar is complete. Only event
-/// rows can be created/patched/deleted; a hearing or deadline id resolves to 404 here.
-/// <c>GET /upcoming</c> is the agenda.
+/// office's real hearings and deadlines, read-only. Only event rows can be created/patched/deleted;
+/// a hearing or deadline id resolves to 404 here. <c>GET /upcoming</c> is the agenda.
 /// </summary>
 [ApiController]
 [Route("api/calendar")]
@@ -22,31 +20,25 @@ public sealed class CalendarController(ICalendarService calendar) : ControllerBa
     public async Task<IActionResult> List(
         [FromQuery] DateTimeOffset? start, [FromQuery] DateTimeOffset? end,
         [FromQuery] string? category, [FromQuery] Guid? matterId, CancellationToken ct)
-        => Ok(await calendar.ListEntriesAsync(start, end, category, matterId, ct));
+        => (await calendar.ListEntriesAsync(start, end, category, matterId, ct)).ToActionResult();
 
     [HttpPost("events")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Create([FromBody] CreateCalendarEventRequest body, CancellationToken ct)
-    {
-        var created = await calendar.CreateAsync(body, ct);
-        return Created($"/api/calendar/events/{created.Id}", created);
-    }
+        => (await calendar.CreateAsync(body, ct)).ToActionResult(c => Created($"/api/calendar/events/{c.Id}", c));
 
     [HttpPatch("events/{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCalendarEventRequest body, CancellationToken ct)
-        => Ok(await calendar.UpdateAsync(id, body, ct));
+        => (await calendar.UpdateAsync(id, body, ct)).ToActionResult();
 
     [HttpDelete("events/{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        await calendar.DeleteAsync(id, ct);
-        return NoContent();
-    }
+        => (await calendar.DeleteAsync(id, ct)).ToActionResult();
 
     [HttpGet("upcoming")]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> Upcoming([FromQuery] int? days, CancellationToken ct)
-        => Ok(await calendar.AgendaAsync(days ?? 14, ct));
+        => (await calendar.AgendaAsync(days ?? 14, ct)).ToActionResult();
 }

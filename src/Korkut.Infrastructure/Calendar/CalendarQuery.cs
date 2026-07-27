@@ -1,6 +1,5 @@
-using Korkut.Application.Calendar;
-using Korkut.Application.Calendar.Responses;
-using Korkut.Domain.Calendar;
+using Korkut.Calendar;
+using Korkut.Contract.Calendar;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

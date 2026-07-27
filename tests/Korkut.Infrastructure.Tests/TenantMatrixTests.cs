@@ -20,7 +20,7 @@ using Korkut.Notes;
 using Korkut.Domain.Invoices;
 using Korkut.Domain.Expenses;
 using Korkut.Correspondence;
-using Korkut.Domain.Calendar;
+using Korkut.Calendar;
 using Korkut.Outbox;
 using Korkut.Channels;
 using Korkut.Domain.Settings;

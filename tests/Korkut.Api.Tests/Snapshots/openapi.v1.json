@@ -3479,9 +3479,6 @@
       "name": "Auth"
     },
     {
-      "name": "Calendar"
-    },
-    {
       "name": "Coverage"
     },
     {
@@ -3537,6 +3534,9 @@
     },
     {
       "name": "Style"
+    },
+    {
+      "name": "Calendar"
     },
     {
       "name": "Channels"

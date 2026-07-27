@@ -24,6 +24,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.Channels.ChannelsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Correspondence.CorrespondenceModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Outbox.OutboxModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Calendar.CalendarModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

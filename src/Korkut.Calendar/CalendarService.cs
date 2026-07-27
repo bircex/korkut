@@ -1,14 +1,13 @@
-using Korkut.Application.Calendar.Requests;
-using Korkut.Application.Calendar.Responses;
+using Korkut.Contract;
+using Korkut.Contract.Calendar;
 using Korkut.Core;
-using Korkut.Application.Errors;
-using Korkut.Domain.Calendar;
 
-namespace Korkut.Application.Calendar;
+namespace Korkut.Calendar;
 
 /// <summary>
-/// Calendar use-cases over the event aggregate and the read query. Create and patch re-read
-/// through the unified view, so the response carries the matter/client/assignee names.
+/// Calendar use-cases over the event aggregate and the cross-module read query. Create and patch
+/// re-read through the unified view, so the response carries the matter/client/assignee names.
+/// Every call RETURNS a <see cref="Result"/>.
 /// </summary>
 public sealed class CalendarService(
     ICalendarEventRepository events, ICalendarQuery query,
@@ -17,11 +16,12 @@ public sealed class CalendarService(
     /// <summary>The agenda look-ahead window, in days, clamped to a sane range.</summary>
     private const int DefaultAgendaDays = 14;
 
-    public Task<IReadOnlyList<CalendarEntryResponse>> ListEntriesAsync(
+    public Task<Result<IReadOnlyList<CalendarEntryResponse>>> ListEntriesAsync(
         DateTimeOffset? start, DateTimeOffset? end, string? category, Guid? matterId, CancellationToken ct = default)
-        => InScopeAsync(office => query.ListEntriesAsync(office, start, end, category, matterId, ct), ct);
+        => InScopeAsync(async office =>
+            Result<IReadOnlyList<CalendarEntryResponse>>.Ok(await query.ListEntriesAsync(office, start, end, category, matterId, ct)), ct);
 
-    public Task<CalendarEntryResponse> CreateAsync(CreateCalendarEventRequest request, CancellationToken ct = default)
+    public Task<Result<CalendarEntryResponse>> CreateAsync(CreateCalendarEventRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
             var calendarEvent = new CalendarEvent(
@@ -32,41 +32,40 @@ public sealed class CalendarService(
             await events.AddAsync(calendarEvent, ct);
 
             // Re-read through the unified view so the response carries the display names.
-            return (await query.GetEditableEntryAsync(office, calendarEvent.Id, ct))!;
+            return Result<CalendarEntryResponse>.Ok((await query.GetEditableEntryAsync(office, calendarEvent.Id, ct))!);
         }, ct);
 
-    public Task<CalendarEntryResponse> UpdateAsync(Guid id, UpdateCalendarEventRequest request, CancellationToken ct = default)
+    public Task<Result<CalendarEntryResponse>> UpdateAsync(Guid id, UpdateCalendarEventRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var calendarEvent = await events.FindForUpdateAsync(office, id, ct)
-                ?? throw new NotFoundException("Takvim kaydı bulunamadı.");
+            var calendarEvent = await events.FindForUpdateAsync(office, id, ct);
+            if (calendarEvent is null)
+            {
+                return Result<CalendarEntryResponse>.NotFound("Takvim kaydı bulunamadı.");
+            }
+
             calendarEvent.Update(
                 request.Title?.Trim(), request.Type?.Trim(), request.StartAt, request.EndAt, request.AllDay,
                 request.MatterId, request.ClientId, request.AssigneeId, request.Location?.Trim(), request.Status,
                 request.Result?.Trim(), request.Notes?.Trim(), request.Rrule?.Trim(), request.RemindBeforeMin);
             await events.SaveChangesAsync(ct);
-            return (await query.GetEditableEntryAsync(office, id, ct))!;
+            return Result<CalendarEntryResponse>.Ok((await query.GetEditableEntryAsync(office, id, ct))!);
         }, ct);
 
-    public Task DeleteAsync(Guid id, CancellationToken ct = default)
+    public Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
         => InScopeAsync(async office =>
-        {
-            if (!await events.RemoveAsync(office, id, ct))
-            {
-                throw new NotFoundException("Takvim kaydı bulunamadı.");
-            }
+            await events.RemoveAsync(office, id, ct)
+                ? Result.Ok()
+                : Result.NotFound("Takvim kaydı bulunamadı."), ct);
 
-            return true;
-        }, ct);
-
-    public Task<AgendaResponse> AgendaAsync(int days, CancellationToken ct = default)
+    public Task<Result<AgendaResponse>> AgendaAsync(int days, CancellationToken ct = default)
     {
         var window = Math.Clamp(days <= 0 ? DefaultAgendaDays : days, 1, 365);
         return InScopeAsync(async office =>
         {
             var now = clock.UtcNow;
             var items = await query.AgendaAsync(office, now, now.AddDays(window), ct);
-            return new AgendaResponse(items, window);
+            return Result<AgendaResponse>.Ok(new AgendaResponse(items, window));
         }, ct);
     }
 

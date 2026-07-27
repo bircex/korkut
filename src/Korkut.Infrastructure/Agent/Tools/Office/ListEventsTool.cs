@@ -2,8 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Calendar;
-using Korkut.Application.Security;
+using Korkut.Contract.Calendar;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -36,6 +35,8 @@ public sealed class ListEventsTool(ICalendarService calendar) : IAgentTool
             category: null,
             ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
             ct);
-        return ToolResult.Ok(ToolArgs.Result(entries));
+        return entries.IsSuccess
+            ? ToolResult.Ok(ToolArgs.Result(entries.Value!))
+            : ToolResult.Error(entries.Error!.Detail);
     }
 }

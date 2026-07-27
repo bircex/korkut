@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Calendar;
-using Korkut.Application.Calendar.Requests;
+using Korkut.Contract.Calendar;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -47,7 +45,13 @@ public sealed class CreateEventTool(ICalendarService calendar) : IAgentTool
             EndAt = ToolArgs.DateTime(arguments, "end_at"),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var entry = await calendar.CreateAsync(request, ct);
+        var result = await calendar.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var entry = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { entry.Id, entry.Title, entry.StartAt }));
     }
 }

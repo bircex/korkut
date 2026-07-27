@@ -58,10 +58,10 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Expenses.IExpenseService, Korkut.Application.Expenses.ExpenseService>();
         services.AddScoped<Korkut.Application.FinanceSummary.IFinanceSummaryService, Korkut.Application.FinanceSummary.FinanceSummaryService>();
         new Korkut.Correspondence.CorrespondenceModule().Register(services, configuration);
-        // Calendar (Clean Architecture: repository port + service; unified read view).
-        services.AddScoped<Korkut.Application.Calendar.ICalendarEventRepository, Korkut.Infrastructure.Calendar.CalendarEventRepository>();
-        services.AddScoped<Korkut.Application.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
-        services.AddScoped<Korkut.Application.Calendar.ICalendarService, Korkut.Application.Calendar.CalendarService>();
+        // Calendar module. The cross-module read-model (ICalendarQuery: events ∪ deadlines ∪
+        // hearings) is a host-level registration since its impl spans other modules' tables.
+        new Korkut.Calendar.CalendarModule().Register(services, configuration);
+        services.AddScoped<Korkut.Contract.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
         // Office settings (Clean Architecture: persona, style layers and memory, one slice each).
         services.AddScoped<Korkut.Application.Settings.IPersonaRepository, Korkut.Infrastructure.Settings.PersonaRepository>();
         services.AddScoped<Korkut.Application.Settings.IPersonaService, Korkut.Application.Settings.PersonaService>();

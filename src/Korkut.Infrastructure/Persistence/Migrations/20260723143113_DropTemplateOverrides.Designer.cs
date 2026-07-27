@@ -27,7 +27,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Domain.Calendar.CalendarEvent", b =>
+            modelBuilder.Entity("Korkut.Calendar.CalendarEvent", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

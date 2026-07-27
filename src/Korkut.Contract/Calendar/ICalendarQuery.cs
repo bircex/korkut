@@ -1,11 +1,10 @@
-using Korkut.Application.Calendar.Responses;
-
-namespace Korkut.Application.Calendar;
+namespace Korkut.Contract.Calendar;
 
 /// <summary>
-/// The calendar READ side. It spans three aggregates (calendar events, hearings, deadlines)
-/// and enriches rows with matter/client/assignee display names, so it is a query port in its
-/// own right rather than a repository for any one aggregate.
+/// The calendar READ side — a cross-module read-model. It spans three aggregates (calendar events,
+/// hearings, deadlines) and enriches rows with matter/client/assignee display names, so its impl
+/// lives at the host/infrastructure level (which can see every table), not inside any one module.
+/// The port is in Contract so a module service can depend on it.
 /// </summary>
 public interface ICalendarQuery
 {

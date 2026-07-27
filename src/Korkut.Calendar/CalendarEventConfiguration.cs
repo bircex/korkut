@@ -1,8 +1,7 @@
-using Korkut.Domain.Calendar;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Calendar;
+namespace Korkut.Calendar;
 
 /// <summary>EF mapping for editable calendar events (table/columns unchanged).</summary>
 public sealed class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent>
