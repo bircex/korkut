@@ -15,4 +15,7 @@
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Web.Kernel\Korkut.Web.Kernel.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Calendar.Unit.Tests" />
+  </ItemGroup>
 </Project>

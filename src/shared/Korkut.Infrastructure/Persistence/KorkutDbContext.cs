@@ -43,13 +43,13 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
 
-    public DbSet<Korkut.Courts.Court> Courts => Set<Korkut.Courts.Court>();
+    public DbSet<Korkut.Courts.Entities.Court> Courts => Set<Korkut.Courts.Entities.Court>();
 
     public DbSet<Korkut.Matters.Party> Parties => Set<Korkut.Matters.Party>();
 
     public DbSet<Korkut.Tasks.Entities.WorkTask> Tasks => Set<Korkut.Tasks.Entities.WorkTask>();
 
-    public DbSet<Korkut.Deadlines.Deadline> Deadlines => Set<Korkut.Deadlines.Deadline>();
+    public DbSet<Korkut.Deadlines.Entities.Deadline> Deadlines => Set<Korkut.Deadlines.Entities.Deadline>();
 
     public DbSet<Korkut.Notes.Entities.CommunicationNote> CommunicationNotes => Set<Korkut.Notes.Entities.CommunicationNote>();
 
@@ -63,9 +63,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Expense> Expenses => Set<Expense>();
 
-    public DbSet<Korkut.Correspondence.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.CorrespondenceItem>();
+    public DbSet<Korkut.Correspondence.Entities.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.Entities.CorrespondenceItem>();
 
-    public DbSet<Korkut.Calendar.CalendarEvent> CalendarEvents => Set<Korkut.Calendar.CalendarEvent>();
+    public DbSet<Korkut.Calendar.Entities.CalendarEvent> CalendarEvents => Set<Korkut.Calendar.Entities.CalendarEvent>();
 
     public DbSet<Korkut.Settings.Persona> Personas => Set<Korkut.Settings.Persona>();
 
@@ -76,7 +76,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
     public DbSet<Korkut.Channels.Channel> Channels => Set<Korkut.Channels.Channel>();
 
 
-    public DbSet<Korkut.Outbox.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.OutboundMessage>();
+    public DbSet<Korkut.Outbox.Entities.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.Entities.OutboundMessage>();
 
     // Chat is a general operational feature (the conversation thread is a first-class product
     // surface, not agent plumbing) so it lives in the operational DB and can relate to
@@ -101,7 +101,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         // — kept together because their tenant-aware composite FKs form one set.
         modelBuilder.ApplyConfiguration(new Korkut.Matters.MatterConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Clients.Entities.ClientConfiguration());
-        modelBuilder.ApplyConfiguration(new Korkut.Courts.CourtConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Courts.Entities.CourtConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Matters.PartyConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Hearings.HearingConfiguration());
 
@@ -109,7 +109,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
 
         modelBuilder.ApplyConfiguration(new Korkut.Tasks.Entities.TaskConfiguration());
-        modelBuilder.ApplyConfiguration(new Korkut.Deadlines.DeadlineConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Deadlines.Entities.DeadlineConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Notes.Entities.NoteConfiguration());
 
         // Finance mappings live in Configurations/ (Clean Architecture layout); other
@@ -117,9 +117,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Finance.Entities.InvoiceConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Finance.Entities.ExpenseConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Correspondence.CorrespondenceConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Correspondence.Entities.CorrespondenceConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Calendar.CalendarEventConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Calendar.Entities.CalendarEventConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Settings.PersonaConfiguration());
 
@@ -129,7 +129,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Outbox.OutboundMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Outbox.Entities.OutboundMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Chat.ConversationConfiguration());
 

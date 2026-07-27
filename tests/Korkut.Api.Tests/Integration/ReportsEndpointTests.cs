@@ -9,7 +9,9 @@ using Korkut.Hearings;
 using Korkut.Tasks;
 using Korkut.Tasks.Entities;
 using Korkut.Deadlines;
+using Korkut.Deadlines.Entities;
 using Korkut.Correspondence;
+using Korkut.Correspondence.Entities;
 
 namespace Korkut.Api.Tests;
 

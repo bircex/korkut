@@ -5,6 +5,7 @@ using Korkut.Api.Tests.Integration;
 using Korkut.Matters;
 using Korkut.Hearings;
 using Korkut.Deadlines;
+using Korkut.Deadlines.Entities;
 
 namespace Korkut.Api.Tests;
 

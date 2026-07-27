@@ -3,6 +3,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Deadlines;
+using Korkut.Deadlines.Entities;
 using Korkut.Tasks;
 using Korkut.Tasks.Entities;
 using Korkut.Infrastructure.Deadlines;

@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Courts.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Infrastructure.Tests" />
+  </ItemGroup>
 </Project>

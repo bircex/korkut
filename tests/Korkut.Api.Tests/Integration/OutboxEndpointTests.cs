@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Outbox;
+using Korkut.Outbox.Entities;
 
 namespace Korkut.Api.Tests;
 

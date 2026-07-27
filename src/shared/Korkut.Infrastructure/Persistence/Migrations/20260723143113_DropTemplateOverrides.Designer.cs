@@ -27,7 +27,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Calendar.CalendarEvent", b =>
+            modelBuilder.Entity("Korkut.Calendar.Entities.CalendarEvent", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -174,7 +174,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("clients", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Correspondence.CorrespondenceItem", b =>
+            modelBuilder.Entity("Korkut.Correspondence.Entities.CorrespondenceItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -226,7 +226,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("correspondence", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Courts.Court", b =>
+            modelBuilder.Entity("Korkut.Courts.Entities.Court", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -254,7 +254,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("courts", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Deadlines.Deadline", b =>
+            modelBuilder.Entity("Korkut.Deadlines.Entities.Deadline", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

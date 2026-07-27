@@ -39,18 +39,33 @@
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Courts.Unit.Tests/Korkut.Courts.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Calendar.Unit.Tests/Korkut.Calendar.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Outbox.Unit.Tests/Korkut.Outbox.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Correspondence.Unit.Tests/Korkut.Correspondence.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Deadlines.Unit.Tests/Korkut.Deadlines.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Tasks.Unit.Tests/Korkut.Tasks.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Notes.Unit.Tests/Korkut.Notes.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Clients.Unit.Tests/Korkut.Clients.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Courts.Integration.Tests/Korkut.Courts.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Calendar.Integration.Tests/Korkut.Calendar.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Outbox.Integration.Tests/Korkut.Outbox.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Correspondence.Integration.Tests/Korkut.Correspondence.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Deadlines.Integration.Tests/Korkut.Deadlines.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Tasks.Integration.Tests/Korkut.Tasks.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Notes.Integration.Tests/Korkut.Notes.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Clients.Integration.Tests/Korkut.Clients.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Courts.Bdd.Tests/Korkut.Courts.Bdd.Tests.csproj" />
+    <Project Path="tests/bdd/Korkut.Calendar.Bdd.Tests/Korkut.Calendar.Bdd.Tests.csproj" />
+    <Project Path="tests/bdd/Korkut.Outbox.Bdd.Tests/Korkut.Outbox.Bdd.Tests.csproj" />
+    <Project Path="tests/bdd/Korkut.Correspondence.Bdd.Tests/Korkut.Correspondence.Bdd.Tests.csproj" />
+    <Project Path="tests/bdd/Korkut.Deadlines.Bdd.Tests/Korkut.Deadlines.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Tasks.Bdd.Tests/Korkut.Tasks.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Notes.Bdd.Tests/Korkut.Notes.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Clients.Bdd.Tests/Korkut.Clients.Bdd.Tests.csproj" />
