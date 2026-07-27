@@ -11,6 +11,7 @@ namespace Korkut.Agent.Drafting;
 public sealed class GeneratedDocument : Entity, ITenantOwned, IAggregateRoot
 {
     public const string Draft = "draft";
+    
     public const string Final = "final";
 
     public GeneratedDocument(Guid officeId, Guid conversationId, string title, DateTimeOffset now)

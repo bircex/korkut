@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Persistence;
 
 /// <summary>
 /// snake_case column naming (Postgres convention; matches the Python schema and the
