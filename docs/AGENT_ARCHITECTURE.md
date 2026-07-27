@@ -148,9 +148,26 @@ truly shared cross-cutting.
    goes live here.
 6. **Architecture test** — assert the one-way dependency flow (no layer references a layer above).
 
+## Alignment with the Python baseline
+
+This mirrors the original Python structure ([ARCHITECTURE.md](ARCHITECTURE.md),
+[DEVELOPMENT.md](DEVELOPMENT.md)), just regrouped into `Korkut.Agent.*` modules:
+
+| Python baseline | This design |
+|---|---|
+| `core/agent_loop.py` (one step: ask model → run tool calls → append → repeat) | **Agent.Brain** (tool-calling loop) |
+| `brain/agent.py::answer(...)` (wires persona + tools + router) | **Agent.Brain** (entry) |
+| `brain/persona.py` (office persona) | **Agent.Brain** (persona) |
+| `core/router.py` (specialty → cloud/local backend) | **Agent.Model** (router) |
+| `core/` providers + `core/redactor.py` | **Agent.Model** (providers + redaction decorator) |
+| tool registry | **Korkut.Tools** |
+
+The only regrouping: the Python **agent loop** and **router** both live in `core/`; here the
+loop is reasoning (Brain) and the router is model-selection (Model). Persona stays with the
+brain, exactly as `brain/persona.py` does — it reads from `Korkut.Settings` but is composed at
+the reasoning layer.
+
 ## Open questions
 
 - `LlmCallLogService`: in Agent.Ledger (data owner) or Agent.Model (the caller)? Leaning Ledger.
-- Do system prompts / persona (from `Korkut.Settings`) belong to Brain, or a small
-  `Korkut.Agent.Prompting` piece?
 - Streaming (SSE) shape: keep `ChatStreamEvent` in Model, or a thin transport type in the Host?
