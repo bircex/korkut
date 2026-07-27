@@ -1,7 +1,7 @@
 using Korkut.Domain.Jobs;
 using Korkut.Application.Jobs;
 using Korkut.Core;
-using Korkut.Domain.Deadlines;
+using Korkut.Deadlines;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

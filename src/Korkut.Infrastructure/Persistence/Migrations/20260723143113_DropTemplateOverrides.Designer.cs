@@ -254,7 +254,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("courts", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Domain.Deadlines.Deadline", b =>
+            modelBuilder.Entity("Korkut.Deadlines.Deadline", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

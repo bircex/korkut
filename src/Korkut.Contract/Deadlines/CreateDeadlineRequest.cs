@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Deadlines.Requests;
+namespace Korkut.Contract.Deadlines;
 
 /// <summary>Body for creating a deadline.</summary>
 public sealed record CreateDeadlineRequest

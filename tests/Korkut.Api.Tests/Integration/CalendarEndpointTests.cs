@@ -4,7 +4,7 @@ using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
-using Korkut.Domain.Deadlines;
+using Korkut.Deadlines;
 
 namespace Korkut.Api.Tests;
 

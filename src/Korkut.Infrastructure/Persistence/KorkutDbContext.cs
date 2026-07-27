@@ -47,7 +47,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Tasks.WorkTask> Tasks => Set<Korkut.Tasks.WorkTask>();
 
-    public DbSet<Domain.Deadlines.Deadline> Deadlines => Set<Domain.Deadlines.Deadline>();
+    public DbSet<Korkut.Deadlines.Deadline> Deadlines => Set<Korkut.Deadlines.Deadline>();
 
     public DbSet<Korkut.Notes.CommunicationNote> CommunicationNotes => Set<Korkut.Notes.CommunicationNote>();
 
@@ -102,7 +102,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
 
         modelBuilder.ApplyConfiguration(new Korkut.Tasks.TaskConfiguration());
-        modelBuilder.ApplyConfiguration(new Deadlines.DeadlineConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Deadlines.DeadlineConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Notes.NoteConfiguration());
 
         // Finance mappings live in Configurations/ (Clean Architecture layout); other

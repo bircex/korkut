@@ -47,10 +47,9 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Matters.IMatterService, Korkut.Application.Matters.MatterService>();
         services.AddScoped<Korkut.Application.Hearings.IHearingService, Korkut.Application.Hearings.HearingService>();
         // Office-ops (Clean Architecture: repository ports + service).
-        services.AddScoped<Korkut.Application.Deadlines.IDeadlineRepository, Korkut.Infrastructure.Deadlines.DeadlineRepository>();
-        services.AddScoped<Korkut.Application.Deadlines.IDeadlineService, Korkut.Application.Deadlines.DeadlineService>();
         new Korkut.Notes.NotesModule().Register(services, configuration);
         new Korkut.Tasks.TasksModule().Register(services, configuration);
+        new Korkut.Deadlines.DeadlinesModule().Register(services, configuration);
         // Finance (Clean Architecture: repository ports + service). The pattern rolls out
         // to the other modules incrementally.
         services.AddScoped<Korkut.Application.Invoices.IInvoiceRepository, Korkut.Infrastructure.Invoices.InvoiceRepository>();

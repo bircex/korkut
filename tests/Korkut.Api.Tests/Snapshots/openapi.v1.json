@@ -3491,9 +3491,6 @@
       "name": "Coverage"
     },
     {
-      "name": "Deadlines"
-    },
-    {
       "name": "Documents"
     },
     {
@@ -3555,6 +3552,9 @@
     },
     {
       "name": "Clients"
+    },
+    {
+      "name": "Deadlines"
     },
     {
       "name": "Notes"

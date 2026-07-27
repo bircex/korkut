@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Deadlines;
-using Korkut.Application.Deadlines.Requests;
+using Korkut.Contract.Deadlines;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -45,7 +43,13 @@ public sealed class AddDeadlineTool(IDeadlineService deadlines) : IAgentTool
             DueDate = due,
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var deadline = await deadlines.CreateAsync(request, ct);
+        var result = await deadlines.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var deadline = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { deadline.Id, deadline.Title, deadline.DueDate }));
     }
 }

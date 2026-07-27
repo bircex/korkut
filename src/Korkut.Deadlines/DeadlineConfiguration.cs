@@ -1,8 +1,7 @@
-using Korkut.Domain.Deadlines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Deadlines;
+namespace Korkut.Deadlines;
 
 /// <summary>EF mapping for deadlines (table/columns unchanged).</summary>
 public sealed class DeadlineConfiguration : IEntityTypeConfiguration<Deadline>

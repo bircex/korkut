@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Deadlines;
+namespace Korkut.Deadlines;
 
 /// <summary>
 /// A legal or internal deadline (süre) on the office calendar. Dates are calendar days in

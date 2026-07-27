@@ -15,7 +15,7 @@ using Korkut.Domain.Hearings;
 using Korkut.Domain.Courts;
 using Korkut.Domain.Parties;
 using Korkut.Tasks;
-using Korkut.Domain.Deadlines;
+using Korkut.Deadlines;
 using Korkut.Notes;
 using Korkut.Domain.Invoices;
 using Korkut.Domain.Expenses;

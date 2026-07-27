@@ -1,4 +1,4 @@
-namespace Korkut.Application.Deadlines.Responses;
+namespace Korkut.Contract.Deadlines;
 
 /// <summary>Transport shape for a deadline.</summary>
 public sealed record DeadlineResponse(
