@@ -1,8 +1,7 @@
-using Korkut.Domain.Agent.Conversations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Chat;
 
 /// <summary>EF mapping for chat messages in the Agent DB (table/columns/index unchanged).</summary>
 public sealed class ConversationMessageConfiguration : IEntityTypeConfiguration<ConversationMessage>

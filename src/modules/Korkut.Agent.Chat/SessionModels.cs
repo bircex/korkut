@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Agent.Conversations;
+namespace Korkut.Agent.Chat;
 
 /// <summary>
 /// A conversation summary (list read model). Carries the raw <see cref="CreatedBy"/> id — the

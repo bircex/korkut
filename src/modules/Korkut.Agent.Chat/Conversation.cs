@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Agent.Conversations;
+namespace Korkut.Agent.Chat;
 
 /// <summary>
 /// An assistant conversation ("session"): a titled thread of chat messages, optionally scoped to a

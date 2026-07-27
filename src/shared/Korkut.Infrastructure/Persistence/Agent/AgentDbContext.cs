@@ -13,9 +13,9 @@ namespace Korkut.Infrastructure.Persistence.Agent;
 /// </summary>
 public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : DbContext(options)
 {
-    public DbSet<Domain.Agent.Conversations.Conversation> Conversations => Set<Domain.Agent.Conversations.Conversation>();
+    public DbSet<Korkut.Agent.Chat.Conversation> Conversations => Set<Korkut.Agent.Chat.Conversation>();
 
-    public DbSet<Domain.Agent.Conversations.ConversationMessage> ChatMessages => Set<Domain.Agent.Conversations.ConversationMessage>();
+    public DbSet<Korkut.Agent.Chat.ConversationMessage> ChatMessages => Set<Korkut.Agent.Chat.ConversationMessage>();
 
     public DbSet<Domain.Agent.Documents.GeneratedDocument> GeneratedDocuments => Set<Domain.Agent.Documents.GeneratedDocument>();
 
@@ -27,9 +27,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
     {
         modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
 
-        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.ConversationConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Chat.ConversationConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.ConversationMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Chat.ConversationMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.GeneratedDocumentConfiguration());
 

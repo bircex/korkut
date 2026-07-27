@@ -1,4 +1,4 @@
-using Korkut.Domain.Agent.Conversations;
+using Korkut.Agent.Chat;
 using Korkut.Core;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;

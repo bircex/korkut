@@ -24,6 +24,7 @@
     <Project Path="src/modules/Korkut.Settings/Korkut.Settings.csproj" />
     <Project Path="src/modules/Korkut.Organization/Korkut.Organization.csproj" />
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
+    <Project Path="src/modules/Korkut.Agent.Chat/Korkut.Agent.Chat.csproj" />
     <Project Path="src/modules/Korkut.Agent.Ledger/Korkut.Agent.Ledger.csproj" />
   </Folder>
   <Folder Name="/src/services/">

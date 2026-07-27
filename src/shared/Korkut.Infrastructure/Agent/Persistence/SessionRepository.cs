@@ -1,4 +1,4 @@
-using Korkut.Domain.Agent.Conversations;
+using Korkut.Agent.Chat;
 using Korkut.Infrastructure.Persistence.Agent;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;

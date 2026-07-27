@@ -23,7 +23,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Domain.Agent.Conversations.ConversationMessage", b =>
+            modelBuilder.Entity("Korkut.Agent.Chat.ConversationMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -60,7 +60,7 @@ namespace Korkut.Infrastructure.Persistence.Agent.Migrations
                     b.ToTable("chat_messages", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Domain.Agent.Conversations.Conversation", b =>
+            modelBuilder.Entity("Korkut.Agent.Chat.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
