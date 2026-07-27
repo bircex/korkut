@@ -37,6 +37,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
   </ItemGroup>
 </Project>

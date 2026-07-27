@@ -1,5 +1,5 @@
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Domain.Agent.Documents;
+using Korkut.Agent.Drafting;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;

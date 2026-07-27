@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Agent.Documents;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>
 /// An AI-drafted document tied to a conversation (one per session). A staged edit lives in the

@@ -1,8 +1,7 @@
-using Korkut.Domain.Agent.Documents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>EF mapping for generated-document version snapshots in the Agent DB (table/columns/index unchanged).</summary>
 public sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<DocumentVersion>

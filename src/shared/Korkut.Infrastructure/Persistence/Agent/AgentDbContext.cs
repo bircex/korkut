@@ -17,9 +17,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     public DbSet<Korkut.Agent.Chat.ConversationMessage> ChatMessages => Set<Korkut.Agent.Chat.ConversationMessage>();
 
-    public DbSet<Domain.Agent.Documents.GeneratedDocument> GeneratedDocuments => Set<Domain.Agent.Documents.GeneratedDocument>();
+    public DbSet<Korkut.Agent.Drafting.GeneratedDocument> GeneratedDocuments => Set<Korkut.Agent.Drafting.GeneratedDocument>();
 
-    public DbSet<Domain.Agent.Documents.DocumentVersion> DocumentVersions => Set<Domain.Agent.Documents.DocumentVersion>();
+    public DbSet<Korkut.Agent.Drafting.DocumentVersion> DocumentVersions => Set<Korkut.Agent.Drafting.DocumentVersion>();
 
     public DbSet<Korkut.Agent.Ledger.LlmCall> LlmCalls => Set<Korkut.Agent.Ledger.LlmCall>();
 
@@ -31,9 +31,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Chat.ConversationMessageConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.GeneratedDocumentConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.GeneratedDocumentConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Infrastructure.Agent.Persistence.DocumentVersionConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.DocumentVersionConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Ledger.LlmCallConfiguration());
 

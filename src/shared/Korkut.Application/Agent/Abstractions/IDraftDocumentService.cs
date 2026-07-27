@@ -1,4 +1,4 @@
-using Korkut.Domain.Agent.Documents;
+using Korkut.Agent.Drafting;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 

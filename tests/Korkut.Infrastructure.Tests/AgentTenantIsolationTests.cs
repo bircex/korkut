@@ -1,4 +1,4 @@
-using Korkut.Domain.Agent.Documents;
+using Korkut.Agent.Drafting;
 using Korkut.Agent.Chat;
 using Korkut.Agent.Ledger;
 using Microsoft.EntityFrameworkCore;
