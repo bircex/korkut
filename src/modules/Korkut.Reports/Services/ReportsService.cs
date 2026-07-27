@@ -9,7 +9,7 @@ namespace Korkut.Reports;
 /// here: it is computed from the same invoice and expense figures the finance screens use,
 /// through <see cref="FinanceTotalsCalculator"/>, so the two can never drift apart.
 /// </summary>
-public sealed class ReportsService(
+internal sealed class ReportsService(
     IReportsQuery query,
     IFinanceLookup finance,
     IUnitOfWork unitOfWork,
