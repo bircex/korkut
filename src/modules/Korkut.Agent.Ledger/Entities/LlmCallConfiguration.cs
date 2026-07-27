@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Agent.Ledger;
+namespace Korkut.Agent.Ledger.Entities;
 
 /// <summary>EF mapping for the llm_calls ledger in the Agent DB (table/columns/index unchanged).</summary>
 public sealed class LlmCallConfiguration : IEntityTypeConfiguration<LlmCall>

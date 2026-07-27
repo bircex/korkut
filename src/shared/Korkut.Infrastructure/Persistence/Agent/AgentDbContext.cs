@@ -19,7 +19,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     public DbSet<Korkut.Agent.Drafting.DocumentVersion> DocumentVersions => Set<Korkut.Agent.Drafting.DocumentVersion>();
 
-    public DbSet<Korkut.Agent.Ledger.LlmCall> LlmCalls => Set<Korkut.Agent.Ledger.LlmCall>();
+    public DbSet<Korkut.Agent.Ledger.Entities.LlmCall> LlmCalls => Set<Korkut.Agent.Ledger.Entities.LlmCall>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,7 +29,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.DocumentVersionConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Agent.Ledger.LlmCallConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Agent.Ledger.Entities.LlmCallConfiguration());
 
         SnakeCaseNaming.Apply(modelBuilder);
 

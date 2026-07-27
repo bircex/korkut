@@ -1,5 +1,6 @@
 using Korkut.Agent.Drafting;
 using Korkut.Agent.Ledger;
+using Korkut.Agent.Ledger.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
