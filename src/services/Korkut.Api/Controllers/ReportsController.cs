@@ -1,6 +1,6 @@
 using Korkut.Core;
 using Korkut.Application.Reports;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

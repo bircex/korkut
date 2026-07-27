@@ -2,7 +2,7 @@ using Korkut.Infrastructure.Jobs;
 using Korkut.Domain.Jobs;
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Korkut.Application.Jobs;
 using Korkut.Application.Jobs.InMemory;
 using Korkut.Infrastructure.Persistence;

@@ -1,5 +1,5 @@
 using Korkut.Organization;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;

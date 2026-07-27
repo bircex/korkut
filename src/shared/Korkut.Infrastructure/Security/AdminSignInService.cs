@@ -1,5 +1,5 @@
 using Korkut.Organization;
-namespace Korkut.Application.Security;
+namespace Korkut.Infrastructure.Security;
 
 public enum AdminSignInStatus
 {

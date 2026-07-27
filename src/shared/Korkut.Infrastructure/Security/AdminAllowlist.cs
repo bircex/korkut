@@ -1,4 +1,4 @@
-namespace Korkut.Application.Security;
+namespace Korkut.Infrastructure.Security;
 
 /// <summary>
 /// The platform-admin email allowlist — the SINGLE source of truth, compiled into

@@ -4,7 +4,7 @@ using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 using Korkut.Application.Knowledge;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools;
 

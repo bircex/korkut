@@ -1,6 +1,6 @@
 using Korkut.Core;
 using Korkut.Organization;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

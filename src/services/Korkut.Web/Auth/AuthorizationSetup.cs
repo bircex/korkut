@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 

@@ -1,4 +1,4 @@
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

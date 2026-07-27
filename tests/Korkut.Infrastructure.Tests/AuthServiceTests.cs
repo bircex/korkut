@@ -1,11 +1,10 @@
 using Korkut.Contract.Organization;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Korkut.Organization;
 using Korkut.Core;
 using Korkut.Infrastructure.Auth;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

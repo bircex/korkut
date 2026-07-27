@@ -1,6 +1,6 @@
 using Korkut.Organization;
 using System.Text.Json;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 
 namespace Korkut.Infrastructure.Security;
 

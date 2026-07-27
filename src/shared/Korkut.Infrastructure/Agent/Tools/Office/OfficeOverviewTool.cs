@@ -3,7 +3,7 @@ using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 using Korkut.Application.Reports;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 

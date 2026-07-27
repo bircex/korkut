@@ -2,7 +2,6 @@ using Korkut.Organization;
 using System.Net.Http.Headers;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
-using Korkut.Application.Security;
 using Korkut.Core;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;

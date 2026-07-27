@@ -1,5 +1,5 @@
 using Korkut.Organization;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 

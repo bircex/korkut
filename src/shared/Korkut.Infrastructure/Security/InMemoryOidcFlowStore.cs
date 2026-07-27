@@ -1,6 +1,6 @@
 using Korkut.Organization;
 using System.Collections.Concurrent;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 
 namespace Korkut.Infrastructure.Security;
 

@@ -2,7 +2,7 @@ using Korkut.Core;
 using Korkut.Organization;
 using Korkut.Infrastructure.Auth;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Application.Security;
+using Korkut.Infrastructure.Security;
 
 namespace Korkut.Infrastructure.Tests;
 

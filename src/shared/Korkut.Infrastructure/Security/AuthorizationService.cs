@@ -1,5 +1,5 @@
 using Korkut.Core;
-namespace Korkut.Application.Security;
+namespace Korkut.Infrastructure.Security;
 
 /// <summary>
 /// Resolves the effective permission set for a principal and answers permission
