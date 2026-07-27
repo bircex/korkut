@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Correspondence;
+namespace Korkut.Correspondence;
 
 /// <summary>An entry in the office's correspondence register ("evrak defteri").</summary>
 public sealed class CorrespondenceItem : Entity, ITenantOwned, IAggregateRoot

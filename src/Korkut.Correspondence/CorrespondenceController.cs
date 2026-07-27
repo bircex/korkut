@@ -1,15 +1,14 @@
+using Korkut.Contract.Correspondence;
 using Korkut.Core;
-using Korkut.Application.Correspondence;
-using Korkut.Application.Correspondence.Requests;
-using Korkut.Application.Security;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.Controllers;
+namespace Korkut.Correspondence;
 
 /// <summary>
-/// The correspondence register ("evrak defteri"). Reads use matters.read and writes
-/// matters.write, since evrak is matter-adjacent case work.
+/// The correspondence register ("evrak defteri"). Reads use matters.read and writes matters.write,
+/// since evrak is matter-adjacent case work. Maps Result to HTTP.
 /// </summary>
 [ApiController]
 [Route("api/evrak")]
@@ -18,21 +17,15 @@ public sealed class CorrespondenceController(ICorrespondenceService corresponden
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List([FromQuery] string? direction, CancellationToken ct)
-        => Ok(await correspondence.ListAsync(direction, ct));
+        => (await correspondence.ListAsync(direction, ct)).ToActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Create([FromBody] CreateCorrespondenceRequest body, CancellationToken ct)
-    {
-        var created = await correspondence.CreateAsync(body, ct);
-        return Created($"/api/evrak/{created.Id}", created);
-    }
+        => (await correspondence.CreateAsync(body, ct)).ToActionResult(c => Created($"/api/evrak/{c.Id}", c));
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        await correspondence.DeleteAsync(id, ct);
-        return NoContent();
-    }
+        => (await correspondence.DeleteAsync(id, ct)).ToActionResult();
 }

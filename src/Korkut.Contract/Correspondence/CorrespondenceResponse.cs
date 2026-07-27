@@ -1,4 +1,4 @@
-namespace Korkut.Application.Correspondence.Responses;
+namespace Korkut.Contract.Correspondence;
 
 /// <summary>Transport shape for a correspondence-register entry.</summary>
 public sealed record CorrespondenceResponse(

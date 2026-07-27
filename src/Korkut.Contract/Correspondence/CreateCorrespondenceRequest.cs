@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Correspondence.Requests;
+namespace Korkut.Contract.Correspondence;
 
 /// <summary>Body for filing a correspondence-register entry.</summary>
 public sealed record CreateCorrespondenceRequest

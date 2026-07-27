@@ -3482,9 +3482,6 @@
       "name": "Calendar"
     },
     {
-      "name": "Correspondence"
-    },
-    {
       "name": "Coverage"
     },
     {
@@ -3552,6 +3549,9 @@
     },
     {
       "name": "Clients"
+    },
+    {
+      "name": "Correspondence"
     },
     {
       "name": "Deadlines"

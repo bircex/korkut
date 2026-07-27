@@ -1,8 +1,7 @@
-using Korkut.Domain.Correspondence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Correspondence;
+namespace Korkut.Correspondence;
 
 /// <summary>EF mapping for the correspondence register (table/columns unchanged).</summary>
 public sealed class CorrespondenceConfiguration : IEntityTypeConfiguration<CorrespondenceItem>

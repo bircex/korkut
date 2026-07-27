@@ -7,7 +7,7 @@ using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
 using Korkut.Tasks;
 using Korkut.Deadlines;
-using Korkut.Domain.Correspondence;
+using Korkut.Correspondence;
 
 namespace Korkut.Api.Tests;
 

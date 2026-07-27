@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Correspondence;
-using Korkut.Application.Correspondence.Requests;
+using Korkut.Contract.Correspondence;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -45,7 +43,13 @@ public sealed class AddEvrakTool(ICorrespondenceService correspondence) : IAgent
             Title = title.Trim(),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var evrak = await correspondence.CreateAsync(request, ct);
+        var result = await correspondence.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var evrak = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { evrak.Id, evrak.Direction, evrak.Title }));
     }
 }

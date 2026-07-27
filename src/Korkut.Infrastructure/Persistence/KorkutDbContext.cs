@@ -61,7 +61,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Expenses.Expense> Expenses => Set<Domain.Expenses.Expense>();
 
-    public DbSet<Domain.Correspondence.CorrespondenceItem> Correspondence => Set<Domain.Correspondence.CorrespondenceItem>();
+    public DbSet<Korkut.Correspondence.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.CorrespondenceItem>();
 
     public DbSet<Domain.Calendar.CalendarEvent> CalendarEvents => Set<Domain.Calendar.CalendarEvent>();
 
@@ -110,7 +110,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Invoices.InvoiceConfiguration());
         modelBuilder.ApplyConfiguration(new Expenses.ExpenseConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Correspondence.CorrespondenceConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Correspondence.CorrespondenceConfiguration());
 
         modelBuilder.ApplyConfiguration(new Calendar.CalendarEventConfiguration());
 

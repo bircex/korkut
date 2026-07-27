@@ -174,7 +174,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("clients", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Domain.Correspondence.CorrespondenceItem", b =>
+            modelBuilder.Entity("Korkut.Correspondence.CorrespondenceItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
