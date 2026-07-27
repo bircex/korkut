@@ -2,6 +2,7 @@ using Korkut.Organization;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Korkut.Matters;
+using Korkut.Matters.Entities;
 
 namespace Korkut.Infrastructure.Tests;
 

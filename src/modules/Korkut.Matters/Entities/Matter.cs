@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Entities;
 
 /// <summary>
 /// A tenant-owned case file / dosya. The court title is snapshotted onto the matter at link

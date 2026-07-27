@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
 using Korkut.Matters;
+using Korkut.Matters.Entities;
 using Korkut.Hearings;
 using Korkut.Hearings.Entities;
 using Korkut.Deadlines;

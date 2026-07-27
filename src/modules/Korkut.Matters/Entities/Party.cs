@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Entities;
 
 /// <summary>A party/counsel attached to a matter (tenant-owned; composite FK to the matter).</summary>
 public sealed class Party : Entity, ITenantOwned, IAggregateRoot

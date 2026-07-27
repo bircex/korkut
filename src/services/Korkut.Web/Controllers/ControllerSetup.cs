@@ -29,7 +29,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.Correspondence.Extensions.CorrespondenceModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Outbox.Extensions.OutboxModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Calendar.Extensions.CalendarModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Matters.MattersModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Matters.Extensions.MattersModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Hearings.Extensions.HearingsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Finance.Extensions.FinanceModule).Assembly)
             .AddApplicationPart(typeof(SettingsModule).Assembly)

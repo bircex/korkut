@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Entities;
 
 /// <summary>
 /// EF mapping for the <see cref="Matter"/> aggregate (table/columns unchanged). Its composite

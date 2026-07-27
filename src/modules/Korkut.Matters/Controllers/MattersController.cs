@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Controllers;
 
 /// <summary>
 /// Matters (dosyalar). A pure transport: each action forwards to <see cref="IMatterService"/> and

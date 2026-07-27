@@ -463,7 +463,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("invoices", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Matters.Matter", b =>
+            modelBuilder.Entity("Korkut.Matters.Entities.Matter", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -588,7 +588,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("communication_notes", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Matters.Party", b =>
+            modelBuilder.Entity("Korkut.Matters.Entities.Party", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1716,7 +1716,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Korkut.Hearings.Entities.Hearing", b =>
                 {
-                    b.HasOne("Korkut.Matters.Matter", null)
+                    b.HasOne("Korkut.Matters.Entities.Matter", null)
                         .WithMany()
                         .HasForeignKey("OfficeId", "MatterId")
                         .HasPrincipalKey("OfficeId", "Id")
@@ -1724,7 +1724,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Korkut.Matters.Matter", b =>
+            modelBuilder.Entity("Korkut.Matters.Entities.Matter", b =>
                 {
                     b.HasOne("Korkut.Clients.Entities.Client", null)
                         .WithMany()
@@ -1733,9 +1733,9 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
-            modelBuilder.Entity("Korkut.Matters.Party", b =>
+            modelBuilder.Entity("Korkut.Matters.Entities.Party", b =>
                 {
-                    b.HasOne("Korkut.Matters.Matter", null)
+                    b.HasOne("Korkut.Matters.Entities.Matter", null)
                         .WithMany()
                         .HasForeignKey("OfficeId", "MatterId")
                         .HasPrincipalKey("OfficeId", "Id")

@@ -1,17 +1,19 @@
+using Korkut.Matters.Repositories;
+using Korkut.Matters.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Courts;
 using Korkut.Contract.Hearings;
 using Korkut.Contract.Matters;
 using Korkut.Core;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Services;
 
 /// <summary>
 /// Matter use-cases over the repository port; every call runs in the caller's tenant scope and
 /// RETURNS a <see cref="Result"/>. Owns the court-title snapshot rule. Cross-module reads (court
 /// name, a matter's hearings) go through Contract lookups, never other modules' entities.
 /// </summary>
-public sealed class MatterService(
+internal sealed class MatterService(
     IMatterRepository matters, IHearingLookup hearings, ICourtLookup courts,
     IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
 {

@@ -3,6 +3,7 @@ using Korkut.Clients.Entities;
 using Korkut.Hearings;
 using Korkut.Hearings.Entities;
 using Korkut.Matters;
+using Korkut.Matters.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;

@@ -12,6 +12,7 @@ using Npgsql;
 using Korkut.Clients;
 using Korkut.Clients.Entities;
 using Korkut.Matters;
+using Korkut.Matters.Entities;
 using Korkut.Hearings;
 using Korkut.Hearings.Entities;
 using Korkut.Courts;

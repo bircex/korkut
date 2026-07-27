@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Korkut.Clients;
 using Korkut.Clients.Entities;
 using Korkut.Matters;
+using Korkut.Matters.Entities;
 
 namespace Korkut.Infrastructure.Tests;
 

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Entities;
 
 /// <summary>EF mapping for matter parties (tenant-aware composite FK to the matter, intra-module).</summary>
 public sealed class PartyConfiguration : IEntityTypeConfiguration<Party>

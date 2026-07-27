@@ -1,9 +1,11 @@
+using Korkut.Matters.Services;
+using Korkut.Matters.Repositories;
 using Korkut.Contract.Matters;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Matters;
+namespace Korkut.Matters.Extensions;
 
 /// <summary>Self-registration for the Matters module: repository, service, and the cross-module lookup.</summary>
 public sealed class MattersModule : IModule

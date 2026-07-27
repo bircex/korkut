@@ -30,7 +30,7 @@ public static class DomainSetup
         // configured in Infrastructure; cross-module reads go through Contract lookups
         // (ICourtLookup, IHearingLookup, IMatterLookup).
         new Korkut.Courts.Extensions.CourtsModule().Register(services, configuration);
-        new Korkut.Matters.MattersModule().Register(services, configuration);
+        new Korkut.Matters.Extensions.MattersModule().Register(services, configuration);
         new Korkut.Hearings.Extensions.HearingsModule().Register(services, configuration);
 
         // Modular monolith: self-registering vertical modules. Clients is the reference slice —
