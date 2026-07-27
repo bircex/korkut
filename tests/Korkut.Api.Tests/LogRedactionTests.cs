@@ -1,5 +1,5 @@
 using Korkut.Infrastructure.Observability;
-using Korkut.Domain.Redaction;
+using Korkut.Infrastructure.Pii;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 

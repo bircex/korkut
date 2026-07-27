@@ -1,4 +1,4 @@
-using Korkut.Domain.Redaction;
+using Korkut.Infrastructure.Pii;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 

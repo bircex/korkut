@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Korkut.Domain.Redaction;
+namespace Korkut.Infrastructure.Pii;
 
 /// <summary>
 /// Central redaction for logs/traces/metrics. Scrubs values that must never leave

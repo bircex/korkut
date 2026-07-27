@@ -1,6 +1,6 @@
-using Korkut.Domain.Redaction;
+using Korkut.Infrastructure.Pii;
 
-namespace Korkut.Domain.Tests;
+namespace Korkut.Infrastructure.Tests;
 
 /// <summary>
 /// Proves the central redactor masks secrets/PII. Canary values are assembled at

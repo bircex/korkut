@@ -2,7 +2,7 @@ using System.Text.Json;
 using Korkut.Core;
 using Korkut.Infrastructure.Auditing;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Redaction;
+using Korkut.Infrastructure.Pii;
 
 namespace Korkut.Infrastructure.Auditing;
 

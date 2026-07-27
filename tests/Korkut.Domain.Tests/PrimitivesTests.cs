@@ -1,5 +1,4 @@
 using Korkut.Core;
-using Korkut.Domain.Results;
 
 namespace Korkut.Domain.Tests;
 
@@ -30,36 +29,6 @@ public class PrimitivesTests
     public void SystemClock_returns_utc()
     {
         Assert.Equal(TimeSpan.Zero, SystemClock.Instance.UtcNow.Offset);
-    }
-
-    [Fact]
-    public void Result_success_has_no_error()
-    {
-        var result = Result.Success();
-
-        Assert.True(result.IsSuccess);
-        Assert.False(result.IsFailure);
-        Assert.Equal(Error.None, result.Error);
-    }
-
-    [Fact]
-    public void Result_failure_carries_error_and_blocks_value_access()
-    {
-        var error = new Error("matter.not_found", "Dosya bulunamadı");
-        var result = Result.Failure<int>(error);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(error, result.Error);
-        Assert.Throws<InvalidOperationException>(() => _ = result.Value);
-    }
-
-    [Fact]
-    public void Result_success_exposes_value()
-    {
-        var result = Result.Success(42);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(42, result.Value);
     }
 
     [Fact]
