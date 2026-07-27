@@ -3,9 +3,8 @@ using Korkut.Application.Errors;
 using Korkut.Application.Invites.Requests;
 using Korkut.Application.Invites.Responses;
 using Korkut.Application.Security;
-using Korkut.Application.Users;
+using Korkut.Organization;
 using Korkut.Domain.Invites;
-using Korkut.Domain.Users;
 
 namespace Korkut.Application.Invites;
 

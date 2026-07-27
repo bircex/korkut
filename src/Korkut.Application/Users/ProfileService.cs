@@ -3,7 +3,6 @@ using Korkut.Application.Errors;
 using Korkut.Organization;
 using Korkut.Application.Users.Requests;
 using Korkut.Application.Users.Responses;
-using Korkut.Domain.Users;
 
 namespace Korkut.Application.Users;
 

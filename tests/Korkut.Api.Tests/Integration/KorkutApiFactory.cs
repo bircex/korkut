@@ -6,7 +6,6 @@ using Korkut.Infrastructure.Security;
 using Korkut.Application.Security;
 using Korkut.Core;
 using Korkut.Domain.Auth;
-using Korkut.Domain.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;

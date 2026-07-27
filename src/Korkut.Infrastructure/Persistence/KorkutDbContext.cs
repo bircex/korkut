@@ -25,7 +25,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Auditing.AuditEvent> AuditEvents => Set<Domain.Auditing.AuditEvent>();
 
-    public DbSet<Domain.Users.User> Users => Set<Domain.Users.User>();
+    public DbSet<Korkut.Organization.User> Users => Set<Korkut.Organization.User>();
 
     public DbSet<Domain.Auth.PasswordResetToken> PasswordResetTokens => Set<Domain.Auth.PasswordResetToken>();
 
@@ -132,7 +132,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Invites.InviteConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Users.UserConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.UserConfiguration());
 
         modelBuilder.ApplyConfiguration(new Auth.PasswordResetTokenConfiguration());
 

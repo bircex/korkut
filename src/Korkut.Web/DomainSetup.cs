@@ -77,9 +77,8 @@ public static class DomainSetup
         services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
         // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
         new Korkut.Outbox.OutboxModule().Register(services, configuration);
-        // Users + members (Clean Architecture: the user aggregate, viewed as the office's
-        // members; owner-safety lives in the service).
-        services.AddScoped<Korkut.Application.Users.IUserRepository, Korkut.Infrastructure.Users.UserRepository>();
+        // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
+        // owned by the Organization module (registered above).
         services.AddScoped<Korkut.Application.Members.IMemberService, Korkut.Application.Members.MemberService>();
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
         services.AddScoped<Korkut.Application.Invites.IInviteRepository, Korkut.Infrastructure.Invites.InviteRepository>();

@@ -1,8 +1,7 @@
-using Korkut.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Users;
+namespace Korkut.Organization;
 
 /// <summary>EF mapping for office users (table/columns/indexes unchanged).</summary>
 public sealed class UserConfiguration : IEntityTypeConfiguration<User>

@@ -1,6 +1,5 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
-using Korkut.Domain.Users;
 using Korkut.Application.Security;
 using System.Security.Cryptography;
 using Korkut.Application.Auditing;

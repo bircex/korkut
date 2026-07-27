@@ -4,12 +4,10 @@ using Korkut.Application.Security;
 using Korkut.Domain.Auth;
 using Korkut.Organization;
 using Korkut.Core;
-using Korkut.Domain.Users;
 using Korkut.Infrastructure.Auth;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
-using Korkut.Infrastructure.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

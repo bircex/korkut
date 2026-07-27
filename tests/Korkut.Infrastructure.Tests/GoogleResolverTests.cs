@@ -3,7 +3,6 @@ using Korkut.Organization;
 using Korkut.Infrastructure.Auth;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Application.Security;
-using Korkut.Domain.Users;
 
 namespace Korkut.Infrastructure.Tests;
 

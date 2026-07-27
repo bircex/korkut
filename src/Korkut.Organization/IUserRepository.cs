@@ -1,11 +1,10 @@
 using Korkut.Core;
-using Korkut.Domain.Users;
 
-namespace Korkut.Application.Users;
+namespace Korkut.Organization;
 
 /// <summary>
-/// Persistence port for the office's users. Listings are ordered by e-mail, the order the
-/// member list is shown in.
+/// Persistence port for the office's users. Listings are ordered by e-mail, the order the member
+/// list is shown in.
 /// </summary>
 public interface IUserRepository : IRepository<User>
 {

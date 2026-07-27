@@ -1,15 +1,11 @@
 using Korkut.Core;
-using Korkut.Application.Security;
-using Korkut.Application.Users;
-using Korkut.Domain.Users;
 using Korkut.Persistence;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Users;
+namespace Korkut.Organization;
 
-/// <summary>EF/Postgres adapter for <see cref="IUserRepository"/>.</summary>
-public sealed class UserRepository(KorkutDbContext db) : Repository<User>(db), IUserRepository
+/// <summary>EF/Postgres adapter for <see cref="IUserRepository"/> over the ambient DbContext.</summary>
+public sealed class UserRepository(DbContext db) : Repository<User>(db), IUserRepository
 {
     public override async Task<IReadOnlyList<User>> ListAsync(Guid officeId, CancellationToken ct = default)
         => await Scoped(officeId).AsNoTracking().OrderBy(u => u.Email).ToListAsync(ct);

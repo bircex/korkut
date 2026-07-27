@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Users;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A person with access to an office. One aggregate carries both sides of that: who they
