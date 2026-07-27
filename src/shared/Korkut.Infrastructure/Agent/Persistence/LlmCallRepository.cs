@@ -1,5 +1,5 @@
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Domain.Agent.Ledger;
+using Korkut.Agent.Ledger;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Application.Agent.Abstractions;
 

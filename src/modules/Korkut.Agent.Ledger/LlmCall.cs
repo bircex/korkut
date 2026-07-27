@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Agent.Ledger;
+namespace Korkut.Agent.Ledger;
 
 /// <summary>
 /// One recorded model call — the cost/token ledger the per-office budgets and usage

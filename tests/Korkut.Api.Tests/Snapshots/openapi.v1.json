@@ -3536,6 +3536,12 @@
       "name": "Notes"
     },
     {
+      "name": "Members"
+    },
+    {
+      "name": "Profile"
+    },
+    {
       "name": "Outbox"
     },
     {
@@ -3549,12 +3555,6 @@
     },
     {
       "name": "Tasks"
-    },
-    {
-      "name": "Members"
-    },
-    {
-      "name": "Profile"
     }
   ]
 }

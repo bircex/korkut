@@ -1,6 +1,6 @@
 using Korkut.Domain.Agent.Documents;
 using Korkut.Domain.Agent.Conversations;
-using Korkut.Domain.Agent.Ledger;
+using Korkut.Agent.Ledger;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

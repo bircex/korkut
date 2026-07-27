@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent · Ledger sub-module: the llm_calls usage/cost ledger (LlmCall) in the Agent DB.
+       Immutable ledger entity + its EF mapping. The repository/log-service stay in Infrastructure
+       for now (they bind the AgentDbContext). References only the kernel. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+</Project>
