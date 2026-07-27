@@ -1,4 +1,4 @@
-using Korkut.Application.Pii;
+using Korkut.Core;
 using Korkut.Infrastructure.Pii;
 
 namespace Korkut.Infrastructure.Tests;

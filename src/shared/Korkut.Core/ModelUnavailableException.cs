@@ -1,4 +1,4 @@
-namespace Korkut.Application.Ai;
+namespace Korkut.Core;
 
 /// <summary>
 /// Raised when no provider is configured or a model call fails; surfaced as 503. Stays in the shared

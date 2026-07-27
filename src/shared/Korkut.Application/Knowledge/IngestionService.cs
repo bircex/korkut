@@ -1,7 +1,5 @@
-using Korkut.Application.Ai;
 using Korkut.Core;
 using Korkut.Domain.Knowledge;
-using Korkut.Application.Pii;
 
 namespace Korkut.Application.Knowledge;
 

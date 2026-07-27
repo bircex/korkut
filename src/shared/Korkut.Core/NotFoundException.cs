@@ -1,4 +1,4 @@
-namespace Korkut.Application.Errors;
+namespace Korkut.Core;
 
 /// <summary>
 /// A requested resource does not exist (or is not visible to the caller's tenant).

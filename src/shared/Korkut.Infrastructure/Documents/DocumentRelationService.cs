@@ -1,6 +1,5 @@
 using Korkut.Core;
 using Korkut.Application.Documents;
-using Korkut.Application.Errors;
 using Korkut.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,4 @@
-namespace Korkut.Application.Errors;
+namespace Korkut.Core;
 
 /// <summary>
 /// The request is well-formed but would break an invariant the office depends on (for

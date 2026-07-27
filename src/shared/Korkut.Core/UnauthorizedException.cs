@@ -1,4 +1,4 @@
-namespace Korkut.Application.Errors;
+namespace Korkut.Core;
 
 /// <summary>
 /// The caller's session no longer corresponds to anyone (the account was removed while the

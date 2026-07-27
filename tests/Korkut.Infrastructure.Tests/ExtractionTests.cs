@@ -1,4 +1,4 @@
-using Korkut.Application.Errors;
+using Korkut.Core;
 using Korkut.Organization;
 using System.Text;
 using Korkut.Application.Documents;
@@ -6,7 +6,6 @@ using Korkut.Application.Documents.OCR;
 using Korkut.Application.Documents.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

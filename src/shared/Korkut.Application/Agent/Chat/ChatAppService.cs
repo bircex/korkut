@@ -1,8 +1,9 @@
 using Korkut.Application.Agent.Chat;
-using Korkut.Application.Errors;
+using Korkut.Core;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Abstractions;
+using ICurrentUser = Korkut.Application.Agent.Abstractions.ICurrentUser;
 
 namespace Korkut.Application.Agent.Chat;
 

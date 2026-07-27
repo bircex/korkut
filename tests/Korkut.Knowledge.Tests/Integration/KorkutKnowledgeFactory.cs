@@ -1,11 +1,10 @@
 using Korkut.Organization;
 using System.Net.Http.Headers;
-using Korkut.Application.Ai;
+using Korkut.Core;
 using Korkut.Application.Security;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Knowledge;
 using Korkut.Infrastructure.Security;
-using Korkut.Core;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;

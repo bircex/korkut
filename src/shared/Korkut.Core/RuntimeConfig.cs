@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Korkut.Application.Runtime;
+namespace Korkut.Core;
 
 /// <summary>
 /// The LLM-provider + context-budget environment contract, ported 1:1 from the Python

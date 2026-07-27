@@ -1,4 +1,4 @@
-using Korkut.Application.Ai;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Ai;
 

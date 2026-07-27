@@ -1,6 +1,5 @@
-using Korkut.Application.Ai;
+using Korkut.Core;
 using Korkut.Application.Documents.OCR;
-using Korkut.Application.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 

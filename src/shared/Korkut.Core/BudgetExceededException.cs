@@ -1,4 +1,4 @@
-namespace Korkut.Application.Ai;
+namespace Korkut.Core;
 
 /// <summary>
 /// Raised when an office has exhausted its model-usage budget; surfaced as 429. Stays in the shared

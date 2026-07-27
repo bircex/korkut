@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Korkut.Application.Runtime;
+namespace Korkut.Core;
 
 /// <summary>
 /// Redacts secret-shaped environment values before any config is logged or dumped

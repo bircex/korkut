@@ -1,4 +1,4 @@
-namespace Korkut.Application.Pii;
+namespace Korkut.Core;
 
 /// <summary>The kinds of Turkish PII the redactor recognizes.</summary>
 public enum PiiKind

@@ -1,12 +1,11 @@
 using Korkut.Infrastructure.Auditing;
-using Korkut.Application.Errors;
+using Korkut.Core;
 using Korkut.Documents;
 using Korkut.Organization;
 using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Clients;
 using Korkut.Matters;

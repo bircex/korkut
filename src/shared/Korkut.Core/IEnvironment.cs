@@ -1,4 +1,4 @@
-namespace Korkut.Application.Runtime;
+namespace Korkut.Core;
 
 /// <summary>
 /// Abstraction over process environment variables (KDM-033), so the runtime-config

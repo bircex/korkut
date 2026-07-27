@@ -1,5 +1,5 @@
 using Korkut.Persistence;
-using Korkut.Application.Directory;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence.Repositories;

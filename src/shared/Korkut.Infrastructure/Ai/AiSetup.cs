@@ -1,7 +1,5 @@
-using Korkut.Application.Ai;
-using Korkut.Application.Runtime;
+using Korkut.Core;
 using Korkut.Infrastructure.Runtime;
-using Korkut.Application.Pii;
 using Korkut.Infrastructure.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

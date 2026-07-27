@@ -1,4 +1,4 @@
-namespace Korkut.Application.Errors;
+namespace Korkut.Core;
 
 /// <summary>
 /// The caller's request is malformed or violates a validation rule. Application-layer

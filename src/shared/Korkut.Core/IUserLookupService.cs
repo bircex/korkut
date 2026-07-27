@@ -1,4 +1,4 @@
-namespace Korkut.Application.Directory;
+namespace Korkut.Core;
 
 /// <summary>
 /// Resolves operational user identity (display name / email) by id. The Agent host stores

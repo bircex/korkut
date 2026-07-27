@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Korkut.Application.Pii;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Pii;
 

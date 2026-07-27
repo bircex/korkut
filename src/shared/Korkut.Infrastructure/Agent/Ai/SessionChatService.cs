@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Settings;
-using Korkut.Application.Runtime;
+using Korkut.Core;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Documents.OCR;

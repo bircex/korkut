@@ -1,4 +1,4 @@
-using Korkut.Application.Ai;
+using Korkut.Core;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 

@@ -1,4 +1,4 @@
-namespace Korkut.Application.Ai;
+namespace Korkut.Core;
 
 /// <summary>
 /// Embedding output. Carries <see cref="ModelId"/> + <see cref="EmbeddingVersion"/> so every

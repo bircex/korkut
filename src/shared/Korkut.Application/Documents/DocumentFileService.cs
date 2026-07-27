@@ -2,7 +2,6 @@ using Korkut.Core;
 using Korkut.Application.Documents.Requests;
 using Korkut.Application.Documents.Responses;
 using Korkut.Application.Documents.Storage;
-using Korkut.Application.Errors;
 using Korkut.Application.Upload.SafeUpload;
 using Korkut.Documents;
 

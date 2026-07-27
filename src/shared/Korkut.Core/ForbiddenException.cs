@@ -1,4 +1,4 @@
-namespace Korkut.Application.Errors;
+namespace Korkut.Core;
 
 /// <summary>
 /// The caller is authenticated and permitted to use the endpoint, but not to do this
