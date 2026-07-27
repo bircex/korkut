@@ -1,7 +1,6 @@
 using Korkut.Core;
-using Korkut.Domain.Tasks;
 
-namespace Korkut.Application.Tasks;
+namespace Korkut.Tasks;
 
 /// <summary>Persistence port for office tasks.</summary>
 public interface ITaskRepository : IRepository<WorkTask>

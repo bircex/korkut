@@ -5,7 +5,7 @@ using Korkut.Api.Tests.Integration;
 using Korkut.Clients;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
-using Korkut.Domain.Tasks;
+using Korkut.Tasks;
 using Korkut.Domain.Deadlines;
 using Korkut.Domain.Correspondence;
 

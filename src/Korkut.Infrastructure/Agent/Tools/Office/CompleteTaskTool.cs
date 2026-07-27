@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
-using Korkut.Application.Tasks;
-using Korkut.Application.Tasks.Requests;
+using Korkut.Contract.Tasks;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -35,7 +33,13 @@ public sealed class CompleteTaskTool(ITaskService tasks) : IAgentTool
             return ToolResult.Error("'task_id' gereklidir.");
         }
 
-        var task = await tasks.SetStatusAsync(taskId, new UpdateTaskStatusRequest { Status = "done" }, ct);
+        var result = await tasks.SetStatusAsync(taskId, new UpdateTaskStatusRequest { Status = "done" }, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var task = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { task.Id, task.Status, task.CompletedAt }));
     }
 }

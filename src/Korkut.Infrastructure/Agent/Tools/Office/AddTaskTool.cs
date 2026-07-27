@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
-using Korkut.Application.Tasks;
-using Korkut.Application.Tasks.Requests;
+using Korkut.Contract.Tasks;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -44,7 +42,13 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
             DueAt = ToolArgs.DateTime(arguments, "due_at"),
         };
-        var task = await tasks.CreateAsync(request, ct);
+        var result = await tasks.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var task = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { task.Id, task.Title, task.Status, task.DueAt }));
     }
 }

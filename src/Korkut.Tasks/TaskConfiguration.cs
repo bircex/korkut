@@ -1,8 +1,7 @@
-using Korkut.Domain.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Tasks;
+namespace Korkut.Tasks;
 
 /// <summary>EF mapping for office tasks (table/columns unchanged).</summary>
 public sealed class TaskConfiguration : IEntityTypeConfiguration<WorkTask>

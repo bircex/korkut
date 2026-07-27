@@ -3554,13 +3554,13 @@
       "name": "Style"
     },
     {
-      "name": "Tasks"
-    },
-    {
       "name": "Clients"
     },
     {
       "name": "Notes"
+    },
+    {
+      "name": "Tasks"
     }
   ]
 }

@@ -19,6 +19,7 @@ public static class ControllerSetup
             // MVC application part so its endpoints are discovered alongside the host's.
             .AddApplicationPart(typeof(Korkut.Clients.ClientsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Notes.NotesModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Tasks.TasksModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

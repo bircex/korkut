@@ -3,7 +3,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Domain.Deadlines;
-using Korkut.Domain.Tasks;
+using Korkut.Tasks;
 using Korkut.Infrastructure.Deadlines;
 
 namespace Korkut.Infrastructure.Tests;

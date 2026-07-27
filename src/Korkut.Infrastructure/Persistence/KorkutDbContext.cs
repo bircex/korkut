@@ -45,7 +45,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Parties.Party> Parties => Set<Domain.Parties.Party>();
 
-    public DbSet<Domain.Tasks.WorkTask> Tasks => Set<Domain.Tasks.WorkTask>();
+    public DbSet<Korkut.Tasks.WorkTask> Tasks => Set<Korkut.Tasks.WorkTask>();
 
     public DbSet<Domain.Deadlines.Deadline> Deadlines => Set<Domain.Deadlines.Deadline>();
 
@@ -101,7 +101,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Auditing.AuditEventConfiguration());
 
 
-        modelBuilder.ApplyConfiguration(new Tasks.TaskConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Tasks.TaskConfiguration());
         modelBuilder.ApplyConfiguration(new Deadlines.DeadlineConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Notes.NoteConfiguration());
 

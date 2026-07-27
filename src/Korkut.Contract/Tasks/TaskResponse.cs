@@ -1,4 +1,4 @@
-namespace Korkut.Application.Tasks.Responses;
+namespace Korkut.Contract.Tasks;
 
 /// <summary>Transport shape for an office task.</summary>
 public sealed record TaskResponse(

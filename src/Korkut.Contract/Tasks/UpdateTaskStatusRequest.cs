@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Tasks.Requests;
+namespace Korkut.Contract.Tasks;
 
 /// <summary>Body for moving a task through its lifecycle.</summary>
 public sealed record UpdateTaskStatusRequest

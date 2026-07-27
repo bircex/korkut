@@ -1,13 +1,12 @@
+using Korkut.Contract.Tasks;
 using Korkut.Core;
-using Korkut.Application.Security;
-using Korkut.Application.Tasks;
-using Korkut.Application.Tasks.Requests;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.Controllers;
+namespace Korkut.Tasks;
 
-/// <summary>Office tasks (görevler). Forwards to <see cref="ITaskService"/>.</summary>
+/// <summary>Office tasks (görevler). Forwards to <see cref="ITaskService"/>, maps Result to HTTP.</summary>
 [ApiController]
 [Route("api/tasks")]
 public sealed class TasksController(ITaskService tasks) : ControllerBase
@@ -15,26 +14,20 @@ public sealed class TasksController(ITaskService tasks) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List([FromQuery] Guid? matterId, CancellationToken ct)
-        => Ok(await tasks.ListAsync(matterId, ct));
+        => (await tasks.ListAsync(matterId, ct)).ToActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Create([FromBody] CreateTaskRequest body, CancellationToken ct)
-    {
-        var created = await tasks.CreateAsync(body, ct);
-        return Created($"/api/tasks/{created.Id}", created);
-    }
+        => (await tasks.CreateAsync(body, ct)).ToActionResult(t => Created($"/api/tasks/{t.Id}", t));
 
     [HttpPatch("{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> SetStatus(Guid id, [FromBody] UpdateTaskStatusRequest body, CancellationToken ct)
-        => Ok(await tasks.SetStatusAsync(id, body, ct));
+        => (await tasks.SetStatusAsync(id, body, ct)).ToActionResult();
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        await tasks.DeleteAsync(id, ct);
-        return NoContent();
-    }
+        => (await tasks.DeleteAsync(id, ct)).ToActionResult();
 }
