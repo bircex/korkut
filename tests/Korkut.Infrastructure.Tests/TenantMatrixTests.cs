@@ -9,7 +9,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Korkut.Domain.Clients;
+using Korkut.Clients;
 using Korkut.Domain.Matters;
 using Korkut.Domain.Hearings;
 using Korkut.Domain.Courts;

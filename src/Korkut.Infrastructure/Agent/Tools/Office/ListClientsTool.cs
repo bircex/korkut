@@ -1,9 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Clients;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
+using Korkut.Contract.Clients;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -24,6 +23,8 @@ public sealed class ListClientsTool(IClientService clients) : IAgentTool
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
         var result = await clients.ListAsync(ct);
-        return ToolResult.Ok(ToolArgs.Result(result));
+        return result.IsSuccess
+            ? ToolResult.Ok(ToolArgs.Result(result.Value!))
+            : ToolResult.Error(result.Error!.Detail);
     }
 }

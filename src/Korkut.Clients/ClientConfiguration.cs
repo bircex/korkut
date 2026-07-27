@@ -1,12 +1,11 @@
-using Korkut.Domain.Clients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Clients;
+namespace Korkut.Clients;
 
 /// <summary>
-/// EF mapping for the <see cref="Client"/> aggregate. Table/column names are unchanged from
-/// the previous persistence entity, so existing migrations and data still apply.
+/// EF mapping for the <see cref="Client"/> aggregate. Table/column names are unchanged from the
+/// previous persistence entity, so existing migrations and data still apply.
 /// </summary>
 public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 {

@@ -24,11 +24,14 @@ public static class DomainSetup
         services.AddScoped<IAuditLog, Korkut.Infrastructure.Auditing.AuditLog>();
         // Office-core (Clean Architecture: clients + matters + hearings). Owns the
         // court-title snapshot rule in MatterService.
-        services.AddScoped<Korkut.Application.Clients.IClientRepository, Korkut.Infrastructure.Clients.ClientRepository>();
         services.AddScoped<Korkut.Application.Matters.IMatterRepository, Korkut.Infrastructure.Matters.MatterRepository>();
         services.AddScoped<Korkut.Application.Courts.ICourtRepository, Korkut.Infrastructure.Courts.CourtRepository>();
         services.AddScoped<Korkut.Application.Hearings.IHearingRepository, Korkut.Infrastructure.Hearings.HearingRepository>();
-        services.AddScoped<Korkut.Application.Clients.IClientService, Korkut.Application.Clients.ClientService>();
+
+        // Modular monolith: self-registering vertical modules. Clients is the reference slice —
+        // it binds its own repository + service; its EF mapping + controller are picked up by the
+        // shared context and MVC application parts (see AddKorkutControllers).
+        new Korkut.Clients.ClientsModule().Register(services, configuration);
 
         // Offices (the tenant root: platform-admin management, cross-tenant by design) and
         // the caller's own profile.

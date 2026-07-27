@@ -1,4 +1,4 @@
-using Korkut.Domain.Clients;
+using Korkut.Clients;
 using Korkut.Domain.Matters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

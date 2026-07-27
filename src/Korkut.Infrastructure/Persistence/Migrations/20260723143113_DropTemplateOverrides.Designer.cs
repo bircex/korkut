@@ -126,7 +126,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("calendar_events", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Domain.Clients.Client", b =>
+            modelBuilder.Entity("Korkut.Clients.Client", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1726,7 +1726,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Korkut.Domain.Matters.Matter", b =>
                 {
-                    b.HasOne("Korkut.Domain.Clients.Client", null)
+                    b.HasOne("Korkut.Clients.Client", null)
                         .WithMany()
                         .HasForeignKey("OfficeId", "ClientId")
                         .HasPrincipalKey("OfficeId", "Id")

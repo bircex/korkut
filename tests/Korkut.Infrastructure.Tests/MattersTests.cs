@@ -2,7 +2,7 @@ using Korkut.Domain.Offices;
 using Korkut.Core;
 using Korkut.Application.Matters;
 using Korkut.Application.Matters.Requests;
-using Korkut.Domain.Clients;
+using Korkut.Clients;
 using Korkut.Domain.Courts;
 using Korkut.Domain.Parties;
 using Korkut.Infrastructure.Courts;

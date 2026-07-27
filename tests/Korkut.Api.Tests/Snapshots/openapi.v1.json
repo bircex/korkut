@@ -3485,9 +3485,6 @@
       "name": "Channels"
     },
     {
-      "name": "Clients"
-    },
-    {
       "name": "Correspondence"
     },
     {
@@ -3561,6 +3558,9 @@
     },
     {
       "name": "Tasks"
+    },
+    {
+      "name": "Clients"
     }
   ]
 }

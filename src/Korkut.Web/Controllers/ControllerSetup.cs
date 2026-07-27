@@ -14,7 +14,11 @@ public static class ControllerSetup
 {
     public static IServiceCollection AddKorkutControllers(this IServiceCollection services)
     {
-        services.AddControllers().AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
+        services.AddControllers()
+            // Vertical modules host their own controllers; register each module assembly as an
+            // MVC application part so its endpoints are discovered alongside the host's.
+            .AddApplicationPart(typeof(Korkut.Clients.ClientsModule).Assembly)
+            .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>
         {

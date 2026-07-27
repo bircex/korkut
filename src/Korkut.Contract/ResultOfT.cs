@@ -23,17 +23,17 @@ public sealed class Result<T> : Result
     public static new Result<T> Fail(ResultStatus status, string code, string detail)
         => new(status, default, new Error(code, detail));
 
-    public static new Result<T> NotFound(string detail, string code = "not_found") => Fail(ResultStatus.NotFound, code, detail);
+    public new static Result<T> NotFound(string detail, string code = "not_found") => Fail(ResultStatus.NotFound, code, detail);
 
-    public static new Result<T> BadRequest(string detail, string code = "bad_request") => Fail(ResultStatus.BadRequest, code, detail);
+    public new static Result<T> BadRequest(string detail, string code = "bad_request") => Fail(ResultStatus.BadRequest, code, detail);
 
-    public static new Result<T> Conflict(string detail, string code = "conflict") => Fail(ResultStatus.Conflict, code, detail);
+    public new static Result<T> Conflict(string detail, string code = "conflict") => Fail(ResultStatus.Conflict, code, detail);
 
-    public static new Result<T> Forbidden(string detail, string code = "forbidden") => Fail(ResultStatus.Forbidden, code, detail);
+    public new static Result<T> Forbidden(string detail, string code = "forbidden") => Fail(ResultStatus.Forbidden, code, detail);
 
-    public static new Result<T> Unauthorized(string detail, string code = "unauthorized") => Fail(ResultStatus.Unauthorized, code, detail);
+    public new static Result<T> Unauthorized(string detail, string code = "unauthorized") => Fail(ResultStatus.Unauthorized, code, detail);
 
-    public static new Result<T> Unprocessable(string detail, string code = "unprocessable") => Fail(ResultStatus.Unprocessable, code, detail);
+    public new static Result<T> Unprocessable(string detail, string code = "unprocessable") => Fail(ResultStatus.Unprocessable, code, detail);
 
     /// <summary>Lift a value into a successful result.</summary>
     public static implicit operator Result<T>(T value) => Ok(value);

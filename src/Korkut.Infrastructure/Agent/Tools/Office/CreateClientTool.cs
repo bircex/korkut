@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Clients;
-using Korkut.Application.Clients.Requests;
-using Korkut.Application.Security;
+using Korkut.Contract.Clients;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -46,7 +44,13 @@ public sealed class CreateClientTool(IClientService clients) : IAgentTool
             Email = ToolArgs.String(arguments, "email"),
             Phone = ToolArgs.String(arguments, "phone"),
         };
-        var client = await clients.CreateAsync(request, ct);
+        var result = await clients.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var client = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { client.Id, client.Name, client.Kind }));
     }
 }
