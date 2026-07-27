@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Models;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Ported model-routing rules from <c>config/model-routing.yaml</c> (KDM-033),

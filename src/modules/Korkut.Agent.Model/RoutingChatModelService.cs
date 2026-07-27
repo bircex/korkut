@@ -1,8 +1,6 @@
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// The <see cref="IChatModelService"/> consumers depend on. Per request it asks the router which

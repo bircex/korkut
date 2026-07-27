@@ -1,7 +1,5 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// The chat port every consumer depends on. Routing (specialty → provider + model) and

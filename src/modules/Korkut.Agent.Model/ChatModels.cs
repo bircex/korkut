@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Models;
+namespace Korkut.Agent.Model;
 
 /// <summary>A tool the model may call: its name, human description, and JSON-Schema for arguments.</summary>
 public sealed record ToolDefinition(string Name, string Description, System.Text.Json.JsonElement Schema);

@@ -1,3 +1,4 @@
+using Korkut.Agent.Model;
 using System.Diagnostics;
 using Korkut.Infrastructure.Observability;
 using Korkut.Core;

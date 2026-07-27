@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Approximate list prices (USD per 1,000,000 tokens, input/output) for the pinned models, used to

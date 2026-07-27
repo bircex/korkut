@@ -1,3 +1,4 @@
+using Korkut.Agent.Model;
 using System.Diagnostics;
 using System.Text;
 using Korkut.Settings;

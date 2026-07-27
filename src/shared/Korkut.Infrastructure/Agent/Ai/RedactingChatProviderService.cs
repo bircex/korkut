@@ -1,3 +1,4 @@
+using Korkut.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Korkut.Core;

@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Models;
+namespace Korkut.Agent.Model;
 
 /// <summary>The feature (call site) that issued a model call — a span/telemetry dimension.</summary>
 public static class LlmFeature

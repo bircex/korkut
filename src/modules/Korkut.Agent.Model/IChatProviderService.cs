@@ -1,7 +1,5 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// One vendor adapter, keyed by <see cref="Name"/> (the token used in <c>model-routing.yaml</c>

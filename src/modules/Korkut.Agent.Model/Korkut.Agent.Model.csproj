@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent · Model: the ONLY layer that talks to an LLM. Chat DTOs + abstractions
+       (IChatModelService/IChatProviderService/IModelRouterService), the providers
+       (Anthropic/OpenAI-compatible), the specialty router, and the routing facade. Cross-cutting
+       (PII/governance/ledger) will wrap IChatModelService as DI decorators (step 2). References
+       only the kernel. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+</Project>

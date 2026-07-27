@@ -1,8 +1,6 @@
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Resolves a specialty to a provider + model using the ported <see cref="ModelRouting"/>

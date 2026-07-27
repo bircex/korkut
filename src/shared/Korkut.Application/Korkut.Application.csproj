@@ -3,6 +3,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Chat\Korkut.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />

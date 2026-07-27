@@ -1,3 +1,4 @@
+using Korkut.Agent.Model;
 using Korkut.Tools.Tools;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;

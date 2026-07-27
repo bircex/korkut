@@ -1,7 +1,5 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Maps a task specialty to a concrete provider + model, honouring <c>model-routing.yaml</c>

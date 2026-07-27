@@ -4,10 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// One adapter for every provider that speaks the OpenAI chat-completions schema —
