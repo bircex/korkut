@@ -65,11 +65,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Calendar.CalendarEvent> CalendarEvents => Set<Korkut.Calendar.CalendarEvent>();
 
-    public DbSet<Domain.Settings.Persona> Personas => Set<Domain.Settings.Persona>();
+    public DbSet<Korkut.Settings.Persona> Personas => Set<Korkut.Settings.Persona>();
 
-    public DbSet<Domain.Settings.StyleProfile> StyleProfiles => Set<Domain.Settings.StyleProfile>();
+    public DbSet<Korkut.Settings.StyleProfile> StyleProfiles => Set<Korkut.Settings.StyleProfile>();
 
-    public DbSet<Domain.Settings.MemoryItem> MemoryItems => Set<Domain.Settings.MemoryItem>();
+    public DbSet<Korkut.Settings.MemoryItem> MemoryItems => Set<Korkut.Settings.MemoryItem>();
 
     public DbSet<Korkut.Channels.Channel> Channels => Set<Korkut.Channels.Channel>();
 
@@ -114,11 +114,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Calendar.CalendarEventConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Settings.PersonaConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Settings.PersonaConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Settings.StyleProfileConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Settings.StyleProfileConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Settings.MemoryItemConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Settings.MemoryItemConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
 

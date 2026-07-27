@@ -3503,13 +3503,7 @@
       "name": "Members"
     },
     {
-      "name": "Memory"
-    },
-    {
       "name": "Onboarding"
-    },
-    {
-      "name": "Persona"
     },
     {
       "name": "PetitionTypes"
@@ -3519,9 +3513,6 @@
     },
     {
       "name": "Reports"
-    },
-    {
-      "name": "Style"
     },
     {
       "name": "Calendar"
@@ -3558,6 +3549,15 @@
     },
     {
       "name": "Outbox"
+    },
+    {
+      "name": "Memory"
+    },
+    {
+      "name": "Persona"
+    },
+    {
+      "name": "Style"
     },
     {
       "name": "Tasks"

@@ -34,5 +34,6 @@
     <ProjectReference Include="..\Korkut.Hearings\Korkut.Hearings.csproj" />
     <ProjectReference Include="..\Korkut.Invoices\Korkut.Invoices.csproj" />
     <ProjectReference Include="..\Korkut.Expenses\Korkut.Expenses.csproj" />
+    <ProjectReference Include="..\Korkut.Settings\Korkut.Settings.csproj" />
   </ItemGroup>
 </Project>

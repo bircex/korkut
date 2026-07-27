@@ -22,7 +22,7 @@ using Korkut.Correspondence;
 using Korkut.Calendar;
 using Korkut.Outbox;
 using Korkut.Channels;
-using Korkut.Domain.Settings;
+using Korkut.Settings;
 using Korkut.Domain.Auth;
 using Korkut.Domain.Auditing;
 using Korkut.Domain.OfficeRoles;

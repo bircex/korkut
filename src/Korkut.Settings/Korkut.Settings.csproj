@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Settings module (office AI configuration): the persona, drafting-style layers and office
+       memory — the cohesive office-config bounded context. Memory's author lookup is a Contract
+       port impl'd in Infrastructure. References only kernel/contract/persistence/web-kernel. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\Korkut.Web.Kernel\Korkut.Web.Kernel.csproj" />
+  </ItemGroup>
+</Project>

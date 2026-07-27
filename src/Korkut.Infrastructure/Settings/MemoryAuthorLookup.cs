@@ -1,4 +1,4 @@
-using Korkut.Application.Settings;
+using Korkut.Contract.Settings;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text;
-using Korkut.Application.Settings;
-using Korkut.Domain.Settings;
+using Korkut.Settings;
 using Korkut.Infrastructure.Templates;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;

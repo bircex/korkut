@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
-using Korkut.Application.Settings;
-using Korkut.Application.Settings.Requests;
+using Korkut.Contract.Settings;
 
 namespace Korkut.Infrastructure.Agent.Tools;
 
@@ -44,8 +42,14 @@ public sealed class RememberTool(IMemoryService memory) : IAgentTool
             return ToolResult.Error("'text' gereklidir.");
         }
 
-        var item = await memory.AddAsync(
+        var result = await memory.AddAsync(
             new CreateMemoryRequest { Text = text.Trim(), Kind = ToolArgs.String(arguments, "kind") ?? "preference" }, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var item = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { remembered = true, id = item.Id, status = item.Status }));
     }
 }

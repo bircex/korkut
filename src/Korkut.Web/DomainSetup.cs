@@ -59,14 +59,10 @@ public static class DomainSetup
         // hearings) is a host-level registration since its impl spans other modules' tables.
         new Korkut.Calendar.CalendarModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
-        // Office settings (Clean Architecture: persona, style layers and memory, one slice each).
-        services.AddScoped<Korkut.Application.Settings.IPersonaRepository, Korkut.Infrastructure.Settings.PersonaRepository>();
-        services.AddScoped<Korkut.Application.Settings.IPersonaService, Korkut.Application.Settings.PersonaService>();
-        services.AddScoped<Korkut.Application.Settings.IStyleProfileRepository, Korkut.Infrastructure.Settings.StyleProfileRepository>();
-        services.AddScoped<Korkut.Application.Settings.IStyleService, Korkut.Application.Settings.StyleService>();
-        services.AddScoped<Korkut.Application.Settings.IMemoryRepository, Korkut.Infrastructure.Settings.MemoryRepository>();
-        services.AddScoped<Korkut.Application.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
-        services.AddScoped<Korkut.Application.Settings.IMemoryService, Korkut.Application.Settings.MemoryService>();
+        // Office settings module (persona, style layers, memory). The memory author lookup impl
+        // stays in Infrastructure (it reads the users table) and is registered here.
+        new Korkut.Settings.SettingsModule().Register(services, configuration);
+        services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         // Reports (Clean Architecture: read-only aggregation query + service; finance is
         // computed from the same invoice/expense figures the finance screens use).
         services.AddScoped<Korkut.Application.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
