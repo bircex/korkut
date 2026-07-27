@@ -1,7 +1,7 @@
 using Korkut.Domain.Offices;
 using Korkut.Application.Differential;
 using Microsoft.EntityFrameworkCore;
-using Korkut.Domain.Matters;
+using Korkut.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 

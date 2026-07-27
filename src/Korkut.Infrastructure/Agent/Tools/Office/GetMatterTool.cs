@@ -1,9 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Matters;
+using Korkut.Contract.Matters;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -33,6 +32,8 @@ public sealed class GetMatterTool(IMatterService matters) : IAgentTool
         }
 
         var matter = await matters.GetAsync(id, ct);
-        return ToolResult.Ok(ToolArgs.Result(matter));
+        return matter.IsSuccess
+            ? ToolResult.Ok(ToolArgs.Result(matter.Value!))
+            : ToolResult.Error(matter.Error!.Detail);
     }
 }

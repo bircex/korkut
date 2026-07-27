@@ -22,11 +22,12 @@ public static class DomainSetup
 
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, Korkut.Infrastructure.Auditing.AuditLog>();
-        // Office-core (Clean Architecture: clients + matters + hearings). Owns the
-        // court-title snapshot rule in MatterService.
-        services.AddScoped<Korkut.Application.Matters.IMatterRepository, Korkut.Infrastructure.Matters.MatterRepository>();
+        // Office-core modules (clients + courts + matters/parties + hearings). Cross-module FKs are
+        // configured in Infrastructure; cross-module reads go through Contract lookups
+        // (ICourtLookup, IHearingLookup, IMatterLookup).
         new Korkut.Courts.CourtsModule().Register(services, configuration);
-        services.AddScoped<Korkut.Application.Hearings.IHearingRepository, Korkut.Infrastructure.Hearings.HearingRepository>();
+        new Korkut.Matters.MattersModule().Register(services, configuration);
+        new Korkut.Hearings.HearingsModule().Register(services, configuration);
 
         // Modular monolith: self-registering vertical modules. Clients is the reference slice —
         // it binds its own repository + service; its EF mapping + controller are picked up by the
@@ -44,8 +45,6 @@ public static class DomainSetup
         services.AddHttpContextAccessor();
         services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
         services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Persistence.UnitOfWork>();
-        services.AddScoped<Korkut.Application.Matters.IMatterService, Korkut.Application.Matters.MatterService>();
-        services.AddScoped<Korkut.Application.Hearings.IHearingService, Korkut.Application.Hearings.HearingService>();
         // Office-ops (Clean Architecture: repository ports + service).
         new Korkut.Notes.NotesModule().Register(services, configuration);
         new Korkut.Tasks.TasksModule().Register(services, configuration);

@@ -1,7 +1,7 @@
 using Korkut.Domain.Offices;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Korkut.Domain.Matters;
+using Korkut.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 

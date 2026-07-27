@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Hearings;
-using Korkut.Application.Hearings.Requests;
-using Korkut.Application.Security;
+using Korkut.Contract.Hearings;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -49,7 +47,13 @@ public sealed class AddHearingTool(IHearingService hearings) : IAgentTool
             Time = TimeOnly.TryParse(ToolArgs.String(arguments, "time"), out var t) ? t : null,
             Location = ToolArgs.String(arguments, "location"),
         };
-        var hearing = await hearings.AddAsync(matterId, request, ct);
+        var result = await hearings.AddAsync(matterId, request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var hearing = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { hearing.Id, hearing.ScheduledAt, hearing.Location }));
     }
 }

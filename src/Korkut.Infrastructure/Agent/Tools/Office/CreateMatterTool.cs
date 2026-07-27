@@ -2,9 +2,7 @@ using Korkut.Core;
 using System.Text.Json;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Matters;
-using Korkut.Application.Matters.Requests;
-using Korkut.Application.Security;
+using Korkut.Contract.Matters;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -42,7 +40,13 @@ public sealed class CreateMatterTool(IMatterService matters) : IAgentTool
             Title = title.Trim(),
             ClientId = ToolArgs.TryGuid(arguments, "client_id", out var cid) ? cid : null,
         };
-        var matter = await matters.CreateAsync(request, ct);
+        var result = await matters.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var matter = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { matter.Id, matter.Title, matter.Status }));
     }
 }

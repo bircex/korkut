@@ -3500,16 +3500,10 @@
       "name": "GoogleAuth"
     },
     {
-      "name": "Hearings"
-    },
-    {
       "name": "Invites"
     },
     {
       "name": "Invoices"
-    },
-    {
-      "name": "Matters"
     },
     {
       "name": "Members"
@@ -3552,6 +3546,12 @@
     },
     {
       "name": "Deadlines"
+    },
+    {
+      "name": "Hearings"
+    },
+    {
+      "name": "Matters"
     },
     {
       "name": "Notes"

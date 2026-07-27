@@ -19,9 +19,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Offices.Office> Offices => Set<Domain.Offices.Office>();
 
-    public DbSet<Domain.Matters.Matter> Matters => Set<Domain.Matters.Matter>();
+    public DbSet<Korkut.Matters.Matter> Matters => Set<Korkut.Matters.Matter>();
 
-    public DbSet<Domain.Hearings.Hearing> MatterHearings => Set<Domain.Hearings.Hearing>();
+    public DbSet<Korkut.Hearings.Hearing> MatterHearings => Set<Korkut.Hearings.Hearing>();
 
     public DbSet<Domain.Auditing.AuditEvent> AuditEvents => Set<Domain.Auditing.AuditEvent>();
 
@@ -43,7 +43,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Courts.Court> Courts => Set<Korkut.Courts.Court>();
 
-    public DbSet<Domain.Parties.Party> Parties => Set<Domain.Parties.Party>();
+    public DbSet<Korkut.Matters.Party> Parties => Set<Korkut.Matters.Party>();
 
     public DbSet<Korkut.Tasks.WorkTask> Tasks => Set<Korkut.Tasks.WorkTask>();
 
@@ -92,11 +92,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
         // — kept together because their tenant-aware composite FKs form one set.
-        modelBuilder.ApplyConfiguration(new Matters.MatterConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Matters.MatterConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Clients.ClientConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Courts.CourtConfiguration());
-        modelBuilder.ApplyConfiguration(new Parties.PartyConfiguration());
-        modelBuilder.ApplyConfiguration(new Hearings.HearingConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Matters.PartyConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Hearings.HearingConfiguration());
 
         modelBuilder.ApplyConfiguration(new Auditing.AuditEventConfiguration());
 
@@ -143,6 +143,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Auth.RefreshTokenConfiguration());
 
         modelBuilder.ApplyConfiguration(new OfficeRoles.OfficeRoleConfiguration());
+
+        // Cross-module FK constraints (Matter→Client, Hearing→Matter) — real DB constraints that
+        // can't live in a module's own config since a module never references another's entity type.
+        CrossModuleRelationships.Apply(modelBuilder);
 
         SnakeCaseNaming.Apply(modelBuilder);
 

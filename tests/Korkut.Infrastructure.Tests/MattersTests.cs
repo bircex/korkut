@@ -1,12 +1,10 @@
 using Korkut.Domain.Offices;
 using Korkut.Core;
-using Korkut.Application.Matters;
-using Korkut.Application.Matters.Requests;
+using Korkut.Contract.Matters;
 using Korkut.Clients;
 using Korkut.Courts;
-using Korkut.Domain.Parties;
-using Korkut.Infrastructure.Hearings;
-using Korkut.Infrastructure.Matters;
+using Korkut.Matters;
+using Korkut.Hearings;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,7 +55,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     // Exercise the use-case service over the real EF repositories, so these tests still cover
     // the court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
     private MatterService Service(KorkutDbContext db) =>
-        new(new MatterRepository(db), new HearingRepository(db), new CourtLookup(new CourtRepository(db)),
+        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db)), new CourtLookup(new CourtRepository(db)),
             new DirectUnitOfWork(), new TestCurrentUser(_office), new Clock());
 
     [Fact]
@@ -70,7 +68,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
             db.Courts.Add(court);
             await db.SaveChangesAsync();
             courtId = court.Id;
-            matterId = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Dava", CourtId = courtId })).Id;
+            matterId = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Dava", CourtId = courtId })).Value!.Id;
         }
 
         // The matter captured the court's title at link time.
@@ -102,13 +100,13 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         Guid keep, drop;
         await using (var db = pg.NewContext())
         {
-            keep = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Aktif" })).Id;
-            drop = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Silinen" })).Id;
+            keep = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Aktif" })).Value!.Id;
+            drop = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Silinen" })).Value!.Id;
             await Service(db).DeleteAsync(drop);
         }
 
         await using var check = pg.NewContext();
-        var listed = await Service(check).ListAsync();
+        var listed = (await Service(check).ListAsync()).Value!;
         Assert.Contains(listed, m => m.Id == keep);
         Assert.DoesNotContain(listed, m => m.Id == drop);
         // But the soft-deleted row is retained (not physically gone).
@@ -124,7 +122,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         {
             db.Offices.Add(new Office(otherOffice, "B", DateTimeOffset.UtcNow));
             await db.SaveChangesAsync();
-            matterInThisOffice = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "M" })).Id;
+            matterInThisOffice = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "M" })).Value!.Id;
         }
 
         // A party in the OTHER office referencing this office's matter has no matching
@@ -142,7 +140,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         db.Clients.Add(client);
         await db.SaveChangesAsync();
 
-        var matterId = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Dava", ClientId = client.Id })).Id;
+        var matterId = (await Service(db).CreateAsync(new CreateMatterRequest { Title = "Dava", ClientId = client.Id })).Value!.Id;
         var m = await db.Matters.AsNoTracking().SingleAsync(x => x.Id == matterId);
         Assert.Equal(client.Id, m.ClientId);
     }

@@ -9,7 +9,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Clients;
-using Korkut.Domain.Matters;
+using Korkut.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 

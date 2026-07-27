@@ -5,7 +5,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Korkut.Domain.Matters;
+using Korkut.Matters;
 
 namespace Korkut.Infrastructure.Tests;
 
