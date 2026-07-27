@@ -16,7 +16,7 @@ using Korkut.Domain.Courts;
 using Korkut.Domain.Parties;
 using Korkut.Domain.Tasks;
 using Korkut.Domain.Deadlines;
-using Korkut.Domain.Notes;
+using Korkut.Notes;
 using Korkut.Domain.Invoices;
 using Korkut.Domain.Expenses;
 using Korkut.Domain.Correspondence;

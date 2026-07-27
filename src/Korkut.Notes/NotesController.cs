@@ -1,13 +1,12 @@
+using Korkut.Contract.Notes;
 using Korkut.Core;
-using Korkut.Application.Notes;
-using Korkut.Application.Notes.Requests;
-using Korkut.Application.Security;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.Controllers;
+namespace Korkut.Notes;
 
-/// <summary>Communication notes (görüşme notları). Forwards to <see cref="INoteService"/>.</summary>
+/// <summary>Communication notes (görüşme notları). Forwards to <see cref="INoteService"/>, maps Result to HTTP.</summary>
 [ApiController]
 [Route("api/notes")]
 public sealed class NotesController(INoteService notes) : ControllerBase
@@ -15,13 +14,10 @@ public sealed class NotesController(INoteService notes) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List([FromQuery] Guid? matterId, CancellationToken ct)
-        => Ok(await notes.ListAsync(matterId, ct));
+        => (await notes.ListAsync(matterId, ct)).ToActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Create([FromBody] CreateNoteRequest body, CancellationToken ct)
-    {
-        var created = await notes.CreateAsync(body, ct);
-        return Created($"/api/notes/{created.Id}", created);
-    }
+        => (await notes.CreateAsync(body, ct)).ToActionResult(n => Created($"/api/notes/{n.Id}", n));
 }

@@ -3533,9 +3533,6 @@
       "name": "Memory"
     },
     {
-      "name": "Notes"
-    },
-    {
       "name": "Onboarding"
     },
     {
@@ -3561,6 +3558,9 @@
     },
     {
       "name": "Clients"
+    },
+    {
+      "name": "Notes"
     }
   ]
 }

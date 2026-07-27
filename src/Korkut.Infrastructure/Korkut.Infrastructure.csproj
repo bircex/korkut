@@ -22,5 +22,6 @@
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\Korkut.Persistence\Korkut.Persistence.csproj" />
     <ProjectReference Include="..\Korkut.Clients\Korkut.Clients.csproj" />
+    <ProjectReference Include="..\Korkut.Notes\Korkut.Notes.csproj" />
   </ItemGroup>
 </Project>

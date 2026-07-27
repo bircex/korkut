@@ -18,6 +18,7 @@ public static class ControllerSetup
             // Vertical modules host their own controllers; register each module assembly as an
             // MVC application part so its endpoints are discovered alongside the host's.
             .AddApplicationPart(typeof(Korkut.Clients.ClientsModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Notes.NotesModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

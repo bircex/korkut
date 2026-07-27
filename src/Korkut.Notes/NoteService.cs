@@ -1,19 +1,21 @@
+using Korkut.Contract;
+using Korkut.Contract.Notes;
 using Korkut.Core;
-using Korkut.Application.Notes.Requests;
-using Korkut.Application.Notes.Responses;
-using Korkut.Domain.Notes;
 
-namespace Korkut.Application.Notes;
+namespace Korkut.Notes;
 
-/// <summary>Note use-cases over the repository port; an omitted occurrence time defaults to now.</summary>
+/// <summary>
+/// Note use-cases over the repository port; an omitted occurrence time defaults to now. Every call
+/// runs in the caller's tenant scope and RETURNS a <see cref="Result"/>.
+/// </summary>
 public sealed class NoteService(
     INoteRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : INoteService
 {
-    public Task<IReadOnlyList<NoteResponse>> ListAsync(Guid? matterId, CancellationToken ct = default)
+    public Task<Result<IReadOnlyList<NoteResponse>>> ListAsync(Guid? matterId, CancellationToken ct = default)
         => InScopeAsync(async office =>
-            (IReadOnlyList<NoteResponse>)(await repository.ListAsync(office, matterId, ct)).Select(ToResponse).ToList(), ct);
+            Result<IReadOnlyList<NoteResponse>>.Ok((await repository.ListAsync(office, matterId, ct)).Select(ToResponse).ToList()), ct);
 
-    public Task<NoteResponse> CreateAsync(CreateNoteRequest request, CancellationToken ct = default)
+    public Task<Result<NoteResponse>> CreateAsync(CreateNoteRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
             var now = clock.UtcNow;
@@ -21,7 +23,7 @@ public sealed class NoteService(
                 office, request.Body!.Trim(), request.Channel, request.MatterId, request.ClientId,
                 request.OccurredAt ?? now, now);
             await repository.AddAsync(note, ct);
-            return ToResponse(note);
+            return Result<NoteResponse>.Ok(ToResponse(note));
         }, ct);
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Notes;
-using Korkut.Application.Notes.Requests;
+using Korkut.Contract.Notes;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -42,7 +40,12 @@ public sealed class AddNoteTool(INoteService notes) : IAgentTool
             Body = body.Trim(),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var note = await notes.CreateAsync(request, ct);
-        return ToolResult.Ok(ToolArgs.Result(new { note.Id }));
+        var result = await notes.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        return ToolResult.Ok(ToolArgs.Result(new { result.Value!.Id }));
     }
 }

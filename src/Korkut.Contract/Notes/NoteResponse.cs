@@ -1,4 +1,4 @@
-namespace Korkut.Application.Notes.Responses;
+namespace Korkut.Contract.Notes;
 
 /// <summary>Transport shape for a communication note.</summary>
 public sealed record NoteResponse(

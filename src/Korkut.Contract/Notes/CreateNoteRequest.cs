@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Notes.Requests;
+namespace Korkut.Contract.Notes;
 
 /// <summary>Body for recording a communication note.</summary>
 public sealed record CreateNoteRequest
