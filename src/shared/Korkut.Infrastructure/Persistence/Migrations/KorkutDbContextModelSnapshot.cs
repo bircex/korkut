@@ -200,7 +200,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("chat_messages", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Clients.Client", b =>
+            modelBuilder.Entity("Korkut.Clients.Entities.Client", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1800,7 +1800,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Korkut.Matters.Matter", b =>
                 {
-                    b.HasOne("Korkut.Clients.Client", null)
+                    b.HasOne("Korkut.Clients.Entities.Client", null)
                         .WithMany()
                         .HasForeignKey("OfficeId", "ClientId")
                         .HasPrincipalKey("OfficeId", "Id")

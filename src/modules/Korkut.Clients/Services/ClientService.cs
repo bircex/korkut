@@ -1,3 +1,4 @@
+using Korkut.Clients.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Clients;
 using Korkut.Core;
@@ -9,7 +10,7 @@ namespace Korkut.Clients;
 /// RETURNS a <see cref="Result"/> — a missing record is a NotFound result, not an exception — so the
 /// controller maps outcome to HTTP uniformly and the flow stays explicit.
 /// </summary>
-public sealed class ClientService(
+internal sealed class ClientService(
     IClientRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IClientService
 {
     public Task<Result<IReadOnlyList<ClientResponse>>> ListAsync(CancellationToken ct = default)

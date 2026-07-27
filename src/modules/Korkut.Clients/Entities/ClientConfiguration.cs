@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Clients;
+namespace Korkut.Clients.Entities;
 
 /// <summary>
 /// EF mapping for the <see cref="Client"/> aggregate. Table/column names are unchanged from the

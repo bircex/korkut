@@ -2,6 +2,7 @@ using Korkut.Organization;
 using Korkut.Core;
 using Korkut.Contract.Matters;
 using Korkut.Clients;
+using Korkut.Clients.Entities;
 using Korkut.Courts;
 using Korkut.Matters;
 using Korkut.Hearings;

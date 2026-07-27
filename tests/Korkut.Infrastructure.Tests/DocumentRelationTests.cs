@@ -8,6 +8,7 @@ using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Clients;
+using Korkut.Clients.Entities;
 using Korkut.Matters;
 
 namespace Korkut.Infrastructure.Tests;

@@ -10,6 +10,7 @@ using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Korkut.Clients;
+using Korkut.Clients.Entities;
 using Korkut.Matters;
 using Korkut.Hearings;
 using Korkut.Courts;

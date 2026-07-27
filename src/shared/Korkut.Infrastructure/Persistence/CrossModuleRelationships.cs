@@ -1,4 +1,5 @@
 using Korkut.Clients;
+using Korkut.Clients.Entities;
 using Korkut.Hearings;
 using Korkut.Matters;
 using Microsoft.EntityFrameworkCore;

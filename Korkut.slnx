@@ -39,12 +39,15 @@
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Clients.Unit.Tests/Korkut.Clients.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Clients.Integration.Tests/Korkut.Clients.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Clients.Bdd.Tests/Korkut.Clients.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Finance.Bdd.Tests/Korkut.Finance.Bdd.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -41,7 +41,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Organization.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.OfficeRole>();
 
-    public DbSet<Korkut.Clients.Client> Clients => Set<Korkut.Clients.Client>();
+    public DbSet<Korkut.Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
 
     public DbSet<Korkut.Courts.Court> Courts => Set<Korkut.Courts.Court>();
 
@@ -100,7 +100,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         // Office-core mappings (matter/client/court/party/hearing) live in Configurations/
         // — kept together because their tenant-aware composite FKs form one set.
         modelBuilder.ApplyConfiguration(new Korkut.Matters.MatterConfiguration());
-        modelBuilder.ApplyConfiguration(new Korkut.Clients.ClientConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Clients.Entities.ClientConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Courts.CourtConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Matters.PartyConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Hearings.HearingConfiguration());
