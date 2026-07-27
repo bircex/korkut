@@ -1,6 +1,5 @@
-using Korkut.Application.Onboarding;
-using Korkut.Application.Onboarding.Requests;
-using Korkut.Application.Onboarding.Responses;
+using Korkut.Contract.Organization;
+using Korkut.Web.Kernel;
 using Korkut.Api.Auth;
 using Korkut.Infrastructure.Security;
 using Korkut.Web.Errors;
@@ -36,9 +35,13 @@ public sealed class OnboardingController(
             ?? throw ApiException.Unauthorized("Google ile doğrulanmış bir kayıt talebi gerekli.");
 
         var result = await onboarding.RequestOfficeAsync(ticket.Email, ticket.GoogleSub, body, ct);
-        // Consume the ticket; the office stays disabled until a platform admin approves it.
-        session.ClearSignup(Response);
-        return Ok(result);
+        // Consume the ticket only on success; the office stays disabled until a platform admin approves it.
+        if (result.IsSuccess)
+        {
+            session.ClearSignup(Response);
+        }
+
+        return result.ToActionResult();
     }
 
     private async Task<SignupTicket?> ReadTicketAsync()

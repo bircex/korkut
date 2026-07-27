@@ -34,7 +34,6 @@ public static class SecuritySetup
         services.AddScoped<Korkut.Application.Auth.Google.IGoogleSignInService, Korkut.Application.Auth.Google.GoogleSignInService>();
         // Self-serve onboarding: provisioning a disabled office for a verified Google identity.
         services.AddScoped<Korkut.Contract.Offices.IOfficeProvisioner, Korkut.Infrastructure.Offices.OfficeProvisioner>();
-        services.AddScoped<Korkut.Application.Onboarding.IOnboardingService, Korkut.Application.Onboarding.OnboardingService>();
 
         // TOTP 2FA (KDM-017). The envelope key is operator-supplied; if it is missing
         // and 2FA is used, resolution fails closed — never a silent random fallback.
