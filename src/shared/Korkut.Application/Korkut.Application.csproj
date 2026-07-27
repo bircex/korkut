@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
   </ItemGroup>
   <ItemGroup>
