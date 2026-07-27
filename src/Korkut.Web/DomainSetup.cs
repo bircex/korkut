@@ -49,12 +49,10 @@ public static class DomainSetup
         new Korkut.Notes.NotesModule().Register(services, configuration);
         new Korkut.Tasks.TasksModule().Register(services, configuration);
         new Korkut.Deadlines.DeadlinesModule().Register(services, configuration);
-        // Finance (Clean Architecture: repository ports + service). The pattern rolls out
-        // to the other modules incrementally.
-        services.AddScoped<Korkut.Application.Invoices.IInvoiceRepository, Korkut.Infrastructure.Invoices.InvoiceRepository>();
-        services.AddScoped<Korkut.Application.Expenses.IExpenseRepository, Korkut.Infrastructure.Expenses.ExpenseRepository>();
-        services.AddScoped<Korkut.Application.Invoices.IInvoiceService, Korkut.Application.Invoices.InvoiceService>();
-        services.AddScoped<Korkut.Application.Expenses.IExpenseService, Korkut.Application.Expenses.ExpenseService>();
+        // Finance modules. The finance read-models (FinanceSummary, Reports) stay in
+        // Application/Infrastructure and read the modules' repository ports transitionally.
+        new Korkut.Invoices.InvoicesModule().Register(services, configuration);
+        new Korkut.Expenses.ExpensesModule().Register(services, configuration);
         services.AddScoped<Korkut.Application.FinanceSummary.IFinanceSummaryService, Korkut.Application.FinanceSummary.FinanceSummaryService>();
         new Korkut.Correspondence.CorrespondenceModule().Register(services, configuration);
         // Calendar module. The cross-module read-model (ICalendarQuery: events ∪ deadlines ∪

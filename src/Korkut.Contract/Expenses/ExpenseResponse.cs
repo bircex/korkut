@@ -1,4 +1,4 @@
-namespace Korkut.Application.Expenses.Responses;
+namespace Korkut.Contract.Expenses;
 
 /// <summary>Transport shape for an expense.</summary>
 public sealed record ExpenseResponse(

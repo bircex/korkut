@@ -57,9 +57,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Documents.DocumentRelation> DocumentRelations => Set<Domain.Documents.DocumentRelation>();
 
-    public DbSet<Domain.Invoices.Invoice> Invoices => Set<Domain.Invoices.Invoice>();
+    public DbSet<Korkut.Invoices.Invoice> Invoices => Set<Korkut.Invoices.Invoice>();
 
-    public DbSet<Domain.Expenses.Expense> Expenses => Set<Domain.Expenses.Expense>();
+    public DbSet<Korkut.Expenses.Expense> Expenses => Set<Korkut.Expenses.Expense>();
 
     public DbSet<Korkut.Correspondence.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.CorrespondenceItem>();
 
@@ -107,8 +107,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         // Finance mappings live in Configurations/ (Clean Architecture layout); other
         // modules move to the same pattern module-by-module.
-        modelBuilder.ApplyConfiguration(new Invoices.InvoiceConfiguration());
-        modelBuilder.ApplyConfiguration(new Expenses.ExpenseConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Invoices.InvoiceConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Expenses.ExpenseConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Correspondence.CorrespondenceConfiguration());
 

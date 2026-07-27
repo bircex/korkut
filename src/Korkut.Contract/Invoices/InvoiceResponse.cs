@@ -1,4 +1,4 @@
-namespace Korkut.Application.Invoices.Responses;
+namespace Korkut.Contract.Invoices;
 
 /// <summary>Transport shape for an invoice, including the VAT-inclusive gross.</summary>
 public sealed record InvoiceResponse(

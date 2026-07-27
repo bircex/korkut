@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Expenses module (masraflar). MatterId/ClientId are guid-only links (no EF FK). References
+       only kernel/contract/persistence/web-kernel. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\Korkut.Web.Kernel\Korkut.Web.Kernel.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Expenses.Requests;
+namespace Korkut.Contract.Expenses;
 
 /// <summary>Body for recording an expense.</summary>
 public sealed record CreateExpenseRequest

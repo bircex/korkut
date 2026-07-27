@@ -1,7 +1,7 @@
 using Korkut.Core;
-using Korkut.Application.Expenses;
+using Korkut.Expenses;
 using Korkut.Application.FinanceSummary.Responses;
-using Korkut.Application.Invoices;
+using Korkut.Invoices;
 
 namespace Korkut.Application.FinanceSummary;
 

@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Expenses;
+namespace Korkut.Expenses;
 
 /// <summary>A tenant-owned expense, optionally attributed to a matter or a client.</summary>
 public sealed class Expense : Entity, ITenantOwned, IAggregateRoot

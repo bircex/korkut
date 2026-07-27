@@ -3485,9 +3485,6 @@
       "name": "Documents"
     },
     {
-      "name": "Expenses"
-    },
-    {
       "name": "Export"
     },
     {
@@ -3501,9 +3498,6 @@
     },
     {
       "name": "Invites"
-    },
-    {
-      "name": "Invoices"
     },
     {
       "name": "Members"
@@ -3548,7 +3542,13 @@
       "name": "Deadlines"
     },
     {
+      "name": "Expenses"
+    },
+    {
       "name": "Hearings"
+    },
+    {
+      "name": "Invoices"
     },
     {
       "name": "Matters"

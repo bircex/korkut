@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Invoices;
-using Korkut.Application.Invoices.Requests;
+using Korkut.Contract.Invoices;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -45,7 +43,13 @@ public sealed class AddInvoiceTool(IInvoiceService invoices) : IAgentTool
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
             Description = ToolArgs.String(arguments, "description"),
         };
-        var invoice = await invoices.CreateAsync(request, ct);
+        var result = await invoices.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var invoice = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { invoice.Id, invoice.Amount, invoice.Status }));
     }
 }

@@ -1,13 +1,12 @@
+using Korkut.Contract.Expenses;
 using Korkut.Core;
-using Korkut.Application.Expenses;
-using Korkut.Application.Expenses.Requests;
-using Korkut.Application.Security;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Api.Controllers;
+namespace Korkut.Expenses;
 
-/// <summary>Expenses (masraflar). Forwards to <see cref="IExpenseService"/>.</summary>
+/// <summary>Expenses (masraflar). Forwards to <see cref="IExpenseService"/>, maps Result to HTTP.</summary>
 [ApiController]
 [Route("api/finance/expenses")]
 public sealed class ExpensesController(IExpenseService expenses) : ControllerBase
@@ -15,21 +14,15 @@ public sealed class ExpensesController(IExpenseService expenses) : ControllerBas
     [HttpGet]
     [Authorize(Policy = Permissions.BillingRead)]
     public async Task<IActionResult> List(CancellationToken ct)
-        => Ok(await expenses.ListAsync(ct));
+        => (await expenses.ListAsync(ct)).ToActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.BillingWrite)]
     public async Task<IActionResult> Create([FromBody] CreateExpenseRequest body, CancellationToken ct)
-    {
-        var created = await expenses.CreateAsync(body, ct);
-        return Created($"/api/finance/expenses/{created.Id}", created);
-    }
+        => (await expenses.CreateAsync(body, ct)).ToActionResult(e => Created($"/api/finance/expenses/{e.Id}", e));
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Permissions.BillingWrite)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
-    {
-        await expenses.DeleteAsync(id, ct);
-        return NoContent();
-    }
+        => (await expenses.DeleteAsync(id, ct)).ToActionResult();
 }

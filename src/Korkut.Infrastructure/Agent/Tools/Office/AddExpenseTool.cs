@@ -1,10 +1,8 @@
 using Korkut.Core;
 using System.Text.Json;
-using Korkut.Application.Expenses;
-using Korkut.Application.Expenses.Requests;
+using Korkut.Contract.Expenses;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Application.Security;
 
 namespace Korkut.Infrastructure.Agent.Tools.Office;
 
@@ -43,7 +41,13 @@ public sealed class AddExpenseTool(IExpenseService expenses) : IAgentTool
             Description = ToolArgs.String(arguments, "description"),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
-        var expense = await expenses.CreateAsync(request, ct);
+        var result = await expenses.CreateAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return ToolResult.Error(result.Error!.Detail);
+        }
+
+        var expense = result.Value!;
         return ToolResult.Ok(ToolArgs.Result(new { expense.Id, expense.Amount }));
     }
 }

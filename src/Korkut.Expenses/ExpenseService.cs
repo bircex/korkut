@@ -1,20 +1,18 @@
+using Korkut.Contract;
+using Korkut.Contract.Expenses;
 using Korkut.Core;
-using Korkut.Application.Errors;
-using Korkut.Application.Expenses.Requests;
-using Korkut.Application.Expenses.Responses;
-using Korkut.Domain.Expenses;
 
-namespace Korkut.Application.Expenses;
+namespace Korkut.Expenses;
 
-/// <summary>Expense use-cases over the repository port; an omitted spend date defaults to now.</summary>
+/// <summary>Expense use-cases over the repository port; an omitted spend date defaults to now. Returns Result.</summary>
 public sealed class ExpenseService(
     IExpenseRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IExpenseService
 {
-    public Task<IReadOnlyList<ExpenseResponse>> ListAsync(CancellationToken ct = default)
+    public Task<Result<IReadOnlyList<ExpenseResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
-            (IReadOnlyList<ExpenseResponse>)(await repository.ListAsync(office, ct)).Select(ToResponse).ToList(), ct);
+            Result<IReadOnlyList<ExpenseResponse>>.Ok((await repository.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
 
-    public Task<ExpenseResponse> CreateAsync(CreateExpenseRequest request, CancellationToken ct = default)
+    public Task<Result<ExpenseResponse>> CreateAsync(CreateExpenseRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
             var now = clock.UtcNow;
@@ -22,19 +20,12 @@ public sealed class ExpenseService(
                 office, request.Amount, request.MatterId, request.ClientId,
                 request.Kind, request.Description, request.SpentAt ?? now, now);
             await repository.AddAsync(expense, ct);
-            return ToResponse(expense);
+            return Result<ExpenseResponse>.Ok(ToResponse(expense));
         }, ct);
 
-    public Task DeleteAsync(Guid id, CancellationToken ct = default)
+    public Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
         => InScopeAsync(async office =>
-        {
-            if (!await repository.RemoveAsync(office, id, ct))
-            {
-                throw new NotFoundException("Masraf bulunamadı.");
-            }
-
-            return true;
-        }, ct);
+            await repository.RemoveAsync(office, id, ct) ? Result.Ok() : Result.NotFound("Masraf bulunamadı."), ct);
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)
     {

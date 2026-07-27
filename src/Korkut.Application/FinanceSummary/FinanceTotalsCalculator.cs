@@ -1,5 +1,5 @@
-using Korkut.Domain.Expenses;
-using Korkut.Domain.Invoices;
+using Korkut.Expenses;
+using Korkut.Invoices;
 
 namespace Korkut.Application.FinanceSummary;
 

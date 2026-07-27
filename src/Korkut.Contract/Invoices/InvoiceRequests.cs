@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Application.Invoices.Requests;
+namespace Korkut.Contract.Invoices;
 
 /// <summary>Body for issuing an invoice.</summary>
 public sealed record CreateInvoiceRequest
@@ -23,4 +23,14 @@ public sealed record CreateInvoiceRequest
     public string Status { get; init; } = "draft";
 
     public DateTimeOffset? IssuedAt { get; init; }
+}
+
+/// <summary>Partial update of an invoice; omitted fields keep their current value.</summary>
+public sealed record UpdateInvoiceRequest
+{
+    [RegularExpression("draft|sent|paid|cancelled")]
+    public string? Status { get; init; }
+
+    [Range(0, 100_000_000)]
+    public decimal? Amount { get; init; }
 }

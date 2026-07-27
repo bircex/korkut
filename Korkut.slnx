@@ -16,6 +16,8 @@
     <Project Path="src/Korkut.Courts/Korkut.Courts.csproj" />
     <Project Path="src/Korkut.Matters/Korkut.Matters.csproj" />
     <Project Path="src/Korkut.Hearings/Korkut.Hearings.csproj" />
+    <Project Path="src/Korkut.Invoices/Korkut.Invoices.csproj" />
+    <Project Path="src/Korkut.Expenses/Korkut.Expenses.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />

@@ -5,5 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Invoices\Korkut.Invoices.csproj" />
+    <ProjectReference Include="..\Korkut.Expenses\Korkut.Expenses.csproj" />
   </ItemGroup>
 </Project>
