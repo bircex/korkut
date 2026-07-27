@@ -36,5 +36,6 @@
     <ProjectReference Include="..\Korkut.Expenses\Korkut.Expenses.csproj" />
     <ProjectReference Include="..\Korkut.Settings\Korkut.Settings.csproj" />
     <ProjectReference Include="..\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\Korkut.Documents\Korkut.Documents.csproj" />
   </ItemGroup>
 </Project>

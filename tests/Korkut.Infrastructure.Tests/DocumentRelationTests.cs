@@ -1,6 +1,6 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Application.Errors;
-using Korkut.Domain.Documents;
+using Korkut.Documents;
 using Korkut.Organization;
 using System.Text;
 using Korkut.Application.Documents;

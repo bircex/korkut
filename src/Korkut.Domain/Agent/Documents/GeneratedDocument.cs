@@ -6,7 +6,7 @@ namespace Korkut.Domain.Agent.Documents;
 /// An AI-drafted document tied to a conversation (one per session). A staged edit lives in the
 /// <c>Pending*</c> fields until a human accepts it — which promotes it to the current content and
 /// snapshots a new version — or reverts it. Distinct from an uploaded
-/// <see cref="Korkut.Domain.Documents.Document"/>: this is generated content, not a stored file.
+/// <see cref="Korkut.Documents.Document"/>: this is generated content, not a stored file.
 /// </summary>
 public sealed class GeneratedDocument : Entity, ITenantOwned, IAggregateRoot
 {

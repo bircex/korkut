@@ -1,8 +1,7 @@
-using Korkut.Domain.Documents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents;
 
 /// <summary>EF mapping for extracted text spans (table/columns/index/FK unchanged).</summary>
 public sealed class DocumentExtractionConfiguration : IEntityTypeConfiguration<DocumentExtraction>

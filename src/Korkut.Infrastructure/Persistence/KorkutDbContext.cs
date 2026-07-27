@@ -51,11 +51,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Notes.CommunicationNote> CommunicationNotes => Set<Korkut.Notes.CommunicationNote>();
 
-    public DbSet<Domain.Documents.Document> Documents => Set<Domain.Documents.Document>();
+    public DbSet<Korkut.Documents.Document> Documents => Set<Korkut.Documents.Document>();
 
-    public DbSet<Domain.Documents.DocumentExtraction> DocumentExtractions => Set<Domain.Documents.DocumentExtraction>();
+    public DbSet<Korkut.Documents.DocumentExtraction> DocumentExtractions => Set<Korkut.Documents.DocumentExtraction>();
 
-    public DbSet<Domain.Documents.DocumentRelation> DocumentRelations => Set<Domain.Documents.DocumentRelation>();
+    public DbSet<Korkut.Documents.DocumentRelation> DocumentRelations => Set<Korkut.Documents.DocumentRelation>();
 
     public DbSet<Korkut.Invoices.Invoice> Invoices => Set<Korkut.Invoices.Invoice>();
 
@@ -124,11 +124,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Outbox.OutboundMessageConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Documents.DocumentConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Documents.DocumentConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Documents.DocumentExtractionConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Documents.DocumentExtractionConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Documents.DocumentRelationConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Documents.DocumentRelationConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.InviteConfiguration());
 

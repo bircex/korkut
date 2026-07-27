@@ -1,7 +1,7 @@
 using Korkut.Application.Auditing;
 using Korkut.Application.Documents;
 using Korkut.Application.Errors;
-using Korkut.Domain.Documents;
+using Korkut.Documents;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;

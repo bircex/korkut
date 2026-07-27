@@ -1,16 +1,13 @@
-using Korkut.Application.Documents;
-using Korkut.Domain.Documents;
 using Korkut.Persistence;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents;
 
 /// <summary>
-/// EF/Postgres adapter for <see cref="IDocumentRepository"/>. Tombstoned rows are filtered
-/// out of every read: they exist as deletion markers, not as documents.
+/// EF/Postgres adapter for <see cref="IDocumentRepository"/> over the ambient DbContext. Tombstoned
+/// rows are filtered out of every read: they exist as deletion markers, not as documents.
 /// </summary>
-public sealed class DocumentRepository(KorkutDbContext db) : Repository<Document>(db), IDocumentRepository
+public sealed class DocumentRepository(DbContext db) : Repository<Document>(db), IDocumentRepository
 {
     public async Task<IReadOnlyList<Document>> ListAsync(Guid officeId, Guid? matterId, CancellationToken ct = default)
         => await Active(officeId)

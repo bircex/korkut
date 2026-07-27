@@ -1,11 +1,10 @@
 using Korkut.Core;
-using Korkut.Domain.Documents;
 
-namespace Korkut.Application.Documents;
+namespace Korkut.Documents;
 
 /// <summary>
-/// Persistence port for document metadata. Listings show what still exists: a tombstoned
-/// document is a marker, not a document.
+/// Persistence port for document metadata. Listings show what still exists: a tombstoned document
+/// is a marker, not a document.
 /// </summary>
 public interface IDocumentRepository : IRepository<Document>
 {

@@ -4,7 +4,7 @@ using Korkut.Application.Documents.Responses;
 using Korkut.Application.Documents.Storage;
 using Korkut.Application.Errors;
 using Korkut.Application.Upload.SafeUpload;
-using Korkut.Domain.Documents;
+using Korkut.Documents;
 
 namespace Korkut.Application.Documents;
 

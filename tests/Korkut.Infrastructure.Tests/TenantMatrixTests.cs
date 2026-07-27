@@ -24,7 +24,7 @@ using Korkut.Outbox;
 using Korkut.Channels;
 using Korkut.Settings;
 using Korkut.Domain.Auditing;
-using Korkut.Domain.Documents;
+using Korkut.Documents;
 
 namespace Korkut.Infrastructure.Tests;
 

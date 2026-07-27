@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Documents;
+namespace Korkut.Documents;
 
 /// <summary>
 /// A document filed against a client, matter or party. The link is also how permission is

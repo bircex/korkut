@@ -3,7 +3,7 @@ using Korkut.Application.Documents.Storage;
 using Korkut.Application.Upload.Malware;
 using Korkut.Application.Upload.SafeUpload;
 using Korkut.Application.Upload.Validator;
-using Korkut.Domain.Documents;
+using Korkut.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

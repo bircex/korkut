@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Documents;
+namespace Korkut.Documents;
 
 /// <summary>
 /// A document's metadata; the bytes live in object storage. Two rules make this an
