@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Invoices\Korkut.Invoices.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Expenses\Korkut.Expenses.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
+  </ItemGroup>
+</Project>

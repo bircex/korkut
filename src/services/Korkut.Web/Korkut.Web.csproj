@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <!-- Mirror the Web SDK's implicit global usings, since this is a plain library that
+       nonetheless builds against ASP.NET Core (FrameworkReference above). -->
+  <ItemGroup>
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.AspNetCore.Routing" />
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Http" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The web foundation shared by every host (Korkut.Api, Korkut.Agent): auth,
+         JSON contract, error mapping, tenant bridge, host setup. -->
+    <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Tasks\Korkut.Tasks.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Deadlines\Korkut.Deadlines.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Channels\Korkut.Channels.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Correspondence\Korkut.Correspondence.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Outbox\Korkut.Outbox.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Calendar\Korkut.Calendar.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Courts\Korkut.Courts.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Matters\Korkut.Matters.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Invoices\Korkut.Invoices.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Expenses\Korkut.Expenses.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Settings\Korkut.Settings.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
+  </ItemGroup>
+</Project>

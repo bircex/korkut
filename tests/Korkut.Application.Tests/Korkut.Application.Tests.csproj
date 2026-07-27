@@ -12,6 +12,6 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\..\src\shared\Korkut.Application\Korkut.Application.csproj" />
   </ItemGroup>
 </Project>

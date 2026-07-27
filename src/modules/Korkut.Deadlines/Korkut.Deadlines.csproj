@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Deadlines module (süreler): deadline vertical. References only kernel/contract/persistence/
+       web-kernel — never another module. (The outbox-reminder enqueue is a Jobs concern and stays
+       in Infrastructure until Jobs becomes a module.) -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Web.Kernel\Korkut.Web.Kernel.csproj" />
+  </ItemGroup>
+</Project>

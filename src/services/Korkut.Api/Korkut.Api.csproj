@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Http" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\..\services\Korkut.Web\Korkut.Web.csproj" />
+  </ItemGroup>
+  <!-- Ship the static legal template catalog with the app so TemplateCatalog resolves
+       it at {BaseDirectory}/templates in published/containerized runs (KORKUT_TEMPLATES_DIR overrides). -->
+  <ItemGroup>
+    <Content Include="..\..\..\templates\**\*" LinkBase="templates" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
