@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Calendar;
+namespace Korkut.Calendar.Controllers;
 
 /// <summary>
 /// The office calendar. <c>GET /events</c> is a UNIFIED read view — editable events plus the

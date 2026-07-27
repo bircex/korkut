@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Channels;
+namespace Korkut.Channels.Controllers;
 
 /// <summary>
 /// The integrations screen: every channel kind with its configuration and pairing state, plus

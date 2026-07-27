@@ -1,9 +1,11 @@
+using Korkut.Finance.Services;
+using Korkut.Finance.Repositories;
 using Korkut.Contract.Finance;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Extensions;
 
 /// <summary>Self-registration for the Finance module: invoice + expense repos, the unified service, and the totals lookup.</summary>
 public sealed class FinanceModule : IModule

@@ -1,5 +1,6 @@
 using Korkut.Settings.Entities;
-namespace Korkut.Settings;
+
+namespace Korkut.Settings.Repositories;
 
 /// <summary>Persistence port for the office persona (one row per office, keyed by office).</summary>
 public interface IPersonaRepository

@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Tasks;
+namespace Korkut.Tasks.Controllers;
 
 /// <summary>Office tasks (görevler). Forwards to <see cref="ITaskService"/>, maps Result to HTTP.</summary>
 [ApiController]

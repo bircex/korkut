@@ -1,8 +1,8 @@
-using Korkut.Settings.Entities;
 using Korkut.Persistence;
+using Korkut.Settings.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="IMemoryRepository"/> over the ambient DbContext.</summary>
 internal sealed class MemoryRepository(DbContext db) : Repository<MemoryItem>(db), IMemoryRepository

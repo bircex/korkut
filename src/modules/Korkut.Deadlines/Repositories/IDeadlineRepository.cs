@@ -1,7 +1,7 @@
 using Korkut.Deadlines.Entities;
 using Korkut.Core;
 
-namespace Korkut.Deadlines;
+namespace Korkut.Deadlines.Repositories;
 
 /// <summary>Persistence port for deadlines.</summary>
 internal interface IDeadlineRepository : IRepository<Deadline>

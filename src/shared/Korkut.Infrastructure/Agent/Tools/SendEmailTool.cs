@@ -3,6 +3,7 @@ using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
 using Korkut.Core;
 using Korkut.Outbox;
+using Korkut.Outbox.Repositories;
 using Korkut.Outbox.Entities;
 
 namespace Korkut.Infrastructure.Agent.Tools;

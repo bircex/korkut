@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Controllers;
 
 /// <summary>
 /// Drafting style in two layers. A user edits their own layer with matters.read (the write is scoped

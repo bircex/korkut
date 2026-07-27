@@ -1,9 +1,10 @@
-using Korkut.Notes.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Notes;
 using Korkut.Core;
+using Korkut.Notes.Entities;
+using Korkut.Notes.Repositories;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Services;
 
 /// <summary>
 /// Note use-cases over the repository port; an omitted occurrence time defaults to now. Every call

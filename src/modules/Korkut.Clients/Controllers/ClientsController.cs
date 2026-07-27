@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Clients;
+namespace Korkut.Clients.Controllers;
 
 /// <summary>
 /// Clients (müvekkiller). A pure transport: each action forwards to <see cref="IClientService"/>

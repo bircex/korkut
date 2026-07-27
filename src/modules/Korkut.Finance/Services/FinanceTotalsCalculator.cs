@@ -1,7 +1,8 @@
+using Korkut.Finance.Repositories;
 using Korkut.Contract.Finance;
 using Korkut.Finance.Entities;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Services;
 
 /// <summary>
 /// The single definition of the office money roll-up, shared by the finance summary and the reports

@@ -1,5 +1,5 @@
 
-namespace Korkut.Reports;
+namespace Korkut.Reports.Repositories;
 
 /// <summary>
 /// Read-only aggregation for the office dashboard: the matters, clients, tasks, agenda and

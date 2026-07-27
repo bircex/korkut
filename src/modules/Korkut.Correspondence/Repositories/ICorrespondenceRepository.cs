@@ -1,7 +1,7 @@
 using Korkut.Correspondence.Entities;
 using Korkut.Core;
 
-namespace Korkut.Correspondence;
+namespace Korkut.Correspondence.Repositories;
 
 /// <summary>Persistence port for the correspondence register.</summary>
 internal interface ICorrespondenceRepository : IRepository<CorrespondenceItem>

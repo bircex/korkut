@@ -1,7 +1,8 @@
+using Korkut.Courts.Repositories;
 using Korkut.Courts.Entities;
 using Korkut.Contract.Courts;
 
-namespace Korkut.Courts;
+namespace Korkut.Courts.Services;
 
 /// <summary>
 /// Implements the cross-module <see cref="ICourtLookup"/> over the court repository, reading in the

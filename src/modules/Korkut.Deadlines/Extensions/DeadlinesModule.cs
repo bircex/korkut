@@ -1,9 +1,11 @@
+using Korkut.Deadlines.Services;
+using Korkut.Deadlines.Repositories;
 using Korkut.Contract.Deadlines;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Deadlines;
+namespace Korkut.Deadlines.Extensions;
 
 /// <summary>Self-registration for the Deadlines module: binds the repository + service ports.</summary>
 public sealed class DeadlinesModule : IModule

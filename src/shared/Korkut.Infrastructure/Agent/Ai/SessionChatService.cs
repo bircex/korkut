@@ -8,6 +8,7 @@ using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Documents.OCR;
 using Korkut.Knowledge;
+using Korkut.Settings.Repositories;
 
 namespace Korkut.Infrastructure.Agent.Ai;
 

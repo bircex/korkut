@@ -1,7 +1,7 @@
-using Korkut.Notes.Entities;
 using Korkut.Core;
+using Korkut.Notes.Entities;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Repositories;
 
 /// <summary>Persistence port for communication notes.</summary>
 internal interface INoteRepository : IRepository<CommunicationNote>

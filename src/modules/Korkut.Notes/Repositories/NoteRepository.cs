@@ -2,7 +2,7 @@ using Korkut.Notes.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="INoteRepository"/> over the ambient DbContext.</summary>
 internal sealed class NoteRepository(DbContext db) : Repository<CommunicationNote>(db), INoteRepository

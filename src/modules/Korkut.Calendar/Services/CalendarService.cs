@@ -1,9 +1,10 @@
+using Korkut.Calendar.Repositories;
 using Korkut.Calendar.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Calendar;
 using Korkut.Core;
 
-namespace Korkut.Calendar;
+namespace Korkut.Calendar.Services;
 
 /// <summary>
 /// Calendar use-cases over the event aggregate and the cross-module read query. Create and patch

@@ -1,8 +1,8 @@
-using Korkut.Tasks.Entities;
 using Korkut.Persistence;
+using Korkut.Tasks.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Tasks;
+namespace Korkut.Tasks.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="ITaskRepository"/> over the ambient DbContext.</summary>
 internal sealed class TaskRepository(DbContext db) : Repository<WorkTask>(db), ITaskRepository

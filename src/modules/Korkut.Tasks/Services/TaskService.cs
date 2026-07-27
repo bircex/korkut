@@ -1,9 +1,10 @@
-using Korkut.Tasks.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Tasks;
 using Korkut.Core;
+using Korkut.Tasks.Entities;
+using Korkut.Tasks.Repositories;
 
-namespace Korkut.Tasks;
+namespace Korkut.Tasks.Services;
 
 /// <summary>
 /// Task use-cases over the repository port. Owns the completion rule: moving a task to "done"

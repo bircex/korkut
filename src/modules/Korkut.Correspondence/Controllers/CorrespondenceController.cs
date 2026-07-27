@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Correspondence;
+namespace Korkut.Correspondence.Controllers;
 
 /// <summary>
 /// The correspondence register ("evrak defteri"). Reads use matters.read and writes matters.write,

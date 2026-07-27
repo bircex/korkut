@@ -1,7 +1,7 @@
 using Korkut.Settings.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Repositories;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="IStyleProfileRepository"/> over the ambient DbContext. A profile

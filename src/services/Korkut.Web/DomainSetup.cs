@@ -1,6 +1,11 @@
 using Korkut.Core;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
+using Korkut.Notes.Extensions;
+using Korkut.Reports.Extensions;
+using Korkut.Reports.Repositories;
+using Korkut.Settings.Extensions;
+using Korkut.Tasks.Extensions;
 
 namespace Korkut.Web;
 
@@ -24,14 +29,14 @@ public static class DomainSetup
         // Office-core modules (clients + courts + matters/parties + hearings). Cross-module FKs are
         // configured in Infrastructure; cross-module reads go through Contract lookups
         // (ICourtLookup, IHearingLookup, IMatterLookup).
-        new Korkut.Courts.CourtsModule().Register(services, configuration);
+        new Korkut.Courts.Extensions.CourtsModule().Register(services, configuration);
         new Korkut.Matters.MattersModule().Register(services, configuration);
         new Korkut.Hearings.HearingsModule().Register(services, configuration);
 
         // Modular monolith: self-registering vertical modules. Clients is the reference slice —
         // it binds its own repository + service; its EF mapping + controller are picked up by the
         // shared context and MVC application parts (see AddKorkutControllers).
-        new Korkut.Clients.ClientsModule().Register(services, configuration);
+        new Korkut.Clients.Extensions.ClientsModule().Register(services, configuration);
 
         // Offices (the tenant root) are owned by the Organization module (registered below); the
         // caller's own profile still lives in the Users application service for now.
@@ -42,29 +47,29 @@ public static class DomainSetup
         services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
         services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Persistence.UnitOfWork>();
         // Office-ops (Clean Architecture: repository ports + service).
-        new Korkut.Notes.NotesModule().Register(services, configuration);
-        new Korkut.Tasks.TasksModule().Register(services, configuration);
-        new Korkut.Deadlines.DeadlinesModule().Register(services, configuration);
+        new NotesModule().Register(services, configuration);
+        new TasksModule().Register(services, configuration);
+        new Korkut.Deadlines.Extensions.DeadlinesModule().Register(services, configuration);
         // Finance: one module for invoices + expenses + the money roll-up (IFinanceService). The
         // reports dashboard reads finance totals through the module's IFinanceLookup.
-        new Korkut.Finance.FinanceModule().Register(services, configuration);
-        new Korkut.Correspondence.CorrespondenceModule().Register(services, configuration);
+        new Korkut.Finance.Extensions.FinanceModule().Register(services, configuration);
+        new Korkut.Correspondence.Extensions.CorrespondenceModule().Register(services, configuration);
         // Calendar module. The cross-module read-model (ICalendarQuery: events ∪ deadlines ∪
         // hearings) is a host-level registration since its impl spans other modules' tables.
-        new Korkut.Calendar.CalendarModule().Register(services, configuration);
+        new Korkut.Calendar.Extensions.CalendarModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
         // Office settings module (persona, style layers, memory). The memory author lookup impl
         // stays in Infrastructure (it reads the users table) and is registered here.
-        new Korkut.Settings.SettingsModule().Register(services, configuration);
+        new SettingsModule().Register(services, configuration);
         // Organization (identity/tenant) module — grows in stages; office roles land first.
         new Korkut.Organization.OrganizationModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         // Reports module (read-only office dashboard). The cross-module aggregation query
         // (IReportsQuery) reads other modules' tables, so its impl lives in Infrastructure and
         // is registered here; the module owns the orchestration service + controller.
-        new Korkut.Reports.ReportsModule().Register(services, configuration);
-        services.AddScoped<Korkut.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
-        new Korkut.Channels.ChannelsModule().Register(services, configuration);
+        new ReportsModule().Register(services, configuration);
+        services.AddScoped<IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
+        new Korkut.Channels.Extensions.ChannelsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
@@ -73,7 +78,7 @@ public static class DomainSetup
         services.AddSingleton<Korkut.Application.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
         services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
         // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
-        new Korkut.Outbox.OutboxModule().Register(services, configuration);
+        new Korkut.Outbox.Extensions.OutboxModule().Register(services, configuration);
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
         // owned by the Organization module (registered above).
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).

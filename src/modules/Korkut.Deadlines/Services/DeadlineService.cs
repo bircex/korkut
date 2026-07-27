@@ -1,9 +1,10 @@
+using Korkut.Deadlines.Repositories;
 using Korkut.Deadlines.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Deadlines;
 using Korkut.Core;
 
-namespace Korkut.Deadlines;
+namespace Korkut.Deadlines.Services;
 
 /// <summary>
 /// Deadline use-cases over the repository port; completion is idempotent-by-refusal. Every call

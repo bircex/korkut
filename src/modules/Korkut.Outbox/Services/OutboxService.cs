@@ -1,9 +1,10 @@
+using Korkut.Outbox.Repositories;
 using Korkut.Outbox.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Outbox;
 using Korkut.Core;
 
-namespace Korkut.Outbox;
+namespace Korkut.Outbox.Services;
 
 /// <summary>
 /// Outbox review over the repository port. The lifecycle rules live on the aggregate; this only

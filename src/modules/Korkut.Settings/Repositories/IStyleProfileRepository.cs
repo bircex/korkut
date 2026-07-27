@@ -1,5 +1,6 @@
 using Korkut.Settings.Entities;
-namespace Korkut.Settings;
+
+namespace Korkut.Settings.Repositories;
 
 /// <summary>
 /// Persistence port for drafting-style profiles. A profile is found by its layer — the office one

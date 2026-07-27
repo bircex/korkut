@@ -1,9 +1,10 @@
+using Korkut.Correspondence.Repositories;
 using Korkut.Correspondence.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Correspondence;
 using Korkut.Core;
 
-namespace Korkut.Correspondence;
+namespace Korkut.Correspondence.Services;
 
 /// <summary>Correspondence use-cases over the repository port; every call RETURNS a <see cref="Result"/>.</summary>
 internal sealed class CorrespondenceService(

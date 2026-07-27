@@ -1,9 +1,11 @@
 using Korkut.Contract.Settings;
 using Korkut.Core;
+using Korkut.Settings.Repositories;
+using Korkut.Settings.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Extensions;
 
 /// <summary>
 /// Self-registration for the Settings module: persona, drafting-style and memory repositories +

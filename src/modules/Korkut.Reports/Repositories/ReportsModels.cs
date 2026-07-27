@@ -1,4 +1,4 @@
-namespace Korkut.Reports;
+namespace Korkut.Reports.Repositories;
 
 /// <summary>The office's money roll-up (VAT-inclusive), composed into the dashboard.</summary>
 public sealed record FinanceTotals(decimal Invoiced, decimal Paid, decimal Outstanding, decimal Expenses);

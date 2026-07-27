@@ -1,9 +1,10 @@
-using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
+using Korkut.Settings.Entities;
+using Korkut.Settings.Repositories;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Services;
 
 /// <summary>
 /// Office-memory orchestration over the repository port. Whether a new item lands active is decided

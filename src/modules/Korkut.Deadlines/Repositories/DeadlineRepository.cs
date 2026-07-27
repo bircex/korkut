@@ -2,7 +2,7 @@ using Korkut.Deadlines.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Deadlines;
+namespace Korkut.Deadlines.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="IDeadlineRepository"/> over the ambient DbContext.</summary>
 internal sealed class DeadlineRepository(DbContext db) : Repository<Deadline>(db), IDeadlineRepository

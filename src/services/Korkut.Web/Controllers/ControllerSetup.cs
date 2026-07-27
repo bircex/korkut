@@ -1,3 +1,7 @@
+using Korkut.Notes.Extensions;
+using Korkut.Reports.Extensions;
+using Korkut.Settings.Extensions;
+using Korkut.Tasks.Extensions;
 using Korkut.Web.Errors;
 using Korkut.Web.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -17,20 +21,20 @@ public static class ControllerSetup
         services.AddControllers()
             // Vertical modules host their own controllers; register each module assembly as an
             // MVC application part so its endpoints are discovered alongside the host's.
-            .AddApplicationPart(typeof(Korkut.Clients.ClientsModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Notes.NotesModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Tasks.TasksModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Deadlines.DeadlinesModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Channels.ChannelsModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Correspondence.CorrespondenceModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Outbox.OutboxModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Calendar.CalendarModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Clients.Extensions.ClientsModule).Assembly)
+            .AddApplicationPart(typeof(NotesModule).Assembly)
+            .AddApplicationPart(typeof(TasksModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Deadlines.Extensions.DeadlinesModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Channels.Extensions.ChannelsModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Correspondence.Extensions.CorrespondenceModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Outbox.Extensions.OutboxModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Calendar.Extensions.CalendarModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Matters.MattersModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Hearings.HearingsModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Finance.FinanceModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Settings.SettingsModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Finance.Extensions.FinanceModule).Assembly)
+            .AddApplicationPart(typeof(SettingsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Organization.OrganizationModule).Assembly)
-            .AddApplicationPart(typeof(Korkut.Reports.ReportsModule).Assembly)
+            .AddApplicationPart(typeof(ReportsModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

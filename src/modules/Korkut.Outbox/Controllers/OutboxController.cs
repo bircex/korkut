@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Outbox;
+namespace Korkut.Outbox.Controllers;
 
 /// <summary>
 /// The outbound-message review queue: a human reviews the assistant's drafts, edits them, then

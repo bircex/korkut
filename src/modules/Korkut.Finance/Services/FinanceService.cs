@@ -1,9 +1,10 @@
+using Korkut.Finance.Repositories;
 using Korkut.Contract;
 using Korkut.Contract.Finance;
 using Korkut.Core;
 using Korkut.Finance.Entities;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Services;
 
 /// <summary>
 /// One service for everything finance: invoice + expense use-cases and the office money roll-up.

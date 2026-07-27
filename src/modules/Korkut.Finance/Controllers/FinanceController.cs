@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Controllers;
 
 /// <summary>
 /// Finance (faturalar, masraflar, para özeti). One controller over <see cref="IFinanceService"/>;

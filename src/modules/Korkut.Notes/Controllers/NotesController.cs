@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Notes;
+namespace Korkut.Notes.Controllers;
 
 /// <summary>Communication notes (görüşme notları). Forwards to <see cref="INoteService"/>, maps Result to HTTP.</summary>
 [ApiController]

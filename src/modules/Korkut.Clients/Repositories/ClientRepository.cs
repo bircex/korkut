@@ -2,7 +2,7 @@ using Korkut.Clients.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Clients;
+namespace Korkut.Clients.Repositories;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="IClientRepository"/>: active clients, by name. Builds on the

@@ -2,7 +2,7 @@ using Korkut.Channels.Entities;
 using Korkut.Channels;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Channels;
+namespace Korkut.Channels.Repositories;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="IChannelRepository"/> over the ambient DbContext. The

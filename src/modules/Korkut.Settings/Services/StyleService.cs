@@ -1,9 +1,10 @@
-using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
+using Korkut.Settings.Entities;
+using Korkut.Settings.Repositories;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Services;
 
 /// <summary>
 /// Drafting-style orchestration over the repository port. The overlay rule lives on

@@ -1,9 +1,11 @@
+using Korkut.Calendar.Services;
+using Korkut.Calendar.Repositories;
 using Korkut.Contract.Calendar;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Calendar;
+namespace Korkut.Calendar.Extensions;
 
 /// <summary>
 /// Self-registration for the Calendar module: binds the event repository + service. The

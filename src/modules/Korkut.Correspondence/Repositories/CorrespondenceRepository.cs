@@ -2,7 +2,7 @@ using Korkut.Correspondence.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Correspondence;
+namespace Korkut.Correspondence.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="ICorrespondenceRepository"/> over the ambient DbContext.</summary>
 internal sealed class CorrespondenceRepository(DbContext db)

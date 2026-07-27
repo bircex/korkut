@@ -1,3 +1,4 @@
+using Korkut.Channels.Repositories;
 using Korkut.Channels.Entities;
 using Korkut.Channels;
 using System.Security.Cryptography;
@@ -6,7 +7,7 @@ using Korkut.Contract;
 using Korkut.Contract.Channels;
 using Korkut.Core;
 
-namespace Korkut.Channels;
+namespace Korkut.Channels.Services;
 
 /// <summary>
 /// Channel configuration over the repository port. Secrets are encrypted here, on the way in, so

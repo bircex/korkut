@@ -1,9 +1,10 @@
+using Korkut.Clients.Repositories;
 using Korkut.Clients.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Clients;
 using Korkut.Core;
 
-namespace Korkut.Clients;
+namespace Korkut.Clients.Services;
 
 /// <summary>
 /// Client use-cases over the repository port. Every call runs inside the caller's tenant scope and

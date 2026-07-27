@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Deadlines;
+namespace Korkut.Deadlines.Controllers;
 
 /// <summary>Deadlines (süreler). Forwards to <see cref="IDeadlineService"/>, maps Result to HTTP.</summary>
 [ApiController]

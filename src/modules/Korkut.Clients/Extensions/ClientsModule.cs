@@ -1,9 +1,11 @@
+using Korkut.Clients.Services;
+using Korkut.Clients.Repositories;
 using Korkut.Contract.Clients;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Korkut.Clients;
+namespace Korkut.Clients.Extensions;
 
 /// <summary>
 /// Self-registration for the Clients module: binds the repository + service ports. The entity

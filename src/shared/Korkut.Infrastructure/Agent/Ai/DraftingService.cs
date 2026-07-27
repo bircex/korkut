@@ -5,6 +5,7 @@ using Korkut.Settings.Entities;
 using Korkut.Infrastructure.Templates;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
+using Korkut.Settings.Repositories;
 
 namespace Korkut.Infrastructure.Agent.Ai;
 

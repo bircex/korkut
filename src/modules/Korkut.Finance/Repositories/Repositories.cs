@@ -3,7 +3,7 @@ using Korkut.Finance.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Finance;
+namespace Korkut.Finance.Repositories;
 
 /// <summary>Persistence port for invoices; listings are most-recently-issued first.</summary>
 internal interface IInvoiceRepository : IRepository<Invoice>;

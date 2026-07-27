@@ -1,7 +1,7 @@
 using Korkut.Settings.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Repositories;
 
 /// <summary>EF/Postgres adapter for <see cref="IPersonaRepository"/> over the ambient DbContext (office-keyed).</summary>
 internal sealed class PersonaRepository(DbContext db) : IPersonaRepository

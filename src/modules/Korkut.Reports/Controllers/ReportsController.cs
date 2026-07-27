@@ -1,9 +1,9 @@
-using Korkut.Core;
 using Korkut.Contract.Reports;
+using Korkut.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Reports;
+namespace Korkut.Reports.Controllers;
 
 /// <summary>
 /// The read-only office dashboard. It surfaces money, so it requires billing.read (both

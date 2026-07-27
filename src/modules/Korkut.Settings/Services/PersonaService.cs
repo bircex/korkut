@@ -1,9 +1,10 @@
-using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
+using Korkut.Settings.Entities;
+using Korkut.Settings.Repositories;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Services;
 
 /// <summary>Office-persona orchestration over the repository port; the first save creates it. Returns Result.</summary>
 internal sealed class PersonaService(

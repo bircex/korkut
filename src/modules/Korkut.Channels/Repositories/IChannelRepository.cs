@@ -1,6 +1,6 @@
 using Korkut.Channels.Entities;
 using Korkut.Channels;
-namespace Korkut.Channels;
+namespace Korkut.Channels.Repositories;
 
 /// <summary>
 /// Persistence port for messaging channels. The aggregate is keyed by (office, kind) rather

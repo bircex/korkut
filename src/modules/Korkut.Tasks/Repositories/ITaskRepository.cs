@@ -1,7 +1,7 @@
-using Korkut.Tasks.Entities;
 using Korkut.Core;
+using Korkut.Tasks.Entities;
 
-namespace Korkut.Tasks;
+namespace Korkut.Tasks.Repositories;
 
 /// <summary>Persistence port for office tasks.</summary>
 internal interface ITaskRepository : IRepository<WorkTask>

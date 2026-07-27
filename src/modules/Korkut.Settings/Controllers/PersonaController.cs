@@ -4,7 +4,7 @@ using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Controllers;
 
 /// <summary>The office-wide AI persona. Read needs matters.read; change needs office.settings.</summary>
 [ApiController]
