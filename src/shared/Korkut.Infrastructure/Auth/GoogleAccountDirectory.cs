@@ -1,5 +1,4 @@
 using Korkut.Infrastructure.Persistence;
-using Korkut.Application.Auth.Google;
 using Korkut.Organization;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

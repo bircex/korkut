@@ -1,4 +1,5 @@
-using Korkut.Application.Auth.Google;
+using Korkut.Contract.Organization;
+using Korkut.Organization;
 using Korkut.Api.Auth;
 using Korkut.Infrastructure.Security;
 using Korkut.Web.Errors;

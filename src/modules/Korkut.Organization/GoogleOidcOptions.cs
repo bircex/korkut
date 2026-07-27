@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Google OIDC configuration, bound to the exact environment names the deployment already

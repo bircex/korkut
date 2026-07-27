@@ -1,4 +1,4 @@
-using Korkut.Application.Auth.Google;
+using Korkut.Organization;
 using System.Net;
 using System.Net.Http.Headers;
 using Korkut.Application.Security;

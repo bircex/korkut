@@ -1,6 +1,5 @@
-using Korkut.Organization;
 
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>
 /// The cross-tenant lookups Google sign-in needs before any session exists: which account a

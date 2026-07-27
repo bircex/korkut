@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>Server-side, single-use, short-lived store of pending OIDC challenges (keyed by state).</summary>
 public interface IOidcFlowStore

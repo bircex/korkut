@@ -1,8 +1,7 @@
 using Korkut.Contract.Organization;
-using Korkut.Organization;
 using Korkut.Core;
 
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Google OIDC sign-in over the OIDC ports and the cross-tenant account lookups. Every

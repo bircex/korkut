@@ -1,5 +1,4 @@
 using Korkut.Organization;
-using Korkut.Application.Auth.Google;
 using Korkut.Contract.Organization;
 using System.Security.Cryptography;
 using Korkut.Application.Security;

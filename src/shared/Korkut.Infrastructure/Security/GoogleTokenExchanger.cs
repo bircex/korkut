@@ -1,4 +1,4 @@
-using Korkut.Application.Auth.Google;
+using Korkut.Organization;
 using System.Text.Json;
 using Korkut.Application.Security;
 

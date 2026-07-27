@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>PKCE S256 code-challenge derivation (RFC 7636).</summary>
 public static class Pkce

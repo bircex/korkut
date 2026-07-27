@@ -1,4 +1,4 @@
-using Korkut.Application.Auth.Google;
+using Korkut.Organization;
 namespace Korkut.Application.Security;
 
 public enum AdminSignInStatus

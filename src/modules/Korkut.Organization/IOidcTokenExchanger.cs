@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>Exchanges an auth code (+ PKCE verifier) for tokens at Google's token endpoint.</summary>
 public interface IOidcTokenExchanger

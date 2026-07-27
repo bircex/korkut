@@ -1,4 +1,3 @@
-using Korkut.Application.Auth;
 using Korkut.Organization;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

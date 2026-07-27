@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>Validates a Google ID token's signature and standard claims, or throws.</summary>
 public interface IGoogleIdTokenValidator

@@ -1,4 +1,3 @@
-using Korkut.Application.Auth;
 using Korkut.Organization;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;

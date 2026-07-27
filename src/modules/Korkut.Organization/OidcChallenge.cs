@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace Korkut.Application.Auth.Google;
+namespace Korkut.Organization;
 
 /// <summary>The per-login secrets: CSRF state, replay-guard nonce, and the PKCE pair.</summary>
 public sealed record OidcChallenge(string State, string Nonce, string CodeVerifier, string CodeChallenge)
