@@ -1,4 +1,4 @@
-namespace Korkut.Application.Security;
+namespace Korkut.Core;
 
 /// <summary>
 /// Mints and hashes the opaque tokens that travel by e-mail or link (invites, password

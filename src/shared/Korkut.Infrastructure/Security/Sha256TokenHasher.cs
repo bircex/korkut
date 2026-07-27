@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Korkut.Application.Security;
+using Korkut.Core;
 
 namespace Korkut.Infrastructure.Security;
 

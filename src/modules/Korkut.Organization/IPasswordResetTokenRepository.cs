@@ -1,7 +1,6 @@
 using Korkut.Core;
-using Korkut.Organization;
 
-namespace Korkut.Application.Auth;
+namespace Korkut.Organization;
 
 /// <summary>Persistence port for password-reset tokens.</summary>
 public interface IPasswordResetTokenRepository : IRepository<PasswordResetToken>

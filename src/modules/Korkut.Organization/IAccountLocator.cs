@@ -1,6 +1,5 @@
-using Korkut.Organization;
 
-namespace Korkut.Application.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Finds which office(s) an e-mail has an account in, before any session exists. Sign-in

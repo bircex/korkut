@@ -21,10 +21,10 @@ public static class SecuritySetup
         // Local sign-in, lockout and password recovery (clean-architecture Auth slice):
         // the cross-tenant account/reset-token resolvers, the reset-token store, and the
         // service the controller talks to.
-        services.AddScoped<Korkut.Application.Auth.IAccountLocator, Korkut.Infrastructure.Auth.AccountLocator>();
-        services.AddScoped<Korkut.Application.Auth.IResetTokenResolver, Korkut.Infrastructure.Auth.ResetTokenResolver>();
-        services.AddScoped<Korkut.Application.Auth.IPasswordResetTokenRepository, Korkut.Infrastructure.Auth.PasswordResetTokenRepository>();
-        services.AddScoped<Korkut.Application.Auth.ISecurityNotifier, Korkut.Infrastructure.Auth.LoggingSecurityNotifier>();
+        services.AddScoped<Korkut.Organization.IAccountLocator, Korkut.Infrastructure.Auth.AccountLocator>();
+        services.AddScoped<Korkut.Organization.IResetTokenResolver, Korkut.Infrastructure.Auth.ResetTokenResolver>();
+        services.AddScoped<Korkut.Organization.IPasswordResetTokenRepository, Korkut.Infrastructure.Auth.PasswordResetTokenRepository>();
+        services.AddScoped<Korkut.Organization.ISecurityNotifier, Korkut.Infrastructure.Auth.LoggingSecurityNotifier>();
         services.AddScoped<Korkut.Application.Auth.IAuthService, Korkut.Application.Auth.AuthService>();
 
         // Google OIDC: bind to the EXISTING exact env names (preserved from Python).
@@ -50,7 +50,7 @@ public static class SecuritySetup
             return new AesGcmSecretEncryptor(Convert.FromBase64String(key));
         });
         services.AddScoped<TwoFactorService>();
-        services.AddScoped<Korkut.Application.Auth.ITwoFactorChallenge>(sp => sp.GetRequiredService<TwoFactorService>());
+        services.AddScoped<Korkut.Organization.ITwoFactorChallenge>(sp => sp.GetRequiredService<TwoFactorService>());
 
         // Sessions (KDM-018): short-lived access tokens + rotating refresh families.
         services.TryAddSingleton<Korkut.Core.IClock>(Korkut.Core.SystemClock.Instance);

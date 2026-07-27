@@ -1,4 +1,4 @@
-namespace Korkut.Application.Security;
+namespace Korkut.Core;
 
 /// <summary>
 /// Versioned, adaptive password hashing. Implementations use an established KDF

@@ -1,4 +1,4 @@
-using Korkut.Application.Auth;
+using Korkut.Organization;
 using Microsoft.Extensions.Logging;
 
 namespace Korkut.Infrastructure.Auth;

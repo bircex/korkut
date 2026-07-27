@@ -1,6 +1,5 @@
-using Korkut.Organization;
 
-namespace Korkut.Application.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Resolves which office a password-reset token belongs to before any session exists.

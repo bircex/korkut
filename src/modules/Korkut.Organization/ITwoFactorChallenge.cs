@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// The second factor at sign-in: a TOTP code, or one of the printed recovery codes. Both
