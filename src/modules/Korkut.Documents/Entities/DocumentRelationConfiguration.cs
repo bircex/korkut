@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Documents;
+namespace Korkut.Documents.Entities;
 
 /// <summary>EF mapping for document relations (table/columns/indexes unchanged).</summary>
 public sealed class DocumentRelationConfiguration : IEntityTypeConfiguration<DocumentRelation>

@@ -1,4 +1,4 @@
-namespace Korkut.Documents;
+namespace Korkut.Documents.Entities;
 
 /// <summary>The kinds of record a document may be filed against.</summary>
 public static class DocumentRelationTarget

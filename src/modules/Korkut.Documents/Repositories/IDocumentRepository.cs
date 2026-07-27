@@ -1,6 +1,7 @@
+using Korkut.Documents.Entities;
 using Korkut.Core;
 
-namespace Korkut.Documents;
+namespace Korkut.Documents.Repositories;
 
 /// <summary>
 /// Persistence port for document metadata. Listings show what still exists: a tombstoned document

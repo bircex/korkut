@@ -4,6 +4,8 @@ using Korkut.Application.Documents.Responses;
 using Korkut.Application.Documents.Storage;
 using Korkut.Application.Upload.SafeUpload;
 using Korkut.Documents;
+using Korkut.Documents.Repositories;
+using Korkut.Documents.Entities;
 
 namespace Korkut.Application.Documents;
 

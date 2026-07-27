@@ -33,6 +33,7 @@ using Korkut.Channels.Entities;
 using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Documents;
+using Korkut.Documents.Entities;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Finance.Entities;

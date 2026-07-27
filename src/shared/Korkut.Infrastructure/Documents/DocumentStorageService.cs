@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.Storage;
 using Korkut.Documents;
+using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;

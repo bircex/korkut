@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Documents;
+namespace Korkut.Documents.Entities;
 
 /// <summary>
 /// One immutable, provenance-tracked text span extracted from a clean document. Uniqueness over

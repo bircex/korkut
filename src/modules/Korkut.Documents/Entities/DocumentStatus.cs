@@ -1,4 +1,4 @@
-namespace Korkut.Documents;
+namespace Korkut.Documents.Entities;
 
 /// <summary>The quarantine → clean lifecycle a document's bytes go through.</summary>
 public static class DocumentStatus

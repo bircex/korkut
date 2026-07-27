@@ -1,13 +1,14 @@
+using Korkut.Documents.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Documents;
+namespace Korkut.Documents.Repositories;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="IDocumentRepository"/> over the ambient DbContext. Tombstoned
 /// rows are filtered out of every read: they exist as deletion markers, not as documents.
 /// </summary>
-public sealed class DocumentRepository(DbContext db) : Repository<Document>(db), IDocumentRepository
+internal sealed class DocumentRepository(DbContext db) : Repository<Document>(db), IDocumentRepository
 {
     public async Task<IReadOnlyList<Document>> ListAsync(Guid officeId, Guid? matterId, CancellationToken ct = default)
         => await Active(officeId)

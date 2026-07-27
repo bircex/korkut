@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Documents;
+namespace Korkut.Documents.Entities;
 
 /// <summary>EF mapping for document metadata (table/columns/indexes unchanged).</summary>
 public sealed class DocumentConfiguration : IEntityTypeConfiguration<Document>
