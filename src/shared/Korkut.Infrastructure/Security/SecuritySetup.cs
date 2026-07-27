@@ -25,7 +25,6 @@ public static class SecuritySetup
         services.AddScoped<Korkut.Organization.IResetTokenResolver, Korkut.Infrastructure.Auth.ResetTokenResolver>();
         services.AddScoped<Korkut.Organization.IPasswordResetTokenRepository, Korkut.Infrastructure.Auth.PasswordResetTokenRepository>();
         services.AddScoped<Korkut.Organization.ISecurityNotifier, Korkut.Infrastructure.Auth.LoggingSecurityNotifier>();
-        services.AddScoped<Korkut.Application.Auth.IAuthService, Korkut.Application.Auth.AuthService>();
 
         // Google OIDC: bind to the EXISTING exact env names (preserved from Python).
         services.AddSingleton(BindGoogleOptions(configuration));

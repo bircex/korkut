@@ -1,3 +1,4 @@
+using Korkut.Contract.Organization;
 namespace Korkut.Application.Auth.Google;
 
 /// <summary>

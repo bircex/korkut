@@ -1,7 +1,6 @@
 using Korkut.Api.Contracts;
 using Korkut.Api.Auth;
-using Korkut.Application.Auth;
-using Korkut.Application.Auth.Requests;
+using Korkut.Contract.Organization;
 using Korkut.Infrastructure.Security;
 using Korkut.Web;
 using Korkut.Web.Errors;

@@ -1,9 +1,7 @@
-using Korkut.Application.Auth.Requests;
+using Korkut.Contract.Organization;
 using Korkut.Core;
-using Korkut.Application.Security;
-using Korkut.Organization;
 
-namespace Korkut.Application.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Local authentication, lockout and password recovery over the user and reset-token

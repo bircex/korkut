@@ -1,3 +1,4 @@
+using Korkut.Contract.Organization;
 using Korkut.Organization;
 using Korkut.Core;
 
