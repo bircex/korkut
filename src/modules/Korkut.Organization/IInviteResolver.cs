@@ -1,6 +1,5 @@
-using Korkut.Organization;
 
-namespace Korkut.Application.Invites;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Resolves what an opaque invite token grants before any session exists, so the accept

@@ -1,8 +1,7 @@
 using Korkut.Core;
-using Korkut.Application.Invites;
-using Korkut.Application.Invites.Requests;
-using Korkut.Application.Security;
+using Korkut.Contract.Organization;
 using Korkut.Web;
+using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -21,27 +20,21 @@ public sealed class InvitesController(IInviteService invites) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.MembersManage)]
     public async Task<IActionResult> List(CancellationToken ct)
-        => Ok(await invites.ListAsync(ct));
+        => (await invites.ListAsync(ct)).ToActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MembersManage)]
     public async Task<IActionResult> Create([FromBody] CreateInviteRequest body, CancellationToken ct)
-    {
-        var created = await invites.CreateAsync(body, ct);
-        return Created($"/api/invites/{created.Id}", created);
-    }
+        => (await invites.CreateAsync(body, ct)).ToActionResult(c => Created($"/api/invites/{c.Id}", c));
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Permissions.MembersManage)]
     public async Task<IActionResult> Revoke(Guid id, CancellationToken ct)
-    {
-        await invites.RevokeAsync(id, ct);
-        return NoContent();
-    }
+        => (await invites.RevokeAsync(id, ct)).ToActionResult();
 
     [HttpPost("accept")]
     [AllowAnonymous]
     [EnableRateLimiting(WebSetup.SensitivePolicy)]
     public async Task<IActionResult> Accept([FromBody] AcceptInviteRequest body, CancellationToken ct)
-        => Ok(await invites.AcceptAsync(body, ct));
+        => (await invites.AcceptAsync(body, ct)).ToActionResult();
 }

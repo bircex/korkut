@@ -1,16 +1,13 @@
+using Korkut.Contract;
+using Korkut.Contract.Organization;
 using Korkut.Core;
-using Korkut.Application.Errors;
-using Korkut.Application.Invites.Requests;
-using Korkut.Application.Invites.Responses;
-using Korkut.Application.Security;
-using Korkut.Organization;
 
-namespace Korkut.Application.Invites;
+namespace Korkut.Organization;
 
 /// <summary>
-/// Invitation orchestration over the repository port. It owns the token: minted here,
-/// stored only as a hash, and returned to the caller exactly once. Accepting runs in the
-/// scope of the office the token resolved to, not the caller's — there is no caller.
+/// Invitation orchestration over the repository port. It owns the token: minted here, stored only as
+/// a hash, and returned exactly once. Accepting runs in the scope of the office the token resolved
+/// to, not the caller's — there is no caller. Every call RETURNS a <see cref="Result"/>.
 /// </summary>
 public sealed class InviteService(
     IInviteRepository repository,
@@ -24,11 +21,11 @@ public sealed class InviteService(
     /// <summary>How long a fresh invite stays valid.</summary>
     public TimeSpan Lifetime { get; init; } = TimeSpan.FromDays(7);
 
-    public Task<IReadOnlyList<InviteResponse>> ListAsync(CancellationToken ct = default)
+    public Task<Result<IReadOnlyList<InviteResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(currentUser.OfficeId, async office =>
-            (IReadOnlyList<InviteResponse>)(await repository.ListAsync(office, ct)).Select(ToResponse).ToList(), ct);
+            Result<IReadOnlyList<InviteResponse>>.Ok((await repository.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
 
-    public Task<InviteCreatedResponse> CreateAsync(CreateInviteRequest request, CancellationToken ct = default)
+    public Task<Result<InviteCreatedResponse>> CreateAsync(CreateInviteRequest request, CancellationToken ct = default)
         => InScopeAsync(currentUser.OfficeId, async office =>
         {
             var rawToken = tokenHasher.NewRawToken();
@@ -37,30 +34,30 @@ public sealed class InviteService(
                 office, request.Email!.Trim().ToLowerInvariant(), request.Role!,
                 tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now);
             await repository.AddAsync(invite, ct);
-            return new InviteCreatedResponse(invite.Id, invite.Email, invite.Role, rawToken, invite.ExpiresAt);
+            return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(invite.Id, invite.Email, invite.Role, rawToken, invite.ExpiresAt));
         }, ct);
 
-    public Task RevokeAsync(Guid inviteId, CancellationToken ct = default)
+    public Task<Result> RevokeAsync(Guid inviteId, CancellationToken ct = default)
         => InScopeAsync(currentUser.OfficeId, async office =>
         {
             // An invite that was already accepted is history, not something to revoke.
             var invite = await repository.FindAsync(office, inviteId, ct);
             if (invite is null || !invite.IsPending)
             {
-                throw new NotFoundException("Davet bulunamadı.");
+                return Result.NotFound("Davet bulunamadı.");
             }
 
-            return await repository.RemoveAsync(office, inviteId, ct)
-                ? true
-                : throw new NotFoundException("Davet bulunamadı.");
+            return await repository.RemoveAsync(office, inviteId, ct) ? Result.Ok() : Result.NotFound("Davet bulunamadı.");
         }, ct);
 
-    public async Task<InviteAcceptedResponse> AcceptAsync(AcceptInviteRequest request, CancellationToken ct = default)
+    public async Task<Result<InviteAcceptedResponse>> AcceptAsync(AcceptInviteRequest request, CancellationToken ct = default)
     {
-        // Resolved across tenants: an unknown, expired or used token is all one answer, so
-        // a caller cannot probe for which offices exist.
-        var grant = await resolver.ResolveAsync(tokenHasher.Hash(request.Token!), ct)
-            ?? throw new BadRequestException("Davet geçersiz, süresi dolmuş veya kullanılmış.");
+        // Resolved across tenants: an unknown, expired or used token is all one answer.
+        var grant = await resolver.ResolveAsync(tokenHasher.Hash(request.Token!), ct);
+        if (grant is null)
+        {
+            return Result<InviteAcceptedResponse>.BadRequest("Davet geçersiz, süresi dolmuş veya kullanılmış.");
+        }
 
         return await InScopeAsync(grant.OfficeId, async office =>
         {
@@ -76,7 +73,7 @@ public sealed class InviteService(
                 await repository.SaveChangesAsync(ct);
             }
 
-            return new InviteAcceptedResponse(true, grant.Email);
+            return Result<InviteAcceptedResponse>.Ok(new InviteAcceptedResponse(true, grant.Email));
         }, ct);
     }
 

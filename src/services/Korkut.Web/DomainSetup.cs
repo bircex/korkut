@@ -76,8 +76,7 @@ public static class DomainSetup
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
         // owned by the Organization module (registered above).
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
-        services.AddScoped<Korkut.Application.Invites.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
-        services.AddScoped<Korkut.Application.Invites.IInviteService, Korkut.Application.Invites.InviteService>();
+        services.AddScoped<Korkut.Organization.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
 
         return services;
     }
