@@ -1,3 +1,4 @@
+using Korkut.Settings.Entities;
 using Korkut.Core;
 
 namespace Korkut.Settings;

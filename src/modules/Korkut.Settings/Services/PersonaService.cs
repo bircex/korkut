@@ -1,3 +1,4 @@
+using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
@@ -5,7 +6,7 @@ using Korkut.Core;
 namespace Korkut.Settings;
 
 /// <summary>Office-persona orchestration over the repository port; the first save creates it. Returns Result.</summary>
-public sealed class PersonaService(
+internal sealed class PersonaService(
     IPersonaRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IPersonaService
 {
     public Task<Result<PersonaResponse>> GetAsync(CancellationToken ct = default)

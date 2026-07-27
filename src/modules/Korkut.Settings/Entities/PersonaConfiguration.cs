@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>EF mapping for the office persona (table/columns unchanged; keyed by office).</summary>
 public sealed class PersonaConfiguration : IEntityTypeConfiguration<Persona>

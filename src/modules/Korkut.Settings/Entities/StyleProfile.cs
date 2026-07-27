@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>
 /// A drafting style profile. Each office has one office-level profile and each user may

@@ -1,3 +1,4 @@
+using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
@@ -8,7 +9,7 @@ namespace Korkut.Settings;
 /// Office-memory orchestration over the repository port. Whether a new item lands active is decided
 /// here, from the caller's permissions — the aggregate is only told which it is. Returns Result.
 /// </summary>
-public sealed class MemoryService(
+internal sealed class MemoryService(
     IMemoryRepository repository,
     IMemoryAuthorLookup authors,
     IUnitOfWork unitOfWork,

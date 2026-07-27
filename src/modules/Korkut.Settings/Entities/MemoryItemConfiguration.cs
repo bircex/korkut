@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>EF mapping for office memory items (table/columns/index unchanged).</summary>
 public sealed class MemoryItemConfiguration : IEntityTypeConfiguration<MemoryItem>

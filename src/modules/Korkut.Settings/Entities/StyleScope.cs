@@ -1,4 +1,4 @@
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>The layers a drafting style can be set at.</summary>
 public static class StyleScope

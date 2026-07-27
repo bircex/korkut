@@ -1,3 +1,4 @@
+using Korkut.Settings.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Settings;
@@ -6,7 +7,7 @@ namespace Korkut.Settings;
 /// EF/Postgres adapter for <see cref="IStyleProfileRepository"/> over the ambient DbContext. A profile
 /// is looked up by its layer — (office, scope, user), the unique index behind it — rather than by id.
 /// </summary>
-public sealed class StyleProfileRepository(DbContext db) : IStyleProfileRepository
+internal sealed class StyleProfileRepository(DbContext db) : IStyleProfileRepository
 {
     public Task<StyleProfile?> FindAsync(Guid officeId, string scope, Guid userId, CancellationToken ct = default)
         => Layer(officeId, scope, userId).AsNoTracking().SingleOrDefaultAsync(ct);

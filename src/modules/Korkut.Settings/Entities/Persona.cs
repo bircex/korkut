@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>
 /// The office-wide AI persona: how the assistant should sound and what it should assume.

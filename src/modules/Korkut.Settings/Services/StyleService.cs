@@ -1,3 +1,4 @@
+using Korkut.Settings.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Settings;
 using Korkut.Core;
@@ -9,7 +10,7 @@ namespace Korkut.Settings;
 /// <see cref="StyleFields"/>; this decides which layer a write lands on, and the user layer is always
 /// the caller's own id. Returns Result.
 /// </summary>
-public sealed class StyleService(
+internal sealed class StyleService(
     IStyleProfileRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IStyleService
 {
     public Task<Result<StyleResponse>> GetAsync(CancellationToken ct = default)

@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>
 /// A remembered fact or instruction for the office assistant. Who added it decides where it

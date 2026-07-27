@@ -1,4 +1,4 @@
-namespace Korkut.Settings;
+namespace Korkut.Settings.Entities;
 
 /// <summary>The four drafting-style fields, used at every style layer.</summary>
 public readonly record struct StyleFields(string Letterhead, string Signature, string Tone, string Boilerplate)

@@ -1,9 +1,10 @@
+using Korkut.Settings.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Settings;
 
 /// <summary>EF/Postgres adapter for <see cref="IPersonaRepository"/> over the ambient DbContext (office-keyed).</summary>
-public sealed class PersonaRepository(DbContext db) : IPersonaRepository
+internal sealed class PersonaRepository(DbContext db) : IPersonaRepository
 {
     public Task<Persona?> FindAsync(Guid officeId, CancellationToken ct = default)
         => db.Set<Persona>().AsNoTracking().SingleOrDefaultAsync(p => p.OfficeId == officeId, ct);
