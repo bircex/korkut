@@ -1,6 +1,5 @@
 using System.Text.Json;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Tools;
+using Korkut.Tools.Tools;
 using Korkut.Core;
 using Korkut.Outbox;
 using Korkut.Outbox.Repositories;

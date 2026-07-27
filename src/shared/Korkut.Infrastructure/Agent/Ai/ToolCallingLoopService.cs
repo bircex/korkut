@@ -1,8 +1,8 @@
-using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Tools;
+using Korkut.Application.Agent.Abstractions;
+using Korkut.Tools.Tools;
 
-namespace Korkut.Tools;
+namespace Korkut.Infrastructure.Agent.Ai;
 
 /// <summary>
 /// The assistant's tool-calling loop. It offers the CALLER'S permitted tools to the model (the

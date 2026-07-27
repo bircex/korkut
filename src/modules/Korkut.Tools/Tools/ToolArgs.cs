@@ -2,7 +2,7 @@ using System.Text.Encodings.Web;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
-namespace Korkut.Application.Agent.Tools;
+namespace Korkut.Tools.Tools;
 
 /// <summary>Reads typed values out of a tool call's JSON arguments and serializes tool output (snake_case).</summary>
 [SuppressMessage("Naming", "CA1720:Identifier contains type name",

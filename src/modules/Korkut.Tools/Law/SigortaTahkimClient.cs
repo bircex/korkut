@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Korkut.Application.Agent.Tools;
+using Korkut.Tools.Tools;
 using System.Text.RegularExpressions;
 
 namespace Korkut.Tools.Law;

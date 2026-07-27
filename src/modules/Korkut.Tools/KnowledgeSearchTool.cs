@@ -1,8 +1,7 @@
 using Korkut.Core;
 using System.Text;
 using System.Text.Json;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Tools;
+using Korkut.Tools.Tools;
 using Korkut.Knowledge;
 
 namespace Korkut.Tools;

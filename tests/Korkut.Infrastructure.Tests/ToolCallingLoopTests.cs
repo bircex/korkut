@@ -1,8 +1,9 @@
+using Korkut.Infrastructure.Agent.Ai;
+using Korkut.Application.Agent.Models;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Tools;
+using Korkut.Tools.Tools;
 using Korkut.Tools;
 
 namespace Korkut.Infrastructure.Tests;

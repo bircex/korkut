@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Korkut.Application.Agent.Tools;
+namespace Korkut.Tools.Tools;
 
 /// <summary>Parses a JSON-Schema literal into a detached <see cref="JsonElement"/> for a tool's parameters.</summary>
 public static class ToolSchema

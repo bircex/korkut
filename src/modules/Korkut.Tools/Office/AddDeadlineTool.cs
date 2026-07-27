@@ -1,8 +1,7 @@
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Contract.Deadlines;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Tools;
+using Korkut.Tools.Tools;
 
 namespace Korkut.Tools.Office;
 

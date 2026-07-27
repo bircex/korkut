@@ -1,7 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Models;
+namespace Korkut.Tools.Tools;
 
 /// <summary>
 /// The trusted identity a tool call runs under: the office (tenant) it is pinned to, the acting
