@@ -62,6 +62,8 @@ public static class DomainSetup
         // Office settings module (persona, style layers, memory). The memory author lookup impl
         // stays in Infrastructure (it reads the users table) and is registered here.
         new Korkut.Settings.SettingsModule().Register(services, configuration);
+        // Organization (identity/tenant) module — grows in stages; office roles land first.
+        new Korkut.Organization.OrganizationModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         // Reports (Clean Architecture: read-only aggregation query + service; finance is
         // computed from the same invoice/expense figures the finance screens use).

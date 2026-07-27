@@ -1,8 +1,7 @@
-using Korkut.Domain.OfficeRoles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.OfficeRoles;
+namespace Korkut.Organization;
 
 /// <summary>EF mapping for office-defined roles (table/columns/index unchanged).</summary>
 public sealed class OfficeRoleConfiguration : IEntityTypeConfiguration<OfficeRole>

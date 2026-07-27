@@ -25,7 +25,7 @@ using Korkut.Channels;
 using Korkut.Settings;
 using Korkut.Domain.Auth;
 using Korkut.Domain.Auditing;
-using Korkut.Domain.OfficeRoles;
+using Korkut.Organization;
 using Korkut.Domain.Documents;
 using Korkut.Domain.Users;
 using Korkut.Domain.Invites;

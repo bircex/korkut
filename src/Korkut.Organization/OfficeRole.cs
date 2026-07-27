@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.OfficeRoles;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A role an office defines for itself: a named permission set that a user's role key points

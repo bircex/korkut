@@ -37,7 +37,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Auth.RefreshToken> RefreshTokens => Set<Domain.Auth.RefreshToken>();
 
-    public DbSet<Domain.OfficeRoles.OfficeRole> OfficeCustomRoles => Set<Domain.OfficeRoles.OfficeRole>();
+    public DbSet<Korkut.Organization.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.OfficeRole>();
 
     public DbSet<Korkut.Clients.Client> Clients => Set<Korkut.Clients.Client>();
 
@@ -142,7 +142,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Auth.RefreshTokenConfiguration());
 
-        modelBuilder.ApplyConfiguration(new OfficeRoles.OfficeRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.OfficeRoleConfiguration());
 
         // Cross-module FK constraints (Matter→Client, Hearing→Matter) — real DB constraints that
         // can't live in a module's own config since a module never references another's entity type.
