@@ -9,6 +9,7 @@
     <Project Path="src/Korkut.Notes/Korkut.Notes.csproj" />
     <Project Path="src/Korkut.Tasks/Korkut.Tasks.csproj" />
     <Project Path="src/Korkut.Deadlines/Korkut.Deadlines.csproj" />
+    <Project Path="src/Korkut.Channels/Korkut.Channels.csproj" />
     <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
     <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />

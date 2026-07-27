@@ -1,16 +1,13 @@
-using Korkut.Application.Channels;
-using Korkut.Domain.Channels;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Channels;
+namespace Korkut.Channels;
 
 /// <summary>
-/// EF/Postgres adapter for <see cref="IChannelRepository"/>. The aggregate is keyed by
-/// (office, kind), so this one cannot derive from the generic EF base; every query still
-/// pins the office before Postgres RLS is consulted.
+/// EF/Postgres adapter for <see cref="IChannelRepository"/> over the ambient DbContext. The
+/// aggregate is keyed by (office, kind), so it cannot derive from the generic EF base; every
+/// query still pins the office before Postgres RLS is consulted.
 /// </summary>
-public sealed class ChannelRepository(KorkutDbContext db) : IChannelRepository
+public sealed class ChannelRepository(DbContext db) : IChannelRepository
 {
     public Task<Channel?> FindAsync(Guid officeId, string kind, CancellationToken ct = default)
         => Scoped(officeId).AsNoTracking().SingleOrDefaultAsync(c => c.Kind == kind, ct);
@@ -23,11 +20,11 @@ public sealed class ChannelRepository(KorkutDbContext db) : IChannelRepository
 
     public Task AddAsync(Channel channel, CancellationToken ct = default)
     {
-        db.Channels.Add(channel);
+        db.Set<Channel>().Add(channel);
         return Task.CompletedTask;
     }
 
     public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 
-    private IQueryable<Channel> Scoped(Guid officeId) => db.Channels.Where(c => c.OfficeId == officeId);
+    private IQueryable<Channel> Scoped(Guid officeId) => db.Set<Channel>().Where(c => c.OfficeId == officeId);
 }

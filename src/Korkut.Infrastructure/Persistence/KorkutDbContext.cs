@@ -71,7 +71,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Domain.Settings.MemoryItem> MemoryItems => Set<Domain.Settings.MemoryItem>();
 
-    public DbSet<Domain.Channels.Channel> Channels => Set<Domain.Channels.Channel>();
+    public DbSet<Korkut.Channels.Channel> Channels => Set<Korkut.Channels.Channel>();
 
 
     // Conversations, chat_messages, generated_documents, document_versions moved to the
@@ -120,7 +120,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Settings.MemoryItemConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Channels.ChannelConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Channels.ChannelConfiguration());
 
         modelBuilder.ApplyConfiguration(new Outbox.OutboundMessageConfiguration());
 

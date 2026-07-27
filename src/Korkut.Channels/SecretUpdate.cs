@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Channels;
+namespace Korkut.Channels;
 
 /// <summary>
 /// How a secret field on a channel should change: keep the stored value, clear it, or

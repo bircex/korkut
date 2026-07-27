@@ -75,9 +75,7 @@ public static class DomainSetup
         // computed from the same invoice/expense figures the finance screens use).
         services.AddScoped<Korkut.Application.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
         services.AddScoped<Korkut.Application.Reports.IReportsService, Korkut.Application.Reports.ReportsService>();
-        // Channels (Clean Architecture: repository port + service; secrets encrypted in the service).
-        services.AddScoped<Korkut.Application.Channels.IChannelRepository, Korkut.Infrastructure.Channels.ChannelRepository>();
-        services.AddScoped<Korkut.Application.Channels.IChannelService, Korkut.Application.Channels.ChannelService>();
+        new Korkut.Channels.ChannelsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());

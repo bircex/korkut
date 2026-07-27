@@ -1,4 +1,4 @@
-namespace Korkut.Application.Security;
+namespace Korkut.Core;
 
 /// <summary>
 /// Envelope encryption for at-rest secrets (e.g. TOTP seeds). The encoded form is

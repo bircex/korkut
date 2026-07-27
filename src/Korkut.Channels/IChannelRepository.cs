@@ -1,12 +1,9 @@
-using Korkut.Domain.Channels;
-
-namespace Korkut.Application.Channels;
+namespace Korkut.Channels;
 
 /// <summary>
 /// Persistence port for messaging channels. The aggregate is keyed by (office, kind) rather
 /// than a surrogate id, so this port is written out instead of deriving from
-/// <c>IRepository&lt;T&gt;</c>; the tenancy rule is the same — the office comes first on
-/// every call.
+/// <c>IRepository&lt;T&gt;</c>; the tenancy rule is the same — the office comes first on every call.
 /// </summary>
 public interface IChannelRepository
 {

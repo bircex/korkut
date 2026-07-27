@@ -25,5 +25,6 @@
     <ProjectReference Include="..\Korkut.Notes\Korkut.Notes.csproj" />
     <ProjectReference Include="..\Korkut.Tasks\Korkut.Tasks.csproj" />
     <ProjectReference Include="..\Korkut.Deadlines\Korkut.Deadlines.csproj" />
+    <ProjectReference Include="..\Korkut.Channels\Korkut.Channels.csproj" />
   </ItemGroup>
 </Project>

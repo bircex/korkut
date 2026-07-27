@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Channels;
+namespace Korkut.Channels;
 
 /// <summary>The messaging-channel kinds an office can configure.</summary>
 public static class ChannelKind
