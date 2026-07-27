@@ -4,7 +4,6 @@ using Korkut.Application.Invites.Requests;
 using Korkut.Application.Invites.Responses;
 using Korkut.Application.Security;
 using Korkut.Organization;
-using Korkut.Domain.Invites;
 
 namespace Korkut.Application.Invites;
 

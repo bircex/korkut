@@ -1,4 +1,4 @@
-using Korkut.Domain.Invites;
+using Korkut.Organization;
 
 namespace Korkut.Application.Invites;
 

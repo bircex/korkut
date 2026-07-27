@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Invites;
+namespace Korkut.Organization;
 
 /// <summary>
 /// An invitation to join an office. Only the hash of the opaque token is kept, so a

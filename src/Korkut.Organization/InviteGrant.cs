@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Invites;
+namespace Korkut.Organization;
 
 /// <summary>
 /// What a pending invite token grants, resolved before any session exists — which office,

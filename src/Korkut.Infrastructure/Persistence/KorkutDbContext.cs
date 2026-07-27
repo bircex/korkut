@@ -29,7 +29,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Organization.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.PasswordResetToken>();
 
-    public DbSet<Domain.Invites.Invite> Invites => Set<Domain.Invites.Invite>();
+    public DbSet<Korkut.Organization.Invite> Invites => Set<Korkut.Organization.Invite>();
 
     public DbSet<Korkut.Organization.UserTotp> UserTotps => Set<Korkut.Organization.UserTotp>();
 
@@ -130,7 +130,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Documents.DocumentRelationConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Invites.InviteConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.InviteConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.UserConfiguration());
 

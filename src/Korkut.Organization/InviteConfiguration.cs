@@ -1,8 +1,7 @@
-using Korkut.Domain.Invites;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Invites;
+namespace Korkut.Organization;
 
 /// <summary>EF mapping for office invitations (table/columns/indexes unchanged).</summary>
 public sealed class InviteConfiguration : IEntityTypeConfiguration<Invite>

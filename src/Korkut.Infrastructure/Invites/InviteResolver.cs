@@ -1,5 +1,5 @@
 using Korkut.Application.Invites;
-using Korkut.Domain.Invites;
+using Korkut.Organization;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

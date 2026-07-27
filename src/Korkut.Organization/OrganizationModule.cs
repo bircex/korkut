@@ -17,5 +17,6 @@ public sealed class OrganizationModule : IModule
         services.AddScoped<IOfficeRepository, OfficeRepository>();
         services.AddScoped<IOfficeAdminService, OfficeAdminService>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IInviteRepository, InviteRepository>();
     }
 }

@@ -81,7 +81,6 @@ public static class DomainSetup
         // owned by the Organization module (registered above).
         services.AddScoped<Korkut.Application.Members.IMemberService, Korkut.Application.Members.MemberService>();
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
-        services.AddScoped<Korkut.Application.Invites.IInviteRepository, Korkut.Infrastructure.Invites.InviteRepository>();
         services.AddScoped<Korkut.Application.Invites.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
         services.AddScoped<Korkut.Application.Invites.IInviteService, Korkut.Application.Invites.InviteService>();
 
