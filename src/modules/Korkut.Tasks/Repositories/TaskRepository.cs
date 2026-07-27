@@ -1,10 +1,11 @@
+using Korkut.Tasks.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Tasks;
 
 /// <summary>EF/Postgres adapter for <see cref="ITaskRepository"/> over the ambient DbContext.</summary>
-public sealed class TaskRepository(DbContext db) : Repository<WorkTask>(db), ITaskRepository
+internal sealed class TaskRepository(DbContext db) : Repository<WorkTask>(db), ITaskRepository
 {
     public async Task<IReadOnlyList<WorkTask>> ListAsync(Guid officeId, Guid? matterId, CancellationToken ct = default)
         => await Scoped(officeId).AsNoTracking()

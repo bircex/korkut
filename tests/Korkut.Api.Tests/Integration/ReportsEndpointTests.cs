@@ -7,6 +7,7 @@ using Korkut.Clients.Entities;
 using Korkut.Matters;
 using Korkut.Hearings;
 using Korkut.Tasks;
+using Korkut.Tasks.Entities;
 using Korkut.Deadlines;
 using Korkut.Correspondence;
 

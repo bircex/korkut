@@ -626,7 +626,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("parties", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Tasks.WorkTask", b =>
+            modelBuilder.Entity("Korkut.Tasks.Entities.WorkTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")

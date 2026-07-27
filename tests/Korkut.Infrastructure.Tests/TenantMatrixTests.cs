@@ -15,6 +15,7 @@ using Korkut.Matters;
 using Korkut.Hearings;
 using Korkut.Courts;
 using Korkut.Tasks;
+using Korkut.Tasks.Entities;
 using Korkut.Deadlines;
 using Korkut.Notes;
 using Korkut.Notes.Entities;

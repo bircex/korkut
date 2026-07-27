@@ -1,3 +1,4 @@
+using Korkut.Tasks.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Tasks;
 using Korkut.Core;
@@ -8,7 +9,7 @@ namespace Korkut.Tasks;
 /// Task use-cases over the repository port. Owns the completion rule: moving a task to "done"
 /// stamps its completion time, moving it back clears it. Every call RETURNS a <see cref="Result"/>.
 /// </summary>
-public sealed class TaskService(
+internal sealed class TaskService(
     ITaskRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : ITaskService
 {
     public Task<Result<IReadOnlyList<TaskResponse>>> ListAsync(Guid? matterId, CancellationToken ct = default)

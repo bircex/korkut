@@ -4,6 +4,7 @@ using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Deadlines;
 using Korkut.Tasks;
+using Korkut.Tasks.Entities;
 using Korkut.Infrastructure.Deadlines;
 
 namespace Korkut.Infrastructure.Tests;

@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Tasks;
+namespace Korkut.Tasks.Entities;
 
 /// <summary>
 /// A unit of office work, optionally attached to a matter and an assignee. Named
