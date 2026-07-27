@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A short-lived, single-use ticket to set a new password without knowing the old one.

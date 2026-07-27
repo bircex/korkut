@@ -3,7 +3,7 @@ using Korkut.Application.Auth;
 using Korkut.Application.Security;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Auth;
+using Korkut.Organization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Security;

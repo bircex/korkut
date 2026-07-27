@@ -27,15 +27,15 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Organization.User> Users => Set<Korkut.Organization.User>();
 
-    public DbSet<Domain.Auth.PasswordResetToken> PasswordResetTokens => Set<Domain.Auth.PasswordResetToken>();
+    public DbSet<Korkut.Organization.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.PasswordResetToken>();
 
     public DbSet<Domain.Invites.Invite> Invites => Set<Domain.Invites.Invite>();
 
-    public DbSet<Domain.Auth.UserTotp> UserTotps => Set<Domain.Auth.UserTotp>();
+    public DbSet<Korkut.Organization.UserTotp> UserTotps => Set<Korkut.Organization.UserTotp>();
 
-    public DbSet<Domain.Auth.RecoveryCode> RecoveryCodes => Set<Domain.Auth.RecoveryCode>();
+    public DbSet<Korkut.Organization.RecoveryCode> RecoveryCodes => Set<Korkut.Organization.RecoveryCode>();
 
-    public DbSet<Domain.Auth.RefreshToken> RefreshTokens => Set<Domain.Auth.RefreshToken>();
+    public DbSet<Korkut.Organization.RefreshToken> RefreshTokens => Set<Korkut.Organization.RefreshToken>();
 
     public DbSet<Korkut.Organization.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.OfficeRole>();
 
@@ -134,13 +134,13 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.UserConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Auth.PasswordResetTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.PasswordResetTokenConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Auth.UserTotpConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.UserTotpConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Auth.RecoveryCodeConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.RecoveryCodeConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Auth.RefreshTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.RefreshTokenConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.OfficeRoleConfiguration());
 

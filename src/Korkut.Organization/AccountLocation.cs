@@ -1,4 +1,4 @@
-namespace Korkut.Domain.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// Where an account lives, resolved from an e-mail before any session exists. Sign-in has

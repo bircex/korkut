@@ -1,4 +1,4 @@
-using Korkut.Domain.Auth;
+using Korkut.Organization;
 
 namespace Korkut.Application.Auth.Google;
 

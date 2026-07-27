@@ -1,5 +1,5 @@
 using Korkut.Application.Auth;
-using Korkut.Domain.Auth;
+using Korkut.Organization;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

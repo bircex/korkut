@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A single-use, hashed TOTP recovery code — the way back in when the authenticator is lost. Only

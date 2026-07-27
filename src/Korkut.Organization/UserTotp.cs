@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// A user's TOTP enrollment. The seed is envelope-encrypted at rest and never leaves the

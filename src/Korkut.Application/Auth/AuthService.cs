@@ -2,7 +2,6 @@ using Korkut.Application.Auth.Requests;
 using Korkut.Core;
 using Korkut.Application.Security;
 using Korkut.Organization;
-using Korkut.Domain.Auth;
 
 namespace Korkut.Application.Auth;
 

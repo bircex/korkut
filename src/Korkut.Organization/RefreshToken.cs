@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Auth;
+namespace Korkut.Organization;
 
 /// <summary>
 /// An opaque, hashed refresh token in a rotating family. Each token is used once; presenting a

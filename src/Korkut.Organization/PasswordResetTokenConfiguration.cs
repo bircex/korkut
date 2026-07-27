@@ -1,8 +1,7 @@
-using Korkut.Domain.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Auth;
+namespace Korkut.Organization;
 
 /// <summary>EF mapping for password-reset tokens (table/columns/index unchanged).</summary>
 public sealed class PasswordResetTokenConfiguration : IEntityTypeConfiguration<PasswordResetToken>
