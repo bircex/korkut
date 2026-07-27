@@ -1,8 +1,8 @@
 using Korkut.Core;
 using Korkut.Contract.Finance;
-using Korkut.Application.Reports.Responses;
+using Korkut.Contract.Reports;
 
-namespace Korkut.Application.Reports;
+namespace Korkut.Reports;
 
 /// <summary>
 /// Dashboard orchestration over the aggregation port. Finance is not queried separately

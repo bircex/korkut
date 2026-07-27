@@ -1,6 +1,6 @@
-using Korkut.Application.Reports.Responses;
+using Korkut.Contract.Reports;
 
-namespace Korkut.Application.Reports;
+namespace Korkut.Contract.Reports;
 
 /// <summary>
 /// The read-only office dashboard: the non-finance roll-ups and the finance totals in one

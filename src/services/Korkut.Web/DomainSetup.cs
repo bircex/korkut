@@ -59,10 +59,11 @@ public static class DomainSetup
         // Organization (identity/tenant) module — grows in stages; office roles land first.
         new Korkut.Organization.OrganizationModule().Register(services, configuration);
         services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
-        // Reports (Clean Architecture: read-only aggregation query + service; finance is
-        // computed from the same invoice/expense figures the finance screens use).
-        services.AddScoped<Korkut.Application.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
-        services.AddScoped<Korkut.Application.Reports.IReportsService, Korkut.Application.Reports.ReportsService>();
+        // Reports module (read-only office dashboard). The cross-module aggregation query
+        // (IReportsQuery) reads other modules' tables, so its impl lives in Infrastructure and
+        // is registered here; the module owns the orchestration service + controller.
+        new Korkut.Reports.ReportsModule().Register(services, configuration);
+        services.AddScoped<Korkut.Reports.IReportsQuery, Korkut.Infrastructure.Reports.ReportsQuery>();
         new Korkut.Channels.ChannelsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.

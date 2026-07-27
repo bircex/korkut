@@ -1,6 +1,5 @@
-using Korkut.Application.Reports;
+using Korkut.Reports;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Domain.Reports;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Reports;

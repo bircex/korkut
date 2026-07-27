@@ -1,4 +1,4 @@
-namespace Korkut.Application.Reports.Responses;
+namespace Korkut.Contract.Reports;
 
 /// <summary>The whole office dashboard in one payload.</summary>
 public sealed record ReportsOverviewResponse(

@@ -3503,9 +3503,6 @@
       "name": "PetitionTypes"
     },
     {
-      "name": "Reports"
-    },
-    {
       "name": "Calendar"
     },
     {
@@ -3543,6 +3540,9 @@
     },
     {
       "name": "Outbox"
+    },
+    {
+      "name": "Reports"
     },
     {
       "name": "Memory"

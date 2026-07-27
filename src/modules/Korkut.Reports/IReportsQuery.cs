@@ -1,6 +1,5 @@
-using Korkut.Domain.Reports;
 
-namespace Korkut.Application.Reports;
+namespace Korkut.Reports;
 
 /// <summary>
 /// Read-only aggregation for the office dashboard: the matters, clients, tasks, agenda and

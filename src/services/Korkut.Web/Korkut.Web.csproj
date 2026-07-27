@@ -40,6 +40,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Settings\Korkut.Settings.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Reports\Korkut.Reports.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
   </ItemGroup>
 </Project>
