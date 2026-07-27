@@ -3,7 +3,7 @@ using System.Text.Json;
 using Korkut.Application.Agent.Abstractions;
 using Korkut.Application.Agent.Models;
 using Korkut.Application.Agent.Tools;
-using Korkut.Infrastructure.Agent.Tools;
+using Korkut.Tools;
 
 namespace Korkut.Infrastructure.Tests;
 

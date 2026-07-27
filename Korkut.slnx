@@ -26,6 +26,7 @@
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
     <Project Path="src/modules/Korkut.Reports/Korkut.Reports.csproj" />
     <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />
+    <Project Path="src/modules/Korkut.Tools/Korkut.Tools.csproj" />
     <Project Path="src/modules/Korkut.Chat/Korkut.Chat.csproj" />
     <Project Path="src/modules/Korkut.Agent.Drafting/Korkut.Agent.Drafting.csproj" />
     <Project Path="src/modules/Korkut.Agent.Ledger/Korkut.Agent.Ledger.csproj" />
@@ -39,6 +40,7 @@
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Tools.Unit.Tests/Korkut.Tools.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Matters.Unit.Tests/Korkut.Matters.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Hearings.Unit.Tests/Korkut.Hearings.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Documents.Unit.Tests/Korkut.Documents.Unit.Tests.csproj" />
@@ -59,6 +61,7 @@
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Tools.Integration.Tests/Korkut.Tools.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Matters.Integration.Tests/Korkut.Matters.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Hearings.Integration.Tests/Korkut.Hearings.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Documents.Integration.Tests/Korkut.Documents.Integration.Tests.csproj" />
@@ -79,6 +82,7 @@
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Tools.Bdd.Tests/Korkut.Tools.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Matters.Bdd.Tests/Korkut.Matters.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Hearings.Bdd.Tests/Korkut.Hearings.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Documents.Bdd.Tests/Korkut.Documents.Bdd.Tests.csproj" />

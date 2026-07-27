@@ -1,4 +1,4 @@
-namespace Korkut.Chat.Tests.Unit;
+namespace Korkut.Chat.Unit.Tests;
 
 // Skeleton project - real tests land later. Marker keeps the runner green.
 public sealed class Placeholder
