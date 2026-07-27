@@ -1,4 +1,4 @@
-using Korkut.Domain.Auditing;
+using Korkut.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

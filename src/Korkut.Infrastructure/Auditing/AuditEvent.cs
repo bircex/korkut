@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Auditing;
+namespace Korkut.Infrastructure.Auditing;
 
 /// <summary>
 /// One entry in the office's audit trail. The record is append-only by construction: it is

@@ -1,9 +1,8 @@
 using System.Text.Json;
-using Korkut.Application.Auditing;
-using Korkut.Domain.Auditing;
+using Korkut.Core;
+using Korkut.Infrastructure.Auditing;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Domain.Redaction;
-using Korkut.Core;
 
 namespace Korkut.Infrastructure.Auditing;
 

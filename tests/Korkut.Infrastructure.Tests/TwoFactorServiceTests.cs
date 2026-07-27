@@ -2,10 +2,9 @@ using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
 using Korkut.Application.Security;
 using System.Security.Cryptography;
-using Korkut.Application.Auditing;
+using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Security;
-using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Tests;

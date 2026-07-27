@@ -1,7 +1,6 @@
-using Korkut.Application.Auditing;
+using Korkut.Core;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Core;
 
 namespace Korkut.Web;
 

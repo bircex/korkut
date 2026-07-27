@@ -1,4 +1,4 @@
-namespace Korkut.Application.Auditing;
+namespace Korkut.Core;
 
 /// <summary>
 /// One audit entry. Actor/session/correlation/office come from the trusted server

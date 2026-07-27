@@ -1,7 +1,6 @@
-using Korkut.Application.Auditing;
+using Korkut.Core;
 using Korkut.Application.Auth;
 using Korkut.Application.Security;
-using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Organization;
 using Microsoft.EntityFrameworkCore;

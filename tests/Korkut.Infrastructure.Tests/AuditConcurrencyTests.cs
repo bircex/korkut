@@ -1,8 +1,7 @@
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
-using Korkut.Application.Auditing;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
+using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Korkut.Matters;

@@ -23,7 +23,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Hearings.Hearing> MatterHearings => Set<Korkut.Hearings.Hearing>();
 
-    public DbSet<Domain.Auditing.AuditEvent> AuditEvents => Set<Domain.Auditing.AuditEvent>();
+    public DbSet<Korkut.Infrastructure.Auditing.AuditEvent> AuditEvents => Set<Korkut.Infrastructure.Auditing.AuditEvent>();
 
     public DbSet<Korkut.Organization.User> Users => Set<Korkut.Organization.User>();
 
