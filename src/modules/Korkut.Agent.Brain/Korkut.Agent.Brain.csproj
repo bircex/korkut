@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent · Brain: the reasoning layer. Owns the model<->tools loop (IAgentToolLoopService /
+       ToolCallingLoopService): given the conversation + tools, ask the model for one step (final
+       text or tool calls), run the calls, append results, repeat. Consumes the Model + Tools
+       capability layers; they never know about each other or the brain. (System prompts +
+       Knowledge grounding join here when the chat use-case is split in step 4.) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\Korkut.Tools\Korkut.Tools.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Agent.Brain.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Infrastructure.Tests" />
+  </ItemGroup>
+</Project>

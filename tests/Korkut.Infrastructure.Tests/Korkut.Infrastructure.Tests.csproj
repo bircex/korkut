@@ -22,6 +22,7 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
     <ProjectReference Include="..\..\src\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
     <ProjectReference Include="..\..\src\modules\Korkut.Tools\Korkut.Tools.csproj" />
     <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />

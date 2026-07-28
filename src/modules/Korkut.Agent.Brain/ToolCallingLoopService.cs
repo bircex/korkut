@@ -1,9 +1,7 @@
 using Korkut.Agent.Model;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Abstractions;
 using Korkut.Tools.Tools;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Brain;
 
 /// <summary>
 /// The assistant's tool-calling loop. It offers the CALLER'S permitted tools to the model (the
@@ -13,7 +11,7 @@ namespace Korkut.Infrastructure.Agent.Ai;
 /// to call; adding a tool never changes this loop. Implements <see cref="IAgentToolLoopService"/> so
 /// lower layers (the chat service) can drive a tool-augmented turn without depending on the tools.
 /// </summary>
-public sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog catalog) : IAgentToolLoopService
+internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog catalog) : IAgentToolLoopService
 {
     private const int MaxIterations = 8;
 

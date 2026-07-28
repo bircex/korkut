@@ -41,6 +41,7 @@
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Agent.Brain.Unit.Tests/Korkut.Agent.Brain.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Agent.Model.Unit.Tests/Korkut.Agent.Model.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Tools.Unit.Tests/Korkut.Tools.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Matters.Unit.Tests/Korkut.Matters.Unit.Tests.csproj" />
@@ -63,6 +64,7 @@
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Agent.Brain.Integration.Tests/Korkut.Agent.Brain.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Agent.Model.Integration.Tests/Korkut.Agent.Model.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Tools.Integration.Tests/Korkut.Tools.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Matters.Integration.Tests/Korkut.Matters.Integration.Tests.csproj" />
@@ -85,6 +87,7 @@
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
+    <Project Path="tests/bdd/Korkut.Agent.Brain.Bdd.Tests/Korkut.Agent.Brain.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Agent.Model.Bdd.Tests/Korkut.Agent.Model.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Tools.Bdd.Tests/Korkut.Tools.Bdd.Tests.csproj" />
     <Project Path="tests/bdd/Korkut.Matters.Bdd.Tests/Korkut.Matters.Bdd.Tests.csproj" />
