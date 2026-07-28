@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 namespace Korkut.Application.Documents.OCR;
 
 /// <summary>

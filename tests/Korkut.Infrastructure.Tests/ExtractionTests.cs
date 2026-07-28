@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 using Korkut.Core;
 using Korkut.Organization;
 using Korkut.Organization.Entities;

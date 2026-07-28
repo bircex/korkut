@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 using System.Text;
 using Korkut.Application.Documents;
 using Korkut.Application.Documents.OCR;

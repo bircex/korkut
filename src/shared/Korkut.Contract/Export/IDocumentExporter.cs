@@ -1,4 +1,4 @@
-namespace Korkut.Application.Export;
+namespace Korkut.Contract.Export;
 
 /// <summary>Renders markdown into a downloadable document. The rendering itself is an adapter concern.</summary>
 public interface IDocumentExporter

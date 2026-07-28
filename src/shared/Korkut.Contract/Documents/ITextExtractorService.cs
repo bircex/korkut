@@ -1,4 +1,4 @@
-namespace Korkut.Application.Documents.OCR;
+namespace Korkut.Contract.Documents;
 
 /// <summary>
 /// Extracts text spans from a document's bytes. Each implementation carries a stable

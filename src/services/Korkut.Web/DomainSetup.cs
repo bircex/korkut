@@ -1,3 +1,4 @@
+using Korkut.Contract.Export;
 using Korkut.Core;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Persistence;
@@ -75,7 +76,7 @@ public static class DomainSetup
         services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
         services.AddScoped<Korkut.Application.Coverage.ICoverageCatalog, Korkut.Infrastructure.Coverage.CatalogCoverageReader>();
         services.AddScoped<Korkut.Application.Coverage.ICoverageService, Korkut.Application.Coverage.CoverageService>();
-        services.AddSingleton<Korkut.Application.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
+        services.AddSingleton<Korkut.Contract.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
         services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
         // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
         new Korkut.Outbox.Extensions.OutboxModule().Register(services, configuration);

@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 using Korkut.Agent.Brain;
 using Korkut.Agent.Model;
 using Korkut.Tools.Tools;

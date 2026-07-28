@@ -1,4 +1,4 @@
-namespace Korkut.Application.Export;
+namespace Korkut.Contract.Export;
 
 /// <summary>The file formats a document can be exported to.</summary>
 public static class ExportFormat
