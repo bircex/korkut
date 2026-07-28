@@ -1,16 +1,15 @@
+using Korkut.Agent.Ledger;
 using System.Collections.Concurrent;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Holds one <see cref="SemaphoreSlim"/> per office (process-wide singleton), so the concurrency
 /// cap is shared across all requests on THIS replica. A distributed cap across replicas would need
 /// shared coordination — deferred; per-replica is the first, safe cut.
 /// </summary>
-public sealed class OfficeConcurrencyGate : IOfficeConcurrencyGate
+internal sealed class OfficeConcurrencyGate : IOfficeConcurrencyGate
 {
     private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _gates = new();
 
@@ -23,7 +22,7 @@ public sealed class OfficeConcurrencyGate : IOfficeConcurrencyGate
 /// read goes through <see cref="ILlmCallRepository"/> (tenant-scoped by the surrounding unit of work).
 /// The returned handle releases the concurrency slot on dispose.
 /// </summary>
-public sealed class UsageGovernorService(
+internal sealed class UsageGovernorService(
     ILlmCallRepository calls, RuntimeConfig config, IClock clock, IOfficeConcurrencyGate gate) : IUsageGovernorService
 {
     public async Task<IAsyncDisposable> BeginCallAsync(Guid officeId, CancellationToken ct = default)

@@ -1,11 +1,9 @@
+using Korkut.Agent.Ledger;
 using Korkut.Agent.Model;
 using System.Diagnostics;
-using Korkut.Infrastructure.Observability;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Records each model call to the <c>llm_calls</c> ledger (via <see cref="ILlmCallRepository"/>) and
@@ -13,9 +11,9 @@ namespace Korkut.Infrastructure.Agent.Ai;
 /// feature (principle 8/9). Cost is derived from <see cref="ModelPricing"/> at record time. No
 /// DbContext here — persistence lives behind the repository.
 /// </summary>
-public sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) : ILlmCallLogService
+internal sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) : ILlmCallLogService
 {
-    private static readonly ActivitySource Source = new(ObservabilitySetup.ActivitySourceName);
+    private static readonly ActivitySource Source = new(Korkut.Core.Observability.ActivitySourceName);
 
     public async Task RecordAsync(
         Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default)

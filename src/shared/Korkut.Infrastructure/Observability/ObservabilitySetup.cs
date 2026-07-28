@@ -19,7 +19,7 @@ namespace Korkut.Infrastructure.Observability;
 public static class ObservabilitySetup
 {
     /// <summary>ActivitySource name for app-authored spans.</summary>
-    public const string ActivitySourceName = "Korkut";
+    public const string ActivitySourceName = Korkut.Core.Observability.ActivitySourceName;
 
     public static IHostApplicationBuilder AddKorkutObservability(
         this IHostApplicationBuilder builder,

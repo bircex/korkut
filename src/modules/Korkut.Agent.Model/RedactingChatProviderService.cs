@@ -2,10 +2,8 @@ using Korkut.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// A PII-redacting decorator around a CLOUD <see cref="IChatProviderService"/>. Before the request leaves
@@ -15,7 +13,7 @@ namespace Korkut.Infrastructure.Agent.Ai;
 /// they keep full fidelity. Streaming is restored incrementally with a carry buffer, so a
 /// placeholder split across two deltas is never emitted half-restored.
 /// </summary>
-public sealed class RedactingChatProviderService(IChatProviderService inner, IPiiRedactor redactor) : IChatProviderService
+internal sealed class RedactingChatProviderService(IChatProviderService inner, IPiiRedactor redactor) : IChatProviderService
 {
     public string Name => inner.Name;
 

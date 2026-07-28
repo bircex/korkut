@@ -1,8 +1,6 @@
 using Korkut.Agent.Model;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Records one completed model call for cost aggregation, per-office billing, and eval (principle

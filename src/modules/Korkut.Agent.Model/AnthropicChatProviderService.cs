@@ -13,7 +13,7 @@ namespace Korkut.Agent.Model;
 /// the resolved <see cref="ModelSelection"/>; the caller's <see cref="ChatRequest.MaxTokens"/>
 /// can only lower it. Usage (input/output tokens) is returned for cost accounting.
 /// </summary>
-public sealed class AnthropicChatProviderService(HttpClient http, IEnvironment env) : IChatProviderService
+internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment env) : IChatProviderService
 {
     private const string Endpoint = "https://api.anthropic.com/v1/messages";
     

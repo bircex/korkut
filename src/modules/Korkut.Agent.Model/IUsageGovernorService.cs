@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Model;
 
 /// <summary>
 /// Cost/rate governance for model calls (principle 9). Before a call, the caller enters the

@@ -8,7 +8,7 @@ namespace Korkut.Agent.Model;
 /// token cap). The local-availability probe drives the <c>fallback_to_cloud_if_no_local</c>
 /// rule. Provider names match the yaml vocabulary: claude | gpt | groq | ollama.
 /// </summary>
-public sealed class ModelRouterService(ModelRouting routing, RuntimeConfig config, IEnvironment env, ILocalModelProbe local) : IModelRouterService
+internal sealed class ModelRouterService(ModelRouting routing, RuntimeConfig config, IEnvironment env, ILocalModelProbe local) : IModelRouterService
 {
     /// <summary>Token cap for providers whose max isn't part of the ported RuntimeConfig contract.</summary>
     private const int DefaultMaxTokens = 4096;
@@ -33,7 +33,7 @@ public sealed class ModelRouterService(ModelRouting routing, RuntimeConfig confi
 }
 
 /// <summary>Default probe: no local backend until the GPU/Ollama host is wired (always false).</summary>
-public sealed class LocalModelUnavailable : ILocalModelProbe
+internal sealed class LocalModelUnavailable : ILocalModelProbe
 {
     public bool IsAvailable => false;
 }

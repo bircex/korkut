@@ -8,7 +8,7 @@ namespace Korkut.Agent.Model;
 /// <see cref="IChatProviderService"/>. This is the single seam where routing lives; providers and
 /// consumers stay ignorant of each other.
 /// </summary>
-public sealed class RoutingChatModelService : IChatModelService
+internal sealed class RoutingChatModelService : IChatModelService
 {
     private readonly IModelRouterService _routerService;
     private readonly IReadOnlyDictionary<string, IChatProviderService> _providers;
@@ -43,7 +43,7 @@ public sealed class RoutingChatModelService : IChatModelService
 }
 
 /// <summary>Fallback used when no provider is configured — every call reports unavailable (503).</summary>
-public sealed class DisabledChatModelService : IChatModelService
+internal sealed class DisabledChatModelService : IChatModelService
 {
     public Task<ChatReply> CompleteAsync(ChatRequest request, CancellationToken ct = default) =>
         throw new ModelUnavailableException("Yapay zeka sağlayıcısı yapılandırılmamış.");

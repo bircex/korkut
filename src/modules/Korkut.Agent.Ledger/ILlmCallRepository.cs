@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Ledger;
 
 /// <summary>One row for the <c>llm_calls</c> ledger (already priced): the seam services persist a model call through.</summary>
 public sealed record LlmCallEntry(
