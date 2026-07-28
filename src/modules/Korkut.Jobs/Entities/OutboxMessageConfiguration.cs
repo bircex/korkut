@@ -1,8 +1,8 @@
-using Korkut.Domain.Jobs;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Jobs;
+namespace Korkut.Jobs.Entities;
 
 /// <summary>EF mapping for outbox messages (table/columns/indexes unchanged).</summary>
 public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>

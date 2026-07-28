@@ -1,4 +1,6 @@
-namespace Korkut.Application.Jobs;
+using Korkut.Jobs.Entities;
+using Korkut.Jobs.Abstractions;
+namespace Korkut.Jobs.Services;
 
 /// <summary>
 /// AsyncLocal tenant scope. The dispatcher enters the message's office before

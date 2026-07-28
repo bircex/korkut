@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />
@@ -45,5 +44,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Chat\Korkut.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>
 </Project>

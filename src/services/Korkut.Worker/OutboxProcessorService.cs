@@ -1,4 +1,5 @@
-using Korkut.Application.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Core;
 
 namespace Korkut.Worker;

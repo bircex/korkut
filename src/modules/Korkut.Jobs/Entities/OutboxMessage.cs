@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Jobs;
+namespace Korkut.Jobs.Entities;
 
 /// <summary>
 /// A unit of asynchronous work, recorded in the same transaction as the change that

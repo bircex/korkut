@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Jobs;
+namespace Korkut.Jobs.Entities;
 
 /// <summary>
 /// A completed effect, remembered so a redelivery does not repeat it. The (office, key)

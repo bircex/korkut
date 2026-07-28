@@ -1,8 +1,8 @@
-using Korkut.Domain.Jobs;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Jobs;
+namespace Korkut.Jobs.Entities;
 
 /// <summary>EF mapping for the idempotency ledger (table/columns unchanged).</summary>
 public sealed class InboxEntryConfiguration : IEntityTypeConfiguration<InboxEntry>

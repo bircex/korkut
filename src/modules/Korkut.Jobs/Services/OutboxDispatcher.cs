@@ -1,7 +1,8 @@
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Entities;
 using Korkut.Core;
 
-namespace Korkut.Application.Jobs;
+namespace Korkut.Jobs.Services;
 
 /// <summary>
 /// Drives one pass of the outbox: leases a batch, and for each message establishes

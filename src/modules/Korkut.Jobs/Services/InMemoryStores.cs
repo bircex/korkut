@@ -1,7 +1,8 @@
+using Korkut.Jobs.Abstractions;
 using System.Collections.Concurrent;
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Entities;
 
-namespace Korkut.Application.Jobs.InMemory;
+namespace Korkut.Jobs.Services;
 
 /// <summary>
 /// In-memory reference outbox for tests and single-node/dev use. Leasing,

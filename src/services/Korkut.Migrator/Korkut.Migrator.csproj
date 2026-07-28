@@ -10,7 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Knowledge\Korkut.Knowledge.csproj" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Chat\Korkut.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />

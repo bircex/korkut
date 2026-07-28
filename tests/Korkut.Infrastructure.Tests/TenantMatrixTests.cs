@@ -1,11 +1,11 @@
 using Korkut.Infrastructure.Jobs;
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Entities;
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using Korkut.Infrastructure.Security;
-using Korkut.Application.Jobs;
-using Korkut.Application.Jobs.InMemory;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;

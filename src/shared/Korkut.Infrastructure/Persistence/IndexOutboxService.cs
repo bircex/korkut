@@ -1,6 +1,7 @@
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Entities;
 using Korkut.Application.Documents;
-using Korkut.Application.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 

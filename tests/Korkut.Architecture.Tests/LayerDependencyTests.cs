@@ -5,14 +5,13 @@ namespace Korkut.Architecture.Tests;
 
 /// <summary>
 /// Enforces the modular-monolith dependency rules from the architecture decision:
-/// Domain is the leaf layer (it owns the cross-cutting primitives and depends on
+/// Core is the leaf kernel (it owns the cross-cutting primitives and depends on
 /// nothing else in the solution) and Application stays free of infrastructure/
 /// framework concerns. These fail the build if a forbidden dependency is introduced.
 /// </summary>
 public class LayerDependencyTests
 {
     private static readonly Assembly Core = typeof(Korkut.Core.Entity).Assembly;
-    private static readonly Assembly Domain = typeof(Korkut.Domain.Jobs.OutboxMessage).Assembly;
     private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
 
@@ -37,35 +36,11 @@ public class LayerDependencyTests
         // never a domain module, a host, or a persistence framework.
         AssertNoDependency(
             Core,
-            "Korkut.Domain",
             "Korkut.Application",
             "Korkut.Infrastructure",
             "Korkut.Api",
             "Korkut.Worker",
             "Korkut.Migrator",
-            "Microsoft.EntityFrameworkCore",
-            "Npgsql",
-            "Microsoft.AspNetCore",
-            "Minio");
-    }
-
-    [Fact]
-    public void Domain_does_not_depend_on_other_layers()
-    {
-        AssertNoDependency(
-            Domain,
-            "Korkut.Application",
-            "Korkut.Infrastructure",
-            "Korkut.Api",
-            "Korkut.Worker",
-            "Korkut.Migrator");
-    }
-
-    [Fact]
-    public void Domain_does_not_depend_on_infrastructure_frameworks()
-    {
-        AssertNoDependency(
-            Domain,
             "Microsoft.EntityFrameworkCore",
             "Npgsql",
             "Microsoft.AspNetCore",

@@ -1,5 +1,6 @@
-using Korkut.Application.Jobs;
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
+using Korkut.Jobs.Entities;
 using Korkut.Infrastructure.Persistence;
 
 namespace Korkut.Infrastructure.Jobs;

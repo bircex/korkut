@@ -1,6 +1,6 @@
-using Korkut.Domain.Jobs;
+using Korkut.Jobs.Entities;
 
-namespace Korkut.Application.Jobs;
+namespace Korkut.Jobs.Abstractions;
 
 /// <summary>Ambient tenant scope for the currently-executing job.</summary>
 public interface ITenantContext

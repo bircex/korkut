@@ -5,6 +5,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>
 </Project>

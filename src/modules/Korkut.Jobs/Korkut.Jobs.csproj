@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Jobs: the reliable background-work vertical (transactional outbox + inbox + job audit).
+       Entities + EF configs, the store/handler/retry/tenant abstractions, the outbox dispatcher,
+       and the in-memory stores. EF-backed stores bind the shared context, so they stay in
+       Infrastructure. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+</Project>

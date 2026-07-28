@@ -1,5 +1,5 @@
-using Korkut.Application.Jobs;
-using Korkut.Application.Jobs.InMemory;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Infrastructure.Observability;
 using Korkut.Core;
 using Korkut.Worker;

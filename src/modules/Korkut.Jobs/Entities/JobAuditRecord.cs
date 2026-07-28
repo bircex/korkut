@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Jobs;
+namespace Korkut.Jobs.Entities;
 
 /// <summary>
 /// One line in the job trail: what happened to a message and when. Append-only — created

@@ -1,5 +1,6 @@
 using Korkut.Persistence;
-using Korkut.Application.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Finance.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,11 +14,11 @@ namespace Korkut.Infrastructure.Persistence;
 /// </summary>
 public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) : DbContext(options)
 {
-    public DbSet<Domain.Jobs.OutboxMessage> Outbox => Set<Domain.Jobs.OutboxMessage>();
+    public DbSet<Korkut.Jobs.Entities.OutboxMessage> Outbox => Set<Korkut.Jobs.Entities.OutboxMessage>();
 
-    public DbSet<Domain.Jobs.InboxEntry> Inbox => Set<Domain.Jobs.InboxEntry>();
+    public DbSet<Korkut.Jobs.Entities.InboxEntry> Inbox => Set<Korkut.Jobs.Entities.InboxEntry>();
 
-    public DbSet<Domain.Jobs.JobAuditRecord> JobAudit => Set<Domain.Jobs.JobAuditRecord>();
+    public DbSet<Korkut.Jobs.Entities.JobAuditRecord> JobAudit => Set<Korkut.Jobs.Entities.JobAuditRecord>();
 
     public DbSet<Korkut.Organization.Entities.Office> Offices => Set<Korkut.Organization.Entities.Office>();
 
@@ -89,11 +90,11 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
     {
         modelBuilder.HasDefaultSchema("korkut");
 
-        modelBuilder.ApplyConfiguration(new Jobs.OutboxMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Jobs.Entities.OutboxMessageConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Jobs.InboxEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Jobs.Entities.InboxEntryConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Jobs.JobAuditRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Jobs.Entities.JobAuditRecordConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.OfficeConfiguration());
 

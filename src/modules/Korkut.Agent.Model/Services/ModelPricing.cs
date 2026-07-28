@@ -1,4 +1,3 @@
-using Korkut.Contract.Agent.Model;
 namespace Korkut.Agent.Model.Services;
 
 /// <summary>

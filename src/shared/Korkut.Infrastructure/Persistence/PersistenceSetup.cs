@@ -1,5 +1,6 @@
 using Korkut.Infrastructure.Jobs;
-using Korkut.Application.Jobs;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;

@@ -26,7 +26,6 @@
          JSON contract, error mapping, tenant bridge, host setup. -->
     <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Domain\Korkut.Domain.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Tasks\Korkut.Tasks.csproj" />

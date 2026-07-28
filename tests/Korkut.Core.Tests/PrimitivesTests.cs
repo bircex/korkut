@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Domain.Tests;
+namespace Korkut.Core.Tests;
 
 public class PrimitivesTests
 {

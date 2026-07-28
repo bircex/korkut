@@ -1,5 +1,6 @@
-using Korkut.Domain.Jobs;
-using Korkut.Application.Jobs;
+using Korkut.Jobs.Entities;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Core;
 
 namespace Korkut.Application.Tests;
