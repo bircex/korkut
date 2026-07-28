@@ -1,3 +1,7 @@
+using Korkut.Agent.Drafting.Entities;
+using Korkut.Agent.Drafting.Repositories;
+using Korkut.Agent.Drafting.Abstractions;
+using Korkut.Contract.Agent.Drafting;
 using Korkut.Contract.Agent.Model;
 using System.Diagnostics;
 using System.Text;
@@ -6,7 +10,7 @@ using Korkut.Settings.Entities;
 using Korkut.Contract.Templates;
 using Korkut.Settings.Repositories;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Services;
 
 /// <summary>
 /// Produces AI edits to a generated document. Builds a drafting-focused system prompt
@@ -14,7 +18,7 @@ namespace Korkut.Agent.Drafting;
 /// template's built-in default when there's no content yet, asks the LLM to return the
 /// full updated markdown, and stages it as a pending edit for human accept/revert.
 /// </summary>
-public sealed class DraftingService(
+internal sealed class DraftingService(
     IDraftDocumentService documents, IPersonaRepository personas, IStyleProfileRepository styles, TemplateCatalog catalog, IChatModelService llm,
     ILlmCallLogService callLogService, IUsageGovernorService governorService) : IDraftingService
 {

@@ -1,11 +1,13 @@
-using Korkut.Agent.Drafting;
+using Korkut.Agent.Drafting.Repositories;
+using Korkut.Agent.Drafting.Abstractions;
+using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Services;
 
 /// <summary>Draft-document orchestration over the repository port.</summary>
-public sealed class DraftDocumentService(IDraftDocumentRepository repo, IClock clock) : IDraftDocumentService
+internal sealed class DraftDocumentService(IDraftDocumentRepository repo, IClock clock) : IDraftDocumentService
 {
     public Task<GeneratedDocument> GetOrCreateForSessionAsync(Guid officeId, Guid conversationId, string title, CancellationToken ct = default)
         => repo.GetOrCreateForSessionAsync(officeId, conversationId, title, clock.UtcNow, ct);

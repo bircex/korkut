@@ -1,7 +1,6 @@
-using Korkut.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Abstractions;
 
 /// <summary>AI-drafted-document use-cases (stage/accept/revert/save + versions). Clock-driven timestamps.</summary>
 public interface IDraftDocumentService

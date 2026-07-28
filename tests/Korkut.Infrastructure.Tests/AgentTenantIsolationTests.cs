@@ -1,4 +1,4 @@
-using Korkut.Agent.Drafting;
+using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Agent.Ledger;
 using Korkut.Agent.Ledger.Entities;

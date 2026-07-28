@@ -1,3 +1,7 @@
+using Korkut.Agent.Drafting.Entities;
+using Korkut.Agent.Drafting.Repositories;
+using Korkut.Agent.Drafting.Abstractions;
+using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Agent;
@@ -5,7 +9,7 @@ using Korkut.Contract.Export;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Agent.Drafting.Services;
 
 /// <summary>
 /// AI-drafted-document use-cases the controller forwards to: runs the domain services inside a
@@ -13,7 +17,7 @@ namespace Korkut.Agent.Drafting;
 /// composes the office persona so it pins BOTH databases; the rest touch the Agent DB. Not-found /
 /// bad-format are thrown <see cref="NotFoundException"/> / <see cref="BadRequestException"/> the shared handler maps.
 /// </summary>
-public sealed class DocumentAppService(
+internal sealed class DocumentAppService(
     IAgentUnitOfWork uow, ICurrentUser current,
     ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting,
     IUserLookupService dir, IDocumentExporter exporter) : IDocumentAppService

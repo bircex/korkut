@@ -1,3 +1,6 @@
+using Korkut.Agent.Drafting.Services;
+using Korkut.Agent.Drafting.Abstractions;
+using Korkut.Contract.Agent.Drafting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Korkut.Agent.Drafting.Extensions;

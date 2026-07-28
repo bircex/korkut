@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Contract.Agent.Drafting;
 
 public sealed record SaveDocumentRequest
 {

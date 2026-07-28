@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Drafting;
+namespace Korkut.Contract.Agent.Drafting;
 
 /// <summary>Composes an AI-drafted document edit (stages a pending version) within a tenant-scoped unit of work.</summary>
 public interface IDraftingService

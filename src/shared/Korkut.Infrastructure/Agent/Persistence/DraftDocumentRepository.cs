@@ -1,5 +1,6 @@
+using Korkut.Agent.Drafting.Repositories;
 using Korkut.Infrastructure.Persistence.Agent;
-using Korkut.Agent.Drafting;
+using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
