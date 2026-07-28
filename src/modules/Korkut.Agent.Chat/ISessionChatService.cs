@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Chat;
 
 /// <summary>Orchestrates one assistant chat / upload / streaming turn within an already tenant-scoped unit of work.</summary>
 public interface ISessionChatService

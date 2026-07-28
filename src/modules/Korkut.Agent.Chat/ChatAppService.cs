@@ -1,11 +1,8 @@
-using Korkut.Application.Agent.Chat;
+using Korkut.Contract.Agent;
 using Korkut.Core;
-using Korkut.Application.Agent.Contracts;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Abstractions;
-using ICurrentUser = Korkut.Application.Agent.Abstractions.ICurrentUser;
+using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Application.Agent.Chat;
+namespace Korkut.Agent.Chat;
 
 /// <summary>
 /// Chat / upload / streaming as the controller sees them: runs <see cref="ISessionChatService"/>

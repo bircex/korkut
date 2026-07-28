@@ -38,6 +38,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Reports\Korkut.Reports.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Knowledge\Korkut.Knowledge.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />

@@ -1,9 +1,7 @@
 using Korkut.Chat;
 using Korkut.Chat.Entities;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Chat;
 
 /// <summary>Assistant-conversation use-cases. Timestamps come from the clock in the implementation.</summary>
 public interface ISessionService

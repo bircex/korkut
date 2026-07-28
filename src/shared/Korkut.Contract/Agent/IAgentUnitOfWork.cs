@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Contract.Agent;
 
 /// <summary>
 /// The tenant-scoped unit of work: runs a piece of work with the caller's office pinned (Postgres

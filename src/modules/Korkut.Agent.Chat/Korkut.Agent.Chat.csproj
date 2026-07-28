@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent · Chat use-case: session + chat orchestration (SessionChatService/ChatAppService/
+       SessionService). Calls the Brain, grounds via Knowledge, builds the persona system prompt
+       from Settings, and persists turns to the Korkut.Chat store. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Chat\Korkut.Chat.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
+    <ProjectReference Include="..\Korkut.Settings\Korkut.Settings.csproj" />
+    <ProjectReference Include="..\Korkut.Knowledge\Korkut.Knowledge.csproj" />
+  </ItemGroup>
+</Project>

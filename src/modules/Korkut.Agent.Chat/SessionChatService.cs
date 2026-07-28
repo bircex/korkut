@@ -4,17 +4,13 @@ using Korkut.Agent.Model;
 using Korkut.Tools.Tools;
 using System.Diagnostics;
 using System.Text;
-using Korkut.Application.Documents;
 using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Documents.OCR;
 using Korkut.Knowledge;
 using Korkut.Settings.Repositories;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Chat;
 
 /// <summary>
 /// Orchestrates one assistant chat turn within the caller's tenant scope: persists the

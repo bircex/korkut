@@ -1,10 +1,8 @@
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Services;
+namespace Korkut.Agent.Chat;
 
 /// <summary>Session orchestration over the repository port.</summary>
 public sealed class SessionService(ISessionRepository repo, IClock clock) : ISessionService

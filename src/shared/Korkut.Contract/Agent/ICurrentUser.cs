@@ -1,6 +1,4 @@
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Contract.Agent;
 
 /// <summary>
 /// The authenticated caller for the current request: the office (tenant) they act in, their user id,

@@ -1,3 +1,4 @@
+using Korkut.Agent.Chat;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Persistence;

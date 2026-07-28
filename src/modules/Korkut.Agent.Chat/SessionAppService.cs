@@ -1,12 +1,9 @@
+using Korkut.Contract.Agent;
 using Korkut.Chat;
-using Korkut.Application.Agent.Sessions;
 using Korkut.Core;
-using Korkut.Application.Agent.Contracts;
-using Korkut.Application.Agent.Models;
-using Korkut.Application.Agent.Abstractions;
-using ICurrentUser = Korkut.Application.Agent.Abstractions.ICurrentUser;
+using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Application.Agent.Sessions;
+namespace Korkut.Agent.Chat;
 
 /// <summary>
 /// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit

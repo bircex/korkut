@@ -1,10 +1,12 @@
+using Korkut.Agent.Chat;
+using Korkut.Contract.Agent;
 using Korkut.Contract.Export;
 using Korkut.Application.Agent.Documents;
 using Korkut.Application.Export;
 using Korkut.Core;
 using Korkut.Application.Agent.Contracts;
 using Korkut.Application.Agent.Abstractions;
-using ICurrentUser = Korkut.Application.Agent.Abstractions.ICurrentUser;
+using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
 namespace Korkut.Application.Agent.Documents;
 

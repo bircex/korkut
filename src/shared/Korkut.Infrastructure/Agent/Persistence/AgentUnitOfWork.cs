@@ -1,3 +1,4 @@
+using Korkut.Contract.Agent;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Infrastructure.Persistence.Agent;
