@@ -1,10 +1,8 @@
 using Korkut.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
-namespace Korkut.Application.Agent.Services;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>Draft-document orchestration over the repository port.</summary>
 public sealed class DraftDocumentService(IDraftDocumentRepository repo, IClock clock) : IDraftDocumentService

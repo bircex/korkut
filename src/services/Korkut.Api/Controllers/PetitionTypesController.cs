@@ -1,7 +1,7 @@
 using Korkut.Core;
 using Korkut.Application.PetitionTypes.Responses;
 using Korkut.Infrastructure.Security;
-using Korkut.Infrastructure.Templates;
+using Korkut.Contract.Templates;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,3 +1,4 @@
+using Korkut.Contract.Templates;
 using Korkut.Contract.Export;
 using Korkut.Core;
 using Korkut.Infrastructure.Ai;
@@ -73,7 +74,7 @@ public static class DomainSetup
         new Korkut.Channels.Extensions.ChannelsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
-        services.AddSingleton(_ => new Korkut.Infrastructure.Templates.TemplateCatalog());
+        services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());
         services.AddScoped<Korkut.Application.Coverage.ICoverageCatalog, Korkut.Infrastructure.Coverage.CatalogCoverageReader>();
         services.AddScoped<Korkut.Application.Coverage.ICoverageService, Korkut.Application.Coverage.CoverageService>();
         services.AddSingleton<Korkut.Contract.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();

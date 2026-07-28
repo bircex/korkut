@@ -1,7 +1,5 @@
 using Korkut.Infrastructure.Persistence.Agent;
 using Microsoft.EntityFrameworkCore;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 using Korkut.Core;
 
 namespace Korkut.Infrastructure.Agent.Persistence;

@@ -3,12 +3,10 @@ using System.Diagnostics;
 using System.Text;
 using Korkut.Settings;
 using Korkut.Settings.Entities;
-using Korkut.Infrastructure.Templates;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
+using Korkut.Contract.Templates;
 using Korkut.Settings.Repositories;
 
-namespace Korkut.Infrastructure.Agent.Ai;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>
 /// Produces AI edits to a generated document. Builds a drafting-focused system prompt

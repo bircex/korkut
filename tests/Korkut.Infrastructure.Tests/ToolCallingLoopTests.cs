@@ -1,10 +1,7 @@
 using Korkut.Agent.Brain;
 using Korkut.Agent.Model;
-using Korkut.Infrastructure.Agent.Ai;
-using Korkut.Application.Agent.Models;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Korkut.Application.Agent.Abstractions;
 using Korkut.Tools.Tools;
 using Korkut.Tools;
 

@@ -1,14 +1,10 @@
 using Korkut.Agent.Chat;
 using Korkut.Contract.Agent;
 using Korkut.Contract.Export;
-using Korkut.Application.Agent.Documents;
-using Korkut.Application.Export;
 using Korkut.Core;
-using Korkut.Application.Agent.Contracts;
-using Korkut.Application.Agent.Abstractions;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Application.Agent.Documents;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>
 /// AI-drafted-document use-cases the controller forwards to: runs the domain services inside a

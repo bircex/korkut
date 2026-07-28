@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Korkut.Infrastructure.Templates;
+namespace Korkut.Contract.Templates;
 
 /// <summary>A built-in template/petition type from the static catalog.</summary>
 public sealed record CatalogType(string Id, string Ad, string? Ref, bool Sik);

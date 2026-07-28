@@ -1,6 +1,6 @@
 using Korkut.Application.Coverage;
 using Korkut.Application.Coverage.Responses;
-using Korkut.Infrastructure.Templates;
+using Korkut.Contract.Templates;
 
 namespace Korkut.Infrastructure.Coverage;
 

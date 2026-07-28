@@ -1,8 +1,6 @@
 using Korkut.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
-namespace Korkut.Application.Agent.Abstractions;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>
 /// Persistence port for AI-drafted documents tied to a conversation: get-or-create per

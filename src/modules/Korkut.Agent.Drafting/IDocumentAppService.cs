@@ -1,8 +1,6 @@
 using Korkut.Contract.Export;
-using Korkut.Application.Export;
-using Korkut.Application.Agent.Contracts;
 
-namespace Korkut.Application.Agent.Documents;
+namespace Korkut.Agent.Drafting;
 
 /// <summary>AI-drafted-document use-cases a controller forwards to.</summary>
 public interface IDocumentAppService

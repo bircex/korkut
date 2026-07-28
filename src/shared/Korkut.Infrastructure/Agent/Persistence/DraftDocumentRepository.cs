@@ -3,8 +3,6 @@ using Korkut.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
-using Korkut.Application.Agent.Abstractions;
-using Korkut.Application.Agent.Models;
 
 namespace Korkut.Infrastructure.Agent.Persistence;
 

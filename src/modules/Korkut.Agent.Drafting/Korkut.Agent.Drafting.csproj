@@ -11,4 +11,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+  </ItemGroup>
 </Project>
