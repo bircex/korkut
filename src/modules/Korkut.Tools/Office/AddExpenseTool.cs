@@ -1,7 +1,7 @@
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Contract.Finance;
-using Korkut.Tools.Tools;
+using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Office;
 
@@ -40,7 +40,9 @@ public sealed class AddExpenseTool(IFinanceService finance) : IAgentTool
             Description = ToolArgs.String(arguments, "description"),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
         };
+        
         var result = await finance.CreateExpenseAsync(request, ct);
+        
         if (!result.IsSuccess)
         {
             return ToolResult.Error(result.Error!.Detail);

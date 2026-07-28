@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Tools.Tools;
+using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Law;
 

@@ -1,4 +1,4 @@
-namespace Korkut.Tools.Tools;
+namespace Korkut.Tools.Core;
 
 /// <summary>The outcome of a tool invocation, fed back to the model as the tool's result.</summary>
 public sealed record ToolResult(string Content, bool IsError = false)

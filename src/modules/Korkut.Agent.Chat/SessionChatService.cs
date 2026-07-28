@@ -1,14 +1,13 @@
 using Korkut.Contract.Documents;
 using Korkut.Agent.Brain;
 using Korkut.Agent.Model;
-using Korkut.Tools.Tools;
 using System.Diagnostics;
 using System.Text;
-using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Core;
 using Korkut.Knowledge;
 using Korkut.Settings.Repositories;
+using Korkut.Tools.Core;
 
 namespace Korkut.Agent.Chat;
 
@@ -20,8 +19,15 @@ namespace Korkut.Agent.Chat;
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
 public sealed class SessionChatService(
-    ISessionService sessions, IPersonaRepository personas, IStyleProfileRepository styles, IMemoryRepository memories, RuntimeConfig config,
-    ITextExtractorService extractorService, IKnowledgeSearchService knowledge, ILlmCallLogService callLogService, IUsageGovernorService governorService,
+    ISessionService sessions, 
+    IPersonaRepository personas,
+    IStyleProfileRepository styles,
+    IMemoryRepository memories,
+    RuntimeConfig config,
+    ITextExtractorService extractorService,
+    IKnowledgeSearchService knowledge,
+    ILlmCallLogService callLogService,
+    IUsageGovernorService governorService,
     IAgentToolLoopService toolLoopService) : ISessionChatService
 {
     private const int MaxExtractedChars = 20_000;

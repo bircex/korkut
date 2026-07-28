@@ -1,5 +1,5 @@
 using Korkut.Agent.Model;
-using Korkut.Tools.Tools;
+using Korkut.Tools.Core;
 
 namespace Korkut.Agent.Brain;
 

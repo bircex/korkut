@@ -2,8 +2,7 @@ using Korkut.Agent.Brain;
 using Korkut.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Korkut.Tools.Tools;
-using Korkut.Tools;
+using Korkut.Tools.Core;
 
 namespace Korkut.Infrastructure.Tests;
 

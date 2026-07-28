@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Korkut.Tools.Tools;
+namespace Korkut.Tools.Core;
 
 /// <summary>
 /// One capability the assistant can call. Self-describing (<see cref="Spec"/>), optionally gated on

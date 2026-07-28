@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Korkut.Tools.Tools;
+namespace Korkut.Tools.Core;
 
 /// <summary>
 /// The single surface the tool-calling loop uses: the tools available to THIS caller (to advertise

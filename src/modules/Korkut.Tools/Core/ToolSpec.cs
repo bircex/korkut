@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Korkut.Tools.Tools;
+namespace Korkut.Tools.Core;
 
 /// <summary>
 /// A tool's self-description handed to the model so it knows when and how to call it: the

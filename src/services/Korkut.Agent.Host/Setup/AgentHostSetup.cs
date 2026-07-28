@@ -12,7 +12,7 @@ using Korkut.Contract.Agent;
 using Korkut.Infrastructure.Agent.Persistence;
 using Korkut.Infrastructure.Chat;
 using Korkut.Tools;
-using Korkut.Tools.Tools;
+using Korkut.Tools.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Korkut.Agent.Host.Setup;
@@ -45,6 +45,9 @@ public static class AgentHostSetup
         {
             services.AddScoped(typeof(IAgentTool), tool);
         }
+
+        // The agent app services resolve the author display name through the operational users table.
+        services.AddScoped<Korkut.Core.IUserLookupService, Korkut.Infrastructure.Persistence.Repositories.UserLookupService>();
 
         // The agent's caller identity has the same shape as the operational one; adapt it.
         services.AddScoped<ICurrentUser, AgentCurrentUser>();

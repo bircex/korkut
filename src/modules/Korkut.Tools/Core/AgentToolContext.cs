@@ -1,5 +1,4 @@
-using Korkut.Core;
-namespace Korkut.Tools.Tools;
+namespace Korkut.Tools.Core;
 
 /// <summary>
 /// The trusted identity a tool call runs under: the office (tenant) it is pinned to, the acting
