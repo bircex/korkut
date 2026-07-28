@@ -1,3 +1,5 @@
+using Korkut.Agent.Model.Services;
+using Korkut.Contract.Agent.Model;
 using Korkut.Core;
 using Microsoft.Extensions.DependencyInjection;
 

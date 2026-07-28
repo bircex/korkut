@@ -1,9 +1,9 @@
-using Korkut.Agent.Model;
+using Korkut.Contract.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Korkut.Core;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// A PII-redacting decorator around a CLOUD <see cref="IChatProviderService"/>. Before the request leaves

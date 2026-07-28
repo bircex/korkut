@@ -1,5 +1,5 @@
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// The chat port every consumer depends on. Routing (specialty → provider + model) and

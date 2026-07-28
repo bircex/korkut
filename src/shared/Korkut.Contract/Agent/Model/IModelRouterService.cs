@@ -1,5 +1,5 @@
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// Maps a task specialty to a concrete provider + model, honouring <c>model-routing.yaml</c>

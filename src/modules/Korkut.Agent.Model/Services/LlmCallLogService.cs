@@ -1,9 +1,9 @@
+using Korkut.Contract.Agent.Model;
 using Korkut.Agent.Ledger;
-using Korkut.Agent.Model;
 using System.Diagnostics;
 using Korkut.Core;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// Records each model call to the <c>llm_calls</c> ledger (via <see cref="ILlmCallRepository"/>) and

@@ -6,6 +6,7 @@
        only the kernel. -->
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
   </ItemGroup>
   <ItemGroup>

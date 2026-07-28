@@ -1,10 +1,11 @@
+using Korkut.Contract.Agent.Model;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Korkut.Core;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// Chat provider for the Anthropic Messages API (provider name "claude"). The API key is

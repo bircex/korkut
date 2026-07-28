@@ -1,8 +1,9 @@
+using Korkut.Contract.Agent.Model;
 using Korkut.Agent.Ledger;
 using System.Collections.Concurrent;
 using Korkut.Core;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// Holds one <see cref="SemaphoreSlim"/> per office (process-wide singleton), so the concurrency

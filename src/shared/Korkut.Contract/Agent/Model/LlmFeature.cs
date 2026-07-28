@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>The feature (call site) that issued a model call — a span/telemetry dimension.</summary>
 public static class LlmFeature

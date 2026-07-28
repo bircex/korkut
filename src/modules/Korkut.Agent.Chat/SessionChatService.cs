@@ -1,6 +1,6 @@
 using Korkut.Contract.Documents;
 using Korkut.Agent.Brain;
-using Korkut.Agent.Model;
+using Korkut.Contract.Agent.Model;
 using System.Diagnostics;
 using System.Text;
 using Korkut.Settings.Entities;

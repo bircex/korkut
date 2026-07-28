@@ -1,6 +1,7 @@
+using Korkut.Contract.Agent.Model;
 using Korkut.Core;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// Resolves a specialty to a provider + model using the ported <see cref="ModelRouting"/>

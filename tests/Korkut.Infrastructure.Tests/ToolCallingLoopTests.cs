@@ -1,5 +1,5 @@
 using Korkut.Agent.Brain;
-using Korkut.Agent.Model;
+using Korkut.Contract.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Korkut.Tools.Core;

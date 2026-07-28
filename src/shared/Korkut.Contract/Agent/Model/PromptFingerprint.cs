@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// The versioned fingerprint of a composed prompt (system prompt + persona + style + grounding),

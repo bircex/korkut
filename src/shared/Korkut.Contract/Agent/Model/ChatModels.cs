@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>A tool the model may call: its name, human description, and JSON-Schema for arguments.</summary>
 public sealed record ToolDefinition(string Name, string Description, System.Text.Json.JsonElement Schema);

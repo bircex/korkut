@@ -1,4 +1,4 @@
-using Korkut.Agent.Model;
+using Korkut.Contract.Agent.Model;
 using Korkut.Tools.Core;
 
 namespace Korkut.Agent.Brain;

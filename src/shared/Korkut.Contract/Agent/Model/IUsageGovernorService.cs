@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// Cost/rate governance for model calls (principle 9). Before a call, the caller enters the

@@ -1,5 +1,5 @@
 
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// One vendor adapter, keyed by <see cref="Name"/> (the token used in <c>model-routing.yaml</c>

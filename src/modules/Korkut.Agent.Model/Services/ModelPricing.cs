@@ -1,4 +1,5 @@
-namespace Korkut.Agent.Model;
+using Korkut.Contract.Agent.Model;
+namespace Korkut.Agent.Model.Services;
 
 /// <summary>
 /// Approximate list prices (USD per 1,000,000 tokens, input/output) for the pinned models, used to

@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Model;
+namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
 /// Ported model-routing rules from <c>config/model-routing.yaml</c> (KDM-033),
