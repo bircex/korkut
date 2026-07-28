@@ -1,7 +1,7 @@
 using Korkut.Contract.Agent.Model;
 using Korkut.Tools.Core;
 
-namespace Korkut.Agent.Brain;
+namespace Korkut.Agent.Brain.Abstractions;
 
 /// <summary>
 /// Runs the assistant's tool-calling loop: offers the caller's permitted tools to the model, runs

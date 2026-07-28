@@ -1,4 +1,5 @@
-using Korkut.Agent.Brain;
+using Korkut.Agent.Brain.Services;
+using Korkut.Agent.Brain.Abstractions;
 using Korkut.Contract.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
