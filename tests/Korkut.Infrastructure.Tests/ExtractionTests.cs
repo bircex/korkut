@@ -1,11 +1,11 @@
+using Korkut.Contract.Documents.Storage;
 using Korkut.Contract.Documents;
 using Korkut.Core;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using System.Text;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.OCR;
-using Korkut.Application.Documents.Storage;
+using Korkut.Contract.Documents.OCR;
+using Korkut.Infrastructure.Storage;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

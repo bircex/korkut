@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Documents.OCR;
+using Korkut.Contract.Documents.OCR;
 using Korkut.Infrastructure.Security;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;

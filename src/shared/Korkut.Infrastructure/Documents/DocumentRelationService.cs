@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Documents;
+using Korkut.Contract.Documents;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;

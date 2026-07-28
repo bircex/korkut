@@ -1,5 +1,5 @@
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.OCR;
+using Korkut.Contract.Documents;
+using Korkut.Contract.Documents.OCR;
 using Korkut.Web;
 using Korkut.Web.Controllers;
 using Korkut.Web.Auth;

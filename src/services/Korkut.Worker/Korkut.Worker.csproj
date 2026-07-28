@@ -3,7 +3,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>

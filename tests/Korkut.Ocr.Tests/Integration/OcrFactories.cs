@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.OCR;
+using Korkut.Contract.Documents;
+using Korkut.Contract.Documents.OCR;
 using Korkut.Infrastructure.Security;
 using Korkut.Core;
 using Microsoft.AspNetCore.Hosting;

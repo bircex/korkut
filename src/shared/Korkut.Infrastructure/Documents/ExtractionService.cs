@@ -1,7 +1,6 @@
 using Korkut.Contract.Documents;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.OCR;
-using Korkut.Application.Documents.Storage;
+using Korkut.Contract.Documents.OCR;
+using Korkut.Contract.Documents.Storage;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;

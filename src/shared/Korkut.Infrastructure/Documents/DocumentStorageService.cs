@@ -1,6 +1,7 @@
+using Korkut.Contract.Documents.Storage;
 using System.Security.Cryptography;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.Storage;
+using Korkut.Contract.Documents;
+using Korkut.Infrastructure.Storage;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;

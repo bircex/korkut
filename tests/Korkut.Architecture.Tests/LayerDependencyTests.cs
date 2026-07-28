@@ -6,13 +6,14 @@ namespace Korkut.Architecture.Tests;
 /// <summary>
 /// Enforces the modular-monolith dependency rules from the architecture decision:
 /// Core is the leaf kernel (it owns the cross-cutting primitives and depends on
-/// nothing else in the solution) and Application stays free of infrastructure/
-/// framework concerns. These fail the build if a forbidden dependency is introduced.
+/// nothing else in the solution) and Contract (the shared ports/DTOs surface)
+/// stays free of infrastructure/framework concerns. These fail the build if a
+/// forbidden dependency is introduced.
 /// </summary>
 public class LayerDependencyTests
 {
     private static readonly Assembly Core = typeof(Korkut.Core.Entity).Assembly;
-    private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
+    private static readonly Assembly Contract = typeof(Korkut.Contract.Result).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
 
     private static void AssertNoDependency(Assembly assembly, params string[] forbidden)
@@ -36,7 +37,7 @@ public class LayerDependencyTests
         // never a domain module, a host, or a persistence framework.
         AssertNoDependency(
             Core,
-            "Korkut.Application",
+            "Korkut.Contract",
             "Korkut.Infrastructure",
             "Korkut.Api",
             "Korkut.Worker",
@@ -48,17 +49,21 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Application_does_not_depend_on_infrastructure_or_host()
+    public void Contract_does_not_depend_on_infrastructure_or_host()
     {
+        // Contract is the shared ports/DTOs surface every module and host compiles against.
+        // It must stay free of the persistence framework, the object store, and any host so
+        // that a consumer can reference the contract without dragging in infrastructure.
         AssertNoDependency(
-            Application,
+            Contract,
             "Korkut.Infrastructure",
             "Korkut.Api",
             "Korkut.Worker",
             "Korkut.Migrator",
             "Microsoft.EntityFrameworkCore",
             "Npgsql",
-            "Microsoft.AspNetCore");
+            "Microsoft.AspNetCore",
+            "Minio");
     }
 
     [Fact]

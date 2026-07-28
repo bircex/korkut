@@ -4,7 +4,6 @@
     <Project Path="src/shared/Korkut.Contract/Korkut.Contract.csproj" />
     <Project Path="src/shared/Korkut.Persistence/Korkut.Persistence.csproj" />
     <Project Path="src/shared/Korkut.Web.Kernel/Korkut.Web.Kernel.csproj" />
-    <Project Path="src/shared/Korkut.Application/Korkut.Application.csproj" />
     <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/modules/">
@@ -65,6 +64,7 @@
     <Project Path="tests/unit/Korkut.Notes.Unit.Tests/Korkut.Notes.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Clients.Unit.Tests/Korkut.Clients.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Jobs.Unit.Tests/Korkut.Jobs.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
     <Project Path="tests/integration/Korkut.Agent.Chat.Integration.Tests/Korkut.Agent.Chat.Integration.Tests.csproj" />
@@ -118,7 +118,6 @@
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />
     <Project Path="tests/Korkut.Ocr.Tests/Korkut.Ocr.Tests.csproj" />
-    <Project Path="tests/Korkut.Application.Tests/Korkut.Application.Tests.csproj" />
     <Project Path="tests/Korkut.Architecture.Tests/Korkut.Architecture.Tests.csproj" />
     <Project Path="tests/Korkut.Core.Tests/Korkut.Core.Tests.csproj" />
     <Project Path="tests/Korkut.Infrastructure.Tests/Korkut.Infrastructure.Tests.csproj" />

@@ -1,9 +1,9 @@
-using Korkut.Application.Documents;
+using Korkut.Contract.Documents;
 using Korkut.Core;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Application.Documents.Storage;
+using Korkut.Contract.Documents.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Documents;

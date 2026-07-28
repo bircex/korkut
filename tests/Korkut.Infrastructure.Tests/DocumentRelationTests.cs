@@ -5,7 +5,7 @@ using Korkut.Documents.Entities;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using System.Text;
-using Korkut.Application.Documents;
+using Korkut.Contract.Documents;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

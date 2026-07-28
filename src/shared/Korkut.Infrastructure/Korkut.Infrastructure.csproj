@@ -19,7 +19,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />

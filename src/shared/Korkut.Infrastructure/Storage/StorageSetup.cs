@@ -1,11 +1,10 @@
 using Korkut.Contract.Documents;
 using Korkut.Documents.Repositories;
-using Korkut.Application.Documents.OCR;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.Storage;
-using Korkut.Application.Upload.Malware;
-using Korkut.Application.Upload.SafeUpload;
-using Korkut.Application.Upload.Validator;
+using Korkut.Contract.Documents.OCR;
+using Korkut.Contract.Documents.Storage;
+using Korkut.Contract.Upload.Malware;
+using Korkut.Contract.Upload.SafeUpload;
+using Korkut.Contract.Upload.Validator;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;

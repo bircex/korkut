@@ -24,7 +24,6 @@
   <ItemGroup>
     <!-- The web foundation shared by every host (Korkut.Api, Korkut.Agent): auth,
          JSON contract, error mapping, tenant bridge, host setup. -->
-    <ProjectReference Include="..\..\shared\Korkut.Application\Korkut.Application.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />

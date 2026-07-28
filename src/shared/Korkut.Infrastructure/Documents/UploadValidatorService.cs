@@ -1,7 +1,7 @@
 using System.IO.Compression;
-using Korkut.Application.Upload;
-using Korkut.Application.Upload.SafeUpload;
-using Korkut.Application.Upload.Validator;
+using Korkut.Contract.Upload;
+using Korkut.Contract.Upload.SafeUpload;
+using Korkut.Contract.Upload.Validator;
 
 namespace Korkut.Infrastructure.Documents;
 

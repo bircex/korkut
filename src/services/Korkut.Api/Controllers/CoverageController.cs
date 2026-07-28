@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Coverage;
+using Korkut.Contract.Coverage;
 using Korkut.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

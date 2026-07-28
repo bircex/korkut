@@ -1,5 +1,5 @@
 using Korkut.Jobs.Entities;
-using Korkut.Application.Documents;
+using Korkut.Contract.Documents;
 using Korkut.Jobs.Abstractions;
 using Korkut.Jobs.Services;
 using Korkut.Core;

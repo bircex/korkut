@@ -1,8 +1,9 @@
+using Korkut.Contract.Documents.Storage;
 using Korkut.Core;
-using Korkut.Application.Documents.Storage;
-using Korkut.Application.Upload.Malware;
-using Korkut.Application.Upload.SafeUpload;
-using Korkut.Application.Upload.Validator;
+using Korkut.Infrastructure.Storage;
+using Korkut.Contract.Upload.Malware;
+using Korkut.Contract.Upload.SafeUpload;
+using Korkut.Contract.Upload.Validator;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Infrastructure.Persistence;

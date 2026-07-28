@@ -1,6 +1,6 @@
 using Korkut.Core;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.Requests;
+using Korkut.Contract.Documents;
+using Korkut.Contract.Documents.Requests;
 using Korkut.Infrastructure.Security;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;

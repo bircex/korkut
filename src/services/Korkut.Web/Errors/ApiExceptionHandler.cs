@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Application.Documents.OCR;
+using Korkut.Contract.Documents.OCR;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 

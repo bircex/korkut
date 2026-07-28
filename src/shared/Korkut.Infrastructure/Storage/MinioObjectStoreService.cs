@@ -1,6 +1,7 @@
+using Korkut.Contract.Documents.Storage;
 using System.Runtime.CompilerServices;
-using Korkut.Application.Documents;
-using Korkut.Application.Documents.Storage;
+using Korkut.Contract.Documents;
+using Korkut.Infrastructure.Storage;
 using Minio;
 using Minio.DataModel.Args;
 

@@ -1,4 +1,4 @@
-using Korkut.Application.Documents.OCR;
+using Korkut.Contract.Documents.OCR;
 
 namespace Korkut.Infrastructure.Documents;
 

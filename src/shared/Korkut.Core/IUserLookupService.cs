@@ -5,7 +5,7 @@ namespace Korkut.Core;
 /// only the raw author id in its own DB (the Agent DB never joins operational data), so it
 /// resolves the id to a human-facing name/email through this port when shaping a response.
 /// The adapter reads the operational store under the caller's tenant scope (RLS). Distinct
-/// from <see cref="Korkut.Application.Security.IUserDirectory"/>, the auth-flow persistence
+/// from <see cref="Korkut.Contract.Security.IUserDirectory"/>, the auth-flow persistence
 /// boundary.
 /// </summary>
 public interface IUserLookupService

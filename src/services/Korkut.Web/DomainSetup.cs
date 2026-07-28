@@ -75,10 +75,10 @@ public static class DomainSetup
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());
-        services.AddScoped<Korkut.Application.Coverage.ICoverageCatalog, Korkut.Infrastructure.Coverage.CatalogCoverageReader>();
-        services.AddScoped<Korkut.Application.Coverage.ICoverageService, Korkut.Application.Coverage.CoverageService>();
+        services.AddScoped<Korkut.Contract.Coverage.ICoverageCatalog, Korkut.Infrastructure.Coverage.CatalogCoverageReader>();
+        services.AddScoped<Korkut.Contract.Coverage.ICoverageService, Korkut.Infrastructure.Coverage.CoverageService>();
         services.AddSingleton<Korkut.Contract.Export.IDocumentExporter, Korkut.Infrastructure.Export.MarkdownExporter>();
-        services.AddScoped<Korkut.Application.Export.IExportService, Korkut.Application.Export.ExportService>();
+        services.AddScoped<Korkut.Contract.Export.IExportService, Korkut.Infrastructure.Export.ExportService>();
         // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
         new Korkut.Outbox.Extensions.OutboxModule().Register(services, configuration);
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
