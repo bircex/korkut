@@ -1,5 +1,5 @@
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Contract.Agent.Chat;
 
 /// <summary>Chat / upload / streaming use-cases a controller forwards to.</summary>
 public interface IChatAppService

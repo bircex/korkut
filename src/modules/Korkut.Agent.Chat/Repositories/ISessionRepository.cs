@@ -1,6 +1,6 @@
 using Korkut.Chat;
 using Korkut.Chat.Entities;
-namespace Korkut.Agent.Chat;
+namespace Korkut.Agent.Chat.Repositories;
 
 /// <summary>
 /// Persistence port for assistant conversations: CRUD, message append/list, and clone.

@@ -1,5 +1,5 @@
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Contract.Agent.Chat;
 
 /// <summary>The session use-cases a controller forwards to: tenant scope + orchestration + DTO mapping live here.</summary>
 public interface ISessionAppService

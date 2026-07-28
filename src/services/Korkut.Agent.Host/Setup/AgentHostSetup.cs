@@ -1,8 +1,9 @@
+using Korkut.Agent.Chat.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Korkut.Agent.Brain.Extensions;
-using Korkut.Agent.Chat;
+using Korkut.Contract.Agent.Chat;
 using Korkut.Agent.Chat.Extensions;
 using Korkut.Agent.Drafting;
 using Korkut.Agent.Drafting.Extensions;

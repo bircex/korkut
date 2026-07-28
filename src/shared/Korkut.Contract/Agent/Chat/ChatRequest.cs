@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Contract.Agent.Chat;
 
 public sealed record ChatRequest
 {

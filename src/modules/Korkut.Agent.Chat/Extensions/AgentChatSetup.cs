@@ -1,3 +1,7 @@
+using Korkut.Agent.Chat.Services;
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
+using Korkut.Contract.Agent.Chat;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Korkut.Agent.Chat.Extensions;

@@ -1,8 +1,11 @@
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
+using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Agent;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Agent.Chat.Services;
 
 /// <summary>
 /// Chat / upload / streaming as the controller sees them: runs <see cref="ISessionChatService"/>
@@ -10,7 +13,7 @@ namespace Korkut.Agent.Chat;
 /// resolves the caller from the token, and maps to response DTOs. The controller only forwards the
 /// request (and, for streaming, the SSE sinks) and returns the result.
 /// </summary>
-public sealed class ChatAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionChatService chat) : IChatAppService
+internal sealed class ChatAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionChatService chat) : IChatAppService
 {
     public async Task<ChatResponse> ChatAsync(Guid id, string text, CancellationToken ct = default)
     {

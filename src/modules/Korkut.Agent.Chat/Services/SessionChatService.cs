@@ -1,3 +1,6 @@
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
+using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Documents;
 using Korkut.Agent.Brain.Abstractions;
 using Korkut.Contract.Agent.Model;
@@ -9,7 +12,7 @@ using Korkut.Knowledge;
 using Korkut.Settings.Repositories;
 using Korkut.Tools.Core;
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Agent.Chat.Services;
 
 /// <summary>
 /// Orchestrates one assistant chat turn within the caller's tenant scope: persists the
@@ -18,7 +21,7 @@ namespace Korkut.Agent.Chat;
 /// reply, and auto-titles a fresh conversation from its first message. Document drafting
 /// and outbox hints (open_document / pending_email) are wired in later brain slices.
 /// </summary>
-public sealed class SessionChatService(
+internal sealed class SessionChatService(
     ISessionService sessions, 
     IPersonaRepository personas,
     IStyleProfileRepository styles,

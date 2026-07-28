@@ -1,16 +1,19 @@
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
+using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Agent;
 using Korkut.Chat;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Agent.Chat.Services;
 
 /// <summary>
 /// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit
 /// of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder), resolves author names, and
 /// maps to response DTOs. Not-found is a thrown <see cref="NotFoundException"/> (→ 404 by the handler).
 /// </summary>
-public sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir)
+internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir)
     : ISessionAppService
 {
     public async Task<SessionPageResponse> ListAsync(int? limit, int? offset, CancellationToken ct = default)

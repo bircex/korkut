@@ -1,11 +1,14 @@
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
+using Korkut.Contract.Agent.Chat;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Core;
 
-namespace Korkut.Agent.Chat;
+namespace Korkut.Agent.Chat.Services;
 
 /// <summary>Session orchestration over the repository port.</summary>
-public sealed class SessionService(ISessionRepository repo, IClock clock) : ISessionService
+internal sealed class SessionService(ISessionRepository repo, IClock clock) : ISessionService
 {
     public Task<Guid> CreateAsync(Guid officeId, Guid createdBy, Guid? matterId, CancellationToken ct = default)
         => repo.CreateAsync(officeId, createdBy, matterId, clock.UtcNow, ct);

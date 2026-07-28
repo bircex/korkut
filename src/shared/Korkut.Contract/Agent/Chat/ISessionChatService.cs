@@ -1,4 +1,4 @@
-namespace Korkut.Agent.Chat;
+namespace Korkut.Contract.Agent.Chat;
 
 /// <summary>Orchestrates one assistant chat / upload / streaming turn within an already tenant-scoped unit of work.</summary>
 public interface ISessionChatService
