@@ -12,14 +12,14 @@
     <!-- Test stack -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <!-- Architecture boundary tests -->
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <!-- ASP.NET Core integration testing -->
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <!-- Worker host -->
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.10" />
     <!-- Governance (Phase 10): retry/backoff + circuit-breaker around provider rate limits -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
@@ -49,15 +49,15 @@
     <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
     <!-- Google OIDC (KDM-016) -->
-    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
-    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.19.2" />
-    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.21.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.21.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
     <!-- Object storage (KDM-025) -->
     <PackageVersion Include="Minio" Version="7.0.0" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
     <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
     <!-- Legal-source tools (Agent/Tools/Law): PDF journal/decision text extraction -->
-    <PackageVersion Include="PdfPig" Version="0.1.9" />
+    <PackageVersion Include="PdfPig" Version="0.1.15" />
   </ItemGroup>
 
 </Project>
