@@ -1,18 +1,19 @@
-using Korkut.Persistence;
 using Korkut.Core;
+using Korkut.Organization.Entities;
+using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence.Repositories;
+namespace Korkut.Organization.Services;
 
 /// <summary>
-/// Operational-DB adapter for <see cref="IUserLookupService"/>. The author's display name lives
-/// in the operational Users table, which the Agent DB never joins; the Agent host calls this
-/// to resolve ids when building responses. Each lookup opens its OWN operational tenant scope
-/// (the surrounding request is pinned on the Agent DB, a different connection), so RLS still
-/// scopes the read to the caller's office. The display name is the user's e-mail (parity with
-/// the pre-split behaviour).
+/// Operational-DB adapter for <see cref="IUserLookupService"/>, owned by the module that owns the
+/// Users table. The Agent host stores only the raw author id in its own DB (which never joins
+/// operational data); it calls this to resolve ids when building a response. Each lookup opens its
+/// OWN operational tenant scope — the surrounding request may be pinned on a different connection
+/// (the Agent DB) — so RLS still scopes the read to the caller's office. The display name is the
+/// user's e-mail (parity with the pre-split behaviour).
 /// </summary>
-public sealed class UserLookupService(KorkutDbContext db) : IUserLookupService
+internal sealed class UserLookupService(DbContext db) : IUserLookupService
 {
     public async Task<IReadOnlyDictionary<Guid, string>> DisplayNamesAsync(
         Guid officeId, IReadOnlyCollection<Guid> userIds, CancellationToken ct = default)
@@ -24,7 +25,7 @@ public sealed class UserLookupService(KorkutDbContext db) : IUserLookupService
 
         var ids = userIds.Distinct().ToList();
         await using var scope = await db.BeginTenantScopeAsync(officeId, ct);
-        var map = await db.Users.AsNoTracking()
+        var map = await db.Set<User>().AsNoTracking()
             .Where(u => ids.Contains(u.Id))
             .Select(u => new { u.Id, u.Email })
             .ToDictionaryAsync(u => u.Id, u => u.Email, ct);
@@ -35,7 +36,7 @@ public sealed class UserLookupService(KorkutDbContext db) : IUserLookupService
     public async Task<string?> EmailAsync(Guid officeId, Guid userId, CancellationToken ct = default)
     {
         await using var scope = await db.BeginTenantScopeAsync(officeId, ct);
-        var email = await db.Users.AsNoTracking()
+        var email = await db.Set<User>().AsNoTracking()
             .Where(u => u.Id == userId).Select(u => u.Email).FirstOrDefaultAsync(ct);
         await scope.CommitAsync(ct);
         return email;

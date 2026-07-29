@@ -58,12 +58,9 @@ public static class DomainSetup
         // Calendar module. Its unified view (events ∪ deadlines ∪ hearings) is composed inside
         // the service via each owner's Contract lookup — no host-level read-model to register.
         new Korkut.Calendar.Extensions.CalendarModule().Register(services, configuration);
-        // Office settings module (persona, style layers, memory). The memory author lookup impl
-        // stays in Infrastructure (it reads the users table) and is registered here.
         new SettingsModule().Register(services, configuration);
         // Organization (identity/tenant) module — grows in stages; office roles land first.
         new Korkut.Organization.Extensions.OrganizationModule().Register(services, configuration);
-        services.AddScoped<Korkut.Contract.Settings.IMemoryAuthorLookup, Korkut.Infrastructure.Settings.MemoryAuthorLookup>();
         // Reports module (read-only office dashboard). It composes the overview from each domain's
         // Contract lookup, so there is no host-level aggregation query to register.
         new ReportsModule().Register(services, configuration);

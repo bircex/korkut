@@ -12,7 +12,7 @@ namespace Korkut.Settings.Services;
 /// </summary>
 internal sealed class MemoryService(
     IMemoryRepository repository,
-    IMemoryAuthorLookup authors,
+    Korkut.Contract.Organization.IUserLookup authors,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IClock clock) : IMemoryService

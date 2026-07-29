@@ -9,8 +9,6 @@ namespace Korkut.Settings.Extensions;
 
 /// <summary>
 /// Self-registration for the Settings module: persona, drafting-style and memory repositories +
-/// services. The memory author lookup (IMemoryAuthorLookup) is registered by the host, since its
-/// impl reads the users table (the identity domain).
 /// </summary>
 public sealed class SettingsModule : IModule
 {
