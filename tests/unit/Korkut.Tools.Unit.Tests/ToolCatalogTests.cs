@@ -3,7 +3,7 @@ using Korkut.Core;
 using Korkut.Tools;
 using Korkut.Tools.Core;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Tools.Tests;
 
 /// <summary>
 /// The tool catalog is the RBAC + configuration gate: a tool is offered and invocable only when

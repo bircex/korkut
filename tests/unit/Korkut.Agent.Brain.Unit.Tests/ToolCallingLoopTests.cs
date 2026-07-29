@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Korkut.Tools.Core;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Agent.Brain.Tests;
 
 /// <summary>
 /// The tool-calling loop: it runs the tools the model asks for, feeds the results back, repeats

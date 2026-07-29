@@ -1,7 +1,6 @@
 using Korkut.Core;
-using Korkut.Pii;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Pii.Unit.Tests;
 
 /// <summary>
 /// The Turkish PII redactor — pure, deterministic. Covers detection of each kind, the TCKN

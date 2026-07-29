@@ -1,6 +1,6 @@
 using Korkut.Knowledge;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Knowledge.Tests;
 
 /// <summary>
 /// The boundary-aware chunker (Knowledge/RAG ingestion). Pure, deterministic — no DB — so these

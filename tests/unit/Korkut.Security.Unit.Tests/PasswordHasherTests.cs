@@ -1,6 +1,4 @@
-using Korkut.Security;
-
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Security.Unit.Tests;
 
 /// <summary>Pure unit tests for the PBKDF2 hasher (no database).</summary>
 public class PasswordHasherTests

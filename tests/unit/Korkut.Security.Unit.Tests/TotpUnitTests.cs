@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
-using Korkut.Security;
 
-namespace Korkut.Api.Tests;
+namespace Korkut.Security.Unit.Tests;
 
 /// <summary>Unit tests for the TOTP algorithm and the AES-GCM envelope encryptor (no DB).</summary>
 public class TotpUnitTests

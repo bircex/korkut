@@ -67,6 +67,9 @@
     <Project Path="tests/unit/Korkut.Notes.Unit.Tests/Korkut.Notes.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Clients.Unit.Tests/Korkut.Clients.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Knowledge.Unit.Tests/Korkut.Knowledge.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Security.Unit.Tests/Korkut.Security.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Pii.Unit.Tests/Korkut.Pii.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Jobs.Unit.Tests/Korkut.Jobs.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
