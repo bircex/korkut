@@ -1,7 +1,7 @@
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 

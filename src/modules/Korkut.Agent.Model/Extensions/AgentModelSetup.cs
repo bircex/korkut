@@ -10,7 +10,7 @@ namespace Korkut.Agent.Model.Extensions;
 /// the routing <see cref="IChatModelService"/> facade, and the cross-cutting services
 /// (governance + ledger logging). Assumes the shared AI runtime is already registered
 /// (<c>AddKorkutAi</c>: the "ai" <see cref="System.Net.Http.HttpClient"/>, <see cref="IEnvironment"/>,
-/// <see cref="RuntimeConfig"/>, <see cref="IPiiRedactor"/>) and that the host binds
+/// <see cref="RuntimeConfig"/>, <see cref="IPiiRedactorService"/>) and that the host binds
 /// <see cref="Korkut.Agent.Ledger.ILlmCallRepository"/> (it touches the Agent DB).
 ///
 /// The **decorator chain** over the model is the point of this layer. Redaction wraps each CLOUD
@@ -32,7 +32,7 @@ public static class AgentModelSetup
         // RuntimeConfig) do not need it. Providers are keyed by Name inside RoutingChatModelService.
         services.AddScoped<IChatProviderService>(sp => new RedactingChatProviderService(
             ActivatorUtilities.CreateInstance<AnthropicChatProviderService>(sp),
-            sp.GetRequiredService<IPiiRedactor>()));
+            sp.GetRequiredService<IPiiRedactorService>()));
         // OpenAI-compatible local/cloud providers are registered by the host per configured backend
         // (each with its own name + base URL), e.g.
         //   services.AddScoped<IChatProviderService>(sp => new OpenAiCompatibleChatProviderService("groq", ...));

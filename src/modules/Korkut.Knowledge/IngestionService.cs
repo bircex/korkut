@@ -14,7 +14,7 @@ public sealed class IngestionService(
     IChunkerService chunkerService,
     IEmbedder embedder,
     IVectorStoreService storeService,
-    IPiiRedactor redactor,
+    IPiiRedactorService redactorService,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser) : IIngestionService
 {
@@ -24,7 +24,7 @@ public sealed class IngestionService(
         return unitOfWork.InTenantScopeAsync(office, async () =>
         {
             // Mask PII before anything is chunked, embedded or stored — the index must never hold it.
-            var masked = redactor.Redact(text).Text;
+            var masked = redactorService.Redact(text).Text;
             var chunks = chunkerService.Chunk(masked);
             if (chunks.Count == 0)
             {

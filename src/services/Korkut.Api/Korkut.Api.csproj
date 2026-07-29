@@ -12,5 +12,6 @@
        it at {BaseDirectory}/templates in published/containerized runs (KORKUT_TEMPLATES_DIR overrides). -->
   <ItemGroup>
     <Content Include="..\..\..\templates\**\*" LinkBase="templates" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

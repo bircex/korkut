@@ -1,6 +1,6 @@
 using Korkut.Core;
 using Korkut.Infrastructure.Runtime;
-using Korkut.Infrastructure.Pii;
+using Korkut.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
@@ -29,7 +29,7 @@ public static class AiSetup
 
         // Turkish PII redactor — masks cloud-bound chat requests (Agent host) and document text
         // before it is indexed (Knowledge host). Shared, so it is registered here.
-        services.TryAddSingleton<IPiiRedactor, PiiRedactor>();
+        services.TryAddSingleton<IPiiRedactorService, PiiRedactorService>();
 
         // Shared HTTP client for AI backends (embedder + the Agent's chat providers) with a
         // retry (backoff+jitter) + circuit-breaker handler. No aggressive attempt timeout — model

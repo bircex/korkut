@@ -1,7 +1,7 @@
 using Korkut.Core;
 using System.ComponentModel.DataAnnotations;
 using Korkut.Knowledge;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

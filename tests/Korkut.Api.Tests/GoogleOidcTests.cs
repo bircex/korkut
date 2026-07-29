@@ -3,7 +3,7 @@ using Korkut.Organization.Services;
 using Korkut.Organization.Entities;
 using Korkut.Contract.Organization;
 using System.Security.Cryptography;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;

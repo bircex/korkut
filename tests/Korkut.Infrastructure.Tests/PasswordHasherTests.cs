@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 
 namespace Korkut.Infrastructure.Tests;
 

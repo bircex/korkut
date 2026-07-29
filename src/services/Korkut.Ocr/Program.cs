@@ -5,7 +5,7 @@ using Korkut.Web.Controllers;
 using Korkut.Web.Auth;
 using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Observability;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Trace;

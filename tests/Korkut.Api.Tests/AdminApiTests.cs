@@ -1,7 +1,7 @@
 using Korkut.Organization;
 using System.Net;
 using System.Net.Http.Headers;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using Microsoft.AspNetCore.Mvc.Testing;
 

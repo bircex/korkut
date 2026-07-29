@@ -40,5 +40,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Reports\Korkut.Reports.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

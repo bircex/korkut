@@ -1,5 +1,5 @@
 using Korkut.Core;
-using Korkut.Infrastructure.Pii;
+using Korkut.Pii;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -11,7 +11,7 @@ namespace Korkut.Infrastructure.Tests;
 /// </summary>
 public class PiiRedactorTests
 {
-    private readonly PiiRedactor _redactor = new();
+    private readonly PiiRedactorService _redactor = new();
 
     // 10000000146 is a canonical checksum-valid test TCKN; 12345678901 fails the checksum.
     private const string ValidTckn = "10000000146";

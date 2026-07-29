@@ -6,6 +6,7 @@
     <Project Path="src/shared/Korkut.Web.Kernel/Korkut.Web.Kernel.csproj" />
     <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/" />
   <Folder Name="/src/modules/">
     <Project Path="src/modules/Korkut.Clients/Korkut.Clients.csproj" />
     <Project Path="src/modules/Korkut.Notes/Korkut.Notes.csproj" />
@@ -14,6 +15,7 @@
     <Project Path="src/modules/Korkut.Channels/Korkut.Channels.csproj" />
     <Project Path="src/modules/Korkut.Correspondence/Korkut.Correspondence.csproj" />
     <Project Path="src/modules/Korkut.Outbox/Korkut.Outbox.csproj" />
+    <Project Path="src/modules/Korkut.Audit/Korkut.Audit.csproj" />
     <Project Path="src/modules/Korkut.Calendar/Korkut.Calendar.csproj" />
     <Project Path="src/modules/Korkut.Courts/Korkut.Courts.csproj" />
     <Project Path="src/modules/Korkut.Matters/Korkut.Matters.csproj" />
@@ -22,6 +24,7 @@
     <Project Path="src/modules/Korkut.Settings/Korkut.Settings.csproj" />
     <Project Path="src/modules/Korkut.Organization/Korkut.Organization.csproj" />
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
+    <Project Path="src/modules/Korkut.Pii/Korkut.Pii.csproj" />
     <Project Path="src/modules/Korkut.Reports/Korkut.Reports.csproj" />
     <Project Path="src/modules/Korkut.Jobs/Korkut.Jobs.csproj" />
     <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />

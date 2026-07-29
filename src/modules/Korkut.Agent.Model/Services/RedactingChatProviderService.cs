@@ -13,13 +13,13 @@ namespace Korkut.Agent.Model.Services;
 /// they keep full fidelity. Streaming is restored incrementally with a carry buffer, so a
 /// placeholder split across two deltas is never emitted half-restored.
 /// </summary>
-internal sealed class RedactingChatProviderService(IChatProviderService inner, IPiiRedactor redactor) : IChatProviderService
+internal sealed class RedactingChatProviderService(IChatProviderService inner, IPiiRedactorService redactorService) : IChatProviderService
 {
     public string Name => inner.Name;
 
     public async Task<ChatReply> CompleteAsync(ModelSelection selection, ChatRequest request, CancellationToken ct = default)
     {
-        var scope = redactor.NewScope();
+        var scope = redactorService.NewScope();
         var reply = await inner.CompleteAsync(selection, Redact(scope, request), ct);
         return reply with { Text = scope.Restore(reply.Text) };
     }
@@ -27,7 +27,7 @@ internal sealed class RedactingChatProviderService(IChatProviderService inner, I
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
         ModelSelection selection, ChatRequest request, [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var scope = redactor.NewScope();
+        var scope = redactorService.NewScope();
         var stream = new PlaceholderStream(scope);
         await foreach (var ev in inner.StreamAsync(selection, Redact(scope, request), ct))
         {

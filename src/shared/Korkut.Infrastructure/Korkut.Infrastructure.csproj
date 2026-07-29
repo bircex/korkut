@@ -45,4 +45,9 @@
     <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Auditing\" />
+    <Folder Include="Pii\" />
+      <ProjectReference Include="..\..\modules\Korkut.Pii\Korkut.Pii.csproj" />
+  </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Api.Tests.Integration;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Api.Tests;

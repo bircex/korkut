@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 
 namespace Korkut.Api.Tests;
 

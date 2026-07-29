@@ -5,7 +5,7 @@ using Korkut.Web;
 using Korkut.Web.Controllers;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Storage;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using OpenTelemetry.Trace;
 
@@ -28,7 +28,7 @@ builder.Services.AddKorkutDomain(builder.Configuration);
 // Auth services (password/hasher/directory/AuthService/TOTP/Google/OIDC) + the
 // refresh-token + Google sign-in services the session endpoints use (KDM-012..017).
 builder.Services.AddKorkutAuth(builder.Configuration);
-builder.Services.AddScoped<Korkut.Infrastructure.Security.RefreshTokenService>();
+builder.Services.AddScoped<Korkut.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
 
 // Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.

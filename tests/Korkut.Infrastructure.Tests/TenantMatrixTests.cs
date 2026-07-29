@@ -3,7 +3,7 @@ using Korkut.Jobs.Entities;
 using Korkut.Infrastructure.Auditing;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Jobs.Abstractions;
 using Korkut.Jobs.Services;
 using Korkut.Infrastructure.Persistence;

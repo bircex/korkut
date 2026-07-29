@@ -3,7 +3,7 @@ using Korkut.Core;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Infrastructure.Storage;
 using Korkut.Web;
 using Korkut.Web.Auth;

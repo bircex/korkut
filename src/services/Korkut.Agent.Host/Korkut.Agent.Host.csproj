@@ -15,5 +15,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

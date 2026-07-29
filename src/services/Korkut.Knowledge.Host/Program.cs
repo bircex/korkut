@@ -6,7 +6,7 @@ using Korkut.Web.Auth;
 using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using OpenTelemetry.Trace;
 

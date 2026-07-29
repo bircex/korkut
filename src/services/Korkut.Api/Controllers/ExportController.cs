@@ -1,7 +1,7 @@
 using Korkut.Core;
 using Korkut.Contract.Export;
 using Korkut.Contract.Export.Requests;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

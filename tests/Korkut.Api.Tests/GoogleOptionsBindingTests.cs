@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Microsoft.Extensions.Configuration;
 
 namespace Korkut.Api.Tests;

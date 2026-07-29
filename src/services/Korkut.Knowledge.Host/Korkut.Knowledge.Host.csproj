@@ -8,5 +8,6 @@
     <!-- Shared host plumbing: AI embedder, observability, security, web pipeline + auth. -->
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\..\services\Korkut.Web\Korkut.Web.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

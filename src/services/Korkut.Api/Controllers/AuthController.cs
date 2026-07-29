@@ -1,7 +1,7 @@
 using Korkut.Api.Contracts;
 using Korkut.Api.Auth;
 using Korkut.Contract.Organization;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Web;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;

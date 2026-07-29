@@ -1,9 +1,9 @@
 using Korkut.Core;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
-using Korkut.Infrastructure.Auth;
+using Korkut.Security.Auth;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 
 namespace Korkut.Infrastructure.Tests;
 

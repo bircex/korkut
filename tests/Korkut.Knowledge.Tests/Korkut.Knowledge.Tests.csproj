@@ -21,5 +21,6 @@
     <ProjectReference Include="..\..\src\services\Korkut.Knowledge.Host\Korkut.Knowledge.Host.csproj" />
     <ProjectReference Include="..\..\src\modules\Korkut.Knowledge\Korkut.Knowledge.csproj" />
     <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\src\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

@@ -27,5 +27,7 @@
     <!-- Snapshot travels to the output dir so tests read it via AppContext.BaseDirectory
          (robust under deterministic CI source-path remapping). -->
     <Content Include="Snapshots\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+      <ProjectReference Include="..\..\src\shared\Korkut.Security\Korkut.Security.csproj" />
+      <ProjectReference Include="..\..\src\modules\Korkut.Pii\Korkut.Pii.csproj" />
   </ItemGroup>
 </Project>

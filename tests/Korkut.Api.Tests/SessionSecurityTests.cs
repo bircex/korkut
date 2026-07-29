@@ -1,5 +1,5 @@
 using System.Net;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Core;
 using Microsoft.AspNetCore.Mvc.Testing;
 

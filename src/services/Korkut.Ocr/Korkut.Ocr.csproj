@@ -6,5 +6,6 @@
     <!-- Shared libraries. No DB: OCR is a stateless byte→text transform. -->
     <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
     <ProjectReference Include="..\..\services\Korkut.Web\Korkut.Web.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
   </ItemGroup>
 </Project>

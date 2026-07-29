@@ -1,11 +1,11 @@
 using Korkut.Contract.Organization;
-using Korkut.Infrastructure.Security;
+using Korkut.Security;
 using Korkut.Organization;
 using Korkut.Organization.Repositories;
 using Korkut.Organization.Services;
 using Korkut.Organization.Entities;
 using Korkut.Core;
-using Korkut.Infrastructure.Auth;
+using Korkut.Security.Auth;
 using Korkut.Persistence;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
