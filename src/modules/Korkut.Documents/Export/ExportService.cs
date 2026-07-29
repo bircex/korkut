@@ -2,7 +2,7 @@ using Korkut.Contract.Export;
 using Korkut.Core;
 using Korkut.Contract.Export.Requests;
 
-namespace Korkut.Infrastructure.Export;
+namespace Korkut.Documents.Export;
 
 /// <summary>Export over the renderer port; an unsupported format is refused here, not deep in the renderer.</summary>
 public sealed class ExportService(IDocumentExporter exporter) : IExportService

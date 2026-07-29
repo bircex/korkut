@@ -26,6 +26,7 @@
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
     <Project Path="src/modules/Korkut.Pii/Korkut.Pii.csproj" />
     <Project Path="src/modules/Korkut.Reports/Korkut.Reports.csproj" />
+    <Project Path="src/modules/Korkut.Coverage/Korkut.Coverage.csproj" />
     <Project Path="src/modules/Korkut.Jobs/Korkut.Jobs.csproj" />
     <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />
     <Project Path="src/modules/Korkut.Tools/Korkut.Tools.csproj" />

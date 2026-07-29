@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Coverage: the read-only "what legal ground the assistant covers" feature, derived from the
+       static legal catalog. Pure (no DB); references only kernel + contract. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+</Project>

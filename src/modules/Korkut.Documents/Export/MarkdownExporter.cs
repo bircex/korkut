@@ -1,7 +1,7 @@
 using Korkut.Contract.Export;
 using Korkut.Documents.Services;
 
-namespace Korkut.Infrastructure.Export;
+namespace Korkut.Documents.Export;
 
 /// <summary>
 /// Renders markdown to Word or UYAP through <see cref="MarkdownDocumentExporter"/>. The

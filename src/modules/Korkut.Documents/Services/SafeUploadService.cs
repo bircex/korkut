@@ -1,11 +1,9 @@
 using Korkut.Contract.Audit;
 using Korkut.Contract.Documents.Storage;
-using Korkut.Core;
 using Korkut.Documents.Storage;
 using Korkut.Contract.Upload.Malware;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
-using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Microsoft.EntityFrameworkCore;
 

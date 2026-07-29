@@ -2,7 +2,7 @@ using Korkut.Contract.Coverage;
 using Korkut.Contract.Coverage.Responses;
 using Korkut.Contract.Templates;
 
-namespace Korkut.Infrastructure.Coverage;
+namespace Korkut.Coverage;
 
 /// <summary>
 /// Reads coverage from the static legal catalog on disk. The same numbers for every
