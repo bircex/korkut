@@ -10,7 +10,7 @@ using Korkut.Tasks;
 using Korkut.Tasks.Entities;
 using Korkut.Infrastructure.Deadlines;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Deadlines.Tests;
 
 public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
