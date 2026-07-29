@@ -15,7 +15,7 @@ using Korkut.Clients.Entities;
 using Korkut.Matters;
 using Korkut.Matters.Entities;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Documents.Tests;
 
 /// <summary>
 /// Typed document relations, index outbox events, and their RLS/audit/idempotency

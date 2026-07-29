@@ -16,7 +16,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Documents.Tests;
 
 public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
     : IClassFixture<PostgresFixture>, IClassFixture<MinioFixture>, IAsyncLifetime

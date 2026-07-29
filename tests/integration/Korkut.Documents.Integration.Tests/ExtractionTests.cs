@@ -11,7 +11,7 @@ using Korkut.Infrastructure.Documents;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Documents.Tests;
 
 /// <summary>
 /// Document extraction + lifecycle over real MinIO + real PostgreSQL (KDM-027):

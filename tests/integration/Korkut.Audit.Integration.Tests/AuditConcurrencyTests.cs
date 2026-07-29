@@ -9,7 +9,7 @@ using Npgsql;
 using Korkut.Matters;
 using Korkut.Matters.Entities;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Audit.Tests;
 
 public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

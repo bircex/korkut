@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.TestSupport;
 
 /// <summary>
 /// The authoritative list of tenant-owned (RLS-forced) tables. The coverage guard

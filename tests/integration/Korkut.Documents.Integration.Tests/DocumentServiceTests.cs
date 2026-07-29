@@ -11,7 +11,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Documents.Tests;
 
 /// <summary>Document storage over real MinIO + real PostgreSQL.</summary>
 public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)

@@ -7,7 +7,7 @@ using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Jobs.Tests;
 
 public class JobPersistenceTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
