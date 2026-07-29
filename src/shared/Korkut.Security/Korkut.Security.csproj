@@ -20,4 +20,7 @@
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Security.Integration.Tests" />
+  </ItemGroup>
 </Project>

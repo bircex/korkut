@@ -78,6 +78,7 @@
     <Project Path="tests/integration/Korkut.Agent.Model.Integration.Tests/Korkut.Agent.Model.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Tools.Integration.Tests/Korkut.Tools.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Matters.Integration.Tests/Korkut.Matters.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Security.Integration.Tests/Korkut.Security.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Hearings.Integration.Tests/Korkut.Hearings.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Documents.Integration.Tests/Korkut.Documents.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Chat.Integration.Tests/Korkut.Chat.Integration.Tests.csproj" />

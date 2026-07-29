@@ -6,7 +6,7 @@ using Korkut.Security.Auth;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Security;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Security.Tests;
 
 /// <summary>
 /// The cross-tenant Google sign-in resolvers must work when called AS the app role
