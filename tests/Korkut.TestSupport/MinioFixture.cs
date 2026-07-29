@@ -2,7 +2,7 @@ using Korkut.Infrastructure.Storage;
 using Minio;
 using Testcontainers.Minio;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.TestSupport;
 
 /// <summary>Spins a real MinIO container and provides a client + object store.</summary>
 public sealed class MinioFixture : IAsyncLifetime

@@ -3,7 +3,7 @@
     <Project Path="src/shared/Korkut.Core/Korkut.Core.csproj" />
     <Project Path="src/shared/Korkut.Contract/Korkut.Contract.csproj" />
     <Project Path="src/shared/Korkut.Persistence/Korkut.Persistence.csproj" />
-    <Project Path="src/shared/Korkut.Web.Kernel/Korkut.Web.Kernel.csproj" />
+    <Project Path="src/shared/Korkut.Security/Korkut.Security.csproj" />
     <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/" />
@@ -122,6 +122,7 @@
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />
     <Project Path="tests/Korkut.Ocr.Tests/Korkut.Ocr.Tests.csproj" />
     <Project Path="tests/Korkut.Architecture.Tests/Korkut.Architecture.Tests.csproj" />
+    <Project Path="tests/Korkut.TestSupport/Korkut.TestSupport.csproj" />
     <Project Path="tests/Korkut.Core.Tests/Korkut.Core.Tests.csproj" />
     <Project Path="tests/Korkut.Infrastructure.Tests/Korkut.Infrastructure.Tests.csproj" />
   </Folder>

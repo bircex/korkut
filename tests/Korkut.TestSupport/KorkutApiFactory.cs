@@ -15,7 +15,7 @@ using Npgsql;
 using Testcontainers.Minio;
 using Testcontainers.PostgreSql;
 
-namespace Korkut.Api.Tests.Integration;
+namespace Korkut.TestSupport;
 
 /// <summary>
 /// Boots the real API against a real PostgreSQL (Testcontainers), so DB-backed

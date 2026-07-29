@@ -1,6 +1,6 @@
+using Korkut.Contract;
 using Korkut.Contract.Tasks;
 using Korkut.Core;
-using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

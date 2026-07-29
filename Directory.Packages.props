@@ -1,5 +1,4 @@
 <Project>
-
   <!-- KDM-005 — Central Package Management. All package versions live here; csproj
        files reference packages without versions. Keeps versions consistent across
        every project and makes SCA/dependency review a single surface. -->
@@ -7,9 +6,9 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- Test stack -->
+    <PackageVersion Include="Microsoft.AspNetCore.Http" Version="2.3.11" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
@@ -62,5 +61,4 @@
     <!-- Legal-source tools (Agent/Tools/Law): PDF journal/decision text extraction -->
     <PackageVersion Include="PdfPig" Version="0.1.9" />
   </ItemGroup>
-
 </Project>

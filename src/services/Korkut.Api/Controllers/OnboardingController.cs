@@ -1,5 +1,5 @@
+using Korkut.Contract;
 using Korkut.Contract.Organization;
-using Korkut.Web.Kernel;
 using Korkut.Api.Auth;
 using Korkut.Security;
 using Korkut.Web.Errors;

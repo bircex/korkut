@@ -1,7 +1,7 @@
+using Korkut.Contract;
 using Korkut.Contract.Offices;
 using Korkut.Web;
 using Korkut.Web.Auth;
-using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;

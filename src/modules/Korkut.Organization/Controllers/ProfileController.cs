@@ -1,7 +1,7 @@
+using Korkut.Contract;
 using Korkut.Organization.Entities;
 using Korkut.Organization;
 using Korkut.Contract.Organization;
-using Korkut.Web.Kernel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

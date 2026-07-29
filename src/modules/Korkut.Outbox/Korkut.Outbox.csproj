@@ -12,7 +12,6 @@
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
-    <ProjectReference Include="..\..\shared\Korkut.Web.Kernel\Korkut.Web.Kernel.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Korkut.Outbox.Unit.Tests" />

@@ -1,8 +1,7 @@
-using Korkut.Contract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Web.Kernel;
+namespace Korkut.Contract;
 
 /// <summary>The handled-failure body, identical to the rest of the API: <c>{ "detail": "..." }</c>.</summary>
 public sealed record ProblemBody(string Detail);

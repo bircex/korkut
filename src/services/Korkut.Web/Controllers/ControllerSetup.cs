@@ -21,7 +21,7 @@ public static class ControllerSetup
         services.AddControllers()
             // Vertical modules host their own controllers; register each module assembly as an
             // MVC application part so its endpoints are discovered alongside the host's.
-            .AddApplicationPart(typeof(Korkut.Clients.Extensions.ClientsModule).Assembly)
+            .AddApplicationPart(typeof(Clients.Extensions.ClientsModule).Assembly)
             .AddApplicationPart(typeof(NotesModule).Assembly)
             .AddApplicationPart(typeof(TasksModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Deadlines.Extensions.DeadlinesModule).Assembly)

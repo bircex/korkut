@@ -3,7 +3,7 @@ using Korkut.Infrastructure.Persistence.Agent;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.TestSupport;
 
 /// <summary>
 /// Spins a real PostgreSQL 16 container once per test class and applies the EF
