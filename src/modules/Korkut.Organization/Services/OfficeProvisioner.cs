@@ -1,10 +1,9 @@
 using Korkut.Contract.Offices;
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Korkut.Infrastructure.Offices;
+namespace Korkut.Organization.Services;
 
 /// <summary>
 /// Provisions a brand-new tenant (a disabled office + its owner) for self-serve signup,
@@ -12,7 +11,7 @@ namespace Korkut.Infrastructure.Offices;
 /// function <c>korkut.provision_office</c>. Returns null if the email/Google subject
 /// already has an account (nothing is created).
 /// </summary>
-public sealed class OfficeProvisioner(KorkutDbContext db, IClock clock) : IOfficeProvisioner
+public sealed class OfficeProvisioner(DbContext db, IClock clock) : IOfficeProvisioner
 {
     public async Task<ProvisionedOffice?> ProvisionAsync(string email, string googleSub, string officeName, CancellationToken ct = default)
     {

@@ -78,9 +78,9 @@ public static class DomainSetup
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
         // owned by the Organization module (registered above).
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
-        services.AddScoped<Korkut.Organization.IInviteResolver, Korkut.Infrastructure.Invites.InviteResolver>();
+        services.AddScoped<Korkut.Organization.IInviteResolver, Korkut.Organization.Services.InviteResolver>();
         // Self-serve onboarding provisions a disabled office for a verified Google identity (raw RLS-bypass SQL).
-        services.AddScoped<Korkut.Contract.Offices.IOfficeProvisioner, Korkut.Infrastructure.Offices.OfficeProvisioner>();
+        services.AddScoped<Korkut.Contract.Offices.IOfficeProvisioner, Korkut.Organization.Services.OfficeProvisioner>();
 
         return services;
     }

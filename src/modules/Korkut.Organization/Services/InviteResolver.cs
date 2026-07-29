@@ -1,10 +1,9 @@
 using Korkut.Organization;
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Korkut.Infrastructure.Invites;
+namespace Korkut.Organization.Services;
 
 /// <summary>
 /// Resolves an opaque invite token before any session exists, through the narrow BYPASSRLS
@@ -12,7 +11,7 @@ namespace Korkut.Infrastructure.Invites;
 /// gets to read across tenants. Returns null for an unknown, expired or already-accepted
 /// invite, so the three are indistinguishable to a caller.
 /// </summary>
-public sealed class InviteResolver(KorkutDbContext db, IClock clock) : IInviteResolver
+public sealed class InviteResolver(DbContext db, IClock clock) : IInviteResolver
 {
     public async Task<InviteGrant?> ResolveAsync(string tokenHash, CancellationToken ct = default)
     {
