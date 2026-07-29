@@ -29,4 +29,11 @@ internal sealed class MatterLookup(IMatterRepository repository, DbContext db) :
             .Select(m => new { m.Id, m.Title })
             .ToDictionaryAsync(m => m.Id, m => m.Title, ct);
     }
+
+    public async Task<IReadOnlyDictionary<string, int>> StatusCountsAsync(Guid officeId, CancellationToken ct = default)
+        => await db.Set<Matter>().AsNoTracking()
+            .Where(m => m.OfficeId == officeId && m.DeletedAt == null)
+            .GroupBy(m => m.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Status, g => g.Count, ct);
 }

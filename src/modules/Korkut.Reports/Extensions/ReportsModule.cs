@@ -1,6 +1,5 @@
 using Korkut.Contract.Reports;
 using Korkut.Core;
-using Korkut.Reports.Repositories;
 using Korkut.Reports.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,9 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Korkut.Reports.Extensions;
 
 /// <summary>
-/// Self-registration for the Reports module: the dashboard orchestration service. The
-/// cross-module aggregation query (<see cref="IReportsQuery"/>) reads other modules' tables,
-/// so its implementation stays in Infrastructure and is registered by the host.
+/// Self-registration for the Reports module: the dashboard orchestration service, which composes
+/// the overview from each domain's Contract lookup. No cross-module query to register.
 /// </summary>
 public sealed class ReportsModule : IModule
 {

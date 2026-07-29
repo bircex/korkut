@@ -12,4 +12,7 @@ public interface IMatterLookup
     /// <summary>Matter id → title, for the requested ids. Absent ids simply drop out; empty input → empty map.</summary>
     Task<IReadOnlyDictionary<Guid, string>> TitlesAsync(
         Guid officeId, IReadOnlyCollection<Guid> matterIds, CancellationToken ct = default);
+
+    /// <summary>Active (non-deleted) matter counts grouped by status, for the dashboard.</summary>
+    Task<IReadOnlyDictionary<string, int>> StatusCountsAsync(Guid officeId, CancellationToken ct = default);
 }

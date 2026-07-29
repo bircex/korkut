@@ -15,6 +15,9 @@ public interface IHearingLookup
     /// </summary>
     Task<IReadOnlyList<HearingCalendarRow>> ListInRangeAsync(
         Guid officeId, DateTimeOffset? start, DateTimeOffset? end, Guid? matterId, CancellationToken ct = default);
+
+    /// <summary>How many hearings are scheduled in [start, end], for the dashboard agenda.</summary>
+    Task<int> CountInRangeAsync(Guid officeId, DateTimeOffset start, DateTimeOffset end, CancellationToken ct = default);
 }
 
 /// <summary>A hearing as the calendar needs it: when it is, and the matter it belongs to.</summary>

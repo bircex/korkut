@@ -14,5 +14,6 @@ public sealed class CorrespondenceModule : IModule
     {
         services.AddScoped<ICorrespondenceRepository, CorrespondenceRepository>();
         services.AddScoped<ICorrespondenceService, CorrespondenceService>();
+        services.AddScoped<Korkut.Contract.Correspondence.ICorrespondenceLookup, CorrespondenceLookup>();
     }
 }

@@ -10,4 +10,7 @@ public interface IClientLookup
     /// <summary>Client id → name. Ids with no client are simply absent; an empty input yields an empty map.</summary>
     Task<IReadOnlyDictionary<Guid, string>> NamesAsync(
         Guid officeId, IReadOnlyCollection<Guid> clientIds, CancellationToken ct = default);
+
+    /// <summary>The office's active (non-deleted) client count, for the dashboard.</summary>
+    Task<int> CountAsync(Guid officeId, CancellationToken ct = default);
 }

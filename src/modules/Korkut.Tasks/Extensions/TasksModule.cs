@@ -14,5 +14,6 @@ public sealed class TasksModule : IModule
     {
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<Korkut.Contract.Tasks.ITaskLookup, TaskLookup>();
     }
 }
