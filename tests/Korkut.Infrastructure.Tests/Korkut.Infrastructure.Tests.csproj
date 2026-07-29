@@ -22,7 +22,13 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Application\Korkut.Application.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Tools\Korkut.Tools.csproj" />
+    <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\src\shared\Korkut.Security\Korkut.Security.csproj" />
+      <ProjectReference Include="..\..\src\modules\Korkut.Pii\Korkut.Pii.csproj" />
+      <ProjectReference Include="..\..\src\modules\Korkut.Audit\Korkut.Audit.csproj" />
+      <ProjectReference Include="..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
   </ItemGroup>
 </Project>

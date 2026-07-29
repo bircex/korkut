@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Korkut.Agent.Host: the composition root that makes the agent RUN. Composes the operational
+       stack (tools' Contract services, Settings, the conversation store) + the agent DB + the
+       agent layers (Model/Brain/Chat/Drafting) + the tool registry, and serves the chat / SSE /
+       upload / drafting surface. -->
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\services\Korkut.Web\Korkut.Web.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
+  </ItemGroup>
+</Project>

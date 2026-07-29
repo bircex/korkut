@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Knowledge (RAG) bounded context as a SELF-CONTAINED, portable module: domain + use-case
+       services + pgvector persistence (its own KnowledgeDbContext, schema korkut_knowledge, own
+       migration chain + RLS). References only the kernel + shared persistence lib, so any host
+       (the Knowledge host today, another API tomorrow) can pull it in with one reference. The
+       thin deployable lives in src/services/Korkut.Knowledge.Host. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Pgvector" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+</Project>

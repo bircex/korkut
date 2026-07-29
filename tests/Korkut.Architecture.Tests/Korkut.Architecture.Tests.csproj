@@ -13,12 +13,17 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Korkut.Api\Korkut.Api.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Worker\Korkut.Worker.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Migrator\Korkut.Migrator.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Application\Korkut.Application.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Domain\Korkut.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Korkut.SharedKernel\Korkut.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\services\Korkut.Api\Korkut.Api.csproj" />
+    <ProjectReference Include="..\..\src\services\Korkut.Worker\Korkut.Worker.csproj" />
+    <ProjectReference Include="..\..\src\services\Korkut.Migrator\Korkut.Migrator.csproj" />
+    <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\modules\Korkut.Tools\Korkut.Tools.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
   </ItemGroup>
 </Project>

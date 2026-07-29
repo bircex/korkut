@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Clients module (müvekkiller): the reference vertical slice. Owns its entity + EF mapping +
+       repository + service (returns Result<T>) + controller + self-registration. References only
+       the shared kernel (Core), the cross-module contract (Contract), the persistence base
+       (Persistence) and the web kernel (Result->HTTP). It never references another module. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Clients.Unit.Tests" />
+  </ItemGroup>
+</Project>

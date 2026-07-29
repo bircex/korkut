@@ -1,0 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Korkut.Contract.Agent.Chat;
+
+public sealed record RenameSessionRequest
+{
+    [Required, MaxLength(300)]
+    public string? Title { get; init; }
+}

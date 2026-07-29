@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Documents module (evrak/dosya metadata): Document + DocumentExtraction + DocumentRelation
+       aggregates (extraction/relation FK the document intra-module). The storage/OCR/extraction/
+       upload SERVICES are cross-cutting infra and stay in Infrastructure, consuming this module's
+       repository + entities. References only kernel/persistence. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Documents.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Infrastructure" />
+  </ItemGroup>
+</Project>

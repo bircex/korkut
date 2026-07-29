@@ -1,29 +1,85 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Korkut.Agent/Korkut.Agent.csproj" />
-    <Project Path="src/Korkut.Api/Korkut.Api.csproj" />
-    <Project Path="src/Korkut.Application/Korkut.Application.csproj" />
-    <Project Path="src/Korkut.Domain/Korkut.Domain.csproj" />
-    <Project Path="src/Korkut.Gateway/Korkut.Gateway.csproj" />
-    <Project Path="src/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
-    <Project Path="src/Korkut.Knowledge/Korkut.Knowledge.csproj" />
-    <Project Path="src/Korkut.Migrator/Korkut.Migrator.csproj" />
-    <Project Path="src/Korkut.Ocr/Korkut.Ocr.csproj" />
-    <Project Path="src/Korkut.Pii/Korkut.Pii.csproj" />
-    <Project Path="src/Korkut.Web/Korkut.Web.csproj" />
-    <Project Path="src/Korkut.SharedKernel/Korkut.SharedKernel.csproj" />
-    <Project Path="src/Korkut.Worker/Korkut.Worker.csproj" />
+  <Folder Name="/src/shared/">
+    <Project Path="src/shared/Korkut.Core/Korkut.Core.csproj" />
+    <Project Path="src/shared/Korkut.Contract/Korkut.Contract.csproj" />
+    <Project Path="src/shared/Korkut.Persistence/Korkut.Persistence.csproj" />
+    <Project Path="src/shared/Korkut.Security/Korkut.Security.csproj" />
+    <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/modules/">
+    <Project Path="src/modules/Korkut.Clients/Korkut.Clients.csproj" />
+    <Project Path="src/modules/Korkut.Notes/Korkut.Notes.csproj" />
+    <Project Path="src/modules/Korkut.Tasks/Korkut.Tasks.csproj" />
+    <Project Path="src/modules/Korkut.Deadlines/Korkut.Deadlines.csproj" />
+    <Project Path="src/modules/Korkut.Channels/Korkut.Channels.csproj" />
+    <Project Path="src/modules/Korkut.Correspondence/Korkut.Correspondence.csproj" />
+    <Project Path="src/modules/Korkut.Outbox/Korkut.Outbox.csproj" />
+    <Project Path="src/modules/Korkut.Audit/Korkut.Audit.csproj" />
+    <Project Path="src/modules/Korkut.Calendar/Korkut.Calendar.csproj" />
+    <Project Path="src/modules/Korkut.Courts/Korkut.Courts.csproj" />
+    <Project Path="src/modules/Korkut.Matters/Korkut.Matters.csproj" />
+    <Project Path="src/modules/Korkut.Hearings/Korkut.Hearings.csproj" />
+    <Project Path="src/modules/Korkut.Finance/Korkut.Finance.csproj" />
+    <Project Path="src/modules/Korkut.Settings/Korkut.Settings.csproj" />
+    <Project Path="src/modules/Korkut.Organization/Korkut.Organization.csproj" />
+    <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
+    <Project Path="src/modules/Korkut.Pii/Korkut.Pii.csproj" />
+    <Project Path="src/modules/Korkut.Reports/Korkut.Reports.csproj" />
+    <Project Path="src/modules/Korkut.Jobs/Korkut.Jobs.csproj" />
+    <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />
+    <Project Path="src/modules/Korkut.Tools/Korkut.Tools.csproj" />
+    <Project Path="src/modules/Korkut.Chat/Korkut.Chat.csproj" />
+    <Project Path="src/modules/Korkut.Agent.Chat/Korkut.Agent.Chat.csproj" />
+    <Project Path="src/modules/Korkut.Agent.Model/Korkut.Agent.Model.csproj" />
+    <Project Path="src/modules/Korkut.Agent.Drafting/Korkut.Agent.Drafting.csproj" />
+    <Project Path="src/modules/Korkut.Agent.Ledger/Korkut.Agent.Ledger.csproj" />
+  </Folder>
+  <Folder Name="/src/services/">
+    <Project Path="src/services/Korkut.Api/Korkut.Api.csproj" />
+    <Project Path="src/services/Korkut.Web/Korkut.Web.csproj" />
+    <Project Path="src/services/Korkut.Worker/Korkut.Worker.csproj" />
+    <Project Path="src/services/Korkut.Migrator/Korkut.Migrator.csproj" />
+    <Project Path="src/services/Korkut.Agent.Host/Korkut.Agent.Host.csproj" />
+    <Project Path="src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj" />
+    <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
+  </Folder>
+  <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Korkut.Agent.Brain.Unit.Tests/Korkut.Agent.Brain.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Tools.Unit.Tests/Korkut.Tools.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Knowledge.Unit.Tests/Korkut.Knowledge.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Security.Unit.Tests/Korkut.Security.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Pii.Unit.Tests/Korkut.Pii.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Jobs.Unit.Tests/Korkut.Jobs.Unit.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Korkut.Matters.Integration.Tests/Korkut.Matters.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Organization.Integration.Tests/Korkut.Organization.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Jobs.Integration.Tests/Korkut.Jobs.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Audit.Integration.Tests/Korkut.Audit.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Security.Integration.Tests/Korkut.Security.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Documents.Integration.Tests/Korkut.Documents.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Agent.Ledger.Integration.Tests/Korkut.Agent.Ledger.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Settings.Integration.Tests/Korkut.Settings.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Channels.Integration.Tests/Korkut.Channels.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Reports.Integration.Tests/Korkut.Reports.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Calendar.Integration.Tests/Korkut.Calendar.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Outbox.Integration.Tests/Korkut.Outbox.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Correspondence.Integration.Tests/Korkut.Correspondence.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Deadlines.Integration.Tests/Korkut.Deadlines.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Tasks.Integration.Tests/Korkut.Tasks.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/bdd/">
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Korkut.Agent.Tests/Korkut.Agent.Tests.csproj" />
-    <Project Path="tests/Korkut.Gateway.Tests/Korkut.Gateway.Tests.csproj" />
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />
     <Project Path="tests/Korkut.Ocr.Tests/Korkut.Ocr.Tests.csproj" />
-    <Project Path="tests/Korkut.Pii.Tests/Korkut.Pii.Tests.csproj" />
-    <Project Path="tests/Korkut.Application.Tests/Korkut.Application.Tests.csproj" />
     <Project Path="tests/Korkut.Architecture.Tests/Korkut.Architecture.Tests.csproj" />
-    <Project Path="tests/Korkut.Domain.Tests/Korkut.Domain.Tests.csproj" />
+    <Project Path="tests/Korkut.TestSupport/Korkut.TestSupport.csproj" />
+    <Project Path="tests/Korkut.Core.Tests/Korkut.Core.Tests.csproj" />
     <Project Path="tests/Korkut.Infrastructure.Tests/Korkut.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

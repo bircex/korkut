@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Korkut.Tools: the agent's tool collection (IAgentTool implementations) — office tools
+       (matter/finance/task/client/deadline/evrak/calendar/member), legal-source tools + their
+       HTTP clients (Law/), knowledge search, email, editor, memory, plus the tool catalog +
+       tool-calling loop. An agent-capability aggregator: it consumes many modules' services
+       (via Contract) + the agent tool abstractions (in Application). Extracted out of
+       Infrastructure so the tools are one self-contained unit. -->
+  <ItemGroup>
+    <PackageReference Include="PdfPig" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Outbox\Korkut.Outbox.csproj" />
+    <ProjectReference Include="..\Korkut.Knowledge\Korkut.Knowledge.csproj" />
+  </ItemGroup>
+</Project>

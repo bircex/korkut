@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Reports module: the read-only office dashboard (matters/clients/tasks/agenda/evrak
+       roll-ups + finance totals). The cross-module aggregation query (IReportsQuery) reads
+       many modules' tables, so its impl (ReportsQuery) stays in Infrastructure and is
+       host-registered — the module owns the port + orchestration + controller, like Calendar.
+       References only kernel/contract/persistence/web-kernel. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Reports.Unit.Tests" />
+  </ItemGroup>
+</Project>

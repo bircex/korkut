@@ -10,8 +10,8 @@ WORKDIR /src
 # Restore with only the project graph + central config (better layer caching).
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ ./src/
-RUN dotnet restore src/Korkut.Knowledge/Korkut.Knowledge.csproj
-RUN dotnet publish src/Korkut.Knowledge/Korkut.Knowledge.csproj \
+RUN dotnet restore src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj
+RUN dotnet publish src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj \
     -c Release -o /app --no-restore /p:UseAppHost=false
 
 # Final stage — chiseled, non-root, minimal.
@@ -33,4 +33,4 @@ USER app
 # Liveness/readiness are the /health/live and /health/ready endpoints (KDM-007),
 # probed by the orchestrator; chiseled images ship no shell/curl for a Docker
 # HEALTHCHECK, so health is delegated to orchestrator probes.
-ENTRYPOINT ["dotnet", "Korkut.Knowledge.dll"]
+ENTRYPOINT ["dotnet", "Korkut.Knowledge.Host.dll"]

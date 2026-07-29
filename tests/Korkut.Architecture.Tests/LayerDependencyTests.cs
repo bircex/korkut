@@ -5,17 +5,16 @@ namespace Korkut.Architecture.Tests;
 
 /// <summary>
 /// Enforces the modular-monolith dependency rules from the architecture decision:
-/// Domain and Application stay free of infrastructure/framework concerns, and the
-/// SharedKernel depends on nothing else in the solution. These fail the build if a
+/// Core is the leaf kernel (it owns the cross-cutting primitives and depends on
+/// nothing else in the solution) and Contract (the shared ports/DTOs surface)
+/// stays free of infrastructure/framework concerns. These fail the build if a
 /// forbidden dependency is introduced.
 /// </summary>
 public class LayerDependencyTests
 {
-    private static readonly Assembly Domain = typeof(Korkut.Domain.Primitives.Entity).Assembly;
-    private static readonly Assembly Application = typeof(Korkut.Application.ApplicationAssembly).Assembly;
+    private static readonly Assembly Core = typeof(Korkut.Core.Entity).Assembly;
+    private static readonly Assembly Contract = typeof(Korkut.Contract.Result).Assembly;
     private static readonly Assembly Infrastructure = typeof(Korkut.Infrastructure.InfrastructureAssembly).Assembly;
-    private static readonly Assembly SharedKernel = typeof(Korkut.SharedKernel.Ids.UuidV7).Assembly;
-    private static readonly Assembly Pii = typeof(Korkut.Pii.PiiRedactor).Assembly;
 
     private static void AssertNoDependency(Assembly assembly, params string[] forbidden)
     {
@@ -31,22 +30,18 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Domain_does_not_depend_on_other_layers()
+    public void Core_is_the_leaf_and_depends_on_no_other_layer_or_infrastructure_framework()
     {
+        // Core is the shared kernel (entity base, persistence ports, clock, the module system).
+        // It carries only the lightweight DI/Config abstractions a module registers against —
+        // never a domain module, a host, or a persistence framework.
         AssertNoDependency(
-            Domain,
-            "Korkut.Application",
+            Core,
+            "Korkut.Contract",
             "Korkut.Infrastructure",
             "Korkut.Api",
             "Korkut.Worker",
-            "Korkut.Migrator");
-    }
-
-    [Fact]
-    public void Domain_does_not_depend_on_infrastructure_frameworks()
-    {
-        AssertNoDependency(
-            Domain,
+            "Korkut.Migrator",
             "Microsoft.EntityFrameworkCore",
             "Npgsql",
             "Microsoft.AspNetCore",
@@ -54,30 +49,21 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Application_does_not_depend_on_infrastructure_or_host()
+    public void Contract_does_not_depend_on_infrastructure_or_host()
     {
+        // Contract is the shared surface every module and host compiles against: ports, DTOs, the
+        // Result envelope, and its HTTP mapping (ApiResults) — so it does reference the ASP.NET
+        // framework. It must still stay free of the persistence framework, the object store, and
+        // any concrete host, so a consumer never drags infrastructure in through the contract.
         AssertNoDependency(
-            Application,
+            Contract,
             "Korkut.Infrastructure",
             "Korkut.Api",
             "Korkut.Worker",
             "Korkut.Migrator",
             "Microsoft.EntityFrameworkCore",
             "Npgsql",
-            "Microsoft.AspNetCore");
-    }
-
-    [Fact]
-    public void SharedKernel_depends_on_nothing_else_in_the_solution()
-    {
-        AssertNoDependency(
-            SharedKernel,
-            "Korkut.Domain",
-            "Korkut.Application",
-            "Korkut.Infrastructure",
-            "Korkut.Api",
-            "Korkut.Worker",
-            "Korkut.Migrator");
+            "Minio");
     }
 
     [Fact]
@@ -86,19 +72,4 @@ public class LayerDependencyTests
         AssertNoDependency(Infrastructure, "Korkut.Api");
     }
 
-    [Fact]
-    public void Pii_is_a_leaf_and_depends_on_nothing_else_in_the_solution()
-    {
-        // Korkut.Pii is a shared leaf library (like SharedKernel): pure redaction logic, used
-        // in-process by the Agent and Knowledge hosts, with no dependency on any other layer.
-        AssertNoDependency(
-            Pii,
-            "Korkut.Domain",
-            "Korkut.Application",
-            "Korkut.Infrastructure",
-            "Korkut.SharedKernel",
-            "Korkut.Api",
-            "Korkut.Worker",
-            "Korkut.Migrator");
-    }
 }

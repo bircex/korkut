@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent · Drafting sub-module: assistant-generated documents (GeneratedDocument, one per
+       conversation) and their version history (DocumentVersion) in the Agent DB, plus the EF
+       mappings. Self-contained — no link to the operational Documents module (separate DB +
+       concept). The repository + drafting service stay in Infrastructure/Application for now
+       (they bind the AgentDbContext). References only the kernel. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+  </ItemGroup>
+</Project>

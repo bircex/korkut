@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk"><!-- Core: the shared kernel of the modular monolith — base entity primitives, the
+       persistence ports (IRepository/IUnitOfWork), the clock, and the module-registration
+       system (IModule). Pure abstractions; only the lightweight DI/Config abstractions a
+       module registers against. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Hearings module (duruşmalar): the hearing aggregate, always in the context of a matter. The
+       Hearing→Matter FK is a cross-module DB constraint configured in Infrastructure; validation of
+       the parent goes through the Contract IMatterLookup. References only kernel/contract/
+       persistence/web-kernel. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Hearings.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Infrastructure.Tests" />
+    <InternalsVisibleTo Include="Korkut.Matters.Integration.Tests" />
+  </ItemGroup>
+</Project>

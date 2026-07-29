@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-  <!-- A leaf library (like Korkut.SharedKernel): pure PII redaction logic, no dependency
-       on any other solution project or infrastructure framework. Used in-process by the
-       Agent (chat-time) and Knowledge (index-time). -->
-</Project>

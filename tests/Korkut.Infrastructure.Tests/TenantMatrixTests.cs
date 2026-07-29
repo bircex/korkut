@@ -1,10 +1,46 @@
-using Korkut.Application.Jobs;
-using Korkut.Application.Jobs.InMemory;
+using Korkut.TestSupport;
+using Korkut.Infrastructure.Jobs;
+using Korkut.Jobs.Entities;
+using Korkut.Audit;
+using Korkut.Organization;
+using Korkut.Organization.Entities;
+using Korkut.Security;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Services;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Entities;
-using Korkut.SharedKernel.Time;
+using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Korkut.Clients;
+using Korkut.Clients.Entities;
+using Korkut.Matters;
+using Korkut.Matters.Entities;
+using Korkut.Hearings;
+using Korkut.Hearings.Entities;
+using Korkut.Courts;
+using Korkut.Courts.Entities;
+using Korkut.Tasks;
+using Korkut.Tasks.Entities;
+using Korkut.Deadlines;
+using Korkut.Deadlines.Entities;
+using Korkut.Notes;
+using Korkut.Notes.Entities;
+using Korkut.Finance;
+using Korkut.Correspondence;
+using Korkut.Correspondence.Entities;
+using Korkut.Calendar;
+using Korkut.Calendar.Entities;
+using Korkut.Outbox;
+using Korkut.Outbox.Entities;
+using Korkut.Channels;
+using Korkut.Channels.Entities;
+using Korkut.Settings;
+using Korkut.Settings.Entities;
+using Korkut.Documents;
+using Korkut.Documents.Entities;
+using Korkut.Chat;
+using Korkut.Chat.Entities;
+using Korkut.Finance.Entities;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -28,8 +64,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         // Seed via superuser (RLS bypassed): A owns 1 matter+1 hearing, B owns 2+2.
         await using var db = pg.NewContext();
         db.Offices.AddRange(
-            new OfficeEntity { Id = _a, Name = "A", CreatedAt = DateTimeOffset.UtcNow },
-            new OfficeEntity { Id = _b, Name = "B", CreatedAt = DateTimeOffset.UtcNow });
+            new Office(_a, "A", DateTimeOffset.UtcNow),
+            new Office(_b, "B", DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
         await SeedMattersAndHearings(db, _a, 1);
         await SeedMattersAndHearings(db, _b, 2);
@@ -47,32 +83,37 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         var matterId = await db.Matters.Where(m => m.OfficeId == office).Select(m => m.Id).FirstAsync();
         for (var i = 0; i < n; i++)
         {
-            var clientId = Guid.CreateVersion7();
-            db.Clients.Add(new ClientEntity { Id = clientId, OfficeId = office, Name = $"c{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.Courts.Add(new CourtEntity { Id = Guid.CreateVersion7(), OfficeId = office, Name = $"court{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.Parties.Add(new PartyEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matterId, Role = "plaintiff", Name = $"p{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.Tasks.Add(new TaskEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"t{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.Deadlines.Add(new DeadlineEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"d{i}", DueDate = new DateOnly(2026, 1, 1), CreatedAt = DateTimeOffset.UtcNow });
-            db.CommunicationNotes.Add(new CommunicationNoteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Body = $"n{i}", OccurredAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
-            var docId = Guid.CreateVersion7();
-            db.Documents.Add(new DocumentEntity { Id = docId, OfficeId = office, Bucket = "korkut-quarantine", ObjectKey = $"{office:N}/doc{i}", OriginalFilename = "f.pdf", ContentType = "application/pdf", Size = 10, ChecksumSha256 = "abc", Status = "quarantine", CreatedAt = DateTimeOffset.UtcNow });
-            db.DocumentExtractions.Add(new DocumentExtractionEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, DocumentVersion = 1, ParserVersion = "plaintext-v1", Page = 1, SpanIndex = 0, Text = $"span{i}", SourceChecksumSha256 = "abc", SourceObjectKey = $"{office:N}/doc{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.DocumentRelations.Add(new DocumentRelationEntity { Id = Guid.CreateVersion7(), OfficeId = office, DocumentId = docId, TargetType = "client", TargetId = clientId, IsPrimary = true, CreatedAt = DateTimeOffset.UtcNow });
-            db.Invites.Add(new InviteEntity { Id = Guid.CreateVersion7(), OfficeId = office, Email = $"invite{i}@example.com", Role = "lawyer", TokenHash = $"hash{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(7), CreatedAt = DateTimeOffset.UtcNow });
-            db.Invoices.Add(new InvoiceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Amount = 100, VatRate = 0.20m, Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
-            db.Expenses.Add(new ExpenseEntity { Id = Guid.CreateVersion7(), OfficeId = office, Amount = 10, CreatedAt = DateTimeOffset.UtcNow });
-            db.Correspondence.Add(new CorrespondenceEntity { Id = Guid.CreateVersion7(), OfficeId = office, Direction = "incoming", Title = $"e{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.CalendarEvents.Add(new CalendarEventEntity { Id = Guid.CreateVersion7(), OfficeId = office, Category = "appointment", Title = $"cal{i}", StartAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow });
-            db.StyleProfiles.Add(new StyleProfileEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), UpdatedAt = DateTimeOffset.UtcNow });
-            db.MemoryItems.Add(new MemoryItemEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "note", Text = $"mem{i}", Status = "active", CreatedAt = DateTimeOffset.UtcNow });
-            db.TemplateOverrides.Add(new TemplateOverrideEntity { Id = Guid.CreateVersion7(), OfficeId = office, Scope = "user", UserId = Guid.CreateVersion7(), Kind = "dilekce", TypeId = $"t{i}", Content = "x", UpdatedAt = DateTimeOffset.UtcNow });
-            db.OutboundMessages.Add(new OutboundMessageEntity { Id = Guid.CreateVersion7(), OfficeId = office, Kind = "email", ToAddr = $"to{i}@x.test", Subject = "s", Body = "b", Status = "draft", CreatedAt = DateTimeOffset.UtcNow });
-            // conversations/chat_messages/generated_documents/document_versions live in the
-            // Agent DB now — seeded + isolation-checked in AgentTenantIsolationTests.
+            var client = new Client(office, $"c{i}", "individual", null, null, DateTimeOffset.UtcNow);
+            var clientId = client.Id;
+            db.Clients.Add(client);
+            db.Courts.Add(new Court(office, $"court{i}", DateTimeOffset.UtcNow));
+            db.Parties.Add(new Party(office, matterId, "plaintiff", $"p{i}", DateTimeOffset.UtcNow));
+            db.Tasks.Add(new WorkTask(office, $"t{i}", null, null, null, DateTimeOffset.UtcNow));
+            db.Deadlines.Add(new Deadline(office, $"d{i}", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, DateTimeOffset.UtcNow));
+            db.CommunicationNotes.Add(new CommunicationNote(office, $"n{i}", "note", null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+            var document = new Document(office, null, "korkut-quarantine", $"{office:N}/doc{i}", "f.pdf", "application/pdf", 10, "abc", DateTimeOffset.UtcNow);
+            var docId = document.Id;
+            db.Documents.Add(document);
+            db.DocumentExtractions.Add(new DocumentExtraction(office, docId, 1, "plaintext-v1", 1, 0, $"span{i}", "abc", $"{office:N}/doc{i}", DateTimeOffset.UtcNow));
+            db.DocumentRelations.Add(new DocumentRelation(office, docId, DocumentRelationTarget.Client, clientId, true, null, DateTimeOffset.UtcNow));
+            db.Invites.Add(new Invite(office, $"invite{i}@example.com", Roles.Lawyer, $"hash{office:N}{i}", DateTimeOffset.UtcNow.AddDays(7), null, DateTimeOffset.UtcNow));
+            db.Invoices.Add(new Invoice(office, 100m, 0.20m, null, null, null, "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+            db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+            db.Correspondence.Add(new CorrespondenceItem(office, "incoming", $"e{i}", null, null, null, null, DateTimeOffset.UtcNow));
+            db.CalendarEvents.Add(new CalendarEvent(office, "appointment", $"cal{i}", DateTimeOffset.UtcNow, null, false, null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
+            db.StyleProfiles.Add(new StyleProfile(office, StyleScope.User, Guid.CreateVersion7()));
+            db.MemoryItems.Add(new MemoryItem(office, $"mem{i}", "note", null, true, DateTimeOffset.UtcNow));
+            db.OutboundMessages.Add(new OutboundMessage(office, "email", $"to{i}@x.test", "s", "b", null, DateTimeOffset.UtcNow));
+            // Chat (conversations + messages) is a general operational feature and lives here.
+            // generated_documents/document_versions live in the Agent DB — seeded + isolation-
+            // checked in AgentTenantIsolationTests.
+            var conversation = new Conversation(office, $"conv{i}", null, null, DateTimeOffset.UtcNow);
+            db.Conversations.Add(conversation);
+            db.ChatMessages.Add(new ConversationMessage(office, conversation.Id, "user", $"cm{i}", DateTimeOffset.UtcNow));
             if (i == 0)
             {
-                db.Personas.Add(new PersonaEntity { OfficeId = office, UpdatedAt = DateTimeOffset.UtcNow }); // one per office
-                db.Channels.Add(new ChannelEntity { OfficeId = office, Kind = "email", UpdatedAt = DateTimeOffset.UtcNow }); // one per office (per-kind PK)
+                db.Personas.Add(new Persona(office)); // one per office
+                db.Channels.Add(new Channel(office, "email")); // one per office (per-kind PK)
             }
         }
 
@@ -83,13 +124,14 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            var uid = Guid.CreateVersion7();
-            db.Users.Add(new UserEntity { Id = uid, OfficeId = office, Email = $"{office:N}-{i}@x.test", SecurityStamp = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow });
-            db.PasswordResetTokens.Add(new PasswordResetTokenEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"h{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddHours(1), CreatedAt = DateTimeOffset.UtcNow });
-            db.UserTotps.Add(new UserTotpEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, EncryptedSecret = $"enc{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.RecoveryCodes.Add(new RecoveryCodeEntity { Id = Guid.CreateVersion7(), OfficeId = office, UserId = uid, CodeHash = $"rc{office:N}{i}", CreatedAt = DateTimeOffset.UtcNow });
-            db.RefreshTokens.Add(new RefreshTokenEntity { Id = Guid.CreateVersion7(), FamilyId = Guid.CreateVersion7(), OfficeId = office, UserId = uid, TokenHash = $"rt{office:N}{i}", ExpiresAt = DateTimeOffset.UtcNow.AddDays(14), CreatedAt = DateTimeOffset.UtcNow });
-            db.OfficeCustomRoles.Add(new OfficeCustomRoleEntity { Id = Guid.CreateVersion7(), OfficeId = office, Key = $"role{i}", Name = "R", Permissions = ["matters.read"], CreatedAt = DateTimeOffset.UtcNow });
+            var user = new User(office, $"{office:N}-{i}@x.test", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
+            var uid = user.Id;
+            db.Users.Add(user);
+            db.PasswordResetTokens.Add(new PasswordResetToken(office, uid, $"h{office:N}{i}", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow));
+            db.UserTotps.Add(new UserTotp(office, uid, $"enc{i}", DateTimeOffset.UtcNow));
+            db.RecoveryCodes.Add(new RecoveryCode(office, uid, $"rc{office:N}{i}", DateTimeOffset.UtcNow));
+            db.RefreshTokens.Add(new RefreshToken(Guid.CreateVersion7(), Guid.CreateVersion7(), office, uid, $"rt{office:N}{i}", DateTimeOffset.UtcNow.AddDays(14), DateTimeOffset.UtcNow));
+            db.OfficeCustomRoles.Add(new OfficeRole(office, $"role{i}", "R", ["matters.read"], DateTimeOffset.UtcNow));
         }
 
         await db.SaveChangesAsync();
@@ -99,14 +141,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            db.AuditEvents.Add(new AuditEventEntity
-            {
-                Id = Guid.CreateVersion7(),
-                OfficeId = office,
-                Action = "read",
-                EntityType = "matter",
-                At = DateTimeOffset.UtcNow,
-            });
+            db.AuditEvents.Add(new AuditEvent(
+                office, null, null, null, "read", "matter", null, null, null, DateTimeOffset.UtcNow));
         }
 
         await db.SaveChangesAsync();
@@ -118,9 +154,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            var matter = new MatterEntity { Id = Guid.CreateVersion7(), OfficeId = office, Title = $"m{i}", CreatedAt = DateTimeOffset.UtcNow };
+            var matter = new Matter(office, $"m{i}", null, null, null, DateTimeOffset.UtcNow);
             db.Matters.Add(matter);
-            db.MatterHearings.Add(new MatterHearingEntity { Id = Guid.CreateVersion7(), OfficeId = office, MatterId = matter.Id, ScheduledAt = DateTimeOffset.UtcNow });
+            db.MatterHearings.Add(new Hearing(office, matter.Id, DateTimeOffset.UtcNow, null, null, null));
         }
 
         await db.SaveChangesAsync();
@@ -221,9 +257,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         var clock = new SystemClockAdapter();
         await using var db = pg.NewContext();
-        var outbox = new EfOutboxStore(db, clock);
-        var inbox = new EfInboxStore(db, clock);
-        var audit = new EfJobAudit(db);
+        var outbox = new OutboxStore(db);
+        var inbox = new InboxStore(db, clock);
+        var audit = new JobAudit(db);
         var seenTenants = new List<Guid?>();
         var tenant = new AmbientTenantContext();
         var handler = new RecordingTenantHandler(tenant, seenTenants);
@@ -244,10 +280,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
         Assert.True(await db.JobAudit.AnyAsync(x => x.OfficeId == _b));
     }
 
-    private static OutboxMessage Msg(Guid office, string key) => new()
-    {
-        Id = Guid.CreateVersion7(), OfficeId = office, Type = "email", Payload = "{}", IdempotencyKey = key,
-    };
+    private static OutboxMessage Msg(Guid office, string key)
+        => new(office, "email", "{}", key, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
     private sealed class SystemClockAdapter : IClock
     {

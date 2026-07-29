@@ -1,7 +1,36 @@
 {
   "components": {
     "schemas": {
-      "CalendarEventCreateRequest": {
+      "AcceptInviteRequest": {
+        "properties": {
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "ChangeMemberRoleRequest": {
+        "properties": {
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
+      "CreateCalendarEventRequest": {
         "properties": {
           "all_day": {
             "type": "boolean"
@@ -99,7 +128,770 @@
         ],
         "type": "object"
       },
-      "CalendarEventPatchRequest": {
+      "CreateClientRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "pattern": "individual|corporate",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateCorrespondenceRequest": {
+        "properties": {
+          "direction": {
+            "pattern": "incoming|outgoing|internal",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "doc_date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference_no": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "direction",
+          "title"
+        ],
+        "type": "object"
+      },
+      "CreateDeadlineRequest": {
+        "properties": {
+          "due_date": {
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "pattern": "statutory|internal",
+            "type": "string"
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reminder_days_before": {
+            "format": "int32",
+            "maximum": "365",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "time_zone_id": {
+            "type": "string"
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "due_date"
+        ],
+        "type": "object"
+      },
+      "CreateExpenseRequest": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "maximum": "100000000",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "spent_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CreateHearingRequest": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "time": {
+            "format": "time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "type": "object"
+      },
+      "CreateInviteRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
+      "CreateInvoiceRequest": {
+        "properties": {
+          "amount": {
+            "format": "double",
+            "maximum": "100000000",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "1000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "issued_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "draft|sent|paid|cancelled",
+            "type": "string"
+          },
+          "vat_rate": {
+            "format": "double",
+            "maximum": "1",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CreateMatterRequest": {
+        "properties": {
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "court_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "CreateMemberRequest": {
+        "properties": {
+          "bar_registry_no": {
+            "maxLength": "50",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "pattern": "owner|lawyer",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
+      "CreateMemoryRequest": {
+        "properties": {
+          "kind": {
+            "maxLength": "50",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "CreateNoteRequest": {
+        "properties": {
+          "body": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "CreateTaskRequest": {
+        "properties": {
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "due_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "DemoRequestRequest": {
+        "properties": {
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "office_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "office_name"
+        ],
+        "type": "object"
+      },
+      "EchoRequest": {
+        "properties": {
+          "title": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "EditOutboxMessageRequest": {
+        "properties": {
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "send_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subject": {
+            "maxLength": "500",
+            "type": "string"
+          },
+          "to_addr": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "to_addr",
+          "body"
+        ],
+        "type": "object"
+      },
+      "ExportDocumentRequest": {
+        "properties": {
+          "format": {
+            "pattern": "docx|udf",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "markdown": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "format",
+          "title",
+          "markdown"
+        ],
+        "type": "object"
+      },
+      "IFormFile": {
+        "format": "binary",
+        "type": "string"
+      },
+      "LinkDocumentRequest": {
+        "properties": {
+          "is_primary": {
+            "type": "boolean"
+          },
+          "target_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "target_type": {
+            "pattern": "client|matter|party",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "target_type",
+          "target_id"
+        ],
+        "type": "object"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "RequestPasswordResetRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "password": {
+            "minLength": "10",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ],
+        "type": "object"
+      },
+      "SaveEmailChannelRequest": {
+        "properties": {
+          "app_password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "from_address": {
+            "maxLength": "320",
+            "type": "string"
+          },
+          "from_name": {
+            "maxLength": "200",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SavePersonaRequest": {
+        "properties": {
+          "expertise": {
+            "maxLength": "2000",
+            "type": "string"
+          },
+          "extra_rules": {
+            "maxLength": "4000",
+            "type": "string"
+          },
+          "tone": {
+            "maxLength": "2000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SaveStyleRequest": {
+        "properties": {
+          "boilerplate": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "letterhead": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "signature": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tone": {
+            "maxLength": "2000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "SaveTelegramChannelRequest": {
+        "properties": {
+          "bot_token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "SaveWhatsAppChannelRequest": {
+        "properties": {
+          "base_url": {
+            "maxLength": "400",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "TotpRequest": {
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recovery_code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateCalendarEventRequest": {
         "properties": {
           "all_day": {
             "type": [
@@ -205,7 +997,7 @@
         },
         "type": "object"
       },
-      "ClientWriteRequest": {
+      "UpdateClientRequest": {
         "properties": {
           "email": {
             "type": [
@@ -237,381 +1029,7 @@
         ],
         "type": "object"
       },
-      "DeadlineCreateRequest": {
-        "properties": {
-          "due_date": {
-            "format": "date",
-            "type": "string"
-          },
-          "kind": {
-            "pattern": "statutory|internal",
-            "type": "string"
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "reminder_days_before": {
-            "format": "int32",
-            "maximum": "365",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ]
-          },
-          "time_zone_id": {
-            "type": "string"
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title",
-          "due_date"
-        ],
-        "type": "object"
-      },
-      "DemoRequestBody": {
-        "properties": {
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "office_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "office_name"
-        ],
-        "type": "object"
-      },
-      "EchoRequest": {
-        "properties": {
-          "title": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "type": "object"
-      },
-      "EmailChannelInput": {
-        "properties": {
-          "app_password": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "from_address": {
-            "maxLength": "320",
-            "type": "string"
-          },
-          "from_name": {
-            "maxLength": "200",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "EvrakCreateRequest": {
-        "properties": {
-          "direction": {
-            "pattern": "incoming|outgoing|internal",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "doc_date": {
-            "format": "date",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "reference_no": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "direction",
-          "title"
-        ],
-        "type": "object"
-      },
-      "ExpenseCreateRequest": {
-        "properties": {
-          "amount": {
-            "format": "double",
-            "maximum": "100000000",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "description": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "kind": {
-            "maxLength": "50",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "spent_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "ExportRequest": {
-        "properties": {
-          "format": {
-            "pattern": "docx|udf",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "markdown": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "300",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "format",
-          "title",
-          "markdown"
-        ],
-        "type": "object"
-      },
-      "HearingCreateRequest": {
-        "properties": {
-          "date": {
-            "format": "date",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "location": {
-            "maxLength": "300",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "time": {
-            "format": "time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "type": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "date"
-        ],
-        "type": "object"
-      },
-      "IFormFile": {
-        "format": "binary",
-        "type": "string"
-      },
-      "InviteAcceptRequest": {
-        "properties": {
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "token"
-        ],
-        "type": "object"
-      },
-      "InviteCreateRequest": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "role"
-        ],
-        "type": "object"
-      },
-      "InvoiceCreateRequest": {
-        "properties": {
-          "amount": {
-            "format": "double",
-            "maximum": "100000000",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "description": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "issued_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "draft|sent|paid|cancelled",
-            "type": "string"
-          },
-          "vat_rate": {
-            "format": "double",
-            "maximum": "1",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
-            "type": [
-              "number",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "InvoicePatchRequest": {
+      "UpdateInvoiceRequest": {
         "properties": {
           "amount": {
             "format": "double",
@@ -634,80 +1052,7 @@
         },
         "type": "object"
       },
-      "LinkRequest": {
-        "properties": {
-          "is_primary": {
-            "type": "boolean"
-          },
-          "target_id": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "target_type": {
-            "pattern": "client|matter|party",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "target_type",
-          "target_id"
-        ],
-        "type": "object"
-      },
-      "LoginRequest": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "password": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ],
-        "type": "object"
-      },
-      "MatterCreateRequest": {
-        "properties": {
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "court_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "type": "object"
-      },
-      "MeUpdateRequest": {
+      "UpdateProfileRequest": {
         "properties": {
           "bar_registry_no": {
             "maxLength": "50",
@@ -726,277 +1071,7 @@
         },
         "type": "object"
       },
-      "MemberCreateRequest": {
-        "properties": {
-          "bar_registry_no": {
-            "maxLength": "50",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "role"
-        ],
-        "type": "object"
-      },
-      "MemberRoleRequest": {
-        "properties": {
-          "role": {
-            "pattern": "owner|lawyer",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "role"
-        ],
-        "type": "object"
-      },
-      "MemoryCreateRequest": {
-        "properties": {
-          "kind": {
-            "maxLength": "50",
-            "type": "string"
-          },
-          "text": {
-            "maxLength": "4000",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "text"
-        ],
-        "type": "object"
-      },
-      "NoteCreateRequest": {
-        "properties": {
-          "body": {
-            "maxLength": "4000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "channel": {
-            "type": "string"
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "occurred_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "body"
-        ],
-        "type": "object"
-      },
-      "OutboxEditRequest": {
-        "properties": {
-          "body": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "send_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "subject": {
-            "maxLength": "500",
-            "type": "string"
-          },
-          "to_addr": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "to_addr",
-          "body"
-        ],
-        "type": "object"
-      },
-      "PersonaInput": {
-        "properties": {
-          "expertise": {
-            "maxLength": "2000",
-            "type": "string"
-          },
-          "extra_rules": {
-            "maxLength": "4000",
-            "type": "string"
-          },
-          "tone": {
-            "maxLength": "2000",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ResetBody": {
-        "properties": {
-          "password": {
-            "minLength": "10",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "token",
-          "password"
-        ],
-        "type": "object"
-      },
-      "ResetRequestBody": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "email"
-        ],
-        "type": "object"
-      },
-      "StyleFieldsDto": {
-        "properties": {
-          "boilerplate": {
-            "maxLength": "4000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "letterhead": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "signature": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "tone": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "letterhead",
-          "signature",
-          "tone",
-          "boilerplate"
-        ],
-        "type": "object"
-      },
-      "TaskCreateRequest": {
-        "properties": {
-          "assignee_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "due_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "type": "object"
-      },
-      "TaskStatusRequest": {
+      "UpdateTaskStatusRequest": {
         "properties": {
           "status": {
             "pattern": "open|in_progress|done",
@@ -1009,77 +1084,6 @@
         "required": [
           "status"
         ],
-        "type": "object"
-      },
-      "TelegramChannelInput": {
-        "properties": {
-          "bot_token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "TemplateSaveRequest": {
-        "properties": {
-          "content": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "scope": {
-            "pattern": "user|office",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "scope",
-          "content"
-        ],
-        "type": "object"
-      },
-      "TotpRequest": {
-        "properties": {
-          "code": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "recovery_code": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "WhatsAppChannelInput": {
-        "properties": {
-          "base_url": {
-            "maxLength": "400",
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
         "type": "object"
       }
     }
@@ -1110,7 +1114,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1133,7 +1137,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1156,7 +1160,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1168,7 +1172,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminPing"
         ]
       }
     },
@@ -1180,7 +1184,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "AdminOffices"
         ]
       }
     },
@@ -1188,7 +1192,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/TotpRequest"
               }
@@ -1202,7 +1216,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1237,7 +1251,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "GoogleAuth"
         ]
       }
     },
@@ -1249,7 +1263,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "GoogleAuth"
         ]
       }
     },
@@ -1257,7 +1271,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginRequest"
               }
@@ -1271,7 +1295,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1279,9 +1303,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResetBody"
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
               }
             }
           },
@@ -1293,7 +1327,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1301,9 +1335,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResetRequestBody"
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetRequest"
               }
             }
           },
@@ -1315,7 +1359,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1327,7 +1371,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -1372,15 +1416,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CalendarEventCreateRequest"
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarEventRequest"
               }
             }
           },
@@ -1392,7 +1446,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -1415,7 +1469,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       },
       "patch": {
@@ -1432,9 +1486,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CalendarEventPatchRequest"
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
               }
             }
           },
@@ -1446,7 +1510,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -1472,7 +1536,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Calendar"
         ]
       }
     },
@@ -1484,15 +1548,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       },
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EmailChannelInput"
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmailChannelRequest"
               }
             }
           },
@@ -1504,7 +1578,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -1512,9 +1586,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TelegramChannelInput"
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
               }
             }
           },
@@ -1526,7 +1610,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -1534,9 +1618,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WhatsAppChannelInput"
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
               }
             }
           },
@@ -1548,7 +1642,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Channels"
         ]
       }
     },
@@ -1560,15 +1654,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ClientWriteRequest"
+                "$ref": "#/components/schemas/CreateClientRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientRequest"
               }
             }
           },
@@ -1580,7 +1684,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       }
     },
@@ -1603,7 +1707,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "get": {
@@ -1624,7 +1728,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       },
       "patch": {
@@ -1641,9 +1745,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ClientWriteRequest"
+                "$ref": "#/components/schemas/UpdateClientRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientRequest"
               }
             }
           },
@@ -1655,7 +1769,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Clients"
         ]
       }
     },
@@ -1667,7 +1781,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Coverage"
         ]
       }
     },
@@ -1689,15 +1803,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeadlineCreateRequest"
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
               }
             }
           },
@@ -1709,7 +1833,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -1732,7 +1856,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -1755,7 +1879,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Deadlines"
         ]
       }
     },
@@ -1763,9 +1887,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DemoRequestBody"
+                "$ref": "#/components/schemas/DemoRequestRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequestRequest"
               }
             }
           },
@@ -1777,7 +1911,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Onboarding"
         ]
       }
     },
@@ -1799,7 +1933,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       },
       "post": {
@@ -1812,9 +1946,6 @@
                     "$ref": "#/components/schemas/IFormFile"
                   }
                 },
-                "required": [
-                  "file"
-                ],
                 "type": "object"
               }
             }
@@ -1827,7 +1958,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -1850,7 +1981,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -1873,7 +2004,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -1892,9 +2023,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkRequest"
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
               }
             }
           },
@@ -1906,7 +2047,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       },
       "post": {
@@ -1923,9 +2064,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkRequest"
+                "$ref": "#/components/schemas/LinkDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkDocumentRequest"
               }
             }
           },
@@ -1937,7 +2088,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Documents"
         ]
       }
     },
@@ -1958,15 +2109,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EvrakCreateRequest"
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCorrespondenceRequest"
               }
             }
           },
@@ -1978,7 +2139,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       }
     },
@@ -2001,7 +2162,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Correspondence"
         ]
       }
     },
@@ -2009,9 +2170,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportDocumentRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExportRequest"
+                "$ref": "#/components/schemas/ExportDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportDocumentRequest"
               }
             }
           },
@@ -2023,7 +2194,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Export"
         ]
       }
     },
@@ -2035,15 +2206,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExpenseCreateRequest"
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
               }
             }
           },
@@ -2055,7 +2236,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       }
     },
@@ -2078,7 +2259,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       }
     },
@@ -2090,15 +2271,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvoiceCreateRequest"
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
               }
             }
           },
@@ -2110,7 +2301,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       }
     },
@@ -2133,7 +2324,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       },
       "patch": {
@@ -2150,9 +2341,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InvoicePatchRequest"
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceRequest"
               }
             }
           },
@@ -2164,7 +2365,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       }
     },
@@ -2176,7 +2377,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Finance"
         ]
       }
     },
@@ -2188,7 +2389,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       }
     },
@@ -2210,7 +2411,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       },
       "post": {
@@ -2230,7 +2431,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Integrations"
         ]
       }
     },
@@ -2242,15 +2443,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteCreateRequest"
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
               }
             }
           },
@@ -2262,7 +2473,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -2270,9 +2481,19 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteAcceptRequest"
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
               }
             }
           },
@@ -2284,7 +2505,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -2307,7 +2528,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Invites"
         ]
       }
     },
@@ -2319,7 +2540,7 @@
           }
         },
         "tags": [
-          "AuthEndpoints"
+          "Auth"
         ]
       }
     },
@@ -2331,15 +2552,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatterRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MatterCreateRequest"
+                "$ref": "#/components/schemas/CreateMatterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatterRequest"
               }
             }
           },
@@ -2351,7 +2582,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       }
     },
@@ -2374,7 +2605,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       },
       "get": {
@@ -2395,7 +2626,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Matters"
         ]
       }
     },
@@ -2414,9 +2645,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHearingRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HearingCreateRequest"
+                "$ref": "#/components/schemas/CreateHearingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHearingRequest"
               }
             }
           },
@@ -2428,7 +2669,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Hearings"
         ]
       }
     },
@@ -2440,15 +2681,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Profile"
         ]
       },
       "patch": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MeUpdateRequest"
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
               }
             }
           },
@@ -2460,7 +2711,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Profile"
         ]
       }
     },
@@ -2472,15 +2723,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberCreateRequest"
+                "$ref": "#/components/schemas/CreateMemberRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberRequest"
               }
             }
           },
@@ -2492,7 +2753,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       }
     },
@@ -2515,7 +2776,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       },
       "patch": {
@@ -2532,9 +2793,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemberRoleRequest"
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
               }
             }
           },
@@ -2546,7 +2817,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Members"
         ]
       }
     },
@@ -2558,15 +2829,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MemoryCreateRequest"
+                "$ref": "#/components/schemas/CreateMemoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryRequest"
               }
             }
           },
@@ -2578,7 +2859,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2601,7 +2882,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2624,7 +2905,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Memory"
         ]
       }
     },
@@ -2646,15 +2927,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Notes"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteCreateRequest"
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
               }
             }
           },
@@ -2666,7 +2957,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Notes"
         ]
       }
     },
@@ -2678,7 +2969,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2701,7 +2992,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       },
       "put": {
@@ -2718,9 +3009,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/OutboxEditRequest"
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditOutboxMessageRequest"
               }
             }
           },
@@ -2732,7 +3033,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2755,7 +3056,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2778,7 +3079,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Outbox"
         ]
       }
     },
@@ -2790,15 +3091,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Persona"
         ]
       },
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePersonaRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PersonaInput"
+                "$ref": "#/components/schemas/SavePersonaRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePersonaRequest"
               }
             }
           },
@@ -2810,7 +3121,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Persona"
         ]
       }
     },
@@ -2822,7 +3133,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "PetitionTypes"
         ]
       }
     },
@@ -2848,7 +3159,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Reports"
         ]
       }
     },
@@ -2860,7 +3171,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Onboarding"
         ]
       }
     },
@@ -2872,7 +3183,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -2880,9 +3191,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StyleFieldsDto"
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
               }
             }
           },
@@ -2894,7 +3215,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -2902,9 +3223,19 @@
       "put": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StyleFieldsDto"
+                "$ref": "#/components/schemas/SaveStyleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStyleRequest"
               }
             }
           },
@@ -2916,7 +3247,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Style"
         ]
       }
     },
@@ -2938,15 +3269,25 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       },
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskCreateRequest"
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
               }
             }
           },
@@ -2958,7 +3299,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       }
     },
@@ -2981,7 +3322,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       },
       "patch": {
@@ -2998,9 +3339,19 @@
         ],
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+              }
+            },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskStatusRequest"
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
               }
             }
           },
@@ -3012,107 +3363,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
-        ]
-      }
-    },
-    "/api/templates": {
-      "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "kind",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Korkut.Api"
-        ]
-      }
-    },
-    "/api/templates/{typeId}": {
-      "delete": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "typeId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "scope",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Korkut.Api"
-        ]
-      },
-      "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "typeId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Korkut.Api"
-        ]
-      },
-      "put": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "typeId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TemplateSaveRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Korkut.Api"
+          "Tasks"
         ]
       }
     },
@@ -3124,7 +3375,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3132,7 +3383,17 @@
       "post": {
         "requestBody": {
           "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EchoRequest"
+              }
+            },
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchoRequest"
+              }
+            },
+            "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/EchoRequest"
               }
@@ -3146,7 +3407,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3158,7 +3419,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3170,7 +3431,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3182,7 +3443,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     },
@@ -3194,7 +3455,7 @@
           }
         },
         "tags": [
-          "Korkut.Api"
+          "Foundation"
         ]
       }
     }
@@ -3209,7 +3470,91 @@
       "name": "Korkut.Api"
     },
     {
-      "name": "AuthEndpoints"
+      "name": "AdminOffices"
+    },
+    {
+      "name": "AdminPing"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Coverage"
+    },
+    {
+      "name": "Documents"
+    },
+    {
+      "name": "Export"
+    },
+    {
+      "name": "Foundation"
+    },
+    {
+      "name": "GoogleAuth"
+    },
+    {
+      "name": "Invites"
+    },
+    {
+      "name": "Onboarding"
+    },
+    {
+      "name": "PetitionTypes"
+    },
+    {
+      "name": "Calendar"
+    },
+    {
+      "name": "Channels"
+    },
+    {
+      "name": "Integrations"
+    },
+    {
+      "name": "Clients"
+    },
+    {
+      "name": "Correspondence"
+    },
+    {
+      "name": "Deadlines"
+    },
+    {
+      "name": "Finance"
+    },
+    {
+      "name": "Hearings"
+    },
+    {
+      "name": "Matters"
+    },
+    {
+      "name": "Notes"
+    },
+    {
+      "name": "Members"
+    },
+    {
+      "name": "Profile"
+    },
+    {
+      "name": "Outbox"
+    },
+    {
+      "name": "Reports"
+    },
+    {
+      "name": "Memory"
+    },
+    {
+      "name": "Persona"
+    },
+    {
+      "name": "Style"
+    },
+    {
+      "name": "Tasks"
     }
   ]
 }

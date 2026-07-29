@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Finance module (faturalar + masraflar + para roll-up): one module, one IFinanceService.
+       Invoice/Expense links (client/matter) are guid-only (no EF FK). References only kernel/
+       contract/persistence/web-kernel. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The module's internals (repositories, service impl) are hidden from other modules but
+         visible to this module's own isolated unit-test project. -->
+    <InternalsVisibleTo Include="Korkut.Finance.Unit.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+  </ItemGroup>
+</Project>

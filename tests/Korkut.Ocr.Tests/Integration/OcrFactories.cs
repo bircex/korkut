@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
-using Korkut.Application.Documents;
-using Korkut.Application.Security;
-using Korkut.Infrastructure.Security;
-using Korkut.SharedKernel.Time;
+using Korkut.Contract.Documents;
+using Korkut.Contract.Documents.OCR;
+using Korkut.Security;
+using Korkut.Core;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -51,11 +51,11 @@ public sealed class KorkutOcrFactory : OcrFactoryBase
     {
         public bool IsAvailable => true;
 
-        public async Task<OcrResult> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
+        public async Task<OcrServiceResult> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
         {
             using var reader = new StreamReader(content, Encoding.UTF8);
             var text = await reader.ReadToEndAsync(ct);
-            return new OcrResult($"OCR: {text}", 1);
+            return new OcrServiceResult($"OCR: {text}", 1);
         }
     }
 }

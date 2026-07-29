@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Pgvector" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" />
+    <PackageReference Include="Minio" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <ProjectReference Include="..\..\modules\Korkut.Finance\Korkut.Finance.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Clients\Korkut.Clients.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Tasks\Korkut.Tasks.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Deadlines\Korkut.Deadlines.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Channels\Korkut.Channels.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Correspondence\Korkut.Correspondence.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Outbox\Korkut.Outbox.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Calendar\Korkut.Calendar.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Courts\Korkut.Courts.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Matters\Korkut.Matters.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Settings\Korkut.Settings.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Reports\Korkut.Reports.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Knowledge\Korkut.Knowledge.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Chat\Korkut.Agent.Chat.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Model\Korkut.Agent.Model.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Chat\Korkut.Chat.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+      <ProjectReference Include="..\..\modules\Korkut.Pii\Korkut.Pii.csproj" />
+      <ProjectReference Include="..\..\modules\Korkut.Audit\Korkut.Audit.csproj" />
+  </ItemGroup>
+</Project>
