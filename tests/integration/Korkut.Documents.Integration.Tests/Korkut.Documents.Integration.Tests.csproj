@@ -27,5 +27,6 @@
     <ProjectReference Include="..\..\..\src\modules\Korkut.Audit\Korkut.Audit.csproj" />
     <ProjectReference Include="..\..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
       <ProjectReference Include="..\..\..\src\services\Korkut.Api\Korkut.Api.csproj" />
+      <ProjectReference Include="..\..\..\src\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>
 </Project>

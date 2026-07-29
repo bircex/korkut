@@ -1,10 +1,9 @@
 using Korkut.Jobs.Abstractions;
 using Korkut.Jobs.Services;
 using Korkut.Jobs.Entities;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Jobs;
+namespace Korkut.Jobs.Persistence;
 
 /// <summary>
 /// PostgreSQL-backed outbox. Claiming a batch uses <c>FOR UPDATE SKIP LOCKED</c>, so many
@@ -12,11 +11,11 @@ namespace Korkut.Infrastructure.Jobs;
 /// other transition goes through the aggregate, so the rules are the same ones the
 /// in-memory reference store applies.
 /// </summary>
-public sealed class OutboxStore(KorkutDbContext db) : IOutboxStore
+public sealed class OutboxStore(DbContext db) : IOutboxStore
 {
     public async Task EnqueueAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
-        db.Outbox.Add(message);
+        db.Set<OutboxMessage>().Add(message);
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -28,7 +27,7 @@ public sealed class OutboxStore(KorkutDbContext db) : IOutboxStore
         // worker already holds, flip them to Leased and return them. The WHERE clause is
         // the SQL form of OutboxMessage.IsLeasable — the one rule that cannot live on the
         // aggregate, because claiming has to be a single round-trip to stay race-free.
-        var rows = await db.Outbox.FromSqlInterpolated($@"
+        var rows = await db.Set<OutboxMessage>().FromSqlInterpolated($@"
             WITH due AS (
                 SELECT id FROM korkut.outbox_messages
                 WHERE ((status IN ('Pending','Failed') AND available_at <= {now})
@@ -59,7 +58,7 @@ public sealed class OutboxStore(KorkutDbContext db) : IOutboxStore
 
     public async Task<OutboxMessage?> ReplayAsync(Guid id, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        var message = await db.Outbox.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var message = await db.Set<OutboxMessage>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (message is null || !message.Replay(now))
         {
             return null;
@@ -71,7 +70,7 @@ public sealed class OutboxStore(KorkutDbContext db) : IOutboxStore
 
     private async Task MutateAsync(Guid id, Action<OutboxMessage> transition, CancellationToken cancellationToken)
     {
-        var message = await db.Outbox.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var message = await db.Set<OutboxMessage>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (message is null)
         {
             return;

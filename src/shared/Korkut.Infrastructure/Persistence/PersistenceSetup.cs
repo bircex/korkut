@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Jobs;
+using Korkut.Jobs.Persistence;
 using Korkut.Jobs.Abstractions;
 using Korkut.Jobs.Services;
 using Microsoft.EntityFrameworkCore;
@@ -31,13 +31,13 @@ public static class PersistenceSetup
         // module's repository never needs to name the concrete KorkutDbContext.
         services.AddScoped<DbContext>(sp => sp.GetRequiredService<KorkutDbContext>());
 
-        services.AddScoped<IOutboxStore, OutboxStore>();
-        services.AddScoped<IInboxStore, InboxStore>();
-        services.AddScoped<IJobAudit, JobAudit>();
+        services.AddScoped<IOutboxStore, Korkut.Jobs.Persistence.OutboxStore>();
+        services.AddScoped<IInboxStore, Korkut.Jobs.Persistence.InboxStore>();
+        services.AddScoped<IJobAudit, Korkut.Jobs.Persistence.JobAudit>();
         // The document pipeline enqueues search-index events through this port; the impl writes
         // the Jobs outbox (so the Documents module never references Jobs). Lives here beside the
         // other outbox stores.
-        services.AddScoped<Korkut.Contract.Documents.IDocumentIndexPublisher, IndexOutboxService>();
+        services.AddScoped<Korkut.Contract.Documents.IDocumentIndexPublisher, Korkut.Jobs.Persistence.IndexOutboxService>();
         return services;
     }
 

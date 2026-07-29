@@ -5,7 +5,7 @@ using Korkut.Jobs.Services;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence;
+namespace Korkut.Jobs.Persistence;
 
 /// <summary>
 /// Enqueues search-index / de-index events onto the transactional outbox (KDM-028).
@@ -13,7 +13,7 @@ namespace Korkut.Infrastructure.Persistence;
 /// per (document, version), one de-index event per document. No search engine is
 /// contacted here — only the contract is produced.
 /// </summary>
-public sealed class IndexOutboxService(KorkutDbContext db, IClock clock) : Korkut.Contract.Documents.IDocumentIndexPublisher
+public sealed class IndexOutboxService(DbContext db, IClock clock) : Korkut.Contract.Documents.IDocumentIndexPublisher
 {
     public Task<bool> EnqueueIndexAsync(Guid officeId, Guid documentId, int version, CancellationToken ct = default)
         => EnqueueAsync(
@@ -33,7 +33,7 @@ public sealed class IndexOutboxService(KorkutDbContext db, IClock clock) : Korku
 
     private async Task<bool> EnqueueAsync(Guid officeId, string type, string key, DocumentIndexEvent evt, CancellationToken ct)
     {
-        var exists = await db.Outbox.AsNoTracking()
+        var exists = await db.Set<OutboxMessage>().AsNoTracking()
             .AnyAsync(x => x.OfficeId == officeId && x.IdempotencyKey == key, ct);
         if (exists)
         {
@@ -44,7 +44,7 @@ public sealed class IndexOutboxService(KorkutDbContext db, IClock clock) : Korku
         // Provenance-preserving payload (tenant + document + version).
         var payload =
             $"{{\"office_id\":\"{evt.OfficeId}\",\"document_id\":\"{evt.DocumentId}\",\"version\":{evt.DocumentVersion},\"op\":\"{evt.Op}\"}}";
-        db.Outbox.Add(new OutboxMessage(officeId, type, payload, key, now, now));
+        db.Set<OutboxMessage>().Add(new OutboxMessage(officeId, type, payload, key, now, now));
         await db.SaveChangesAsync(ct);
         return true;
     }
