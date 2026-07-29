@@ -1,3 +1,4 @@
+using Korkut.Contract.Audit;
 using Korkut.Core;
 using Korkut.Contract.Documents;
 using Korkut.Documents;

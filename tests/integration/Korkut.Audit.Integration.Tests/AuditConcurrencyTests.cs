@@ -1,5 +1,6 @@
 using Korkut.TestSupport;
 using Korkut.Audit;
+using Korkut.Contract.Audit;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using Korkut.Core;

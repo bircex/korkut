@@ -53,6 +53,10 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         }.ConnectionString;
 
         Environment.SetEnvironmentVariable("KORKUT_DB_URL", _appConnectionString);
+        // Host secrets, as env vars so BOTH the API host and this factory's own token-minting
+        // (ClientFor) see them — no per-test-assembly TestEnv needed. Fixed non-production values.
+        Environment.SetEnvironmentVariable("KORKUT_SECRET", "korkut-integration-test-signing-secret-32b+");
+        Environment.SetEnvironmentVariable("KORKUT_TOTP_KEY", Convert.ToBase64String(new byte[32]));
         var minioEndpoint = new Uri(_minio.GetConnectionString());
         Environment.SetEnvironmentVariable("KORKUT_MINIO_ENDPOINT", $"{minioEndpoint.Host}:{minioEndpoint.Port}");
         Environment.SetEnvironmentVariable("KORKUT_MINIO_ACCESS_KEY", _minio.GetAccessKey());
@@ -71,6 +75,10 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("KORKUT_DB_URL", _appConnectionString);
+        // Host secrets the API needs to boot (fixed, non-production test values). Set here so
+        // every endpoint-test assembly gets them from the shared factory — no per-project env setup.
+        builder.UseSetting("KORKUT_SECRET", "korkut-integration-test-signing-secret-32b+");
+        builder.UseSetting("KORKUT_TOTP_KEY", Convert.ToBase64String(new byte[32]));
         // This one shared host serves the whole integration suite, so the per-IP
         // sensitive-endpoint limiter would throttle across tests. Raise it here only
         // (the dedicated rate-limit test uses its own strict host).

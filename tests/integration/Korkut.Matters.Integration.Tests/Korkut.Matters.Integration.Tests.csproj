@@ -11,7 +11,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Testcontainers.PostgreSql" />
-  </ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.Minio" />
+    <PackageReference Include="Minio" />
+</ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
@@ -23,5 +26,6 @@
     <ProjectReference Include="..\..\..\src\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
     <ProjectReference Include="..\..\..\src\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
+      <ProjectReference Include="..\..\..\src\services\Korkut.Api\Korkut.Api.csproj" />
   </ItemGroup>
 </Project>

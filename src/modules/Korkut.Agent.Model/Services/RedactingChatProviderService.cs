@@ -1,6 +1,7 @@
 using Korkut.Contract.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Korkut.Contract.Pii;
 using Korkut.Core;
 
 namespace Korkut.Agent.Model.Services;

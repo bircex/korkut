@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Korkut.Contract.Audit;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Core;
 using Korkut.Pii;

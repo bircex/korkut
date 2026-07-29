@@ -1,3 +1,4 @@
+using Korkut.Contract.Audit;
 using Korkut.Contract.Documents.Storage;
 using Korkut.Core;
 using Korkut.Infrastructure.Storage;

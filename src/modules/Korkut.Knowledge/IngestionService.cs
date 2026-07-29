@@ -1,3 +1,4 @@
+using Korkut.Contract.Pii;
 using Korkut.Core;
 
 namespace Korkut.Knowledge;
@@ -34,6 +35,7 @@ public sealed class IngestionService(
 
             var embedding = await embedder.EmbedAsync(chunks, ct);
             var items = new List<ChunkEmbedding>(chunks.Count);
+            
             for (var i = 0; i < chunks.Count; i++)
             {
                 items.Add(new ChunkEmbedding(i, chunks[i], embedding.Vectors[i]));

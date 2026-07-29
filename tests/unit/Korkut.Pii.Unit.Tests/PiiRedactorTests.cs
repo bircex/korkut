@@ -1,4 +1,4 @@
-using Korkut.Core;
+using Korkut.Contract.Pii;
 
 namespace Korkut.Pii.Unit.Tests;
 
@@ -20,7 +20,7 @@ public class PiiRedactorTests
     public void Detects_email_iban_tckn_and_phone()
     {
         var text = $"Müvekkil ahmet@ornek.com, TCKN {ValidTckn}, IBAN TR33 0006 1005 1978 6457 8413 26, tel +90 532 123 45 67.";
-        var result = _redactor.Redact(text);
+        var result = new PiiRedactorService().Redact(text);
 
         Assert.DoesNotContain("ahmet@ornek.com", result.Text);
         Assert.DoesNotContain(ValidTckn, result.Text);
@@ -37,7 +37,7 @@ public class PiiRedactorTests
     public void Restore_round_trips_to_the_original()
     {
         var text = $"Sayın ahmet@ornek.com ({ValidTckn}), IBAN TR330006100519786457841326, GSM 0532 123 45 67.";
-        var result = _redactor.Redact(text);
+        var result = new PiiRedactorService().Redact(text);
         Assert.NotEqual(text, result.Text);
 
         var scope = _redactor.NewScope();
@@ -48,7 +48,7 @@ public class PiiRedactorTests
     [Fact]
     public void Invalid_tckn_is_not_redacted()
     {
-        var result = _redactor.Redact($"Dosya numarası {InvalidTckn} olarak kaydedildi.");
+        var result = new PiiRedactorService().Redact($"Dosya numarası {InvalidTckn} olarak kaydedildi.");
         Assert.Contains(InvalidTckn, result.Text);
         Assert.DoesNotContain(result.Matches, m => m.Kind == PiiKind.Tckn);
     }
@@ -60,7 +60,7 @@ public class PiiRedactorTests
     [InlineData("0 (212) 555 12 34")]
     public void Phone_shapes_are_detected(string phone)
     {
-        var result = _redactor.Redact($"Telefon: {phone}");
+        var result = new PiiRedactorService().Redact($"Telefon: {phone}");
         Assert.Contains(result.Matches, m => m.Kind == PiiKind.Phone);
     }
 
@@ -68,7 +68,7 @@ public class PiiRedactorTests
     public void A_bare_ten_digit_run_is_not_a_phone()
     {
         // No +90/0 prefix and no grouping separators → a case/reference number, not a phone.
-        var result = _redactor.Redact("Referans no 5321234567 ile işlem yapıldı.");
+        var result = new PiiRedactorService().Redact("Referans no 5321234567 ile işlem yapıldı.");
         Assert.DoesNotContain(result.Matches, m => m.Kind == PiiKind.Phone);
         Assert.Contains("5321234567", result.Text);
     }
@@ -77,7 +77,7 @@ public class PiiRedactorTests
     public void Text_without_pii_is_returned_unchanged()
     {
         const string clean = "Kira sözleşmesinin feshine ilişkin ihtarname hazırlanacaktır.";
-        var result = _redactor.Redact(clean);
+        var result = new PiiRedactorService().Redact(clean);
         Assert.Equal(clean, result.Text);
         Assert.Empty(result.Matches);
     }
@@ -85,7 +85,7 @@ public class PiiRedactorTests
     [Fact]
     public void A_repeated_value_gets_one_stable_placeholder()
     {
-        var result = _redactor.Redact("ahmet@ornek.com ve tekrar ahmet@ornek.com");
+        var result = new PiiRedactorService().Redact("ahmet@ornek.com ve tekrar ahmet@ornek.com");
         var emails = result.Matches.Where(m => m.Kind == PiiKind.Email).ToList();
         Assert.Single(emails);
         // Both occurrences masked to the same token.
