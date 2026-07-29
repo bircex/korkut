@@ -34,6 +34,10 @@ public static class PersistenceSetup
         services.AddScoped<IOutboxStore, OutboxStore>();
         services.AddScoped<IInboxStore, InboxStore>();
         services.AddScoped<IJobAudit, JobAudit>();
+        // The document pipeline enqueues search-index events through this port; the impl writes
+        // the Jobs outbox (so the Documents module never references Jobs). Lives here beside the
+        // other outbox stores.
+        services.AddScoped<Korkut.Contract.Documents.IDocumentIndexPublisher, IndexOutboxService>();
         return services;
     }
 

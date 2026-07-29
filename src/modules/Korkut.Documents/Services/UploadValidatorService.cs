@@ -3,7 +3,7 @@ using Korkut.Contract.Upload;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// Layered upload checks BEFORE anything is trusted: size, extension allowlist,

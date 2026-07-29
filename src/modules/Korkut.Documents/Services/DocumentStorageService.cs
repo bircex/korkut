@@ -1,14 +1,13 @@
 using Korkut.Contract.Documents.Storage;
 using System.Security.Cryptography;
 using Korkut.Contract.Documents;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 public sealed record StoredDocument(Guid Id, string ObjectKey, string ChecksumSha256, long Size);
 
@@ -20,7 +19,7 @@ public sealed record ReconcileReport(IReadOnlyList<Guid> DbRowsMissingObject, IR
 /// short-lived; the caller enforces permission first. Reconciliation finds DB↔object
 /// drift so the two stores can be reconverified (KDM-025).
 /// </summary>
-public sealed class DocumentStorageService(KorkutDbContext db, IObjectStoreService objectStoreService, IClock clock)
+public sealed class DocumentStorageService(DbContext db, IObjectStoreService objectStoreService, IClock clock)
 {
     public async Task<StoredDocument> StoreAsync(
         Guid officeId, Guid? ownerId, Stream content, string filename, string contentType, CancellationToken ct = default)
@@ -39,26 +38,26 @@ public sealed class DocumentStorageService(KorkutDbContext db, IObjectStoreServi
             officeId, ownerId, ObjectBuckets.Quarantine, key,
             filename, // in the DB only, never in the key
             contentType, buffer.Length, checksum, clock.UtcNow);
-        db.Documents.Add(doc);
+        db.Set<Document>().Add(doc);
         await db.SaveChangesAsync(ct);
         return new StoredDocument(doc.Id, key, checksum, doc.Size);
     }
 
     /// <summary>Active (non-tombstoned) documents, newest first; optionally scoped to a matter.</summary>
     public Task<List<Document>> ListAsync(Guid officeId, Guid? matterId = null, CancellationToken ct = default)
-        => db.Documents.AsNoTracking()
+        => db.Set<Document>().AsNoTracking()
             .Where(x => x.OfficeId == officeId && x.Status != DocumentStatus.Tombstoned && (matterId == null || x.MatterId == matterId))
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
 
     public Task<Document?> GetAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
-        => db.Documents.AsNoTracking()
+        => db.Set<Document>().AsNoTracking()
             .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId && x.Status != DocumentStatus.Tombstoned, ct);
 
     /// <summary>Short-lived presigned GET. The caller MUST have checked permission first.</summary>
     public async Task<string> PresignAsync(Guid officeId, Guid documentId, TimeSpan expiry, CancellationToken ct = default)
     {
-        var doc = await db.Documents.AsNoTracking()
+        var doc = await db.Set<Document>().AsNoTracking()
             .FirstOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
             ?? throw new InvalidOperationException("Document not found in this office.");
         // No download/preview/OCR until the document is proven clean (KDM-026).
@@ -73,7 +72,7 @@ public sealed class DocumentStorageService(KorkutDbContext db, IObjectStoreServi
     /// <summary>Find DB↔object drift for a bucket (orphan reconciliation).</summary>
     public async Task<ReconcileReport> ReconcileAsync(string bucket, CancellationToken ct = default)
     {
-        var dbDocs = await db.Documents.AsNoTracking()
+        var dbDocs = await db.Set<Document>().AsNoTracking()
             .Where(x => x.Bucket == bucket)
             .Select(x => new { x.Id, x.ObjectKey })
             .ToListAsync(ct);

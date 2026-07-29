@@ -1,4 +1,4 @@
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 public enum BlockKind
 {

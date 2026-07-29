@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Korkut.Clients.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Documents.Integration.Tests" />
   </ItemGroup>
 </Project>

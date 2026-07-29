@@ -9,6 +9,9 @@ public interface IMatterLookup
     /// <summary>Whether an active matter with this id exists in the office.</summary>
     Task<bool> ExistsAsync(Guid officeId, Guid matterId, CancellationToken ct = default);
 
+    /// <summary>Whether a party with this id exists in the office (parties live inside the Matters module).</summary>
+    Task<bool> PartyExistsAsync(Guid officeId, Guid partyId, CancellationToken ct = default);
+
     /// <summary>Matter id → title, for the requested ids. Absent ids simply drop out; empty input → empty map.</summary>
     Task<IReadOnlyDictionary<Guid, string>> TitlesAsync(
         Guid officeId, IReadOnlyCollection<Guid> matterIds, CancellationToken ct = default);

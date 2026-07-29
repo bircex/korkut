@@ -41,13 +41,13 @@ public sealed class KorkutOcrFactory : OcrFactoryBase
         base.ConfigureWebHost(builder);
         builder.ConfigureTestServices(services =>
         {
-            services.RemoveAll<IOcrEngine>();
-            services.AddSingleton<IOcrEngine, FakeOcrEngine>();
+            services.RemoveAll<IOcrService>();
+            services.AddSingleton<IOcrService, FakeOcrService>();
         });
     }
 
     /// <summary>A stand-in engine: echoes the uploaded bytes as recovered "text" so the path is verifiable.</summary>
-    private sealed class FakeOcrEngine : IOcrEngine
+    private sealed class FakeOcrService : IOcrService
     {
         public bool IsAvailable => true;
 

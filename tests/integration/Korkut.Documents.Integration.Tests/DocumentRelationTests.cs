@@ -1,3 +1,6 @@
+using Korkut.Matters.Repositories;
+using Korkut.Matters.Services;
+using Korkut.Clients.Services;
 using Korkut.TestSupport;
 using Korkut.Audit;
 using Korkut.Core;
@@ -7,7 +10,7 @@ using Korkut.Organization;
 using Korkut.Organization.Entities;
 using System.Text;
 using Korkut.Contract.Documents;
-using Korkut.Infrastructure.Documents;
+using Korkut.Documents.Services;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Clients;
@@ -44,7 +47,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private static DocumentRelationService Relations(KorkutDbContext db) => new(db, new AuditLog(db, new Clock()), new Clock());
+    private static DocumentRelationService Relations(KorkutDbContext db) => new(db, new AuditLog(db, new Clock()), new ClientLookup(db), new MatterLookup(new MatterRepository(db), db), new Clock());
 
     private async Task<Guid> SeedDocumentAsync(KorkutDbContext db)
     {
@@ -181,12 +184,12 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
         var clock = new Clock();
 
         // Extract twice (retry): still one index event (idempotent projection).
-        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, doc);
-        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), clock).ExtractAsync(_office, doc);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new IndexOutboxService(db, new Clock()), clock).ExtractAsync(_office, doc);
+        await new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new IndexOutboxService(db, new Clock()), clock).ExtractAsync(_office, doc);
         Assert.Equal(1, await db.Outbox.CountAsync(x => x.Type == DocumentIndexEventTypes.Index));
 
         // Tombstone -> a de-index event that preserves provenance.
-        await new DocumentLifecycleService(db, minio.StoreService, clock).TombstoneAsync(_office, doc);
+        await new DocumentLifecycleService(db, minio.StoreService, new IndexOutboxService(db, new Clock()), clock).TombstoneAsync(_office, doc);
         var deindex = await db.Outbox.AsNoTracking().SingleAsync(x => x.Type == DocumentIndexEventTypes.Deindex);
         Assert.Contains(doc.ToString(), deindex.Payload, StringComparison.Ordinal);
         Assert.Contains(_office.ToString(), deindex.Payload, StringComparison.Ordinal);

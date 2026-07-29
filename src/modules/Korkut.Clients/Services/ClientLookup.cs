@@ -27,4 +27,7 @@ internal sealed class ClientLookup(DbContext db) : IClientLookup
 
     public async Task<int> CountAsync(Guid officeId, CancellationToken ct = default)
         => await db.Set<Client>().AsNoTracking().CountAsync(c => c.OfficeId == officeId && c.DeletedAt == null, ct);
+
+    public async Task<bool> ExistsAsync(Guid officeId, Guid clientId, CancellationToken ct = default)
+        => await db.Set<Client>().AsNoTracking().AnyAsync(c => c.OfficeId == officeId && c.Id == clientId, ct);
 }

@@ -1,12 +1,12 @@
 using Korkut.TestSupport;
 using Korkut.Contract.Documents.Storage;
-using Korkut.Infrastructure.Documents;
+using Korkut.Documents.Services;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using System.Security.Cryptography;
 using System.Text;
 using Korkut.Contract.Documents;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;

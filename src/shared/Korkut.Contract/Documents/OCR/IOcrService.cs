@@ -8,7 +8,7 @@ namespace Korkut.Contract.Documents.OCR;
 /// (Korkut.Ocr) invoked on demand. The real engine is a deploy-time native binary; the in-code
 /// default reports unavailable so the host still boots (503 on use).
 /// </summary>
-public interface IOcrEngine
+public interface IOcrService
 {
     /// <summary>True when a real OCR backend is wired; false for the in-code scaffold.</summary>
     bool IsAvailable { get; }

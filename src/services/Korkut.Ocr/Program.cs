@@ -3,7 +3,7 @@ using Korkut.Contract.Documents.OCR;
 using Korkut.Web;
 using Korkut.Web.Controllers;
 using Korkut.Web.Auth;
-using Korkut.Infrastructure.Documents;
+using Korkut.Documents.Services;
 using Korkut.Infrastructure.Observability;
 using Korkut.Security;
 using Korkut.Core;
@@ -17,7 +17,7 @@ builder.AddKorkutObservability("Korkut.Ocr", tracing => tracing.AddAspNetCoreIns
 builder.Services.AddKorkutWeb(builder.Configuration);
 builder.Services.AddKorkutControllers();
 
-builder.Services.TryAddSingleton<IOcrEngine, DisabledOcrEngine>();
+builder.Services.TryAddSingleton<IOcrService, DisabledOcrService>();
 
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(

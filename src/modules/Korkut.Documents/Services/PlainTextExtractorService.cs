@@ -1,8 +1,7 @@
-using Korkut.Contract.Documents;
 using System.Text;
-using Korkut.Contract.Documents.OCR;
+using Korkut.Contract.Documents;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// Extracts UTF-8 text, paginated on form-feeds and split into paragraph spans. A

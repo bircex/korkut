@@ -36,4 +36,7 @@ internal sealed class MatterLookup(IMatterRepository repository, DbContext db) :
             .GroupBy(m => m.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.Status, g => g.Count, ct);
+
+    public async Task<bool> PartyExistsAsync(Guid officeId, Guid partyId, CancellationToken ct = default)
+        => await db.Set<Party>().AsNoTracking().AnyAsync(p => p.OfficeId == officeId && p.Id == partyId, ct);
 }

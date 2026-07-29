@@ -5,13 +5,23 @@
        repository + entities. References only kernel/persistence. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
-  </ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Minio" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+</ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Korkut.Documents.Unit.Tests" />
+    <InternalsVisibleTo Include="Korkut.Documents.Integration.Tests" />
     <InternalsVisibleTo Include="Korkut.Infrastructure" />
   </ItemGroup>
 </Project>

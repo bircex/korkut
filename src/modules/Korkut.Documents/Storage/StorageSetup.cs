@@ -5,15 +5,14 @@ using Korkut.Contract.Documents.Storage;
 using Korkut.Contract.Upload.Malware;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
-using Korkut.Infrastructure.Documents;
-using Korkut.Infrastructure.Persistence;
+using Korkut.Documents.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Minio;
 
-namespace Korkut.Infrastructure.Storage;
+namespace Korkut.Documents.Storage;
 
 /// <summary>
 /// Registers MinIO object storage + the document pipeline services (KDM-025..028).

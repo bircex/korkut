@@ -4,7 +4,7 @@ using Korkut.Infrastructure.Ai;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Security;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Korkut.Web;
 using Korkut.Web.Auth;
 using Korkut.Web.Controllers;

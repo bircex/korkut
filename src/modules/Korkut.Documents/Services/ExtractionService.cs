@@ -3,11 +3,10 @@ using Korkut.Contract.Documents.OCR;
 using Korkut.Contract.Documents.Storage;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>Outcome of an extraction run (KDM-027).</summary>
 public enum ExtractionOutcome
@@ -36,14 +35,15 @@ public sealed record ExtractionResult(ExtractionOutcome Outcome, int SpanCount);
 /// </list>
 /// </summary>
 public sealed class ExtractionService(
-    KorkutDbContext db,
+    DbContext db,
     IObjectStoreService storeService,
     ITextExtractorService extractorService,
+    Korkut.Contract.Documents.IDocumentIndexPublisher indexQueue,
     IClock clock)
 {
     public async Task<ExtractionResult> ExtractAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
     {
-        var doc = await db.Documents.AsNoTracking()
+        var doc = await db.Set<Document>().AsNoTracking()
             .SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
             ?? throw new InvalidOperationException("Document not found.");
 
@@ -55,7 +55,7 @@ public sealed class ExtractionService(
 
         // Immutable-per-parser: if artifacts already exist for this document version +
         // parser, this is a retry — do nothing (idempotent).
-        var alreadyDone = await db.DocumentExtractions.AsNoTracking().AnyAsync(
+        var alreadyDone = await db.Set<DocumentExtraction>().AsNoTracking().AnyAsync(
             x => x.OfficeId == officeId
                 && x.DocumentId == documentId
                 && x.DocumentVersion == doc.Version
@@ -75,7 +75,7 @@ public sealed class ExtractionService(
         var now = clock.UtcNow;
         foreach (var span in spans)
         {
-            db.DocumentExtractions.Add(new DocumentExtraction(
+            db.Set<DocumentExtraction>().Add(new DocumentExtraction(
                 officeId, documentId, doc.Version, extractorService.ParserVersion,
                 span.Page, span.Index, span.Text, doc.ChecksumSha256, doc.ObjectKey, now));
         }
@@ -83,7 +83,7 @@ public sealed class ExtractionService(
         await db.SaveChangesAsync(ct);
 
         // The projection is search-ready — enqueue an index event (idempotent per version).
-        await new IndexOutboxService(db, clock).EnqueueIndexAsync(officeId, documentId, doc.Version, ct);
+        await indexQueue.EnqueueIndexAsync(officeId, documentId, doc.Version, ct);
         return new ExtractionResult(ExtractionOutcome.Extracted, spans.Count);
     }
 }

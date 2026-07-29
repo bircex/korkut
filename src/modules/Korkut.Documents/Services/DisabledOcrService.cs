@@ -1,6 +1,6 @@
 using Korkut.Contract.Documents.OCR;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// The in-code OCR scaffold: reports unavailable and refuses every request (→ 503). Tesseract (or
@@ -8,7 +8,7 @@ namespace Korkut.Infrastructure.Documents;
 /// at deploy without any consumer change. Keeps the Korkut.Ocr host bootable and its contract
 /// exercised in tests (which swap in a fake engine) before the binary exists.
 /// </summary>
-public sealed class DisabledOcrEngine : IOcrEngine
+public sealed class DisabledOcrService : IOcrService
 {
     private const string Error = "OCR motoru aktif değil!";
     

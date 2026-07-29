@@ -4,7 +4,7 @@ using Korkut.Api.Observability;
 using Korkut.Web;
 using Korkut.Web.Controllers;
 using Korkut.Infrastructure.Observability;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Korkut.Security;
 using Korkut.Core;
 using OpenTelemetry.Trace;

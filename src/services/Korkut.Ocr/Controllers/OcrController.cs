@@ -18,7 +18,7 @@ public sealed record OcrResponse(string Text, int Pages);
 /// shared handler maps to 503.
 /// </summary>
 [ApiController]
-public sealed class OcrController(IOcrEngine engine) : ControllerBase
+public sealed class OcrController(IOcrService service) : ControllerBase
 {
     [HttpPost("/extract")]
     [Authorize(Policy = Permissions.MattersRead)]
@@ -30,7 +30,7 @@ public sealed class OcrController(IOcrEngine engine) : ControllerBase
         }
 
         await using var stream = file.OpenReadStream();
-        var result = await engine.ExtractAsync(stream, file.ContentType ?? "application/octet-stream", ct);
+        var result = await service.ExtractAsync(stream, file.ContentType ?? "application/octet-stream", ct);
         return Ok(new OcrResponse(result.Text, result.Pages));
     }
 }

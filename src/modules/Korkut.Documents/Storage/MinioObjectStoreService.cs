@@ -1,11 +1,11 @@
 using Korkut.Contract.Documents.Storage;
 using System.Runtime.CompilerServices;
 using Korkut.Contract.Documents;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Minio;
 using Minio.DataModel.Args;
 
-namespace Korkut.Infrastructure.Storage;
+namespace Korkut.Documents.Storage;
 
 /// <summary>MinIO-backed <see cref="IObjectStoreService"/>. Buckets are created private (no public policy).</summary>
 public sealed class MinioObjectStoreService(IMinioClient client) : IObjectStoreService

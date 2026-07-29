@@ -13,7 +13,7 @@ namespace Korkut.Infrastructure.Persistence;
 /// per (document, version), one de-index event per document. No search engine is
 /// contacted here — only the contract is produced.
 /// </summary>
-public sealed class IndexOutboxService(KorkutDbContext db, IClock clock)
+public sealed class IndexOutboxService(KorkutDbContext db, IClock clock) : Korkut.Contract.Documents.IDocumentIndexPublisher
 {
     public Task<bool> EnqueueIndexAsync(Guid officeId, Guid documentId, int version, CancellationToken ct = default)
         => EnqueueAsync(

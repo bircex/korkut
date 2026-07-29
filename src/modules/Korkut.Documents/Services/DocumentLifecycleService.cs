@@ -2,11 +2,10 @@ using Korkut.Contract.Documents;
 using Korkut.Core;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Contract.Documents.Storage;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// The document delete/tombstone/retention state machine (KDM-027). A tombstone
@@ -14,7 +13,7 @@ namespace Korkut.Infrastructure.Documents;
 /// auditable marker. Legal hold is an absolute veto over both explicit deletes and
 /// retention-driven purges.
 /// </summary>
-public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreService storeService, IClock clock)
+public sealed class DocumentLifecycleService(DbContext db, IObjectStoreService storeService, Korkut.Contract.Documents.IDocumentIndexPublisher indexQueue, IClock clock)
     : IDocumentLifecycleService
 {
     /// <summary>
@@ -24,7 +23,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
     /// </summary>
     public async Task TombstoneAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
     {
-        var doc = await db.Documents.SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
+        var doc = await db.Set<Document>().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == documentId, ct)
             ?? throw new NotFoundException("Belge bulunamadı.");
 
         if (doc.LegalHold)
@@ -43,7 +42,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
         await db.SaveChangesAsync(ct);
 
         // A tombstoned/revoked document must leave the search index (KDM-028).
-        await new IndexOutboxService(db, clock).EnqueueDeindexAsync(officeId, documentId, doc.Version, ct);
+        await indexQueue.EnqueueDeindexAsync(officeId, documentId, doc.Version, ct);
     }
 
     /// <summary>
@@ -51,7 +50,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
     /// </summary>
     public async Task SetLegalHoldAsync(Guid officeId, Guid documentId, bool held, CancellationToken ct = default)
     {
-        var affected = await db.Documents
+        var affected = await db.Set<Document>()
             .Where(x => x.OfficeId == officeId && x.Id == documentId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.LegalHold, held), ct);
         if (affected == 0)
@@ -68,7 +67,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
     public async Task<int> PurgeExpiredAsync(Guid officeId, CancellationToken ct = default)
     {
         var now = clock.UtcNow;
-        var expired = await db.Documents
+        var expired = await db.Set<Document>()
             .Where(x => x.OfficeId == officeId
                 && x.RetentionUntil != null
                 && x.RetentionUntil < now
@@ -85,16 +84,15 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
         if (expired.Count > 0)
         {
             var ids = expired.Select(x => x.Id).ToArray();
-            await db.Documents
+            await db.Set<Document>()
                 .Where(x => x.OfficeId == officeId && ids.Contains(x.Id))
                 .ExecuteUpdateAsync(
                     s => s.SetProperty(x => x.Status, DocumentStatus.Tombstoned).SetProperty(x => x.TombstonedAt, now),
                     ct);
 
-            var index = new IndexOutboxService(db, clock);
             foreach (var d in expired)
             {
-                await index.EnqueueDeindexAsync(officeId, d.Id, d.Version, ct);
+                await indexQueue.EnqueueDeindexAsync(officeId, d.Id, d.Version, ct);
             }
         }
 
@@ -105,7 +103,7 @@ public sealed class DocumentLifecycleService(KorkutDbContext db, IObjectStoreSer
     {
         // Best-effort object removal (bytes gone); metadata row is retained as a tombstone.
         await storeService.RemoveAsync(bucket, objectKey, ct);
-        await db.DocumentExtractions
+        await db.Set<DocumentExtraction>()
             .Where(x => x.OfficeId == officeId && x.DocumentId == documentId)
             .ExecuteDeleteAsync(ct);
     }

@@ -1,19 +1,18 @@
 using Korkut.Contract.Audit;
 using Korkut.Contract.Documents.Storage;
 using Korkut.Core;
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Korkut.Contract.Upload.Malware;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
-using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 public sealed class SafeUploadService(
-    KorkutDbContext db,
+    DbContext db,
     DocumentStorageService documents,
     IObjectStoreService objectStoreService,
     IUploadValidatorService validatorService,
@@ -76,7 +75,7 @@ public sealed class SafeUploadService(
     /// <summary>The scan verdict is a state change on the document, so it goes through the aggregate.</summary>
     private async Task MarkAsync(Guid documentId, Action<Document> verdict, CancellationToken ct)
     {
-        var document = await db.Documents.SingleAsync(x => x.Id == documentId, ct);
+        var document = await db.Set<Document>().SingleAsync(x => x.Id == documentId, ct);
         verdict(document);
         await db.SaveChangesAsync(ct);
     }

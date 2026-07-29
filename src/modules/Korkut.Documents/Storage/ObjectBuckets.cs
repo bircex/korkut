@@ -1,6 +1,6 @@
 ﻿using Korkut.Core;
 
-namespace Korkut.Infrastructure.Storage;
+namespace Korkut.Documents.Storage;
 
 /// <summary>Bucket names + opaque object-key generation (no PII).</summary>
 public static class ObjectBuckets

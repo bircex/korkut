@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Storage;
+using Korkut.Documents.Storage;
 using Minio;
 using Testcontainers.Minio;
 

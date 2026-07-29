@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// Renders a markdown document to a downloadable Word (.docx, OpenXML WordprocessingML)

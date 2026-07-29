@@ -8,7 +8,7 @@ using Korkut.Documents;
 using Korkut.Documents.Repositories;
 using Korkut.Documents.Entities;
 
-namespace Korkut.Infrastructure.Documents;
+namespace Korkut.Documents.Services;
 
 /// <summary>
 /// The document library over the repository and the upload/lifecycle ports. The two rules

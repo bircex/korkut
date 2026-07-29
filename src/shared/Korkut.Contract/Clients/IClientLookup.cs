@@ -13,4 +13,7 @@ public interface IClientLookup
 
     /// <summary>The office's active (non-deleted) client count, for the dashboard.</summary>
     Task<int> CountAsync(Guid officeId, CancellationToken ct = default);
+
+    /// <summary>Whether an active client with this id exists in the office.</summary>
+    Task<bool> ExistsAsync(Guid officeId, Guid clientId, CancellationToken ct = default);
 }
