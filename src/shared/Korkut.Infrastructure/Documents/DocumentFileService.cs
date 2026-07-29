@@ -25,7 +25,7 @@ public sealed class DocumentFileService(
     ICurrentUser currentUser) : IDocumentFileService
 {
     /// <summary>How long a download URL stays valid — long enough to click, short enough to leak nothing.</summary>
-    public TimeSpan DownloadUrlLifetime { get; init; } = TimeSpan.FromMinutes(2);
+    private TimeSpan DownloadUrlLifetime { get; init; } = TimeSpan.FromMinutes(2);
 
     public Task<IReadOnlyList<DocumentResponse>> ListAsync(Guid? matterId, CancellationToken ct = default)
         => InScopeAsync(async office =>

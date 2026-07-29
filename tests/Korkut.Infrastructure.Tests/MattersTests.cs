@@ -65,7 +65,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     // Exercise the use-case service over the real EF repositories, so these tests still cover
     // the court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
     private MatterService Service(KorkutDbContext db) =>
-        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db)), new CourtLookup(new CourtRepository(db)),
+        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db), db), new CourtLookup(new CourtRepository(db)),
             new DirectUnitOfWork(), new TestCurrentUser(_office), new Clock());
 
     [Fact]

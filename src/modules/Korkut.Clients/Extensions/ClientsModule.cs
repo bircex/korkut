@@ -18,5 +18,6 @@ public sealed class ClientsModule : IModule
     {
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<Korkut.Contract.Clients.IClientLookup, Korkut.Clients.Services.ClientLookup>();
     }
 }

@@ -14,7 +14,7 @@ public sealed record ProblemBody(string Detail);
 /// </summary>
 public static class ApiResults
 {
-    public static int ToStatusCode(ResultStatus status) => status switch
+    private static int ToStatusCode(ResultStatus status) => status switch
     {
         ResultStatus.Ok => StatusCodes.Status200OK,
         ResultStatus.NotFound => StatusCodes.Status404NotFound,
@@ -27,7 +27,7 @@ public static class ApiResults
     };
 
     private static ObjectResult Failure(Result result) =>
-        new ObjectResult(new ProblemBody(result.Error?.Detail ?? "Beklenmeyen bir hata oluştu."))
+        new(new ProblemBody(result.Error?.Detail ?? "Beklenmeyen bir hata oluştu."))
         {
             StatusCode = ToStatusCode(result.Status),
         };

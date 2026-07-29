@@ -21,6 +21,7 @@ public sealed class OrganizationModule : IModule
         services.AddScoped<IOfficeRepository, OfficeRepository>();
         services.AddScoped<IOfficeAdminService, OfficeAdminService>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<Korkut.Contract.Organization.IUserLookup, UserLookup>();
         services.AddScoped<IInviteRepository, InviteRepository>();
         services.AddScoped<Korkut.Contract.Organization.IMemberService, MemberService>();
         services.AddScoped<Korkut.Contract.Organization.IProfileService, ProfileService>();

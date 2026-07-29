@@ -19,6 +19,7 @@ internal sealed class HearingService(
     public Task<Result<HearingResponse>> AddAsync(Guid matterId, CreateHearingRequest request, CancellationToken ct = default)
     {
         var office = currentUser.OfficeId;
+        
         return unitOfWork.InTenantScopeAsync(office, async () =>
         {
             if (!await matters.ExistsAsync(office, matterId, ct))

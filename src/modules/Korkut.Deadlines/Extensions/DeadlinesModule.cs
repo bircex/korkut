@@ -14,5 +14,6 @@ public sealed class DeadlinesModule : IModule
     {
         services.AddScoped<IDeadlineRepository, DeadlineRepository>();
         services.AddScoped<IDeadlineService, DeadlineService>();
+        services.AddScoped<Korkut.Contract.Deadlines.IDeadlineLookup, DeadlineLookup>();
     }
 }

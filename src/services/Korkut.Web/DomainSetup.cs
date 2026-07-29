@@ -56,10 +56,9 @@ public static class DomainSetup
         // reports dashboard reads finance totals through the module's IFinanceLookup.
         new Korkut.Finance.Extensions.FinanceModule().Register(services, configuration);
         new Korkut.Correspondence.Extensions.CorrespondenceModule().Register(services, configuration);
-        // Calendar module. The cross-module read-model (ICalendarQuery: events ∪ deadlines ∪
-        // hearings) is a host-level registration since its impl spans other modules' tables.
+        // Calendar module. Its unified view (events ∪ deadlines ∪ hearings) is composed inside
+        // the service via each owner's Contract lookup — no host-level read-model to register.
         new Korkut.Calendar.Extensions.CalendarModule().Register(services, configuration);
-        services.AddScoped<Korkut.Contract.Calendar.ICalendarQuery, Korkut.Infrastructure.Calendar.CalendarQuery>();
         // Office settings module (persona, style layers, memory). The memory author lookup impl
         // stays in Infrastructure (it reads the users table) and is registered here.
         new SettingsModule().Register(services, configuration);

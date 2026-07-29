@@ -20,7 +20,7 @@ public static class SnakeCaseNaming
         }
     }
 
-    public static string ToSnakeCase(string name)
+    private static string ToSnakeCase(string name)
     {
         var sb = new System.Text.StringBuilder(name.Length + 8);
         for (var i = 0; i < name.Length; i++)

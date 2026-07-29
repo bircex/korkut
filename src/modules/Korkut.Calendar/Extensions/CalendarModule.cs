@@ -8,9 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Korkut.Calendar.Extensions;
 
 /// <summary>
-/// Self-registration for the Calendar module: binds the event repository + service. The
-/// cross-module read-model (<see cref="ICalendarQuery"/>) is registered by the host, since its
-/// impl spans other modules' tables.
+/// Self-registration for the Calendar module: binds the event repository + service. The unified
+/// view (events ∪ deadlines ∪ hearings) is composed inside the service by calling each owner's
+/// Contract lookup, so there is no cross-module read-model to register.
 /// </summary>
 public sealed class CalendarModule : IModule
 {

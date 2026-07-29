@@ -11,7 +11,7 @@ namespace Korkut.Persistence;
 /// </summary>
 public static class Tenancy
 {
-    public const string SettingName = "app.current_office";
+    private const string SettingName = "app.current_office";
 
     /// <summary>
     /// Begin a transaction and pin the tenant for its duration. Dispose commits;

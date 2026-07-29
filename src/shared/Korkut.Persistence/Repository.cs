@@ -14,7 +14,7 @@ public abstract class Repository<TEntity>(DbContext db) : IRepository<TEntity>
 {
     protected DbContext Db => db;
 
-    protected DbSet<TEntity> Set => db.Set<TEntity>();
+    private DbSet<TEntity> Set => db.Set<TEntity>();
 
     /// <summary>Every read starts here: the aggregate, pinned to one office.</summary>
     protected IQueryable<TEntity> Scoped(Guid officeId) => Set.Where(e => e.OfficeId == officeId);
