@@ -1,6 +1,6 @@
 using Korkut.Infrastructure.Jobs;
 using Korkut.Jobs.Entities;
-using Korkut.Infrastructure.Auditing;
+using Korkut.Audit;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
 using Korkut.Security;

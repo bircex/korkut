@@ -1,8 +1,7 @@
-using Korkut.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Korkut.Infrastructure.Auditing;
+namespace Korkut.Audit;
 
 /// <summary>EF mapping for the audit trail (table/columns/indexes unchanged).</summary>
 public sealed class AuditEventConfiguration : IEntityTypeConfiguration<AuditEvent>

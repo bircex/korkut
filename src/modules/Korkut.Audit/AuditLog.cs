@@ -1,10 +1,9 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Korkut.Core;
-using Korkut.Infrastructure.Auditing;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Pii;
 
-namespace Korkut.Infrastructure.Auditing;
+namespace Korkut.Audit;
 
 /// <summary>
 /// Writes audit entries to the append-only <c>audit_events</c> table. Before/after
@@ -12,13 +11,13 @@ namespace Korkut.Infrastructure.Auditing;
 /// secrets/tokens/PII never land in the audit trail. The record is INSERT-only — the
 /// app role has no UPDATE/DELETE and a trigger blocks mutation.
 /// </summary>
-public sealed class AuditLog(KorkutDbContext db, IClock clock) : IAuditLog
+public sealed class AuditLog(DbContext db, IClock clock) : IAuditLog
 {
     private static readonly JsonSerializerOptions Json = new();
 
     public async Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
-        db.AuditEvents.Add(new AuditEvent(
+        db.Set<AuditEvent>().Add(new AuditEvent(
             entry.OfficeId, entry.ActorId, entry.SessionId, entry.CorrelationId,
             entry.Action, entry.EntityType, entry.EntityId,
             Redact(entry.Before), Redact(entry.After), clock.UtcNow));

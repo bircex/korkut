@@ -23,7 +23,7 @@ public sealed class InviteService(
     IClock clock) : IInviteService
 {
     /// <summary>How long a fresh invite stays valid.</summary>
-    public TimeSpan Lifetime { get; init; } = TimeSpan.FromDays(7);
+    private TimeSpan Lifetime { get; init; } = TimeSpan.FromDays(7);
 
     public Task<Result<IReadOnlyList<InviteResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(currentUser.OfficeId, async office =>

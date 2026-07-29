@@ -26,7 +26,7 @@ public static class DomainSetup
         services.AddKorkutPersistence(connection);
 
         // IClock is registered by the composition root; audit + stores are scoped.
-        services.AddScoped<IAuditLog, Korkut.Infrastructure.Auditing.AuditLog>();
+        services.AddScoped<IAuditLog, Korkut.Audit.AuditLog>();
         // Office-core modules (clients + courts + matters/parties + hearings). Cross-module FKs are
         // configured in Infrastructure; cross-module reads go through Contract lookups
         // (ICourtLookup, IHearingLookup, IMatterLookup).

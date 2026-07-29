@@ -49,5 +49,6 @@
     <Folder Include="Auditing\" />
     <Folder Include="Pii\" />
       <ProjectReference Include="..\..\modules\Korkut.Pii\Korkut.Pii.csproj" />
+      <ProjectReference Include="..\..\modules\Korkut.Audit\Korkut.Audit.csproj" />
   </ItemGroup>
 </Project>

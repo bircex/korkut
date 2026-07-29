@@ -1,4 +1,4 @@
-using Korkut.Infrastructure.Auditing;
+using Korkut.Audit;
 using Korkut.Core;
 using Korkut.Documents;
 using Korkut.Documents.Entities;
