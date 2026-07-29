@@ -18,5 +18,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\modules\Korkut.Matters\Korkut.Matters.csproj" />
     <ProjectReference Include="..\..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\..\src\modules\Korkut.Clients\Korkut.Clients.csproj" />
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Courts\Korkut.Courts.csproj" />
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Hearings\Korkut.Hearings.csproj" />
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Organization\Korkut.Organization.csproj" />
+    <ProjectReference Include="..\..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
   </ItemGroup>
 </Project>

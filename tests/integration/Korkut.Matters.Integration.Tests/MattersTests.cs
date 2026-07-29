@@ -19,7 +19,7 @@ using Korkut.Hearings.Repositories;
 using Korkut.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Tests;
+namespace Korkut.Matters.Tests;
 
 public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
