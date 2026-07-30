@@ -2,10 +2,10 @@ import { useState } from "react";
 import { api, ApiError } from "../api";
 import { Button, Field } from "../a11y";
 
-// Local password sign-in + policy-driven TOTP challenge for the .NET auth contract
-// (KDM-030). Cookie-based: no token is ever read or stored in JS. On success the
-// caller re-probes the session (onAuthed) to enter the app. Also hosts the local
-// e-mail/parola registration, which creates a DISABLED office pending admin approval.
+// Local password sign-in / registration for the .NET auth contract (KDM-030). Cookie-based:
+// no token is ever read or stored in JS. Driven by `mode`: "login" shows the credentials +
+// TOTP flow (onAuthed on success); "register" shows the new-office form (Ad Soyad, büro, e-posta,
+// parola + confirm + strength), which creates a DISABLED office pending platform-admin approval.
 
 type Step = "credentials" | "totp" | "register" | "registered";
 
@@ -24,8 +24,16 @@ function passwordStrength(pw: string): number {
   return Math.min(score, 4);
 }
 
-export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
-  const [step, setStep] = useState<Step>("credentials");
+export function LocalAuth({
+  mode,
+  onAuthed,
+  onSwitchToLogin,
+}: {
+  mode: "login" | "register";
+  onAuthed: () => void;
+  onSwitchToLogin: () => void;
+}) {
+  const [step, setStep] = useState<Step>(mode === "register" ? "register" : "credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -87,13 +95,6 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
     }
   }
 
-  function switchTo(next: Step) {
-    setError(null);
-    setPassword("");
-    setConfirm("");
-    setStep(next);
-  }
-
   if (step === "registered") {
     return (
       <div className="flex flex-col gap-2 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-3">
@@ -103,7 +104,7 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
         </p>
         <button
           type="button"
-          onClick={() => switchTo("credentials")}
+          onClick={onSwitchToLogin}
           className="self-start text-[13px] font-medium text-emerald-700 underline-offset-2 hover:underline"
         >
           Girişe dön
@@ -146,7 +147,7 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
     );
   }
 
-  if (step === "register") {
+  if (mode === "register") {
     return (
       <form onSubmit={submitRegister} className="flex flex-col gap-3" aria-labelledby="register-heading">
         <h2 id="register-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
@@ -188,10 +189,7 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
                 <span
                   key={i}
                   className="h-1 flex-1 rounded-full"
-                  style={{
-                    backgroundColor:
-                      i < strength ? STRENGTH_COLORS[strength] : "#e4e4e7",
-                  }}
+                  style={{ backgroundColor: i < strength ? STRENGTH_COLORS[strength] : "#e4e4e7" }}
                 />
               ))}
             </div>
@@ -226,13 +224,6 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
         >
           {busy ? "Kaydediliyor…" : "Kayıt ol"}
         </Button>
-        <button
-          type="button"
-          onClick={() => switchTo("credentials")}
-          className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
-        >
-          Zaten hesabınız var mı? Giriş yapın
-        </button>
       </form>
     );
   }
@@ -262,13 +253,6 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
       <Button type="submit" disabled={busy || !email.trim() || !password}>
         {busy ? "Giriş yapılıyor…" : "Giriş yap"}
       </Button>
-      <button
-        type="button"
-        onClick={() => switchTo("register")}
-        className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
-      >
-        Hesabınız yok mu? Yeni büro kaydı
-      </button>
     </form>
   );
 }

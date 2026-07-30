@@ -49,10 +49,10 @@ export function Signup() {
     return (
       <AuthShell>
         <div className="mb-1">
-          <Brand subtitle="Demo talebiniz alındı" />
+          <Brand subtitle="Kaydınız alındı" />
         </div>
         <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-3 text-[13px] text-emerald-800">
-          Talebiniz alındı. Ekibimiz onayladığında <span className="font-medium">{email}</span> ile
+          Kaydınız alındı. Yönetici onayladığında <span className="font-medium">{email}</span> ile
           Google’dan giriş yapabilirsiniz.
         </div>
         <button
@@ -68,11 +68,11 @@ export function Signup() {
   return (
     <AuthShell>
       <div className="mb-1">
-        <Brand subtitle="Demo talep edin" />
+        <Brand subtitle="Yeni büro kaydı" />
       </div>
       <p className="m-0 text-[13px] text-zinc-500">
-        <span className="font-medium text-zinc-700">{email}</span> ile giriş yaptınız. Büronuz için
-        demo talep edin; onaylandığında giriş yapabilirsiniz.
+        <span className="font-medium text-zinc-700">{email}</span> ile giriş yaptınız. Büronuzu
+        kaydedin; yönetici onayından sonra giriş yapabilirsiniz.
       </p>
       <form onSubmit={submit} className="mt-1 flex flex-col gap-2">
         <input
@@ -95,7 +95,7 @@ export function Signup() {
           disabled={busy || !officeName.trim()}
           className="mt-1 rounded-[10px] bg-zinc-900 px-4 py-3 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {busy ? "Gönderiliyor…" : "Demo talep et"}
+          {busy ? "Gönderiliyor…" : "Kaydı tamamla"}
         </button>
         {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
       </form>

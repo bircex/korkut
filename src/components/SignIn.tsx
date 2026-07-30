@@ -7,10 +7,12 @@ import { AuthShell, Brand } from "../ui";
 // The callback bounces failures back here with ?error=<code>; map each to a friendly line.
 const ERROR_MESSAGES: Record<string, string> = {
   verify: "Google doğrulaması tamamlanamadı. Lütfen tekrar deneyin.",
-  no_office: "Bu Google hesabına bağlı aktif bir ofis yok. Ofis sahibinizden davet isteyin.",
+  no_office: "Bu Google hesabına bağlı aktif bir ofis yok. Kayıt olun ya da ofis sahibinizden davet isteyin.",
   invite: "Davet kullanılamadı: süresi dolmuş, kullanılmış ya da farklı bir e-posta için olabilir.",
   pending: "Büronuz henüz onaylanmadı. Onaylandığında giriş yapabilirsiniz.",
 };
+
+type Mode = "login" | "register";
 
 export function SignIn() {
   // Read the callback's ?error once at mount (a lazy initializer avoids a cascading render).
@@ -19,7 +21,9 @@ export function SignIn() {
     if (!code) return null;
     return ERROR_MESSAGES[code] ?? "Giriş yapılamadı. Lütfen tekrar deneyin.";
   });
-  const [demoOn, setDemoOn] = useState(false);
+  // Registration (self-serve signup) is enabled by the same flag that used to gate the demo.
+  const [registerEnabled, setRegisterEnabled] = useState(false);
+  const [mode, setMode] = useState<Mode>("login");
 
   useEffect(() => {
     // Drop the ?error param so a refresh is clean (side effect only — no setState here).
@@ -28,9 +32,13 @@ export function SignIn() {
     }
     api
       .config()
-      .then((c) => setDemoOn(c.demo_enabled))
+      .then((c) => setRegisterEnabled(c.demo_enabled))
       .catch(() => {});
   }, []);
+
+  const isRegister = mode === "register";
+  const googleClasses =
+    "flex items-center justify-center gap-2.5 rounded-[10px] border border-zinc-300 bg-white px-4 py-3 text-[15px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-50";
 
   return (
     <AuthShell>
@@ -46,7 +54,12 @@ export function SignIn() {
           migration flag so Python mode stays Google-only (behaviour parity). */}
       {API_MODE === "dotnet" && (
         <>
-          <LocalAuth onAuthed={signalAuthChanged} />
+          <LocalAuth
+            key={mode}
+            mode={mode}
+            onAuthed={signalAuthChanged}
+            onSwitchToLogin={() => setMode("login")}
+          />
           <div className="my-1 flex items-center gap-3 text-[12px] text-zinc-500">
             <span className="h-px flex-1 bg-zinc-200" aria-hidden />
             veya
@@ -54,21 +67,19 @@ export function SignIn() {
           </div>
         </>
       )}
-      <a
-        href={api.googleSignInUrl()}
-        className="mt-1 flex items-center justify-center gap-2.5 rounded-[10px] border border-zinc-300 bg-white px-4 py-3 text-[15px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-50"
-      >
+      {/* One Google button per view: login shows "giriş yap", register shows "kayıt ol". */}
+      <a href={api.googleSignInUrl()} className={`mt-1 ${googleClasses}`}>
         <GoogleMark />
-        Google ile giriş yap
+        {isRegister ? "Google ile kayıt ol" : "Google ile giriş yap"}
       </a>
-      {demoOn && (
-        <a
-          href={api.googleSignInUrl()}
-          className="flex items-center justify-center gap-2.5 rounded-[10px] border border-zinc-300 bg-white px-4 py-3 text-[15px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-50"
+      {registerEnabled && (
+        <button
+          type="button"
+          onClick={() => setMode(isRegister ? "login" : "register")}
+          className="mt-1 text-center text-[13px] font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
         >
-          <GoogleMark />
-          Google ile kayıt ol
-        </a>
+          {isRegister ? "Zaten hesabınız var mı? Giriş yapın" : "Hesabınız yok mu? Yeni büro kaydı"}
+        </button>
       )}
     </AuthShell>
   );
