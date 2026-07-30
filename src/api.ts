@@ -514,6 +514,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify(recovery ? { recovery_code: code } : { code }),
     }),
+  // Local e-mail/password self-serve registration. Creates a DISABLED office pending a
+  // platform admin; the owner can sign in only after approval.
+  register: (email: string, password: string, office_name: string) =>
+    probe<{ pending: boolean }>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, office_name }),
+    }),
   requestPasswordReset: (email: string) =>
     probe<{ ok: boolean }>("/api/auth/password/reset-request", {
       method: "POST",

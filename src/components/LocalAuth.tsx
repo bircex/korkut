@@ -4,14 +4,16 @@ import { Button, Field } from "../a11y";
 
 // Local password sign-in + policy-driven TOTP challenge for the .NET auth contract
 // (KDM-030). Cookie-based: no token is ever read or stored in JS. On success the
-// caller re-probes the session (onAuthed) to enter the app.
+// caller re-probes the session (onAuthed) to enter the app. Also hosts the local
+// e-mail/parola registration, which creates a DISABLED office pending admin approval.
 
-type Step = "credentials" | "totp";
+type Step = "credentials" | "totp" | "register" | "registered";
 
 export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
   const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [officeName, setOfficeName] = useState("");
   const [code, setCode] = useState("");
   const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,20 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
     }
   }
 
+  async function submitRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await api.register(email.trim(), password, officeName.trim());
+      setStep("registered");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Kayıt oluşturulamadı");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submitTotp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -47,6 +63,30 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function switchTo(next: Step) {
+    setError(null);
+    setPassword("");
+    setStep(next);
+  }
+
+  if (step === "registered") {
+    return (
+      <div className="flex flex-col gap-2 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-3">
+        <h2 className="m-0 text-[15px] font-semibold text-emerald-800">Kaydınız alındı</h2>
+        <p className="m-0 text-[13px] text-emerald-700">
+          Büronuz yönetici onayı bekliyor. Onaylandığında bu e-posta ve parolayla giriş yapabilirsiniz.
+        </p>
+        <button
+          type="button"
+          onClick={() => switchTo("credentials")}
+          className="self-start text-[13px] font-medium text-emerald-700 underline-offset-2 hover:underline"
+        >
+          Girişe dön
+        </button>
+      </div>
+    );
   }
 
   if (step === "totp") {
@@ -83,6 +123,49 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
     );
   }
 
+  if (step === "register") {
+    return (
+      <form onSubmit={submitRegister} className="flex flex-col gap-3" aria-labelledby="register-heading">
+        <h2 id="register-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
+          Yeni büro kaydı
+        </h2>
+        <Field
+          label="Büro adı"
+          value={officeName}
+          onChange={(e) => setOfficeName(e.target.value)}
+          required
+        />
+        <Field
+          label="E-posta"
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Field
+          label="Parola (en az 10 karakter)"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={error ?? undefined}
+          required
+        />
+        <Button type="submit" disabled={busy || !email.trim() || password.length < 10 || !officeName.trim()}>
+          {busy ? "Kaydediliyor…" : "Kayıt ol"}
+        </Button>
+        <button
+          type="button"
+          onClick={() => switchTo("credentials")}
+          className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+        >
+          Zaten hesabınız var mı? Giriş yapın
+        </button>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={submitCredentials} className="flex flex-col gap-3" aria-labelledby="login-heading">
       <h2 id="login-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
@@ -108,6 +191,13 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
       <Button type="submit" disabled={busy || !email.trim() || !password}>
         {busy ? "Giriş yapılıyor…" : "Giriş yap"}
       </Button>
+      <button
+        type="button"
+        onClick={() => switchTo("register")}
+        className="text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+      >
+        Hesabınız yok mu? Yeni büro kaydı
+      </button>
     </form>
   );
 }
