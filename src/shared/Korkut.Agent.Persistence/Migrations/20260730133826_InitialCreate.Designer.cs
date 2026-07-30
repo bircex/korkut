@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Korkut.Agent.Persistence.Migrations
 {
     [DbContext(typeof(AgentDbContext))]
-    [Migration("20260721171110_LlmCalls")]
-    partial class LlmCalls
+    [Migration("20260730133826_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,84 +26,7 @@ namespace Korkut.Agent.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ChatMessageEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("conversation_id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("role");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "ConversationId", "CreatedAt")
-                        .HasDatabaseName("ix_chat_messages_conversation");
-
-                    b.ToTable("chat_messages", "korkut_agent");
-                });
-
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.ConversationEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<Guid?>("MatterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("matter_id");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OfficeId", "UpdatedAt")
-                        .HasDatabaseName("ix_conversations_office_updated");
-
-                    b.ToTable("conversations", "korkut_agent");
-                });
-
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.DocumentVersionEntity", b =>
+            modelBuilder.Entity("Korkut.Agent.Drafting.Entities.DocumentVersion", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -144,7 +67,7 @@ namespace Korkut.Agent.Persistence.Migrations
                     b.ToTable("document_versions", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.GeneratedDocumentEntity", b =>
+            modelBuilder.Entity("Korkut.Agent.Drafting.Entities.GeneratedDocument", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -204,7 +127,7 @@ namespace Korkut.Agent.Persistence.Migrations
                     b.ToTable("generated_documents", "korkut_agent");
                 });
 
-            modelBuilder.Entity("Korkut.Infrastructure.Persistence.Entities.LlmCallEntity", b =>
+            modelBuilder.Entity("Korkut.Agent.Ledger.Entities.LlmCall", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -241,6 +164,12 @@ namespace Korkut.Agent.Persistence.Migrations
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid")
                         .HasColumnName("office_id");
+
+                    b.Property<string>("PromptFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("prompt_fingerprint");
 
                     b.Property<int>("PromptTokens")
                         .HasColumnType("integer")

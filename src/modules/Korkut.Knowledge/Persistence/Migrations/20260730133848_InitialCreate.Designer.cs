@@ -13,8 +13,8 @@ using Pgvector;
 namespace Korkut.Knowledge.Persistence.Migrations
 {
     [DbContext(typeof(KnowledgeDbContext))]
-    [Migration("20260721150824_KnowledgeInitial")]
-    partial class KnowledgeInitial
+    [Migration("20260730133848_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

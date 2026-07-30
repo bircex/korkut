@@ -142,7 +142,7 @@ public class TenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFi
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT INTO korkut.matter_hearings (id, office_id, matter_id, scheduled_at) VALUES (@id, @off, @m, now())";
+        cmd.CommandText = "INSERT INTO korkut.matter_hearings (id, office_id, matter_id, scheduled_at, reminder_status) VALUES (@id, @off, @m, now(), 'pending')";
         cmd.Parameters.AddWithValue("id", Guid.CreateVersion7());
         cmd.Parameters.AddWithValue("off", _officeB);   // office B
         cmd.Parameters.AddWithValue("m", _matterA);     // but matter belongs to A

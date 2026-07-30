@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Pgvector;
 
@@ -7,7 +7,7 @@ using Pgvector;
 namespace Korkut.Knowledge.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class KnowledgeInitial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -43,10 +43,15 @@ namespace Korkut.Knowledge.Persistence.Migrations
                 table: "chunks",
                 columns: new[] { "office_id", "document_id", "ordinal" });
 
-            // The least-privileged app role (created cluster-wide by the operational TenancyRls
-            // migration) can use this schema; RLS + FORCE + tenant policy on every table, keyed on
-            // the shared app.current_office GUC (same as the operational + agent schemas).
-            migrationBuilder.Sql("GRANT USAGE ON SCHEMA korkut_knowledge TO korkut_app;");
+            // Tenant isolation on the korkut_knowledge schema, keyed on the shared app.current_office
+            // GUC. korkut_app is created by the operational migration; guard for order-independence.
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'korkut_app') THEN
+                        CREATE ROLE korkut_app NOLOGIN;
+                    END IF;
+                END $$;
+                GRANT USAGE ON SCHEMA korkut_knowledge TO korkut_app;");
             foreach (var table in new[] { "chunks" })
             {
                 migrationBuilder.Sql($@"
