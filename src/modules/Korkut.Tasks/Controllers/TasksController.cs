@@ -6,15 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Korkut.Tasks.Controllers;
 
-/// <summary>Office tasks (görevler). Forwards to <see cref="ITaskService"/>, maps Result to HTTP.</summary>
+/// <summary>Office agenda records (görev / hatırlatma / randevu). Forwards to
+/// <see cref="ITaskService"/>, maps Result to HTTP.</summary>
 [ApiController]
 [Route("api/tasks")]
 public sealed class TasksController(ITaskService tasks) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
-    public async Task<IActionResult> List([FromQuery] Guid? matterId, CancellationToken ct)
-        => (await tasks.ListAsync(matterId, ct)).ToListActionResult();
+    public async Task<IActionResult> List(
+        [FromQuery] Guid? matterId, [FromQuery] string? status, [FromQuery] string? category, CancellationToken ct)
+        => (await tasks.ListAsync(matterId, status, category, ct)).ToListActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]
@@ -23,8 +25,8 @@ public sealed class TasksController(ITaskService tasks) : ControllerBase
 
     [HttpPatch("{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]
-    public async Task<IActionResult> SetStatus(Guid id, [FromBody] UpdateTaskStatusRequest body, CancellationToken ct)
-        => (await tasks.SetStatusAsync(id, body, ct)).ToActionResult();
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskRequest body, CancellationToken ct)
+        => (await tasks.UpdateAsync(id, body, ct)).ToActionResult();
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Permissions.MattersWrite)]

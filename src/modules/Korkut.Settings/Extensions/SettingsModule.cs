@@ -20,5 +20,7 @@ public sealed class SettingsModule : IModule
         services.AddScoped<IStyleService, StyleService>();
         services.AddScoped<IMemoryRepository, MemoryRepository>();
         services.AddScoped<IMemoryService, MemoryService>();
+        services.AddScoped<IMailPreferenceRepository, MailPreferenceRepository>();
+        services.AddScoped<IMailPreferenceService, MailPreferenceService>();
     }
 }

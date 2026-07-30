@@ -14,37 +14,37 @@ namespace Korkut.Infrastructure.Persistence;
 /// </summary>
 public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) : DbContext(options)
 {
-    public DbSet<Korkut.Jobs.Entities.OutboxMessage> Outbox => Set<Korkut.Jobs.Entities.OutboxMessage>();
+    public DbSet<Jobs.Entities.OutboxMessage> Outbox => Set<Korkut.Jobs.Entities.OutboxMessage>();
 
-    public DbSet<Korkut.Jobs.Entities.InboxEntry> Inbox => Set<Korkut.Jobs.Entities.InboxEntry>();
+    public DbSet<Jobs.Entities.InboxEntry> Inbox => Set<Korkut.Jobs.Entities.InboxEntry>();
 
-    public DbSet<Korkut.Jobs.Entities.JobAuditRecord> JobAudit => Set<Korkut.Jobs.Entities.JobAuditRecord>();
+    public DbSet<Jobs.Entities.JobAuditRecord> JobAudit => Set<Korkut.Jobs.Entities.JobAuditRecord>();
 
-    public DbSet<Korkut.Organization.Entities.Office> Offices => Set<Korkut.Organization.Entities.Office>();
+    public DbSet<Organization.Entities.Office> Offices => Set<Korkut.Organization.Entities.Office>();
 
-    public DbSet<Korkut.Matters.Entities.Matter> Matters => Set<Korkut.Matters.Entities.Matter>();
+    public DbSet<Matters.Entities.Matter> Matters => Set<Korkut.Matters.Entities.Matter>();
 
-    public DbSet<Korkut.Hearings.Entities.Hearing> MatterHearings => Set<Korkut.Hearings.Entities.Hearing>();
+    public DbSet<Hearings.Entities.Hearing> MatterHearings => Set<Korkut.Hearings.Entities.Hearing>();
 
-    public DbSet<Korkut.Audit.AuditEvent> AuditEvents => Set<Korkut.Audit.AuditEvent>();
+    public DbSet<Audit.AuditEvent> AuditEvents => Set<Korkut.Audit.AuditEvent>();
 
-    public DbSet<Korkut.Organization.Entities.User> Users => Set<Korkut.Organization.Entities.User>();
+    public DbSet<Organization.Entities.User> Users => Set<Korkut.Organization.Entities.User>();
 
-    public DbSet<Korkut.Organization.Entities.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.Entities.PasswordResetToken>();
+    public DbSet<Organization.Entities.PasswordResetToken> PasswordResetTokens => Set<Korkut.Organization.Entities.PasswordResetToken>();
 
-    public DbSet<Korkut.Organization.Entities.Invite> Invites => Set<Korkut.Organization.Entities.Invite>();
+    public DbSet<Organization.Entities.Invite> Invites => Set<Korkut.Organization.Entities.Invite>();
 
-    public DbSet<Korkut.Organization.Entities.UserTotp> UserTotps => Set<Korkut.Organization.Entities.UserTotp>();
+    public DbSet<Organization.Entities.UserTotp> UserTotps => Set<Korkut.Organization.Entities.UserTotp>();
 
-    public DbSet<Korkut.Organization.Entities.RecoveryCode> RecoveryCodes => Set<Korkut.Organization.Entities.RecoveryCode>();
+    public DbSet<Organization.Entities.RecoveryCode> RecoveryCodes => Set<Korkut.Organization.Entities.RecoveryCode>();
 
-    public DbSet<Korkut.Organization.Entities.RefreshToken> RefreshTokens => Set<Korkut.Organization.Entities.RefreshToken>();
+    public DbSet<Organization.Entities.RefreshToken> RefreshTokens => Set<Korkut.Organization.Entities.RefreshToken>();
 
-    public DbSet<Korkut.Organization.Entities.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.Entities.OfficeRole>();
+    public DbSet<Organization.Entities.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.Entities.OfficeRole>();
 
-    public DbSet<Korkut.Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
+    public DbSet<Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
 
-    public DbSet<Korkut.Courts.Entities.Court> Courts => Set<Korkut.Courts.Entities.Court>();
+    public DbSet<Courts.Entities.Court> Courts => Set<Korkut.Courts.Entities.Court>();
 
     public DbSet<Korkut.Matters.Entities.Party> Parties => Set<Korkut.Matters.Entities.Party>();
 
@@ -66,18 +66,13 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Correspondence.Entities.CorrespondenceItem> Correspondence => Set<Korkut.Correspondence.Entities.CorrespondenceItem>();
 
-    public DbSet<Korkut.Calendar.Entities.CalendarEvent> CalendarEvents => Set<Korkut.Calendar.Entities.CalendarEvent>();
-
     public DbSet<Korkut.Settings.Entities.Persona> Personas => Set<Korkut.Settings.Entities.Persona>();
 
     public DbSet<Korkut.Settings.Entities.StyleProfile> StyleProfiles => Set<Korkut.Settings.Entities.StyleProfile>();
 
     public DbSet<Korkut.Settings.Entities.MemoryItem> MemoryItems => Set<Korkut.Settings.Entities.MemoryItem>();
 
-    public DbSet<Korkut.Channels.Entities.Channel> Channels => Set<Korkut.Channels.Entities.Channel>();
-
-
-    public DbSet<Korkut.Outbox.Entities.OutboundMessage> OutboundMessages => Set<Korkut.Outbox.Entities.OutboundMessage>();
+    public DbSet<Korkut.Settings.Entities.MailPreference> MailPreferences => Set<Korkut.Settings.Entities.MailPreference>();
 
     // Chat is a general operational feature (the conversation thread is a first-class product
     // surface, not agent plumbing) so it lives in the operational DB and can relate to
@@ -120,17 +115,13 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Correspondence.Entities.CorrespondenceConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Calendar.Entities.CalendarEventConfiguration());
-
         modelBuilder.ApplyConfiguration(new Korkut.Settings.Entities.PersonaConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Settings.Entities.StyleProfileConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Settings.Entities.MemoryItemConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Channels.Entities.ChannelConfiguration());
-
-        modelBuilder.ApplyConfiguration(new Korkut.Outbox.Entities.OutboundMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Settings.Entities.MailPreferenceConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Chat.Entities.ConversationConfiguration());
 

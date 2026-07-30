@@ -91,7 +91,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
         Guid id;
         await using (var db = pg.NewContext())
         {
-            var task = new WorkTask(_office, "Dilekçe yaz", null, null, null, null, DateTimeOffset.UtcNow);
+            var task = new WorkTask(_office, "gorev", "Dilekçe yaz", null, null, null, null, null, null, null, true, null, null, null, DateTimeOffset.UtcNow);
             db.Tasks.Add(task);
             await db.SaveChangesAsync();
             id = task.Id;

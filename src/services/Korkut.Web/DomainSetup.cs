@@ -3,6 +3,7 @@ using Korkut.Contract.Templates;
 using Korkut.Contract.Export;
 using Korkut.Core;
 using Korkut.Ai;
+using Korkut.Mail;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Notes.Extensions;
 using Korkut.Reports.Extensions;
@@ -25,6 +26,11 @@ public static class DomainSetup
             ?? throw new InvalidOperationException("KORKUT_DB_URL is required for the API (the least-privileged app-role connection).");
 
         services.AddKorkutPersistence(connection);
+
+        // Transactional e-mail: the single operator SMTP account (KORKUT_SMTP_*). Binds the
+        // Contract IEmailSender to the MailKit sender, or a log-only no-op when SMTP is unset.
+        // Registered here so every host that wires the domain (API + Agent host) can send mail.
+        services.AddKorkutMail(configuration);
 
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, Korkut.Audit.AuditLog>();
@@ -65,7 +71,6 @@ public static class DomainSetup
         // Reports module (read-only office dashboard). It composes the overview from each domain's
         // Contract lookup, so there is no host-level aggregation query to register.
         new ReportsModule().Register(services, configuration);
-        new Korkut.Channels.Extensions.ChannelsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());
@@ -73,8 +78,6 @@ public static class DomainSetup
         services.AddScoped<Korkut.Contract.Coverage.ICoverageService, Korkut.Coverage.CoverageService>();
         services.AddSingleton<Korkut.Contract.Export.IDocumentExporter, Korkut.Documents.Export.MarkdownExporter>();
         services.AddScoped<Korkut.Contract.Export.IExportService, Korkut.Documents.Export.ExportService>();
-        // Outbox review queue (module; distinct from the jobs-side IOutboxStore/OutboxStore that dispatches/sends).
-        new Korkut.Outbox.Extensions.OutboxModule().Register(services, configuration);
         // Members (owner-safety lives in the service). The user aggregate + IUserRepository are
         // owned by the Organization module (registered above).
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).

@@ -98,6 +98,15 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      # Transactional e-mail: single operator SMTP account. Unset -> mail is logged, not sent.
+      KORKUT_SMTP_HOST: ${KORKUT_SMTP_HOST:-smtp.gmail.com}
+      KORKUT_SMTP_PORT: ${KORKUT_SMTP_PORT:-587}
+      KORKUT_SMTP_USER: ${KORKUT_SMTP_USER:-}
+      KORKUT_SMTP_PASSWORD: ${KORKUT_SMTP_PASSWORD:-}
+      KORKUT_SMTP_FROM: ${KORKUT_SMTP_FROM:-}
+      KORKUT_SMTP_FROM_NAME: ${KORKUT_SMTP_FROM_NAME:-Korkut}
+      KORKUT_ADMIN_NOTIFY_EMAIL: ${KORKUT_ADMIN_NOTIFY_EMAIL:-}
+      KORKUT_APP_URL: ${KORKUT_APP_URL:-}
     depends_on:
       migrator:
         condition: service_completed_successfully

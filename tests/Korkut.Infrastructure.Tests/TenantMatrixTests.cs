@@ -28,12 +28,6 @@ using Korkut.Notes.Entities;
 using Korkut.Finance;
 using Korkut.Correspondence;
 using Korkut.Correspondence.Entities;
-using Korkut.Calendar;
-using Korkut.Calendar.Entities;
-using Korkut.Outbox;
-using Korkut.Outbox.Entities;
-using Korkut.Channels;
-using Korkut.Channels.Entities;
 using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Documents;
@@ -88,7 +82,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Clients.Add(client);
             db.Courts.Add(new Court(office, $"court{i}", DateTimeOffset.UtcNow));
             db.Parties.Add(new Party(office, matterId, "plaintiff", $"p{i}", DateTimeOffset.UtcNow));
-            db.Tasks.Add(new WorkTask(office, $"t{i}", null, null, null, null, DateTimeOffset.UtcNow));
+            db.Tasks.Add(new WorkTask(office, "gorev", $"t{i}", null, null, null, null, null, null, null, true, null, null, null, DateTimeOffset.UtcNow));
             db.Deadlines.Add(new Deadline(office, $"d{i}", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, null, DateTimeOffset.UtcNow));
             db.CommunicationNotes.Add(new CommunicationNote(office, $"n{i}", "note", null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             var document = new Document(office, null, "korkut-quarantine", $"{office:N}/doc{i}", "f.pdf", "application/pdf", 10, "abc", DateTimeOffset.UtcNow);
@@ -100,10 +94,8 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Invoices.Add(new Invoice(office, 100m, 0.20m, null, null, null, "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Expenses.Add(new Expense(office, 10m, null, null, null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             db.Correspondence.Add(new CorrespondenceItem(office, "incoming", $"e{i}", null, null, null, null, DateTimeOffset.UtcNow));
-            db.CalendarEvents.Add(new CalendarEvent(office, "appointment", $"cal{i}", DateTimeOffset.UtcNow, null, false, null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
             db.StyleProfiles.Add(new StyleProfile(office, StyleScope.User, Guid.CreateVersion7()));
             db.MemoryItems.Add(new MemoryItem(office, $"mem{i}", "note", null, true, DateTimeOffset.UtcNow));
-            db.OutboundMessages.Add(new OutboundMessage(office, "email", $"to{i}@x.test", "s", "b", null, DateTimeOffset.UtcNow));
             // Chat (conversations + messages) is a general operational feature and lives here.
             // generated_documents/document_versions live in the Agent DB — seeded + isolation-
             // checked in AgentTenantIsolationTests.
@@ -113,7 +105,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             if (i == 0)
             {
                 db.Personas.Add(new Persona(office)); // one per office
-                db.Channels.Add(new Channel(office, "email")); // one per office (per-kind PK)
+                db.MailPreferences.Add(new MailPreference(office)); // one per office
             }
         }
 

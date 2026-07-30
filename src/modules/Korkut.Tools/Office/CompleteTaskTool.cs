@@ -32,7 +32,7 @@ public sealed class CompleteTaskTool(ITaskService tasks) : IAgentTool
             return ToolResult.Error("'task_id' gereklidir.");
         }
 
-        var result = await tasks.SetStatusAsync(taskId, new UpdateTaskStatusRequest { Status = "done" }, ct);
+        var result = await tasks.UpdateAsync(taskId, new UpdateTaskRequest { Status = "done" }, ct);
         if (!result.IsSuccess)
         {
             return ToolResult.Error(result.Error!.Detail);

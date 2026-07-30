@@ -3,8 +3,10 @@ using Korkut.Organization.Repositories;
 using Korkut.Organization.Entities;
 using Korkut.Organization;
 using Korkut.Contract;
+using Korkut.Contract.Notifications;
 using Korkut.Contract.Organization;
 using Korkut.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Korkut.Organization.Services;
 
@@ -13,14 +15,17 @@ namespace Korkut.Organization.Services;
 /// a hash, and returned exactly once. Accepting runs in the scope of the office the token resolved
 /// to, not the caller's — there is no caller. Every call RETURNS a <see cref="Result"/>.
 /// </summary>
-public sealed class InviteService(
+public sealed partial class InviteService(
     IInviteRepository repository,
     IInviteResolver resolver,
     IUserRepository users,
     ITokenHasher tokenHasher,
+    IEmailSender emailSender,
+    MailLinks mailLinks,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
-    IClock clock) : IInviteService
+    IClock clock,
+    ILogger<InviteService> logger) : IInviteService
 {
     /// <summary>How long a fresh invite stays valid.</summary>
     private TimeSpan Lifetime { get; init; } = TimeSpan.FromDays(7);
@@ -29,18 +34,53 @@ public sealed class InviteService(
         => InScopeAsync(currentUser.OfficeId, async office =>
             Result<IReadOnlyList<InviteResponse>>.Ok((await repository.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
 
-    public Task<Result<InviteCreatedResponse>> CreateAsync(CreateInviteRequest request, CancellationToken ct = default)
-        => InScopeAsync(currentUser.OfficeId, async office =>
+    public async Task<Result<InviteCreatedResponse>> CreateAsync(CreateInviteRequest request, CancellationToken ct = default)
+    {
+        var email = request.Email!.Trim().ToLowerInvariant();
+        var rawToken = tokenHasher.NewRawToken();
+        var result = await InScopeAsync(currentUser.OfficeId, async office =>
         {
-            var rawToken = tokenHasher.NewRawToken();
             var now = clock.UtcNow;
             var invite = new Invite(
-                office, request.Email!.Trim().ToLowerInvariant(), request.Role ?? Roles.Lawyer,
+                office, email, request.Role ?? Roles.Lawyer,
                 tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now);
             await repository.AddAsync(invite, ct);
             return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(
-                invite.Id, invite.Email, invite.Role, Redeemed: false, rawToken, $"/?invite={rawToken}", invite.ExpiresAt));
+                invite.Id, invite.Email, invite.Role, Redeemed: false, rawToken, mailLinks.InviteLink(rawToken), invite.ExpiresAt));
         }, ct);
+
+        // Deliver the invite link by e-mail (best-effort: the link is still returned in the
+        // response, so a mail outage never blocks inviting). Sent outside the tenant tx.
+        if (result.IsSuccess)
+        {
+            await SendInviteEmailAsync(email, rawToken, ct);
+        }
+
+        return result;
+    }
+
+    private async Task SendInviteEmailAsync(string address, string rawToken, CancellationToken ct)
+    {
+        var link = mailLinks.InviteLink(rawToken);
+        const string subject = "Korkut'a davet edildiniz";
+        var body =
+            "<p>Merhaba,</p>" +
+            "<p>Bir Korkut ofisine katılmanız için davet edildiniz. Daveti kabul etmek için aşağıdaki bağlantıya tıklayın:</p>" +
+            $"<p><a href=\"{link}\">{link}</a></p>" +
+            "<p>Bu bağlantı sınırlı bir süre geçerlidir.</p>" +
+            "<p>Korkut</p>";
+        try
+        {
+            await emailSender.SendAsync(address, subject, body, ct);
+        }
+        catch (Exception ex)
+        {
+            LogInviteEmailFailed(logger, ex);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to send invite e-mail.")]
+    private static partial void LogInviteEmailFailed(ILogger logger, Exception ex);
 
     public Task<Result> RevokeAsync(Guid inviteId, CancellationToken ct = default)
         => InScopeAsync(currentUser.OfficeId, async office =>

@@ -37,12 +37,10 @@ public static class TenantMatrix
             ["invoices"] = (1, 2),
             ["expenses"] = (1, 2),
             ["correspondence"] = (1, 2),
-            ["calendar_events"] = (1, 2),
             ["office_persona"] = (1, 1), // one persona row per office
             ["style_profiles"] = (1, 2),
             ["memory_items"] = (1, 2),
-            ["channels"] = (1, 1), // one channel row per office (seeded once)
-            ["outbound_messages"] = (1, 2),
+            ["mail_preferences"] = (1, 1), // one mail-preference row per office (seeded once)
             ["conversations"] = (1, 2),
             ["chat_messages"] = (1, 2),
             // generated_documents / document_versions live in the Agent DB (schema korkut_agent)

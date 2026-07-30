@@ -60,5 +60,7 @@
     <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
     <!-- Legal-source tools (Agent/Tools/Law): PDF journal/decision text extraction -->
     <PackageVersion Include="PdfPig" Version="0.1.9" />
+    <!-- Transactional e-mail: system-level SMTP sender (single operator account) -->
+    <PackageVersion Include="MailKit" Version="4.17.0" />
   </ItemGroup>
 </Project>

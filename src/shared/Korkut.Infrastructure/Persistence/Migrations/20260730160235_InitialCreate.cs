@@ -38,55 +38,18 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "calendar_events",
-                schema: "korkut",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    category = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    start_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    end_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    all_day = table.Column<bool>(type: "boolean", nullable: false),
-                    matter_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    client_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    assignee_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    location = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    result = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    rrule = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    remind_before_min = table.Column<int>(type: "integer", nullable: true),
-                    reminder_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_calendar_events", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "channels",
+                name: "mail_preferences",
                 schema: "korkut",
                 columns: table => new
                 {
                     office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    enabled = table.Column<bool>(type: "boolean", nullable: false),
-                    from_address = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: true),
-                    from_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    base_url = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    encrypted_secret = table.Column<string>(type: "text", nullable: true),
-                    linked = table.Column<bool>(type: "boolean", nullable: false),
-                    linked_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    link_code = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
+                    notifications_enabled = table.Column<bool>(type: "boolean", nullable: false),
+                    notify_email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: true),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_channels", x => new { x.office_id, x.kind });
+                    table.PrimaryKey("PK_mail_preferences", x => x.office_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -413,28 +376,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "outbound_messages",
-                schema: "korkut",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    to_addr = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
-                    subject = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    body = table.Column<string>(type: "text", nullable: false),
-                    send_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    error = table.Column<string>(type: "text", nullable: true),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    sent_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_outbound_messages", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "outbox_messages",
                 schema: "korkut",
                 columns: table => new
@@ -540,12 +481,21 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     office_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    category = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     matter_id = table.Column<Guid>(type: "uuid", nullable: true),
                     assignee_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    client_id = table.Column<Guid>(type: "uuid", nullable: true),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     description = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     due_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    end_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    all_day = table.Column<bool>(type: "boolean", nullable: false),
+                    location = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    rrule = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    remind_before_min = table.Column<int>(type: "integer", nullable: true),
+                    reminder_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     completed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -753,12 +703,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 columns: new[] { "office_id", "at" });
 
             migrationBuilder.CreateIndex(
-                name: "ix_calendar_events_office_start",
-                schema: "korkut",
-                table: "calendar_events",
-                columns: new[] { "office_id", "start_at" });
-
-            migrationBuilder.CreateIndex(
                 name: "ix_chat_messages_conversation",
                 schema: "korkut",
                 table: "chat_messages",
@@ -913,12 +857,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_outbound_messages_office_status",
-                schema: "korkut",
-                table: "outbound_messages",
-                columns: new[] { "office_id", "status" });
-
-            migrationBuilder.CreateIndex(
                 name: "ix_outbox_office_key",
                 schema: "korkut",
                 table: "outbox_messages",
@@ -975,6 +913,12 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 columns: new[] { "office_id", "status" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_tasks_office_due",
+                schema: "korkut",
+                table: "tasks",
+                columns: new[] { "office_id", "due_at" });
+
+            migrationBuilder.CreateIndex(
                 name: "ux_user_totp_office_user",
                 schema: "korkut",
                 table: "user_totp",
@@ -1016,11 +960,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
             // on the app.current_office GUC (NULL when unset -> no row matches -> access denied).
             foreach (var table in new[]
             {
-                "calendar_events", "channels", "chat_messages", "clients", "communication_notes",
+                "chat_messages", "clients", "communication_notes",
                 "conversations", "correspondence", "courts", "deadlines", "documents",
                 "document_extractions", "document_relations", "expenses", "invites", "invoices",
-                "matters", "matter_hearings", "memory_items", "office_custom_roles", "office_persona",
-                "outbound_messages", "parties", "password_reset_tokens", "recovery_codes", "refresh_tokens",
+                "mail_preferences", "matters", "matter_hearings", "memory_items", "office_custom_roles", "office_persona",
+                "parties", "password_reset_tokens", "recovery_codes", "refresh_tokens",
                 "style_profiles", "tasks", "user_totp", "users",
             })
             {
@@ -1290,11 +1234,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 schema: "korkut");
 
             migrationBuilder.DropTable(
-                name: "calendar_events",
-                schema: "korkut");
-
-            migrationBuilder.DropTable(
-                name: "channels",
+                name: "mail_preferences",
                 schema: "korkut");
 
             migrationBuilder.DropTable(
@@ -1367,10 +1307,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "offices",
-                schema: "korkut");
-
-            migrationBuilder.DropTable(
-                name: "outbound_messages",
                 schema: "korkut");
 
             migrationBuilder.DropTable(

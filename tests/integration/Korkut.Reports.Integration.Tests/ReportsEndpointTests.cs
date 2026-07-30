@@ -49,9 +49,9 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
             db.Matters.Add(goneMatter); // excluded
             db.Clients.Add(new Client(office, "C1", "individual", null, null, null, null, null, now));
 
-            db.Tasks.Add(new WorkTask(office, "t-open", null, null, null, null, now));
-            db.Tasks.Add(new WorkTask(office, "t-overdue", null, null, null, now.AddDays(-1), now));
-            var doneTask = new WorkTask(office, "t-done", null, null, null, null, now);
+            db.Tasks.Add(new WorkTask(office, "gorev", "t-open", null, null, null, null, null, null, null, true, null, null, null, now));
+            db.Tasks.Add(new WorkTask(office, "gorev", "t-overdue", null, null, null, null, null, now.AddDays(-1), null, true, null, null, null, now));
+            var doneTask = new WorkTask(office, "gorev", "t-done", null, null, null, null, null, null, null, true, null, null, null, now);
             doneTask.SetStatus("done", now);
             db.Tasks.Add(doneTask);
 

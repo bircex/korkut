@@ -6,6 +6,7 @@
     <Project Path="src/shared/Korkut.Security/Korkut.Security.csproj" />
     <Project Path="src/shared/Korkut.Agent.Persistence/Korkut.Agent.Persistence.csproj" />
     <Project Path="src/shared/Korkut.Ai/Korkut.Ai.csproj" />
+    <Project Path="src/shared/Korkut.Mail/Korkut.Mail.csproj" />
     <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/" />
@@ -14,9 +15,7 @@
     <Project Path="src/modules/Korkut.Notes/Korkut.Notes.csproj" />
     <Project Path="src/modules/Korkut.Tasks/Korkut.Tasks.csproj" />
     <Project Path="src/modules/Korkut.Deadlines/Korkut.Deadlines.csproj" />
-    <Project Path="src/modules/Korkut.Channels/Korkut.Channels.csproj" />
     <Project Path="src/modules/Korkut.Correspondence/Korkut.Correspondence.csproj" />
-    <Project Path="src/modules/Korkut.Outbox/Korkut.Outbox.csproj" />
     <Project Path="src/modules/Korkut.Audit/Korkut.Audit.csproj" />
     <Project Path="src/modules/Korkut.Calendar/Korkut.Calendar.csproj" />
     <Project Path="src/modules/Korkut.Courts/Korkut.Courts.csproj" />
@@ -66,10 +65,8 @@
     <Project Path="tests/integration/Korkut.Documents.Integration.Tests/Korkut.Documents.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Agent.Ledger.Integration.Tests/Korkut.Agent.Ledger.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Settings.Integration.Tests/Korkut.Settings.Integration.Tests.csproj" />
-    <Project Path="tests/integration/Korkut.Channels.Integration.Tests/Korkut.Channels.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Reports.Integration.Tests/Korkut.Reports.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Calendar.Integration.Tests/Korkut.Calendar.Integration.Tests.csproj" />
-    <Project Path="tests/integration/Korkut.Outbox.Integration.Tests/Korkut.Outbox.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Correspondence.Integration.Tests/Korkut.Correspondence.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Deadlines.Integration.Tests/Korkut.Deadlines.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Tasks.Integration.Tests/Korkut.Tasks.Integration.Tests.csproj" />

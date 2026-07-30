@@ -24,9 +24,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Notes\Korkut.Notes.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Tasks\Korkut.Tasks.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Deadlines\Korkut.Deadlines.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Channels\Korkut.Channels.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Correspondence\Korkut.Correspondence.csproj" />
-    <ProjectReference Include="..\..\modules\Korkut.Outbox\Korkut.Outbox.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Calendar\Korkut.Calendar.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Courts\Korkut.Courts.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Matters\Korkut.Matters.csproj" />

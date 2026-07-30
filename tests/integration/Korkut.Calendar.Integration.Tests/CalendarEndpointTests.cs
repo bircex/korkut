@@ -12,9 +12,10 @@ using Korkut.Deadlines.Entities;
 namespace Korkut.Calendar.Tests;
 
 /// <summary>
-/// Calendar + agenda over the real API + real PostgreSQL with RLS (endpoint migration,
-/// slice 12). Covers calendar_events CRUD, the unified read view (which also surfaces
-/// real hearings + deadlines read-only), the agenda look-ahead, and tenant isolation.
+/// Calendar + agenda over the real API + real PostgreSQL with RLS. The calendar owns no table:
+/// editable records (görev/hatırlatma/randevu) are created through <c>/api/tasks</c> and surface
+/// on the calendar; hearings + deadlines surface read-only from their own domains. Covers the
+/// unified read view, the agenda look-ahead, and tenant isolation.
 /// </summary>
 [Collection(IntegrationSuite.Name)]
 public class CalendarEndpointTests(KorkutApiFactory factory)
@@ -38,25 +39,33 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
     }
 
     [Fact]
-    public async Task Appointment_crud_roundtrip()
+    public async Task Appointment_created_as_task_surfaces_on_calendar_editable()
     {
         var (office, user) = await factory.SeedOfficeAsync();
         var client = factory.ClientFor(office, user);
 
-        var created = await (await client.PostAsJsonAsync("/api/calendar/events",
-            new { category = "appointment", title = "Müvekkil görüşmesi", startAt = "2026-08-01T10:00:00+00:00", location = "Büro", remindBeforeMin = 30 }, Json))
+        // Editable calendar records are agenda records owned by Tasks.
+        var created = await (await client.PostAsJsonAsync("/api/tasks",
+            new { category = "randevu", title = "Müvekkil görüşmesi", dueDate = "2026-08-01T10:00:00+00:00", allDay = false, location = "Büro", remindBeforeMin = 30 }, Json))
             .Content.ReadFromJsonAsync<JsonElement>(Json);
         var id = created.GetProperty("id").GetGuid();
-        Assert.True(created.GetProperty("editable").GetBoolean());
-        Assert.Equal("appointment", created.GetProperty("category").GetString());
+        Assert.Equal("randevu", created.GetProperty("category").GetString());
         Assert.Equal(30, created.GetProperty("remind_before_min").GetInt32());
 
-        var patch = await client.PatchAsJsonAsync($"/api/calendar/events/{id}", new { status = "done", result = "Tamamlandı" }, Json);
+        // It shows up on the unified calendar view, marked editable.
+        var events = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events", Json))!.Items;
+        var entry = events!.Single(e => e.GetProperty("id").GetGuid() == id);
+        Assert.True(entry.GetProperty("editable").GetBoolean());
+        Assert.Equal("randevu", entry.GetProperty("category").GetString());
+        Assert.Equal(30, entry.GetProperty("remind_before_min").GetInt32());
+
+        // Edited + deleted through the Tasks API.
+        var patch = await client.PatchAsJsonAsync($"/api/tasks/{id}", new { status = "done" }, Json);
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
         Assert.Equal("done", (await patch.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("status").GetString());
 
-        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/calendar/events/{id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/calendar/events/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/tasks/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/tasks/{id}")).StatusCode);
     }
 
     [Fact]
@@ -79,9 +88,6 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         // Category filter narrows correctly.
         var onlyHearings = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events?category=hearing", Json))!.Items;
         Assert.All(onlyHearings!, e => Assert.Equal("hearing", e.GetProperty("category").GetString()));
-
-        // A read-only hearing cannot be patched/deleted through the calendar (its own domain owns it).
-        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/calendar/events/{hearingId}")).StatusCode);
     }
 
     [Fact]
@@ -107,14 +113,14 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         var clientA = factory.ClientFor(officeA, userA);
         var clientB = factory.ClientFor(officeB, userB);
 
-        var created = await (await clientA.PostAsJsonAsync("/api/calendar/events",
-            new { category = "reminder", title = "Gizli", startAt = "2026-08-01T09:00:00+00:00" }, Json))
+        var created = await (await clientA.PostAsJsonAsync("/api/tasks",
+            new { category = "hatirlatma", title = "Gizli", dueDate = "2026-08-01T09:00:00+00:00" }, Json))
             .Content.ReadFromJsonAsync<JsonElement>(Json);
         var id = created.GetProperty("id").GetGuid();
 
         var listB = (await clientB.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events", Json))!.Items;
         Assert.DoesNotContain(listB!, e => e.GetProperty("id").GetGuid() == id);
-        Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/calendar/events/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/tasks/{id}")).StatusCode);
     }
 
     [Fact]

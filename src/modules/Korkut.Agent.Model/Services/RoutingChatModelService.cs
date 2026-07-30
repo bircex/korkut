@@ -42,13 +42,3 @@ internal sealed class RoutingChatModelService : IChatModelService
             : throw new ModelUnavailableException($"Sağlayıcı kayıtlı değil: {selection.Provider}");
     }
 }
-
-/// <summary>Fallback used when no provider is configured — every call reports unavailable (503).</summary>
-internal sealed class DisabledChatModelService : IChatModelService
-{
-    public Task<ChatReply> CompleteAsync(ChatRequest request, CancellationToken ct = default) =>
-        throw new ModelUnavailableException("Yapay zeka sağlayıcısı yapılandırılmamış.");
-
-    public IAsyncEnumerable<ChatStreamEvent> StreamAsync(ChatRequest request, CancellationToken ct = default) =>
-        throw new ModelUnavailableException("Yapay zeka sağlayıcısı yapılandırılmamış.");
-}

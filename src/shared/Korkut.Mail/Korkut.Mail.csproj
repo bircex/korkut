@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Korkut.Mail: the system-level transactional e-mail sender. Korkut sends mail from ONE
+       operator-controlled account (KORKUT_SMTP_*); there is no per-office e-mail integration.
+       A leaf library (like Korkut.Pii): the composition root calls AddKorkutMail to bind the
+       Contract IEmailSender to the MailKit SMTP sender, or a log-only no-op when SMTP is unset. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+</Project>
