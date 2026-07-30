@@ -21,6 +21,14 @@ public sealed class AgentUnitOfWork(AgentDbContext agent, Microsoft.EntityFramew
         return result;
     }
 
+    public async Task<T> InOfficeScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
+    {
+        await using var scope = await office.BeginTenantScopeAsync(officeId, ct);
+        var result = await work();
+        await scope.CommitAsync(ct);
+        return result;
+    }
+
     public async Task<T> InDualScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {
         await using var agentScope = await agent.BeginTenantScopeAsync(officeId, ct);

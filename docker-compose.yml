@@ -19,6 +19,9 @@ x-app-env: &app-env
 services:
   postgres:
     image: pgvector/pgvector:pg16
+    # Headroom above the pgbouncer pool (50 + reserve) for the direct admin/migrator connections and
+    # future host replicas; the default 100 is tight once the pool grows.
+    command: ["postgres", "-c", "max_connections=200"]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -47,7 +50,13 @@ services:
       POOL_MODE: transaction
       AUTH_TYPE: scram-sha-256
       MAX_CLIENT_CONN: "1000"
-      DEFAULT_POOL_SIZE: "25"
+      # Server-side pool to Postgres. Turns hold connections only for short read/write bursts now
+      # (the model loop runs outside any transaction), so this many backends serve far more concurrent
+      # turns. Keep DEFAULT_POOL_SIZE + RESERVE below Postgres max_connections.
+      DEFAULT_POOL_SIZE: "50"
+      MIN_POOL_SIZE: "10"
+      RESERVE_POOL_SIZE: "10"
+      RESERVE_POOL_TIMEOUT: "3"
     depends_on:
       postgres:
         condition: service_healthy

@@ -40,6 +40,17 @@ internal sealed class DraftingService(
         }
 
         var system = await BuildDraftingPromptAsync(officeId, userId, ct);
+
+        // Fold in the type's format-aware guide (ordered sections + HMK-critical flags) and, for
+        // petitions, the case-specific intake block (inherited jurisdiction/deadlines/evidence +
+        // the type's mandatory questions/checks) so drafting follows the Turkish legal format and
+        // never silently drops a critical section. Null when no petition type is targeted.
+        var guide = string.IsNullOrWhiteSpace(petitionType) ? null : catalog.DraftingInstruction(petitionType!);
+        if (!string.IsNullOrWhiteSpace(guide))
+        {
+            system += "\n\nBu belge tipi için format ve olay yönergesi (uy):\n" + guide;
+        }
+
         var prompt = new StringBuilder();
         prompt.AppendLine("Aşağıdaki belgeyi verilen talimata göre güncelle ve YALNIZCA güncellenmiş belgeyi markdown olarak döndür.");
         prompt.AppendLine().AppendLine("--- Mevcut belge ---");

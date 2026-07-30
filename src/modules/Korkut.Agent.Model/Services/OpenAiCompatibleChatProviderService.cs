@@ -34,6 +34,18 @@ public sealed class OpenAiCompatibleChatProviderService(
             .Select(t => new ToolInvocation(t.Id!, t.Function!.Name, ParseArguments(t.Function.Arguments)))
             .ToList();
 
+        // Some models (deepseek-chat) emit their tool call as TEXT instead of structured tool_calls.
+        // Salvage it so the tool actually runs and the raw markup never reaches the user.
+        if ((toolCalls is null || toolCalls.Count == 0) && LeakedToolCallParser.LooksLikeToolCall(text))
+        {
+            var salvaged = LeakedToolCallParser.Parse(text!).ToList();
+            text = LeakedToolCallParser.Strip(text!);
+            if (salvaged.Count > 0)
+            {
+                toolCalls = salvaged;
+            }
+        }
+
         if (string.IsNullOrEmpty(text) && (toolCalls is null || toolCalls.Count == 0))
         {
             throw new ModelUnavailableException("Yapay zeka sağlayıcısı boş yanıt döndürdü.");
@@ -55,6 +67,9 @@ public sealed class OpenAiCompatibleChatProviderService(
         // Tool calls stream incrementally (id + name in the first delta, arguments across many),
         // keyed by index; assembled and emitted once at the end so the loop can run them.
         var toolAcc = new SortedDictionary<int, ToolAccumulator>();
+        // Guards the content channel: holds text back just long enough to tell a normal answer from a
+        // leaked text tool-call block (deepseek-chat), so the raw markup is never streamed to the user.
+        var gate = new ContentGate();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
@@ -113,7 +128,10 @@ public sealed class OpenAiCompatibleChatProviderService(
 
             if (!string.IsNullOrEmpty(frame.Delta))
             {
-                yield return ChatStreamEvent.Text(frame.Delta);
+                foreach (var chunk in gate.Push(frame.Delta))
+                {
+                    yield return ChatStreamEvent.Text(chunk);
+                }
             }
         }
 
@@ -121,6 +139,19 @@ public sealed class OpenAiCompatibleChatProviderService(
             .Where(a => a.Id is not null && a.Name is not null)
             .Select(a => new ToolInvocation(a.Id!, a.Name!, ParseArguments(a.Args.ToString())))
             .ToList();
+
+        // Flush the gate: a held leaked block becomes real tool calls (never shown); otherwise any
+        // remaining buffered prose is emitted as the tail of the answer.
+        var (tail, leaked) = gate.Finish();
+        if (calls.Count == 0 && leaked is not null && LeakedToolCallParser.LooksLikeToolCall(leaked))
+        {
+            calls = LeakedToolCallParser.Parse(leaked).ToList();
+        }
+        else if (!string.IsNullOrEmpty(tail))
+        {
+            yield return ChatStreamEvent.Text(tail);
+        }
+
         if (calls.Count > 0)
         {
             yield return ChatStreamEvent.Tools(calls);
@@ -134,6 +165,86 @@ public sealed class OpenAiCompatibleChatProviderService(
         public string? Id;
         public string? Name;
         public System.Text.StringBuilder Args { get; } = new();
+    }
+
+    /// <summary>
+    /// Streams normal answer text live but withholds a leaked text tool-call block — even when it
+    /// appears AFTER real prose (deepseek-chat often writes a sentence, then the block). It keeps the
+    /// full content, streams everything up to the first tool-call marker (retaining a small guard tail
+    /// so a marker split across deltas is still caught), and captures from the marker on. At the end a
+    /// captured block that really parses is handed to the tool parser; a false positive is emitted as
+    /// text after all, so genuine content is never dropped.
+    /// </summary>
+    private sealed class ContentGate
+    {
+        // Retain this many trailing chars unemitted so a marker straddling two deltas is still found
+        // (the markers we key off — "tool_calls" / "invoke name=" — are shorter than this).
+        private const int Guard = 16;
+
+        private readonly System.Text.StringBuilder _content = new();
+        private int _emitted;
+        private int _blockStart = -1;
+
+        public IEnumerable<string> Push(string delta)
+        {
+            _content.Append(delta);
+            if (_blockStart >= 0)
+            {
+                yield break; // already capturing a leaked block
+            }
+
+            var s = _content.ToString();
+            var mark = EarliestMarker(s);
+            if (mark >= 0)
+            {
+                var open = s.LastIndexOf('<', Math.Min(mark, s.Length - 1));
+                _blockStart = open >= 0 ? open : mark;
+                if (_blockStart > _emitted)
+                {
+                    var prose = s[_emitted.._blockStart];
+                    _emitted = _blockStart;
+                    if (prose.Length > 0)
+                    {
+                        yield return prose;
+                    }
+                }
+
+                yield break;
+            }
+
+            var safeEnd = s.Length - Guard;
+            if (safeEnd > _emitted)
+            {
+                var chunk = s[_emitted..safeEnd];
+                _emitted = safeEnd;
+                yield return chunk;
+            }
+        }
+
+        public (string Tail, string? Leaked) Finish()
+        {
+            var s = _content.ToString();
+            if (_blockStart >= 0)
+            {
+                var block = s[_blockStart..];
+                // Genuine leak → parse it; false positive (marker word in prose) → show the held text.
+                return LeakedToolCallParser.LooksLikeToolCall(block) ? (string.Empty, block) : (s[_emitted..], null);
+            }
+
+            return (_emitted < s.Length ? s[_emitted..] : string.Empty, null);
+        }
+
+        private static int EarliestMarker(string s)
+        {
+            var a = s.IndexOf("invoke name=", StringComparison.Ordinal);
+            var b = s.IndexOf("tool_calls", StringComparison.Ordinal);
+            if (a < 0)
+            {
+                return b;
+            }
+
+            return b < 0 ? a : Math.Min(a, b);
+        }
     }
 
     private sealed record ToolFragment(int Index, string? Id, string? Name, string? ArgsFragment);
