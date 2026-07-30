@@ -24,7 +24,7 @@ public sealed class MemberService(
         => InScopeAsync(async office =>
         {
             var member = new User(
-                office, request.Email!.Trim().ToLowerInvariant(), request.Role!,
+                office, request.Email!.Trim().ToLowerInvariant(), request.Role ?? Roles.Lawyer,
                 request.FullName?.Trim(), request.BarRegistryNo?.Trim(), clock.UtcNow);
             await repository.AddAsync(member, ct);
             return Result<MemberResponse>.Ok(ToResponse(member));
@@ -74,7 +74,7 @@ public sealed class MemberService(
         }, ct);
 
     private MemberResponse ToResponse(User u) =>
-        new(u.Id, u.Email, u.FullName, u.BarRegistryNo, u.Role, u.TwoFactorEnabled,
+        new(u.Id, u.Email, u.Email, u.FullName, u.BarRegistryNo, u.Role, u.TwoFactorEnabled,
             u.IsActive, u.IsBound, u.Id == currentUser.UserId, u.CreatedAt);
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

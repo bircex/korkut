@@ -386,8 +386,7 @@
           }
         },
         "required": [
-          "email",
-          "role"
+          "email"
         ],
         "type": "object"
       },
@@ -505,11 +504,17 @@
               "null",
               "string"
             ]
+          },
+          "username": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "required": [
-          "email",
-          "role"
+          "email"
         ],
         "type": "object"
       },

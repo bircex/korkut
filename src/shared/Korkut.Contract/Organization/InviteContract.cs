@@ -2,14 +2,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Korkut.Contract.Organization;
 
-/// <summary>A pending invitation in an owner's listing. Carries no token material.</summary>
-public sealed record InviteResponse(Guid Id, string Email, string Role, DateTimeOffset ExpiresAt, DateTimeOffset CreatedAt);
+/// <summary>An invitation in an owner's listing. Carries no token material. <see cref="Redeemed"/>
+/// is true once accepted.</summary>
+public sealed record InviteResponse(
+    Guid Id, string Email, string Role, bool Redeemed, DateTimeOffset ExpiresAt, DateTimeOffset CreatedAt);
 
 /// <summary>
 /// A freshly created invitation. This is the ONLY time the raw token is returned — it is stored
-/// hashed — so the caller must build the invite link from this response.
+/// hashed. <see cref="Path"/> is the ready-to-share relative link the UI appends to its origin.
 /// </summary>
-public sealed record InviteCreatedResponse(Guid Id, string Email, string Role, string Token, DateTimeOffset ExpiresAt);
+public sealed record InviteCreatedResponse(
+    Guid Id, string Email, string Role, bool Redeemed, string Token, string Path, DateTimeOffset ExpiresAt);
 
 /// <summary>The outcome of accepting an invitation: which e-mail may now sign in.</summary>
 public sealed record InviteAcceptedResponse(bool Ok, string Email);
@@ -21,7 +24,7 @@ public sealed record CreateInviteRequest
     [EmailAddress(ErrorMessage = "Geçerli bir e-posta girin.")]
     public string? Email { get; init; }
 
-    [Required(ErrorMessage = "Rol zorunludur.")]
+    /// <summary>Optional; defaults to "lawyer" when omitted.</summary>
     [RegularExpression("owner|lawyer", ErrorMessage = "role 'owner' veya 'lawyer' olmalıdır.")]
     public string? Role { get; init; }
 }

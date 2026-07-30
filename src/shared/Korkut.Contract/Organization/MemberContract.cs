@@ -4,7 +4,7 @@ namespace Korkut.Contract.Organization;
 
 /// <summary>A member as the office listing shows them, including whether this row is the caller.</summary>
 public sealed record MemberResponse(
-    Guid Id, string Email, string? FullName, string? BarRegistryNo, string Role,
+    Guid Id, string Username, string Email, string? FullName, string? BarRegistryNo, string Role,
     bool TwoFactorEnabled, bool IsActive, bool Bound, bool IsSelf, DateTimeOffset CreatedAt);
 
 /// <summary>Body for adding a member to the office.</summary>
@@ -14,7 +14,12 @@ public sealed record CreateMemberRequest
     [EmailAddress(ErrorMessage = "Geçerli bir e-posta girin.")]
     public string? Email { get; init; }
 
-    [Required(ErrorMessage = "Rol zorunludur.")]
+    /// <summary>Display handle from the UI form; the office identity is the e-mail, so this is not persisted
+    /// (Username mirrors the e-mail, matching the profile contract). Accepted so the form body validates.</summary>
+    [MaxLength(200)]
+    public string? Username { get; init; }
+
+    /// <summary>Optional; defaults to "lawyer" when the form omits it.</summary>
     [RegularExpression("owner|lawyer", ErrorMessage = "role 'owner' veya 'lawyer' olmalıdır.")]
     public string? Role { get; init; }
 

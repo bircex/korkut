@@ -35,10 +35,11 @@ public sealed class InviteService(
             var rawToken = tokenHasher.NewRawToken();
             var now = clock.UtcNow;
             var invite = new Invite(
-                office, request.Email!.Trim().ToLowerInvariant(), request.Role!,
+                office, request.Email!.Trim().ToLowerInvariant(), request.Role ?? Roles.Lawyer,
                 tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now);
             await repository.AddAsync(invite, ct);
-            return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(invite.Id, invite.Email, invite.Role, rawToken, invite.ExpiresAt));
+            return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(
+                invite.Id, invite.Email, invite.Role, Redeemed: false, rawToken, $"/?invite={rawToken}", invite.ExpiresAt));
         }, ct);
 
     public Task<Result> RevokeAsync(Guid inviteId, CancellationToken ct = default)
@@ -82,7 +83,7 @@ public sealed class InviteService(
     }
 
     private static InviteResponse ToResponse(Invite i) =>
-        new(i.Id, i.Email, i.Role, i.ExpiresAt, i.CreatedAt);
+        new(i.Id, i.Email, i.Role, i.AcceptedAt is not null, i.ExpiresAt, i.CreatedAt);
 
     private Task<T> InScopeAsync<T>(Guid officeId, Func<Guid, Task<T>> work, CancellationToken ct)
         => unitOfWork.InTenantScopeAsync(officeId, () => work(officeId), ct);
