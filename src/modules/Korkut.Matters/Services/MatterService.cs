@@ -33,7 +33,7 @@ internal sealed class MatterService(
             var hearingRows = await hearings.ListForMatterAsync(office, id, ct);
             return Result<MatterDetailResponse>.Ok(new MatterDetailResponse(
                 matter.Id, matter.Title, matter.ClientId, matter.Status, matter.CourtNameSnapshot,
-                matter.CreatedAt, hearingRows));
+                matter.FileNo, matter.CaseType, matter.Counterparty, matter.CreatedAt, hearingRows));
         }, ct);
 
     public Task<Result<MatterResponse>> CreateAsync(CreateMatterRequest request, CancellationToken ct = default)
@@ -46,6 +46,21 @@ internal sealed class MatterService(
 
             var matter = new Matter(office, request.Title!.Trim(), request.ClientId, request.CourtId, courtName, clock.UtcNow);
             await matters.AddAsync(matter, ct);
+            return Result<MatterResponse>.Ok(ToResponse(matter));
+        }, ct);
+
+    public Task<Result<MatterResponse>> UpdateAsync(Guid id, UpdateMatterRequest request, CancellationToken ct = default)
+        => InScopeAsync(async office =>
+        {
+            var matter = await matters.FindForUpdateAsync(office, id, ct);
+            if (matter is null)
+            {
+                return Result<MatterResponse>.NotFound("Dosya bulunamadı.");
+            }
+
+            matter.Update(request.Title?.Trim(), request.FileNo?.Trim(), request.CaseType?.Trim(),
+                request.Counterparty?.Trim(), request.Status);
+            await matters.SaveChangesAsync(ct);
             return Result<MatterResponse>.Ok(ToResponse(matter));
         }, ct);
 
@@ -63,5 +78,5 @@ internal sealed class MatterService(
     }
 
     private static MatterResponse ToResponse(Matter m) =>
-        new(m.Id, m.Title, m.ClientId, m.Status, m.CourtNameSnapshot, m.CreatedAt);
+        new(m.Id, m.Title, m.ClientId, m.Status, m.CourtNameSnapshot, m.FileNo, m.CaseType, m.Counterparty, m.CreatedAt);
 }

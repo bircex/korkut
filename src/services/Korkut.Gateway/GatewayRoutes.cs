@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Korkut.Gateway;
@@ -17,12 +16,11 @@ public static class GatewayRoutes
     public const string AuthenticatedPolicy = "authenticated";
 
     private const string AgentCluster = "agent";
+    
     private const string ApiCluster = "api";
 
     public static IReadOnlyList<RouteConfig> Routes()
     {
-        // Drafting sub-actions live on the Agent, but /api/documents (upload/download/links) is
-        // operational — so these are matched by method + exact sub-path, ahead of the API catch-all.
         RouteConfig Agent(string id, string path, string? methods = null) => new()
         {
             RouteId = id,

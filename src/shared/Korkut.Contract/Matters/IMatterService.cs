@@ -15,5 +15,7 @@ public interface IMatterService
 
     Task<Result<MatterResponse>> CreateAsync(CreateMatterRequest request, CancellationToken ct = default);
 
+    Task<Result<MatterResponse>> UpdateAsync(Guid id, UpdateMatterRequest request, CancellationToken ct = default);
+
     Task<Result> DeleteAsync(Guid id, CancellationToken ct = default);
 }

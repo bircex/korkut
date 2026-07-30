@@ -55,6 +55,15 @@ public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    public void Update(string? title, string? fileNo, string? caseType, string? counterparty, string? status)
+    {
+        if (title is not null) Title = title;
+        FileNo = fileNo ?? FileNo;
+        CaseType = caseType ?? CaseType;
+        Counterparty = counterparty ?? Counterparty;
+        if (status is not null) Status = status;
+    }
+
     public void Rename(string title) => Title = title;
 
     /// <summary>Closes the file; reporting counts open vs closed matters.</summary>
