@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>
 /// The base repository contract shared by every Agent repository. Tenancy is MANDATORY: the caller's

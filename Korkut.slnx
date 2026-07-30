@@ -4,6 +4,7 @@
     <Project Path="src/shared/Korkut.Contract/Korkut.Contract.csproj" />
     <Project Path="src/shared/Korkut.Persistence/Korkut.Persistence.csproj" />
     <Project Path="src/shared/Korkut.Security/Korkut.Security.csproj" />
+    <Project Path="src/shared/Korkut.Agent.Persistence/Korkut.Agent.Persistence.csproj" />
     <Project Path="src/shared/Korkut.Ai/Korkut.Ai.csproj" />
     <Project Path="src/shared/Korkut.Infrastructure/Korkut.Infrastructure.csproj" />
   </Folder>

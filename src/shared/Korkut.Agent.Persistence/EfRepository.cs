@@ -1,8 +1,8 @@
-using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Agent.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Korkut.Core;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>
 /// EF Core base for the Agent DB repositories — the ONLY place a DbContext lives. Bakes in the

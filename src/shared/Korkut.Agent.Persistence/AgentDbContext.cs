@@ -1,7 +1,7 @@
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Persistence.Agent;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>
 /// The Agent DB context — the assistant's private store (generated drafts + versions, and the
@@ -23,7 +23,7 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema(PersistenceSetup.AgentSchema);
+        modelBuilder.HasDefaultSchema(AgentPersistenceSetup.AgentSchema);
 
         modelBuilder.ApplyConfiguration(new Korkut.Agent.Drafting.Entities.GeneratedDocumentConfiguration());
 

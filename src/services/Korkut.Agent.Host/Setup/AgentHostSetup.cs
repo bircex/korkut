@@ -11,7 +11,7 @@ using Korkut.Agent.Drafting.Extensions;
 using Korkut.Agent.Ledger;
 using Korkut.Agent.Model.Extensions;
 using Korkut.Contract.Agent;
-using Korkut.Infrastructure.Agent.Persistence;
+using Korkut.Agent.Persistence;
 using Korkut.Tools;
 using Korkut.Tools.Core;
 using Microsoft.Extensions.DependencyInjection;

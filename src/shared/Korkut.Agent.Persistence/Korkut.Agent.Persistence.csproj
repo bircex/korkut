@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Agent DB persistence: the assistant's private store (schema korkut_agent) — its DbContext,
+       migration chain, the Agent repository base + concrete repos, and the dual-scope unit of work.
+       The Agent-plane analogue of the operational persistence kernel; sits above the Agent modules
+       (references their entities/ports) and depends on no operational host. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Drafting\Korkut.Agent.Drafting.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Agent.Ledger\Korkut.Agent.Ledger.csproj" />
+  </ItemGroup>
+</Project>

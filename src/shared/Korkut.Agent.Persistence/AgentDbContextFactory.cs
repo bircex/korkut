@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Korkut.Infrastructure.Persistence.Agent;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>
 /// Design-time factory so `dotnet ef migrations` can build the Agent context without a
@@ -17,8 +17,8 @@ public sealed class AgentDbContextFactory : IDesignTimeDbContextFactory<AgentDbC
             ?? "Host=localhost;Port=5432;Database=korkut;Username=korkut_migrator;Password=placeholder";
 
         var options = new DbContextOptionsBuilder<AgentDbContext>()
-            .UseNpgsql(PersistenceSetup.ToNpgsql(connection), npgsql =>
-                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.AgentSchema))
+            .UseNpgsql(AgentPersistenceSetup.ToNpgsql(connection), npgsql =>
+                npgsql.MigrationsHistoryTable(AgentPersistenceSetup.MigrationsHistoryTable, AgentPersistenceSetup.AgentSchema))
             .Options;
 
         return new AgentDbContext(options);

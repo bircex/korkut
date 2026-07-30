@@ -1,9 +1,9 @@
-using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Agent.Persistence;
 using Korkut.Agent.Ledger;
 using Korkut.Agent.Ledger.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>EF adapter over the Agent DB <c>llm_calls</c> ledger (RLS-scoped by the surrounding unit of work).</summary>
 public sealed class LlmCallRepository(AgentDbContext db) : EfRepository<LlmCall>(db), ILlmCallRepository

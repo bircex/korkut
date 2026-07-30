@@ -1,5 +1,5 @@
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Agent.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
@@ -47,7 +47,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         var options = new DbContextOptionsBuilder<AgentDbContext>()
             .UseNpgsql(connectionString, npgsql =>
-                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.AgentSchema))
+                npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, AgentPersistenceSetup.AgentSchema))
             .Options;
         return new AgentDbContext(options);
     }

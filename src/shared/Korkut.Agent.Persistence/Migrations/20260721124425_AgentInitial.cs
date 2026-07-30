@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Korkut.Infrastructure.Persistence.Agent.Migrations
+namespace Korkut.Agent.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AgentInitial : Migration

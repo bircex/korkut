@@ -39,7 +39,7 @@ public class AgentTenantIsolationTests(PostgresFixture pg) : IClassFixture<Postg
         await SeedAsync(db, _b, 2);
     }
 
-    private static async Task SeedAsync(Korkut.Infrastructure.Persistence.Agent.AgentDbContext db, Guid office, int n)
+    private static async Task SeedAsync(Korkut.Agent.Persistence.AgentDbContext db, Guid office, int n)
     {
         for (var i = 0; i < n; i++)
         {

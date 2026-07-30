@@ -17,5 +17,6 @@
     <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />
       <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
       <ProjectReference Include="..\..\shared\Korkut.Ai\Korkut.Ai.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Agent.Persistence\Korkut.Agent.Persistence.csproj" />
   </ItemGroup>
 </Project>

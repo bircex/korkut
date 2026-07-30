@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Korkut.Infrastructure.Persistence.Agent.Migrations
+namespace Korkut.Agent.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class LlmCallPromptFingerprint : Migration

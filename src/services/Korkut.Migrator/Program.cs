@@ -4,7 +4,7 @@
 // Applies BOTH schemas: the operational context and the Agent context (korkut_agent).
 
 using Korkut.Infrastructure.Persistence;
-using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Agent.Persistence;
 using Korkut.Knowledge;
 using Korkut.Knowledge.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +36,7 @@ static AgentDbContext BuildAgentContext()
 
     var options = new DbContextOptionsBuilder<AgentDbContext>()
         .UseNpgsql(PersistenceSetup.ToNpgsql(connection), npgsql =>
-            npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, PersistenceSetup.AgentSchema))
+            npgsql.MigrationsHistoryTable(PersistenceSetup.MigrationsHistoryTable, AgentPersistenceSetup.AgentSchema))
         .Options;
     return new AgentDbContext(options);
 }

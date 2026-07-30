@@ -12,9 +12,6 @@ public static class PersistenceSetup
     public const string MigrationsHistoryTable = "__ef_migrations_history";
     public const string Schema = "korkut";
 
-    /// <summary>The Agent DB's own schema (own migration chain + RLS), separate from the operational schema.</summary>
-    public const string AgentSchema = "korkut_agent";
-
     /// <summary>
     /// Register the DbContext + EF-backed job stores. Migrations are never applied
     /// here — the API/Worker run under the least-privileged app role and must not
@@ -38,20 +35,6 @@ public static class PersistenceSetup
         // the Jobs outbox (so the Documents module never references Jobs). Lives here beside the
         // other outbox stores.
         services.AddScoped<Korkut.Contract.Documents.IDocumentIndexPublisher, Korkut.Jobs.Persistence.IndexOutboxService>();
-        return services;
-    }
-
-    /// <summary>
-    /// Register the Agent DB context (assistant's private store, schema <c>korkut_agent</c>).
-    /// Its own migration-history table lives in that schema, so it never collides with the
-    /// operational chain even when the two share a database. Migrations are applied only by
-    /// Korkut.Migrator, never on startup.
-    /// </summary>
-    public static IServiceCollection AddKorkutAgentPersistence(this IServiceCollection services, string connectionString)
-    {
-        services.AddDbContext<Agent.AgentDbContext>(options =>
-            options.UseNpgsql(ToNpgsql(connectionString), npgsql =>
-                npgsql.MigrationsHistoryTable(MigrationsHistoryTable, AgentSchema)));
         return services;
     }
 

@@ -1,11 +1,11 @@
 using Korkut.Agent.Drafting.Repositories;
-using Korkut.Infrastructure.Persistence.Agent;
+using Korkut.Agent.Persistence;
 using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Agent.Persistence;
+namespace Korkut.Agent.Persistence;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="IDraftDocumentRepository"/>. Accepting a pending edit
