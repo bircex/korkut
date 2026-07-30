@@ -17,7 +17,7 @@ public sealed class MattersController(IMatterService matters) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List(CancellationToken ct)
-        => (await matters.ListAsync(ct)).ToActionResult();
+        => (await matters.ListAsync(ct)).ToPagedActionResult();
 
     [HttpGet("{id:guid}")]
     [Authorize(Policy = Permissions.MattersRead)]

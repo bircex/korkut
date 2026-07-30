@@ -18,7 +18,7 @@ public sealed class FinanceController(IFinanceService finance) : ControllerBase
     [HttpGet("invoices")]
     [Authorize(Policy = Permissions.BillingRead)]
     public async Task<IActionResult> ListInvoices(CancellationToken ct)
-        => (await finance.ListInvoicesAsync(ct)).ToActionResult();
+        => (await finance.ListInvoicesAsync(ct)).ToListActionResult();
 
     [HttpPost("invoices")]
     [Authorize(Policy = Permissions.BillingWrite)]
@@ -39,7 +39,7 @@ public sealed class FinanceController(IFinanceService finance) : ControllerBase
     [HttpGet("expenses")]
     [Authorize(Policy = Permissions.BillingRead)]
     public async Task<IActionResult> ListExpenses(CancellationToken ct)
-        => (await finance.ListExpensesAsync(ct)).ToActionResult();
+        => (await finance.ListExpensesAsync(ct)).ToListActionResult();
 
     [HttpPost("expenses")]
     [Authorize(Policy = Permissions.BillingWrite)]

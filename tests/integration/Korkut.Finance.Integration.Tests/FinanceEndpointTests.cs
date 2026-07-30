@@ -36,7 +36,7 @@ public class FinanceEndpointTests(KorkutApiFactory factory)
         Assert.Equal("paid", (await patch.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("status").GetString());
 
         // List reflects it.
-        var list = await client.GetFromJsonAsync<List<JsonElement>>("/api/finance/invoices", Json);
+        var list = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/finance/invoices", Json))!.Items;
         Assert.Contains(list!, i => i.GetProperty("id").GetGuid() == id);
 
         // Delete.
@@ -74,7 +74,7 @@ public class FinanceEndpointTests(KorkutApiFactory factory)
         var id = created.GetProperty("id").GetGuid();
         Assert.Equal(75.50m, created.GetProperty("amount").GetDecimal());
 
-        var list = await client.GetFromJsonAsync<List<JsonElement>>("/api/finance/expenses", Json);
+        var list = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/finance/expenses", Json))!.Items;
         Assert.Contains(list!, e => e.GetProperty("id").GetGuid() == id);
 
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/finance/expenses/{id}")).StatusCode);
@@ -94,7 +94,7 @@ public class FinanceEndpointTests(KorkutApiFactory factory)
         var id = created.GetProperty("id").GetGuid();
 
         // B's list excludes A's invoice, and B cannot patch/delete it (RLS → not found).
-        var listB = await clientB.GetFromJsonAsync<List<JsonElement>>("/api/finance/invoices", Json);
+        var listB = (await clientB.GetFromJsonAsync<Envelope<JsonElement>>("/api/finance/invoices", Json))!.Items;
         Assert.DoesNotContain(listB!, i => i.GetProperty("id").GetGuid() == id);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/finance/invoices/{id}")).StatusCode);
     }

@@ -33,7 +33,7 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
         Assert.Equal("Ahmet Yılmaz", created!.FullName);
 
         // List shows it.
-        var list = await client.GetFromJsonAsync<List<ClientDto>>("/api/clients", Json);
+        var list = (await client.GetFromJsonAsync<Envelope<ClientDto>>("/api/clients", Json))!.Items;
         Assert.Contains(list!, c => c.Id == created.Id);
 
         // Get by id.
@@ -49,7 +49,7 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
         // Delete (soft) → gone from list + 404 on get.
         var del = await client.DeleteAsync($"/api/clients/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
-        var afterList = await client.GetFromJsonAsync<List<ClientDto>>("/api/clients", Json);
+        var afterList = (await client.GetFromJsonAsync<Envelope<ClientDto>>("/api/clients", Json))!.Items;
         Assert.DoesNotContain(afterList!, c => c.Id == created.Id);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/clients/{created.Id}")).StatusCode);
     }
@@ -67,7 +67,7 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
 
         // Office B must NOT see it (RLS) — empty list + 404 on direct get.
         var b = factory.ClientFor(officeB, userB);
-        var bList = await b.GetFromJsonAsync<List<ClientDto>>("/api/clients", Json);
+        var bList = (await b.GetFromJsonAsync<Envelope<ClientDto>>("/api/clients", Json))!.Items;
         Assert.DoesNotContain(bList!, c => c.Id == created!.Id);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/clients/{created!.Id}")).StatusCode);
     }

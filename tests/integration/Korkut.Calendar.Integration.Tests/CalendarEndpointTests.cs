@@ -67,7 +67,7 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         var (matterId, hearingId, deadlineId) = await SeedMatterAgendaAsync(
             office, DateTimeOffset.UtcNow.AddDays(2), DateOnly.FromDateTime(DateTime.UtcNow.AddDays(3)));
 
-        var events = await client.GetFromJsonAsync<List<JsonElement>>("/api/calendar/events", Json);
+        var events = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events", Json))!.Items;
         var hearing = events!.Single(e => e.GetProperty("id").GetGuid() == hearingId);
         var deadline = events!.Single(e => e.GetProperty("id").GetGuid() == deadlineId);
         Assert.Equal("hearing", hearing.GetProperty("category").GetString());
@@ -77,7 +77,7 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         Assert.False(deadline.GetProperty("editable").GetBoolean());
 
         // Category filter narrows correctly.
-        var onlyHearings = await client.GetFromJsonAsync<List<JsonElement>>("/api/calendar/events?category=hearing", Json);
+        var onlyHearings = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events?category=hearing", Json))!.Items;
         Assert.All(onlyHearings!, e => Assert.Equal("hearing", e.GetProperty("category").GetString()));
 
         // A read-only hearing cannot be patched/deleted through the calendar (its own domain owns it).
@@ -112,7 +112,7 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
             .Content.ReadFromJsonAsync<JsonElement>(Json);
         var id = created.GetProperty("id").GetGuid();
 
-        var listB = await clientB.GetFromJsonAsync<List<JsonElement>>("/api/calendar/events", Json);
+        var listB = (await clientB.GetFromJsonAsync<Envelope<JsonElement>>("/api/calendar/events", Json))!.Items;
         Assert.DoesNotContain(listB!, e => e.GetProperty("id").GetGuid() == id);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/calendar/events/{id}")).StatusCode);
     }

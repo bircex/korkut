@@ -34,9 +34,9 @@ public class EvrakEndpointTests(KorkutApiFactory factory)
         await client.PostAsJsonAsync("/api/evrak", new { direction = "outgoing", title = "Dilekçe" }, Json);
 
         // Unfiltered list has both; direction filter narrows to one.
-        var all = await client.GetFromJsonAsync<List<JsonElement>>("/api/evrak", Json);
+        var all = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/evrak", Json))!.Items;
         Assert.Equal(2, all!.Count);
-        var incoming = await client.GetFromJsonAsync<List<JsonElement>>("/api/evrak?direction=incoming", Json);
+        var incoming = (await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/evrak?direction=incoming", Json))!.Items;
         Assert.Single(incoming!);
         Assert.Equal(incId, incoming![0].GetProperty("id").GetGuid());
 
@@ -65,7 +65,7 @@ public class EvrakEndpointTests(KorkutApiFactory factory)
             .Content.ReadFromJsonAsync<JsonElement>(Json);
         var id = created.GetProperty("id").GetGuid();
 
-        var listB = await clientB.GetFromJsonAsync<List<JsonElement>>("/api/evrak", Json);
+        var listB = (await clientB.GetFromJsonAsync<Envelope<JsonElement>>("/api/evrak", Json))!.Items;
         Assert.DoesNotContain(listB!, e => e.GetProperty("id").GetGuid() == id);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/evrak/{id}")).StatusCode);
     }

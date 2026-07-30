@@ -6,6 +6,12 @@ namespace Korkut.Contract;
 /// <summary>The handled-failure body, identical to the rest of the API: <c>{ "detail": "..." }</c>.</summary>
 public sealed record ProblemBody(string Detail);
 
+/// <summary>The list envelope the UI destructures: <c>{ "items": [...] }</c>.</summary>
+public sealed record ListEnvelope<T>(IReadOnlyList<T> Items);
+
+/// <summary>The paged list envelope: <c>{ "items": [...], "total": n }</c>.</summary>
+public sealed record PagedEnvelope<T>(IReadOnlyList<T> Items, int Total);
+
 /// <summary>
 /// Maps a service <see cref="Result"/> / <see cref="Result{T}"/> onto the HTTP contract, so a module
 /// controller stays a pure transport: success yields the value (or 204), and a non-Ok status becomes
@@ -43,4 +49,13 @@ public static class ApiResults
         result.IsSuccess
             ? onSuccess is null ? new OkObjectResult(result.Value) : onSuccess(result.Value!)
             : Failure(result);
+
+    /// <summary>A list result: success -> 200 with <c>{ items }</c>, failure -> { detail }. Matches the
+    /// UI's list-destructuring convention (the same shape as memory/sessions/calendar).</summary>
+    public static IActionResult ToListActionResult<T>(this Result<IReadOnlyList<T>> result) =>
+        result.IsSuccess ? new OkObjectResult(new ListEnvelope<T>(result.Value!)) : Failure(result);
+
+    /// <summary>A paged list result: success -> 200 with <c>{ items, total }</c>, failure -> { detail }.</summary>
+    public static IActionResult ToPagedActionResult<T>(this Result<IReadOnlyList<T>> result) =>
+        result.IsSuccess ? new OkObjectResult(new PagedEnvelope<T>(result.Value!, result.Value!.Count)) : Failure(result);
 }

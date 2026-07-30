@@ -14,7 +14,7 @@ public sealed class TasksController(ITaskService tasks) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List([FromQuery] Guid? matterId, CancellationToken ct)
-        => (await tasks.ListAsync(matterId, ct)).ToActionResult();
+        => (await tasks.ListAsync(matterId, ct)).ToListActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]

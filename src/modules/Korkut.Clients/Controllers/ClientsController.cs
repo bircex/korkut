@@ -18,7 +18,7 @@ public sealed class ClientsController(IClientService clients) : ControllerBase
     [HttpGet]
     [Authorize(Policy = Permissions.ClientsRead)]
     public async Task<IActionResult> List(CancellationToken ct)
-        => (await clients.ListAsync(ct)).ToActionResult();
+        => (await clients.ListAsync(ct)).ToListActionResult();
 
     [HttpGet("{id:guid}")]
     [Authorize(Policy = Permissions.ClientsRead)]

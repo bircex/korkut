@@ -17,7 +17,7 @@ public sealed class CorrespondenceController(ICorrespondenceService corresponden
     [HttpGet]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List([FromQuery] string? direction, CancellationToken ct)
-        => (await correspondence.ListAsync(direction, ct)).ToActionResult();
+        => (await correspondence.ListAsync(direction, ct)).ToListActionResult();
 
     [HttpPost]
     [Authorize(Policy = Permissions.MattersWrite)]

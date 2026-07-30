@@ -20,7 +20,7 @@ public sealed class CalendarController(ICalendarService calendar) : ControllerBa
     public async Task<IActionResult> List(
         [FromQuery] DateTimeOffset? start, [FromQuery] DateTimeOffset? end,
         [FromQuery] string? category, [FromQuery] Guid? matterId, CancellationToken ct)
-        => (await calendar.ListEntriesAsync(start, end, category, matterId, ct)).ToActionResult();
+        => (await calendar.ListEntriesAsync(start, end, category, matterId, ct)).ToListActionResult();
 
     [HttpPost("events")]
     [Authorize(Policy = Permissions.MattersWrite)]
