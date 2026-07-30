@@ -64,14 +64,12 @@ export function SignIn() {
       {demoOn && (
         <a
           href={api.googleSignInUrl()}
-          className="text-center text-[13px] font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+          className="flex items-center justify-center gap-2.5 rounded-[10px] border border-zinc-300 bg-white px-4 py-3 text-[15px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-50"
         >
-          Yeni firma mısınız? Demo talep edin
+          <GoogleMark />
+          Google ile kayıt ol
         </a>
       )}
-      <p className="mt-1 text-center text-[13px] text-zinc-500">
-        Ofisinize davet edildiyseniz davet bağlantısındaki giriş düğmesini kullanın.
-      </p>
     </AuthShell>
   );
 }
