@@ -156,6 +156,14 @@ public sealed class AuthService(
         }
 
         await users.SaveChangesAsync(ct);
+
+        // The password was correct, but a self-serve signup's office stays disabled until a
+        // platform admin approves it — no session is issued while it waits.
+        if (await accounts.IsOfficeDisabledAsync(officeId, ct))
+        {
+            return SignInResult.OfficePending;
+        }
+
         return SignInResult.Success(ToSessionUser(user)!);
     }
 

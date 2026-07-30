@@ -33,4 +33,18 @@ public sealed class AccountLocator(DbContext db) : IAccountLocator
 
         return accounts;
     }
+
+    public async Task<bool> IsOfficeDisabledAsync(Guid officeId, CancellationToken ct = default)
+    {
+        var conn = (NpgsqlConnection)db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+        {
+            await conn.OpenAsync(ct);
+        }
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT korkut.is_office_disabled(@o)";
+        cmd.Parameters.AddWithValue("o", officeId);
+        return (bool)(await cmd.ExecuteScalarAsync(ct))!;
+    }
 }

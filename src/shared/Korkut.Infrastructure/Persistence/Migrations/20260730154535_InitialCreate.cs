@@ -1249,6 +1249,37 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                                 ALTER FUNCTION korkut.provision_office(text, text, text, timestamptz) OWNER TO korkut_resolver;
                                 REVOKE ALL ON FUNCTION korkut.provision_office(text, text, text, timestamptz) FROM PUBLIC;
                                 GRANT EXECUTE ON FUNCTION korkut.provision_office(text, text, text, timestamptz) TO korkut_app;");
+            migrationBuilder.Sql(@"
+                CREATE FUNCTION korkut.provision_office_local(
+                                    p_email text, p_password_hash text, p_office_name text, p_now timestamptz)
+                                RETURNS TABLE(office_id uuid, user_id uuid)
+                                LANGUAGE plpgsql SECURITY DEFINER SET search_path = korkut AS $fn$
+                                DECLARE
+                                    v_office uuid;
+                                    v_user uuid;
+                                BEGIN
+                                    -- Never duplicate an existing e-mail identity.
+                                    IF EXISTS (SELECT 1 FROM korkut.users WHERE lower(email) = lower(p_email)) THEN
+                                        RETURN;
+                                    END IF;
+                
+                                    v_office := gen_random_uuid();
+                                    v_user := gen_random_uuid();
+                
+                                    INSERT INTO korkut.offices (id, name, disabled, require_two_factor, created_at)
+                                        VALUES (v_office, p_office_name, true, false, p_now);
+                                    INSERT INTO korkut.users
+                                        (id, office_id, email, role, password_hash, two_factor_enabled,
+                                         security_stamp, token_epoch, failed_access_count, created_at)
+                                        VALUES (v_user, v_office, lower(p_email), 'owner', p_password_hash, false,
+                                                gen_random_uuid(), 0, 0, p_now);
+                
+                                    RETURN QUERY SELECT v_office, v_user;
+                                END;
+                                $fn$;
+                                ALTER FUNCTION korkut.provision_office_local(text, text, text, timestamptz) OWNER TO korkut_resolver;
+                                REVOKE ALL ON FUNCTION korkut.provision_office_local(text, text, text, timestamptz) FROM PUBLIC;
+                                GRANT EXECUTE ON FUNCTION korkut.provision_office_local(text, text, text, timestamptz) TO korkut_app;");
         }
 
         /// <inheritdoc />

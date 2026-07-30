@@ -11,4 +11,7 @@ public interface IAccountLocator
 {
     /// <summary>Every account with this e-mail, across offices. Empty when there is none.</summary>
     Task<IReadOnlyList<AccountLocation>> FindByEmailAsync(string normalizedEmail, CancellationToken ct = default);
+
+    /// <summary>Whether the office is still disabled (a fresh self-serve signup awaiting a platform admin).</summary>
+    Task<bool> IsOfficeDisabledAsync(Guid officeId, CancellationToken ct = default);
 }

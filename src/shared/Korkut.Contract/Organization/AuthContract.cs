@@ -5,7 +5,7 @@ namespace Korkut.Contract.Organization;
 // ---- Sign-in / session result types ----
 
 /// <summary>How a sign-in attempt ended.</summary>
-public enum AuthOutcome { Success, InvalidCredentials, LockedOut }
+public enum AuthOutcome { Success, InvalidCredentials, LockedOut, OfficePending }
 
 /// <summary>How a password reset ended.</summary>
 public enum ResetOutcome { Success, InvalidOrExpiredToken }
@@ -18,6 +18,10 @@ public sealed record SignInResult(AuthOutcome Outcome, SessionUser? User)
 {
     public static readonly SignInResult InvalidCredentials = new(AuthOutcome.InvalidCredentials, null);
     public static readonly SignInResult LockedOut = new(AuthOutcome.LockedOut, null);
+
+    /// <summary>Credentials were valid, but the office is still disabled (awaiting a platform admin).</summary>
+    public static readonly SignInResult OfficePending = new(AuthOutcome.OfficePending, null);
+
     public static SignInResult Success(SessionUser user) => new(AuthOutcome.Success, user);
 }
 

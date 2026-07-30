@@ -33,6 +33,11 @@ public sealed class AuthController(
             throw ApiException.Locked("Hesap geçici olarak kilitli.");
         }
 
+        if (result.Outcome == AuthOutcome.OfficePending)
+        {
+            throw ApiException.Forbidden("Kaydınız yönetici onayı bekliyor. Onaylandığında giriş yapabilirsiniz.");
+        }
+
         if (result.Outcome != AuthOutcome.Success || result.User is null)
         {
             throw InvalidCredentials();

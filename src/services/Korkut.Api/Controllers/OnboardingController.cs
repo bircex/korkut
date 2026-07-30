@@ -2,9 +2,11 @@ using Korkut.Contract;
 using Korkut.Contract.Organization;
 using Korkut.Api.Auth;
 using Korkut.Security;
+using Korkut.Web;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Korkut.Api.Controllers;
 
@@ -27,6 +29,14 @@ public sealed class OnboardingController(
         var ticket = await ReadTicketAsync() ?? throw ApiException.Unauthorized("Bekleyen bir kayıt bulunamadı.");
         return Ok(new SignupPendingResponse(ticket.Email));
     }
+
+    /// <summary>Local e-mail + password registration (no Google). Creates a disabled office; the
+    /// owner can sign in only after a platform admin enables it. Rate-limited like the other
+    /// sensitive endpoints; the identity here IS the supplied e-mail + password.</summary>
+    [HttpPost("auth/register")]
+    [EnableRateLimiting(WebSetup.SensitivePolicy)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest body, CancellationToken ct)
+        => (await onboarding.RegisterAsync(body, ct)).ToActionResult();
 
     [HttpPost("demo-request")]
     public async Task<IActionResult> RequestDemo([FromBody] DemoRequestRequest body, CancellationToken ct)

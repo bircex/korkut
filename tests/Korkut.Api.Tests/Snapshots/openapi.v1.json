@@ -812,6 +812,37 @@
         ],
         "type": "object"
       },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "office_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "maxLength": "200",
+            "minLength": "10",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "office_name"
+        ],
+        "type": "object"
+      },
       "RequestPasswordResetRequest": {
         "properties": {
           "email": {
@@ -1518,6 +1549,38 @@
         },
         "tags": [
           "Auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Onboarding"
         ]
       }
     },
