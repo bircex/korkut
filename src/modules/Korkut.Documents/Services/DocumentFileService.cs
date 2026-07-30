@@ -4,7 +4,6 @@ using Korkut.Contract.Documents.Requests;
 using Korkut.Contract.Documents.Responses;
 using Korkut.Contract.Documents.Storage;
 using Korkut.Contract.Upload.SafeUpload;
-using Korkut.Documents;
 using Korkut.Documents.Repositories;
 using Korkut.Documents.Entities;
 

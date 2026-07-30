@@ -21,5 +21,6 @@
       <ProjectReference Include="..\..\..\src\modules\Korkut.Tasks\Korkut.Tasks.csproj" />
     <ProjectReference Include="..\..\..\src\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
+      <ProjectReference Include="..\..\..\src\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,5 @@
 using Korkut.Contract.Documents;
 using Korkut.Core;
-using Korkut.Documents;
 using Korkut.Documents.Entities;
 using Korkut.Contract.Documents.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,7 @@ namespace Korkut.Documents.Services;
 /// auditable marker. Legal hold is an absolute veto over both explicit deletes and
 /// retention-driven purges.
 /// </summary>
-public sealed class DocumentLifecycleService(DbContext db, IObjectStoreService storeService, Korkut.Contract.Documents.IDocumentIndexPublisher indexQueue, IClock clock)
+public sealed class DocumentLifecycleService(DbContext db, IObjectStoreService storeService, IDocumentIndexPublisher indexQueue, IClock clock)
     : IDocumentLifecycleService
 {
     /// <summary>
@@ -84,6 +83,7 @@ public sealed class DocumentLifecycleService(DbContext db, IObjectStoreService s
         if (expired.Count > 0)
         {
             var ids = expired.Select(x => x.Id).ToArray();
+            
             await db.Set<Document>()
                 .Where(x => x.OfficeId == officeId && ids.Contains(x.Id))
                 .ExecuteUpdateAsync(

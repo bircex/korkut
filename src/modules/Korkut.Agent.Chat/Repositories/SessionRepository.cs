@@ -1,11 +1,10 @@
-using Korkut.Agent.Chat.Repositories;
 using Korkut.Contract.Agent.Chat;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Infrastructure.Chat;
+namespace Korkut.Agent.Chat.Repositories;
 
 /// <summary>
 /// EF/Postgres adapter for <see cref="ISessionRepository"/> over the operational DB — chat is a
@@ -15,7 +14,7 @@ namespace Korkut.Infrastructure.Chat;
 /// tenancy is enforced by construction on top of RLS. Recency is tracked by
 /// conversations.updated_at, bumped whenever a message is appended.
 /// </summary>
-public sealed class SessionRepository(DbContext db)
+internal sealed class SessionRepository(DbContext db)
     : Repository<Conversation>(db), ISessionRepository
 {
     private DbSet<ConversationMessage> Messages => Db.Set<ConversationMessage>();

@@ -2,7 +2,7 @@ using Korkut.Contract.Audit;
 using Korkut.Contract.Templates;
 using Korkut.Contract.Export;
 using Korkut.Core;
-using Korkut.Infrastructure.Ai;
+using Korkut.Ai;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Notes.Extensions;
 using Korkut.Reports.Extensions;

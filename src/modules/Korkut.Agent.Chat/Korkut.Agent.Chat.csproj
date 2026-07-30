@@ -3,6 +3,9 @@
        SessionService). Calls the Brain, grounds via Knowledge, builds the persona system prompt
        from Settings, and persists turns to the Korkut.Chat store. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\Korkut.Chat\Korkut.Chat.csproj" />
@@ -10,5 +13,6 @@
     <ProjectReference Include="..\Korkut.Agent.Brain\Korkut.Agent.Brain.csproj" />
     <ProjectReference Include="..\Korkut.Settings\Korkut.Settings.csproj" />
     <ProjectReference Include="..\Korkut.Knowledge\Korkut.Knowledge.csproj" />
+      <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
   </ItemGroup>
 </Project>

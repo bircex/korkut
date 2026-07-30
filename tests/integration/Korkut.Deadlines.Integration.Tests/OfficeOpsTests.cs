@@ -1,3 +1,4 @@
+using Korkut.Jobs.Persistence;
 using Korkut.TestSupport;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
@@ -8,7 +9,6 @@ using Korkut.Deadlines;
 using Korkut.Deadlines.Entities;
 using Korkut.Tasks;
 using Korkut.Tasks.Entities;
-using Korkut.Infrastructure.Deadlines;
 
 namespace Korkut.Deadlines.Tests;
 
@@ -40,7 +40,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
         // Due 2026-01-01 in Europe/Istanbul (UTC+3), remind on the day → local midnight
         // is 2025-12-31T21:00:00Z, NOT 2026-01-01T00:00:00Z.
         var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, DateTimeOffset.UtcNow);
-        var instant = DeadlineReminderService.ReminderInstant(deadline);
+        var instant = DeadlineReminderService.ReminderInstant(deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore);
         Assert.Equal(new DateTimeOffset(2025, 12, 31, 21, 0, 0, TimeSpan.Zero), instant);
     }
 
@@ -48,7 +48,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
     public void Reminder_days_before_shifts_the_business_date()
     {
         var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 3, 10), "internal", null, "UTC", 3, DateTimeOffset.UtcNow);
-        var instant = DeadlineReminderService.ReminderInstant(deadline);
+        var instant = DeadlineReminderService.ReminderInstant(deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore);
         Assert.Equal(new DateTimeOffset(2026, 3, 7, 0, 0, 0, TimeSpan.Zero), instant);
     }
 
@@ -67,12 +67,12 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
 
         await using (var db = pg.NewContext())
         {
-            await new DeadlineReminderService(db, new Clock()).EnsureReminderAsync(_office, deadline);
+            await new DeadlineReminderService(db, new Clock()).EnsureReminderAsync(_office, deadline.Id, deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore);
         }
 
         await using (var db = pg.NewContext())
         {
-            await new DeadlineReminderService(db, new Clock()).EnsureReminderAsync(_office, deadline); // again
+            await new DeadlineReminderService(db, new Clock()).EnsureReminderAsync(_office, deadline.Id, deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore); // again
         }
 
         await using var check = pg.NewContext();
@@ -80,7 +80,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
             .Where(x => x.IdempotencyKey == DeadlineReminderService.ReminderKey(deadline.Id)).ToListAsync();
         Assert.Single(reminders);
         // And it was scheduled for the correct tz-aware instant.
-        Assert.Equal(DeadlineReminderService.ReminderInstant(deadline), reminders[0].AvailableAt);
+        Assert.Equal(DeadlineReminderService.ReminderInstant(deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore), reminders[0].AvailableAt);
     }
 
     // --- task lifecycle + tenant isolation (real Postgres) ---

@@ -18,6 +18,7 @@ public static class AgentChatSetup
         services.AddScoped<ISessionChatService, SessionChatService>();
         services.AddScoped<ISessionAppService, SessionAppService>();
         services.AddScoped<IChatAppService, ChatAppService>();
+        services.AddScoped<Korkut.Agent.Chat.Repositories.ISessionRepository, Korkut.Agent.Chat.Repositories.SessionRepository>();
         return services;
     }
 }

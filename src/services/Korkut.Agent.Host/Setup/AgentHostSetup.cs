@@ -12,7 +12,6 @@ using Korkut.Agent.Ledger;
 using Korkut.Agent.Model.Extensions;
 using Korkut.Contract.Agent;
 using Korkut.Infrastructure.Agent.Persistence;
-using Korkut.Infrastructure.Chat;
 using Korkut.Tools;
 using Korkut.Tools.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,7 +34,6 @@ public static class AgentHostSetup
         services.AddKorkutAgentDrafting();
 
         // Agent-DB persistence adapters (bind AgentDbContext / the operational conversation store).
-        services.AddScoped<ISessionRepository, SessionRepository>();
         services.AddScoped<IDraftDocumentRepository, DraftDocumentRepository>();
         services.AddScoped<ILlmCallRepository, LlmCallRepository>();
         services.AddScoped<IAgentUnitOfWork, AgentUnitOfWork>();
