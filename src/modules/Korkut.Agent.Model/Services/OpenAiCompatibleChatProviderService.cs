@@ -52,6 +52,9 @@ public sealed class OpenAiCompatibleChatProviderService(
         using var reader = new StreamReader(stream);
 
         int prompt = 0, completion = 0;
+        // Tool calls stream incrementally (id + name in the first delta, arguments across many),
+        // keyed by index; assembled and emitted once at the end so the loop can run them.
+        var toolAcc = new SortedDictionary<int, ToolAccumulator>();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
@@ -65,7 +68,7 @@ public sealed class OpenAiCompatibleChatProviderService(
                 break;
             }
 
-            (string? delta, int? p, int? c) frame;
+            StreamFrame frame;
             try
             {
                 frame = ParseFrame(data);
@@ -75,36 +78,109 @@ public sealed class OpenAiCompatibleChatProviderService(
                 continue;
             }
 
-            if (frame.p is { } pv)
+            if (frame.Prompt is { } pv)
             {
                 prompt = pv;
             }
 
-            if (frame.c is { } cv)
+            if (frame.Completion is { } cv)
             {
                 completion = cv;
             }
 
-            if (!string.IsNullOrEmpty(frame.delta))
+            foreach (var f in frame.ToolFragments)
             {
-                yield return ChatStreamEvent.Text(frame.delta);
+                if (!toolAcc.TryGetValue(f.Index, out var acc))
+                {
+                    toolAcc[f.Index] = acc = new ToolAccumulator();
+                }
+
+                if (f.Id is not null)
+                {
+                    acc.Id = f.Id;
+                }
+
+                if (f.Name is not null)
+                {
+                    acc.Name = f.Name;
+                }
+
+                if (f.ArgsFragment is not null)
+                {
+                    acc.Args.Append(f.ArgsFragment);
+                }
             }
+
+            if (!string.IsNullOrEmpty(frame.Delta))
+            {
+                yield return ChatStreamEvent.Text(frame.Delta);
+            }
+        }
+
+        var calls = toolAcc.Values
+            .Where(a => a.Id is not null && a.Name is not null)
+            .Select(a => new ToolInvocation(a.Id!, a.Name!, ParseArguments(a.Args.ToString())))
+            .ToList();
+        if (calls.Count > 0)
+        {
+            yield return ChatStreamEvent.Tools(calls);
         }
 
         yield return ChatStreamEvent.Final(new ChatUsage(name, selection.ModelId, prompt, completion));
     }
 
-    // choices[0].delta.content = text; a terminal frame may carry usage.{prompt,completion}_tokens.
-    private static (string? Delta, int? Prompt, int? Completion) ParseFrame(string data)
+    private sealed class ToolAccumulator
+    {
+        public string? Id;
+        public string? Name;
+        public System.Text.StringBuilder Args { get; } = new();
+    }
+
+    private sealed record ToolFragment(int Index, string? Id, string? Name, string? ArgsFragment);
+
+    private sealed record StreamFrame(
+        string? Delta, int? Prompt, int? Completion, IReadOnlyList<ToolFragment> ToolFragments);
+
+    // choices[0].delta carries content (text) and/or tool_calls fragments; a terminal frame may
+    // carry usage.{prompt,completion}_tokens.
+    private static StreamFrame ParseFrame(string data)
     {
         using var doc = JsonDocument.Parse(data);
         var root = doc.RootElement;
 
         string? delta = null;
+        var fragments = new List<ToolFragment>();
         if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0
-            && choices[0].TryGetProperty("delta", out var d) && d.TryGetProperty("content", out var content))
+            && choices[0].TryGetProperty("delta", out var d) && d.ValueKind == JsonValueKind.Object)
         {
-            delta = content.GetString();
+            if (d.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String)
+            {
+                delta = content.GetString();
+            }
+
+            if (d.TryGetProperty("tool_calls", out var tcs) && tcs.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var tc in tcs.EnumerateArray())
+                {
+                    var index = tc.TryGetProperty("index", out var ix) && ix.ValueKind == JsonValueKind.Number ? ix.GetInt32() : 0;
+                    var id = tc.TryGetProperty("id", out var idv) && idv.ValueKind == JsonValueKind.String ? idv.GetString() : null;
+                    string? fname = null, fargs = null;
+                    if (tc.TryGetProperty("function", out var fn) && fn.ValueKind == JsonValueKind.Object)
+                    {
+                        if (fn.TryGetProperty("name", out var nm) && nm.ValueKind == JsonValueKind.String)
+                        {
+                            fname = nm.GetString();
+                        }
+
+                        if (fn.TryGetProperty("arguments", out var ar) && ar.ValueKind == JsonValueKind.String)
+                        {
+                            fargs = ar.GetString();
+                        }
+                    }
+
+                    fragments.Add(new ToolFragment(index, id, fname, fargs));
+                }
+            }
         }
 
         int? prompt = null, completion = null;
@@ -121,7 +197,7 @@ public sealed class OpenAiCompatibleChatProviderService(
             }
         }
 
-        return (delta, prompt, completion);
+        return new StreamFrame(delta, prompt, completion, fragments);
     }
 
     private static CompletionRequest BuildPayload(ModelSelection selection, ChatRequest request, bool stream)

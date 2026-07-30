@@ -58,6 +58,9 @@ internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment
         using var reader = new StreamReader(stream);
 
         int inputTokens = 0, outputTokens = 0;
+        // tool_use blocks stream as content_block_start (id + name) then input_json_delta fragments,
+        // keyed by block index; assembled and emitted once so the tool loop can run them.
+        var toolAcc = new SortedDictionary<int, ToolAccumulator>();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
@@ -71,7 +74,7 @@ internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment
                 break;
             }
 
-            (string? delta, int? inTok, int? outTok) frame;
+            AnthFrame frame;
             try
             {
                 frame = ParseFrame(data);
@@ -81,36 +84,89 @@ internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment
                 continue; // ignore keep-alive / non-JSON frames
             }
 
-            if (frame.inTok is { } i)
+            if (frame.InputTokens is { } i)
             {
                 inputTokens = i;
             }
 
-            if (frame.outTok is { } o)
+            if (frame.OutputTokens is { } o)
             {
                 outputTokens = o;
             }
 
-            if (!string.IsNullOrEmpty(frame.delta))
+            if (frame.ToolStartIndex is { } ts)
             {
-                yield return ChatStreamEvent.Text(frame.delta);
+                toolAcc[ts] = new ToolAccumulator { Id = frame.ToolId, Name = frame.ToolName };
             }
+
+            if (frame.ArgsIndex is { } ai && frame.ArgsFragment is { } af
+                && toolAcc.TryGetValue(ai, out var acc))
+            {
+                acc.Args.Append(af);
+            }
+
+            if (!string.IsNullOrEmpty(frame.Delta))
+            {
+                yield return ChatStreamEvent.Text(frame.Delta);
+            }
+        }
+
+        var calls = toolAcc.Values
+            .Where(a => a.Id is not null && a.Name is not null)
+            .Select(a => new ToolInvocation(a.Id!, a.Name!, ParseArguments(a.Args.ToString())))
+            .ToList();
+        if (calls.Count > 0)
+        {
+            yield return ChatStreamEvent.Tools(calls);
         }
 
         yield return ChatStreamEvent.Final(new ChatUsage(Name, selection.ModelId, inputTokens, outputTokens));
     }
 
-    // message_start carries usage.input_tokens; content_block_delta carries delta.text;
-    // message_delta carries usage.output_tokens.
-    private static (string? Delta, int? InputTokens, int? OutputTokens) ParseFrame(string data)
+    private sealed class ToolAccumulator
+    {
+        public string? Id;
+        public string? Name;
+        public System.Text.StringBuilder Args { get; } = new();
+    }
+
+    private sealed record AnthFrame(
+        string? Delta, int? InputTokens, int? OutputTokens,
+        int? ToolStartIndex, string? ToolId, string? ToolName, int? ArgsIndex, string? ArgsFragment);
+
+    // message_start → usage.input_tokens; content_block_start(tool_use) → id + name; content_block_delta
+    // → delta.text OR delta.input_json_delta.partial_json; message_delta → usage.output_tokens.
+    private static AnthFrame ParseFrame(string data)
     {
         using var doc = JsonDocument.Parse(data);
         var root = doc.RootElement;
 
         string? delta = null;
-        if (root.TryGetProperty("delta", out var d) && d.TryGetProperty("text", out var t))
+        int? toolStartIndex = null, argsIndex = null;
+        string? toolId = null, toolName = null, argsFragment = null;
+
+        var index = root.TryGetProperty("index", out var ix) && ix.ValueKind == JsonValueKind.Number ? ix.GetInt32() : 0;
+
+        if (root.TryGetProperty("content_block", out var cb) && cb.ValueKind == JsonValueKind.Object
+            && cb.TryGetProperty("type", out var cbt) && cbt.GetString() == "tool_use")
         {
-            delta = t.GetString();
+            toolStartIndex = index;
+            toolId = cb.TryGetProperty("id", out var idv) ? idv.GetString() : null;
+            toolName = cb.TryGetProperty("name", out var nmv) ? nmv.GetString() : null;
+        }
+
+        if (root.TryGetProperty("delta", out var d) && d.ValueKind == JsonValueKind.Object)
+        {
+            if (d.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String)
+            {
+                delta = t.GetString();
+            }
+
+            if (d.TryGetProperty("partial_json", out var pj) && pj.ValueKind == JsonValueKind.String)
+            {
+                argsIndex = index;
+                argsFragment = pj.GetString();
+            }
         }
 
         int? input = null, output = null;
@@ -125,7 +181,24 @@ internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment
             output = ot.GetInt32();
         }
 
-        return (delta, input, output);
+        return new AnthFrame(delta, input, output, toolStartIndex, toolId, toolName, argsIndex, argsFragment);
+    }
+
+    private static JsonElement ParseArguments(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return JsonDocument.Parse("{}").RootElement.Clone();
+        }
+
+        try
+        {
+            return JsonDocument.Parse(raw).RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return JsonDocument.Parse("{}").RootElement.Clone();
+        }
     }
 
     private string ApiKey() => env.Get("ANTHROPIC_API_KEY") is { Length: > 0 } key

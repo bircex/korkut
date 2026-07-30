@@ -1,6 +1,7 @@
 using Korkut.Agent.Brain.Abstractions;
 using Korkut.Tools.Core;
 using Korkut.Contract.Agent.Model;
+using System.Text;
 
 namespace Korkut.Agent.Brain.Services;
 
@@ -28,26 +29,23 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         var turn = messages.ToList();
         var prompt = 0;
         var completion = 0;
-        string provider;
-        string modelId;
+        var provider = string.Empty;
+        var modelId = string.Empty;
 
         for (var i = 0; i < MaxIterations; i++)
         {
-            var reply = await llm.CompleteAsync(new ChatRequest(system, turn, specialty, maxTokens, Tools: tools), ct);
-            (prompt, completion, provider, modelId) = Accumulate(prompt, completion, reply.Usage);
+            // Stream the turn: text deltas reach the user token-by-token via onToken as they arrive,
+            // and any tool calls are collected to run before the next turn.
+            var (text, toolCalls, usage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools, onToken, ct);
+            (prompt, completion, provider, modelId) = Accumulate(prompt, completion, usage);
 
-            if (reply.ToolCalls is not { Count: > 0 } calls)
+            if (toolCalls is not { Count: > 0 } calls)
             {
-                if (onToken is not null && reply.Text.Length > 0)
-                {
-                    await onToken(reply.Text);
-                }
-
-                return reply with { Usage = new ChatUsage(provider, modelId, prompt, completion) };
+                return new ChatReply(text, new ChatUsage(provider, modelId, prompt, completion));
             }
 
             // Record the assistant's tool-call turn, then run each call and feed the results back.
-            turn.Add(new ChatMessage("assistant", reply.Text, ToolCalls: calls));
+            turn.Add(new ChatMessage("assistant", text, ToolCalls: calls));
             var outputs = new List<ToolOutput>(calls.Count);
             foreach (var call in calls)
             {
@@ -63,15 +61,45 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
             turn.Add(new ChatMessage("tool", string.Empty, ToolResults: outputs));
         }
 
-        // Iteration cap reached — ask once more WITHOUT tools to force a final answer.
-        var final = await llm.CompleteAsync(new ChatRequest(system, turn, specialty, maxTokens), ct);
-        (prompt, completion, provider, modelId) = Accumulate(prompt, completion, final.Usage);
-        if (onToken is not null && final.Text.Length > 0)
+        // Iteration cap reached — ask once more (streamed) WITHOUT tools to force a final answer.
+        var (finalText, _, finalUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools: null, onToken, ct);
+        (prompt, completion, provider, modelId) = Accumulate(prompt, completion, finalUsage);
+        return new ChatReply(finalText, new ChatUsage(provider, modelId, prompt, completion));
+    }
+
+    // Drive one streamed model turn: append text deltas (live via onToken), collect any tool calls,
+    // and capture usage. The provider emits a single tool-calls event once the turn is a tool-use turn.
+    private async Task<(string Text, IReadOnlyList<ToolInvocation>? ToolCalls, ChatUsage Usage)> StreamTurnAsync(
+        string system, IReadOnlyList<ChatMessage> turn, string specialty, int? maxTokens,
+        IReadOnlyList<ToolDefinition>? tools, Func<string, Task>? onToken, CancellationToken ct)
+    {
+        var text = new StringBuilder();
+        IReadOnlyList<ToolInvocation>? toolCalls = null;
+        var usage = ChatUsage.None;
+
+        await foreach (var ev in llm.StreamAsync(new ChatRequest(system, turn, specialty, maxTokens, Tools: tools), ct))
         {
-            await onToken(final.Text);
+            if (ev.Delta is { Length: > 0 } delta)
+            {
+                text.Append(delta);
+                if (onToken is not null)
+                {
+                    await onToken(delta);
+                }
+            }
+
+            if (ev.ToolCalls is { Count: > 0 } calls)
+            {
+                toolCalls = calls;
+            }
+
+            if (ev.Usage is { } u)
+            {
+                usage = u;
+            }
         }
 
-        return final with { Usage = new ChatUsage(provider, modelId, prompt, completion) };
+        return (text.ToString(), toolCalls, usage);
     }
 
     // Sum token counts across the loop's model calls; keep the last call's provider/model for the label.

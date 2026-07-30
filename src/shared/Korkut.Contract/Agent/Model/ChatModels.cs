@@ -48,13 +48,16 @@ public sealed record ChatUsage(string Provider, string ModelId, int PromptTokens
 public sealed record ChatReply(string Text, ChatUsage Usage, IReadOnlyList<ToolInvocation>? ToolCalls = null);
 
 /// <summary>
-/// One streamed event: either a text <see cref="Delta"/> (mid-stream) or the terminal
-/// <see cref="Usage"/> (once, at end). Exactly one of the two is set. Carrying usage on the
-/// stream lets streamed calls be cost-accounted too, without a later port change.
+/// One streamed event: a text <see cref="Delta"/> (mid-stream), the tool calls the model wants run
+/// (<see cref="ToolCalls"/>, emitted once when the turn is a tool-use turn), or the terminal
+/// <see cref="Usage"/> (once, at end). Carrying tool calls + usage on the stream lets the tool loop
+/// run natively over the stream (real token-by-token answers) and still cost-account every call.
 /// </summary>
-public sealed record ChatStreamEvent(string? Delta, ChatUsage? Usage)
+public sealed record ChatStreamEvent(string? Delta, ChatUsage? Usage, IReadOnlyList<ToolInvocation>? ToolCalls = null)
 {
     public static ChatStreamEvent Text(string delta) => new(delta, null);
+
+    public static ChatStreamEvent Tools(IReadOnlyList<ToolInvocation> toolCalls) => new(null, null, toolCalls);
 
     public static ChatStreamEvent Final(ChatUsage usage) => new(null, usage);
 }
