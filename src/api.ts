@@ -3,7 +3,7 @@ export type User = {
   email: string;
   full_name: string | null;
   bar_registry_no: string | null;
-  role: "owner" | "member";
+  role: "owner" | "lawyer";
   office: string | null;
 };
 export type Member = {
@@ -12,7 +12,7 @@ export type Member = {
   email: string;
   full_name: string | null;
   bar_registry_no: string | null;
-  role: "owner" | "member";
+  role: "owner" | "lawyer";
   is_active: boolean;
   bound: boolean; // has completed a first Google sign-in
   is_self: boolean;
@@ -20,7 +20,7 @@ export type Member = {
 export type Invite = {
   id: number;
   email: string | null;
-  role: "owner" | "member";
+  role: "owner" | "lawyer";
   expires_at: string;
   redeemed: boolean;
 };
@@ -68,33 +68,13 @@ export type StyleData = {
 };
 export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik: boolean };
 export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
-export type TemplateKind = "dilekce" | "sozlesme";
-export type TemplateScope = "user" | "office";
 export type ExportFormat = "udf" | "docx";
-export type TemplateTypeRow = {
-  id: string;
-  ad: string;
-  ref: string | null;
-  hasOfficeOverride: boolean;
-  hasUserOverride: boolean;
-};
-export type TemplateCategory = { kategori: string; tipler: TemplateTypeRow[] };
-export type TemplateList = { kind: TemplateKind; kategoriler: TemplateCategory[] };
-export type TemplateDetail = {
-  id: string;
-  ad: string;
-  kind: string;
-  default: string | null;
-  officeOverride: string | null;
-  userOverride: string | null;
-  effective: string | null;
-};
 export type EmailChannel = {
   kind: string;
   enabled: boolean;
   from_address: string;
   from_name: string;
-  hasPassword: boolean;
+  has_password: boolean;
   can_edit: boolean;
 };
 export type EmailChannelInput = {
@@ -399,7 +379,7 @@ export const api = {
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
   invites: () => request<Invite[]>("/api/invites"),
-  createInvite: (input: { email?: string | null; role?: "owner" | "member" }) =>
+  createInvite: (input: { email?: string | null; role?: "owner" | "lawyer" }) =>
     request<NewInvite>("/api/invites", { method: "POST", body: JSON.stringify(input) }),
   revokeInvite: (id: number) =>
     request<{ ok: boolean }>(`/api/invites/${id}`, { method: "DELETE" }),
@@ -410,18 +390,6 @@ export const api = {
     request<StyleFields>("/api/style/user", { method: "PUT", body: JSON.stringify(fields) }),
   saveOfficeStyle: (fields: StyleFields) =>
     request<StyleFields>("/api/style/office", { method: "PUT", body: JSON.stringify(fields) }),
-  listTemplates: (kind: TemplateKind) => request<TemplateList>(`/api/templates?kind=${kind}`),
-  getTemplate: (typeId: string) =>
-    request<TemplateDetail>(`/api/templates/${encodeURIComponent(typeId)}`),
-  saveTemplate: (typeId: string, scope: TemplateScope, content: string) =>
-    request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}`, {
-      method: "PUT",
-      body: JSON.stringify({ scope, content }),
-    }),
-  deleteTemplate: (typeId: string, scope: TemplateScope) =>
-    request<{ ok: boolean }>(`/api/templates/${encodeURIComponent(typeId)}?scope=${scope}`, {
-      method: "DELETE",
-    }),
   getPersona: () => request<PersonaData>("/api/persona"),
   savePersona: (input: PersonaInput) =>
     request<PersonaData>("/api/persona", { method: "PUT", body: JSON.stringify(input) }),

@@ -13,7 +13,6 @@ import {
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { Settings } from "./Settings";
-import { Customize } from "./Customize";
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
@@ -29,7 +28,6 @@ import {
   Check,
   CheckSquare,
   DotsThree,
-  FileDashed,
   FileText,
   Folder,
   List,
@@ -88,7 +86,6 @@ const NAV_ICON: Record<string, Icon> = {
   tasks: CheckSquare,
   calendar: CalendarBlank,
   docs: FileText,
-  customize: FileDashed,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -148,7 +145,6 @@ type SidebarView =
   | "chats"
   | "docs"
   | "settings"
-  | "customize"
   | "matters"
   | "clients"
   | "finance"
@@ -162,7 +158,6 @@ const VIEW_PATH: Record<SidebarView, string> = {
   chats: "/",
   docs: "/belgeler",
   settings: "/ayarlar",
-  customize: "/sablonlar",
   matters: "/dosyalar",
   clients: "/muvekkiller",
   finance: "/mali",
@@ -190,7 +185,6 @@ const VIEW_TITLE: Record<SidebarView, string> = {
   chats: "Sohbet",
   docs: "Belgeler",
   settings: "Ayarlar",
-  customize: "Şablonlar",
   matters: "Dosyalar",
   clients: "Müvekkiller",
   finance: "Mali",
@@ -672,7 +666,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       { key: "tasks", label: "Görevler" },
                       { key: "calendar", label: "Takvim" },
                       { key: "docs", label: "Belgeler" },
-                      { key: "customize", label: "Şablonlar" },
                     ] as { key: SidebarView; label: string }[]
                   ).map((it) => (
                     <a
@@ -804,8 +797,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         <div className="relative flex min-w-0 flex-1">
         {view === "settings" ? (
           <Settings user={user} />
-        ) : view === "customize" ? (
-          <Customize user={user} />
         ) : view === "docs" ? (
           <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
         ) : view === "matters" ? (

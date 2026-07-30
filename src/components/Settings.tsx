@@ -106,6 +106,7 @@ function Members({ isOwner }: { isOwner: boolean }) {
   const [busy, setBusy] = useState(false);
   const [newLink, setNewLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
 
   useEffect(() => {
     api.members().then(setMembers).catch(() => {});
@@ -147,11 +148,16 @@ function Members({ isOwner }: { isOwner: boolean }) {
 
   async function createInvite() {
     setError("");
+    if (!inviteEmail.trim()) {
+      setError("Davet için bir e-posta girin");
+      return;
+    }
     setBusy(true);
     setCopied(false);
     try {
-      const inv = await api.createInvite({ role: "member" });
+      const inv = await api.createInvite({ email: inviteEmail.trim(), role: "lawyer" });
       setInvites((list) => [inv, ...list]);
+      setInviteEmail("");
       const link = window.location.origin + inv.path;
       setNewLink(link);
       try {
@@ -262,12 +268,19 @@ function Members({ isOwner }: { isOwner: boolean }) {
           </form>
 
           <div className="mt-3 flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <div className="flex items-center justify-between">
-              <p className="m-0 text-[13px] font-medium text-zinc-700">Davet bağlantıları</p>
+            <p className="m-0 text-[13px] font-medium text-zinc-700">Davet bağlantıları</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Davet edilecek e-posta"
+                className="min-w-0 flex-1 rounded-md border border-zinc-200 px-2 py-1.5 text-[13px] outline-none focus:border-zinc-400"
+              />
               <button
                 onClick={createInvite}
                 disabled={busy}
-                className="rounded-md bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                className="shrink-0 rounded-md bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
                 Davet oluştur
               </button>

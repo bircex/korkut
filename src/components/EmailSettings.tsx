@@ -133,7 +133,7 @@ export function EmailSettings() {
             value={appPassword}
             autoComplete="new-password"
             placeholder={
-              data?.hasPassword ? "•••••••• (kayıtlı — değiştirmek için yazın)" : "16 haneli şifre"
+              data?.has_password ? "•••••••• (kayıtlı — değiştirmek için yazın)" : "16 haneli şifre"
             }
             onChange={(e) => {
               setAppPassword(e.target.value);
