@@ -39,7 +39,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
     {
         // Due 2026-01-01 in Europe/Istanbul (UTC+3), remind on the day → local midnight
         // is 2025-12-31T21:00:00Z, NOT 2026-01-01T00:00:00Z.
-        var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, DateTimeOffset.UtcNow);
+        var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, null, DateTimeOffset.UtcNow);
         var instant = DeadlineReminderService.ReminderInstant(deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore);
         Assert.Equal(new DateTimeOffset(2025, 12, 31, 21, 0, 0, TimeSpan.Zero), instant);
     }
@@ -47,7 +47,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
     [Fact]
     public void Reminder_days_before_shifts_the_business_date()
     {
-        var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 3, 10), "internal", null, "UTC", 3, DateTimeOffset.UtcNow);
+        var deadline = new Deadline(Guid.Empty, "d", new DateOnly(2026, 3, 10), "internal", null, "UTC", 3, null, DateTimeOffset.UtcNow);
         var instant = DeadlineReminderService.ReminderInstant(deadline.DueDate, deadline.TimeZoneId, deadline.ReminderDaysBefore);
         Assert.Equal(new DateTimeOffset(2026, 3, 7, 0, 0, 0, TimeSpan.Zero), instant);
     }
@@ -58,7 +58,7 @@ public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>
     public async Task Ensuring_a_reminder_twice_enqueues_it_only_once()
     {
         var deadline = new Deadline(
-            _office, "Cevap süresi", new DateOnly(2026, 5, 1), "internal", null, "Europe/Istanbul", 2, DateTimeOffset.UtcNow);
+            _office, "Cevap süresi", new DateOnly(2026, 5, 1), "internal", null, "Europe/Istanbul", 2, null, DateTimeOffset.UtcNow);
         await using (var db = pg.NewContext())
         {
             db.Deadlines.Add(deadline);

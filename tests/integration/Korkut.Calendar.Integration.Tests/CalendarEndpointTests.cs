@@ -31,7 +31,7 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         db.Matters.Add(matter);
         var hearing = new Hearing(office, matter.Id, hearingAt, null, null, null);
         db.MatterHearings.Add(hearing);
-        var deadline = new Deadline(office, "Cevap süresi", deadlineDue, "internal", matter.Id, "Europe/Istanbul", 0, DateTimeOffset.UtcNow);
+        var deadline = new Deadline(office, "Cevap süresi", deadlineDue, "internal", matter.Id, "Europe/Istanbul", 0, null, DateTimeOffset.UtcNow);
         db.Deadlines.Add(deadline);
         await db.SaveChangesAsync();
         return (matter.Id, hearing.Id, deadline.Id);

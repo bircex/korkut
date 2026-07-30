@@ -238,12 +238,15 @@
             "format": "date",
             "type": "string"
           },
-          "kind": {
-            "pattern": "statutory|internal",
-            "type": "string"
-          },
           "matter_id": {
             "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "4000",
             "type": [
               "null",
               "string"
@@ -264,6 +267,13 @@
           },
           "title": {
             "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
             "type": [
               "null",
               "string"
@@ -2855,6 +2865,49 @@
         },
         "tags": [
           "Hearings"
+        ]
+      }
+    },
+    "/api/matters/{matterId}/deadlines": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeadlineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Deadlines"
         ]
       }
     },

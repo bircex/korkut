@@ -21,6 +21,13 @@ public sealed class DeadlinesController(IDeadlineService deadlines) : Controller
     public async Task<IActionResult> Create([FromBody] CreateDeadlineRequest body, CancellationToken ct)
         => (await deadlines.CreateAsync(body, ct)).ToActionResult(d => Created($"/api/deadlines/{d.Id}", d));
 
+    /// <summary>Nested create under a matter (the SPA posts here); the path's matter id wins.</summary>
+    [HttpPost("/api/matters/{matterId:guid}/deadlines")]
+    [Authorize(Policy = Permissions.MattersWrite)]
+    public async Task<IActionResult> CreateForMatter(Guid matterId, [FromBody] CreateDeadlineRequest body, CancellationToken ct)
+        => (await deadlines.CreateAsync(body with { MatterId = matterId }, ct))
+            .ToActionResult(d => Created($"/api/deadlines/{d.Id}", d));
+
     [HttpPost("{id:guid}/complete")]
     [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct)

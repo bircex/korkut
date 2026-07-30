@@ -482,13 +482,18 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Kind")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("kind");
 
                     b.Property<Guid?>("MatterId")
                         .HasColumnType("uuid")
                         .HasColumnName("matter_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("notes");
 
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid")

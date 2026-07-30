@@ -10,7 +10,7 @@ public sealed class Deadline : Entity, ITenantOwned, IAggregateRoot
 {
     public Deadline(
         Guid officeId, string title, DateOnly dueDate, string kind, Guid? matterId,
-        string timeZoneId, int reminderDaysBefore, DateTimeOffset createdAt)
+        string timeZoneId, int reminderDaysBefore, string? notes, DateTimeOffset createdAt)
         : base(NewId())
     {
         OfficeId = officeId;
@@ -20,6 +20,7 @@ public sealed class Deadline : Entity, ITenantOwned, IAggregateRoot
         MatterId = matterId;
         TimeZoneId = timeZoneId;
         ReminderDaysBefore = reminderDaysBefore;
+        Notes = notes;
         CreatedAt = createdAt;
     }
 
@@ -42,6 +43,8 @@ public sealed class Deadline : Entity, ITenantOwned, IAggregateRoot
     public string TimeZoneId { get; private set; } = "Europe/Istanbul";
 
     public int ReminderDaysBefore { get; private set; }
+
+    public string? Notes { get; private set; }
 
     public DateTimeOffset? CompletedAt { get; private set; }
 

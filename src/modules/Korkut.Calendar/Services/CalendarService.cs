@@ -124,7 +124,7 @@ internal sealed class CalendarService(
         var rows = new List<CalendarEntryResponse>();
         rows.AddRange(eventRows.Select(e => ToResponse(e, titles, names, emails)));
         rows.AddRange(deadlineRows.Select(d => new CalendarEntryResponse(
-            d.Id, "deadline", d.Kind, d.Title, AtMidnightUtc(d.DueDate), null, true,
+            d.Id, "deadline", d.Type, d.Title, AtMidnightUtc(d.DueDate), null, true,
             d.MatterId, Name(titles, d.MatterId), null, null, null, null,
             null, d.CompletedAt == null ? "scheduled" : "done", null, null, null, null, "pending", false)));
         rows.AddRange(hearingRows.Select(h => new CalendarEntryResponse(

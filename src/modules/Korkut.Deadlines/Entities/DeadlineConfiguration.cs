@@ -11,8 +11,9 @@ public sealed class DeadlineConfiguration : IEntityTypeConfiguration<Deadline>
         builder.ToTable("deadlines");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
-        builder.Property(x => x.Kind).HasMaxLength(20);
+        builder.Property(x => x.Kind).HasMaxLength(100); // holds the UI's free-text "type"
         builder.Property(x => x.Title).HasMaxLength(500);
+        builder.Property(x => x.Notes).HasMaxLength(4000);
         builder.Property(x => x.TimeZoneId).HasMaxLength(60);
         builder.HasIndex(x => new { x.OfficeId, x.DueDate }).HasDatabaseName("ix_deadlines_office_due");
     }

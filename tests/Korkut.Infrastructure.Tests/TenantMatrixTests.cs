@@ -89,7 +89,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.Courts.Add(new Court(office, $"court{i}", DateTimeOffset.UtcNow));
             db.Parties.Add(new Party(office, matterId, "plaintiff", $"p{i}", DateTimeOffset.UtcNow));
             db.Tasks.Add(new WorkTask(office, $"t{i}", null, null, null, null, DateTimeOffset.UtcNow));
-            db.Deadlines.Add(new Deadline(office, $"d{i}", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, DateTimeOffset.UtcNow));
+            db.Deadlines.Add(new Deadline(office, $"d{i}", new DateOnly(2026, 1, 1), "internal", null, "Europe/Istanbul", 0, null, DateTimeOffset.UtcNow));
             db.CommunicationNotes.Add(new CommunicationNote(office, $"n{i}", "note", null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
             var document = new Document(office, null, "korkut-quarantine", $"{office:N}/doc{i}", "f.pdf", "application/pdf", 10, "abc", DateTimeOffset.UtcNow);
             var docId = document.Id;

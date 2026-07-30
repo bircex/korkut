@@ -209,11 +209,12 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     office_id = table.Column<Guid>(type: "uuid", nullable: false),
                     matter_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    kind = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     due_date = table.Column<DateOnly>(type: "date", nullable: false),
                     time_zone_id = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
                     reminder_days_before = table.Column<int>(type: "integer", nullable: false),
+                    notes = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     completed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },

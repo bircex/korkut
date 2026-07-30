@@ -12,8 +12,12 @@ public sealed record CreateDeadlineRequest
     [Required]
     public DateOnly DueDate { get; init; }
 
-    [RegularExpression("statutory|internal")]
-    public string Kind { get; init; } = "internal";
+    /// <summary>Free-text label (the UI's "type"); optional.</summary>
+    [MaxLength(100)]
+    public string? Type { get; init; } = "internal";
+
+    [MaxLength(4000)]
+    public string? Notes { get; init; }
 
     public Guid? MatterId { get; init; }
 

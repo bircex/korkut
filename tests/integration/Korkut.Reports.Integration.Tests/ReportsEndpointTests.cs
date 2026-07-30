@@ -56,8 +56,8 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
             db.Tasks.Add(doneTask);
 
             db.MatterHearings.Add(new Hearing(office, db.Matters.Local.First().Id, now.AddDays(3), null, null, null));
-            db.Deadlines.Add(new Deadline(office, "d-upcoming", today.AddDays(5), "internal", null, "Europe/Istanbul", 0, now));
-            db.Deadlines.Add(new Deadline(office, "d-overdue", today.AddDays(-3), "internal", null, "Europe/Istanbul", 0, now));
+            db.Deadlines.Add(new Deadline(office, "d-upcoming", today.AddDays(5), "internal", null, "Europe/Istanbul", 0, null, now));
+            db.Deadlines.Add(new Deadline(office, "d-overdue", today.AddDays(-3), "internal", null, "Europe/Istanbul", 0, null, now));
 
             db.Correspondence.Add(new CorrespondenceItem(office, "incoming", "e1", null, null, null, null, now));
             db.Correspondence.Add(new CorrespondenceItem(office, "incoming", "e2", null, null, null, null, now));

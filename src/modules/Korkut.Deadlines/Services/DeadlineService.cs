@@ -21,8 +21,9 @@ internal sealed class DeadlineService(
         => InScopeAsync(async office =>
         {
             var deadline = new Deadline(
-                office, request.Title!.Trim(), request.DueDate, request.Kind, request.MatterId,
-                request.TimeZoneId, request.ReminderDaysBefore, clock.UtcNow);
+                office, request.Title!.Trim(), request.DueDate, request.Type ?? "internal", request.MatterId,
+                request.TimeZoneId, request.ReminderDaysBefore,
+                string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(), clock.UtcNow);
             await repository.AddAsync(deadline, ct);
             return Result<DeadlineResponse>.Ok(ToResponse(deadline));
         }, ct);
@@ -53,5 +54,6 @@ internal sealed class DeadlineService(
     }
 
     private static DeadlineResponse ToResponse(Deadline d) =>
-        new(d.Id, d.Title, d.DueDate, d.Kind, d.MatterId, d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt);
+        new(d.Id, d.Title, d.DueDate, d.Kind, d.CompletedAt is null ? "open" : "done", d.MatterId, d.Notes,
+            d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt);
 }
