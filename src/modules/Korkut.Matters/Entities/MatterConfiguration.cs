@@ -23,8 +23,11 @@ public sealed class MatterConfiguration : IEntityTypeConfiguration<Matter>
         // Optimistic concurrency via Postgres' system xmin column.
         builder.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
         builder.Property(x => x.Status).HasMaxLength(30);
+        builder.Property(x => x.ClientNameSnapshot).HasColumnName("client_name_snapshot").HasMaxLength(400);
         builder.Property(x => x.FileNo).HasMaxLength(100);
         builder.Property(x => x.CaseType).HasMaxLength(100);
+        builder.Property(x => x.Counterparty).HasMaxLength(400);
+        builder.Property(x => x.Notes).HasMaxLength(8000);
         builder.Property(x => x.CourtNameSnapshot).HasMaxLength(400);
         builder.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_matters_office_status");
     }

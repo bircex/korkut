@@ -449,6 +449,13 @@
       },
       "CreateMatterRequest": {
         "properties": {
+          "case_type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "client_id": {
             "format": "uuid",
             "type": [
@@ -456,8 +463,36 @@
               "string"
             ]
           },
+          "client_name": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "counterparty": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "court": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "court_id": {
             "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "file_no": {
+            "maxLength": "100",
             "type": [
               "null",
               "string"
@@ -1121,6 +1156,13 @@
             ]
           },
           "file_no": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "maxLength": "8000",
             "type": [
               "null",
               "string"

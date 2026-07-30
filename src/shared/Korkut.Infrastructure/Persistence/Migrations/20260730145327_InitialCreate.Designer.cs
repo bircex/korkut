@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Korkut.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(KorkutDbContext))]
-    [Migration("20260730141054_InitialCreate")]
+    [Migration("20260730145327_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1034,8 +1034,14 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("client_id");
 
+                    b.Property<string>("ClientNameSnapshot")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("client_name_snapshot");
+
                     b.Property<string>("Counterparty")
-                        .HasColumnType("text")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
                         .HasColumnName("counterparty");
 
                     b.Property<Guid?>("CourtId")
@@ -1060,6 +1066,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("file_no");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)")
+                        .HasColumnName("notes");
+
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid")
                         .HasColumnName("office_id");
@@ -1079,6 +1090,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("title");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()

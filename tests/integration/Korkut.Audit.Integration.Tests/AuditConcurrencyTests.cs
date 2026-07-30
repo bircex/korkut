@@ -115,7 +115,7 @@ public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresF
         Guid matterId;
         await using (var seed = pg.NewContext())
         {
-            var matter = new Matter(_office, "orig", null, null, null, DateTimeOffset.UtcNow);
+            var matter = new Matter(_office, "orig", null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
             seed.Matters.Add(matter);
             await seed.SaveChangesAsync();
             matterId = matter.Id;

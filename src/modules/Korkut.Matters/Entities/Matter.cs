@@ -10,12 +10,17 @@ namespace Korkut.Matters.Entities;
 public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoot
 {
     public Matter(
-        Guid officeId, string title, Guid? clientId, Guid? courtId, string? courtNameSnapshot, DateTimeOffset createdAt)
+        Guid officeId, string title, Guid? clientId, string? clientNameSnapshot, string? fileNo,
+        string? caseType, string? counterparty, Guid? courtId, string? courtNameSnapshot, DateTimeOffset createdAt)
         : base(NewId())
     {
         OfficeId = officeId;
         Title = title;
         ClientId = clientId;
+        ClientNameSnapshot = clientNameSnapshot;
+        FileNo = fileNo;
+        CaseType = caseType;
+        Counterparty = counterparty;
         CourtId = courtId;
         CourtNameSnapshot = courtNameSnapshot;
         Status = "open";
@@ -35,6 +40,9 @@ public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
     /// <summary>Optional tenant-aware link to the client (composite FK on (office_id, client_id)).</summary>
     public Guid? ClientId { get; private set; }
 
+    /// <summary>The client name as typed when opening the matter (the UI works with a name, not an id).</summary>
+    public string? ClientNameSnapshot { get; private set; }
+
     public string? FileNo { get; private set; }
 
     public string? CaseType { get; private set; }
@@ -49,19 +57,28 @@ public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
 
     public string Status { get; private set; } = "open";
 
+    public string? Notes { get; private set; }
+
     public DateTimeOffset? OpenedAt { get; private set; }
+
+    /// <summary>Stamped on every edit; null until the matter is first updated.</summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public void Update(string? title, string? fileNo, string? caseType, string? counterparty, string? status)
+    public void Update(
+        string? title, string? fileNo, string? caseType, string? counterparty, string? status,
+        string? notes, DateTimeOffset updatedAt)
     {
         if (title is not null) Title = title;
         FileNo = fileNo ?? FileNo;
         CaseType = caseType ?? CaseType;
         Counterparty = counterparty ?? Counterparty;
         if (status is not null) Status = status;
+        if (notes is not null) Notes = notes;
+        UpdatedAt = updatedAt;
     }
 
     public void Rename(string title) => Title = title;

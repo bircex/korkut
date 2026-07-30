@@ -15,4 +15,7 @@ public sealed record UpdateMatterRequest
     public string? Counterparty { get; init; }
 
     public string? Status { get; init; }
+
+    [MaxLength(8000)]
+    public string? Notes { get; init; }
 }

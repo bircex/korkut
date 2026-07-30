@@ -27,7 +27,7 @@ public class CalendarEndpointTests(KorkutApiFactory factory)
         Guid office, DateTimeOffset hearingAt, DateOnly deadlineDue)
     {
         await using var db = factory.OwnerContext();
-        var matter = new Matter(office, "Dava X", null, null, null, DateTimeOffset.UtcNow);
+        var matter = new Matter(office, "Dava X", null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
         db.Matters.Add(matter);
         var hearing = new Hearing(office, matter.Id, hearingAt, null, null, null);
         db.MatterHearings.Add(hearing);

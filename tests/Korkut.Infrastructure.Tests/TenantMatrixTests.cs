@@ -154,7 +154,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         for (var i = 0; i < n; i++)
         {
-            var matter = new Matter(office, $"m{i}", null, null, null, DateTimeOffset.UtcNow);
+            var matter = new Matter(office, $"m{i}", null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
             db.Matters.Add(matter);
             db.MatterHearings.Add(new Hearing(office, matter.Id, DateTimeOffset.UtcNow, null, null, null));
         }

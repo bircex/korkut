@@ -39,12 +39,12 @@ public class ReportsEndpointTests(KorkutApiFactory factory)
         // Seed directly (owner ctx bypasses RLS) for the non-calendar/finance bits.
         await using (var db = factory.OwnerContext())
         {
-            db.Matters.Add(new Matter(office, "M1", null, null, null, now));
-            db.Matters.Add(new Matter(office, "M2", null, null, null, now));
-            var closedMatter = new Matter(office, "M3", null, null, null, now);
+            db.Matters.Add(new Matter(office, "M1", null, null, null, null, null, null, null, now));
+            db.Matters.Add(new Matter(office, "M2", null, null, null, null, null, null, null, now));
+            var closedMatter = new Matter(office, "M3", null, null, null, null, null, null, null, now);
             closedMatter.Close();
             db.Matters.Add(closedMatter);
-            var goneMatter = new Matter(office, "gone", null, null, null, now);
+            var goneMatter = new Matter(office, "gone", null, null, null, null, null, null, null, now);
             goneMatter.SoftDelete(now);
             db.Matters.Add(goneMatter); // excluded
             db.Clients.Add(new Client(office, "C1", "individual", null, null, null, null, null, now));

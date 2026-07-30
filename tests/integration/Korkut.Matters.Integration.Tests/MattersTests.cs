@@ -66,8 +66,21 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     // Exercise the use-case service over the real EF repositories, so these tests still cover
     // the court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
     private MatterService Service(KorkutDbContext db) =>
-        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db), db), new CourtLookup(new CourtRepository(db)),
+        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db), db), new NoDeadlines(),
+            new CourtLookup(new CourtRepository(db)),
             new DirectUnitOfWork(), new TestCurrentUser(_office), new Clock());
+
+    // These tests cover the matter/court/hearing paths, not deadline composition.
+    private sealed class NoDeadlines : Korkut.Contract.Deadlines.IDeadlineLookup
+    {
+        public Task<IReadOnlyList<Korkut.Contract.Deadlines.DeadlineResponse>> ListInRangeAsync(
+            Guid officeId, DateTimeOffset? start, DateTimeOffset? end, Guid? matterId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<Korkut.Contract.Deadlines.DeadlineResponse>>([]);
+
+        public Task<Korkut.Contract.Deadlines.DeadlineCounts> CountsAsync(
+            Guid officeId, DateOnly today, DateOnly until, CancellationToken ct = default)
+            => Task.FromResult(new Korkut.Contract.Deadlines.DeadlineCounts(0, 0));
+    }
 
     [Fact]
     public async Task Renaming_a_court_does_not_change_a_matters_historical_snapshot()

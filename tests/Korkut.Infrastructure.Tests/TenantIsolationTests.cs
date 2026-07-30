@@ -29,11 +29,11 @@ public class TenantIsolationTests(PostgresFixture pg) : IClassFixture<PostgresFi
         await using var db = pg.NewContext();
         db.Offices.Add(new Office(_officeA, "A", DateTimeOffset.UtcNow));
         db.Offices.Add(new Office(_officeB, "B", DateTimeOffset.UtcNow));
-        var matterA = new Matter(_officeA, "A-1", null, null, null, DateTimeOffset.UtcNow);
+        var matterA = new Matter(_officeA, "A-1", null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
         _matterA = matterA.Id;
         db.Matters.Add(matterA);
-        db.Matters.Add(new Matter(_officeB, "B-1", null, null, null, DateTimeOffset.UtcNow));
-        db.Matters.Add(new Matter(_officeB, "B-2", null, null, null, DateTimeOffset.UtcNow));
+        db.Matters.Add(new Matter(_officeB, "B-1", null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
+        db.Matters.Add(new Matter(_officeB, "B-2", null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
         await db.SaveChangesAsync();
     }
 

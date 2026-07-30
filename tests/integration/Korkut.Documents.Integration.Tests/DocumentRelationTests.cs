@@ -69,7 +69,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedMatterAsync(KorkutDbContext db)
     {
-        var matter = new Matter(_office, "m", null, null, null, DateTimeOffset.UtcNow);
+        var matter = new Matter(_office, "m", null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
         db.Matters.Add(matter);
         await db.SaveChangesAsync();
         return matter.Id;

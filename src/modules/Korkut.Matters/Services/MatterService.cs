@@ -2,6 +2,7 @@ using Korkut.Matters.Repositories;
 using Korkut.Matters.Entities;
 using Korkut.Contract;
 using Korkut.Contract.Courts;
+using Korkut.Contract.Deadlines;
 using Korkut.Contract.Hearings;
 using Korkut.Contract.Matters;
 using Korkut.Core;
@@ -11,10 +12,10 @@ namespace Korkut.Matters.Services;
 /// <summary>
 /// Matter use-cases over the repository port; every call runs in the caller's tenant scope and
 /// RETURNS a <see cref="Result"/>. Owns the court-title snapshot rule. Cross-module reads (court
-/// name, a matter's hearings) go through Contract lookups, never other modules' entities.
+/// name, a matter's hearings + deadlines) go through Contract lookups, never other modules' entities.
 /// </summary>
 internal sealed class MatterService(
-    IMatterRepository matters, IHearingLookup hearings, ICourtLookup courts,
+    IMatterRepository matters, IHearingLookup hearings, IDeadlineLookup deadlines, ICourtLookup courts,
     IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
 {
     public Task<Result<IReadOnlyList<MatterResponse>>> ListAsync(CancellationToken ct = default)
@@ -31,20 +32,26 @@ internal sealed class MatterService(
             }
 
             var hearingRows = await hearings.ListForMatterAsync(office, id, ct);
+            var deadlineRows = await deadlines.ListInRangeAsync(office, null, null, id, ct);
             return Result<MatterDetailResponse>.Ok(new MatterDetailResponse(
-                matter.Id, matter.Title, matter.ClientId, matter.Status, matter.CourtNameSnapshot,
-                matter.FileNo, matter.CaseType, matter.Counterparty, matter.CreatedAt, hearingRows));
+                matter.Id, matter.Title, matter.ClientNameSnapshot, matter.FileNo, matter.CourtNameSnapshot,
+                matter.CaseType, matter.Counterparty, matter.Status, matter.OpenedAt, matter.UpdatedAt,
+                Client: null, matter.Notes, hearingRows, deadlineRows, Documents: []));
         }, ct);
 
     public Task<Result<MatterResponse>> CreateAsync(CreateMatterRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            // Snapshot the court's CURRENT title onto the matter; a later rename never rewrites it.
-            var courtName = request.CourtId is { } courtId
-                ? await courts.GetNameAsync(office, courtId, ct)
-                : null;
+            // The court title is snapshotted: use the free-text value if given, else the linked
+            // court's CURRENT title. A later court rename never rewrites the matter's text.
+            var courtName = string.IsNullOrWhiteSpace(request.Court)
+                ? request.CourtId is { } courtId ? await courts.GetNameAsync(office, courtId, ct) : null
+                : request.Court.Trim();
 
-            var matter = new Matter(office, request.Title!.Trim(), request.ClientId, request.CourtId, courtName, clock.UtcNow);
+            var matter = new Matter(
+                office, request.Title!.Trim(), request.ClientId, request.ClientName?.Trim(),
+                request.FileNo?.Trim(), request.CaseType?.Trim(), request.Counterparty?.Trim(),
+                request.CourtId, courtName, clock.UtcNow);
             await matters.AddAsync(matter, ct);
             return Result<MatterResponse>.Ok(ToResponse(matter));
         }, ct);
@@ -59,7 +66,7 @@ internal sealed class MatterService(
             }
 
             matter.Update(request.Title?.Trim(), request.FileNo?.Trim(), request.CaseType?.Trim(),
-                request.Counterparty?.Trim(), request.Status);
+                request.Counterparty?.Trim(), request.Status, request.Notes?.Trim(), clock.UtcNow);
             await matters.SaveChangesAsync(ct);
             return Result<MatterResponse>.Ok(ToResponse(matter));
         }, ct);
@@ -78,5 +85,6 @@ internal sealed class MatterService(
     }
 
     private static MatterResponse ToResponse(Matter m) =>
-        new(m.Id, m.Title, m.ClientId, m.Status, m.CourtNameSnapshot, m.FileNo, m.CaseType, m.Counterparty, m.CreatedAt);
+        new(m.Id, m.Title, m.ClientNameSnapshot, m.FileNo, m.CourtNameSnapshot, m.CaseType,
+            m.Counterparty, m.Status, m.OpenedAt, m.UpdatedAt);
 }
