@@ -15,8 +15,8 @@ WORKDIR /src
 # Restore with only the project graph + central config (better layer caching).
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ ./src/
-RUN dotnet restore src/Korkut.Ocr/Korkut.Ocr.csproj
-RUN dotnet publish src/Korkut.Ocr/Korkut.Ocr.csproj \
+RUN dotnet restore src/services/Korkut.Ocr/Korkut.Ocr.csproj
+RUN dotnet publish src/services/Korkut.Ocr/Korkut.Ocr.csproj \
     -c Release -o /app --no-restore /p:UseAppHost=false
 
 # Final stage — chiseled, non-root, minimal (scaffold engine needs no native deps).

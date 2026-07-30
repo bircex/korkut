@@ -52,9 +52,8 @@ public sealed class OpenAiCompatibleChatProviderService(
         using var reader = new StreamReader(stream);
 
         int prompt = 0, completion = 0;
-        while (!reader.EndOfStream)
+        while (await reader.ReadLineAsync(ct) is { } line)
         {
-            var line = await reader.ReadLineAsync(ct);
             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
             {
                 continue;

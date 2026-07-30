@@ -10,8 +10,8 @@ WORKDIR /src
 # Restore with only the project graph + central config (better layer caching).
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ ./src/
-RUN dotnet restore src/Korkut.Api/Korkut.Api.csproj
-RUN dotnet publish src/Korkut.Api/Korkut.Api.csproj \
+RUN dotnet restore src/services/Korkut.Api/Korkut.Api.csproj
+RUN dotnet publish src/services/Korkut.Api/Korkut.Api.csproj \
     -c Release -o /app --no-restore /p:UseAppHost=false
 
 # Final stage — chiseled, non-root, minimal.

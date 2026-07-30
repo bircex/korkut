@@ -40,6 +40,7 @@
   </Folder>
   <Folder Name="/src/services/">
     <Project Path="src/services/Korkut.Api/Korkut.Api.csproj" />
+    <Project Path="src/services/Korkut.Gateway/Korkut.Gateway.csproj" />
     <Project Path="src/services/Korkut.Web/Korkut.Web.csproj" />
     <Project Path="src/services/Korkut.Worker/Korkut.Worker.csproj" />
     <Project Path="src/services/Korkut.Migrator/Korkut.Migrator.csproj" />

@@ -58,9 +58,8 @@ internal sealed class AnthropicChatProviderService(HttpClient http, IEnvironment
         using var reader = new StreamReader(stream);
 
         int inputTokens = 0, outputTokens = 0;
-        while (!reader.EndOfStream)
+        while (await reader.ReadLineAsync(ct) is { } line)
         {
-            var line = await reader.ReadLineAsync(ct);
             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:", StringComparison.Ordinal))
             {
                 continue;
