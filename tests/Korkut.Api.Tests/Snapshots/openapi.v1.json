@@ -559,7 +559,7 @@
               "string"
             ]
           },
-          "due_at": {
+          "due_date": {
             "format": "date-time",
             "type": [
               "null",

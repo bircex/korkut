@@ -39,7 +39,7 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
         {
             Title = title.Trim(),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
-            DueAt = ToolArgs.DateTime(arguments, "due_at"),
+            DueDate = ToolArgs.DateTime(arguments, "due_at"),
         };
         var result = await tasks.CreateAsync(request, ct);
         if (!result.IsSuccess)
@@ -48,6 +48,6 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
         }
 
         var task = result.Value!;
-        return ToolResult.Ok(ToolArgs.Result(new { task.Id, task.Title, task.Status, task.DueAt }));
+        return ToolResult.Ok(ToolArgs.Result(new { task.Id, task.Title, task.Status, task.DueDate }));
     }
 }

@@ -13,5 +13,5 @@ public sealed record CreateTaskRequest
 
     public Guid? AssigneeId { get; init; }
 
-    public DateTimeOffset? DueAt { get; init; }
+    public DateTimeOffset? DueDate { get; init; }
 }
