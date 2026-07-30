@@ -5,14 +5,12 @@ import {
   type Icon,
   BookmarkSimple,
   EnvelopeSimple,
-  LinkSimple,
   PencilSimpleLine,
   Sparkle,
   User as UserIcon,
   Users,
 } from "../icons";
-import { EmailSettings } from "./EmailSettings";
-import { IntegrationsSettings } from "./IntegrationsSettings";
+import { MailPreferenceSettings } from "./MailPreferenceSettings";
 import { MemorySettings } from "./MemorySettings";
 import { PersonaSettings } from "./PersonaSettings";
 
@@ -500,8 +498,7 @@ type Tab =
   | "persona"
   | "memory"
   | "style"
-  | "integrations"
-  | "email";
+  | "notifications";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
@@ -509,8 +506,7 @@ const TAB_TITLE: Record<Tab, string> = {
   persona: "Kişilik",
   memory: "Hafıza",
   style: "Yazım stili",
-  integrations: "Entegrasyonlar",
-  email: "E-posta",
+  notifications: "Bildirimler",
 };
 
 // URL slug per tab, e.g. /ayarlar/model — lets a tab be bookmarked, shared, or survive a reload.
@@ -520,8 +516,7 @@ const TAB_SLUG: Record<Tab, string> = {
   persona: "kisilik",
   memory: "hafiza",
   style: "stil",
-  integrations: "entegrasyonlar",
-  email: "e-posta",
+  notifications: "bildirimler",
 };
 
 function tabFromPath(path: string): Tab {
@@ -534,7 +529,7 @@ function tabFromPath(path: string): Tab {
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Hesap", ids: ["account", "members"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
-  { label: "Sistem", ids: ["integrations", "email"] },
+  { label: "Sistem", ids: ["notifications"] },
 ];
 
 // Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
@@ -544,8 +539,7 @@ const TAB_ICON: Record<Tab, Icon> = {
   persona: Sparkle,
   memory: BookmarkSimple,
   style: PencilSimpleLine,
-  integrations: LinkSimple,
-  email: EnvelopeSimple,
+  notifications: EnvelopeSimple,
 };
 
 function TabIcon({ id }: { id: Tab }) {
@@ -563,10 +557,8 @@ export function Settings({ user }: { user: User }) {
     { id: "persona", label: "Kişilik" },
     { id: "memory", label: "Hafıza" },
     { id: "style", label: "Stil" },
-    // Every member can link their own account; channel config inside is owner-gated.
-    { id: "integrations", label: "Entegrasyonlar" },
-    // E-posta is an office-wide setting — owner only.
-    ...(user.role === "owner" ? [{ id: "email" as Tab, label: "E-posta" }] : []),
+    // Bildirim tercihi ofis geneli bir ayar — yalnızca ofis sahibi.
+    ...(user.role === "owner" ? [{ id: "notifications" as Tab, label: "Bildirimler" }] : []),
   ];
 
   return (
@@ -653,8 +645,7 @@ export function Settings({ user }: { user: User }) {
           {tab === "persona" && <PersonaSettings />}
           {tab === "memory" && <MemorySettings />}
           {tab === "style" && <StyleTab />}
-          {tab === "integrations" && <IntegrationsSettings />}
-          {tab === "email" && user.role === "owner" && <EmailSettings />}
+          {tab === "notifications" && user.role === "owner" && <MailPreferenceSettings />}
         </div>
       </div>
     </div>

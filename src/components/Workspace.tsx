@@ -18,7 +18,6 @@ import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
-import { MailConfirm } from "./MailConfirm";
 import { matchPath, navigate, usePath } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
@@ -241,7 +240,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
-  const [pendingEmailId, setPendingEmailId] = useState<number | null>(null);
   const [docRefresh, setDocRefresh] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
@@ -364,7 +362,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   async function loadHomeTasks() {
     try {
-      setHomeTasks((await api.tasks("open")).items);
+      setHomeTasks((await api.tasks("open", "gorev")).items);
     } catch {
       /* best effort — kart görünmez */
     }
@@ -531,10 +529,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
         loadDocs(); // a new draft may have landed → refresh the Belgeler list
       }
-      if (!file && showsThisChat() && res.pending_email) {
-        // Korkut proposed an e-mail → surface the confirmation card (it never sends on its own).
-        setPendingEmailId(res.pending_email);
-      }
       // The sidebar entry updates regardless of which chat is on screen — it's keyed by targetId.
       const fixedId = targetId;
       setSessions((s) => [
@@ -565,9 +559,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
 
   return (
     <div className="flex h-dvh flex-col bg-zinc-100 text-zinc-900">
-      {pendingEmailId !== null && (
-        <MailConfirm id={pendingEmailId} onClose={() => setPendingEmailId(null)} />
-      )}
       {/* Bütünleşik navbar: kanvasla aynı zemin, çizgisiz — Sohbet/Editör anahtarı beyaz kart olarak öne çıkar. */}
       <header className="relative flex items-center gap-3 bg-zinc-100 px-3 py-2">
         <button

@@ -69,57 +69,16 @@ export type StyleData = {
 export type PetitionType = { id: string; ad: string; mahkeme: string | null; sik: boolean };
 export type PetitionCategory = { kategori: string; dilekceler: PetitionType[] };
 export type ExportFormat = "udf" | "docx";
-export type EmailChannel = {
-  kind: string;
-  enabled: boolean;
-  from_address: string;
-  from_name: string;
-  has_password: boolean;
+// Office-wide mail preference. The system sends mail from ONE operator account; this only
+// records where notification mail goes and whether informational mail is enabled at all.
+export type MailPreference = {
+  notifications_enabled: boolean;
+  notify_email: string | null;
   can_edit: boolean;
 };
-export type EmailChannelInput = {
-  enabled: boolean;
-  from_address: string;
-  from_name: string;
-  app_password: string | null; // null → keep stored password; "" → clear
-};
-export type IntegrationKind = "telegram" | "whatsapp" | "email";
-export type IntegrationChannel = {
-  kind: IntegrationKind;
-  enabled: boolean;
-  configured: boolean;
-  base_url: string;
-  linked: boolean;
-  linked_id: string;
-  can_edit: boolean;
-};
-export type TelegramChannelInput = {
-  enabled: boolean;
-  bot_token: string | null; // null → keep stored token; "" → clear
-};
-export type WhatsAppChannelInput = {
-  enabled: boolean;
-  base_url: string;
-  token: string | null; // null → keep stored secret; "" → clear
-};
-export type OutboxStatus = "draft" | "queued" | "sent" | "failed" | "cancelled";
-export type OutboxMessage = {
-  id: number;
-  kind: string;
-  to: string;
-  subject: string;
-  body: string;
-  send_at: string | null;
-  status: OutboxStatus;
-  error: string | null;
-  created_at: string | null;
-  sent_at: string | null;
-};
-export type OutboxEdit = {
-  to_addr: string;
-  subject: string;
-  body: string;
-  send_at: string | null;
+export type MailPreferenceInput = {
+  notifications_enabled: boolean;
+  notify_email: string | null;
 };
 export type PersonaData = {
   tone: string;
@@ -195,13 +154,39 @@ export type FinanceSummary = {
 };
 export type Task = {
   id: number;
+  category: string; // gorev | hatirlatma | randevu
   title: string;
   description: string | null;
+  type: string | null;
   assignee_id: number | null;
   assignee_name: string | null;
   matter_id: number | null;
+  client_id: number | null;
   status: string;
   due_date: string | null;
+  end_at: string | null;
+  all_day: boolean;
+  location: string | null;
+  rrule: string | null;
+  remind_before_min: number | null;
+  reminder_status: string;
+};
+
+// Body for creating an agenda record (görev / hatırlatma / randevu).
+export type TaskInput = {
+  category?: string;
+  title: string;
+  description?: string | null;
+  type?: string | null;
+  matter_id?: number | null;
+  assignee_id?: number | null;
+  client_id?: number | null;
+  due_date?: string | null;
+  end_at?: string | null;
+  all_day?: boolean;
+  location?: string | null;
+  rrule?: string | null;
+  remind_before_min?: number | null;
 };
 export type DocumentRecord = {
   id: number;
@@ -280,21 +265,6 @@ export type CalendarEvent = {
   remind_before_min: number | null;
   reminder_status: string;
   recurring?: boolean; // true when this row is an expanded occurrence of a recurring event
-};
-export type CalendarEventInput = {
-  category: string;
-  title: string;
-  start_at: string;
-  end_at?: string | null;
-  all_day?: boolean;
-  type?: string | null;
-  matter_id?: number | null;
-  client_id?: number | null;
-  assignee_id?: number | null;
-  location?: string | null;
-  notes?: string | null;
-  rrule?: string | null;
-  remind_before_min?: number | null;
 };
 export type MatterDocument = {
   id: number;
@@ -440,14 +410,16 @@ export const api = {
   deleteExpense: (id: number) =>
     request<{ ok: boolean }>(`/api/finance/expenses/${id}`, { method: "DELETE" }),
   financeSummary: () => request<FinanceSummary>("/api/finance/summary"),
-  tasks: (status?: string) =>
-    request<{ items: Task[] }>(`/api/tasks${status ? `?status=${status}` : ""}`),
-  createTask: (input: {
-    title: string;
-    assignee_id?: number | null;
-    due_date?: string | null;
-  }) => request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(input) }),
-  updateTask: (id: number, patch: { status?: string; assignee_id?: number | null }) =>
+  tasks: (status?: string, category?: string) => {
+    const q = new URLSearchParams();
+    if (status) q.set("status", status);
+    if (category) q.set("category", category);
+    const qs = q.toString();
+    return request<{ items: Task[] }>(`/api/tasks${qs ? `?${qs}` : ""}`);
+  },
+  createTask: (input: TaskInput) =>
+    request<Task>("/api/tasks", { method: "POST", body: JSON.stringify(input) }),
+  updateTask: (id: number, patch: Partial<TaskInput> & { status?: string }) =>
     request<Task>(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteTask: (id: number) =>
     request<{ ok: boolean }>(`/api/tasks/${id}`, { method: "DELETE" }),
@@ -476,18 +448,6 @@ export const api = {
     const qs = q.toString();
     return request<{ items: CalendarEvent[] }>(`/api/calendar/events${qs ? `?${qs}` : ""}`);
   },
-  createCalendarEvent: (input: CalendarEventInput) =>
-    request<CalendarEvent>("/api/calendar/events", {
-      method: "POST",
-      body: JSON.stringify(input),
-    }),
-  updateCalendarEvent: (id: number, patch: Partial<CalendarEventInput> & { status?: string }) =>
-    request<CalendarEvent>(`/api/calendar/events/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(patch),
-    }),
-  deleteCalendarEvent: (id: number) =>
-    request<{ ok: boolean }>(`/api/calendar/events/${id}`, { method: "DELETE" }),
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
     const res = await fetch("/api/export", {
       method: "POST",
@@ -548,32 +508,12 @@ export const api = {
     }),
   cloneSession: (id: number) =>
     request<SessionBrief>(`/api/sessions/${id}/clone`, { method: "POST" }),
-  getEmailChannel: () => request<EmailChannel>("/api/channels/email"),
-  saveEmailChannel: (input: EmailChannelInput) =>
-    request<EmailChannel>("/api/channels/email", { method: "PUT", body: JSON.stringify(input) }),
-  listIntegrations: () => request<{ channels: IntegrationChannel[] }>("/api/integrations"),
-  saveTelegramChannel: (input: TelegramChannelInput) =>
-    request<{ ok: boolean; configured: boolean }>("/api/channels/telegram", {
+  getMailPreference: () => request<MailPreference>("/api/mail-preferences"),
+  saveMailPreference: (input: MailPreferenceInput) =>
+    request<MailPreference>("/api/mail-preferences", {
       method: "PUT",
       body: JSON.stringify(input),
     }),
-  saveWhatsAppChannel: (input: WhatsAppChannelInput) =>
-    request<{ ok: boolean; configured: boolean }>("/api/channels/whatsapp", {
-      method: "PUT",
-      body: JSON.stringify(input),
-    }),
-  createIntegrationLink: (kind: IntegrationKind) =>
-    request<{ code: string; kind: string }>(`/api/integrations/${kind}/link`, { method: "POST" }),
-  deleteIntegrationLink: (kind: IntegrationKind) =>
-    request<{ ok: boolean }>(`/api/integrations/${kind}/link`, { method: "DELETE" }),
-  getOutbox: (id: number) => request<OutboxMessage>(`/api/outbox/${id}`),
-  listOutbox: () => request<OutboxMessage[]>("/api/outbox"),
-  editOutbox: (id: number, fields: OutboxEdit) =>
-    request<OutboxMessage>(`/api/outbox/${id}`, { method: "PUT", body: JSON.stringify(fields) }),
-  confirmOutbox: (id: number) =>
-    request<OutboxMessage>(`/api/outbox/${id}/confirm`, { method: "POST" }),
-  cancelOutbox: (id: number) =>
-    request<OutboxMessage>(`/api/outbox/${id}/cancel`, { method: "POST" }),
   sessionChat: (id: number, text: string) =>
     request<{
       reply: string;

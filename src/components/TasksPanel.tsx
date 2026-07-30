@@ -26,6 +26,8 @@ export function TasksPanel() {
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("");
   const [due, setDue] = useState("");
+  const [time, setTime] = useState("");
+  const [location, setLocation] = useState("");
 
   useEffect(() => {
     api.members().then(setMembers).catch(() => {});
@@ -33,14 +35,14 @@ export function TasksPanel() {
 
   useEffect(() => {
     api
-      .tasks(showAll ? undefined : "open")
+      .tasks(showAll ? undefined : "open", "gorev")
       .then((d) => setTasks(d.items))
       .catch(() => {});
   }, [showAll]);
 
   function reload() {
     api
-      .tasks(showAll ? undefined : "open")
+      .tasks(showAll ? undefined : "open", "gorev")
       .then((d) => setTasks(d.items))
       .catch(() => {});
   }
@@ -48,14 +50,20 @@ export function TasksPanel() {
   async function add() {
     const t = title.trim();
     if (!t) return;
+    const allDay = !due || !time;
     await api.createTask({
+      category: "gorev",
       title: t,
       assignee_id: assignee ? Number(assignee) : null,
-      due_date: due || null,
+      due_date: due ? (allDay ? due : `${due}T${time}:00`) : null,
+      all_day: allDay,
+      location: location.trim() || null,
     });
     setTitle("");
     setAssignee("");
     setDue("");
+    setTime("");
+    setLocation("");
     setAdding(false);
     reload();
   }
@@ -174,13 +182,34 @@ export function TasksPanel() {
                 ))}
               </select>
             </label>
+            <div className="flex gap-3">
+              <label className="flex flex-1 flex-col gap-1 text-[13px] text-zinc-600">
+                Son tarih (opsiyonel)
+                <input
+                  type="date"
+                  value={due}
+                  onChange={(e) => setDue(e.target.value)}
+                  className={`${input} text-zinc-700`}
+                />
+              </label>
+              <label className="flex w-28 flex-col gap-1 text-[13px] text-zinc-600">
+                Saat
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  disabled={!due}
+                  className={`${input} text-zinc-700 disabled:opacity-50`}
+                />
+              </label>
+            </div>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
-              Son tarih (opsiyonel)
+              Yer (opsiyonel)
               <input
-                type="date"
-                value={due}
-                onChange={(e) => setDue(e.target.value)}
-                className={`${input} text-zinc-700`}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="ör. adliye, ofis, online"
+                className={input}
               />
             </label>
           </div>

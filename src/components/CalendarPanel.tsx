@@ -14,24 +14,27 @@ const input =
 type Mode = "month" | "week" | "day" | "agenda";
 
 const CATEGORY_LABEL: Record<string, string> = {
+  gorev: "Görev",
+  hatirlatma: "Hatırlatma",
+  randevu: "Randevu",
   hearing: "Duruşma",
   deadline: "Süre",
-  appointment: "Randevu",
-  reminder: "Hatırlatma",
 };
 
 const CATEGORY_STYLE: Record<string, string> = {
+  gorev: "bg-emerald-100 text-emerald-700",
+  hatirlatma: "bg-amber-100 text-amber-700",
+  randevu: "bg-teal-100 text-teal-700",
   hearing: "bg-indigo-100 text-indigo-700",
   deadline: "bg-red-100 text-red-700",
-  appointment: "bg-emerald-100 text-emerald-700",
-  reminder: "bg-amber-100 text-amber-700",
 };
 
 const CATEGORY_DOT: Record<string, string> = {
+  gorev: "bg-emerald-500",
+  hatirlatma: "bg-amber-500",
+  randevu: "bg-teal-500",
   hearing: "bg-indigo-500",
   deadline: "bg-red-500",
-  appointment: "bg-emerald-500",
-  reminder: "bg-amber-500",
 };
 
 const MONTHS = [
@@ -78,7 +81,7 @@ function fmtTime(startAt: string | null, allDay: boolean): string {
 }
 
 const EMPTY_FORM = {
-  category: "appointment",
+  category: "gorev",
   title: "",
   date: "",
   time: "",
@@ -190,16 +193,16 @@ export function CalendarPanel() {
     const title = f.title.trim();
     if (!title || !f.date) return;
     const start_at = f.all_day || !f.time ? f.date : `${f.date}T${f.time}:00`;
-    await api.createCalendarEvent({
+    await api.createTask({
       category: f.category,
       title,
-      start_at,
+      due_date: start_at,
       all_day: f.all_day || !f.time,
       type: f.type.trim() || null,
       location: f.location.trim() || null,
       matter_id: f.matter_id ? Number(f.matter_id) : null,
       client_id: f.client_id ? Number(f.client_id) : null,
-      notes: f.notes.trim() || null,
+      description: f.notes.trim() || null,
       rrule: buildRrule(f.repeat, f.until),
       remind_before_min: f.remind ? Number(f.remind) : null,
     });
@@ -209,11 +212,11 @@ export function CalendarPanel() {
   }
 
   async function complete(ev: CalendarEvent) {
-    await api.updateCalendarEvent(ev.id, { status: "done" });
+    await api.updateTask(ev.id, { status: "done" });
     reload();
   }
   async function remove(id: number) {
-    await api.deleteCalendarEvent(id);
+    await api.deleteTask(id);
     reload();
   }
 
@@ -252,7 +255,7 @@ export function CalendarPanel() {
               ["month", "Ay"],
               ["week", "Hafta"],
               ["day", "Gün"],
-              ["agenda", "Ajanda"],
+              ["agenda", "Liste"],
             ] as [Mode, string][]
           ).map(([m, lbl]) => (
             <button
@@ -295,22 +298,23 @@ export function CalendarPanel() {
           className={`${input} text-zinc-700`}
         >
           <option value="">Tümü</option>
+          <option value="gorev">Görev</option>
+          <option value="hatirlatma">Hatırlatma</option>
+          <option value="randevu">Randevu</option>
           <option value="hearing">Duruşma</option>
           <option value="deadline">Süre</option>
-          <option value="appointment">Randevu</option>
-          <option value="reminder">Hatırlatma</option>
         </select>
         <button
           onClick={() => openFormOn(ymdOf(cursor))}
           className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
         >
-          + Yeni etkinlik
+          + Yeni kayıt
         </button>
       </div>
 
       {adding && (
         <Modal
-          title="Yeni etkinlik"
+          title="Yeni ajanda kaydı"
           width="max-w-3xl"
           onClose={() => setAdding(false)}
           footer={
@@ -337,10 +341,9 @@ export function CalendarPanel() {
               onChange={(e) => setF({ ...f, category: e.target.value })}
               className={`${input} text-zinc-700`}
             >
-              <option value="appointment">Randevu/Görüşme</option>
-              <option value="hearing">Duruşma</option>
-              <option value="deadline">Süre</option>
-              <option value="reminder">Hatırlatma</option>
+              <option value="gorev">Görev</option>
+              <option value="hatirlatma">Hatırlatma</option>
+              <option value="randevu">Randevu</option>
             </select>
             <input
               value={f.title}
