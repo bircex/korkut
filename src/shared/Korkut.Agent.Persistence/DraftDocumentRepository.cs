@@ -32,6 +32,12 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
     public Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default)
         => Db.GeneratedDocuments.AsNoTracking().SingleOrDefaultAsync(x => x.OfficeId == officeId && x.Id == docId, ct);
 
+    public async Task<IReadOnlyList<GeneratedDocument>> ListAsync(Guid officeId, CancellationToken ct = default)
+        => await Db.GeneratedDocuments.AsNoTracking()
+            .Where(x => x.OfficeId == officeId)
+            .OrderByDescending(x => x.UpdatedAt)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<DocumentVersion>> VersionsAsync(Guid officeId, Guid docId, CancellationToken ct = default)
         => await Db.DocumentVersions.AsNoTracking()
             .Where(x => x.OfficeId == officeId && x.DocumentId == docId)

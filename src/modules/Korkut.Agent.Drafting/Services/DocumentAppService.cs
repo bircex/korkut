@@ -22,6 +22,15 @@ internal sealed class DocumentAppService(
     ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting,
     IUserLookupService dir, IDocumentExporter exporter) : IDocumentAppService
 {
+    public async Task<IReadOnlyList<DocBriefResponse>> ListAsync(CancellationToken ct = default)
+    {
+        var office = current.OfficeId;
+        var rows = await uow.InScopeAsync(office, () => docs.ListAsync(office, ct), ct);
+        return rows
+            .Select(d => new DocBriefResponse(d.Id, d.ConversationId, d.Title, Kind: null, d.UpdatedAt))
+            .ToList();
+    }
+
     public async Task<DocumentDataResponse> ForSessionAsync(Guid sessionId, CancellationToken ct = default)
     {
         var office = current.OfficeId;

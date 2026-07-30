@@ -45,7 +45,16 @@ internal sealed class TaskService(
                 return Result<TaskResponse>.NotFound("Görev bulunamadı.");
             }
 
-            task.SetStatus(request.Status!, clock.UtcNow);
+            if (request.Status is not null)
+            {
+                task.SetStatus(request.Status, clock.UtcNow);
+            }
+
+            if (request.AssigneeId is { } assignee)
+            {
+                task.Reassign(assignee);
+            }
+
             await repository.SaveChangesAsync(ct);
             return Result<TaskResponse>.Ok(ToResponse(task, await ResolveAsync(office, [task.AssigneeId], ct)));
         }, ct);

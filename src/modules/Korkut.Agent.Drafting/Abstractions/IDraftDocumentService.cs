@@ -9,6 +9,8 @@ public interface IDraftDocumentService
 
     Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default);
 
+    Task<IReadOnlyList<GeneratedDocument>> ListAsync(Guid officeId, CancellationToken ct = default);
+
     Task<IReadOnlyList<DocumentVersion>> VersionsAsync(Guid officeId, Guid docId, CancellationToken ct = default);
 
     Task<Guid?> StagePendingAsync(Guid officeId, Guid docId, string contentMd, string summary, CancellationToken ct = default);

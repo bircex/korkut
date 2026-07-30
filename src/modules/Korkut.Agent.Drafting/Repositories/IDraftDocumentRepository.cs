@@ -13,6 +13,9 @@ public interface IDraftDocumentRepository
 
     Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default);
 
+    /// <summary>All generated documents in the office, most-recently-updated first.</summary>
+    Task<IReadOnlyList<GeneratedDocument>> ListAsync(Guid officeId, CancellationToken ct = default);
+
     Task<IReadOnlyList<DocumentVersion>> VersionsAsync(Guid officeId, Guid docId, CancellationToken ct = default);
 
     /// <summary>Stage a pending edit; returns the pending id, or null if the document is missing.</summary>

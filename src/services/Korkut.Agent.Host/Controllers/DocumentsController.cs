@@ -15,6 +15,12 @@ namespace Korkut.Agent.Host.Controllers;
 [Route("api/documents")]
 public sealed class DocumentsController(IDocumentAppService docs) : ControllerBase
 {
+    /// <summary>Every drafted document in the office (the SPA's document list). Bare array.</summary>
+    [HttpGet]
+    [Authorize(Policy = Permissions.MattersRead)]
+    public async Task<IActionResult> List(CancellationToken ct)
+        => Ok(await docs.ListAsync(ct));
+
     [HttpGet("/api/sessions/{sessionId:guid}/document")]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> ForSession(Guid sessionId, CancellationToken ct)

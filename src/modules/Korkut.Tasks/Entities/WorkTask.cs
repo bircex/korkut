@@ -53,4 +53,6 @@ public sealed class WorkTask : Entity, ITenantOwned, IAggregateRoot
         Status = status;
         CompletedAt = status == "done" ? now : null;
     }
+
+    public void Reassign(Guid? assigneeId) => AssigneeId = assigneeId;
 }

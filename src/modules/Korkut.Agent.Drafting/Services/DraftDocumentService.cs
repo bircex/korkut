@@ -15,6 +15,9 @@ internal sealed class DraftDocumentService(IDraftDocumentRepository repo, IClock
     public Task<GeneratedDocument?> GetAsync(Guid officeId, Guid docId, CancellationToken ct = default)
         => repo.GetAsync(officeId, docId, ct);
 
+    public Task<IReadOnlyList<GeneratedDocument>> ListAsync(Guid officeId, CancellationToken ct = default)
+        => repo.ListAsync(officeId, ct);
+
     public Task<IReadOnlyList<DocumentVersion>> VersionsAsync(Guid officeId, Guid docId, CancellationToken ct = default)
         => repo.VersionsAsync(officeId, docId, ct);
 

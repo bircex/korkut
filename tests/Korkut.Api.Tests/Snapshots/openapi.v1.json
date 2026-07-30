@@ -1215,6 +1215,13 @@
       },
       "UpdateTaskStatusRequest": {
         "properties": {
+          "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "status": {
             "pattern": "open|in_progress|done",
             "type": [
@@ -1223,9 +1230,6 @@
             ]
           }
         },
-        "required": [
-          "status"
-        ],
         "type": "object"
       }
     }
