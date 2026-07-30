@@ -78,6 +78,30 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
+// Chat avatars: Korkut's logo for the assistant, the signed-in user's initials for our messages.
+function KorkutAvatar({ size = 28 }: { size?: number }) {
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className="grid shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-white"
+    >
+      <img src="/korkut-logo.svg" alt="Korkut" className="h-[70%] w-[70%]" />
+    </div>
+  );
+}
+
+function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className="grid shrink-0 place-items-center rounded-full bg-zinc-900 text-[11px] font-semibold text-white"
+      title={user.full_name ?? user.username}
+    >
+      {initials(user)}
+    </div>
+  );
+}
+
 // Sol menü ikonları — Phosphor set'inden (bkz. ../icons.ts).
 const NAV_ICON: Record<string, Icon> = {
   matters: Folder,
@@ -176,9 +200,10 @@ function viewFromPath(path: string): SidebarView {
 function chatRoute(path: string): { id: number; pane: "chat" | "document" } | null {
   const doc = matchPath("/sohbet/:id/belge", path);
   const m = doc ?? matchPath("/sohbet/:id", path);
-  if (!m) return null;
-  const id = Number(m.id);
-  return Number.isFinite(id) ? { id, pane: doc ? "document" : "chat" } : null;
+  if (!m?.id) return null;
+  // Session ids are GUIDs (opaque strings), so never coerce to a number — Number("019f…") is NaN,
+  // which used to make every history click resolve to no chat. Keep the raw id.
+  return { id: m.id as unknown as number, pane: doc ? "document" : "chat" };
 }
 
 const VIEW_TITLE: Record<SidebarView, string> = {
@@ -733,12 +758,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                           e.preventDefault();
                           openSession(s.id);
                         }}
-                        className="min-w-0 flex-1 text-left"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
                         title={s.title}
                       >
-                        <div className="truncate text-zinc-800">{s.title}</div>
-                        <div className="truncate text-[11px] text-zinc-400">
-                          {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
+                        <KorkutAvatar size={24} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-zinc-800">{s.title}</div>
+                          <div className="truncate text-[11px] text-zinc-400">
+                            {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
+                          </div>
                         </div>
                       </a>
                     )}
@@ -872,7 +900,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           ) : (
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
             {messages.map((m, i) => (
-              <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+              <div
+                key={i}
+                className={
+                  "flex items-end gap-2 " + (m.role === "user" ? "flex-row-reverse" : "flex-row")
+                }
+              >
+                {m.role === "user" ? <UserAvatar user={user} /> : <KorkutAvatar />}
                 <div
                   className={
                     m.role === "user"
@@ -885,7 +919,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               </div>
             ))}
             {sending && sendingId === currentId && !streaming && (
-              <div className="flex justify-start">
+              <div className="flex items-end gap-2">
+                <KorkutAvatar />
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
                   {activity ? activity : "Korkut yazıyor…"}
                 </div>
