@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Infrastructure.Runtime;
+namespace Korkut.Core;
 
 /// <summary>Production <see cref="IEnvironment"/> over the real process environment (KDM-033).</summary>
 public sealed class SystemEnvironment : IEnvironment
