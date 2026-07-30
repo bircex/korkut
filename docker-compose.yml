@@ -41,6 +41,9 @@ services:
       DB_NAME: korkut
       DB_USER: korkut_app
       DB_PASSWORD: ${KORKUT_APP_DB_PASSWORD}
+      # The runtime hosts connect to pgbouncer:6432 (KORKUT_DB_URL); the edoburu image
+      # otherwise listens on 5432, so pin the pooler's listen port to match.
+      LISTEN_PORT: "6432"
       POOL_MODE: transaction
       AUTH_TYPE: scram-sha-256
       MAX_CLIENT_CONN: "1000"
