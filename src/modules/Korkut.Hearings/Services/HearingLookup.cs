@@ -24,7 +24,7 @@ internal sealed class HearingLookup(IHearingRepository repository, DbContext db)
                 && (start == null || h.ScheduledAt >= start)
                 && (end == null || h.ScheduledAt <= end))
             .OrderBy(h => h.ScheduledAt)
-            .Select(h => new HearingCalendarRow(h.Id, h.MatterId, h.ScheduledAt))
+            .Select(h => new HearingCalendarRow(h.Id, h.MatterId, h.ScheduledAt, h.Type, h.Location))
             .ToListAsync(ct);
 
     public async Task<int> CountInRangeAsync(Guid officeId, DateTimeOffset start, DateTimeOffset end, CancellationToken ct = default)

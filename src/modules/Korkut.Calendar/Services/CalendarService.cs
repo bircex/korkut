@@ -91,7 +91,8 @@ internal sealed class CalendarService(
 
             var items = hearingRows
                 .Select(h => new AgendaItemResponse(
-                    "hearing", h.ScheduledAt, h.Id, h.MatterId, titles.GetValueOrDefault(h.MatterId, string.Empty), "scheduled"))
+                    "hearing", h.ScheduledAt, h.Id, h.MatterId, titles.GetValueOrDefault(h.MatterId, string.Empty), "scheduled",
+                    h.Type, TimeOnly.FromDateTime(h.ScheduledAt.DateTime), h.Location))
                 .Concat(deadlineRows.Select(d => new AgendaItemResponse(
                     "deadline", AtMidnightUtc(d.DueDate), d.Id, d.MatterId, d.Title, "open")))
                 .OrderBy(r => r.Date)
@@ -127,9 +128,9 @@ internal sealed class CalendarService(
             d.MatterId, Name(titles, d.MatterId), null, null, null, null,
             null, d.CompletedAt == null ? "scheduled" : "done", null, null, null, null, "pending", false)));
         rows.AddRange(hearingRows.Select(h => new CalendarEntryResponse(
-            h.Id, "hearing", null, titles.GetValueOrDefault(h.MatterId, string.Empty), h.ScheduledAt, null, false,
+            h.Id, "hearing", h.Type, titles.GetValueOrDefault(h.MatterId, string.Empty), h.ScheduledAt, null, false,
             h.MatterId, titles.GetValueOrDefault(h.MatterId, string.Empty), null, null, null, null,
-            null, "scheduled", null, null, null, null, "pending", false)));
+            h.Location, "scheduled", null, null, null, null, "pending", false)));
 
         return rows.OrderBy(r => r.StartAt).ToList();
     }

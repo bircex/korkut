@@ -37,8 +37,10 @@ public sealed record EchoResponse(string Title);
 [Route("api/v1")]
 public sealed class FoundationController : ControllerBase
 {
-    /// <summary>A stable public contract: what the sign-in screen may offer.</summary>
+    /// <summary>A stable public contract: what the sign-in screen may offer. Served at both
+    /// <c>/api/config</c> (what the SPA calls) and the versioned <c>/api/v1/config</c>.</summary>
     [HttpGet("config")]
+    [HttpGet("/api/config")]
     [AllowAnonymous]
     public IActionResult Config() => Ok(new ConfigResponse(DemoEnabled: true, GoogleConfigured: false));
 

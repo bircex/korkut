@@ -21,4 +21,5 @@ public interface IHearingLookup
 }
 
 /// <summary>A hearing as the calendar needs it: when it is, and the matter it belongs to.</summary>
-public sealed record HearingCalendarRow(Guid Id, Guid MatterId, DateTimeOffset ScheduledAt);
+public sealed record HearingCalendarRow(
+    Guid Id, Guid MatterId, DateTimeOffset ScheduledAt, string? Type, string? Location);

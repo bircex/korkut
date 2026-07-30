@@ -8,5 +8,7 @@ namespace Korkut.Hearings.Services;
 internal static class HearingMapping
 {
     public static HearingResponse ToResponse(Hearing h) =>
-        new(h.Id, h.ScheduledAt, h.Type, h.Location, h.Result, h.Notes, h.ReminderStatus);
+        new(h.Id, h.MatterId, h.ScheduledAt,
+            DateOnly.FromDateTime(h.ScheduledAt.DateTime), TimeOnly.FromDateTime(h.ScheduledAt.DateTime),
+            h.Type, h.Location, h.Result, h.Notes, h.ReminderStatus);
 }
