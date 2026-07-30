@@ -820,6 +820,13 @@
               "string"
             ]
           },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "office_name": {
             "maxLength": "200",
             "type": [
@@ -837,6 +844,7 @@
           }
         },
         "required": [
+          "full_name",
           "email",
           "password",
           "office_name"

@@ -34,5 +34,5 @@ public interface IOfficeProvisioner
     /// <summary>Local (e-mail + password) self-serve signup: a disabled office + its owner, whose
     /// password hash is stored so they can sign in once a platform admin enables the office. Null
     /// when the e-mail already has an account.</summary>
-    Task<ProvisionedOffice?> ProvisionLocalAsync(string email, string passwordHash, string officeName, CancellationToken ct = default);
+    Task<ProvisionedOffice?> ProvisionLocalAsync(string email, string passwordHash, string officeName, string fullName, CancellationToken ct = default);
 }

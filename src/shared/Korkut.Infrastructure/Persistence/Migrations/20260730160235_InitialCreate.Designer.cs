@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Korkut.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(KorkutDbContext))]
-    [Migration("20260730154535_InitialCreate")]
+    [Migration("20260730160235_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

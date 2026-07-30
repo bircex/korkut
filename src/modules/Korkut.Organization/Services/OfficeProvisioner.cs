@@ -36,7 +36,7 @@ public sealed class OfficeProvisioner(DbContext db, IClock clock) : IOfficeProvi
         return new ProvisionedOffice(reader.GetGuid(0), reader.GetGuid(1));
     }
 
-    public async Task<ProvisionedOffice?> ProvisionLocalAsync(string email, string passwordHash, string officeName, CancellationToken ct = default)
+    public async Task<ProvisionedOffice?> ProvisionLocalAsync(string email, string passwordHash, string officeName, string fullName, CancellationToken ct = default)
     {
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
@@ -45,10 +45,11 @@ public sealed class OfficeProvisioner(DbContext db, IClock clock) : IOfficeProvi
         }
 
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT office_id, user_id FROM korkut.provision_office_local(@e, @h, @n, @now)";
+        cmd.CommandText = "SELECT office_id, user_id FROM korkut.provision_office_local(@e, @h, @n, @f, @now)";
         cmd.Parameters.AddWithValue("e", email);
         cmd.Parameters.AddWithValue("h", passwordHash);
         cmd.Parameters.AddWithValue("n", officeName);
+        cmd.Parameters.AddWithValue("f", fullName);
         cmd.Parameters.AddWithValue("now", clock.UtcNow);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct))

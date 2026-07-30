@@ -21,6 +21,10 @@ public sealed record DemoRequestResponse(bool Pending);
 /// that a platform admin must enable before the owner can sign in.</summary>
 public sealed record RegisterRequest
 {
+    [Required(ErrorMessage = "Ad Soyad zorunludur.")]
+    [MaxLength(200, ErrorMessage = "Ad Soyad en fazla 200 karakter olabilir.")]
+    public string? FullName { get; init; }
+
     [Required(ErrorMessage = "E-posta zorunludur.")]
     [EmailAddress(ErrorMessage = "Geçerli bir e-posta girin.")]
     public string? Email { get; init; }

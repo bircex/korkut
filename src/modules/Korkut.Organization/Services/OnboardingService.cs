@@ -29,8 +29,15 @@ public sealed class OnboardingService(IOfficeProvisioner provisioner, IPasswordH
 
     public async Task<Result<DemoRequestResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
+        // Block throwaway / temp-mail providers so a signup uses a real inbox.
+        if (DisposableEmailPolicy.IsDisposable(request.Email))
+        {
+            return Result<DemoRequestResponse>.BadRequest("Geçici e-posta adresleriyle kayıt yapılamaz. Kurumsal veya kalıcı bir e-posta kullanın.");
+        }
+
         var provisioned = await provisioner.ProvisionLocalAsync(
-            request.Email!.Trim(), passwordHasher.Hash(request.Password!), request.OfficeName!.Trim(), ct);
+            request.Email!.Trim(), passwordHasher.Hash(request.Password!),
+            request.OfficeName!.Trim(), request.FullName!.Trim(), ct);
         return provisioned is null
             ? Result<DemoRequestResponse>.Conflict("Bu e-posta için zaten bir hesap mevcut.")
             : Result<DemoRequestResponse>.Ok(new DemoRequestResponse(true));
