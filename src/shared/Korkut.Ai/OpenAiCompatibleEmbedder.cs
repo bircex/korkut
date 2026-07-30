@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Korkut.Core;
 
-namespace Korkut.Infrastructure.Ai;
+namespace Korkut.Ai;
 
 /// <summary>
 /// One embedding adapter for every backend that speaks the OpenAI <c>/embeddings</c> schema —

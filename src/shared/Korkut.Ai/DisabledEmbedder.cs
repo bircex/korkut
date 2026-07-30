@@ -1,6 +1,6 @@
 using Korkut.Core;
 
-namespace Korkut.Infrastructure.Ai;
+namespace Korkut.Ai;
 
 /// <summary>
 /// Fallback embedder used by the Knowledge host when no embedding endpoint is configured — every

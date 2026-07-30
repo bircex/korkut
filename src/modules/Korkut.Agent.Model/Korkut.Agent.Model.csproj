@@ -11,5 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Korkut.Agent.Model.Unit.Tests" />
+      <ProjectReference Include="..\..\shared\Korkut.Ai\Korkut.Ai.csproj" />
   </ItemGroup>
 </Project>

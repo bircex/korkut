@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
-namespace Korkut.Infrastructure.Ai;
+namespace Korkut.Ai;
 
 /// <summary>
 /// The SHARED AI runtime both AI-plane hosts need: the environment adapter + ported RuntimeConfig,

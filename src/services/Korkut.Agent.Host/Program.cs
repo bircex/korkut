@@ -1,6 +1,6 @@
 using Korkut.Agent.Host.Setup;
 using Korkut.Core;
-using Korkut.Infrastructure.Ai;
+using Korkut.Ai;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Security;

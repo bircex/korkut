@@ -3,7 +3,7 @@ using Korkut.Knowledge.Host.Setup;
 using Korkut.Web;
 using Korkut.Web.Controllers;
 using Korkut.Web.Auth;
-using Korkut.Infrastructure.Ai;
+using Korkut.Ai;
 using Korkut.Infrastructure.Observability;
 using Korkut.Infrastructure.Persistence;
 using Korkut.Security;
