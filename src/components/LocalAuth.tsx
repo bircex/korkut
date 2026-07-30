@@ -9,15 +9,33 @@ import { Button, Field } from "../a11y";
 
 type Step = "credentials" | "totp" | "register" | "registered";
 
+const STRENGTH_LABELS = ["Çok zayıf", "Zayıf", "Orta", "İyi", "Güçlü"];
+const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#16a34a"];
+
+// A lightweight password-quality heuristic: length + character-class variety, 0..4.
+function passwordStrength(pw: string): number {
+  if (!pw) return 0;
+  let score = 0;
+  if (pw.length >= 10) score++;
+  if (pw.length >= 14) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return Math.min(score, 4);
+}
+
 export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
   const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [fullName, setFullName] = useState("");
   const [officeName, setOfficeName] = useState("");
   const [code, setCode] = useState("");
   const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const strength = passwordStrength(password);
 
   async function submitCredentials(e: React.FormEvent) {
     e.preventDefault();
@@ -40,9 +58,13 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
   async function submitRegister(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (password !== confirm) {
+      setError("Parolalar eşleşmiyor");
+      return;
+    }
     setBusy(true);
     try {
-      await api.register(email.trim(), password, officeName.trim());
+      await api.register(fullName.trim(), email.trim(), password, officeName.trim());
       setStep("registered");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Kayıt oluşturulamadı");
@@ -68,6 +90,7 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
   function switchTo(next: Step) {
     setError(null);
     setPassword("");
+    setConfirm("");
     setStep(next);
   }
 
@@ -130,6 +153,13 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
           Yeni büro kaydı
         </h2>
         <Field
+          label="Ad Soyad"
+          autoComplete="name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+        />
+        <Field
           label="Büro adı"
           value={officeName}
           onChange={(e) => setOfficeName(e.target.value)}
@@ -149,10 +179,51 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          error={error ?? undefined}
           required
         />
-        <Button type="submit" disabled={busy || !email.trim() || password.length < 10 || !officeName.trim()}>
+        {password.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-1" aria-hidden>
+              {[0, 1, 2, 3].map((i) => (
+                <span
+                  key={i}
+                  className="h-1 flex-1 rounded-full"
+                  style={{
+                    backgroundColor:
+                      i < strength ? STRENGTH_COLORS[strength] : "#e4e4e7",
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-[12px]" style={{ color: STRENGTH_COLORS[strength] }}>
+              Parola gücü: {STRENGTH_LABELS[strength]}
+            </span>
+          </div>
+        )}
+        <Field
+          label="Parola (tekrar)"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          error={
+            error ??
+            (confirm.length > 0 && confirm !== password ? "Parolalar eşleşmiyor" : undefined)
+          }
+          required
+        />
+        <Button
+          type="submit"
+          disabled={
+            busy ||
+            !fullName.trim() ||
+            !email.trim() ||
+            password.length < 10 ||
+            strength < 2 ||
+            confirm !== password ||
+            !officeName.trim()
+          }
+        >
           {busy ? "Kaydediliyor…" : "Kayıt ol"}
         </Button>
         <button
