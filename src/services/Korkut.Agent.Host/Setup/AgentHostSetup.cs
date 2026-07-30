@@ -62,6 +62,25 @@ public static class AgentHostSetup
             }
         }
 
+        // Bedesten (Ministry of Justice, bedesten.adalet.gov.tr) is a base-relative API shared by the
+        // court-decision sources AND Mevzuat, so it needs its base URL configured.
+        services.AddHttpClient("bedesten", c =>
+        {
+            c.BaseAddress = new Uri("https://bedesten.adalet.gov.tr");
+            c.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        // The four Bedesten court sources — each pins its own itemTypeList (the API's court-type enum)
+        // and is exposed as an ISourceClient the search/fetch tools dispatch to by name. Yargıtay and
+        // Danıştay support chamber (daire) filtering; Emsal (yerel + istinaf) and KYB do not.
+        void Bedesten(string source, string[] itemTypes, bool chamber) =>
+            services.AddScoped<Korkut.Tools.Law.ISourceClient>(sp => new Korkut.Tools.Law.BedestenClient(
+                sp.GetRequiredService<System.Net.Http.IHttpClientFactory>(), source, itemTypes, chamber));
+        Bedesten("yargitay", ["YARGITAYKARARI"], chamber: true);
+        Bedesten("danistay", ["DANISTAYKARAR"], chamber: true);
+        Bedesten("emsal", ["YERELHUKUK", "ISTINAFHUKUK"], chamber: false);
+        Bedesten("kyb", ["KYB"], chamber: false);
+
         // Tool registry: every IAgentTool in Korkut.Tools, plus the catalog that gates them.
         services.AddScoped<IToolCatalog, ToolCatalog>();
         foreach (var tool in typeof(ToolCatalog).Assembly.GetTypes()
