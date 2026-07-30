@@ -174,12 +174,25 @@ services:
       <<: *app-env
       KORKUT_API_URL: http://api:8080
       KORKUT_AGENT_URL: http://agent:8080
-    ports:
-      - "8090:8080"
+    expose:
+      - "8080"
     depends_on:
       api:
         condition: service_started
       agent:
+        condition: service_started
+    restart: unless-stopped
+
+  # The browser entry (:8090): serves the built React SPA and reverse-proxies /api to the gateway,
+  # so it's a single same-origin (session cookies + the Google OAuth callback keep working).
+  ui:
+    build:
+      context: ../korkut-ui
+      dockerfile: Dockerfile
+    ports:
+      - "8090:80"
+    depends_on:
+      gateway:
         condition: service_started
     restart: unless-stopped
 
