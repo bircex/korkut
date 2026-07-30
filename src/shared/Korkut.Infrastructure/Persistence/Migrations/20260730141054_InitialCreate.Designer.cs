@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Korkut.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(KorkutDbContext))]
-    [Migration("20260730133125_InitialCreate")]
+    [Migration("20260730141054_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -329,9 +329,18 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -342,17 +351,22 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(320)")
                         .HasColumnName("email");
 
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("full_name");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("kind");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("character varying(400)")
-                        .HasColumnName("name");
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("national_id");
 
                     b.Property<Guid>("OfficeId")
                         .HasColumnType("uuid")
@@ -1758,6 +1772,11 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("description");
 
                     b.Property<DateTimeOffset?>("DueAt")
                         .HasColumnType("timestamp with time zone")

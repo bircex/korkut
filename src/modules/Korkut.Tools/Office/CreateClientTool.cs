@@ -13,12 +13,15 @@ public sealed class CreateClientTool(IClientService clients) : IAgentTool
         {
           "type": "object",
           "properties": {
-            "name": { "type": "string", "description": "Müvekkil adı" },
+            "full_name": { "type": "string", "description": "Müvekkil adı soyadı / unvanı" },
             "kind": { "type": "string", "enum": ["individual", "corporate"], "description": "Tür (varsayılan: individual)" },
             "email": { "type": "string", "description": "E-posta (opsiyonel)" },
-            "phone": { "type": "string", "description": "Telefon (opsiyonel)" }
+            "phone": { "type": "string", "description": "Telefon (opsiyonel)" },
+            "national_id": { "type": "string", "description": "T.C. kimlik / vergi numarası (opsiyonel)" },
+            "address": { "type": "string", "description": "Adres (opsiyonel)" },
+            "date_of_birth": { "type": "string", "description": "Doğum tarihi, YYYY-MM-DD (opsiyonel)" }
           },
-          "required": ["name"]
+          "required": ["full_name"]
         }
         """);
 
@@ -30,18 +33,21 @@ public sealed class CreateClientTool(IClientService clients) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var name = ToolArgs.String(arguments, "name");
-        if (string.IsNullOrWhiteSpace(name))
+        var fullName = ToolArgs.String(arguments, "full_name");
+        if (string.IsNullOrWhiteSpace(fullName))
         {
-            return ToolResult.Error("'name' gereklidir.");
+            return ToolResult.Error("'full_name' gereklidir.");
         }
 
         var request = new CreateClientRequest
         {
-            Name = name.Trim(),
+            FullName = fullName.Trim(),
             Kind = ToolArgs.String(arguments, "kind") ?? "individual",
             Email = ToolArgs.String(arguments, "email"),
             Phone = ToolArgs.String(arguments, "phone"),
+            NationalId = ToolArgs.String(arguments, "national_id"),
+            Address = ToolArgs.String(arguments, "address"),
+            DateOfBirth = DateOnly.TryParse(ToolArgs.String(arguments, "date_of_birth"), out var dob) ? dob : null,
         };
         var result = await clients.CreateAsync(request, ct);
         if (!result.IsSuccess)
@@ -50,6 +56,6 @@ public sealed class CreateClientTool(IClientService clients) : IAgentTool
         }
 
         var client = result.Value!;
-        return ToolResult.Ok(ToolArgs.Result(new { client.Id, client.Name, client.Kind }));
+        return ToolResult.Ok(ToolArgs.Result(new { client.Id, client.FullName, client.Kind }));
     }
 }

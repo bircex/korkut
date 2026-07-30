@@ -61,7 +61,7 @@ public class DocumentRelationTests(PostgresFixture pg, MinioFixture minio)
 
     private async Task<Guid> SeedClientAsync(KorkutDbContext db)
     {
-        var client = new Client(_office, "c", "individual", null, null, DateTimeOffset.UtcNow);
+        var client = new Client(_office, "c", "individual", null, null, null, null, null, DateTimeOffset.UtcNow);
         db.Clients.Add(client);
         await db.SaveChangesAsync();
         return client.Id;

@@ -1,8 +1,7 @@
-using Korkut.Finance;
-using Korkut.Finance.Services;
 using Korkut.Finance.Entities;
+using Korkut.Finance.Services;
 
-namespace Korkut.Contract.Tests;
+namespace Korkut.Finance.Unit.Tests;
 
 /// <summary>
 /// Unit tests for the money rules — no DB, no EF. The VAT-inclusive gross lives on the

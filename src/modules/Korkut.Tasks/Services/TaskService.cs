@@ -28,7 +28,10 @@ internal sealed class TaskService(
     public Task<Result<TaskResponse>> CreateAsync(CreateTaskRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var task = new WorkTask(office, request.Title!.Trim(), request.MatterId, request.AssigneeId, request.DueDate, clock.UtcNow);
+            var task = new WorkTask(
+                office, request.Title!.Trim(),
+                string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+                request.MatterId, request.AssigneeId, request.DueDate, clock.UtcNow);
             await repository.AddAsync(task, ct);
             return Result<TaskResponse>.Ok(ToResponse(task, await ResolveAsync(office, [task.AssigneeId], ct)));
         }, ct);
@@ -66,7 +69,7 @@ internal sealed class TaskService(
     }
 
     private static TaskResponse ToResponse(WorkTask t, IReadOnlyDictionary<Guid, string> names) =>
-        new(t.Id, t.Title, t.Status, t.MatterId, t.AssigneeId,
+        new(t.Id, t.Title, t.Description, t.Status, t.MatterId, t.AssigneeId,
             t.AssigneeId is { } a && names.TryGetValue(a, out var n) ? n : null,
             t.DueAt, t.CompletedAt, t.CreatedAt);
 }

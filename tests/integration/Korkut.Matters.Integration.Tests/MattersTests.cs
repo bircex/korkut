@@ -147,7 +147,7 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     public async Task Client_matter_link_uses_the_tenant_aware_composite_key()
     {
         await using var db = pg.NewContext();
-        var client = new Client(_office, "Müvekkil", "individual", null, null, DateTimeOffset.UtcNow);
+        var client = new Client(_office, "Müvekkil", "individual", null, null, null, null, null, DateTimeOffset.UtcNow);
         db.Clients.Add(client);
         await db.SaveChangesAsync();
 

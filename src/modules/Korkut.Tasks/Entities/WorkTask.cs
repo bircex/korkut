@@ -8,11 +8,14 @@ namespace Korkut.Tasks.Entities;
 /// </summary>
 public sealed class WorkTask : Entity, ITenantOwned, IAggregateRoot
 {
-    public WorkTask(Guid officeId, string title, Guid? matterId, Guid? assigneeId, DateTimeOffset? dueAt, DateTimeOffset createdAt)
+    public WorkTask(
+        Guid officeId, string title, string? description, Guid? matterId, Guid? assigneeId,
+        DateTimeOffset? dueAt, DateTimeOffset createdAt)
         : base(NewId())
     {
         OfficeId = officeId;
         Title = title;
+        Description = description;
         MatterId = matterId;
         AssigneeId = assigneeId;
         DueAt = dueAt;
@@ -32,6 +35,8 @@ public sealed class WorkTask : Entity, ITenantOwned, IAggregateRoot
     public Guid? AssigneeId { get; private set; }
 
     public string Title { get; private set; } = string.Empty;
+
+    public string? Description { get; private set; }
 
     /// <summary>"open" | "in_progress" | "done".</summary>
     public string Status { get; private set; } = "open";

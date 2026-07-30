@@ -113,10 +113,13 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     office_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
+                    full_name = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
                     kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: true),
                     phone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    national_id = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    date_of_birth = table.Column<DateOnly>(type: "date", nullable: true),
                     deleted_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -539,6 +542,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     matter_id = table.Column<Guid>(type: "uuid", nullable: true),
                     assignee_id = table.Column<Guid>(type: "uuid", nullable: true),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    description = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     due_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     completed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -989,10 +993,8 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
             // ===========================================================================
             // Tenant isolation, least-privilege roles, and privileged resolver functions.
-            // Squashed from the original incremental migrations (see git history before this
-            // InitialCreate). The app connects as korkut_app (RLS-subject, never BYPASSRLS);
-            // pre-session auth flows cross RLS only through the narrow SECURITY DEFINER
-            // functions below, owned by the BYPASSRLS korkut_resolver role.
+            // Hand-maintained: EF does not generate this. Re-applied after every regen via
+            // scratchpad/inject_security.py. See memory korkut-migrations-squashed.
             // ===========================================================================
             migrationBuilder.Sql(@"
                 DO $$ BEGIN
@@ -1057,9 +1059,7 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                 GRANT SELECT, INSERT, UPDATE ON korkut.inbox_entries TO korkut_app;
                 GRANT SELECT, INSERT ON korkut.job_audit TO korkut_app;");
 
-            // Privileged SECURITY DEFINER resolver functions (verbatim from the original
-            // migrations). Each grants the resolver the table privileges it uses, defines the
-            // function, transfers ownership to the BYPASSRLS role, and exposes EXECUTE to the app.
+            // Privileged SECURITY DEFINER resolver functions (verbatim from the original migrations).
             migrationBuilder.Sql(@"
                 DO $$ BEGIN
                                     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'korkut_resolver') THEN
@@ -1193,7 +1193,8 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                                 REVOKE ALL ON FUNCTION korkut.resolve_reset_token(text, timestamptz) FROM PUBLIC;
                                 GRANT EXECUTE ON FUNCTION korkut.resolve_reset_token(text, timestamptz) TO korkut_app;");
             migrationBuilder.Sql(@"
-                                -- invites gets its GRANT + tenant RLS from the standard loop above.
+                
+                
                                 -- Accepting an invite happens before any session, so resolving its office
                                 -- crosses RLS via a narrow BYPASSRLS SECURITY DEFINER function (owned by
                                 -- korkut_resolver) — the sanctioned pattern. Returns an active invite only.

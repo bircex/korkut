@@ -14,6 +14,7 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
           "type": "object",
           "properties": {
             "title": { "type": "string", "description": "Görev başlığı" },
+            "description": { "type": "string", "description": "Görev açıklaması (opsiyonel)" },
             "matter_id": { "type": "string", "description": "Bağlanacak dosya kimliği (opsiyonel)" },
             "due_at": { "type": "string", "format": "date-time", "description": "Son tarih (ISO 8601, opsiyonel)" }
           },
@@ -38,6 +39,7 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
         var request = new CreateTaskRequest
         {
             Title = title.Trim(),
+            Description = ToolArgs.String(arguments, "description"),
             MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
             DueDate = ToolArgs.DateTime(arguments, "due_at"),
         };

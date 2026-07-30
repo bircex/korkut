@@ -130,7 +130,28 @@
       },
       "CreateClientRequest": {
         "properties": {
+          "address": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date_of_birth": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "400",
             "type": [
               "null",
               "string"
@@ -140,8 +161,8 @@
             "pattern": "individual|corporate",
             "type": "string"
           },
-          "name": {
-            "maxLength": "300",
+          "national_id": {
+            "maxLength": "20",
             "type": [
               "null",
               "string"
@@ -156,7 +177,7 @@
           }
         },
         "required": [
-          "name"
+          "full_name"
         ],
         "type": "object"
       },
@@ -554,6 +575,13 @@
         "properties": {
           "assignee_id": {
             "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "4000",
             "type": [
               "null",
               "string"
@@ -999,7 +1027,28 @@
       },
       "UpdateClientRequest": {
         "properties": {
+          "address": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date_of_birth": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "400",
             "type": [
               "null",
               "string"
@@ -1009,8 +1058,8 @@
             "pattern": "individual|corporate",
             "type": "string"
           },
-          "name": {
-            "maxLength": "300",
+          "national_id": {
+            "maxLength": "20",
             "type": [
               "null",
               "string"
@@ -1025,7 +1074,7 @@
           }
         },
         "required": [
-          "name"
+          "full_name"
         ],
         "type": "object"
       },

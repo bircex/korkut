@@ -1,11 +1,10 @@
-using Korkut.Agent.Brain.Services;
-using Korkut.Agent.Brain.Abstractions;
-using Korkut.Contract.Agent.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Korkut.Agent.Brain.Services;
+using Korkut.Contract.Agent.Model;
 using Korkut.Tools.Core;
 
-namespace Korkut.Agent.Brain.Tests;
+namespace Korkut.Agent.Brain.Unit.Tests;
 
 /// <summary>
 /// The tool-calling loop: it runs the tools the model asks for, feeds the results back, repeats

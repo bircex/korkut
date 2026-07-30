@@ -28,7 +28,9 @@ internal sealed class ClientService(
     public Task<Result<ClientResponse>> CreateAsync(CreateClientRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var client = new Client(office, request.Name!.Trim(), request.Kind, request.Email, request.Phone, clock.UtcNow);
+            var client = new Client(
+                office, request.FullName!.Trim(), request.Kind, request.Email, request.Phone,
+                Normalize(request.NationalId), Normalize(request.Address), request.DateOfBirth, clock.UtcNow);
             await repository.AddAsync(client, ct);
             return Result<ClientResponse>.Ok(ToResponse(client));
         }, ct);
@@ -42,7 +44,9 @@ internal sealed class ClientService(
                 return Result<ClientResponse>.NotFound("Müvekkil bulunamadı.");
             }
 
-            client.Update(request.Name!.Trim(), request.Kind, request.Email, request.Phone);
+            client.Update(
+                request.FullName!.Trim(), request.Kind, request.Email, request.Phone,
+                Normalize(request.NationalId), Normalize(request.Address), request.DateOfBirth);
             await repository.SaveChangesAsync(ct);
             return Result<ClientResponse>.Ok(ToResponse(client));
         }, ct);
@@ -59,6 +63,9 @@ internal sealed class ClientService(
         return unitOfWork.InTenantScopeAsync(office, () => work(office), ct);
     }
 
+    private static string? Normalize(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     private static ClientResponse ToResponse(Client c) =>
-        new(c.Id, c.Name, c.Kind, c.Email, c.Phone, c.CreatedAt);
+        new(c.Id, c.FullName, c.Kind, c.Email, c.Phone, c.NationalId, c.Address, c.DateOfBirth, c.CreatedAt);
 }

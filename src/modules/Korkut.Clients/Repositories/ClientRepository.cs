@@ -12,5 +12,5 @@ namespace Korkut.Clients.Repositories;
 internal sealed class ClientRepository(DbContext db) : SoftDeleteRepository<Client>(db), IClientRepository
 {
     public override async Task<IReadOnlyList<Client>> ListAsync(Guid officeId, CancellationToken ct = default)
-        => await Scoped(officeId).AsNoTracking().OrderBy(c => c.Name).ToListAsync(ct);
+        => await Scoped(officeId).AsNoTracking().OrderBy(c => c.FullName).ToListAsync(ct);
 }

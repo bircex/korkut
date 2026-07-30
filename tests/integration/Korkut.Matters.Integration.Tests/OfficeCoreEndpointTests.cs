@@ -15,9 +15,10 @@ namespace Korkut.Matters.Tests;
 [Collection(IntegrationSuite.Name)]
 public class OfficeCoreEndpointTests(KorkutApiFactory factory)
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json =
+        new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
-    private sealed record ClientDto(Guid Id, string Name, string Kind, string? Email, string? Phone);
+    private sealed record ClientDto(Guid Id, string FullName, string Kind, string? Email, string? Phone);
 
     [Fact]
     public async Task Client_crud_round_trips_over_http()
@@ -26,10 +27,10 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
         var client = factory.ClientFor(office, user);
 
         // Create.
-        var create = await client.PostAsJsonAsync("/api/clients", new { name = "Ahmet Yılmaz", kind = "individual", email = "ahmet@example.com" });
+        var create = await client.PostAsJsonAsync("/api/clients", new { full_name = "Ahmet Yılmaz", kind = "individual", email = "ahmet@example.com" });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var created = await create.Content.ReadFromJsonAsync<ClientDto>(Json);
-        Assert.Equal("Ahmet Yılmaz", created!.Name);
+        Assert.Equal("Ahmet Yılmaz", created!.FullName);
 
         // List shows it.
         var list = await client.GetFromJsonAsync<List<ClientDto>>("/api/clients", Json);
@@ -40,10 +41,10 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
         Assert.Equal("ahmet@example.com", got!.Email);
 
         // Update.
-        var patch = await client.PatchAsJsonAsync($"/api/clients/{created.Id}", new { name = "Ahmet K. Yılmaz", kind = "individual" });
+        var patch = await client.PatchAsJsonAsync($"/api/clients/{created.Id}", new { full_name = "Ahmet K. Yılmaz", kind = "individual" });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
         var updated = await patch.Content.ReadFromJsonAsync<ClientDto>(Json);
-        Assert.Equal("Ahmet K. Yılmaz", updated!.Name);
+        Assert.Equal("Ahmet K. Yılmaz", updated!.FullName);
 
         // Delete (soft) → gone from list + 404 on get.
         var del = await client.DeleteAsync($"/api/clients/{created.Id}");
@@ -61,7 +62,7 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
 
         // Office A creates a client.
         var a = factory.ClientFor(officeA, userA);
-        var created = await (await a.PostAsJsonAsync("/api/clients", new { name = "A-only", kind = "individual" }))
+        var created = await (await a.PostAsJsonAsync("/api/clients", new { full_name = "A-only", kind = "individual" }))
             .Content.ReadFromJsonAsync<ClientDto>(Json);
 
         // Office B must NOT see it (RLS) — empty list + 404 on direct get.
@@ -146,7 +147,7 @@ public class OfficeCoreEndpointTests(KorkutApiFactory factory)
     {
         var (office, user) = await factory.SeedOfficeAsync();
         var client = factory.ClientFor(office, user);
-        var resp = await client.PostAsJsonAsync("/api/clients", new { name = "", kind = "individual" });
+        var resp = await client.PostAsJsonAsync("/api/clients", new { full_name = "", kind = "individual" });
         Assert.Equal(HttpStatusCode.UnprocessableEntity, resp.StatusCode);
     }
 }

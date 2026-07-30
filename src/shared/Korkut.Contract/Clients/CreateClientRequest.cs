@@ -6,8 +6,8 @@ namespace Korkut.Contract.Clients;
 public sealed record CreateClientRequest
 {
     [Required(ErrorMessage = "Ad zorunludur.")]
-    [MaxLength(300, ErrorMessage = "Ad en fazla 300 karakter olabilir.")]
-    public string? Name { get; init; }
+    [MaxLength(400, ErrorMessage = "Ad en fazla 400 karakter olabilir.")]
+    public string? FullName { get; init; }
 
     [RegularExpression("individual|corporate", ErrorMessage = "Tür 'individual' veya 'corporate' olmalıdır.")]
     public string Kind { get; init; } = "individual";
@@ -17,4 +17,12 @@ public sealed record CreateClientRequest
 
     [MaxLength(50)]
     public string? Phone { get; init; }
+
+    [MaxLength(20, ErrorMessage = "Kimlik numarası en fazla 20 karakter olabilir.")]
+    public string? NationalId { get; init; }
+
+    [MaxLength(500, ErrorMessage = "Adres en fazla 500 karakter olabilir.")]
+    public string? Address { get; init; }
+
+    public DateOnly? DateOfBirth { get; init; }
 }

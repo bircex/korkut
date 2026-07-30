@@ -9,6 +9,9 @@ public sealed record CreateTaskRequest
     [MaxLength(500)]
     public string? Title { get; init; }
 
+    [MaxLength(4000)]
+    public string? Description { get; init; }
+
     public Guid? MatterId { get; init; }
 
     public Guid? AssigneeId { get; init; }

@@ -10,15 +10,17 @@ public class RedactionTests
     // Runtime-assembled canaries (avoid committing matchable secret literals).
     public static TheoryData<string> SensitiveValues()
     {
-        var data = new TheoryData<string>();
-        data.Add("sk-ant-" + new string('a', 28));            // anthropic key
-        data.Add("sk-" + new string('b', 30));               // openai key
-        data.Add("AIza" + new string('c', 30));              // google key
-        data.Add("eyJ" + new string('h', 12) + "." + new string('d', 20) + "." + new string('e', 20)); // jwt
-        data.Add("Bearer " + new string('f', 24));           // bearer token
-        data.Add("password = " + new string('g', 18));       // assigned secret
-        data.Add(new string('1', 11));                       // TCKN (11 digits)
-        data.Add("muvekkil" + "@example.test");              // email
+        var data = new TheoryData<string>
+        {
+            "sk-ant-" + new string('a', 28), // anthropic key
+            "sk-" + new string('b', 30), // openai key
+            "AIza" + new string('c', 30), // google key
+            "eyJ" + new string('h', 12) + "." + new string('d', 20) + "." + new string('e', 20), // jwt
+            "Bearer " + new string('f', 24), // bearer token
+            "password = " + new string('g', 18), // assigned secret
+            new string('1', 11), // TCKN (11 digits)
+            "muvekkil" + "@example.test" // email
+        };
         return data;
     }
 

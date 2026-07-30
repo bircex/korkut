@@ -12,6 +12,7 @@ public sealed class TaskConfiguration : IEntityTypeConfiguration<WorkTask>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Title).HasMaxLength(500);
+        builder.Property(x => x.Description).HasMaxLength(4000);
         builder.Property(x => x.Status).HasMaxLength(20);
         builder.HasIndex(x => new { x.OfficeId, x.Status }).HasDatabaseName("ix_tasks_office_status");
     }

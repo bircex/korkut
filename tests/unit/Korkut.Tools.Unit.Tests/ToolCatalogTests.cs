@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Korkut.Core;
-using Korkut.Tools;
 using Korkut.Tools.Core;
 
-namespace Korkut.Tools.Tests;
+namespace Korkut.Tools.Unit.Tests;
 
 /// <summary>
 /// The tool catalog is the RBAC + configuration gate: a tool is offered and invocable only when
