@@ -8,6 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# The backend is the .NET stack, so build the SPA in "dotnet" mode: this surfaces the
+# local e-mail/parola sign-in (LocalAuth) and picks the .NET auth endpoint paths.
+ARG VITE_API_MODE=dotnet
+ENV VITE_API_MODE=$VITE_API_MODE
 RUN npm run build
 
 FROM nginx:1.27-alpine
