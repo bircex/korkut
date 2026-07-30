@@ -25,6 +25,7 @@ internal sealed class ModelRouterService(ModelRouting routing, RuntimeConfig con
     private (string ModelId, int MaxTokens) ModelFor(string provider) => provider switch
     {
         "claude" => (config.AnthropicModel, config.AnthropicMaxTokens),
+        "deepseek" => (config.DeepSeekModel, config.DeepSeekMaxTokens),
         "gpt" => (config.OpenAiModel, DefaultMaxTokens),
         "groq" => (config.GroqModel, DefaultMaxTokens),
         // Local (Ollama) model id is operator-set; kept off the frozen RuntimeConfig contract.

@@ -21,6 +21,13 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public string GroqModel => env.Get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
 
+    // DeepSeek is OpenAI-compatible (base https://api.deepseek.com). deepseek-chat = V3, deepseek-reasoner = R1.
+    public string DeepSeekModel => env.Get("DEEPSEEK_MODEL") ?? "deepseek-chat";
+
+    public string DeepSeekBaseUrl => env.Get("DEEPSEEK_BASE_URL")?.Trim() is { Length: > 0 } url ? url : "https://api.deepseek.com";
+
+    public int DeepSeekMaxTokens => ParseInt(env.Get("DEEPSEEK_MAX_TOKENS"), 8000);
+
     // --- Context budget (tokens) ---
     public int ContextWindow => ParseInt(env.Get("KORKUT_CONTEXT_WINDOW"), 128000);
 
@@ -50,6 +57,8 @@ public sealed class RuntimeConfig(IEnvironment env)
     public bool HasOpenAiKey => IsSet("OPENAI_API_KEY");
 
     public bool HasGroqKey => IsSet("GROQ_API_KEY");
+
+    public bool HasDeepSeekKey => IsSet("DEEPSEEK_API_KEY");
 
     /// <summary>
     /// Compatibility guard (KDM-033): <c>KORKUT_MODELS_FILE</c> is a documented-but-
