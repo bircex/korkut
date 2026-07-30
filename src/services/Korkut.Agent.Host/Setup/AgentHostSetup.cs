@@ -33,10 +33,34 @@ public static class AgentHostSetup
         services.AddKorkutAgentChat();
         services.AddKorkutAgentDrafting();
 
+        // RAG grounding: the retrieval adapter that calls the internal Knowledge /search over HTTP
+        // (forwarding the caller's token), degrading to ungrounded when Knowledge is unconfigured.
+        services.AddHttpContextAccessor();
+        services.AddScoped<Korkut.Knowledge.IKnowledgeSearchService, HttpKnowledgeSearch>();
+
         // Agent-DB persistence adapters (bind AgentDbContext / the operational conversation store).
         services.AddScoped<IDraftDocumentRepository, DraftDocumentRepository>();
         services.AddScoped<ILlmCallRepository, LlmCallRepository>();
         services.AddScoped<IAgentUnitOfWork, AgentUnitOfWork>();
+
+        // Law/source clients the legal tools depend on: every concrete *Client whose constructor
+        // needs only injectable deps (IHttpClientFactory / IEnvironment / another *Client) is
+        // self-registered, and the ISourceClient ones are also exposed as the IEnumerable<ISourceClient>
+        // the fetch/search tools iterate. Parameterized clients (e.g. BedestenClient, one instance per
+        // court source) are skipped here — they need their per-source config registered explicitly.
+        static bool Injectable(Type p) =>
+            p == typeof(System.Net.Http.IHttpClientFactory) || p == typeof(Korkut.Core.IEnvironment)
+            || p.Name.EndsWith("Client", StringComparison.Ordinal);
+        foreach (var clientType in typeof(Korkut.Tools.Law.ISourceClient).Assembly.GetTypes()
+                     .Where(t => t is { IsAbstract: false, IsInterface: false } && t.Name.EndsWith("Client"))
+                     .Where(t => t.GetConstructors().FirstOrDefault()?.GetParameters().All(pi => Injectable(pi.ParameterType)) == true))
+        {
+            services.AddScoped(clientType);
+            if (typeof(Korkut.Tools.Law.ISourceClient).IsAssignableFrom(clientType))
+            {
+                services.AddScoped(typeof(Korkut.Tools.Law.ISourceClient), sp => sp.GetRequiredService(clientType));
+            }
+        }
 
         // Tool registry: every IAgentTool in Korkut.Tools, plus the catalog that gates them.
         services.AddScoped<IToolCatalog, ToolCatalog>();

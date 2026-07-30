@@ -21,7 +21,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
         var office = current.OfficeId;
         var take = Math.Clamp(limit ?? 20, 1, 100);
         var skip = Math.Max(offset ?? 0, 0);
-        var (items, total) = await uow.InScopeAsync(office, () => svc.ListAsync(office, take, skip, ct), ct);
+        var (items, total) = await uow.InDualScopeAsync(office, () => svc.ListAsync(office, take, skip, ct), ct);
         var names = await ResolveNamesAsync(items, ct);
         return new SessionPageResponse(items.Select(b => ToBrief(b, names)).ToList(), total);
     }
@@ -29,7 +29,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task<SessionBriefResponse> CreateAsync(Guid? matterId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var brief = await uow.InScopeAsync(office, async () =>
+        var brief = await uow.InDualScopeAsync(office, async () =>
         {
             var id = await svc.CreateAsync(office, current.UserId, matterId, ct);
             return await svc.GetBriefAsync(office, id, ct);
@@ -40,7 +40,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task<SessionDetailResponse> GetAsync(Guid id, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var data = await uow.InScopeAsync(office, async () =>
+        var data = await uow.InDualScopeAsync(office, async () =>
         {
             var brief = await svc.GetBriefAsync(office, id, ct);
             if (brief is null)
@@ -64,7 +64,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task<SessionBriefResponse> RenameAsync(Guid id, string title, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var brief = await uow.InScopeAsync(office, async () =>
+        var brief = await uow.InDualScopeAsync(office, async () =>
             await svc.RenameAsync(office, id, title.Trim(), ct) ? await svc.GetBriefAsync(office, id, ct) : null, ct);
         return brief is null ? throw new NotFoundException("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
     }
@@ -72,7 +72,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var ok = await uow.InScopeAsync(office, () => svc.DeleteAsync(office, id, ct), ct);
+        var ok = await uow.InDualScopeAsync(office, () => svc.DeleteAsync(office, id, ct), ct);
         if (!ok)
         {
             throw new NotFoundException("Görüşme bulunamadı.");
@@ -82,7 +82,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task<SessionBriefResponse> CloneAsync(Guid id, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var brief = await uow.InScopeAsync(office, async () =>
+        var brief = await uow.InDualScopeAsync(office, async () =>
         {
             var newId = await svc.CloneAsync(office, id, current.UserId, ct);
             return newId is null ? null : await svc.GetBriefAsync(office, newId.Value, ct);
