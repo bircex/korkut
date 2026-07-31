@@ -19,8 +19,14 @@ RUN dotnet restore src/services/Korkut.Ocr/Korkut.Ocr.csproj
 RUN dotnet publish src/services/Korkut.Ocr/Korkut.Ocr.csproj \
     -c Release -o /app --no-restore /p:UseAppHost=false
 
-# Final stage — chiseled, non-root, minimal (scaffold engine needs no native deps).
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled@sha256:70d6f993bf715a031f027832a19cfb7f894df66c8b5eb40be0aaee820ad5d119 AS final
+# Final stage — full noble runtime (NOT chiseled) so the native OCR binaries can be installed.
+# Tesseract (+ Turkish/English data) does the recognition; poppler-utils' pdftoppm rasterises PDFs.
+# Enable the real engine at runtime with KORKUT_OCR_ENGINE=tesseract (see Korkut.Ocr/Program.cs).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS final
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr tesseract-ocr-tur tesseract-ocr-eng poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app ./
 
@@ -29,7 +35,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
 EXPOSE 8080
 
-# Runs as the chiseled 'app' user (UID 1654) — never root.
+# Run as a non-root user (the noble image ships 'app', UID 1654).
 USER app
 
 # Liveness/readiness via /health/live and /health/ready, probed by the orchestrator.

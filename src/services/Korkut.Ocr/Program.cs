@@ -17,6 +17,14 @@ builder.AddKorkutObservability("Korkut.Ocr", tracing => tracing.AddAspNetCoreIns
 builder.Services.AddKorkutWeb(builder.Configuration);
 builder.Services.AddKorkutControllers();
 
+// Wire the real Tesseract engine when KORKUT_OCR_ENGINE=tesseract (the image must ship the native
+// binaries — see docker/Dockerfile.ocr). Registered BEFORE the scaffold so TryAdd keeps it. Any other
+// value (or unset) leaves the DisabledOcrService scaffold (→ 503), so the host still boots anywhere.
+if (string.Equals(builder.Configuration["KORKUT_OCR_ENGINE"], "tesseract", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IOcrService>(_ => new TesseractOcrService(builder.Configuration["KORKUT_OCR_LANGS"]));
+}
+
 builder.Services.TryAddSingleton<IOcrService, DisabledOcrService>();
 
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);

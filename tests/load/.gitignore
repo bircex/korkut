@@ -1,0 +1,7 @@
+# Load-run artifacts (generated locally, not source). Per-run summaries are ignored, but the
+# committed baseline (results/baseline-*.json) is kept for regression comparison.
+results/*
+!results/baseline-*.json
+tenants.json
+fixtures/scan.png
+fixtures/contract.txt

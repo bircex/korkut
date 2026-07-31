@@ -1,0 +1,53 @@
+# Load-test overlay for the Korkut stack. Apply ALONGSIDE the root compose:
+#   docker compose -f docker-compose.yml -f tests/load/docker-compose.load.yml up -d --build
+#
+# It (1) adds a mock OpenAI-compatible LLM and points the agent's cloud provider at it, so a run
+# measures OUR infra instead of DeepSeek's rate limiter; (2) switches the OCR host to the real
+# Tesseract engine; (3) adds an on-demand k6 runner on the stack network (reaches gateway:8080 and
+# ocr:8080 directly). Relative paths are resolved from the root compose's directory (korkut-backend).
+services:
+  mock-llm:
+    build:
+      context: ./tests/load/mock-llm
+    environment:
+      MOCK_LATENCY_MS: "${MOCK_LATENCY_MS:-300}"
+      MOCK_DEBUG: "${MOCK_DEBUG:-}"
+    restart: unless-stopped
+
+  # Point the agent's DeepSeek (OpenAI-compatible) provider AND its Knowledge/RAG search at the mock,
+  # so a turn measures the chat pipeline (not a rate-limited LLM or an unembeddable knowledge host).
+  agent:
+    environment:
+      DEEPSEEK_BASE_URL: http://mock-llm:8080
+      KORKUT_KNOWLEDGE_URL: http://mock-llm:8080
+
+  # The auth endpoints (login/register) are throttled to 5 / 5min PER IP by default; a load run
+  # comes from ONE IP (the k6 container), so lift the ceiling for the load stack only. Login and
+  # register are served by the api host.
+  api:
+    environment:
+      KORKUT_SENSITIVE_RATE_LIMIT: "1000000"
+
+  # Expose the gateway directly on the host so the host-side seed/readiness hit the SAME entry k6
+  # uses in-cluster (the :8090 SPA proxy doesn't forward every /api path).
+  gateway:
+    ports:
+      - "8091:8080"
+
+  # Turn on real OCR (the image already ships tesseract + poppler via docker/Dockerfile.ocr).
+  ocr:
+    environment:
+      KORKUT_OCR_ENGINE: tesseract
+      KORKUT_OCR_LANGS: "${KORKUT_OCR_LANGS:-tur+eng}"
+
+  # On-demand load generator. Started with `docker compose ... run`, never by `up` (profile-gated).
+  k6:
+    image: grafana/k6:latest
+    profiles: ["load"]
+    volumes:
+      - ./tests/load:/load
+    working_dir: /load
+    # BASE_URL/OCR_URL default to the in-cluster service names; override per run with -e.
+    environment:
+      BASE_URL: "${BASE_URL:-http://gateway:8080}"
+      OCR_URL: "${OCR_URL:-http://ocr:8080}"
