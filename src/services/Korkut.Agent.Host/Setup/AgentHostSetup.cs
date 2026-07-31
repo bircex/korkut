@@ -83,6 +83,9 @@ public static class AgentHostSetup
 
         // Tool registry: every IAgentTool in Korkut.Tools, plus the catalog that gates them.
         services.AddScoped<IToolCatalog, ToolCatalog>();
+
+        // Full-text lookup for the UI's sources drawer — same source clients as fetch_document.
+        services.AddScoped<Korkut.Contract.Agent.Legal.ILegalDocumentAppService, Korkut.Tools.Law.LegalDocumentAppService>();
         foreach (var tool in typeof(ToolCatalog).Assembly.GetTypes()
                      .Where(t => typeof(IAgentTool).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false }))
         {

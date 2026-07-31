@@ -33,6 +33,7 @@ public static class GatewayRoutes
         return
         [
             Agent("agent-sessions", "/api/sessions/{**catch-all}"),
+            Agent("agent-legal", "/api/legal/{**catch-all}"),
             Agent("agent-doc-draft", "/api/documents/{docId}/draft", "POST"),
             Agent("agent-doc-accept", "/api/documents/{docId}/accept", "POST"),
             Agent("agent-doc-revert", "/api/documents/{docId}/revert", "POST"),
