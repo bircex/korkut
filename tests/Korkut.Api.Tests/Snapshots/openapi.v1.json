@@ -30,104 +30,6 @@
         ],
         "type": "object"
       },
-      "CreateCalendarEventRequest": {
-        "properties": {
-          "all_day": {
-            "type": "boolean"
-          },
-          "assignee_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "category": {
-            "pattern": "hearing|deadline|appointment|reminder",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "end_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "location": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "remind_before_min": {
-            "format": "int32",
-            "maximum": "40320",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ]
-          },
-          "rrule": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "start_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "type": {
-            "maxLength": "100",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "category",
-          "title",
-          "start_at"
-        ],
-        "type": "object"
-      },
       "CreateClientRequest": {
         "properties": {
           "address": {
@@ -623,7 +525,24 @@
       },
       "CreateTaskRequest": {
         "properties": {
+          "all_day": {
+            "type": "boolean"
+          },
           "assignee_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "category": {
+            "pattern": "gorev|hatirlatma|randevu",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
             "format": "uuid",
             "type": [
               "null",
@@ -644,6 +563,20 @@
               "string"
             ]
           },
+          "end_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "matter_id": {
             "format": "uuid",
             "type": [
@@ -651,8 +584,33 @@
               "string"
             ]
           },
+          "remind_before_min": {
+            "format": "int32",
+            "maximum": "40320",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "rrule": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "title": {
             "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
             "type": [
               "null",
               "string"
@@ -698,39 +656,6 @@
         },
         "required": [
           "title"
-        ],
-        "type": "object"
-      },
-      "EditOutboxMessageRequest": {
-        "properties": {
-          "body": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "send_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "subject": {
-            "maxLength": "500",
-            "type": "string"
-          },
-          "to_addr": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "to_addr",
-          "body"
         ],
         "type": "object"
       },
@@ -887,24 +812,17 @@
         ],
         "type": "object"
       },
-      "SaveEmailChannelRequest": {
+      "SaveMailPreferenceRequest": {
         "properties": {
-          "app_password": {
+          "notifications_enabled": {
+            "type": "boolean"
+          },
+          "notify_email": {
+            "maxLength": "320",
             "type": [
               "null",
               "string"
             ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "from_address": {
-            "maxLength": "320",
-            "type": "string"
-          },
-          "from_name": {
-            "maxLength": "200",
-            "type": "string"
           }
         },
         "type": "object"
@@ -959,38 +877,6 @@
         },
         "type": "object"
       },
-      "SaveTelegramChannelRequest": {
-        "properties": {
-          "bot_token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
-      "SaveWhatsAppChannelRequest": {
-        "properties": {
-          "base_url": {
-            "maxLength": "400",
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "token": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
       "TotpRequest": {
         "properties": {
           "code": {
@@ -1000,112 +886,6 @@
             ]
           },
           "recovery_code": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "UpdateCalendarEventRequest": {
-        "properties": {
-          "all_day": {
-            "type": [
-              "null",
-              "boolean"
-            ]
-          },
-          "assignee_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "client_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "end_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "location": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "matter_id": {
-            "format": "uuid",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "notes": {
-            "maxLength": "2000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "remind_before_min": {
-            "format": "int32",
-            "maximum": "40320",
-            "minimum": "0",
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ]
-          },
-          "result": {
-            "maxLength": "1000",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "rrule": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "start_at": {
-            "format": "date-time",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "scheduled|done|cancelled",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "maxLength": "500",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "type": {
-            "maxLength": "100",
             "type": [
               "null",
               "string"
@@ -1252,8 +1032,14 @@
         },
         "type": "object"
       },
-      "UpdateTaskStatusRequest": {
+      "UpdateTaskRequest": {
         "properties": {
+          "all_day": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
           "assignee_id": {
             "format": "uuid",
             "type": [
@@ -1261,8 +1047,89 @@
               "string"
             ]
           },
+          "category": {
+            "pattern": "gorev|hatirlatma|randevu",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "due_date": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end_at": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matter_id": {
+            "format": "uuid",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "remind_before_min": {
+            "format": "int32",
+            "maximum": "40320",
+            "minimum": "0",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "rrule": {
+            "maxLength": "400",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "status": {
             "pattern": "open|in_progress|done",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "maxLength": "100",
             "type": [
               "null",
               "string"
@@ -1635,100 +1502,6 @@
         "tags": [
           "Calendar"
         ]
-      },
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCalendarEventRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCalendarEventRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCalendarEventRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Calendar"
-        ]
-      }
-    },
-    "/api/calendar/events/{id}": {
-      "delete": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Calendar"
-        ]
-      },
-      "patch": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCalendarEventRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Calendar"
-        ]
       }
     },
     "/api/calendar/upcoming": {
@@ -1754,112 +1527,6 @@
         },
         "tags": [
           "Calendar"
-        ]
-      }
-    },
-    "/api/channels/email": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Channels"
-        ]
-      },
-      "put": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveEmailChannelRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveEmailChannelRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveEmailChannelRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Channels"
-        ]
-      }
-    },
-    "/api/channels/telegram": {
-      "put": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTelegramChannelRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Channels"
-        ]
-      }
-    },
-    "/api/channels/whatsapp": {
-      "put": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveWhatsAppChannelRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Channels"
         ]
       }
     },
@@ -2610,60 +2277,6 @@
         ]
       }
     },
-    "/api/integrations": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Integrations"
-        ]
-      }
-    },
-    "/api/integrations/{kind}/link": {
-      "delete": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "kind",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Integrations"
-        ]
-      },
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "kind",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Integrations"
-        ]
-      }
-    },
     "/api/invites": {
       "get": {
         "responses": {
@@ -2770,6 +2383,48 @@
         },
         "tags": [
           "Auth"
+        ]
+      }
+    },
+    "/api/mail-preferences": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MailPreference"
+        ]
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMailPreferenceRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMailPreferenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMailPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MailPreference"
         ]
       }
     },
@@ -3274,128 +2929,6 @@
         ]
       }
     },
-    "/api/outbox": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Outbox"
-        ]
-      }
-    },
-    "/api/outbox/{id}": {
-      "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Outbox"
-        ]
-      },
-      "put": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/EditOutboxMessageRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EditOutboxMessageRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EditOutboxMessageRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Outbox"
-        ]
-      }
-    },
-    "/api/outbox/{id}/cancel": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Outbox"
-        ]
-      }
-    },
-    "/api/outbox/{id}/confirm": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Outbox"
-        ]
-      }
-    },
     "/api/persona": {
       "get": {
         "responses": {
@@ -3574,6 +3107,20 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3654,17 +3201,17 @@
           "content": {
             "application/*\u002Bjson": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+                "$ref": "#/components/schemas/UpdateTaskRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+                "$ref": "#/components/schemas/UpdateTaskRequest"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTaskStatusRequest"
+                "$ref": "#/components/schemas/UpdateTaskRequest"
               }
             }
           },
@@ -3819,12 +3366,6 @@
       "name": "Calendar"
     },
     {
-      "name": "Channels"
-    },
-    {
-      "name": "Integrations"
-    },
-    {
       "name": "Clients"
     },
     {
@@ -3852,10 +3393,10 @@
       "name": "Profile"
     },
     {
-      "name": "Outbox"
+      "name": "Reports"
     },
     {
-      "name": "Reports"
+      "name": "MailPreference"
     },
     {
       "name": "Memory"
