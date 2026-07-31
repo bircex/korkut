@@ -23,13 +23,17 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
             "query": { "type": "string", "description": "Arama sorgusu" },
             "limit": { "type": "integer", "description": "Sonuç sayısı (varsayılan 10)" },
             "page": { "type": "integer", "description": "Sayfa (varsayılan 1)" },
-            "date_start": { "type": "string", "description": "YYYY-MM-DD (yargitay/danistay/emsal/kyb/kik)" },
+            "date_start": { "type": "string", "description": "YYYY-MM-DD; karar tarihi (yargitay/danistay/emsal/kyb/kik) veya Resmî Gazete tarihi (mevzuat)" },
             "date_end": { "type": "string", "description": "YYYY-MM-DD" },
             "chamber": { "type": "string", "description": "Daire (yargitay/danistay)" },
             "decision_type": { "type": "string", "description": "rekabet/kik/sayistay için karar türü (ör. sayistay: genel_kurul/temyiz_kurulu/daire; kik: uyusmazlik/duzenleyici/mahkeme)" },
             "application_type": { "type": "string", "description": "anayasa için: norm veya individual" },
             "scope": { "type": "string", "description": "uyusmazlik için arama kapsamı: all/esas/karar" },
-            "legislation_type": { "type": "string", "description": "mevzuat için tür filtresi (ör. KANUN, KHK, YONETMELIK)" }
+            "legislation_type": { "type": "string", "description": "mevzuat için tür filtresi, virgülle çoklu: KANUN, CB_KARARNAME, YONETMELIK, CB_YONETMELIK, CB_KARAR, CB_GENELGE, KHK, TUZUK, KKY (kurum yönetmelikleri), UY (üniversite yönetmelikleri), TEBLIGLER, MULGA" },
+            "search_scope": { "type": "string", "enum": ["title", "content", "title_and_content"], "description": "mevzuat için arama kapsamı. title: yalnızca mevzuat adında (varsayılan). content: metin içinde tam metin arama; Solr sözdizimi desteklenir (\"tam ifade\", +zorunlu -hariç, joker*, bulanık~). title_and_content: hem ad hem metin" },
+            "tam_cumle": { "type": "boolean", "description": "mevzuat için: sorguyu tam ifade olarak eşleştir (varsayılan false, kelime bazlı)" },
+            "mevzuat_no": { "type": "string", "description": "mevzuat için numara filtresi (ör. 5237 Türk Ceza Kanunu, 6102 Türk Ticaret Kanunu). Yalnızca rakamdan oluşan bir query otomatik bu filtreye çevrilir" },
+            "gazette_number": { "type": "string", "description": "mevzuat için Resmî Gazete sayısı filtresi" }
           },
           "required": ["source", "query"]
         }

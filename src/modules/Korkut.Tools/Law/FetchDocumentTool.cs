@@ -21,7 +21,7 @@ public sealed class FetchDocumentTool(IEnumerable<ISourceClient> clients, IEnvir
           "properties": {
             "source": { "type": "string", "enum": ["yargitay","danistay","emsal","kyb","anayasa","mevzuat","gib","kik","rekabet","sayistay","uyusmazlik","bddk","kvkk","sigorta_tahkim"], "description": "Belgenin kaynağı (search_decisions ile aynı)" },
             "id": { "type": "string", "description": "search_decisions sonucundan gelen kimlik" },
-            "article_id": { "type": "string", "description": "mevzuat için: yalnızca tek bir maddeyi getir" },
+            "article_id": { "type": "string", "description": "mevzuat için: yalnızca tek bir maddeyi getir (madde_id, get_mevzuat_madde_tree sonucundan)" },
             "page": { "type": "integer", "description": "Uzun belgelerde sayfa (varsayılan 1)" },
             "page_size": { "type": "integer", "description": "Sayfa başına karakter (varsayılan 5000)" }
           },

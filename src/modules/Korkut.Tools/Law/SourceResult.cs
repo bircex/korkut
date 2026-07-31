@@ -15,4 +15,6 @@ public sealed record SourceResult(
     string? Court = null,
     string? Chamber = null,
     string? Url = null,
-    string? Snippet = null);
+    string? Snippet = null,
+    string? GazetteNumber = null,
+    string? GerekceId = null);
