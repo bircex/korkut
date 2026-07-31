@@ -26,7 +26,31 @@ export type Invite = {
 };
 export type PublicConfig = { demo_enabled: boolean; google_configured: boolean };
 export type NewInvite = Invite & { token: string; path: string };
-export type ChatMessage = { role: "user" | "assistant"; content: string };
+// Bir sohbet turunda danışılan hukuki kaynak (backend SourceRef, snake_case) — İlgili Kararlar
+// drawer'ını besler. `kind` içtihat/mevzuat ayrımıdır; `source`+`id` karar detayının anahtarıdır.
+export type SourceRef = {
+  kind: "ictihat" | "mevzuat";
+  source: string;
+  id: string;
+  title: string;
+  date?: string | null;
+  case_number?: string | null;
+  decision_number?: string | null;
+  court?: string | null;
+  chamber?: string | null;
+  url?: string | null;
+  snippet?: string | null;
+};
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  // Asistan turunun dayandığı kaynaklar (varsa) — geçmiş yüklemede sunucudan, canlı turda
+  // SSE `sources` çerçevesinden gelir.
+  sources?: SourceRef[] | null;
+  // Yalnız canlı turda bilinir (SSE `tool` çerçevelerinden sayılır); geçmişte persist edilmez.
+  searches?: number;
+};
 export type SessionBrief = {
   id: number;
   title: string;
@@ -520,14 +544,22 @@ export const api = {
       title: string;
       open_document: number | null;
       pending_email: number | null;
+      sources: SourceRef[] | null;
     }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
   // Streaming twin of sessionChat: activity steps + answer tokens arrive live over SSE. `onStep`
-  // and `onToken` fire as events land; the promise resolves with the same payload as sessionChat
-  // (or rejects with an ApiError carrying the friendly detail from an `error` event).
+  // and `onToken` fire as events land; `onTool` gets each raw tool name (structured, for UI
+  // counters); `onSources` gets the turn's legal sources just before `done`. The promise resolves
+  // with the same payload as sessionChat (or rejects with an ApiError carrying the friendly
+  // detail from an `error` event).
   sessionChatStream: async (
     id: number,
     text: string,
-    on: { onStep?: (label: string) => void; onToken?: (t: string) => void },
+    on: {
+      onStep?: (label: string) => void;
+      onToken?: (t: string) => void;
+      onTool?: (name: string) => void;
+      onSources?: (items: SourceRef[]) => void;
+    },
   ) => {
     const res = await fetch(`/api/sessions/${id}/chat/stream`, {
       method: "POST",
@@ -551,6 +583,7 @@ export const api = {
       title: string;
       open_document: number | null;
       pending_email: number | null;
+      sources: SourceRef[] | null;
     };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -569,6 +602,8 @@ export const api = {
       const parsed = JSON.parse(data);
       if (event === "step") on.onStep?.(parsed.label as string);
       else if (event === "token") on.onToken?.(parsed.text as string);
+      else if (event === "tool") on.onTool?.(parsed.name as string);
+      else if (event === "sources") on.onSources?.(parsed.items as SourceRef[]);
       else if (event === "done") done = parsed as Done;
       else if (event === "error") errorDetail = parsed.detail as string;
     };
@@ -607,7 +642,12 @@ export const api = {
       }
       throw new ApiError(res.status, detail);
     }
-    return (await res.json()) as { reply: string; title: string; user_display: string };
+    return (await res.json()) as {
+      reply: string;
+      title: string;
+      user_display: string;
+      sources: SourceRef[] | null;
+    };
   },
   documents: () => request<DocBrief[]>("/api/documents"),
   petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),

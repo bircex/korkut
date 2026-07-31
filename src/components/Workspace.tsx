@@ -6,6 +6,7 @@ import {
   ApiError,
   type ChatMessage,
   type DocBrief,
+  type SourceRef,
   type SessionBrief,
   type Task,
   type User,
@@ -13,6 +14,7 @@ import {
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { RightDrawer } from "./RightDrawer";
+import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
 import { Settings } from "./Settings";
 import { ClientsPanel } from "./ClientsPanel";
@@ -24,6 +26,7 @@ import { matchPath, navigate, usePath } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
+  BookOpenText,
   CalendarBlank,
   CaretDown,
   Check,
@@ -246,6 +249,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   // Editör drawer'ı kapatma onayı: kaydedilmemiş değişiklik varken (dirty) X/toggle'a basılırsa sorulur.
   const docDirtyRef = useRef(false);
   const [confirmDocClose, setConfirmDocClose] = useState(false);
+  // Kaynaklar drawer'ı: açık olduğu mesajın index'i (URL'e yazılmaz, mesaj-scoped geçici state).
+  const [sourcesFor, setSourcesFor] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
   const [renamingId, setRenamingId] = useState<number | null>(null);
@@ -299,6 +304,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [viewedKey, setViewedKey] = useState(routeKey);
   if (routeKey !== null && routeKey !== viewedKey) {
     setViewedKey(routeKey);
+    setSourcesFor(null); // kaynaklar drawer'ı mesaja bağlıdır, görünüm değişince kapanır
     if (routeKey === "home") {
       setMessages([]);
       loadedIdRef.current = null;
@@ -348,6 +354,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       return;
     }
     if (currentId !== null) navigate(`/sohbet/${currentId}`);
+  }
+
+  // Tek drawer kuralı: kaynaklar açılırken editör kapanır (dirty ise önce onay akışı çalışır ve
+  // kaynaklar açılmaz; kullanıcı karar verdikten sonra tekrar tıklar).
+  function openSources(messageIndex: number) {
+    if (pane === "document") {
+      requestCloseEditor();
+      if (docDirtyRef.current) return;
+    }
+    setSourcesFor(messageIndex);
   }
 
   async function loadOlder() {
@@ -507,18 +523,29 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         title: string;
         open_document?: number | null;
         pending_email?: number | null;
+        sources?: SourceRef[] | null;
       };
       if (file) {
         // Uploads aren't streamed (the file is processed server-side, then answered).
         res = await api.uploadToSession(targetId, file, t);
-        if (showsThisChat()) setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+        if (showsThisChat()) {
+          setMessages((m) => [...m, { role: "assistant", content: res.reply, sources: res.sources }]);
+        }
       } else {
         // Stream the answer: show activity steps, then grow the assistant bubble token by token.
         let acc = "";
         let started = false;
+        let searches = 0; // canlı arama sayacı (SSE `tool` çerçeveleri; persist edilmez)
+        let liveSources: SourceRef[] | null = null; // SSE `sources` çerçevesi (done'dan önce gelir)
         res = await api.sessionChatStream(targetId, t, {
           onStep: (label) => {
             if (!started && showsThisChat()) setActivity(label);
+          },
+          onTool: (name) => {
+            if (name === "search_decisions") searches += 1;
+          },
+          onSources: (items) => {
+            liveSources = items;
           },
           onToken: (tok) => {
             acc += tok;
@@ -538,16 +565,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         });
         // Reconcile with the authoritative reply (e.g. the cloud path streams no tokens, or the
         // final restored text differs from the streamed slices) — only if still viewing this chat.
+        // Kaynaklar/arama sayısı da burada mesaja işlenir ki chip ve drawer kalıcı olsun.
         if (showsThisChat()) {
-          if (!started) {
-            setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
-          } else if (res.reply && res.reply !== acc) {
-            setMessages((m) => {
-              const copy = m.slice();
-              copy[copy.length - 1] = { role: "assistant", content: res.reply };
-              return copy;
-            });
-          }
+          const sources = liveSources ?? res.sources ?? null;
+          const finalMsg: ChatMessage = {
+            role: "assistant",
+            content: res.reply || acc,
+            sources,
+            searches: searches || undefined,
+          };
+          setMessages((m) => (started ? [...m.slice(0, -1), finalMsg] : [...m, finalMsg]));
         }
       }
       if (!file && showsThisChat() && res.open_document) {
@@ -622,9 +649,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           // Editör artık ayrı bir sayfa değil, sağ drawer — anahtar yerine tek toggle.
           <div className="absolute left-1/2 flex -translate-x-1/2 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
             <button
-              onClick={() =>
-                pane === "document" ? requestCloseEditor() : navigate(`/sohbet/${currentId}/belge`)
-              }
+              onClick={() => {
+                if (pane === "document") {
+                  requestCloseEditor();
+                } else {
+                  setSourcesFor(null); // tek drawer kuralı
+                  navigate(`/sohbet/${currentId}/belge`);
+                }
+              }}
               aria-pressed={pane === "document"}
               className={
                 "flex items-center gap-1.5 rounded-md px-4 py-1 " +
@@ -923,12 +955,41 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 {m.role === "user" ? <UserAvatar user={user} /> : <KorkutAvatar />}
                 <div
                   className={
-                    m.role === "user"
-                      ? "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-zinc-900 px-3.5 py-2.5 text-[15px] leading-relaxed text-white"
-                      : "md max-w-[85%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed text-zinc-900"
+                    "flex min-w-0 flex-col items-start gap-1.5 " +
+                    (m.role === "user" ? "max-w-[80%]" : "max-w-[85%]")
                   }
                 >
-                  {m.role === "user" ? m.content : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>}
+                  {/* Arama chip'i: bu yanıt hukuki kaynaklara dayanıyorsa balonun üstünde görünür
+                      ve İlgili Kararlar drawer'ını açar. Arama sayısı yalnız canlı turda bilinir. */}
+                  {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
+                    <button
+                      onClick={() => openSources(i)}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
+                    >
+                      <Check size={13} weight="bold" aria-hidden className="text-zinc-500" />
+                      {m.searches ? `${m.searches} arama · ` : ""}
+                      {m.sources!.length} kaynak
+                      <CaretDown size={11} aria-hidden className="text-zinc-400" />
+                    </button>
+                  )}
+                  <div
+                    className={
+                      m.role === "user"
+                        ? "whitespace-pre-wrap rounded-2xl rounded-br-sm bg-zinc-900 px-3.5 py-2.5 text-[15px] leading-relaxed text-white"
+                        : "md w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed text-zinc-900"
+                    }
+                  >
+                    {m.role === "user" ? m.content : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>}
+                  </div>
+                  {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
+                    <button
+                      onClick={() => openSources(i)}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
+                    >
+                      <BookOpenText size={13} aria-hidden className="text-zinc-500" />
+                      Kaynaklar ({m.sources!.length})
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1018,6 +1079,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               }}
             />
           </RightDrawer>
+        )}
+        {/* İlgili Kararlar drawer'ı — editörle aynı anda açık olmaz (editör URL'den önceliklidir). */}
+        {sourcesFor !== null && pane !== "document" && (messages[sourcesFor]?.sources?.length ?? 0) > 0 && (
+          <SourcesDrawer
+            sources={messages[sourcesFor]!.sources!}
+            onClose={() => setSourcesFor(null)}
+          />
         )}
         <ConfirmDialog
           open={confirmDocClose}

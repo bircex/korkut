@@ -38,4 +38,9 @@ export {
   Sun,
   Moon,
   Monitor,
+  // Kaynaklar (İlgili Kararlar drawer'ı)
+  Scales,
+  ArrowSquareOut,
+  MagnifyingGlass,
+  BookOpenText,
 } from "@phosphor-icons/react";
