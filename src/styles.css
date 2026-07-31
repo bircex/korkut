@@ -77,6 +77,17 @@ body {
 .md th { background: #f4f4f5; font-weight: 600; }
 .md hr { border: none; border-top: 1px solid #e4e4e7; margin: 1em 0; }
 
+/* Sağ drawer girişi (RightDrawer): yalnız transform+opacity — genişlik animasyonu yok ki
+   içindeki ağır içerik (CKEditor) mount olurken layout tekrar tekrar hesaplanmasın. */
+@keyframes drawer-in {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.drawer-anim { animation: drawer-in 0.18s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .drawer-anim { animation: none; }
+}
+
 /* CKEditor — UYAP/Word-like A4 document page floating on a gray canvas. */
 .doc-canvas {
   background: #e9eaed;

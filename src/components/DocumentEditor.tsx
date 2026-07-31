@@ -15,6 +15,7 @@ export function DocumentEditor({
   onTitleChange,
   onClose,
   onSave,
+  onChange,
   headerExtra,
   footer,
   exportTitle,
@@ -26,6 +27,7 @@ export function DocumentEditor({
   onTitleChange?: (t: string) => void;
   onClose?: () => void;
   onSave?: (markdown: string) => void | Promise<void>;
+  onChange?: (markdown: string) => void;
   headerExtra?: ReactNode;
   footer?: ReactNode;
   exportTitle?: string;
@@ -89,6 +91,7 @@ export function DocumentEditor({
           onReady={(editor) => {
             editorRef.current = editor;
           }}
+          onChange={onChange}
         />
       </div>
 

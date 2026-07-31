@@ -12,6 +12,8 @@ import {
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
+import { RightDrawer } from "./RightDrawer";
+import { ConfirmDialog } from "../a11y";
 import { Settings } from "./Settings";
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
@@ -241,6 +243,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     typeof window !== "undefined" ? window.innerWidth >= 640 : true,
   );
   const [docRefresh, setDocRefresh] = useState(0);
+  // Editör drawer'ı kapatma onayı: kaydedilmemiş değişiklik varken (dirty) X/toggle'a basılırsa sorulur.
+  const docDirtyRef = useRef(false);
+  const [confirmDocClose, setConfirmDocClose] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
   const [renamingId, setRenamingId] = useState<number | null>(null);
@@ -283,6 +288,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   // Keep the ref in lockstep with currentId so stream callbacks read the chat the user is on now.
   useEffect(() => {
     currentIdRef.current = currentId;
+    // Başka sohbete geçiş editörü (varsa) kapatır; bayat dirty bayrağı beforeunload'u yanlış
+    // tetiklemesin.
+    docDirtyRef.current = false;
   }, [currentId]);
 
   // Ana ekrana dönüşte önceki sohbetin mesajları kalmasın — render sırasında state uyarlama
@@ -320,8 +328,26 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     document.title = `${VIEW_TITLE[view]} · ${user.office ?? "Korkut"}`;
   }, [view, user.office]);
 
+  // Sekme kapanırken/yenilenirken kaydedilmemiş belge değişikliği varsa tarayıcı uyarısı.
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (docDirtyRef.current) e.preventDefault();
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   function closeSidebarOnMobile() {
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
+  }
+
+  // Editör drawer'ını kapatma isteği: dirty ise önce onay iste, değilse sohbet URL'ine dön.
+  function requestCloseEditor() {
+    if (docDirtyRef.current) {
+      setConfirmDocClose(true);
+      return;
+    }
+    if (currentId !== null) navigate(`/sohbet/${currentId}`);
   }
 
   async function loadOlder() {
@@ -593,23 +619,21 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           )}
         </div>
         {view === "chats" && currentId !== null && (
-          <div className="absolute left-1/2 flex -translate-x-1/2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
+          // Editör artık ayrı bir sayfa değil, sağ drawer — anahtar yerine tek toggle.
+          <div className="absolute left-1/2 flex -translate-x-1/2 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
             <button
-              onClick={() => navigate(`/sohbet/${currentId}`)}
+              onClick={() =>
+                pane === "document" ? requestCloseEditor() : navigate(`/sohbet/${currentId}/belge`)
+              }
+              aria-pressed={pane === "document"}
               className={
-                "rounded-md px-4 py-1 " +
-                (pane === "chat" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
+                "flex items-center gap-1.5 rounded-md px-4 py-1 " +
+                (pane === "document"
+                  ? "bg-zinc-900 text-white shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800")
               }
             >
-              Sohbet
-            </button>
-            <button
-              onClick={() => navigate(`/sohbet/${currentId}/belge`)}
-              className={
-                "rounded-md px-4 py-1 " +
-                (pane === "document" ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800")
-              }
-            >
+              <FileText size={15} aria-hidden />
               Editör
             </button>
           </div>
@@ -828,9 +852,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <TasksPanel />
         ) : view === "calendar" ? (
           <CalendarPanel />
-        ) : pane === "document" && currentId !== null ? (
-          <DocumentPanel key={currentId} sessionId={currentId} refreshKey={docRefresh} />
         ) : (
+        <>
         <div className="flex min-w-0 flex-1 flex-col">
           {currentId === null && messages.length === 0 ? (
             // Ana ekran: saate göre karşılama + açık görevler.
@@ -972,6 +995,45 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </button>
           </form>
         </div>
+
+        {/* Editör: sohbetin yanında sağ drawer (geniş ekranda push, darda overlay). URL tek
+            gerçek kaynak kuralı sürer: /sohbet/:id/belge = drawer açık. Kanvas 21cm (A4)
+            istediği için 1200px altında push yerine overlay açılır (bkz. DRAWER_ROADMAP R1). */}
+        {currentId !== null && (
+          <RightDrawer
+            open={pane === "document"}
+            onClose={requestCloseEditor}
+            label="Belge editörü"
+            width="clamp(680px, 55vw, 900px)"
+            overlayWidth="900px"
+            overlayBelow={1200}
+          >
+            <DocumentPanel
+              key={currentId}
+              sessionId={currentId}
+              refreshKey={docRefresh}
+              onClose={requestCloseEditor}
+              onDirtyChange={(dirty) => {
+                docDirtyRef.current = dirty;
+              }}
+            />
+          </RightDrawer>
+        )}
+        <ConfirmDialog
+          open={confirmDocClose}
+          title="Kaydedilmemiş değişiklikler"
+          message="Belgede kaydedilmemiş değişiklikler var. Kaydetmeden kapatılsın mı?"
+          confirmLabel="Kapat"
+          cancelLabel="Vazgeç"
+          destructive
+          onCancel={() => setConfirmDocClose(false)}
+          onConfirm={() => {
+            setConfirmDocClose(false);
+            docDirtyRef.current = false;
+            if (currentId !== null) navigate(`/sohbet/${currentId}`);
+          }}
+        />
+        </>
         )}
         </div>
       </div>
