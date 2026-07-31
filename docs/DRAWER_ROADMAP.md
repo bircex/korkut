@@ -101,8 +101,9 @@ Turdaki tüm hukuki aramaların birleşik kaynağı; içtihat ve mevzuat tek lis
 Her faz kendi başına merge edilebilir PR dilimi olacak şekilde sıralandı.
 
 > **Durum (2026-07-31):** Faz 1-2 TAMAM (korkut-ui fbf3a26), Faz 3 TAMAM (korkut-backend
-> c142e69), Faz 4 TAMAM (korkut-ui, chip + SourcesDrawer). Sırada Faz 5 (karar detayı) ve
-> Faz 6 (cila).
+> c142e69), Faz 4 TAMAM (korkut-ui, chip + SourcesDrawer), Faz 5 TAMAM (korkut-backend
+> 75212cc: GET /api/legal/documents; korkut-ui: drawer içi tam metin görünümü). Kalan: Faz 6
+> (mevzuat/büro-belgeleri genişletmesi, a11y turu, e2e).
 
 ### Faz 1: UI drawer altyapısı
 - `src/components/RightDrawer.tsx`: push (masaüstü) + overlay (mobil), Esc/kapama, başlık

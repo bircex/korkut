@@ -1,7 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { SourceRef } from "../api";
 import { SourcesDrawer } from "./SourcesDrawer";
+
+// Detay görünümü ağa çıkar; api katmanı mock'lanır (ApiError gerçek kalır).
+vi.mock("../api", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../api")>();
+  return { ...real, api: { ...real.api, legalDocument: vi.fn() } };
+});
+const { api, ApiError } = await import("../api");
+const legalDocument = vi.mocked(api.legalDocument);
+
+beforeEach(() => legalDocument.mockReset());
 
 const KARAR: SourceRef = {
   kind: "ictihat",
@@ -56,5 +66,28 @@ describe("SourcesDrawer", () => {
     render(<SourcesDrawer sources={[KARAR]} onClose={onClose} />);
     fireEvent.click(screen.getByRole("button", { name: "Kapat" }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("karta tıklayınca tam metin drawer içinde açılır ve listeye dönülebilir", async () => {
+    legalDocument.mockResolvedValueOnce({ source: "yargitay", id: "k1", content_md: "# TAM METİN\n\nGerekçe..." });
+    render(<SourcesDrawer sources={[KARAR]} onClose={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: KARAR.title }));
+    expect(await screen.findByText("TAM METİN")).toBeVisible();
+    expect(legalDocument).toHaveBeenCalledWith("yargitay", "k1");
+    // Künye satırı: mahkeme + E./K. + tarih.
+    expect(screen.getByText(/2015\/89 E\./)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: /Listeye dön/ }));
+    expect(screen.getByText(/Karar tarihi: 2018-04-02/)).toBeVisible(); // kart listesi geri geldi
+  });
+
+  it("tam metin getirilemezse hata ve dış bağlantı fallback'i gösterilir", async () => {
+    legalDocument.mockRejectedValueOnce(new ApiError(404, "'yargitay' belgesi getirilemedi."));
+    render(<SourcesDrawer sources={[KARAR]} onClose={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: KARAR.title }));
+    expect(await screen.findByText(/belgesi getirilemedi/)).toBeVisible();
+    expect(screen.getByRole("link", { name: /Kaynakta açmayı deneyin/ })).toHaveAttribute("href", KARAR.url);
   });
 });

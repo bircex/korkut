@@ -649,6 +649,11 @@ export const api = {
       sources: SourceRef[] | null;
     };
   },
+  // Bir SourceRef'in (source+id) tam metni — İlgili Kararlar drawer'ındaki detay görünümü.
+  legalDocument: (source: string, id: string) =>
+    request<{ source: string; id: string; content_md: string }>(
+      `/api/legal/documents?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`,
+    ),
   documents: () => request<DocBrief[]>("/api/documents"),
   petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),
   getDocument: (sessionId: number) =>
