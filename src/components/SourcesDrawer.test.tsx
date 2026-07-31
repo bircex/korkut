@@ -10,6 +10,7 @@ vi.mock("../api", async (importOriginal) => {
 });
 const { api, ApiError } = await import("../api");
 const legalDocument = vi.mocked(api.legalDocument);
+const { axeComponent } = await import("../test/axe");
 
 beforeEach(() => legalDocument.mockReset());
 
@@ -80,6 +81,17 @@ describe("SourcesDrawer", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Listeye dön/ }));
     expect(screen.getByText(/Karar tarihi: 2018-04-02/)).toBeVisible(); // kart listesi geri geldi
+  });
+
+  it("liste ve detay görünümleri axe'ten geçer, detay açılınca focus içeri taşınır", async () => {
+    legalDocument.mockResolvedValueOnce({ source: "yargitay", id: "k1", content_md: "Tam metin." });
+    const { container } = render(<SourcesDrawer sources={[KARAR, KANUN]} onClose={() => {}} />);
+    expect(await axeComponent(container)).toHaveNoViolations();
+
+    fireEvent.click(screen.getByRole("button", { name: KARAR.title }));
+    await screen.findByText("Tam metin.");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /Listeye dön/ }));
+    expect(await axeComponent(container)).toHaveNoViolations();
   });
 
   it("tam metin getirilemezse hata ve dış bağlantı fallback'i gösterilir", async () => {

@@ -102,8 +102,12 @@ Her faz kendi başına merge edilebilir PR dilimi olacak şekilde sıralandı.
 
 > **Durum (2026-07-31):** Faz 1-2 TAMAM (korkut-ui fbf3a26), Faz 3 TAMAM (korkut-backend
 > c142e69), Faz 4 TAMAM (korkut-ui, chip + SourcesDrawer), Faz 5 TAMAM (korkut-backend
-> 75212cc: GET /api/legal/documents; korkut-ui: drawer içi tam metin görünümü). Kalan: Faz 6
-> (mevzuat/büro-belgeleri genişletmesi, a11y turu, e2e).
+> 75212cc: GET /api/legal/documents; korkut-ui: drawer içi tam metin görünümü), Faz 6 TAMAM
+> (a11y turu: drawer kontrastları AA'ya çekildi + detay focus yönetimi + axe bileşen testleri;
+> Playwright drawer e2e'si 3 viewport'ta). ERTELENEN: RAG alıntılarının "Büro belgeleri" bölümü —
+> Knowledge hit'leri belge adı/başlık taşımıyor (yalnız chunk metni), anlamlı bir kart için önce
+> Knowledge search yanıtına belge adı eklenmeli. Uygulama kabuğunun (sidebar/başlık etiketleri)
+> mevcut kontrast ihlalleri bu işin dışında; ayrı görev olarak işaretlendi.
 
 ### Faz 1: UI drawer altyapısı
 - `src/components/RightDrawer.tsx`: push (masaüstü) + overlay (mobil), Esc/kapama, başlık

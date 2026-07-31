@@ -19,7 +19,7 @@ type DocState =
 
 function Badge({ ictihat }: { ictihat: boolean }) {
   return (
-    <span className="shrink-0 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500">
+    <span className="shrink-0 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-600">
       {ictihat ? "İçtihat" : "Mevzuat"}
     </span>
   );
@@ -60,7 +60,7 @@ function SourceCard({ source, onOpen }: { source: SourceRef; onOpen: () => void 
       </div>
       {(source.date || source.snippet) && (
         <p className="mt-1.5 line-clamp-3 text-[12.5px] leading-relaxed text-zinc-600">
-          {source.date && <span className="font-medium text-zinc-500">[Karar tarihi: {source.date}] </span>}
+          {source.date && <span className="font-medium text-zinc-600">[Karar tarihi: {source.date}] </span>}
           {source.snippet}
         </p>
       )}
@@ -107,9 +107,11 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 border-b border-zinc-200 px-3.5 py-2">
+        {/* Detaya geçişte focus buraya taşınır — klavye/ekran okuyucu görünüm değişimini duyar. */}
         <button
+          autoFocus
           onClick={onBack}
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-[13px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-[13px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
         >
           <ArrowLeft size={13} aria-hidden /> Listeye dön
         </button>
@@ -117,7 +119,7 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
         <h3 className="text-[14px] font-semibold leading-snug text-zinc-900">{source.title}</h3>
-        {kunye && <p className="mt-1 text-[12px] text-zinc-500">{kunye}</p>}
+        {kunye && <p className="mt-1 text-[12px] text-zinc-600">{kunye}</p>}
         <div className="mt-3 border-t border-zinc-100 pt-3 text-[13.5px] leading-relaxed text-zinc-800">
           {doc.state === "loading" && <p className="italic text-zinc-400">Belge yükleniyor…</p>}
           {doc.state === "error" && (
@@ -169,7 +171,7 @@ export function SourcesDrawer({
           {mevzuat.length > 0 && (
             <>
               {kararlar.length > 0 && (
-                <h3 className="mt-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mt-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                   Mevzuat
                 </h3>
               )}

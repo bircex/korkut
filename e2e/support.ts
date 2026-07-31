@@ -19,9 +19,13 @@ export async function stubApi(page: Page, opts: { pending?: string; demo?: boole
   );
 }
 
-/** Fail the test on any critical/serious axe violation (acceptance criterion 1). */
-export async function assertNoSeriousA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+/** Fail the test on any critical/serious axe violation (acceptance criterion 1).
+ * `include` narrows the scan to one region (e.g. a drawer) so a feature spec asserts its own
+ * surface without re-reporting pre-existing shell issues. */
+export async function assertNoSeriousA11yViolations(page: Page, opts: { include?: string } = {}) {
+  let builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]);
+  if (opts.include) builder = builder.include(opts.include);
+  const results = await builder.analyze();
   const blocking = results.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
   const summary = blocking.map((v) => `${v.id} (${v.impact}): ${v.nodes.length} node(s)`).join("\n");
   expect(blocking, `Critical/serious axe violations:\n${summary}`).toEqual([]);
