@@ -48,6 +48,8 @@ SUMMARY="/load/results/summary-${TS}.json"
 echo "==> [5/5] Running k6  (VUS=$VUS DURATION=$DURATION RAMP=$RAMP)"
 $COMPOSE run --rm \
   -e VUS="$VUS" -e DURATION="$DURATION" -e RAMP="$RAMP" \
+  -e W_CHAT="${W_CHAT:-}" -e W_UPLOAD="${W_UPLOAD:-}" -e W_OCR="${W_OCR:-}" \
+  -e THINK_MAX="${THINK_MAX:-}" -e DEBUG_ERR="${DEBUG_ERR:-}" \
   k6 run /load/k6/rag-load.js --summary-export="$SUMMARY"
 
 echo

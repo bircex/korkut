@@ -15,6 +15,10 @@ import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
 
 const BASE = __ENV.BASE_URL || 'http://gateway:8080';
+// Session/chat/upload can target the agent host directly. Set AGENT_URL=http://agent:8080 so, when
+// the agent is scaled to N replicas, Docker DNS round-robins across them (the gateway pins to one).
+// Login stays on BASE (served by the api host via the gateway). Bearer auth works on either.
+const AGENT = __ENV.AGENT_URL || BASE;
 const OCR = __ENV.OCR_URL || 'http://ocr:8080';
 const VUS = parseInt(__ENV.VUS || '200', 10);
 const DURATION = __ENV.DURATION || '2m';
@@ -47,6 +51,9 @@ const QUERIES = [
 ];
 
 export const options = {
+  // With NO_CONN_REUSE=1 each request re-resolves DNS, so when the agent is scaled to N replicas
+  // Docker DNS round-robins across them (both k6 and YARP otherwise pin a pooled connection to one).
+  noConnectionReuse: __ENV.NO_CONN_REUSE === '1',
   scenarios: {
     rag: {
       executor: 'ramping-vus',
@@ -93,7 +100,7 @@ function bearer(token, json) {
 }
 
 function ensureSession(token) {
-  const res = http.post(`${BASE}/api/sessions`, null, { headers: bearer(token), tags: { op: 'session_create' } });
+  const res = http.post(`${AGENT}/api/sessions`, null, { headers: bearer(token), tags: { op: 'session_create' } });
   const ok = check(res, { 'session created': (r) => r.status === 201 || r.status === 200 });
   if (ok) {
     try { session = JSON.parse(res.body).id; } catch (e) { session = null; }
@@ -104,7 +111,7 @@ function ensureSession(token) {
 
 function ragChat(token) {
   const q = QUERIES[Math.floor(Math.random() * QUERIES.length)];
-  const res = http.post(`${BASE}/api/sessions/${session}/chat`, JSON.stringify({ text: q }), {
+  const res = http.post(`${AGENT}/api/sessions/${session}/chat`, JSON.stringify({ text: q }), {
     headers: bearer(token, true), timeout: '60s', tags: { op: 'rag_chat' },
   });
   chatMs.add(res.timings.duration);
@@ -115,7 +122,7 @@ function ragChat(token) {
 }
 
 function uploadDoc(token) {
-  const res = http.post(`${BASE}/api/sessions/${session}/upload`, {
+  const res = http.post(`${AGENT}/api/sessions/${session}/upload`, {
     file: http.file(contractTxt, 'sozlesme.txt', 'text/plain'),
     text: 'Bu belgeyi özetle ve riskleri çıkar.',
   }, { headers: bearer(token), timeout: '60s', tags: { op: 'upload' } });
@@ -148,5 +155,7 @@ export default function (data) {
   else if (roll < W_CHAT + W_UPLOAD) uploadDoc(t.token);
   else ocrExtract(t.token);
 
-  sleep(Math.random() * 1.5);
+  // Think-time between ops. Default simulates a real user; set THINK_MAX=0 for a max-throughput run.
+  const think = parseFloat(__ENV.THINK_MAX || '1.5');
+  if (think > 0) sleep(Math.random() * think);
 }

@@ -20,6 +20,9 @@ services:
     environment:
       DEEPSEEK_BASE_URL: http://mock-llm:8080
       KORKUT_KNOWLEDGE_URL: http://mock-llm:8080
+      # Per-office concurrency cap. Defaults to the base value (4, realistic); a throughput run sets
+      # LOAD_OFFICE_CONCURRENCY=0 (unlimited) to find the raw ceiling without the governor in the way.
+      KORKUT_OFFICE_CONCURRENCY: "${LOAD_OFFICE_CONCURRENCY:-4}"
 
   # The auth endpoints (login/register) are throttled to 5 / 5min PER IP by default; a load run
   # comes from ONE IP (the k6 container), so lift the ceiling for the load stack only. Login and

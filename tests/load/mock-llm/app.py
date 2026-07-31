@@ -14,6 +14,7 @@ concurrency actually overlaps. No third-party dependencies (Python stdlib only).
 
 import json
 import os
+import random
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -29,15 +30,23 @@ FINAL_TEXT = (
     "- İlgili daire kararları emsal alınmıştır.\n- Somut olayın koşullarına göre değişebilir."
 )
 
-# Deliberately a LOCAL, DB-backed, tenant-scoped tool (not search_decisions, which would call the
-# real external Bedesten API and turn the benchmark into a test of a third-party service). list_clients
-# exercises exactly what the load test should stress: the tool loop + a per-tool tenant scope + the
-# connection pool, with no external dependency.
-TOOL_CALL = {
-    "id": "call_load_0",
-    "type": "function",
-    "function": {"name": "list_clients", "arguments": "{}"},
-}
+# The tool the mock asks for each turn: LOCAL, DB-backed, tenant-scoped tools only (never
+# search_decisions, which would hit the real external Bedesten API — rate-limited ~10/30s and
+# unsuitable for a throughput benchmark). Rotates DB WRITES (create_client/create_matter → INSERT +
+# RLS) and reads (list_*), so a run stresses the write path + per-tool tenant scope + connection pool.
+# Weighted toward writes. Each call carries valid args and a unique name so rows don't collide.
+def make_tool_call():
+    n = random.randint(1, 10 ** 9)
+    name, args = random.choices(
+        [
+            ("create_client", {"full_name": f"Yük Müvekkil {n}", "kind": "individual"}),
+            ("create_matter", {"title": f"Yük Dosya {n}"}),
+            ("list_clients", {}),
+            ("list_matters", {}),
+        ],
+        weights=[35, 35, 15, 15],
+    )[0]
+    return {"id": f"call_{n}", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}
 
 # Fast fake RAG grounding hits (Knowledge /search stand-in).
 FAKE_HITS = [
@@ -98,28 +107,28 @@ class Handler(BaseHTTPRequestHandler):
         if LATENCY_MS > 0:
             time.sleep(LATENCY_MS / 1000.0)
 
-        tool = wants_tool_call(body)
+        tc = make_tool_call() if wants_tool_call(body) else None
         if os.environ.get("MOCK_DEBUG"):
-            has_tools = bool(body.get("tools"))
             roles = [m.get("role") for m in body.get("messages", [])]
-            print(f"[mock] stream={bool(body.get('stream'))} tools={has_tools} roles={roles} -> {'TOOL_CALL' if tool else 'FINAL_TEXT'}", file=sys.stderr, flush=True)
+            label = tc["function"]["name"] if tc else "FINAL_TEXT"
+            print(f"[mock] stream={bool(body.get('stream'))} tools={bool(body.get('tools'))} roles={roles} -> {label}", file=sys.stderr, flush=True)
         if body.get("stream"):
-            self._stream(tool)
+            self._stream(tc)
         else:
-            self._complete(tool)
+            self._complete(tc)
 
-    def _complete(self, tool):
-        message = {"role": "assistant", "content": None, "tool_calls": [TOOL_CALL]} if tool \
+    def _complete(self, tc):
+        message = {"role": "assistant", "content": None, "tool_calls": [tc]} if tc \
             else {"role": "assistant", "content": FINAL_TEXT}
         self._json(200, {
             "id": "cmpl_load",
             "object": "chat.completion",
             "model": MODEL,
-            "choices": [{"index": 0, "message": message, "finish_reason": "tool_calls" if tool else "stop"}],
+            "choices": [{"index": 0, "message": message, "finish_reason": "tool_calls" if tc else "stop"}],
             "usage": {"prompt_tokens": PROMPT_TOKENS, "completion_tokens": COMPLETION_TOKENS},
         })
 
-    def _stream(self, tool):
+    def _stream(self, tc):
         # No Content-Length on an SSE body, so close the connection at the end to frame it (the
         # .NET HttpClient then reads the stream until EOF). Simpler than manual chunked encoding.
         self.close_connection = True
@@ -133,9 +142,9 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(f"data: {json.dumps(obj)}\n\n".encode("utf-8"))
             self.wfile.flush()
 
-        if tool:
+        if tc:
             frame({"choices": [{"index": 0, "delta": {"tool_calls": [
-                {"index": 0, "id": TOOL_CALL["id"], "type": "function", "function": TOOL_CALL["function"]}
+                {"index": 0, "id": tc["id"], "type": "function", "function": tc["function"]}
             ]}}]})
         else:
             for chunk in _chunks(FINAL_TEXT):
