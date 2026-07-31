@@ -20,7 +20,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
     public async Task<ChatReply> RunAsync(
         string system, IReadOnlyList<ChatMessage> messages, AgentToolContext context,
         string specialty, int? maxTokens = null,
-        Func<string, Task>? onStep = null, Func<string, Task>? onToken = null, CancellationToken ct = default)
+        Func<string, Task>? onStep = null, Func<string, Task>? onToken = null,
+        Func<string, Task>? onTool = null, CancellationToken ct = default)
     {
         var tools = catalog.AvailableSpecs(context)
             .Select(s => new ToolDefinition(s.Name, s.Description, s.Parameters))
@@ -31,6 +32,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         var completion = 0;
         var provider = string.Empty;
         var modelId = string.Empty;
+        // Legal sources surfaced by tool results, in call order; dedup/caps are the chat service's job.
+        List<Korkut.Contract.Agent.Chat.SourceRef>? sources = null;
 
         for (var i = 0; i < MaxIterations; i++)
         {
@@ -41,7 +44,7 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
 
             if (toolCalls is not { Count: > 0 } calls)
             {
-                return new ChatReply(text, new ChatUsage(provider, modelId, prompt, completion));
+                return new ChatReply(text, new ChatUsage(provider, modelId, prompt, completion), Sources: sources);
             }
 
             // Record the assistant's tool-call turn, then run each call and feed the results back.
@@ -54,8 +57,17 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
                     await onStep($"Araç çalıştırılıyor: {call.Name}");
                 }
 
+                if (onTool is not null)
+                {
+                    await onTool(call.Name);
+                }
+
                 var result = await catalog.InvokeAsync(call.Name, call.Arguments, context, ct);
                 outputs.Add(new ToolOutput(call.Id, result.Content, result.IsError));
+                if (result.Sources is { Count: > 0 })
+                {
+                    (sources ??= []).AddRange(result.Sources);
+                }
             }
 
             turn.Add(new ChatMessage("tool", string.Empty, ToolResults: outputs));
@@ -64,7 +76,7 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         // Iteration cap reached — ask once more (streamed) WITHOUT tools to force a final answer.
         var (finalText, _, finalUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools: null, onToken, ct);
         (prompt, completion, provider, modelId) = Accumulate(prompt, completion, finalUsage);
-        return new ChatReply(finalText, new ChatUsage(provider, modelId, prompt, completion));
+        return new ChatReply(finalText, new ChatUsage(provider, modelId, prompt, completion), Sources: sources);
     }
 
     // Drive one streamed model turn: append text deltas (live via onToken), collect any tool calls,

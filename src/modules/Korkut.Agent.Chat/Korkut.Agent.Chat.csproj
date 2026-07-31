@@ -6,6 +6,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Agent.Chat.Unit.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\Korkut.Chat\Korkut.Chat.csproj" />

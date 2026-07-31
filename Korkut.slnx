@@ -49,6 +49,7 @@
   </Folder>
   <Folder Name="/tests/unit/">
     <Project Path="tests/unit/Korkut.Agent.Brain.Unit.Tests/Korkut.Agent.Brain.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Agent.Chat.Unit.Tests/Korkut.Agent.Chat.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Tools.Unit.Tests/Korkut.Tools.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Knowledge.Unit.Tests/Korkut.Knowledge.Unit.Tests.csproj" />

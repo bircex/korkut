@@ -87,30 +87,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_events", "korkut");
                 });
 
-            modelBuilder.Entity("Korkut.Settings.Entities.MailPreference", b =>
-                {
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<bool>("NotificationsEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("notifications_enabled");
-
-                    b.Property<string>("NotifyEmail")
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)")
-                        .HasColumnName("notify_email");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("OfficeId");
-
-                    b.ToTable("mail_preferences", "korkut");
-                });
-
             modelBuilder.Entity("Korkut.Chat.Entities.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -179,6 +155,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("role");
+
+                    b.Property<string>("SourcesJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("sources_json");
 
                     b.HasKey("Id");
 
@@ -1443,6 +1423,30 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("user_totp", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Settings.Entities.MailPreference", b =>
+                {
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<bool>("NotificationsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notifications_enabled");
+
+                    b.Property<string>("NotifyEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("notify_email");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("OfficeId");
+
+                    b.ToTable("mail_preferences", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Settings.Entities.MemoryItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1583,9 +1587,23 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<bool>("AllDay")
+                        .HasColumnType("boolean")
+                        .HasColumnName("all_day");
+
                     b.Property<Guid?>("AssigneeId")
                         .HasColumnType("uuid")
                         .HasColumnName("assignee_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("category");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_id");
 
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1604,40 +1622,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("due_at");
 
-                    b.Property<Guid?>("MatterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("matter_id");
-
-                    b.Property<Guid>("OfficeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("office_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("title");
-
-                    b.Property<bool>("AllDay")
-                        .HasColumnType("boolean")
-                        .HasColumnName("all_day");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("category");
-
-                    b.Property<Guid?>("ClientId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("client_id");
-
                     b.Property<DateTimeOffset?>("EndAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_at");
@@ -1646,6 +1630,14 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)")
                         .HasColumnName("location");
+
+                    b.Property<Guid?>("MatterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matter_id");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
 
                     b.Property<int?>("RemindBeforeMin")
                         .HasColumnType("integer")
@@ -1661,6 +1653,18 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)")
                         .HasColumnName("rrule");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
 
                     b.Property<string>("Type")
                         .HasMaxLength(100)

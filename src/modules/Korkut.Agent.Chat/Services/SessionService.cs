@@ -25,8 +25,8 @@ internal sealed class SessionService(ISessionRepository repo, IClock clock) : IS
     public Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default)
         => repo.MessagesAsync(officeId, conversationId, ct);
 
-    public Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, CancellationToken ct = default)
-        => repo.AppendMessageAsync(officeId, conversationId, role, content, clock.UtcNow, ct);
+    public Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, string? sourcesJson = null, CancellationToken ct = default)
+        => repo.AppendMessageAsync(officeId, conversationId, role, content, clock.UtcNow, sourcesJson, ct);
 
     public Task<bool> RenameAsync(Guid officeId, Guid id, string title, CancellationToken ct = default)
         => repo.RenameAsync(officeId, id, title, clock.UtcNow, ct);

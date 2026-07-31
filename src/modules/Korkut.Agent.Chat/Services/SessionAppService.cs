@@ -48,7 +48,9 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
                 return ((SessionBrief Brief, List<ChatMessageResponse> Messages)?)null;
             }
 
-            var messages = (await svc.MessagesAsync(office, id, ct)).Select(m => new ChatMessageResponse(m.Role, m.Content)).ToList();
+            var messages = (await svc.MessagesAsync(office, id, ct))
+                .Select(m => new ChatMessageResponse(m.Role, m.Content, MessageSources.Deserialize(m.SourcesJson)))
+                .ToList();
             return (brief, messages);
         }, ct);
 

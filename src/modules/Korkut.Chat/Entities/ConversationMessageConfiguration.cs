@@ -12,6 +12,7 @@ public sealed class ConversationMessageConfiguration : IEntityTypeConfiguration<
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Role).HasMaxLength(20);
+        builder.Property(x => x.SourcesJson).HasColumnType("jsonb");
         builder.HasIndex(x => new { x.OfficeId, x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_chat_messages_conversation");
     }
 }

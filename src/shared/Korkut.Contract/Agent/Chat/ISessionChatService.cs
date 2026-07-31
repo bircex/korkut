@@ -12,5 +12,6 @@ public interface ISessionChatService
 
     Task<ChatOutcome?> ChatStreamAsync(
         Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions,
-        Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default);
+        Func<string, Task> onStep, Func<string, Task> onToken, Func<string, Task>? onTool = null,
+        CancellationToken ct = default);
 }

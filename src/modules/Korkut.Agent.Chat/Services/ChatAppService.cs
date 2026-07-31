@@ -29,17 +29,19 @@ internal sealed class ChatAppService(ICurrentUser current, ISessionChatService c
             current.OfficeId, current.UserId, id, fileName, contentType, content, text, current.Permissions, ct);
         return outcome is null
             ? throw new NotFoundException("Görüşme bulunamadı.")
-            : new UploadResponse(outcome.Reply, outcome.Title, outcome.UserDisplay);
+            : new UploadResponse(outcome.Reply, outcome.Title, outcome.UserDisplay, outcome.Sources);
     }
 
     /// <summary>Streaming turn: the caller supplies the SSE sinks. Returns null when the conversation
     /// is missing (the caller emits an error frame).</summary>
     public async Task<ChatResponse?> StreamAsync(
-        Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default)
+        Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken,
+        Func<string, Task>? onTool = null, CancellationToken ct = default)
     {
-        var outcome = await chat.ChatStreamAsync(current.OfficeId, current.UserId, id, text.Trim(), current.Permissions, onStep, onToken, ct);
+        var outcome = await chat.ChatStreamAsync(
+            current.OfficeId, current.UserId, id, text.Trim(), current.Permissions, onStep, onToken, onTool, ct);
         return outcome is null ? null : Map(outcome);
     }
 
-    private static ChatResponse Map(ChatOutcome o) => new(o.Reply, o.Title, o.OpenDocument, o.PendingEmail);
+    private static ChatResponse Map(ChatOutcome o) => new(o.Reply, o.Title, o.OpenDocument, o.PendingEmail, o.Sources);
 }

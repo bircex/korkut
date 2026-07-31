@@ -21,7 +21,7 @@ public interface ISessionRepository
 
     Task<IReadOnlyList<ConversationMessage>> MessagesAsync(Guid officeId, Guid conversationId, CancellationToken ct = default);
 
-    Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, CancellationToken ct = default);
+    Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, string? sourcesJson = null, CancellationToken ct = default);
 
     Task<bool> RenameAsync(Guid officeId, Guid id, string title, DateTimeOffset now, CancellationToken ct = default);
 

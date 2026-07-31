@@ -69,7 +69,15 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
         try
         {
             var results = await client.SearchAsync(query.Trim(), arguments, ct);
-            return ToolResult.Ok(ToolArgs.Result(results));
+            // The model reads the JSON text; the SourceRef list rides along for the UI's sources
+            // drawer (kind splits legislation from case law — "mevzuat" is the only statute source).
+            var kind = source.Equals("mevzuat", StringComparison.OrdinalIgnoreCase) ? "mevzuat" : "ictihat";
+            var sources = results
+                .Select(r => new Korkut.Contract.Agent.Chat.SourceRef(
+                    kind, r.Source, r.Id, r.Title, r.Date, r.CaseNumber, r.DecisionNumber,
+                    r.Court, r.Chamber, r.Url, r.Snippet))
+                .ToList();
+            return ToolResult.Ok(ToolArgs.Result(results), sources);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
         {

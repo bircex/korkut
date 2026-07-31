@@ -8,5 +8,7 @@ public interface IChatAppService
 
     Task<UploadResponse> UploadAsync(Guid id, string fileName, string contentType, Stream content, string text, CancellationToken ct = default);
 
-    Task<ChatResponse?> StreamAsync(Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default);
+    Task<ChatResponse?> StreamAsync(
+        Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken,
+        Func<string, Task>? onTool = null, CancellationToken ct = default);
 }

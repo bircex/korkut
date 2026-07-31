@@ -98,11 +98,24 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
 
         try
         {
+            // Frame order: step/tool/token live during the turn, then one `sources` frame (the
+            // structured drawer data, when any legal search ran), then the terminal `done`.
             var outcome = await chat.StreamAsync(id, body.Text!,
-                label => Frame("step", new { label }), token => Frame("token", new { text = token }), ct);
-            await (outcome is null
-                ? Frame("error", new { detail = "Görüşme bulunamadı." })
-                : Frame("done", outcome));
+                label => Frame("step", new { label }), token => Frame("token", new { text = token }),
+                name => Frame("tool", new { name }), ct);
+            if (outcome is null)
+            {
+                await Frame("error", new { detail = "Görüşme bulunamadı." });
+            }
+            else
+            {
+                if (outcome.Sources is { Count: > 0 })
+                {
+                    await Frame("sources", new { items = outcome.Sources });
+                }
+
+                await Frame("done", outcome);
+            }
         }
         catch (ModelUnavailableException ex)
         {

@@ -126,7 +126,7 @@ internal sealed class SessionChatService(
 
         var seed = string.IsNullOrWhiteSpace(text) ? fileName : text;
         var outcome = await RunTurnAsync(officeId, userId, conversationId, promptContent.ToString(), seed, permissions, ct: ct);
-        return outcome is null ? null : new UploadOutcome(outcome.Reply, outcome.Title, userDisplay);
+        return outcome is null ? null : new UploadOutcome(outcome.Reply, outcome.Title, userDisplay, outcome.Sources);
     }
 
     public async Task<ChatOutcome?> ChatAsync(
@@ -141,8 +141,9 @@ internal sealed class SessionChatService(
     /// </summary>
     public Task<ChatOutcome?> ChatStreamAsync(
         Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions,
-        Func<string, Task> onStep, Func<string, Task> onToken, CancellationToken ct = default)
-        => RunTurnAsync(officeId, userId, conversationId, text, text, permissions, onStep, onToken, ct);
+        Func<string, Task> onStep, Func<string, Task> onToken, Func<string, Task>? onTool = null,
+        CancellationToken ct = default)
+        => RunTurnAsync(officeId, userId, conversationId, text, text, permissions, onStep, onToken, onTool, ct);
 
     /// <summary>
     /// One assistant turn, split so a DB connection is NEVER held across the (slow) model calls:
@@ -155,7 +156,8 @@ internal sealed class SessionChatService(
     private async Task<ChatOutcome?> RunTurnAsync(
         Guid officeId, Guid userId, Guid conversationId, string userContent, string titleSeed,
         IReadOnlySet<string> permissions,
-        Func<string, Task>? onStep = null, Func<string, Task>? onToken = null, CancellationToken ct = default)
+        Func<string, Task>? onStep = null, Func<string, Task>? onToken = null,
+        Func<string, Task>? onTool = null, CancellationToken ct = default)
     {
         if (onStep is not null)
         {
@@ -180,13 +182,14 @@ internal sealed class SessionChatService(
         var timer = Stopwatch.StartNew();
         var reply = await toolLoopService.RunAsync(
             system, prep.Messages, new AgentToolContext(officeId, userId, permissions),
-            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, ct);
+            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, onTool, ct);
         timer.Stop();
 
         // Phase 3 — short agent scope: persist the reply + auto-title; ledger write is best-effort.
-        var title = await PersistReplyAsync(officeId, conversationId, prep.Title, titleSeed, reply.Text, ct);
+        var sources = MessageSources.Normalize(reply.Sources);
+        var title = await PersistReplyAsync(officeId, conversationId, prep.Title, titleSeed, reply.Text, sources, ct);
         await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
-        return new ChatOutcome(reply.Text, title, OpenDocument: null, PendingEmail: null);
+        return new ChatOutcome(reply.Text, title, OpenDocument: null, PendingEmail: null, sources);
     }
 
     // Phase 1: reads office data (persona/style/memory) + writes the user turn — all on the operational
@@ -200,7 +203,7 @@ internal sealed class SessionChatService(
                 return null;
             }
 
-            await sessions.AppendMessageAsync(officeId, conversationId, "user", userContent, ct);
+            await sessions.AppendMessageAsync(officeId, conversationId, "user", userContent, sourcesJson: null, ct);
             var system = await BuildSystemPromptAsync(officeId, userId, ct);
             var history = await sessions.MessagesAsync(officeId, conversationId, ct);
             return new Prepared(conversation.Title, system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList());
@@ -209,10 +212,12 @@ internal sealed class SessionChatService(
     // Phase 3: persist the assistant reply and auto-title a fresh conversation (both on the operational
     // DB), in one short office scope.
     private Task<string> PersistReplyAsync(
-        Guid officeId, Guid conversationId, string currentTitle, string titleSeed, string replyText, CancellationToken ct)
+        Guid officeId, Guid conversationId, string currentTitle, string titleSeed, string replyText,
+        IReadOnlyList<SourceRef>? sources, CancellationToken ct)
         => uow.InOfficeScopeAsync(officeId, async () =>
         {
-            await sessions.AppendMessageAsync(officeId, conversationId, "assistant", replyText, ct);
+            await sessions.AppendMessageAsync(
+                officeId, conversationId, "assistant", replyText, MessageSources.Serialize(sources), ct);
             var title = currentTitle;
             if (currentTitle == "Yeni görüşme")
             {

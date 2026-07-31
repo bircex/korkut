@@ -48,9 +48,9 @@ internal sealed class SessionRepository(DbContext db)
             .OrderBy(x => x.CreatedAt)
             .ToListAsync(ct);
 
-    public async Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, CancellationToken ct = default)
+    public async Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, string? sourcesJson = null, CancellationToken ct = default)
     {
-        Messages.Add(new ConversationMessage(officeId, conversationId, role, content, now));
+        Messages.Add(new ConversationMessage(officeId, conversationId, role, content, now, sourcesJson));
         await Conversations.Where(x => x.OfficeId == officeId && x.Id == conversationId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedAt, now), ct);
         await Db.SaveChangesAsync(ct);
@@ -84,7 +84,7 @@ internal sealed class SessionRepository(DbContext db)
             .Where(x => x.OfficeId == officeId && x.ConversationId == id).OrderBy(x => x.CreatedAt).ToListAsync(ct);
         foreach (var m in messages)
         {
-            Messages.Add(new ConversationMessage(officeId, clone.Id, m.Role, m.Content, m.CreatedAt));
+            Messages.Add(new ConversationMessage(officeId, clone.Id, m.Role, m.Content, m.CreatedAt, m.SourcesJson));
         }
 
         await Db.SaveChangesAsync(ct);
