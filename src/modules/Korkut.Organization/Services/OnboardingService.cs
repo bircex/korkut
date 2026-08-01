@@ -19,6 +19,7 @@ public sealed class OnboardingService(
     IOfficeProvisioner provisioner,
     IPasswordHasher passwordHasher,
     Korkut.Contract.Notifications.IEmailSender emailSender,
+    Korkut.Contract.Notifications.MailLinks mailLinks,
     IEnvironment env) : IOnboardingService
 {
     /// <summary>Başvuru sonrası bildirimler (best-effort): başvurana "alındı", operatöre
@@ -27,14 +28,14 @@ public sealed class OnboardingService(
     {
         try
         {
-            await emailSender.SendAsync(applicantEmail, "Korkut başvurunuz alındı",
+            await emailSender.SendAsync(applicantEmail, "Korkut AI başvurunuz alındı",
                 Korkut.Contract.Notifications.EmailTemplates.Render(
                     "Başvurunuz alındı",
                     [
                         "Merhaba,",
                         $"\"{officeName}\" bürosu için kaydınızı aldık. Başvurunuz kısa süre içinde incelenecek; onaylandığında e-postayla haber vereceğiz.",
                         "Onaydan sonra Google hesabınızla (veya belirlediğiniz parolayla) giriş yapabilirsiniz.",
-                    ]), ct);
+                    ], null, mailLinks.LogoUrl()), ct);
         }
         catch (Exception)
         {
@@ -57,7 +58,7 @@ public sealed class OnboardingService(
                         $"Başvuran: {applicantEmail}",
                         "Admin panelinden inceleyip etkinleştirebilirsiniz.",
                     ],
-                    ("Admin panelini aç", "https://admin.korkutai.com/")), ct);
+                    ("Admin panelini aç", "https://admin.korkutai.com/"), mailLinks.LogoUrl()), ct);
         }
         catch (Exception)
         {

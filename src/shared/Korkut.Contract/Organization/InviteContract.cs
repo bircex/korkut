@@ -19,6 +19,27 @@ public sealed record InviteCreatedResponse(
 /// <summary>The outcome of accepting an invitation: which e-mail may now sign in.</summary>
 public sealed record InviteAcceptedResponse(bool Ok, string Email);
 
+/// <summary>Davet linkine tıklayan kişiye gösterilecek bilgi — token TÜKETİLMEZ.</summary>
+public sealed record InvitePeekResponse(string OfficeName, string Email, string? FullName, string Role);
+
+/// <summary>Parola belirleyerek daveti kabul: hesap açılır ve oturum verilecek kullanıcı döner.</summary>
+public sealed record InviteJoinedUser(Guid OfficeId, Guid UserId, string Role, Guid SecurityStamp, string Email);
+
+/// <summary>Davet linkinden parolayla katılım gövdesi.</summary>
+public sealed record AcceptInviteLocalRequest
+{
+    [Required(ErrorMessage = "Davet kodu zorunludur.")]
+    public string? Token { get; init; }
+
+    [Required(ErrorMessage = "Parola zorunludur.")]
+    [MinLength(10, ErrorMessage = "Parola en az 10 karakter olmalıdır.")]
+    [MaxLength(200)]
+    public string? Password { get; init; }
+
+    [StringLength(200, ErrorMessage = "Ad soyad en fazla 200 karakter olabilir.")]
+    public string? FullName { get; init; }
+}
+
 /// <summary>Body for inviting someone to the office.</summary>
 public sealed record CreateInviteRequest
 {
@@ -55,4 +76,10 @@ public interface IInviteService
     Task<Result> RevokeAsync(Guid inviteId, CancellationToken ct = default);
 
     Task<Result<InviteAcceptedResponse>> AcceptAsync(AcceptInviteRequest request, CancellationToken ct = default);
+
+    /// <summary>Token'ı tüketmeden davet bilgisini döndürür (katılım ekranı için).</summary>
+    Task<Result<InvitePeekResponse>> PeekAsync(string token, CancellationToken ct = default);
+
+    /// <summary>Parola belirleyerek katılım: hesabı açar, daveti tüketir, oturumluk kullanıcıyı döner.</summary>
+    Task<Result<InviteJoinedUser>> AcceptLocalAsync(AcceptInviteLocalRequest request, CancellationToken ct = default);
 }

@@ -98,15 +98,15 @@ public sealed class AuthService(
         {
             try
             {
-                await emailSender.SendAsync(email, "Korkut parola sıfırlama",
+                await emailSender.SendAsync(email, "Korkut AI parola sıfırlama",
                     Korkut.Contract.Notifications.EmailTemplates.Render(
                         "Parolanızı sıfırlayın",
                         [
                             "Merhaba,",
-                            "Korkut hesabınız için bir parola sıfırlama isteği aldık. Yeni parolanızı belirlemek için aşağıdaki düğmeye tıklayın.",
+                            "Korkut AI hesabınız için bir parola sıfırlama isteği aldık. Yeni parolanızı belirlemek için aşağıdaki düğmeye tıklayın.",
                             "Bağlantı 1 saat geçerlidir ve tek kullanımlıktır.",
                         ],
-                        ("Parolayı sıfırla", mailLinks.ResetLink(rawToken))), ct);
+                        ("Parolayı sıfırla", mailLinks.ResetLink(rawToken)), mailLinks.LogoUrl()), ct);
             }
             catch (Exception)
             {

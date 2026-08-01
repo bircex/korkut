@@ -68,15 +68,15 @@ public sealed class OfficeAdminService(
                 return;
             }
 
-            await emailSender.SendAsync(owner, "Korkut büronuz onaylandı",
+            await emailSender.SendAsync(owner, "Korkut AI büronuz onaylandı",
                 Korkut.Contract.Notifications.EmailTemplates.Render(
                     "Büronuz onaylandı",
                     [
                         "Merhaba,",
-                        $"\"{officeName}\" bürosu için başvurunuz onaylandı. Artık giriş yapıp Korkut'u kullanmaya başlayabilirsiniz.",
+                        $"\"{officeName}\" bürosu için başvurunuz onaylandı. Artık giriş yapıp Korkut AI'yı kullanmaya başlayabilirsiniz.",
                         "Ayarlar bölümünden meslektaşlarınızı büronuza davet edebilirsiniz.",
                     ],
-                    ("Giriş yap", mailLinks.LoginLink())), ct);
+                    ("Giriş yap", mailLinks.LoginLink()), mailLinks.LogoUrl()), ct);
         }
         catch (Exception)
         {

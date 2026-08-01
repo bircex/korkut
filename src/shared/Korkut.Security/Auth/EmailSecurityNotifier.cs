@@ -16,12 +16,12 @@ public sealed partial class EmailSecurityNotifier(
     {
         LogPasswordChanged(logger, officeId);
 
-        const string subject = "Korkut hesabınızın parolası değişti";
+        const string subject = "Korkut AI hesabınızın parolası değişti";
         var body = EmailTemplates.Render(
             "Parolanız değiştirildi",
             [
                 "Merhaba,",
-                "Korkut hesabınızın parolası az önce değiştirildi. Bu işlemi siz yaptıysanız bir şey yapmanıza gerek yok.",
+                "Korkut AI hesabınızın parolası az önce değiştirildi. Bu işlemi siz yaptıysanız bir şey yapmanıza gerek yok.",
                 "Bu işlemi siz yapmadıysanız hemen parola sıfırlama isteyin ve büro yöneticinizle iletişime geçin.",
             ]);
 

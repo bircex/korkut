@@ -1,6 +1,37 @@
 {
   "components": {
     "schemas": {
+      "AcceptInviteLocalRequest": {
+        "properties": {
+          "full_name": {
+            "maxLength": "200",
+            "minLength": "0",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "maxLength": "200",
+            "minLength": "10",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ],
+        "type": "object"
+      },
       "AcceptInviteRequest": {
         "properties": {
           "token": {
@@ -2720,6 +2751,59 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/invites/accept-local": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteLocalRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteLocalRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteLocalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/invites/peek": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"

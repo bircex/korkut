@@ -15,7 +15,7 @@ namespace Korkut.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/invites")]
-public sealed class InvitesController(IInviteService invites) : ControllerBase
+public sealed class InvitesController(IInviteService invites, Korkut.Api.Auth.SessionManager session) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = Permissions.MembersManage)]
@@ -37,4 +37,31 @@ public sealed class InvitesController(IInviteService invites) : ControllerBase
     [EnableRateLimiting(WebSetup.SensitivePolicy)]
     public async Task<IActionResult> Accept([FromBody] AcceptInviteRequest body, CancellationToken ct)
         => (await invites.AcceptAsync(body, ct)).ToActionResult();
+
+    /// <summary>Katılım ekranı için davet bilgisi — token TÜKETİLMEZ.</summary>
+    [HttpGet("peek")]
+    [AllowAnonymous]
+    [EnableRateLimiting(WebSetup.SensitivePolicy)]
+    public async Task<IActionResult> Peek([FromQuery] string? token, CancellationToken ct)
+        => string.IsNullOrWhiteSpace(token)
+            ? throw Korkut.Web.Errors.ApiException.BadRequest("'token' gereklidir.")
+            : (await invites.PeekAsync(token, ct)).ToActionResult();
+
+    /// <summary>Parola belirleyerek katılım: hesabı açar, daveti tüketir ve oturumu BAŞLATIR —
+    /// davetli, davet edenin bürosunun üyesi olarak doğrudan uygulamaya düşer.</summary>
+    [HttpPost("accept-local")]
+    [AllowAnonymous]
+    [EnableRateLimiting(WebSetup.SensitivePolicy)]
+    public async Task<IActionResult> AcceptLocal([FromBody] AcceptInviteLocalRequest body, CancellationToken ct)
+    {
+        var result = await invites.AcceptLocalAsync(body, ct);
+        if (!result.IsSuccess)
+        {
+            return result.ToActionResult();
+        }
+
+        var user = result.Value!;
+        await session.IssueAsync(Response, user.OfficeId, user.UserId, user.Role, user.SecurityStamp, ct);
+        return Ok(new InviteAcceptedResponse(true, user.Email));
+    }
 }

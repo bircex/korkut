@@ -25,6 +25,10 @@ public sealed record MailLinks(string AppBaseUrl)
     /// <summary>Absolute link to the sign-in screen (post-approval welcome mail).</summary>
     public string LoginLink() => Absolute("/giris");
 
+    /// <summary>E-posta başlığındaki logo (uygulama origin'inde barındırılan PNG; SVG mail
+    /// istemcilerinde çalışmaz). Base URL yoksa null — şablon metin markasına düşer.</summary>
+    public string? LogoUrl() => string.IsNullOrWhiteSpace(AppBaseUrl) ? null : Absolute("/korkut-logo-email.png");
+
     private string Absolute(string path)
         => string.IsNullOrWhiteSpace(AppBaseUrl) ? path : $"{AppBaseUrl.TrimEnd('/')}{path}";
 }

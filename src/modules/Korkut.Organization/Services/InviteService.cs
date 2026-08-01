@@ -19,6 +19,8 @@ public sealed partial class InviteService(
     IInviteRepository repository,
     IInviteResolver resolver,
     IUserRepository users,
+    IOfficeRepository offices,
+    IPasswordHasher passwordHasher,
     ITokenHasher tokenHasher,
     IEmailSender emailSender,
     MailLinks mailLinks,
@@ -38,6 +40,7 @@ public sealed partial class InviteService(
     {
         var email = request.Email!.Trim().ToLowerInvariant();
         var fullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
+        var officeName = (await offices.FindAsync(currentUser.OfficeId, ct))?.Name;
         var rawToken = tokenHasher.NewRawToken();
         var result = await InScopeAsync(currentUser.OfficeId, async office =>
         {
@@ -55,24 +58,28 @@ public sealed partial class InviteService(
         // response, so a mail outage never blocks inviting). Sent outside the tenant tx.
         if (result.IsSuccess)
         {
-            await SendInviteEmailAsync(email, fullName, rawToken, ct);
+            await SendInviteEmailAsync(email, fullName, officeName, rawToken, ct);
         }
 
         return result;
     }
 
-    private async Task SendInviteEmailAsync(string address, string? fullName, string rawToken, CancellationToken ct)
+    private async Task SendInviteEmailAsync(string address, string? fullName, string? officeName, string rawToken, CancellationToken ct)
     {
         var link = mailLinks.InviteLink(rawToken);
-        const string subject = "Korkut'a davet edildiniz";
+        var officeLabel = string.IsNullOrWhiteSpace(officeName) ? "bir Korkut AI bürosuna" : $"\"{officeName}\" bürosuna";
+        var subject = string.IsNullOrWhiteSpace(officeName)
+            ? "Korkut AI'ya davet edildiniz"
+            : $"{officeName} sizi Korkut AI'ya davet etti";
         var body = EmailTemplates.Render(
-            "Korkut'a davet edildiniz",
+            "Büroya davet edildiniz",
             [
                 string.IsNullOrWhiteSpace(fullName) ? "Merhaba," : $"Merhaba {fullName},",
-                "Bir Korkut bürosuna katılmanız için davet edildiniz. Daveti kabul etmek için aşağıdaki düğmeye tıklayın ve Google hesabınızla giriş yapın.",
+                $"{officeLabel} katılmanız için davet edildiniz. Daveti kabul etmek için aşağıdaki düğmeye tıklayın ve parolanızı belirleyin.",
                 "Bağlantı tek kullanımlıktır ve 7 gün geçerlidir.",
             ],
-            ("Daveti kabul et", link));
+            ("Daveti kabul et", link),
+            mailLinks.LogoUrl());
         try
         {
             await emailSender.SendAsync(address, subject, body, ct);
@@ -124,6 +131,64 @@ public sealed partial class InviteService(
             }
 
             return Result<InviteAcceptedResponse>.Ok(new InviteAcceptedResponse(true, grant.Email));
+        }, ct);
+    }
+
+    public async Task<Result<InvitePeekResponse>> PeekAsync(string token, CancellationToken ct = default)
+    {
+        var grant = await resolver.ResolveAsync(tokenHasher.Hash(token), ct);
+        if (grant is null)
+        {
+            return Result<InvitePeekResponse>.BadRequest("Davet geçersiz, süresi dolmuş veya kullanılmış.");
+        }
+
+        return await InScopeAsync(grant.OfficeId, async office =>
+        {
+            var officeName = (await offices.FindAsync(office, ct))?.Name ?? "Korkut AI";
+            var invite = await repository.FindAsync(office, grant.Id, ct);
+            return Result<InvitePeekResponse>.Ok(
+                new InvitePeekResponse(officeName, grant.Email, invite?.FullName, grant.Role));
+        }, ct);
+    }
+
+    public async Task<Result<InviteJoinedUser>> AcceptLocalAsync(AcceptInviteLocalRequest request, CancellationToken ct = default)
+    {
+        var grant = await resolver.ResolveAsync(tokenHasher.Hash(request.Token!), ct);
+        if (grant is null)
+        {
+            return Result<InviteJoinedUser>.BadRequest("Davet geçersiz, süresi dolmuş veya kullanılmış.");
+        }
+
+        return await InScopeAsync(grant.OfficeId, async office =>
+        {
+            var invite = await repository.FindForUpdateAsync(office, grant.Id, ct);
+            var fullName = string.IsNullOrWhiteSpace(request.FullName) ? invite?.FullName : request.FullName.Trim();
+
+            // Var olan üye: parolası yoksa belirlenir (eski akıştan kalan hesap), varsa davet
+            // yalnız tüketilir ve giriş sayfasına yönlendirilecek hata dönülür.
+            var existing = await users.FindByEmailAsync(office, grant.Email, ct);
+            User user;
+            if (existing is null)
+            {
+                user = new User(office, grant.Email, grant.Role, fullName, null, clock.UtcNow);
+                user.SetPassword(passwordHasher.Hash(request.Password!));
+                await users.AddAsync(user, ct);
+            }
+            else if (existing.PasswordHash is null)
+            {
+                existing.SetPassword(passwordHasher.Hash(request.Password!));
+                user = existing;
+            }
+            else
+            {
+                return Result<InviteJoinedUser>.Conflict("Bu e-posta zaten üye. Giriş yapın.");
+            }
+
+            invite?.Accept(clock.UtcNow);
+            await repository.SaveChangesAsync(ct); // davet + (varsa) parola set edilen mevcut üye birlikte
+
+            return Result<InviteJoinedUser>.Ok(
+                new InviteJoinedUser(office, user.Id, user.Role, user.SecurityStamp, user.Email));
         }, ct);
     }
 
