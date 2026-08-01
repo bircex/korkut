@@ -1,12 +1,12 @@
-name: .NET Migration CI
+name: CI
 
-# KDM-005 — build + architecture + smoke tests for the .NET solution on every PR
-# into dotnet-migration that touches the .NET sources (now at the repo root). Path-
-# aware so it stays fast. Read-only permissions; no secrets used.
+# Build + architecture + smoke tests for the .NET solution on every PR into main
+# that touches the .NET sources. Path-aware so it stays fast. Read-only
+# permissions; no secrets used.
 
 on:
   pull_request:
-    branches: [dotnet-migration]
+    branches: [main]
     paths:
       - "src/**"
       - "tests/**"
@@ -16,7 +16,7 @@ on:
       - "global.json"
       - "dotnet-tools.json"
       - ".editorconfig"
-      - ".github/workflows/dotnet-migration-ci.yml"
+      - ".github/workflows/ci.yml"
 
 permissions:
   contents: read

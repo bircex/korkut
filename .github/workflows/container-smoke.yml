@@ -1,13 +1,12 @@
 name: Container smoke
 
-# KDM-009 — build the hardened API/Worker/Migrator images and run the container
-# smoke test (non-root, read-only filesystem, health, graceful SIGTERM shutdown).
-# Path-aware: runs when the Docker packaging changes. Broader release-time image
-# verification is part of KDM-035/036.
+# Builds the hardened host images and runs the container smoke test (non-root,
+# read-only filesystem, health, graceful SIGTERM shutdown). Path-aware: runs
+# when the Docker packaging changes.
 
 on:
   pull_request:
-    branches: [dotnet-migration]
+    branches: [main]
     paths:
       - "docker/**"
       - "global.json"
