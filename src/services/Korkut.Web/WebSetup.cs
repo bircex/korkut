@@ -58,9 +58,16 @@ public static class WebSetup
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            // Partition by the REAL client, not the socket peer: behind the proxy chain
+            // (Cloudflare → caddy → ui nginx → gateway) RemoteIpAddress is always the previous
+            // hop's container IP, which would put the whole world in ONE bucket — the login+2FA
+            // flow alone (~5 requests) then starves everyone. Cloudflare sets CF-Connecting-IP
+            // to the true client on every proxied request; local/direct traffic falls back to
+            // the socket address (tests unchanged).
             options.AddPolicy(SensitivePolicy, context =>
                 RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    context.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
+                        ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = sensitiveLimit,
