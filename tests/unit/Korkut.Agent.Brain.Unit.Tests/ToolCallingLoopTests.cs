@@ -71,7 +71,7 @@ public class ToolCallingLoopTests
     }
 
     private static SourceRef Karar(string id) =>
-        new("ictihat", "yargitay", id, $"Yargıtay {id}", Date: "2020-01-01");
+        new("ictihat", "yargitay", id, $"Yargıtay {id}", Date: "2020-01-01", CaseNumber: id);
 
     [Fact]
     public async Task A_final_answer_with_no_tool_calls_returns_immediately()
@@ -107,13 +107,36 @@ public class ToolCallingLoopTests
         Assert.Equal(2, model.Calls);                            // call turn + final turn
         Assert.Equal(20, reply.Usage.PromptTokens);              // 8 + 12 summed
         Assert.Equal(6, reply.Usage.CompletionTokens);           // 2 + 4 summed
-        Assert.Contains(steps, s => s.Contains("create_matter"));
+        // Steps carry the human activity label, never the raw tool name.
+        Assert.Contains("Dosya açıyorum", steps);
     }
 
     [Fact]
-    public async Task Tool_sources_accumulate_across_calls_and_iterations_in_call_order()
+    public async Task Search_and_fetch_steps_name_the_legal_database_from_the_source_argument()
     {
-        // Two searches over two iterations; each attaches sources to its result.
+        var args = ToolSchema.Parse("""{"source":"yargitay","query":"hakaret"}""");
+        var callTurn = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
+            ToolCalls:
+            [
+                new ToolInvocation("c1", "search_decisions", args),
+                new ToolInvocation("c2", "fetch_document", args),
+            ]);
+        var final = new ChatReply("Bitti.", new ChatUsage("fake", "m", 1, 1));
+        var loop = new ToolCallingLoopService(new ScriptedModel(callTurn, final), new FakeCatalog("search_decisions", "fetch_document"));
+
+        var steps = new List<string>();
+        await loop.RunAsync("sys", [new ChatMessage("user", "soru")], Context(),
+            ModelSpecialty.Dispatcher, onStep: s => { steps.Add(s); return Task.CompletedTask; });
+
+        Assert.Contains("Yargıtay kararlarında arıyorum", steps);
+        Assert.Contains("Yargıtay kararının tam metnini okuyorum", steps);
+    }
+
+    [Fact]
+    public async Task Only_the_sources_the_final_answer_cites_survive()
+    {
+        // Two searches over two iterations; each attaches sources to its result. The final answer
+        // cites only 2015/89 — the uncited 2013/24590 candidates are dropped as noise.
         var turn1 = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
             ToolCalls:
             [
@@ -122,18 +145,53 @@ public class ToolCallingLoopTests
             ]);
         var turn2 = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
             ToolCalls: [new ToolInvocation("c3", "search_decisions", NoArgs)]);
-        var final = new ChatReply("Cevap.", new ChatUsage("fake", "m", 1, 1));
+        var final = new ChatReply("Yargıtay 2015/89 E. sayılı kararına göre suçtur.", new ChatUsage("fake", "m", 1, 1));
         var catalog = new FakeCatalog("search_decisions", "search_office_documents");
         catalog.Sources["search_decisions"] = [Karar("2015/89"), Karar("2013/24590")];
         var loop = new ToolCallingLoopService(new ScriptedModel(turn1, turn2, final), catalog);
 
         var reply = await loop.RunAsync("sys", [new ChatMessage("user", "emsal bul")], Context(), ModelSpecialty.Dispatcher);
 
-        Assert.Equal("Cevap.", reply.Text);
-        // Both search_decisions calls contributed (duplicates preserved — dedup is the chat service's job).
+        // The cited decision came back from BOTH search calls (duplicates preserved — dedup is the
+        // chat service's job); the uncited one is gone entirely.
         Assert.NotNull(reply.Sources);
-        Assert.Equal(4, reply.Sources!.Count);
-        Assert.All(reply.Sources, s => Assert.Equal("ictihat", s.Kind));
+        Assert.Equal(2, reply.Sources!.Count);
+        Assert.All(reply.Sources, s => Assert.Equal("2015/89", s.CaseNumber));
+    }
+
+    [Fact]
+    public async Task An_answer_that_cites_nothing_carries_no_sources()
+    {
+        var callTurn = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
+            ToolCalls: [new ToolInvocation("c1", "search_decisions", NoArgs)]);
+        var final = new ChatReply("Bu konuda emsal karar bulamadım.", new ChatUsage("fake", "m", 1, 1));
+        var catalog = new FakeCatalog("search_decisions");
+        catalog.Sources["search_decisions"] = [Karar("2015/89"), Karar("2013/24590")];
+        var loop = new ToolCallingLoopService(new ScriptedModel(callTurn, final), catalog);
+
+        var reply = await loop.RunAsync("sys", [new ChatMessage("user", "emsal bul")], Context(), ModelSpecialty.Dispatcher);
+
+        Assert.Null(reply.Sources);
+    }
+
+    [Fact]
+    public async Task A_cited_law_number_keeps_the_legislation_source()
+    {
+        var callTurn = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
+            ToolCalls: [new ToolInvocation("c1", "search_decisions", NoArgs)]);
+        var final = new ChatReply("5816 sayılı Kanun m.1 uyarınca cezalandırılır.", new ChatUsage("fake", "m", 1, 1));
+        var catalog = new FakeCatalog("search_decisions");
+        catalog.Sources["search_decisions"] =
+        [
+            new SourceRef("mevzuat", "mevzuat", "5816", "Atatürk Aleyhine İşlenen Suçlar Hakkında Kanun"),
+            new SourceRef("mevzuat", "mevzuat", "6098", "Türk Borçlar Kanunu"),
+        ];
+        var loop = new ToolCallingLoopService(new ScriptedModel(callTurn, final), catalog);
+
+        var reply = await loop.RunAsync("sys", [new ChatMessage("user", "hangi kanun?")], Context(), ModelSpecialty.Dispatcher);
+
+        var only = Assert.Single(reply.Sources!);
+        Assert.Equal("5816", only.Id);
     }
 
     [Fact]
