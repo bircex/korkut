@@ -41,7 +41,22 @@ public static class SecuritySetup
                     "KORKUT_TOTP_KEY (base64, 32 bytes) is required to encrypt TOTP secrets.");
             }
 
-            return new AesGcmSecretEncryptor(Convert.FromBase64String(key));
+            byte[] parsed;
+            try
+            {
+                parsed = Convert.FromBase64String(key);
+            }
+            catch (FormatException)
+            {
+                throw new InvalidOperationException("KORKUT_TOTP_KEY is not valid base64 (need base64 of exactly 32 random bytes, e.g. `openssl rand -base64 32`).");
+            }
+
+            // Fail FAST at boot with a clear message — a wrong-size key otherwise surfaces as a
+            // cryptic AesGcm error on the first 2FA enrollment (hex-encoded keys decode to 48 bytes).
+            return parsed.Length == 32
+                ? new AesGcmSecretEncryptor(parsed)
+                : throw new InvalidOperationException(
+                    $"KORKUT_TOTP_KEY decodes to {parsed.Length} bytes; AES-256-GCM needs exactly 32 (use `openssl rand -base64 32`).");
         });
         services.AddScoped<TwoFactorService>();
         services.AddScoped<Korkut.Organization.ITwoFactorChallenge>(sp => sp.GetRequiredService<TwoFactorService>());
