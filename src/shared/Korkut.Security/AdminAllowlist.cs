@@ -12,6 +12,7 @@ public static class AdminAllowlist
     private static readonly HashSet<string> Allowed = new(StringComparer.Ordinal)
     {
         "recepkizilarslan@gmail.com",
+        "kizilarslanibrahim8@gmail.com"
     };
 
     /// <summary>Exact normalization used for both storage and comparison (trim + lower-invariant).</summary>
