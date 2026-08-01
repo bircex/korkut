@@ -96,43 +96,17 @@ function BarNoField({ initial }: { initial: string | null }) {
 function Members({ isOwner }: { isOwner: boolean }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [barNo, setBarNo] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [newLink, setNewLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
 
   useEffect(() => {
     api.members().then(setMembers).catch(() => {});
     if (isOwner) api.invites().then(setInvites).catch(() => {});
   }, [isOwner]);
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setBusy(true);
-    try {
-      const m = await api.addMember(
-        email.trim(),
-        username.trim(),
-        fullName.trim(),
-        barNo.trim() || undefined,
-      );
-      setMembers((list) => [...list, m]);
-      setEmail("");
-      setUsername("");
-      setFullName("");
-      setBarNo("");
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Üye eklenemedi");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function remove(m: Member) {
     if (!confirm(`${m.full_name ?? m.username} ofisten çıkarılsın mı?`)) return;
@@ -146,16 +120,21 @@ function Members({ isOwner }: { isOwner: boolean }) {
 
   async function createInvite() {
     setError("");
-    if (!inviteEmail.trim()) {
-      setError("Davet için bir e-posta girin");
+    if (!inviteName.trim() || !inviteEmail.trim()) {
+      setError("Yeni üye için ad soyad ve e-posta girin");
       return;
     }
     setBusy(true);
     setCopied(false);
     try {
-      const inv = await api.createInvite({ email: inviteEmail.trim(), role: "lawyer" });
+      const inv = await api.createInvite({
+        email: inviteEmail.trim(),
+        full_name: inviteName.trim(),
+        role: "lawyer",
+      });
       setInvites((list) => [inv, ...list]);
       setInviteEmail("");
+      setInviteName("");
       const link = window.location.origin + inv.path;
       setNewLink(link);
       try {
@@ -220,86 +199,53 @@ function Members({ isOwner }: { isOwner: boolean }) {
 
       {isOwner ? (
         <>
-          <form
-            onSubmit={add}
-            className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3"
-          >
+          <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
             <p className="m-0 text-[13px] font-medium text-zinc-700">Yeni üye ekle</p>
             <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={inviteName}
+              onChange={(e) => setInviteName(e.target.value)}
               placeholder="Ad Soyad"
               className={inputCls}
             />
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              placeholder="Google e-postası"
-              autoComplete="off"
-              className={inputCls}
-            />
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Kullanıcı adı"
-              autoComplete="off"
-              className={inputCls}
-            />
-            <input
-              value={barNo}
-              onChange={(e) => setBarNo(e.target.value)}
-              placeholder="Baro sicil no (opsiyonel)"
-              className={inputCls}
-            />
-            <button
-              type="submit"
-              disabled={busy || !fullName.trim() || !username.trim() || !email.trim()}
-              className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {busy ? "Ekleniyor…" : "Üye ekle"}
-            </button>
-            {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
-            <p className="m-0 text-[12px] text-zinc-400">
-              Üye bu e-postayla Google’a giriş yaptığında hesabı otomatik bağlanır. Parola yoktur.
-            </p>
-          </form>
-
-          <div className="mt-3 flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <p className="m-0 text-[13px] font-medium text-zinc-700">Davet bağlantıları</p>
             <div className="flex items-center gap-2">
               <input
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Davet edilecek e-posta"
-                className="min-w-0 flex-1 rounded-md border border-zinc-200 px-2 py-1.5 text-[13px] outline-none focus:border-zinc-400"
+                placeholder="E-posta"
+                className={inputCls + " min-w-0 flex-1"}
               />
               <button
                 onClick={createInvite}
-                disabled={busy}
-                className="shrink-0 rounded-md bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                disabled={busy || !inviteName.trim() || !inviteEmail.trim()}
+                className="shrink-0 rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
-                Davet oluştur
+                {busy ? "Oluşturuluyor…" : "Davet oluştur"}
               </button>
             </div>
+            {error && <p className="m-0 text-[13px] text-red-600">{error}</p>}
             {newLink && (
-              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5">
-                <input
-                  readOnly
-                  value={newLink}
-                  onFocus={(e) => e.target.select()}
-                  className="min-w-0 flex-1 bg-transparent text-[12px] text-emerald-800 outline-none"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard?.writeText(newLink);
-                    setCopied(true);
-                  }}
-                  className="shrink-0 text-[12px] font-medium text-emerald-700 hover:underline"
-                >
-                  {copied ? "Kopyalandı" : "Kopyala"}
-                </button>
+              <div className="flex flex-col gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5">
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={newLink}
+                    onFocus={(e) => e.target.select()}
+                    className="min-w-0 flex-1 bg-transparent text-[12px] text-emerald-800 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard?.writeText(newLink);
+                      setCopied(true);
+                    }}
+                    className="shrink-0 text-[12px] font-medium text-emerald-700 hover:underline"
+                  >
+                    {copied ? "Kopyalandı" : "Kopyala"}
+                  </button>
+                </div>
+                <p className="m-0 text-[12px] text-emerald-700">
+                  Davet e-postası gönderildi; bağlantıyı dilerseniz elle de paylaşabilirsiniz.
+                </p>
               </div>
             )}
             {pendingInvites.length > 0 && (
@@ -307,7 +253,8 @@ function Members({ isOwner }: { isOwner: boolean }) {
                 {pendingInvites.map((i) => (
                   <div key={i.id} className="flex items-center gap-2 py-1.5 text-[12px]">
                     <span className="min-w-0 flex-1 truncate text-zinc-600">
-                      {i.email ?? "herkese açık"} · {i.role === "owner" ? "Sahip" : "Üye"} ·{" "}
+                      {[i.full_name, i.email].filter(Boolean).join(" · ") || "herkese açık"} ·{" "}
+                      {i.role === "owner" ? "Sahip" : "Üye"} ·{" "}
                       {new Date(i.expires_at).toLocaleDateString("tr-TR")} tarihine kadar
                     </span>
                     <button
@@ -321,8 +268,9 @@ function Members({ isOwner }: { isOwner: boolean }) {
               </div>
             )}
             <p className="m-0 text-[12px] text-zinc-400">
-              Bağlantıyı yeni üyeye gönderin; tıklayıp Google ile giriş yapınca ofise katılır. Tek
-              kullanımlıktır ve 7 gün geçerlidir.
+              Davet bağlantısı e-postayla gider ve kopyalanabilir; yeni üye tıklayıp Google ile
+              giriş yapınca doğrudan büronuza katılır. Bağlantı tek kullanımlıktır ve 7 gün
+              geçerlidir.
             </p>
           </div>
         </>

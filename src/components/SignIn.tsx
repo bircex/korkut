@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { Button, Field } from "../a11y";
 import { API_MODE, signalAuthChanged } from "../session";
 import { LocalAuth } from "./LocalAuth";
 import { AuthShell, Brand } from "../ui";
@@ -12,7 +13,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   pending: "Büronuz henüz onaylanmadı. Onaylandığında giriş yapabilirsiniz.",
 };
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot" | "reset";
 
 export function SignIn() {
   // Read the callback's ?error once at mount (a lazy initializer avoids a cascading render).
@@ -23,11 +24,18 @@ export function SignIn() {
   });
   // Registration (self-serve signup) is enabled by the same flag that used to gate the demo.
   const [registerEnabled, setRegisterEnabled] = useState(false);
-  const [mode, setMode] = useState<Mode>("login");
+  // E-postadaki sıfırlama bağlantısı /giris?reset=TOKEN ile gelir → doğrudan reset formu açılır.
+  const [resetToken] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("reset"),
+  );
+  const [mode, setMode] = useState<Mode>(() =>
+    new URLSearchParams(window.location.search).get("reset") ? "reset" : "login",
+  );
 
   useEffect(() => {
-    // Drop the ?error param so a refresh is clean (side effect only — no setState here).
-    if (new URLSearchParams(window.location.search).get("error")) {
+    // Drop the ?error / ?reset params so a refresh is clean (side effect only — no setState).
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") || params.get("reset")) {
       window.history.replaceState(null, "", "/giris");
     }
     api
@@ -52,7 +60,13 @@ export function SignIn() {
       )}
       {/* .NET auth contract: local e-posta/parola + policy-driven TOTP. Behind the
           migration flag so Python mode stays Google-only (behaviour parity). */}
-      {API_MODE === "dotnet" && (
+      {API_MODE === "dotnet" && mode === "forgot" && (
+        <ForgotPassword onBack={() => setMode("login")} />
+      )}
+      {API_MODE === "dotnet" && mode === "reset" && (
+        <ResetPassword token={resetToken} onDone={() => setMode("login")} />
+      )}
+      {API_MODE === "dotnet" && (mode === "login" || mode === "register") && (
         <>
           <LocalAuth
             key={mode}
@@ -60,6 +74,15 @@ export function SignIn() {
             onAuthed={signalAuthChanged}
             onSwitchToLogin={() => setMode("login")}
           />
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={() => setMode("forgot")}
+              className="self-start text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+            >
+              Parolamı unuttum
+            </button>
+          )}
           <div className="my-1 flex items-center gap-3 text-[12px] text-zinc-500">
             <span className="h-px flex-1 bg-zinc-200" aria-hidden />
             veya
@@ -68,11 +91,13 @@ export function SignIn() {
         </>
       )}
       {/* One Google button per view: login shows "giriş yap", register shows "kayıt ol". */}
-      <a href={api.googleSignInUrl()} className={`mt-1 ${googleClasses}`}>
-        <GoogleMark />
-        {isRegister ? "Google ile kayıt ol" : "Google ile giriş yap"}
-      </a>
-      {registerEnabled && (
+      {(mode === "login" || mode === "register") && (
+        <a href={api.googleSignInUrl()} className={`mt-1 ${googleClasses}`}>
+          <GoogleMark />
+          {isRegister ? "Google ile kayıt ol" : "Google ile giriş yap"}
+        </a>
+      )}
+      {registerEnabled && (mode === "login" || mode === "register") && (
         <button
           type="button"
           onClick={() => setMode(isRegister ? "login" : "register")}
@@ -82,6 +107,144 @@ export function SignIn() {
         </button>
       )}
     </AuthShell>
+  );
+}
+
+// "Parolamı unuttum": e-posta al, sıfırlama bağlantısını gönder. Yanıt her zaman aynıdır
+// (hesap var/yok sızdırılmaz) — kullanıcıya tek tip bilgi mesajı gösterilir.
+function ForgotPassword({ onBack }: { onBack: () => void }) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.requestPasswordReset(email.trim());
+    } catch {
+      /* tek tip davranış */
+    } finally {
+      setBusy(false);
+      setSent(true);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-3">
+        <p className="m-0 text-[13px] text-emerald-700">
+          Bu e-posta için bir hesap varsa sıfırlama bağlantısı gönderildi. Gelen kutunuzu kontrol edin.
+        </p>
+        <button
+          onClick={onBack}
+          className="self-start text-[13px] font-medium text-emerald-700 underline-offset-2 hover:underline"
+        >
+          ← Girişe dön
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3" aria-labelledby="forgot-heading">
+      <h2 id="forgot-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
+        Parola sıfırlama
+      </h2>
+      <Field
+        label="E-posta"
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="email"
+      />
+      <Button type="submit" disabled={busy || !email.trim()}>
+        {busy ? "Gönderiliyor…" : "Sıfırlama bağlantısı gönder"}
+      </Button>
+      <button
+        type="button"
+        onClick={onBack}
+        className="self-start text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+      >
+        ← Girişe dön
+      </button>
+    </form>
+  );
+}
+
+// E-postadaki bağlantıdan gelen tek kullanımlık token ile yeni parola belirleme.
+function ResetPassword({ token, onDone }: { token: string | null; onDone: () => void }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (password.length < 8) {
+      setError("Parola en az 8 karakter olmalı.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Parolalar eşleşmiyor.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.resetPassword(token ?? "", password);
+      setDone(true);
+    } catch {
+      setError("Bağlantı geçersiz ya da süresi dolmuş. Yeni bir sıfırlama isteyin.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-3">
+        <p className="m-0 text-[13px] text-emerald-700">
+          Parolanız güncellendi. Yeni parolanızla giriş yapabilirsiniz.
+        </p>
+        <button
+          onClick={onDone}
+          className="self-start text-[13px] font-medium text-emerald-700 underline-offset-2 hover:underline"
+        >
+          Girişe dön
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3" aria-labelledby="reset-heading">
+      <h2 id="reset-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
+        Yeni parola belirleyin
+      </h2>
+      <Field
+        label="Yeni parola"
+        type="password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="new-password"
+      />
+      <Field
+        label="Yeni parola (tekrar)"
+        type="password"
+        required
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        autoComplete="new-password"
+        error={error || undefined}
+      />
+      <Button type="submit" disabled={busy || !password || !confirm}>
+        {busy ? "Kaydediliyor…" : "Parolayı güncelle"}
+      </Button>
+    </form>
   );
 }
 

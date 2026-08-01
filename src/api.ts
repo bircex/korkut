@@ -20,6 +20,7 @@ export type Member = {
 export type Invite = {
   id: number;
   email: string | null;
+  full_name: string | null;
   role: "owner" | "lawyer";
   expires_at: string;
   redeemed: boolean;
@@ -373,7 +374,7 @@ export const api = {
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
   invites: () => request<Invite[]>("/api/invites"),
-  createInvite: (input: { email?: string | null; role?: "owner" | "lawyer" }) =>
+  createInvite: (input: { email?: string | null; full_name?: string | null; role?: "owner" | "lawyer" }) =>
     request<NewInvite>("/api/invites", { method: "POST", body: JSON.stringify(input) }),
   revokeInvite: (id: number) =>
     request<{ ok: boolean }>(`/api/invites/${id}`, { method: "DELETE" }),
