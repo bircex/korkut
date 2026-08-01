@@ -18,11 +18,15 @@ RUN dotnet publish src/services/Korkut.Api/Korkut.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled@sha256:70d6f993bf715a031f027832a19cfb7f894df66c8b5eb40be0aaee820ad5d119 AS final
 WORKDIR /app
 COPY --from=build /app ./
+# The legal template catalog (petition/contract skeletons + intake schemas) ships in the
+# image — TemplateCatalog resolves it via KORKUT_TEMPLATES_DIR at startup.
+COPY templates/ /app/templates/
 
 # Bind on 8080 (non-privileged). Runtime config comes from the environment, never
 # baked into the image.
 ENV ASPNETCORE_URLS=http://+:8080 \
-    DOTNET_EnableDiagnostics=0
+    DOTNET_EnableDiagnostics=0 \
+    KORKUT_TEMPLATES_DIR=/app/templates
 EXPOSE 8080
 
 # Runs as the chiseled 'app' user (UID 1654) — never root.

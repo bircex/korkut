@@ -34,8 +34,11 @@ internal sealed class DocumentAppService(
     public async Task<DocumentDataResponse> ForSessionAsync(Guid sessionId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        
-        var data = await uow.InScopeAsync(office, async () =>
+
+        // DUAL scope: the conversation lives on the operational DB, the draft document on the
+        // Agent DB — an agent-only scope leaves the operational connection without its RLS GUC
+        // (22P02 "invalid input syntax for type uuid" at runtime).
+        var data = await uow.InDualScopeAsync(office, async () =>
         {
             var conv = await sessions.GetAsync(office, sessionId, ct);
             

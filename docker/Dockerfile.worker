@@ -10,7 +10,11 @@ RUN dotnet publish src/services/Korkut.Worker/Korkut.Worker.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 COPY --from=build /app ./
-ENV DOTNET_EnableDiagnostics=0
+# The legal template catalog (petition/contract skeletons + intake schemas) ships in the
+# image — TemplateCatalog resolves it via KORKUT_TEMPLATES_DIR at startup.
+COPY templates/ /app/templates/
+ENV DOTNET_EnableDiagnostics=0 \
+    KORKUT_TEMPLATES_DIR=/app/templates
 USER app
 # The Generic Host stops hosted services gracefully on SIGTERM; the outbox loop
 # honours the stopping token (KDM-008).

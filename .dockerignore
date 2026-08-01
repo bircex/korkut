@@ -1,10 +1,10 @@
 # Build context is the repository root; the .NET Dockerfiles live under docker/ and
-# only COPY global.json + Directory.*.props + .editorconfig + src/. Everything else is
+# only COPY global.json + Directory.*.props + .editorconfig + src/ + templates/ (the
+# legal template catalog ships in the api/agent/worker images). Everything else is
 # excluded to keep the context minimal and free of artifacts/secrets.
 .git
 .github
 docs
-templates
 config
 assets
 tests
