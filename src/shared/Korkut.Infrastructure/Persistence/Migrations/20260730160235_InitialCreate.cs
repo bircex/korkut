@@ -1014,7 +1014,12 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                                         CREATE ROLE korkut_resolver NOLOGIN BYPASSRLS;
                                     END IF;
                                 END $$;
-                                GRANT USAGE ON SCHEMA korkut TO korkut_resolver;
+                                -- Cloud SQL: the migrating user is NOT a superuser, so changing function
+                                -- ownership requires (a) membership in the target role and (b) the target
+                                -- role holding CREATE on the schema. Both are no-ops for a real superuser;
+                                -- CREATE is revoked again at the end of this migration.
+                                GRANT korkut_resolver TO CURRENT_USER;
+                                GRANT USAGE, CREATE ON SCHEMA korkut TO korkut_resolver;
                                 GRANT SELECT, UPDATE ON korkut.users TO korkut_resolver;
                                 GRANT SELECT ON korkut.offices TO korkut_resolver;
                 
@@ -1224,6 +1229,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                                 ALTER FUNCTION korkut.provision_office_local(text, text, text, text, timestamptz) OWNER TO korkut_resolver;
                                 REVOKE ALL ON FUNCTION korkut.provision_office_local(text, text, text, text, timestamptz) FROM PUBLIC;
                                 GRANT EXECUTE ON FUNCTION korkut.provision_office_local(text, text, text, text, timestamptz) TO korkut_app;");
+
+            // Least privilege restored: the resolver role only needed CREATE while function
+            // ownership was being transferred above (Cloud SQL, non-superuser migrator).
+            migrationBuilder.Sql("REVOKE CREATE ON SCHEMA korkut FROM korkut_resolver;");
         }
 
         /// <inheritdoc />
