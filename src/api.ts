@@ -43,6 +43,9 @@ export type SourceRef = {
   snippet?: string | null;
 };
 
+// Turun ürettiği/güncellediği taslak belge — chat'teki belge kartı + editörü açma sinyali.
+export type DocumentRef = { doc_id: number; title: string; summary: string | null };
+
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -51,6 +54,9 @@ export type ChatMessage = {
   sources?: SourceRef[] | null;
   // Yalnız canlı turda bilinir (SSE `tool` çerçevelerinden sayılır); geçmişte persist edilmez.
   searches?: number;
+  // Bu turda hazırlanan taslak belge (SSE `document` çerçevesi) — yalnız canlı turda bilinir;
+  // geçmişte belge kartı Belgeler listesinden (conversation_id eşleşmesi) türetilir.
+  document?: DocumentRef | null;
 };
 export type SessionBrief = {
   id: number;
@@ -557,6 +563,7 @@ export const api = {
       open_document: number | null;
       pending_email: number | null;
       sources: SourceRef[] | null;
+      document?: DocumentRef | null;
     }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
   // Streaming twin of sessionChat: activity steps + answer tokens arrive live over SSE. `onStep`
   // and `onToken` fire as events land; `onTool` gets each raw tool name (structured, for UI
@@ -571,6 +578,7 @@ export const api = {
       onToken?: (t: string) => void;
       onTool?: (name: string) => void;
       onSources?: (items: SourceRef[]) => void;
+      onDocument?: (doc: DocumentRef) => void;
     },
   ) => {
     const res = await fetch(`/api/sessions/${id}/chat/stream`, {
@@ -596,6 +604,7 @@ export const api = {
       open_document: number | null;
       pending_email: number | null;
       sources: SourceRef[] | null;
+      document?: DocumentRef | null;
     };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -616,6 +625,7 @@ export const api = {
       else if (event === "token") on.onToken?.(parsed.text as string);
       else if (event === "tool") on.onTool?.(parsed.name as string);
       else if (event === "sources") on.onSources?.(parsed.items as SourceRef[]);
+      else if (event === "document") on.onDocument?.(parsed as DocumentRef);
       else if (event === "done") done = parsed as Done;
       else if (event === "error") errorDetail = parsed.detail as string;
     };
@@ -666,7 +676,9 @@ export const api = {
     request<{ source: string; id: string; content_md: string }>(
       `/api/legal/documents?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`,
     ),
-  documents: () => request<DocBrief[]>("/api/documents"),
+  // AI taslak belgeleri (Belgeler sekmesi) — /api/documents operasyonel evrak kütüphanesidir,
+  // taslak listesi kendi yolundan gelir (gateway path'e göre yönlendirir).
+  documents: () => request<DocBrief[]>("/api/draft-documents"),
   petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),
   getDocument: (sessionId: number) =>
     request<DocumentData>(`/api/sessions/${sessionId}/document`),
