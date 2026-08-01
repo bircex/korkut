@@ -34,6 +34,14 @@ public static class GatewayRoutes
         [
             Agent("agent-sessions", "/api/sessions/{**catch-all}"),
             Agent("agent-legal", "/api/legal/{**catch-all}"),
+            new()
+            {
+                // Platform-admin console API (auth + data) — served by the operational API host.
+                RouteId = "admin-api",
+                ClusterId = ApiCluster,
+                Order = 1,
+                Match = new RouteMatch { Path = "/admin/api/{**catch-all}" },
+            },
             Agent("agent-doc-draft", "/api/documents/{docId}/draft", "POST"),
             Agent("agent-doc-accept", "/api/documents/{docId}/accept", "POST"),
             Agent("agent-doc-revert", "/api/documents/{docId}/revert", "POST"),

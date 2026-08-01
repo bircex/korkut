@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Korkut.Web.Auth;
 using Korkut.Api.Auth;
 using Korkut.Api.Observability;
@@ -47,6 +48,12 @@ builder.Services.AddSingleton(sp => new AccessTokenService(
     builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
 builder.Services.AddSingleton(sp => new AdminAccessTokens(
     builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
+// Platform-admin console: cookie session, admin TOTP store, and the admin Google flow
+// (same client, separate pre-registered redirect URI).
+builder.Services.TryAddSingleton<Korkut.Core.IEnvironment, Korkut.Core.SystemEnvironment>();
+builder.Services.AddSingleton<Korkut.Api.Auth.AdminSession>();
+builder.Services.AddScoped<Korkut.Security.AdminTwoFactorService>();
+builder.Services.AddHttpClient<Korkut.Api.Auth.AdminGoogleFlow>();
 builder.Services.AddKorkutAuthorization();
 
 // Bound request body size to a sane default (tightened per-endpoint for uploads in KDM-026).

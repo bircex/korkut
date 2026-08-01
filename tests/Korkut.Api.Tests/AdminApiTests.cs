@@ -3,12 +3,20 @@ using System.Net;
 using System.Net.Http.Headers;
 using Korkut.Security;
 using Korkut.Core;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Korkut.Api.Tests;
 
-public class AdminApiTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class AdminApiTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    // This class fires well over the default 5-requests/5-min sensitive budget; raise it so the
+    // limiter itself (covered elsewhere) doesn't 429 the auth-boundary assertions.
+    private readonly WebApplicationFactory<Program> factory;
+
+    public AdminApiTests(WebApplicationFactory<Program> fixture)
+        => factory = fixture.WithWebHostBuilder(b => b.UseSetting("KORKUT_SENSITIVE_RATE_LIMIT", "1000"));
+
     private sealed class Clock : IClock
     {
         public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
@@ -113,5 +121,87 @@ public class AdminApiTests(WebApplicationFactory<Program> factory) : IClassFixtu
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", office);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/ping")).StatusCode);
+    }
+
+    // --- Admin console cookie session (/admin/api) — the SPA's server-driven state machine ---
+
+    private static string MintAdmin(string role, string email) =>
+        new AdminAccessTokens(Secret, new Clock())
+            .Mint(new AccessClaims(Guid.CreateVersion7(), Guid.Empty, role, email));
+
+    private HttpClient ClientWithCookie(string name, string value)
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Cookie", $"{name}={value}");
+        return client;
+    }
+
+    [Fact]
+    public async Task Session_is_anon_without_cookies()
+    {
+        var res = await factory.CreateClient().GetStringAsync("/admin/api/session");
+        Assert.Contains("\"state\":\"anon\"", res);
+    }
+
+    [Fact]
+    public async Task Pending_totp_cookie_yields_totp_required()
+    {
+        var pending = MintAdmin("admin_pending_totp", "recepkizilarslan@gmail.com");
+        var res = await ClientWithCookie("korkut_admin_2fa", pending).GetStringAsync("/admin/api/session");
+        Assert.Contains("\"state\":\"totp_required\"", res);
+    }
+
+    [Fact]
+    public async Task Pending_bootstrap_cookie_yields_bootstrap_required()
+    {
+        var pending = MintAdmin("admin_pending_bootstrap", "recepkizilarslan@gmail.com");
+        var res = await ClientWithCookie("korkut_admin_2fa", pending).GetStringAsync("/admin/api/session");
+        Assert.Contains("\"state\":\"bootstrap_required\"", res);
+    }
+
+    [Fact]
+    public async Task Full_session_cookie_yields_authed_and_me_returns_the_email()
+    {
+        var at = MintAdmin("platform_admin", "recepkizilarslan@gmail.com");
+        var client = ClientWithCookie("korkut_admin_at", at);
+        Assert.Contains("\"state\":\"authed\"", await client.GetStringAsync("/admin/api/session"));
+        Assert.Contains("recepkizilarslan@gmail.com", await client.GetStringAsync("/admin/api/me"));
+    }
+
+    [Fact]
+    public async Task Session_cookie_authenticates_the_admin_scheme()
+    {
+        var at = MintAdmin("platform_admin", "recepkizilarslan@gmail.com");
+        var res = await ClientWithCookie("korkut_admin_at", at).GetAsync("/api/admin/ping");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_pending_cookie_grants_no_api_access()
+    {
+        // The half-authenticated pending token is admin-audience but NOT the full role.
+        var pending = MintAdmin("admin_pending_totp", "recepkizilarslan@gmail.com");
+        var res = await ClientWithCookie("korkut_admin_at", pending).GetAsync("/api/admin/ping");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task An_office_cookie_never_authenticates_the_admin_scheme()
+    {
+        var office = new AccessTokenService(Secret, new Clock())
+            .Mint(new AccessClaims(Guid.CreateVersion7(), Guid.CreateVersion7(), "owner", "s1"));
+        var res = await ClientWithCookie("korkut_admin_at", office).GetAsync("/api/admin/ping");
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_clears_the_admin_session()
+    {
+        var at = MintAdmin("platform_admin", "recepkizilarslan@gmail.com");
+        var res = await ClientWithCookie("korkut_admin_at", at).PostAsync("/admin/api/logout", null);
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var cleared = res.Headers.TryGetValues("Set-Cookie", out var cookies)
+            && cookies.Any(c => c.StartsWith("korkut_admin_at=", StringComparison.Ordinal));
+        Assert.True(cleared);
     }
 }
