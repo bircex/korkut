@@ -107,6 +107,18 @@ function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
   );
 }
 
+// Animasyonlu "yazıyor" göstergesi: gerçek bir etkinlik etiketi (araç adımı) ya da ilk token
+// gelene kadar balonda üç nokta oynar — jenerik "hazırlanıyor/üretiliyor" metinleri yok.
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1 py-2" role="status" aria-label="Korkut yazıyor">
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400" />
+      ))}
+    </span>
+  );
+}
+
 // Cevabın üstündeki silik "düşünme" izi (Claude/ChatGPT deseni): araç çağrılarından önce akan ara
 // anlatım burada gösterilir — canlıda açık ve soluk akar, tur bitince tek satıra katlanır,
 // tıklayınca yeniden açılır. Nihai cevap her zaman balondadır; bu blok cevabın parçası değildir.
@@ -611,6 +623,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         };
         res = await api.sessionChatStream(targetId, t, {
           onStep: (label) => {
+            // Eski agent sürümlerinin jenerik faz etiketleri yok sayılır — onların yerinde
+            // animasyonlu üç nokta oynar; yalnız gerçek araç adımları metin olarak görünür.
+            if (label === "Bağlam hazırlanıyor" || label === "Yanıt üretiliyor") return;
             if (showsThisChat()) setActivity(label); // balon boşken ve araçlar dönerken görünür
           },
           onTool: (name) => {
@@ -1073,9 +1088,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       m.content
                     ) : m.content ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                    ) : (
+                    ) : activity ? (
                       // Ara anlatım ize taşındı, cevap henüz akmıyor — balonda o anki adım görünür.
-                      <span className="italic text-zinc-400">{activity ?? "Korkut yazıyor…"}</span>
+                      <span className="italic text-zinc-400">{activity}</span>
+                    ) : (
+                      <TypingDots />
                     )}
                   </div>
                   {/* Belge kartı: bu turda hazırlanan taslak — tıklayınca editör drawer'ı açılır
@@ -1115,7 +1132,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               <div className="flex items-end gap-2">
                 <KorkutAvatar />
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
-                  {activity ? activity : "Korkut yazıyor…"}
+                  {activity ? activity : <TypingDots />}
                 </div>
               </div>
             )}

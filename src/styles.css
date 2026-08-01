@@ -226,3 +226,21 @@ body {
     border-color: #000000;
     box-shadow: none;
   }
+
+/* Yazıyor göstergesi: üç noktanın sırayla soluklaşıp yükseldiği klasik animasyon
+   (prefers-reduced-motion'a saygılı — hareket azaltılınca yalnız opaklık değişir). */
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+.typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  @keyframes typing-dot {
+    0%, 80%, 100% { opacity: 0.3; transform: none; }
+    40% { opacity: 1; transform: none; }
+  }
+}
