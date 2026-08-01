@@ -20,9 +20,10 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
           "type": "object",
           "properties": {
             "source": { "type": "string", "enum": ["yargitay","danistay","emsal","kyb","anayasa","mevzuat","gib","kik","rekabet","sayistay","uyusmazlik","bddk","kvkk","sigorta_tahkim"], "description": "Aranacak hukuki veritabanı" },
-            "query": { "type": "string", "description": "Arama sorgusu" },
+            "query": { "type": "string", "description": "Arama sorgusu. Çok kelimeli sorguda kelimelerden HERHANGİ biri eşleşir (sonuç şişer); tam ifade için tırnak kullan: \"silahlı terör örgütü\". Kısa ve odaklı anahtar kelimeler en iyi sonucu verir" },
             "limit": { "type": "integer", "description": "Sonuç sayısı (varsayılan 10)" },
             "page": { "type": "integer", "description": "Sayfa (varsayılan 1)" },
+            "sort": { "type": "string", "enum": ["relevance", "date"], "description": "Sıralama (yargitay/danistay/emsal/kyb): relevance = alaka (varsayılan, önerilen), date = en yeni karar" },
             "date_start": { "type": "string", "description": "YYYY-MM-DD; karar tarihi (yargitay/danistay/emsal/kyb/kik) veya Resmî Gazete tarihi (mevzuat)" },
             "date_end": { "type": "string", "description": "YYYY-MM-DD" },
             "chamber": { "type": "string", "description": "Daire (yargitay/danistay)" },
@@ -68,7 +69,8 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
 
         try
         {
-            var results = await client.SearchAsync(query.Trim(), arguments, ct);
+            var outcome = await client.SearchPagedAsync(query.Trim(), arguments, ct);
+            var results = outcome.Items;
             // The model reads the JSON text; the SourceRef list rides along for the UI's sources
             // drawer (kind splits legislation from case law — "mevzuat" is the only statute source).
             var kind = source.Equals("mevzuat", StringComparison.OrdinalIgnoreCase) ? "mevzuat" : "ictihat";
@@ -77,7 +79,10 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
                     kind, r.Source, r.Id, r.Title, r.Date, r.CaseNumber, r.DecisionNumber,
                     r.Court, r.Chamber, r.Url, r.Snippet))
                 .ToList();
-            return ToolResult.Ok(ToolArgs.Result(results), sources);
+            // total = the database's full match count (null when the source doesn't report one);
+            // count = the hits actually pulled. The persona's coverage-transparency rule reads these.
+            return ToolResult.Ok(
+                ToolArgs.Result(new { total = outcome.Total, count = results.Count, results }), sources);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
         {

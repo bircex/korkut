@@ -26,6 +26,9 @@ public sealed class BedestenClient(
     public bool SupportsFetch => true;
 
     public async Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default)
+        => (await SearchPagedAsync(query, args, ct)).Items;
+
+    public async Task<SearchOutcome> SearchPagedAsync(string query, JsonElement args, CancellationToken ct = default)
     {
         var limit = Math.Clamp(ToolArgs.Int(args, "limit") ?? 10, 1, 10);
         var page = Math.Max(1, ToolArgs.Int(args, "page") ?? 1);
@@ -36,9 +39,17 @@ public sealed class BedestenClient(
             ["pageNumber"] = page,
             ["itemTypeList"] = itemTypes,
             ["phrase"] = query,
-            ["sortFields"] = new[] { "KARAR_TARIHI" },
-            ["sortDirection"] = "desc",
         };
+
+        // RELEVANCE is the default ordering: multi-word phrases match ANY word, so date ordering
+        // returns the newest (mostly unrelated) hits while the engine's own scoring surfaces the
+        // on-topic ones. Date ordering stays available via sort=date.
+        if (string.Equals(ToolArgs.String(args, "sort"), "date", StringComparison.OrdinalIgnoreCase))
+        {
+            data["sortFields"] = new[] { "KARAR_TARIHI" };
+            data["sortDirection"] = "desc";
+        }
+
         if (supportsChamber && ToolArgs.String(args, "chamber") is { Length: > 0 } chamber)
         {
             data["birimAdi"] = chamber;
@@ -59,8 +70,12 @@ public sealed class BedestenClient(
             !payload.TryGetProperty("emsalKararList", out var list) ||
             list.ValueKind != JsonValueKind.Array)
         {
-            return [];
+            return new SearchOutcome([], Total: null);
         }
+
+        // The database-reported TOTAL match count — surfaced so the assistant can report the real
+        // corpus size ("2.894 karar uydu") instead of guessing from the 10 hits it pulled.
+        long? total = payload.TryGetProperty("total", out var t) && t.TryGetInt64(out var n) ? n : null;
 
         var results = new List<SourceResult>(list.GetArrayLength());
         foreach (var e in list.EnumerateArray())
@@ -81,7 +96,7 @@ public sealed class BedestenClient(
                 Court: court,
                 Url: $"https://mevzuat.adalet.gov.tr/ictihat/{documentId}"));
         }
-        return results;
+        return new SearchOutcome(results, total);
     }
 
     public async Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default)

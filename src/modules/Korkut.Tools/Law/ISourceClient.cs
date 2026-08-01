@@ -22,6 +22,17 @@ public interface ISourceClient
 
     Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default);
 
+    /// <summary>
+    /// Search plus the database's TOTAL match count when the source reports one — what lets the
+    /// assistant say "bu sorguya 2.894 karar uydu; en ilgili 10'unu inceledim" honestly. Default
+    /// wraps <see cref="SearchAsync"/> with an unknown total; sources that get a count override it.
+    /// </summary>
+    async Task<SearchOutcome> SearchPagedAsync(string query, JsonElement args, CancellationToken ct = default)
+        => new(await SearchAsync(query, args, ct), Total: null);
+
     /// <summary>Full document text (Markdown) for an id from this source; null if unsupported/not found.</summary>
     Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default);
 }
+
+/// <summary>A page of search hits plus the database-reported total match count (null = unknown).</summary>
+public sealed record SearchOutcome(IReadOnlyList<SourceResult> Items, long? Total);

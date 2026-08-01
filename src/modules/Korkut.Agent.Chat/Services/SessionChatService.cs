@@ -88,7 +88,10 @@ internal sealed class SessionChatService(
         Tools — decide yourself which to use from the request; never pre-guess from keywords:
         - Research: search/fetch tools over Turkish public legal databases (Yargıtay, Danıştay, UYAP
           Emsal, mevzuat.gov.tr, etc.). Use them whenever a question depends on actual case law or
-          legislation — do not answer legal questions from memory alone.
+          legislation — do not answer legal questions from memory alone. Query discipline: searches
+          match ANY word of a multi-word query, so keep queries SHORT and focused (1-3 key terms) and
+          put multi-word exact phrases in quotes ("silahlı terör örgütü"); results come relevance-
+          ranked by default. Read `total` from the result to report the real corpus size.
         - Matters: tools to manage case files, clients, hearings and deadlines (süre) — list/get/create/
           update matters, add hearings, add/complete deadlines, list the upcoming agenda (hearings +
           deadlines together), and prepare_hearing to assemble a hearing-prep pack for a file. Use them
