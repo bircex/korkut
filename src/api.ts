@@ -376,6 +376,17 @@ export const api = {
   invites: () => request<Invite[]>("/api/invites"),
   createInvite: (input: { email?: string | null; full_name?: string | null; role?: "owner" | "lawyer" }) =>
     request<NewInvite>("/api/invites", { method: "POST", body: JSON.stringify(input) }),
+  // Davet linkine tıklayan kişinin katılım ekranı: token tüketilmeden davet bilgisi.
+  peekInvite: (token: string) =>
+    request<{ office_name: string; email: string; full_name: string | null; role: string }>(
+      `/api/invites/peek?token=${encodeURIComponent(token)}`,
+    ),
+  // Parola belirleyerek katılım: hesap açılır, davet tüketilir, oturum çerezleri set edilir.
+  acceptInviteLocal: (token: string, password: string, fullName?: string | null) =>
+    request<{ ok: boolean; email: string }>("/api/invites/accept-local", {
+      method: "POST",
+      body: JSON.stringify({ token, password, full_name: fullName ?? null }),
+    }),
   revokeInvite: (id: number) =>
     request<{ ok: boolean }>(`/api/invites/${id}`, { method: "DELETE" }),
   updateMe: (patch: { full_name?: string; bar_registry_no?: string | null }) =>

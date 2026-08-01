@@ -13,7 +13,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   pending: "Büronuz henüz onaylanmadı. Onaylandığında giriş yapabilirsiniz.",
 };
 
-type Mode = "login" | "register" | "forgot" | "reset";
+type Mode = "login" | "register" | "forgot" | "reset" | "invite";
 
 export function SignIn() {
   // Read the callback's ?error once at mount (a lazy initializer avoids a cascading render).
@@ -24,13 +24,19 @@ export function SignIn() {
   });
   // Registration (self-serve signup) is enabled by the same flag that used to gate the demo.
   const [registerEnabled, setRegisterEnabled] = useState(false);
-  // E-postadaki sıfırlama bağlantısı /giris?reset=TOKEN ile gelir → doğrudan reset formu açılır.
+  // E-postadaki sıfırlama bağlantısı /giris?reset=TOKEN, davet bağlantısı /?invite=TOKEN ile
+  // gelir → doğrudan ilgili ekran açılır.
   const [resetToken] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get("reset"),
   );
-  const [mode, setMode] = useState<Mode>(() =>
-    new URLSearchParams(window.location.search).get("reset") ? "reset" : "login",
+  const [inviteToken] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("invite"),
   );
+  const [mode, setMode] = useState<Mode>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("invite")) return "invite";
+    return params.get("reset") ? "reset" : "login";
+  });
 
   useEffect(() => {
     // Drop the ?error / ?reset params so a refresh is clean (side effect only — no setState).
@@ -60,6 +66,9 @@ export function SignIn() {
       )}
       {/* .NET auth contract: local e-posta/parola + policy-driven TOTP. Behind the
           migration flag so Python mode stays Google-only (behaviour parity). */}
+      {API_MODE === "dotnet" && mode === "invite" && (
+        <InviteJoin token={inviteToken} onAuthed={signalAuthChanged} />
+      )}
       {API_MODE === "dotnet" && mode === "forgot" && (
         <ForgotPassword onBack={() => setMode("login")} />
       )}
@@ -243,6 +252,108 @@ function ResetPassword({ token, onDone }: { token: string | null; onDone: () => 
       />
       <Button type="submit" disabled={busy || !password || !confirm}>
         {busy ? "Kaydediliyor…" : "Parolayı güncelle"}
+      </Button>
+    </form>
+  );
+}
+
+// Davet linkinden katılım: davet bilgisi gösterilir (hangi büro, hangi e-posta), kişi kendi
+// parolasını belirler ve doğrudan o büronun üyesi olarak oturum açılır. Bu ekranda "yeni büro
+// kaydı" YOKTUR — davetli, davet edenin bürosuna katılır.
+function InviteJoin({ token, onAuthed }: { token: string | null; onAuthed: () => void }) {
+  const [info, setInfo] = useState<{ office_name: string; email: string; full_name: string | null } | null>(null);
+  const [invalid, setInvalid] = useState(() => !token);
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+    api
+      .peekInvite(token)
+      .then((r) => {
+        setInfo(r);
+        setFullName(r.full_name ?? "");
+      })
+      .catch(() => setInvalid(true));
+  }, [token]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (password.length < 10) {
+      setError("Parola en az 10 karakter olmalı.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Parolalar eşleşmiyor.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.acceptInviteLocal(token ?? "", password, fullName.trim() || null);
+      window.history.replaceState(null, "", "/");
+      onAuthed(); // çerezler set edildi → oturum yeniden yoklanır, uygulama açılır
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Davet kabul edilemedi.");
+      setBusy(false);
+    }
+  }
+
+  if (invalid) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-3">
+        <p className="m-0 text-[13px] text-red-700">
+          Davet geçersiz, süresi dolmuş ya da kullanılmış. Büro yöneticinizden yeni bir davet isteyin.
+        </p>
+      </div>
+    );
+  }
+
+  if (!info) {
+    return <p className="text-[13px] text-zinc-500">Davet doğrulanıyor…</p>;
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3" aria-labelledby="invite-heading">
+      <h2 id="invite-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
+        "{info.office_name}" bürosuna katılıyorsunuz
+      </h2>
+      <p className="m-0 text-[13px] text-zinc-500">
+        Hesabınız <span className="font-medium text-zinc-700">{info.email}</span> adresiyle açılacak.
+        Parolanızı belirleyin ve devam edin.
+      </p>
+      <Field
+        label="Ad Soyad"
+        required
+        value={fullName}
+        onChange={(e) => setFullName(e.target.value)}
+        autoComplete="name"
+      />
+      <Field
+        label="Parola"
+        type="password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="new-password"
+        hint="En az 10 karakter"
+      />
+      <Field
+        label="Parola (tekrar)"
+        type="password"
+        required
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        autoComplete="new-password"
+        error={error || undefined}
+      />
+      <Button type="submit" disabled={busy || !fullName.trim() || !password || !confirm}>
+        {busy ? "Katılıyor…" : "Parolayı belirle ve katıl"}
       </Button>
     </form>
   );
