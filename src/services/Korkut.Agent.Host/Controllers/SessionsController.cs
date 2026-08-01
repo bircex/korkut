@@ -99,7 +99,8 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
         try
         {
             // Frame order: step/tool/token live during the turn, then one `sources` frame (the
-            // structured drawer data, when any legal search ran), then the terminal `done`.
+            // structured drawer data, when any legal search ran) and one `document` frame (the
+            // draft the turn staged, when any), then the terminal `done`.
             var outcome = await chat.StreamAsync(id, body.Text!,
                 label => Frame("step", new { label }), token => Frame("token", new { text = token }),
                 name => Frame("tool", new { name }), ct);
@@ -112,6 +113,11 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
                 if (outcome.Sources is { Count: > 0 })
                 {
                     await Frame("sources", new { items = outcome.Sources });
+                }
+
+                if (outcome.Document is { } doc)
+                {
+                    await Frame("document", doc);
                 }
 
                 await Frame("done", outcome);

@@ -45,11 +45,12 @@ public sealed record ChatUsage(string Provider, string ModelId, int PromptTokens
 /// A completed chat reply plus its usage. When the model chose to call tools instead of (or before)
 /// answering, <see cref="ToolCalls"/> is non-empty and the loop runs them before asking again.
 /// <see cref="Sources"/> carries the legal sources the loop's tool calls surfaced (raw, in call
-/// order; the chat service dedupes/caps before persisting or emitting them).
+/// order; the chat service dedupes/caps before persisting or emitting them). <see cref="Document"/>
+/// is the draft document a tool call produced this turn (the UI's editor-open signal), when any.
 /// </summary>
 public sealed record ChatReply(
     string Text, ChatUsage Usage, IReadOnlyList<ToolInvocation>? ToolCalls = null,
-    IReadOnlyList<Chat.SourceRef>? Sources = null);
+    IReadOnlyList<Chat.SourceRef>? Sources = null, Chat.DocumentRef? Document = null);
 
 /// <summary>
 /// One streamed event: a text <see cref="Delta"/> (mid-stream), the tool calls the model wants run

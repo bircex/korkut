@@ -2,6 +2,7 @@ using Korkut.Agent.Chat.Services;
 using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent.Chat;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Korkut.Agent.Chat.Extensions;
 
@@ -14,6 +15,7 @@ public static class AgentChatSetup
 {
     public static IServiceCollection AddKorkutAgentChat(this IServiceCollection services)
     {
+        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ISessionChatService, SessionChatService>();
         services.AddScoped<ISessionAppService, SessionAppService>();
