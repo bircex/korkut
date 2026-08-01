@@ -201,10 +201,8 @@ internal sealed class SessionChatService(
         Func<string, Task>? onStep = null, Func<string, Task>? onToken = null,
         Func<string, Task>? onTool = null, CancellationToken ct = default)
     {
-        if (onStep is not null)
-        {
-            await onStep("Bağlam hazırlanıyor");
-        }
+        // No generic phase labels here — the UI shows an animated typing indicator until a real
+        // activity label (a tool step from the loop) or the first token arrives.
 
         // Phase 1 — short dual scope: validate, persist the user turn, snapshot system prompt + history.
         var prep = await PrepareTurnAsync(officeId, userId, conversationId, userContent, ct);
@@ -215,11 +213,6 @@ internal sealed class SessionChatService(
 
         // Phase 2 — NO transaction: grounding (HTTP) + the model/tool loop. Tools self-scope per call.
         var system = await WithGroundingAsync(prep.System, titleSeed, ct);
-        if (onStep is not null)
-        {
-            await onStep("Yanıt üretiliyor");
-        }
-
         await using var governed = await governorService.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await toolLoopService.RunAsync(
