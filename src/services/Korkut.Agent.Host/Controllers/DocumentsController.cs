@@ -15,8 +15,10 @@ namespace Korkut.Agent.Host.Controllers;
 [Route("api/documents")]
 public sealed class DocumentsController(IDocumentAppService docs) : ControllerBase
 {
-    /// <summary>Every drafted document in the office (the SPA's document list). Bare array.</summary>
-    [HttpGet]
+    /// <summary>Every drafted document in the office (the SPA's Belgeler list). Bare array.
+    /// Own path (NOT /api/documents): that one is the operational evrak library on the Api host —
+    /// the gateway routes by path, so the two must not share the list URL.</summary>
+    [HttpGet("/api/draft-documents")]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List(CancellationToken ct)
         => Ok(await docs.ListAsync(ct));

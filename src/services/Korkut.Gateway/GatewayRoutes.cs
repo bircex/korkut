@@ -42,6 +42,7 @@ public static class GatewayRoutes
                 Order = 1,
                 Match = new RouteMatch { Path = "/admin/api/{**catch-all}" },
             },
+            Agent("agent-doc-list", "/api/draft-documents", "GET"),
             Agent("agent-doc-draft", "/api/documents/{docId}/draft", "POST"),
             Agent("agent-doc-accept", "/api/documents/{docId}/accept", "POST"),
             Agent("agent-doc-revert", "/api/documents/{docId}/revert", "POST"),
