@@ -121,6 +121,8 @@ const jsonLd = {
 
     <link rel="sitemap" href={`${base}sitemap-index.xml`} />
 
+    <slot name="head" />
+
     <script
       type="application/ld+json"
       set:html={JSON.stringify(jsonLd)}

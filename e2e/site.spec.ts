@@ -5,7 +5,9 @@ import AxeBuilder from "@axe-core/playwright";
 // no external assets load, layout reflows at 320px/200% zoom, and axe finds no
 // critical/serious violations.
 
-const PAGES = ["/", "/demo"];
+// /demo artık uygulamanın kayıt sayfasına anlık meta-refresh ile yönlenir; sayfa-düzeyi
+// denetimler gerçek sayfalara uygulanır, /demo ayrı bir yönlendirme testiyle doğrulanır.
+const PAGES = ["/"];
 
 async function assertNoSeriousA11y(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
@@ -59,6 +61,17 @@ for (const path of PAGES) {
     });
   });
 }
+
+test.describe("redirects", () => {
+  test("/demo forwards old links to the app register page", async ({ page }) => {
+    // Navigasyonsuz doğrula (anlık meta refresh sayfayı hemen terk eder).
+    const res = await page.request.get("/demo");
+    expect(res.status()).toBeLessThan(400);
+    const html = await res.text();
+    expect(html).toContain('http-equiv="refresh"');
+    expect(html).toContain("https://app.korkutai.com/kayit");
+  });
+});
 
 test.describe("routes & links", () => {
   test("every internal link resolves (no broken routes)", async ({ page, baseURL }) => {

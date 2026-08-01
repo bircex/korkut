@@ -1,5 +1,5 @@
 ---
-import { NAV_LINKS, DEMO_PATH, APP_URL } from "../consts";
+import { NAV_LINKS, REGISTER_URL, APP_URL } from "../consts";
 const base = import.meta.env.BASE_URL;
 // base "/" ile bittiğinden anchor'lar (#...) "/#..." olarak çözülür ve alt
 // sayfalardan da ana sayfaya döner; sayfa yolları da base ile önlenir.
@@ -27,7 +27,7 @@ const resolve = (href: string) => `${base}${href}`;
       <a class="ghost-link" href={APP_URL} aria-label="Giriş yap">
         <span>Giriş yap</span>
       </a>
-      <a href={`${base}${DEMO_PATH}`} class="btn btn-primary">Demo iste</a>
+      <a href={REGISTER_URL} class="btn btn-primary">Ücretsiz Başla</a>
     </div>
   </div>
 </header>

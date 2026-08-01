@@ -1,5 +1,5 @@
 ---
-import { DEMO_PATH, APP_URL } from "../consts";
+import { REGISTER_URL, APP_URL } from "../consts";
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -8,12 +8,11 @@ const base = import.meta.env.BASE_URL;
     <div class="cta">
       <h2>Büronuza Korkut'u getirin</h2>
       <p>
-        Bulutta dakikalar içinde başlayın. Büronuz için bir demo ayarlayalım;
-        ardından davet bağlantısıyla Google girişi yaparak hemen kullanmaya
-        başlayın.
+        Bulutta dakikalar içinde başlayın. Büronuzu ücretsiz kaydedin;
+        onaydan sonra Google ile giriş yaparak hemen kullanmaya başlayın.
       </p>
       <div class="cta-row">
-        <a href={`${base}${DEMO_PATH}`} class="btn btn-primary btn-lg">Demo iste</a>
+        <a href={REGISTER_URL} class="btn btn-primary btn-lg">Ücretsiz Başla</a>
         <a href={APP_URL} class="btn btn-ghost btn-lg">Giriş yap</a>
       </div>
     </div>

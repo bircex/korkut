@@ -18,14 +18,13 @@ export const SITE = {
 // Uygulama girişi (bulut): Google ile giriş app subdomain'inde yapılır.
 export const APP_URL = "https://app.korkutai.com";
 
-// İletişim: büro erişimi demo talebi veya iletişim ile açılır.
+// İletişim.
 export const CONTACT_EMAIL = "iletisim@korkutai.com";
 
-// Demo talep formu (ayrı sayfa) ve e-posta yedeği.
+// Ücretsiz Başla: kayıt doğrudan uygulamanın kayıt sayfasında yapılır. Eski /demo
+// bağlantıları da oraya yönlenir (pages/demo.astro).
+export const REGISTER_URL = `${APP_URL}/kayit`;
 export const DEMO_PATH = "demo";
-export const DEMO_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-  "Korkut demo talebi",
-)}`;
 
 // Sıkça sorulan sorular: hem FAQ bölümü hem de FAQPage yapılandırılmış verisi.
 export const FAQS = [
@@ -35,7 +34,7 @@ export const FAQS = [
   },
   {
     q: "Nasıl başlıyorum, kuruluma gerek var mı?",
-    a: "Bulutta teknik kurulum yoktur: demo sonrası büronuza bir davet bağlantısı iletilir, Google ile giriş yaparak dakikalar içinde başlarsınız. Bakım ve güncellemeler bize aittir.",
+    a: "Bulutta teknik kurulum yoktur: Ücretsiz Başla ile büronuzu kaydedersiniz, onaydan sonra Google ile giriş yaparak dakikalar içinde başlarsınız. Bakım ve güncellemeler bize aittir.",
   },
   {
     q: "Korkut hangi yapay zeka modellerini kullanıyor?",
