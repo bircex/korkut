@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, ApiError, type SourceRef } from "../api";
 import { ArrowLeft, ArrowSquareOut, BookOpenText, Scales } from "../icons";
+import { formatLegalText } from "./legalFormat";
 import { RightDrawer } from "./RightDrawer";
 
 // "İlgili Kararlar" drawer'ı (bkz. docs/DRAWER_ROADMAP.md): bir asistan mesajının dayandığı
@@ -80,7 +81,8 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
     api
       .legalDocument(source.source, source.id)
       .then((d) => {
-        if (!stale) setDoc({ state: "ready", md: d.content_md });
+        // Sunucu düz metne yakın içerik döndürür; sunum formatlaması burada (bkz. legalFormat.ts).
+        if (!stale) setDoc({ state: "ready", md: formatLegalText(d.content_md) });
       })
       .catch((err) => {
         if (!stale) {
