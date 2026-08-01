@@ -1,4 +1,5 @@
 using Korkut.Agent.Brain.Abstractions;
+using Korkut.Core;
 using Korkut.Tools.Core;
 using Korkut.Contract.Agent.Model;
 using System.Text;
@@ -13,9 +14,19 @@ namespace Korkut.Agent.Brain.Services;
 /// to call; adding a tool never changes this loop. Implements <see cref="IAgentToolLoopService"/> so
 /// lower layers (the chat service) can drive a tool-augmented turn without depending on the tools.
 /// </summary>
-internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog catalog) : IAgentToolLoopService
+internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog catalog, RuntimeConfig? config = null) : IAgentToolLoopService
 {
-    private const int MaxIterations = 8;
+    // The runaway brake (KORKUT_MAX_TOOL_TURNS): generous enough that genuine research never hits
+    // it; a model stuck repeating the same search does, before it drains the office token budget.
+    private int MaxIterations => config?.MaxToolTurns ?? 32;
+
+    // Appended when the brake trips, so the forced tool-less turn produces a real ANSWER instead
+    // of more research narration ("…bakayım").
+    private const string FinishInstruction =
+        "(Sistem notu: bu istek için araç kullanımı sona erdi; başka araç çağrısı yapılamaz. "
+        + "Yukarıda topladığın bilgilerle sorunun NİHAİ cevabını şimdi ver. Yeni araştırma adımı "
+        + "anlatma ve önerme; araçlardan, arama fonksiyonlarından veya sistem kısıtlarından asla "
+        + "bahsetme. Doğrulayabildiğin kaynaklara atıf yap; doğrulayamadığını açıkça söyle.)";
 
     public async Task<ChatReply> RunAsync(
         string system, IReadOnlyList<ChatMessage> messages, AgentToolContext context,
@@ -83,6 +94,7 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         }
 
         // Iteration cap reached — ask once more (streamed) WITHOUT tools to force a final answer.
+        turn.Add(new ChatMessage("user", FinishInstruction));
         var (finalText, _, finalUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools: null, onToken, ct);
         (prompt, completion, provider, modelId) = Accumulate(prompt, completion, finalUsage);
         return new ChatReply(

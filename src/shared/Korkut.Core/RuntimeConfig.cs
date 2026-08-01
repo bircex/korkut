@@ -35,6 +35,13 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public int ReplyHeadroom => ParseInt(env.Get("KORKUT_REPLY_HEADROOM"), 1024);
 
+    /// <summary>
+    /// Safety ceiling on model turns per chat request in the tool loop — the runaway brake, not a
+    /// depth budget (one turn may carry several tool calls). High enough that real research never
+    /// hits it; a looping model does, before it burns the office's token budget.
+    /// </summary>
+    public int MaxToolTurns => ParseInt(env.Get("KORKUT_MAX_TOOL_TURNS"), 32);
+
     // --- Embeddings (Knowledge/RAG). Prefer a fully-local endpoint (Ollama / HF-TEI) so office
     //     data never leaves the cluster (docs/SOURCES.md); a hosted key is optional. The base URL's
     //     presence is what enables the real embedder — no URL → embeddings stay disabled. ---
