@@ -19,8 +19,9 @@ namespace Korkut.Agent.Chat.Services;
 /// Orchestrates one assistant chat turn within the caller's tenant scope: persists the
 /// user message, builds a system prompt from the office persona + the user's effective
 /// drafting style + active office memory, sends the conversation to the LLM, persists the
-/// reply, and auto-titles a fresh conversation from its first message. Document drafting
-/// and outbox hints (open_document / pending_email) are wired in later brain slices.
+/// reply, and auto-titles a fresh conversation from its first message. When the model drafts a
+/// document (the draft_document tool), the staged draft rides the outcome as its DocumentRef —
+/// the UI's editor-open signal. Outbox hints (pending_email) are wired in later brain slices.
 /// </summary>
 internal sealed class SessionChatService(
     ISessionService sessions,
@@ -33,7 +34,8 @@ internal sealed class SessionChatService(
     IKnowledgeSearchService knowledge,
     ILlmCallLogService callLogService,
     IUsageGovernorService governorService,
-    IAgentToolLoopService toolLoopService) : ISessionChatService
+    IAgentToolLoopService toolLoopService,
+    TimeProvider clock) : ISessionChatService
 {
     private const int MaxExtractedChars = 20_000;
 
@@ -89,6 +91,14 @@ internal sealed class SessionChatService(
           duruşmalar/süreler" (e.g. "Ahmet için dosya aç", "X dosyasına cevap süresi ekle", "bu hafta ne
           var", "şu dosyada duruşmaya hazırlan"). A plain question ("boşanma davası nasıl açılır?") is NOT
           a request to open a file — just answer it; only act when the lawyer asks you to.
+        - Drafting: the draft_document tool writes a petition/contract draft into the DOCUMENT EDITOR
+          next to the chat and stages it for the lawyer's approval. When the lawyer asks you to
+          prepare or revise a document ("dilekçe hazırla", "sözleşme taslağı yaz", "şu maddeyi
+          ekle"), first make sure the essentials are known (parties, subject, claims, key dates/
+          amounts) — ask briefly if they are missing — then call draft_document with a DETAILED
+          instruction carrying everything gathered in the conversation. NEVER paste the document
+          text into the chat: after the tool runs, tell the lawyer in one or two sentences that the
+          draft is ready in the editor for review and what it covers.
 
         Citation discipline (critical): before you present a decision or a statute article as a
         citation, verify it actually exists by fetching it with the fetch tools. Never invent case
@@ -208,7 +218,7 @@ internal sealed class SessionChatService(
         await using var governed = await governorService.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await toolLoopService.RunAsync(
-            system, prep.Messages, new AgentToolContext(officeId, userId, permissions),
+            system, prep.Messages, new AgentToolContext(officeId, userId, permissions, conversationId),
             ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, onTool, ct);
         timer.Stop();
 
@@ -216,7 +226,8 @@ internal sealed class SessionChatService(
         var sources = MessageSources.Normalize(reply.Sources);
         var title = await PersistReplyAsync(officeId, conversationId, prep.Title, titleSeed, reply.Text, sources, ct);
         await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
-        return new ChatOutcome(reply.Text, title, OpenDocument: null, PendingEmail: null, sources);
+        return new ChatOutcome(
+            reply.Text, title, OpenDocument: reply.Document?.DocId, PendingEmail: null, sources, reply.Document);
     }
 
     // Phase 1: reads office data (persona/style/memory) + writes the user turn — all on the operational
@@ -307,6 +318,8 @@ internal sealed class SessionChatService(
     {
         var sb = new StringBuilder();
         sb.AppendLine(CorePersona);
+        sb.AppendLine();
+        sb.AppendLine(TurkeyTodayLine(clock.GetUtcNow()));
 
         // Office tuning is appended after the locked core; the security/citation/approval rules and
         // the Turkish-reply rule always stand (the office adds, never overrides).
@@ -347,6 +360,24 @@ internal sealed class SessionChatService(
     /// <summary>A style layer that was never set reads as empty, so the overlay always has a baseline.</summary>
     private async Task<StyleFields> StyleAsync(Guid officeId, string scope, Guid userId, CancellationToken ct)
         => (await styles.FindAsync(officeId, scope, userId, ct))?.Fields ?? StyleFields.Empty;
+
+    // Turkey is permanently UTC+3 (no DST since 2016), so a fixed offset avoids depending on
+    // tzdata inside the hardened containers; the hand-rolled Turkish names are needed because
+    // the build runs with InvariantGlobalization, where the tr-TR culture is unavailable.
+    private static readonly string[] TurkishMonths =
+        ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+         "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+    private static readonly string[] TurkishDays =
+        ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+
+    internal static string TurkeyTodayLine(DateTimeOffset utcNow)
+    {
+        var tr = utcNow.ToOffset(TimeSpan.FromHours(3));
+        return $"Bugünün tarihi: {tr.Day} {TurkishMonths[tr.Month - 1]} {tr.Year} "
+            + $"{TurkishDays[(int)tr.DayOfWeek]}, saat {tr:HH\\:mm} (Türkiye saati, UTC+3). "
+            + "Süre, zamanaşımı ve takvim hesaplarında bu tarihi esas al.";
+    }
 
     private static void AppendIf(StringBuilder sb, string label, string? value)
     {

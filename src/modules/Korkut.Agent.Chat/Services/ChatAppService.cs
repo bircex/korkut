@@ -43,5 +43,6 @@ internal sealed class ChatAppService(ICurrentUser current, ISessionChatService c
         return outcome is null ? null : Map(outcome);
     }
 
-    private static ChatResponse Map(ChatOutcome o) => new(o.Reply, o.Title, o.OpenDocument, o.PendingEmail, o.Sources);
+    private static ChatResponse Map(ChatOutcome o)
+        => new(o.Reply, o.Title, o.OpenDocument, o.PendingEmail, o.Sources, o.Document);
 }

@@ -34,6 +34,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         var modelId = string.Empty;
         // Legal sources surfaced by tool results, in call order; dedup/caps are the chat service's job.
         List<Korkut.Contract.Agent.Chat.SourceRef>? sources = null;
+        // The draft document a tool call produced (draft_document); the last one wins.
+        Korkut.Contract.Agent.Chat.DocumentRef? document = null;
 
         for (var i = 0; i < MaxIterations; i++)
         {
@@ -44,7 +46,7 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
 
             if (toolCalls is not { Count: > 0 } calls)
             {
-                return new ChatReply(text, new ChatUsage(provider, modelId, prompt, completion), Sources: sources);
+                return new ChatReply(text, new ChatUsage(provider, modelId, prompt, completion), Sources: sources, Document: document);
             }
 
             // Record the assistant's tool-call turn, then run each call and feed the results back.
@@ -68,6 +70,11 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
                 {
                     (sources ??= []).AddRange(result.Sources);
                 }
+
+                if (result.Document is { } doc)
+                {
+                    document = doc;
+                }
             }
 
             turn.Add(new ChatMessage("tool", string.Empty, ToolResults: outputs));
@@ -76,7 +83,7 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         // Iteration cap reached — ask once more (streamed) WITHOUT tools to force a final answer.
         var (finalText, _, finalUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools: null, onToken, ct);
         (prompt, completion, provider, modelId) = Accumulate(prompt, completion, finalUsage);
-        return new ChatReply(finalText, new ChatUsage(provider, modelId, prompt, completion), Sources: sources);
+        return new ChatReply(finalText, new ChatUsage(provider, modelId, prompt, completion), Sources: sources, Document: document);
     }
 
     // Drive one streamed model turn: append text deltas (live via onToken), collect any tool calls,
