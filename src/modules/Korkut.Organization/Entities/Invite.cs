@@ -12,11 +12,12 @@ public sealed class Invite : Entity, ITenantOwned, IAggregateRoot
 {
     public Invite(
         Guid officeId, string email, string role, string tokenHash,
-        DateTimeOffset expiresAt, Guid? createdBy, DateTimeOffset createdAt)
+        DateTimeOffset expiresAt, Guid? createdBy, DateTimeOffset createdAt, string? fullName = null)
         : base(NewId())
     {
         OfficeId = officeId;
         Email = email;
+        FullName = fullName;
         Role = role;
         TokenHash = tokenHash;
         ExpiresAt = expiresAt;
@@ -32,6 +33,9 @@ public sealed class Invite : Entity, ITenantOwned, IAggregateRoot
     public Guid OfficeId { get; private set; }
 
     public string Email { get; private set; } = string.Empty;
+
+    /// <summary>Davet edilenin adı-soyadı: kabulde kullanıcı bu adla açılır, listede bu ad görünür.</summary>
+    public string? FullName { get; private set; }
 
     /// <summary>"owner" | "lawyer".</summary>
     public string Role { get; private set; } = "lawyer";

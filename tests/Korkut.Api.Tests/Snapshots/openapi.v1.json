@@ -321,6 +321,14 @@
               "string"
             ]
           },
+          "full_name": {
+            "maxLength": "200",
+            "minLength": "0",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "role": {
             "pattern": "owner|lawyer",
             "type": [

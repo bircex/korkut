@@ -23,6 +23,8 @@ public sealed class AuthService(
     IPasswordHasher passwordHasher,
     ITokenHasher tokenHasher,
     ISecurityNotifier notifier,
+    Korkut.Contract.Notifications.IEmailSender emailSender,
+    Korkut.Contract.Notifications.MailLinks mailLinks,
     IUnitOfWork unitOfWork,
     IClock clock) : IAuthService
 {
@@ -74,6 +76,7 @@ public sealed class AuthService(
             return; // silently no-op: no enumeration signal
         }
 
+        string? rawToken = null;
         await unitOfWork.InTenantScopeAsync(office.Value, async () =>
         {
             var user = await users.FindByEmailAsync(office.Value, email, ct);
@@ -83,12 +86,33 @@ public sealed class AuthService(
             }
 
             var now = clock.UtcNow;
-            var rawToken = tokenHasher.NewRawToken();
+            rawToken = tokenHasher.NewRawToken();
             await tokens.AddAsync(
                 new PasswordResetToken(office.Value, user.Id, tokenHasher.Hash(rawToken), now + ResetTokenLifetime, now), ct);
-            // The raw token is delivered out of band (e-mail); it is never logged or audited.
             return true;
         }, ct);
+
+        // The raw token is delivered ONLY by e-mail (never logged/audited); best-effort so a
+        // mail outage cannot become an enumeration signal — the endpoint answers 200 regardless.
+        if (rawToken is not null)
+        {
+            try
+            {
+                await emailSender.SendAsync(email, "Korkut parola sıfırlama",
+                    Korkut.Contract.Notifications.EmailTemplates.Render(
+                        "Parolanızı sıfırlayın",
+                        [
+                            "Merhaba,",
+                            "Korkut hesabınız için bir parola sıfırlama isteği aldık. Yeni parolanızı belirlemek için aşağıdaki düğmeye tıklayın.",
+                            "Bağlantı 1 saat geçerlidir ve tek kullanımlıktır.",
+                        ],
+                        ("Parolayı sıfırla", mailLinks.ResetLink(rawToken))), ct);
+            }
+            catch (Exception)
+            {
+                // Yut: davranış tek tip kalmalı (enumeration-safe 200).
+            }
+        }
     }
 
     public async Task<ResetOutcome> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)

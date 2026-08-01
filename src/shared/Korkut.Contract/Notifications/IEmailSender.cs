@@ -17,9 +17,14 @@ public interface IEmailSender
 public sealed record MailLinks(string AppBaseUrl)
 {
     /// <summary>Absolute link to accept an invite, or the relative path when the base URL is unset.</summary>
-    public string InviteLink(string rawToken)
-    {
-        var path = $"/?invite={rawToken}";
-        return string.IsNullOrWhiteSpace(AppBaseUrl) ? path : $"{AppBaseUrl.TrimEnd('/')}{path}";
-    }
+    public string InviteLink(string rawToken) => Absolute($"/?invite={rawToken}");
+
+    /// <summary>Absolute link to the password-reset screen carrying the one-time token.</summary>
+    public string ResetLink(string rawToken) => Absolute($"/giris?reset={rawToken}");
+
+    /// <summary>Absolute link to the sign-in screen (post-approval welcome mail).</summary>
+    public string LoginLink() => Absolute("/giris");
+
+    private string Absolute(string path)
+        => string.IsNullOrWhiteSpace(AppBaseUrl) ? path : $"{AppBaseUrl.TrimEnd('/')}{path}";
 }

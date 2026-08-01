@@ -37,38 +37,42 @@ public sealed partial class InviteService(
     public async Task<Result<InviteCreatedResponse>> CreateAsync(CreateInviteRequest request, CancellationToken ct = default)
     {
         var email = request.Email!.Trim().ToLowerInvariant();
+        var fullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
         var rawToken = tokenHasher.NewRawToken();
         var result = await InScopeAsync(currentUser.OfficeId, async office =>
         {
             var now = clock.UtcNow;
             var invite = new Invite(
                 office, email, request.Role ?? Roles.Lawyer,
-                tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now);
+                tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now, fullName);
             await repository.AddAsync(invite, ct);
             return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(
-                invite.Id, invite.Email, invite.Role, Redeemed: false, rawToken, mailLinks.InviteLink(rawToken), invite.ExpiresAt));
+                invite.Id, invite.Email, invite.Role, Redeemed: false, rawToken, mailLinks.InviteLink(rawToken), invite.ExpiresAt,
+                invite.FullName));
         }, ct);
 
         // Deliver the invite link by e-mail (best-effort: the link is still returned in the
         // response, so a mail outage never blocks inviting). Sent outside the tenant tx.
         if (result.IsSuccess)
         {
-            await SendInviteEmailAsync(email, rawToken, ct);
+            await SendInviteEmailAsync(email, fullName, rawToken, ct);
         }
 
         return result;
     }
 
-    private async Task SendInviteEmailAsync(string address, string rawToken, CancellationToken ct)
+    private async Task SendInviteEmailAsync(string address, string? fullName, string rawToken, CancellationToken ct)
     {
         var link = mailLinks.InviteLink(rawToken);
         const string subject = "Korkut'a davet edildiniz";
-        var body =
-            "<p>Merhaba,</p>" +
-            "<p>Bir Korkut ofisine katılmanız için davet edildiniz. Daveti kabul etmek için aşağıdaki bağlantıya tıklayın:</p>" +
-            $"<p><a href=\"{link}\">{link}</a></p>" +
-            "<p>Bu bağlantı sınırlı bir süre geçerlidir.</p>" +
-            "<p>Korkut</p>";
+        var body = EmailTemplates.Render(
+            "Korkut'a davet edildiniz",
+            [
+                string.IsNullOrWhiteSpace(fullName) ? "Merhaba," : $"Merhaba {fullName},",
+                "Bir Korkut bürosuna katılmanız için davet edildiniz. Daveti kabul etmek için aşağıdaki düğmeye tıklayın ve Google hesabınızla giriş yapın.",
+                "Bağlantı tek kullanımlıktır ve 7 gün geçerlidir.",
+            ],
+            ("Daveti kabul et", link));
         try
         {
             await emailSender.SendAsync(address, subject, body, ct);
@@ -106,13 +110,14 @@ public sealed partial class InviteService(
 
         return await InScopeAsync(grant.OfficeId, async office =>
         {
-            // Idempotent: if the invitee is already a member, just consume the invite.
+            // Davet satırındaki ad-soyad kabulde hesaba işlenir (resolver'a dokunmadan, kendi
+            // scope'umuzdan okunur). Idempotent: üye zaten varsa yalnız davet tüketilir.
+            var invite = await repository.FindForUpdateAsync(office, grant.Id, ct);
             if (!await users.ExistsWithEmailAsync(office, grant.Email, ct))
             {
-                await users.AddAsync(new User(office, grant.Email, grant.Role, null, null, clock.UtcNow), ct);
+                await users.AddAsync(new User(office, grant.Email, grant.Role, invite?.FullName, null, clock.UtcNow), ct);
             }
 
-            var invite = await repository.FindForUpdateAsync(office, grant.Id, ct);
             if (invite is not null && invite.Accept(clock.UtcNow))
             {
                 await repository.SaveChangesAsync(ct);
@@ -123,7 +128,7 @@ public sealed partial class InviteService(
     }
 
     private static InviteResponse ToResponse(Invite i) =>
-        new(i.Id, i.Email, i.Role, i.AcceptedAt is not null, i.ExpiresAt, i.CreatedAt);
+        new(i.Id, i.Email, i.Role, i.AcceptedAt is not null, i.ExpiresAt, i.CreatedAt, i.FullName);
 
     private Task<T> InScopeAsync<T>(Guid officeId, Func<Guid, Task<T>> work, CancellationToken ct)
         => unitOfWork.InTenantScopeAsync(officeId, () => work(officeId), ct);

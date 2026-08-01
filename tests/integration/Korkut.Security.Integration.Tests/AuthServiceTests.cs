@@ -68,6 +68,8 @@ public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixtur
     private AuthService NewService(KorkutDbContext db) =>
         new(new AccountLocator(db), new UserRepository(db), new PasswordResetTokenRepository(db),
             new ResetTokenResolver(db, _clock), new NoTwoFactor(), _hasher, _tokens, _notifier,
+            new Korkut.Mail.NullEmailSender(Microsoft.Extensions.Logging.Abstractions.NullLogger<Korkut.Mail.NullEmailSender>.Instance),
+            new Korkut.Contract.Notifications.MailLinks(string.Empty),
             new UnitOfWork(db), _clock)
         { MaxFailedAttempts = 3 };
 
