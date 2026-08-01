@@ -107,6 +107,34 @@ function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
   );
 }
 
+// Cevabın üstündeki silik "düşünme" izi (Claude/ChatGPT deseni): araç çağrılarından önce akan ara
+// anlatım burada gösterilir — canlıda açık ve soluk akar, tur bitince tek satıra katlanır,
+// tıklayınca yeniden açılır. Nihai cevap her zaman balondadır; bu blok cevabın parçası değildir.
+function ThinkingTrail({ segments, live }: { segments: string[]; live: boolean }) {
+  const [open, setOpen] = useState(false);
+  const show = live || open;
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-400 hover:text-zinc-600"
+      >
+        <CaretDown
+          size={11}
+          aria-hidden
+          className={"transition-transform " + (show ? "" : "-rotate-90")}
+        />
+        {live ? "Düşünüyor…" : "Düşünme süreci"}
+      </button>
+      {show && (
+        <div className="mt-1.5 whitespace-pre-wrap border-l-2 border-zinc-200 pl-3 text-[12.5px] leading-relaxed text-zinc-400">
+          {segments.join("\n\n")}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Sol menü ikonları — Phosphor set'inden (bkz. ../icons.ts).
 const NAV_ICON: Record<string, Icon> = {
   matters: Folder,
@@ -563,17 +591,36 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         }
       } else {
         // Stream the answer: show activity steps, then grow the assistant bubble token by token.
+        // Akış modeli (Claude/ChatGPT deseni): `acc` o anki model turunun metnidir. Tur bir araç
+        // çağrısıyla biterse (SSE `tool` çerçevesi) o metin CEVAP DEĞİL ara anlatımdır — balondan
+        // çıkarılıp üstteki silik "Düşünüyor" izine (thinking) taşınır. Yalnız son turun metni
+        // (araçsız biten) cevap balonunda kalır.
         let acc = "";
         let started = false;
         let searches = 0; // canlı arama sayacı (SSE `tool` çerçeveleri; persist edilmez)
+        const thinking: string[] = []; // araç öncesi ara anlatım segmentleri (canlı tur izi)
         let liveSources: SourceRef[] | null = null; // SSE `sources` çerçevesi (done'dan önce gelir)
         let liveDocument: DocumentRef | null = null; // SSE `document` çerçevesi (done'dan önce gelir)
+        const paint = () => {
+          if (!showsThisChat()) return;
+          setMessages((m) => {
+            const copy = m.slice();
+            copy[copy.length - 1] = { role: "assistant", content: acc, thinking: [...thinking] };
+            return copy;
+          });
+        };
         res = await api.sessionChatStream(targetId, t, {
           onStep: (label) => {
-            if (!started && showsThisChat()) setActivity(label);
+            if (showsThisChat()) setActivity(label); // balon boşken ve araçlar dönerken görünür
           },
           onTool: (name) => {
             if (name === "search_decisions") searches += 1;
+            // Bu turun metni araç çağrısıyla bitti → ara anlatımdı; düşünme izine taşı.
+            if (acc.trim()) {
+              thinking.push(acc.trim());
+              acc = "";
+              if (started) paint();
+            }
           },
           onSources: (items) => {
             liveSources = items;
@@ -590,11 +637,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               setActivity(null);
               setMessages((m) => [...m, { role: "assistant", content: "" }]);
             }
-            setMessages((m) => {
-              const copy = m.slice();
-              copy[copy.length - 1] = { role: "assistant", content: acc };
-              return copy;
-            });
+            paint();
           },
         });
         // Reconcile with the authoritative reply (e.g. the cloud path streams no tokens, or the
@@ -608,6 +651,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             sources,
             searches: searches || undefined,
             document: liveDocument ?? res.document ?? null,
+            thinking: thinking.length ? thinking : undefined,
           };
           setMessages((m) => (started ? [...m.slice(0, -1), finalMsg] : [...m, finalMsg]));
         }
@@ -1011,6 +1055,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       <CaretDown size={11} aria-hidden className="text-zinc-400" />
                     </button>
                   )}
+                  {/* Silik düşünme izi: araç öncesi ara anlatım — canlıda soluk akar, sonra katlanır. */}
+                  {m.role === "assistant" && (m.thinking?.length ?? 0) > 0 && (
+                    <ThinkingTrail
+                      segments={m.thinking!}
+                      live={streaming && sendingId === currentId && i === messages.length - 1}
+                    />
+                  )}
                   <div
                     className={
                       m.role === "user"
@@ -1018,7 +1069,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         : "md w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed text-zinc-900"
                     }
                   >
-                    {m.role === "user" ? m.content : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>}
+                    {m.role === "user" ? (
+                      m.content
+                    ) : m.content ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    ) : (
+                      // Ara anlatım ize taşındı, cevap henüz akmıyor — balonda o anki adım görünür.
+                      <span className="italic text-zinc-400">{activity ?? "Korkut yazıyor…"}</span>
+                    )}
                   </div>
                   {/* Belge kartı: bu turda hazırlanan taslak — tıklayınca editör drawer'ı açılır
                       (artifact deseni; başlıkta ayrıca düğme yok). */}

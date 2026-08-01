@@ -57,6 +57,9 @@ export type ChatMessage = {
   // Bu turda hazırlanan taslak belge (SSE `document` çerçevesi) — yalnız canlı turda bilinir;
   // geçmişte belge kartı Belgeler listesinden (conversation_id eşleşmesi) türetilir.
   document?: DocumentRef | null;
+  // Araç çağrılarından ÖNCE akan ara anlatım parçaları ("düşünme" izi) — balona değil, üstteki
+  // silik katlanabilir bloğa gider. Yalnız canlı turda bilinir; persist Faz B (parts_json) işi.
+  thinking?: string[];
 };
 export type SessionBrief = {
   id: number;
