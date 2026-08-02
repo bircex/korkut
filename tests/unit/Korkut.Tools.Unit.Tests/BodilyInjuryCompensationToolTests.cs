@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class BedenselTazminatToolTests
+public class BodilyInjuryCompensationToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class BedenselTazminatToolTests
     public async Task Tam_maluliyet_aktif_ve_pasif_donem_kaybi()
     {
         // Erkek 30: TRH-2010 ex = 44,45 -> aktif 30 yıl (60'a kadar), pasif 14,45 yıl.
-        var result = await new BedenselTazminatTool().InvokeAsync(Args(
+        var result = await new BodilyInjuryCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 30, "maluliyet_orani": 100, "aylik_net_gelir": 30000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -33,7 +33,7 @@ public class BedenselTazminatToolTests
     [Fact]
     public async Task Kismi_maluliyet_kusur_ve_gecici_donem_dusulur()
     {
-        var result = await new BedenselTazminatTool().InvokeAsync(Args(
+        var result = await new BodilyInjuryCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 30, "maluliyet_orani": 10, "kusur_orani": 25, "aylik_net_gelir": 30000, "gecici_is_goremezlik_ay": 2 }"""), Context);
 
         Assert.False(result.IsError);
@@ -50,7 +50,7 @@ public class BedenselTazminatToolTests
     public async Task Altmis_ustu_yasta_aktif_donem_sifir_ve_asgari_ucret_varsayilir()
     {
         // Kadın 65: ex = 16,63; gelir verilmedi -> AGİ hariç net asgari ücret (28.075,50 TL/ay).
-        var result = await new BedenselTazminatTool().InvokeAsync(Args(
+        var result = await new BodilyInjuryCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "kadin", "yas": 65, "maluliyet_orani": 100 }"""), Context);
 
         Assert.False(result.IsError);
@@ -65,7 +65,7 @@ public class BedenselTazminatToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var tool = new BedenselTazminatTool();
+        var tool = new BodilyInjuryCompensationTool();
         Assert.True((await tool.InvokeAsync(Args(
             """{ "cinsiyet": "belirsiz", "yas": 30, "maluliyet_orani": 50 }"""), Context)).IsError);
         Assert.True((await tool.InvokeAsync(Args(

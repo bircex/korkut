@@ -8,7 +8,7 @@ namespace Korkut.Tools.Calc;
 /// Kazalı aracın değer kaybını ZMSS Genel Şartları ekindeki resmi formülle hesaplar:
 /// Toplam = (rayiç değer x %19) x hasar boyutu katsayısı x kilometre katsayısı.
 /// </summary>
-public sealed class AracDegerKaybiTool : IAgentTool
+public sealed class VehicleValueLossTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -35,57 +35,57 @@ public sealed class AracDegerKaybiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var piyasa = ToolArgs.Decimal(arguments, "piyasa_degeri");
-        var kilometre = ToolArgs.Int(arguments, "kilometre");
-        if (piyasa is not { } deger || deger <= 0 || kilometre is not { } km || km < 0)
+        var marketValue = ToolArgs.Decimal(arguments, "piyasa_degeri");
+        var mileage = ToolArgs.Int(arguments, "kilometre");
+        if (marketValue is not { } value || value <= 0 || mileage is not { } mileageValue || mileageValue < 0)
         {
             return Task.FromResult(ToolResult.Error("Pozitif piyasa_degeri ve negatif olmayan kilometre zorunludur."));
         }
 
-        var varsayimlar = new List<string>
+        var assumptions = new List<string>
         {
             "Resmi formül: Toplam Değer Kaybı = Baz Değer Kaybı (rayiç x %19) x hasar boyutu katsayısı x kilometre katsayısı (ZMSS Genel Şartları eki).",
         };
 
-        var hasarBoyutu = ToolArgs.String(arguments, "hasar_boyutu");
-        if (hasarBoyutu is null)
+        var damageSize = ToolArgs.String(arguments, "hasar_boyutu");
+        if (damageSize is null)
         {
-            if (ToolArgs.Decimal(arguments, "hasar_tutari") is not { } tutar || tutar <= 0)
+            if (ToolArgs.Decimal(arguments, "hasar_tutari") is not { } repairAmount || repairAmount <= 0)
             {
                 return Task.FromResult(ToolResult.Error("hasar_boyutu (buyuk|orta|kucuk|basit) veya pozitif hasar_tutari verilmelidir."));
             }
 
-            var oran = tutar / deger;
-            hasarBoyutu = oran switch
+            var ratio = repairAmount / value;
+            damageSize = ratio switch
             {
                 <= 0.05m => "basit",
                 <= 0.15m => "kucuk",
                 <= 0.25m => "orta",
                 _ => "buyuk",
             };
-            varsayimlar.Add(
+            assumptions.Add(
                 "Hasar boyutu onarım tutarının rayice oranından türetildi (pratik yaklaşım, Genel Şartlar'da yer almaz): %5'e kadar basit, %15'e kadar küçük, %25'e kadar orta, üzeri büyük.");
         }
 
-        if (Zmss.HasarBoyutuKatsayisi(hasarBoyutu) is not { } hasarKatsayi)
+        if (Zmss.HasarBoyutuKatsayisi(damageSize) is not { } damageCoefficient)
         {
             return Task.FromResult(ToolResult.Error("hasar_boyutu buyuk, orta, kucuk veya basit olmalıdır."));
         }
 
-        var kmKatsayi = Zmss.KilometreKatsayisi(km) ?? 0m;
-        var baz = decimal.Round(deger * Zmss.BazDegerKaybiOrani, 2);
-        var sonuc = decimal.Round(deger * Zmss.BazDegerKaybiOrani * hasarKatsayi * kmKatsayi, 2);
+        var mileageCoefficient = Zmss.KilometreKatsayisi(mileageValue) ?? 0m;
+        var baseAmount = decimal.Round(value * Zmss.BazDegerKaybiOrani, 2);
+        var valueLoss = decimal.Round(value * Zmss.BazDegerKaybiOrani * damageCoefficient * mileageCoefficient, 2);
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
             Yontem = "ZMSS Genel Şartları eki resmi değer kaybı formülü",
-            BazDegerKaybi = baz,
-            HasarBoyutu = hasarBoyutu,
-            HasarBoyutuKatsayisi = hasarKatsayi,
-            KilometreKatsayisi = kmKatsayi,
-            DegerKaybi = sonuc,
+            BazDegerKaybi = baseAmount,
+            HasarBoyutu = damageSize,
+            HasarBoyutuKatsayisi = damageCoefficient,
+            KilometreKatsayisi = mileageCoefficient,
+            DegerKaybi = valueLoss,
             Uyari = "Bu tutar sigorta tahkim/başvuru aşaması için Genel Şartlar formülüdür; mahkemede bilirkişi serbest piyasa (rayiç fark) yöntemiyle farklı ve çoğu kez daha yüksek bir tutara ulaşabilir.",
-            Varsayimlar = varsayimlar,
+            Varsayimlar = assumptions,
             Kaynak = Zmss.DegerKaybiKaynak,
         })));
     }

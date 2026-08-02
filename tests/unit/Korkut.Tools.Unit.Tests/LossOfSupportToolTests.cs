@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class DestektenYoksunlukToolTests
+public class LossOfSupportToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class DestektenYoksunlukToolTests
     public async Task Es_ve_iki_cocuk_pay_ve_sure_dagilimi()
     {
         // Müteveffa erkek 40: ex = 34,93 -> aktif 20, pasif 14,93. Paylar: müteveffa 2 + eş 2 + 2 çocuk = 6.
-        var result = await new DestektenYoksunlukTool().InvokeAsync(Args(
+        var result = await new LossOfSupportTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 40, "aylik_net_gelir": 40000, "kusur_orani": 20, "es_var": true, "es_yasi": 38, "cocuklar": [10, 16] }"""), Context);
 
         Assert.False(result.IsError);
@@ -48,7 +48,7 @@ public class DestektenYoksunlukToolTests
     [Fact]
     public async Task Onsekiz_ustu_cocuga_destek_hesaplanmaz()
     {
-        var result = await new DestektenYoksunlukTool().InvokeAsync(Args(
+        var result = await new LossOfSupportTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 45, "cocuklar": [20] }"""), Context);
 
         Assert.False(result.IsError);
@@ -61,7 +61,7 @@ public class DestektenYoksunlukToolTests
     public async Task Anne_babaya_kendi_bakiye_omru_kadar_destek()
     {
         // Müteveffa kadın 30 (ex 49,00); anne 70 yaşında (kadın 70: ex 12,87 < 49) -> süre 12,87.
-        var result = await new DestektenYoksunlukTool().InvokeAsync(Args(
+        var result = await new LossOfSupportTool().InvokeAsync(Args(
             """{ "cinsiyet": "kadin", "yas": 30, "anne_var": true, "anne_yasi": 70 }"""), Context);
 
         Assert.False(result.IsError);
@@ -74,7 +74,7 @@ public class DestektenYoksunlukToolTests
     [Fact]
     public async Task Yeniden_evlenme_indirimi_uygulanmadigi_belirtilir()
     {
-        var result = await new DestektenYoksunlukTool().InvokeAsync(Args(
+        var result = await new LossOfSupportTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 40, "es_var": true }"""), Context);
 
         Assert.False(result.IsError);
@@ -86,7 +86,7 @@ public class DestektenYoksunlukToolTests
     [Fact]
     public async Task Hak_sahibi_yoksa_hata_doner()
     {
-        var result = await new DestektenYoksunlukTool().InvokeAsync(Args(
+        var result = await new LossOfSupportTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 40 }"""), Context);
 
         Assert.True(result.IsError);

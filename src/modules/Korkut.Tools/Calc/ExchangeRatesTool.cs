@@ -55,11 +55,11 @@ public sealed class ExchangeRatesTool(TcmbRatesClient tcmb) : IAgentTool
             }
         }
 
-        var tarih = ToolArgs.Date(arguments, "tarih");
+        var date = ToolArgs.Date(arguments, "tarih");
         TcmbBulletin? bulletin;
         try
         {
-            bulletin = tarih is { } t ? await tcmb.GetForDateAsync(t, ct) : await tcmb.GetLatestAsync(ct);
+            bulletin = date is { } d ? await tcmb.GetForDateAsync(d, ct) : await tcmb.GetLatestAsync(ct);
         }
         catch (HttpRequestException)
         {
@@ -76,19 +76,19 @@ public sealed class ExchangeRatesTool(TcmbRatesClient tcmb) : IAgentTool
                 "İstenen tarih için TCMB kur bülteni bulunamadı (7 güne kadar önceki iş günlerine de bakıldı); tarihi kontrol edin.");
         }
 
-        var kurlar = new List<object>(codes.Length);
-        var bulunamayan = new List<string>();
+        var rateList = new List<object>(codes.Length);
+        var missingCodes = new List<string>();
         foreach (var code in codes)
         {
             var rate = bulletin.Rates.FirstOrDefault(r =>
                 string.Equals(r.Code, code, StringComparison.OrdinalIgnoreCase));
             if (rate is null)
             {
-                bulunamayan.Add(code);
+                missingCodes.Add(code);
                 continue;
             }
 
-            kurlar.Add(new
+            rateList.Add(new
             {
                 Kod = rate.Code,
                 Birim = rate.Unit,
@@ -97,17 +97,17 @@ public sealed class ExchangeRatesTool(TcmbRatesClient tcmb) : IAgentTool
             });
         }
 
-        if (kurlar.Count == 0)
+        if (rateList.Count == 0)
         {
             return ToolResult.Error(
-                $"İstenen para birimleri TCMB bülteninde bulunamadı: {string.Join(", ", bulunamayan)}.");
+                $"İstenen para birimleri TCMB bülteninde bulunamadı: {string.Join(", ", missingCodes)}.");
         }
 
         return ToolResult.Ok(ToolArgs.Result(new
         {
             KurTarihi = bulletin.Date,
-            Kurlar = kurlar,
-            BulunamayanKodlar = bulunamayan,
+            Kurlar = rateList,
+            BulunamayanKodlar = missingCodes,
             Kaynak = "TCMB Gösterge Kurları",
         }));
     }

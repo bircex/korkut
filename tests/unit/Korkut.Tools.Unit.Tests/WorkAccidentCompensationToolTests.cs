@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class IsKazasiTazminatiToolTests
+public class WorkAccidentCompensationToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class IsKazasiTazminatiToolTests
     public async Task Isveren_kusuru_ve_sgk_pesin_sermaye_dusulur()
     {
         // Erkek 30: aktif 30, pasif 14,45. Yıllık 480.000, oran %20, işveren kusuru %80.
-        var result = await new IsKazasiTazminatiTool().InvokeAsync(Args(
+        var result = await new WorkAccidentCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 30, "surekli_is_goremezlik_orani": 20, "isveren_kusur_orani": 80, "aylik_net_gelir": 40000, "gecici_is_goremezlik_ay": 3, "sgk_gelir_baglandi": true, "sgk_pesin_sermaye": 100000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -33,7 +33,7 @@ public class IsKazasiTazminatiToolTests
     [Fact]
     public async Task Sgk_geliri_baglandi_ama_tutar_verilmediyse_not_eklenir()
     {
-        var result = await new IsKazasiTazminatiTool().InvokeAsync(Args(
+        var result = await new WorkAccidentCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 40, "surekli_is_goremezlik_orani": 30, "sgk_gelir_baglandi": true }"""), Context);
 
         Assert.False(result.IsError);
@@ -46,7 +46,7 @@ public class IsKazasiTazminatiToolTests
     [Fact]
     public async Task Isveren_kusuru_verilmezse_tam_kusur_varsayilir()
     {
-        var result = await new IsKazasiTazminatiTool().InvokeAsync(Args(
+        var result = await new WorkAccidentCompensationTool().InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 30, "surekli_is_goremezlik_orani": 100, "aylik_net_gelir": 30000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -59,7 +59,7 @@ public class IsKazasiTazminatiToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var tool = new IsKazasiTazminatiTool();
+        var tool = new WorkAccidentCompensationTool();
         Assert.True((await tool.InvokeAsync(Args(
             """{ "cinsiyet": "erkek", "yas": 30, "surekli_is_goremezlik_orani": 0 }"""), Context)).IsError);
         Assert.True((await tool.InvokeAsync(Args(

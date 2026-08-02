@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class KiraArtisToolTests
+public class RentIncreaseToolTests
 {
     private static readonly AgentToolContext Ctx = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class KiraArtisToolTests
     public async Task Yenileme_ayi_bir_onceki_ayin_endeksiyle_hesaplanir()
     {
         // Temmuz 2026 yenilemesi Haziran 2026 endeksini kullanır: %32,03.
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 10000, "yenileme_ayi": "2026-07" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -33,7 +33,7 @@ public class KiraArtisToolTests
     public async Task Kurus_iceren_kira_iki_haneye_yuvarlanir()
     {
         // Ocak 2026 yenilemesi Aralık 2025 endeksi: %34,88; 7543,21 x 0,3488 = 2631,07.
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 7543.21, "yenileme_ayi": "2026-01" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -45,7 +45,7 @@ public class KiraArtisToolTests
     [Fact]
     public async Task Tabloda_olmayan_ay_icin_oran_istenir()
     {
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 10000, "yenileme_ayi": "2030-01" }"""), Ctx);
 
         Assert.True(result.IsError);
@@ -56,7 +56,7 @@ public class KiraArtisToolTests
     [Fact]
     public async Task Verilen_tufe_orani_tabloya_tercih_edilir()
     {
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 10000, "yenileme_ayi": "2030-01", "tufe_orani": 25 }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -69,7 +69,7 @@ public class KiraArtisToolTests
     [Fact]
     public async Task Bicimsiz_yenileme_ayi_hata_doner()
     {
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 10000, "yenileme_ayi": "Temmuz 2026" }"""), Ctx);
 
         Assert.True(result.IsError);
@@ -79,11 +79,11 @@ public class KiraArtisToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new KiraArtisTool().InvokeAsync(Args(
+        var result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 0, "yenileme_ayi": "2026-07" }"""), Ctx);
         Assert.True(result.IsError);
 
-        result = await new KiraArtisTool().InvokeAsync(Args(
+        result = await new RentIncreaseTool().InvokeAsync(Args(
             """{ "mevcut_kira": 10000, "yenileme_ayi": "2026-07", "tufe_orani": -3 }"""), Ctx);
         Assert.True(result.IsError);
     }
