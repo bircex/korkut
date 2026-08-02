@@ -83,18 +83,7 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-// Chat avatars: Korkut's logo for the assistant, the signed-in user's initials for our messages.
-function KorkutAvatar({ size = 28 }: { size?: number }) {
-  return (
-    <div
-      style={{ width: size, height: size }}
-      className="grid shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-white"
-    >
-      <img src="/korkut-logo.svg" alt="Korkut" className="h-[70%] w-[70%]" />
-    </div>
-  );
-}
-
+// Chat avatar: only the signed-in user's initials — the assistant speaks without an icon.
 function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
   return (
     <div
@@ -879,7 +868,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         className="flex min-w-0 flex-1 items-center gap-2 text-left"
                         title={s.title}
                       >
-                        <KorkutAvatar size={24} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-zinc-800">{s.title}</div>
                           <div className="truncate text-[11px] text-zinc-400">
@@ -936,6 +924,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   </button>
                 )}
               </nav>
+              {/* Sol alt: oturum açan kullanıcının profili. */}
+              <div className="flex items-center gap-2.5 border-t border-zinc-200 px-3 py-3">
+                <UserAvatar user={user} size={32} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-medium text-zinc-800">
+                    {user.full_name ?? user.username}
+                  </div>
+                  <div className="truncate text-[11px] text-zinc-400">
+                    {user.role === "owner" ? "Kurucu" : "Avukat"}
+                  </div>
+                </div>
+              </div>
             </aside>
           </>
         )}
@@ -1050,7 +1050,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   "flex items-end gap-2 " + (m.role === "user" ? "flex-row-reverse" : "flex-row")
                 }
               >
-                {m.role === "user" ? <UserAvatar user={user} /> : <KorkutAvatar />}
+                {m.role === "user" && <UserAvatar user={user} />}
                 <div
                   className={
                     "flex min-w-0 flex-col items-start gap-1.5 " +
@@ -1130,7 +1130,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             ))}
             {sending && sendingId === currentId && !streaming && (
               <div className="flex items-end gap-2">
-                <KorkutAvatar />
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
                   {activity ? activity : <TypingDots />}
                 </div>

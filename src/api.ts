@@ -146,6 +146,8 @@ export type Hearing = {
 export type ClientBrief = {
   id: number;
   full_name: string;
+  /** "individual" | "corporate" — tüzel kişiler listede rozetle ayrışır. */
+  kind?: string;
   phone: string | null;
   email: string | null;
   national_id: string | null;

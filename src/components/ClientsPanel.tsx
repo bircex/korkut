@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type ClientBrief } from "../api";
 import { Modal } from "./Modal";
+import { DataTable } from "./DataTable";
 
 // Müvekkiller — a standalone client (müvekkil) management screen: list, create, and edit clients
 // directly (not only through a matter). The PII entered here also feeds the redactor's known-entity
-// layer, so cloud-bound prompts can mask each client's details.
+// layer, so cloud-bound prompts can mask each client's details. The list is a searchable, paged
+// data table; editing happens in a modal.
 
 const input =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900";
@@ -60,75 +62,17 @@ function FieldGrid({
   );
 }
 
-function ClientRow({
-  client,
-  onSaved,
-}: {
-  client: ClientBrief;
-  onSaved: (c: ClientBrief) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [f, setF] = useState<Fields>(toFields(client));
-  const [busy, setBusy] = useState(false);
-  const set = (k: keyof Fields) => (v: string) => setF((s) => ({ ...s, [k]: v }));
-
-  async function save() {
-    const name = f.full_name.trim();
-    if (!name) return;
-    setBusy(true);
-    try {
-      const updated = await api.updateClient(client.id, { full_name: name, ...toPatch(f) });
-      onSaved(updated);
-      setEditing(false);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="px-4 py-3">
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm text-zinc-800">{client.full_name}</span>
-          <span className="block truncate text-[12px] text-zinc-400">
-            {[client.national_id, client.phone].filter(Boolean).join(" · ") || "—"}
-          </span>
-        </span>
-        <button
-          onClick={() => {
-            setF(toFields(client));
-            setEditing((e) => !e);
-          }}
-          className="shrink-0 text-[12px] text-zinc-500 hover:text-zinc-900"
-        >
-          {editing ? "Kapat" : "Düzenle"}
-        </button>
-      </div>
-      {editing && (
-        <div className="mt-3 flex flex-col gap-3">
-          <FieldGrid f={f} set={set} withName />
-          <div className="flex gap-2">
-            <button
-              onClick={save}
-              disabled={busy}
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {busy ? "Kaydediliyor…" : "Kaydet"}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function ClientsPanel() {
   const [clients, setClients] = useState<ClientBrief[] | null>(null);
   const [nf, setNf] = useState<Fields>({ ...EMPTY });
   const [adding, setAdding] = useState(false);
+  // Düzenleme modalda: seçili müvekkil + form alanları.
+  const [editing, setEditing] = useState<ClientBrief | null>(null);
+  const [ef, setEf] = useState<Fields>({ ...EMPTY });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const setN = (k: keyof Fields) => (v: string) => setNf((s) => ({ ...s, [k]: v }));
+  const setE = (k: keyof Fields) => (v: string) => setEf((s) => ({ ...s, [k]: v }));
 
   useEffect(() => {
     api
@@ -136,6 +80,29 @@ export function ClientsPanel() {
       .then((d) => setClients(d.items))
       .catch(() => setClients([]));
   }, []);
+
+  function openEdit(c: ClientBrief) {
+    setEf(toFields(c));
+    setError("");
+    setEditing(c);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    const name = ef.full_name.trim();
+    if (!name) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api.updateClient(editing.id, { full_name: name, ...toPatch(ef) });
+      setClients((list) => (list ?? []).map((x) => (x.id === updated.id ? updated : x)));
+      setEditing(null);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Kaydedilemedi");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function create() {
     const name = nf.full_name.trim();
@@ -171,23 +138,61 @@ export function ClientsPanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 py-4">
+        <div className="mx-auto max-w-4xl px-4 py-4">
           {clients === null ? (
             <p className="text-[13px] text-zinc-400">Yükleniyor…</p>
-          ) : clients.length === 0 ? (
-            <p className="text-[13px] text-zinc-400">Henüz müvekkil yok.</p>
           ) : (
-            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-              {clients.map((c) => (
-                <ClientRow
-                  key={c.id}
-                  client={c}
-                  onSaved={(u) =>
-                    setClients((list) => (list ?? []).map((x) => (x.id === u.id ? u : x)))
-                  }
-                />
-              ))}
-            </div>
+            <DataTable
+              rows={clients}
+              rowKey={(c) => c.id}
+              pageSize={10}
+              empty="Henüz müvekkil yok."
+              searchPlaceholder="Ad, telefon, e-posta ara…"
+              searchText={(c) =>
+                [c.full_name, c.phone, c.email, c.national_id].filter(Boolean).join(" ")
+              }
+              columns={[
+                {
+                  key: "name",
+                  label: "Ad Soyad",
+                  render: (c) => (
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium text-zinc-900">{c.full_name}</span>
+                      {c.kind === "corporate" && (
+                        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
+                          Tüzel kişi
+                        </span>
+                      )}
+                    </span>
+                  ),
+                },
+                {
+                  key: "phone",
+                  label: "Telefon",
+                  className: "hidden sm:table-cell",
+                  render: (c) => <span className="text-zinc-600">{c.phone ?? "-"}</span>,
+                },
+                {
+                  key: "email",
+                  label: "E-posta",
+                  className: "hidden md:table-cell",
+                  render: (c) => <span className="text-zinc-500">{c.email ?? "-"}</span>,
+                },
+                {
+                  key: "actions",
+                  label: "",
+                  className: "w-20 text-right",
+                  render: (c) => (
+                    <button
+                      onClick={() => openEdit(c)}
+                      className="rounded-md px-2 py-1 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                    >
+                      Düzenle
+                    </button>
+                  ),
+                },
+              ]}
+            />
           )}
 
           <p className="mt-4 text-[12px] text-zinc-400">
@@ -195,6 +200,35 @@ export function ClientsPanel() {
           </p>
         </div>
       </div>
+
+      {editing && (
+        <Modal
+          title="Müvekkili düzenle"
+          onClose={() => setEditing(null)}
+          footer={
+            <>
+              <button
+                onClick={() => setEditing(null)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={busy || !ef.full_name.trim()}
+                className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {busy ? "Kaydediliyor…" : "Kaydet"}
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <FieldGrid f={ef} set={setE} withName />
+            {error && <span className="text-[13px] text-red-600">{error}</span>}
+          </div>
+        </Modal>
+      )}
 
       {adding && (
         <Modal

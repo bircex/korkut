@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Expense, type FinanceSummary, type Invoice } from "../api";
 import { Modal } from "./Modal";
+import { DataTable } from "./DataTable";
 
 // Mali — the office's bookkeeping (fatura / masraf / cari). A first slice: record invoices and
 // expenses and see a simple current-account summary. Real e-SMM/e-fatura submission (GİB) is out
@@ -12,11 +13,25 @@ const input =
 const STATUS_LABEL: Record<string, string> = {
   draft: "Taslak",
   issued: "Kesildi",
+  sent: "Gönderildi",
   paid: "Tahsil edildi",
   cancelled: "İptal",
 };
 
+// Durum hapları: tahsil yeşil, bekleyen amber, taslak nötr, iptal kırmızı.
+const STATUS_PILL: Record<string, string> = {
+  paid: "bg-emerald-500/15 text-emerald-700",
+  sent: "bg-amber-500/15 text-amber-700",
+  issued: "bg-amber-500/15 text-amber-700",
+  draft: "bg-zinc-100 text-zinc-500",
+  cancelled: "bg-red-500/10 text-red-600",
+};
+
 const money = (n: number) => `${n.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺`;
+
+// KDV oranı backend'de 0-1 aralığında kesir olarak tutulur (0.20 → %20); eski
+// kayıtlarda yüzde olarak gelmiş değerleri de olduğu gibi gösterir.
+const vatPct = (r: number) => (r <= 1 ? Math.round(r * 100) : Math.round(r));
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
@@ -127,64 +142,125 @@ export function FinancePanel() {
           )}
 
           <h2 className="mb-2 text-sm font-semibold text-zinc-700">Faturalar</h2>
-          <div className="mb-6 divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-            {invoices.length === 0 && (
-              <div className="px-4 py-3 text-sm text-zinc-400">Fatura yok.</div>
-            )}
-            {invoices.map((i) => (
-              <div key={i.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-zinc-800">
-                    {money(i.gross)}{" "}
-                    <span className="text-[12px] text-zinc-400">
-                      (net {money(i.amount)} + %{i.vat_rate})
+          <div className="mb-6">
+            <DataTable
+              rows={invoices}
+              rowKey={(i) => i.id}
+              pageSize={10}
+              empty="Fatura yok."
+              searchPlaceholder="Tutar, durum, açıklama ara…"
+              searchText={(i) =>
+                [money(i.gross), STATUS_LABEL[i.status] ?? i.status, i.description]
+                  .filter(Boolean)
+                  .join(" ")
+              }
+              columns={[
+                {
+                  key: "amount",
+                  label: "Tutar",
+                  render: (i) => (
+                    <>
+                      <div className="font-medium text-zinc-900">{money(i.gross)}</div>
+                      <div className="text-xs text-zinc-400">
+                        net {money(i.amount)} + %{vatPct(i.vat_rate)} KDV
+                      </div>
+                    </>
+                  ),
+                },
+                {
+                  key: "status",
+                  label: "Durum",
+                  render: (i) => (
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        STATUS_PILL[i.status] ?? "bg-zinc-100 text-zinc-500"
+                      }`}
+                    >
+                      {STATUS_LABEL[i.status] ?? i.status}
                     </span>
-                  </div>
-                  <div className="truncate text-[12px] text-zinc-400">
-                    {STATUS_LABEL[i.status] ?? i.status}
-                    {i.description ? ` · ${i.description}` : ""}
-                  </div>
-                </div>
-                {i.status !== "paid" && (
-                  <button
-                    onClick={() => markPaid(i.id)}
-                    className="shrink-0 rounded-md border border-zinc-300 px-2 py-1 text-[12px] text-zinc-700 hover:border-zinc-900"
-                  >
-                    Tahsil edildi
-                  </button>
-                )}
-                <button
-                  onClick={() => removeInvoice(i.id)}
-                  className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-                >
-                  Sil
-                </button>
-              </div>
-            ))}
+                  ),
+                },
+                {
+                  key: "desc",
+                  label: "Açıklama",
+                  className: "hidden sm:table-cell",
+                  render: (i) => <span className="text-zinc-500">{i.description ?? "-"}</span>,
+                },
+                {
+                  key: "actions",
+                  label: "",
+                  className: "w-44 text-right",
+                  render: (i) => (
+                    <span className="flex items-center justify-end gap-1">
+                      {i.status !== "paid" && (
+                        <button
+                          onClick={() => markPaid(i.id)}
+                          className="rounded-md border border-zinc-300 px-2 py-1 text-[12px] text-zinc-700 hover:border-zinc-900"
+                        >
+                          Tahsil edildi
+                        </button>
+                      )}
+                      <button
+                        onClick={() => removeInvoice(i.id)}
+                        className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+                      >
+                        Sil
+                      </button>
+                    </span>
+                  ),
+                },
+              ]}
+            />
           </div>
 
           <h2 className="mb-2 text-sm font-semibold text-zinc-700">Masraflar</h2>
-          <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-            {expenses.length === 0 && (
-              <div className="px-4 py-3 text-sm text-zinc-400">Masraf yok.</div>
-            )}
-            {expenses.map((e) => (
-              <div key={e.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-zinc-800">{money(e.amount)}</div>
-                  <div className="truncate text-[12px] text-zinc-400">
-                    {[e.kind, e.description].filter(Boolean).join(" · ") || "—"}
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeExpense(e.id)}
-                  className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-                >
-                  Sil
-                </button>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            rows={expenses}
+            rowKey={(e) => e.id}
+            pageSize={10}
+            empty="Masraf yok."
+            searchPlaceholder="Tutar, tür, açıklama ara…"
+            searchText={(e) => [money(e.amount), e.kind, e.description].filter(Boolean).join(" ")}
+            columns={[
+              {
+                key: "amount",
+                label: "Tutar",
+                render: (e) => <span className="font-medium text-zinc-900">{money(e.amount)}</span>,
+              },
+              {
+                key: "kind",
+                label: "Tür",
+                render: (e) =>
+                  e.kind ? (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
+                      {e.kind}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-400">-</span>
+                  ),
+              },
+              {
+                key: "desc",
+                label: "Açıklama",
+                className: "hidden sm:table-cell",
+                render: (e) => <span className="text-zinc-500">{e.description ?? "-"}</span>,
+              },
+              {
+                key: "actions",
+                label: "",
+                className: "w-16 text-right",
+                render: (e) => (
+                  <button
+                    onClick={() => removeExpense(e.id)}
+                    className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+                  >
+                    Sil
+                  </button>
+                ),
+              },
+            ]}
+          />
+
         </div>
       </div>
 

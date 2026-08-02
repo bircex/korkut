@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
+import { api, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
 import { ArrowLeft, CaretRight } from "../icons";
+import { DataTable } from "./DataTable";
 import { matchPath, navigate, usePath } from "../router";
 import { Modal } from "./Modal";
 
@@ -22,7 +23,6 @@ export function MattersPanel({
   onOpenSession: (sessionId: number) => void;
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
-  const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [detail, setDetail] = useState<MatterDetail | null>(null); // /dosyalar/:id yüklenince dolar
   const path = usePath();
   // Açık dosya URL'den okunur: /dosyalar → liste, /dosyalar/:id → detay.
@@ -40,11 +40,9 @@ export function MattersPanel({
 
   const refresh = useCallback(
     () =>
-      Promise.all([api.matters(), api.agenda(30)])
-        .then(([m, a]) => {
-          setMatters(m.items);
-          setAgenda(a.items);
-        })
+      api
+        .matters()
+        .then((m) => setMatters(m.items))
         .catch(() => setError("Dosyalar yüklenemedi.")),
     [],
   );
@@ -429,80 +427,61 @@ export function MattersPanel({
   // uioption varyantlarının paylaştığı parçalar: durum rozeti, ajanda kartı, satır listesi.
   const statusBadge = (m: MatterBrief) => (
     <span
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
-        m.status === "closed" ? "bg-zinc-200 text-zinc-500" : "bg-emerald-500/15 text-emerald-600"
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+        m.status === "closed" ? "bg-zinc-100 text-zinc-500" : "bg-emerald-500/15 text-emerald-700"
       }`}
     >
       {STATUS_LABEL[m.status] ?? m.status}
     </span>
   );
 
-  const agendaCard = (limit: number) =>
-    agenda.length > 0 && (
-      <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-          Yaklaşan ({agenda.length})
-        </div>
-        <div className="space-y-0.5">
-          {agenda.slice(0, limit).map((a) => (
-            <button
-              key={`${a.kind}-${a.id}`}
-              onClick={() => openMatter(a.matter_id)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-amber-100/60"
-            >
-              <span className="font-medium text-amber-900">
-                {a.date}
-                {a.time ? ` ${a.time}` : ""}
-              </span>
-              <span className="truncate text-amber-800">
-                {a.kind === "deadline" ? a.title : a.type ?? "Duruşma"}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-
   const errorNote = error && <div className="mb-3 text-xs text-red-600">{error}</div>;
 
-  const matterTable = () =>
-    matters.length === 0 ? (
-      <div className="px-4 py-12 text-center text-sm text-zinc-400">Henüz dosya yok.</div>
-    ) : (
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            <th className="py-2 pr-3 font-semibold">Dosya</th>
-            <th className="hidden py-2 pr-3 font-semibold sm:table-cell">Müvekkil</th>
-            <th className="hidden py-2 pr-3 font-semibold md:table-cell">Mahkeme</th>
-            <th className="hidden py-2 pr-3 font-semibold lg:table-cell">Tür</th>
-            <th className="py-2 font-semibold">Durum</th>
-          </tr>
-        </thead>
-        <tbody>
-          {matters.map((m) => (
-            <tr
-              key={m.id}
-              onClick={() => openMatter(m.id)}
-              className="cursor-pointer border-b border-zinc-100 hover:bg-zinc-50"
-            >
-              <td className="py-2.5 pr-3">
-                <div className="font-medium text-zinc-800">{m.title}</div>
-                {m.file_no && <div className="text-xs text-zinc-400">{m.file_no}</div>}
-              </td>
-              <td className="hidden py-2.5 pr-3 text-zinc-600 sm:table-cell">
-                {m.client_name ?? "—"}
-              </td>
-              <td className="hidden py-2.5 pr-3 text-zinc-500 md:table-cell">{m.court ?? "—"}</td>
-              <td className="hidden py-2.5 pr-3 text-zinc-500 lg:table-cell">
-                {m.case_type ?? "—"}
-              </td>
-              <td className="py-2.5">{statusBadge(m)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+  // Aranabilir + sayfalı veri tablosu (DataTable); satıra tıklayınca dosya açılır.
+  const matterTable = () => (
+    <DataTable
+      rows={matters}
+      rowKey={(m) => m.id}
+      onRowClick={(m) => openMatter(m.id)}
+      pageSize={10}
+      empty="Henüz dosya yok."
+      searchPlaceholder="Dosya, müvekkil, mahkeme ara…"
+      searchText={(m) =>
+        [m.title, m.file_no, m.client_name, m.court, m.case_type].filter(Boolean).join(" ")
+      }
+      columns={[
+        {
+          key: "title",
+          label: "Dosya",
+          render: (m) => (
+            <>
+              <div className="font-medium text-zinc-900">{m.title}</div>
+              {m.file_no && <div className="text-xs text-zinc-400">{m.file_no}</div>}
+            </>
+          ),
+        },
+        {
+          key: "client",
+          label: "Müvekkil",
+          className: "hidden sm:table-cell",
+          render: (m) => <span className="text-zinc-600">{m.client_name ?? "-"}</span>,
+        },
+        {
+          key: "court",
+          label: "Mahkeme",
+          className: "hidden md:table-cell",
+          render: (m) => <span className="text-zinc-500">{m.court ?? "-"}</span>,
+        },
+        {
+          key: "type",
+          label: "Tür",
+          className: "hidden lg:table-cell",
+          render: (m) => <span className="text-zinc-500">{m.case_type ?? "-"}</span>,
+        },
+        { key: "status", label: "Durum", render: (m) => statusBadge(m) },
+      ]}
+    />
+  );
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
@@ -517,20 +496,9 @@ export function MattersPanel({
         </button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-5xl items-start gap-6 px-4 py-4">
-          <div className="min-w-0 flex-1">
-            {errorNote}
-            {matterTable()}
-          </div>
-          <aside className="sticky top-4 hidden w-72 shrink-0 lg:block">
-            {agenda.length > 0 ? (
-              agendaCard(10)
-            ) : (
-              <div className="rounded-xl border border-zinc-200 p-3 text-center text-xs text-zinc-400">
-                Yaklaşan duruşma/süre yok.
-              </div>
-            )}
-          </aside>
+        <div className="mx-auto max-w-5xl px-4 py-4">
+          {errorNote}
+          {matterTable()}
         </div>
       </div>
 
