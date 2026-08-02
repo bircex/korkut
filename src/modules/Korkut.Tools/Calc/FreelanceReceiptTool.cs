@@ -4,9 +4,9 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Serbest meslek makbuzu hesaplar: brüt/net/KDV dahil tutardan stopaj, KDV ve tahsil edilecek toplamı çıkarır.</summary>
-public sealed class SmmTool : IAgentTool
+public sealed class FreelanceReceiptTool : IAgentTool
 {
-    private const string Kaynak =
+    private const string Source =
         "GVK m.94/2-b (serbest meslek stopajı %20); KDV genel oranı %20 (7346 CB Kararı); avukatlık hizmetlerinde 5/10 KDV tevkifatı: KDV Genel Uygulama Tebliği I/C-2.1.3.2.13";
 
     private static readonly JsonElement Schema = ToolSchema.Parse(
@@ -42,57 +42,57 @@ public sealed class SmmTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var yon = ToolArgs.String(arguments, "yon");
-        var tutar = ToolArgs.Decimal(arguments, "tutar");
-        if (yon is null || tutar is not { } t || t <= 0)
+        var direction = ToolArgs.String(arguments, "yon");
+        var amount = ToolArgs.Decimal(arguments, "tutar");
+        if (direction is null || amount is not { } value || value <= 0)
         {
             return Task.FromResult(ToolResult.Error("yon ve pozitif tutar zorunludur."));
         }
 
-        var kdvOrani = ToolArgs.Decimal(arguments, "kdv_orani") ?? 20m;
-        var stopajOrani = ToolArgs.Decimal(arguments, "stopaj_orani") ?? 20m;
-        if (kdvOrani is < 0 or > 100 || stopajOrani is < 0 or >= 100)
+        var vatRate = ToolArgs.Decimal(arguments, "kdv_orani") ?? 20m;
+        var withholdingRate = ToolArgs.Decimal(arguments, "stopaj_orani") ?? 20m;
+        if (vatRate is < 0 or > 100 || withholdingRate is < 0 or >= 100)
         {
             return Task.FromResult(ToolResult.Error("kdv_orani 0-100, stopaj_orani 0-99 aralığında olmalıdır."));
         }
 
-        var kdv = kdvOrani / 100m;
-        var stopaj = stopajOrani / 100m;
-        decimal brut;
-        switch (yon)
+        var vatFraction = vatRate / 100m;
+        var withholdingFraction = withholdingRate / 100m;
+        decimal gross;
+        switch (direction)
         {
             case "brutten":
-                brut = t;
+                gross = value;
                 break;
             case "netten":
-                brut = t / (1m - stopaj);
+                gross = value / (1m - withholdingFraction);
                 break;
             case "kdv_dahilden":
-                brut = t / (1m + kdv);
+                gross = value / (1m + vatFraction);
                 break;
             default:
                 return Task.FromResult(ToolResult.Error("yon brutten, netten veya kdv_dahilden olmalıdır."));
         }
 
-        var tevkifatli = ToolArgs.Bool(arguments, "kdv_tevkifati");
-        var stopajTutari = brut * stopaj;
-        var kdvTutari = brut * kdv;
-        var kdvTevkifati = tevkifatli ? kdvTutari * 0.5m : 0m;
-        var net = brut - stopajTutari;
-        var tahsil = net + kdvTutari - kdvTevkifati;
+        var reverseCharge = ToolArgs.Bool(arguments, "kdv_tevkifati");
+        var withholdingAmount = gross * withholdingFraction;
+        var vatAmount = gross * vatFraction;
+        var vatReverseChargeAmount = reverseCharge ? vatAmount * 0.5m : 0m;
+        var net = gross - withholdingAmount;
+        var totalCollected = net + vatAmount - vatReverseChargeAmount;
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            Brut = decimal.Round(brut, 2),
-            StopajOrani = stopajOrani,
-            Stopaj = decimal.Round(stopajTutari, 2),
+            Brut = decimal.Round(gross, 2),
+            StopajOrani = withholdingRate,
+            Stopaj = decimal.Round(withholdingAmount, 2),
             NetEleGecen = decimal.Round(net, 2),
-            KdvOrani = kdvOrani,
-            Kdv = decimal.Round(kdvTutari, 2),
-            KdvTevkifati = decimal.Round(kdvTevkifati, 2),
-            TahsilEdilecekToplam = decimal.Round(tahsil, 2),
+            KdvOrani = vatRate,
+            Kdv = decimal.Round(vatAmount, 2),
+            KdvTevkifati = decimal.Round(vatReverseChargeAmount, 2),
+            TahsilEdilecekToplam = decimal.Round(totalCollected, 2),
             Not = "Stopaj yalnızca GVK m.94 kapsamındaki vergi sorumlusu ödeyicilerde (şirket, kurum vb.) kesilir; nihai tüketiciye makbuzda stopaj uygulanmaz. 5/10 KDV tevkifatı yalnızca tevkifat yükümlüsü alıcılarda geçerlidir.",
-            Kaynak,
+            Kaynak = Source,
         })));
     }
 }

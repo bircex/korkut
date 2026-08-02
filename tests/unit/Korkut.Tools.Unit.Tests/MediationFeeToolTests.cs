@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class ArabuluculukUcretiToolTests
+public class MediationFeeToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Saatlik_ticari_iki_taraf()
     {
         // 1.500 TL/saat x 5 saat = 7.500
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "ticari", "anlasma": false, "saat": 5 }"""), Context);
 
         Assert.False(result.IsError);
@@ -29,7 +29,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Aile_hukuku_saatlik_ucreti_tuketiciyle_ayni()
     {
         // RG 26.12.2025/33119 madde 1: aile hukuku, tüketici ve diğer aynı saatlik tutarları paylaşır.
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "aile", "anlasma": false, "saat": 1 }"""), Context);
 
         Assert.False(result.IsError);
@@ -40,9 +40,9 @@ public class ArabuluculukUcretiToolTests
     public async Task Taraf_sayisi_bandi_sinirlari()
     {
         // İşçi-işveren: 5 taraf 3-5 bandında (2.460), 6 taraf 6-10 bandında (2.560).
-        var bes = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var bes = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "isci_isveren", "anlasma": false, "saat": 1, "taraf_sayisi": 5 }"""), Context);
-        var alti = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var alti = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "isci_isveren", "anlasma": false, "saat": 1, "taraf_sayisi": 6 }"""), Context);
 
         Assert.Equal(2460.00m, Payload(bes).GetProperty("ucret").GetDecimal());
@@ -53,7 +53,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Anlasma_nispi_iki_dilim()
     {
         // 600.000 x %6 + 400.000 x %5 = 36.000 + 20.000 = 56.000
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "diger", "anlasma": true, "anlasma_tutari": 1000000 }"""), Context);
 
         var payload = Payload(result);
@@ -66,7 +66,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Anlasma_asgari_ucret_tabani_genel()
     {
         // 50.000 x %6 = 3.000 < 9.000
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "isci_isveren", "anlasma": true, "anlasma_tutari": 50000 }"""), Context);
 
         var payload = Payload(result);
@@ -78,7 +78,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Anlasma_asgari_ucret_tabani_ticari()
     {
         // 100.000 x %6 = 6.000 < 13.000 (ticari)
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "ticari", "anlasma": true, "anlasma_tutari": 100000 }"""), Context);
 
         Assert.Equal(13000.00m, Payload(result).GetProperty("ucret").GetDecimal());
@@ -88,7 +88,7 @@ public class ArabuluculukUcretiToolTests
     public async Task Birden_fazla_arabulucuda_yuzde_artar()
     {
         // 600.000 x %9 = 54.000
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "diger", "anlasma": true, "anlasma_tutari": 600000, "arabulucu_sayisi": 2 }"""), Context);
 
         Assert.Equal(54000.00m, Payload(result).GetProperty("ucret").GetDecimal());
@@ -97,9 +97,9 @@ public class ArabuluculukUcretiToolTests
     [Fact]
     public async Task Anlasma_tutarsiz_veya_saatsiz_cagri_hata_doner()
     {
-        var tutarsiz = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var tutarsiz = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "ticari", "anlasma": true }"""), Context);
-        var saatsiz = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var saatsiz = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "ticari", "anlasma": false }"""), Context);
 
         Assert.True(tutarsiz.IsError);
@@ -109,7 +109,7 @@ public class ArabuluculukUcretiToolTests
     [Fact]
     public async Task Bilinmeyen_uyusmazlik_turu_hata_doner()
     {
-        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+        var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "uzay", "anlasma": false, "saat": 1 }"""), Context);
 
         Assert.True(result.IsError);
