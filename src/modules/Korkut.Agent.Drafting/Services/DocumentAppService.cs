@@ -27,8 +27,18 @@ internal sealed class DocumentAppService(
         var office = current.OfficeId;
         var rows = await uow.InScopeAsync(office, () => docs.ListAsync(office, ct), ct);
         return rows
-            .Select(d => new DocBriefResponse(d.Id, d.ConversationId, d.Title, Kind: null, d.UpdatedAt))
+            .Select(d => new DocBriefResponse(d.Id, d.ConversationId, d.Title, KindOf(d.Title), d.UpdatedAt))
             .ToList();
+    }
+
+    /// <summary>
+    /// The library groups drafts as "sözleşme" vs everything else (dilekçe). The store keeps no
+    /// kind column, so classify by title until drafting records an explicit type.
+    /// </summary>
+    private static string? KindOf(string title)
+    {
+        var t = title.ToLowerInvariant();
+        return t.Contains("sözleşme") || t.Contains("protokol") ? "sozlesme" : null;
     }
 
     public async Task<DocumentDataResponse> ForSessionAsync(Guid sessionId, CancellationToken ct = default)

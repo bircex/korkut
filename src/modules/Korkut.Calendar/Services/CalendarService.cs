@@ -114,7 +114,7 @@ internal sealed class CalendarService(
     {
         var titles = await matters.TitlesAsync(office, Ids(matterIds), ct);
         var names = await clients.NamesAsync(office, Ids(clientIds), ct);
-        var emails = await users.EmailsAsync(office, Ids(assigneeIds), ct);
+        var emails = await users.DisplayNamesAsync(office, Ids(assigneeIds), ct);
         return (titles, names, emails);
     }
 

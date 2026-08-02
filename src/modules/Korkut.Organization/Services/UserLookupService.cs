@@ -11,7 +11,7 @@ namespace Korkut.Organization.Services;
 /// operational data); it calls this to resolve ids when building a response. Each lookup opens its
 /// OWN operational tenant scope — the surrounding request may be pinned on a different connection
 /// (the Agent DB) — so RLS still scopes the read to the caller's office. The display name is the
-/// user's e-mail (parity with the pre-split behaviour).
+/// user's full name, falling back to the e-mail when no name is recorded.
 /// </summary>
 internal sealed class UserLookupService(DbContext db) : IUserLookupService
 {
@@ -27,8 +27,8 @@ internal sealed class UserLookupService(DbContext db) : IUserLookupService
         await using var scope = await db.BeginTenantScopeAsync(officeId, ct);
         var map = await db.Set<User>().AsNoTracking()
             .Where(u => ids.Contains(u.Id))
-            .Select(u => new { u.Id, u.Email })
-            .ToDictionaryAsync(u => u.Id, u => u.Email, ct);
+            .Select(u => new { u.Id, Name = u.FullName ?? u.Email })
+            .ToDictionaryAsync(u => u.Id, u => u.Name, ct);
         await scope.CommitAsync(ct);
         return map;
     }

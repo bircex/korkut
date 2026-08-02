@@ -56,7 +56,7 @@ internal sealed class MemoryService(
         Guid officeId, IReadOnlyList<MemoryItem> items, CancellationToken ct)
     {
         var authorIds = items.Where(i => i.AuthorId is not null).Select(i => i.AuthorId!.Value).Distinct().ToList();
-        var emails = await authors.EmailsAsync(officeId, authorIds, ct);
+        var emails = await authors.DisplayNamesAsync(officeId, authorIds, ct);
         return items.Select(i => new MemoryItemResponse(
             i.Id, i.Kind, i.Text, i.Status,
             i.AuthorId is not null && emails.TryGetValue(i.AuthorId.Value, out var email) ? email : null,

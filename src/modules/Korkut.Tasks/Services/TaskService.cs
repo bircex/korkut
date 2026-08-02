@@ -72,7 +72,7 @@ internal sealed class TaskService(
     private Task<IReadOnlyDictionary<Guid, string>> ResolveAsync(Guid office, IEnumerable<Guid?> ids, CancellationToken ct)
     {
         var list = ids.Where(i => i is not null).Select(i => i!.Value).Distinct().ToList();
-        return list.Count == 0 ? Task.FromResult(NoNames) : users.EmailsAsync(office, list, ct);
+        return list.Count == 0 ? Task.FromResult(NoNames) : users.DisplayNamesAsync(office, list, ct);
     }
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)
