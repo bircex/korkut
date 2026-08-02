@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class IhbarTazminatiToolTests
+public class NoticePayToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class IhbarTazminatiToolTests
     public async Task Yirmi_ay_kidem_alti_hafta_ihbar()
     {
         // Günlük 2.000; 6 hafta x 7 gün x 2.000 = 84.000 brüt; GV %15 = 12.600; damga 637,56.
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             """{ "kidem_ay": 20, "brut_maas": 60000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -37,7 +37,7 @@ public class IhbarTazminatiToolTests
     [InlineData(37, 8)]
     public async Task Ihbar_suresi_4857_m17_basamaklarina_uyar(double kidemAy, int beklenenHafta)
     {
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             $$"""{ "kidem_ay": {{kidemAy}}, "brut_maas": 30000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -48,7 +48,7 @@ public class IhbarTazminatiToolTests
     public async Task Tarih_ciftinden_kidem_hesaplanir()
     {
         // 577 gün / 30 = 19,23 ay -> 6 hafta.
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             """{ "ise_giris": "2025-01-01", "isten_cikis": "2026-08-01", "brut_maas": 60000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -59,7 +59,7 @@ public class IhbarTazminatiToolTests
     public async Task Yan_haklar_giydirilmis_ucrete_dahil_edilir()
     {
         // Giydirilmiş 30.000, günlük 1.000; 6 hafta -> 42.000 brüt; GV 6.300; damga 318,78.
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             """{ "kidem_ay": 20, "brut_maas": 27000, "yemek": 2000, "yol": 1000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -72,7 +72,7 @@ public class IhbarTazminatiToolTests
     [Fact]
     public async Task Kidem_bilgisi_yoksa_hata_doner()
     {
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             """{ "brut_maas": 60000 }"""), Context);
 
         Assert.True(result.IsError);
@@ -81,7 +81,7 @@ public class IhbarTazminatiToolTests
     [Fact]
     public async Task Gecersiz_ucret_hata_doner()
     {
-        var result = await new IhbarTazminatiTool().InvokeAsync(Args(
+        var result = await new NoticePayTool().InvokeAsync(Args(
             """{ "kidem_ay": 12, "brut_maas": 0 }"""), Context);
 
         Assert.True(result.IsError);

@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Yıllık izin süresi ve kullanılmayan izin ücretini hesaplar (4857 sK m.53, 57, 59).</summary>
-public sealed class YillikIzinUcretiTool : IAgentTool
+public sealed class AnnualLeavePayTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -31,47 +31,47 @@ public sealed class YillikIzinUcretiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var kidem = ToolArgs.Decimal(arguments, "kidem_yil");
-        var gunlukBrut = ToolArgs.Decimal(arguments, "gunluk_brut_ucret");
-        if (kidem is not { } kidemYil || gunlukBrut is not { } gunluk || gunluk <= 0)
+        var seniorityYearsArg = ToolArgs.Decimal(arguments, "kidem_yil");
+        var dailyWageArg = ToolArgs.Decimal(arguments, "gunluk_brut_ucret");
+        if (seniorityYearsArg is not { } seniorityYears || dailyWageArg is not { } dailyWage || dailyWage <= 0)
         {
             return Task.FromResult(ToolResult.Error("kidem_yil ve pozitif gunluk_brut_ucret zorunludur."));
         }
 
-        if (kidemYil < 1)
+        if (seniorityYears < 1)
         {
             return Task.FromResult(ToolResult.Error(
                 "Yıllık ücretli izin hakkı, en az 1 yıl çalışmayla doğar (4857 sK m.53). Bu kıdemle izin hakkı henüz doğmamıştır."));
         }
 
         // 4857 m.53: 1-5 yıl (beş yıl dahil) 14 gün; 5'ten fazla 15'ten az 20 gün; 15 (dahil) ve fazlası 26 gün.
-        var hak = kidemYil <= 5 ? 14 : kidemYil < 15 ? 20 : 26;
+        var entitlementDays = seniorityYears <= 5 ? 14 : seniorityYears < 15 ? 20 : 26;
 
         // 4857 m.53/son: 18 ve daha küçük yaştaki işçilerle 50 ve daha yukarı yaştaki işçilere
         // verilecek yıllık ücretli izin süresi 20 günden az olamaz.
-        var yas = ToolArgs.Int(arguments, "yas");
-        var yasKurali = yas is { } y && (y <= 18 || y >= 50);
-        if (yasKurali && hak < 20)
+        var ageArg = ToolArgs.Int(arguments, "yas");
+        var minimumAgeRuleApplied = ageArg is { } age && (age <= 18 || age >= 50);
+        if (minimumAgeRuleApplied && entitlementDays < 20)
         {
-            hak = 20;
+            entitlementDays = 20;
         }
 
-        var gun = ToolArgs.Decimal(arguments, "kullanilmayan_izin_gunu") ?? hak;
-        if (gun < 0)
+        var calculatedDays = ToolArgs.Decimal(arguments, "kullanilmayan_izin_gunu") ?? entitlementDays;
+        if (calculatedDays < 0)
         {
             return Task.FromResult(ToolResult.Error("kullanilmayan_izin_gunu negatif olamaz."));
         }
 
-        var brutUcret = decimal.Round(gun * gunluk, 2);
+        var grossPay = decimal.Round(calculatedDays * dailyWage, 2);
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            KidemYil = kidemYil,
-            YillikIzinHakkiGun = hak,
-            YasKuraliUygulandi = yasKurali,
-            HesaplananGun = gun,
-            GunlukBrutUcret = gunluk,
-            BrutIzinUcreti = brutUcret,
+            KidemYil = seniorityYears,
+            YillikIzinHakkiGun = entitlementDays,
+            YasKuraliUygulandi = minimumAgeRuleApplied,
+            HesaplananGun = calculatedDays,
+            GunlukBrutUcret = dailyWage,
+            BrutIzinUcreti = grossPay,
             Not = "Yıllık izin ücreti çıplak brüt ücret üzerinden hesaplanır (giydirilmiş ücret esas alınmaz, 4857 sK m.57). Sözleşme sona erdiğinde kullanılmayan izin ücreti gelir vergisi, damga vergisi ve SGK kesintilerine tabidir; tutar brüttür.",
             Kaynak = "4857 sK m.53 (izin süreleri), m.57 (izin ücreti) ve m.59 (sözleşme sonunda izin alacağı)",
         })));

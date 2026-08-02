@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Kıdem tazminatı hesaplar (1475 sK m.14: giydirilmiş brüt, tavan kontrolü, damga kesintisi).</summary>
-public sealed class KidemTazminatiTool : IAgentTool
+public sealed class SeveranceTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -34,10 +34,10 @@ public sealed class KidemTazminatiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var giris = ToolArgs.Date(arguments, "ise_giris");
-        var cikis = ToolArgs.Date(arguments, "isten_cikis");
-        var brutMaas = ToolArgs.Decimal(arguments, "brut_maas");
-        if (giris is not { } start || cikis is not { } end || brutMaas is not { } maas || maas <= 0)
+        var hireDateArg = ToolArgs.Date(arguments, "ise_giris");
+        var terminationDateArg = ToolArgs.Date(arguments, "isten_cikis");
+        var baseSalaryArg = ToolArgs.Decimal(arguments, "brut_maas");
+        if (hireDateArg is not { } start || terminationDateArg is not { } end || baseSalaryArg is not { } baseSalary || baseSalary <= 0)
         {
             return Task.FromResult(ToolResult.Error("ise_giris, isten_cikis ve pozitif brut_maas zorunludur."));
         }
@@ -47,55 +47,55 @@ public sealed class KidemTazminatiTool : IAgentTool
             return Task.FromResult(ToolResult.Error("ise_giris, isten_cikis tarihinden önce olmalıdır."));
         }
 
-        var yemek = ToolArgs.Decimal(arguments, "yemek") ?? 0m;
-        var yol = ToolArgs.Decimal(arguments, "yol") ?? 0m;
-        var diger = ToolArgs.Decimal(arguments, "diger") ?? 0m;
-        if (yemek < 0 || yol < 0 || diger < 0)
+        var mealAllowance = ToolArgs.Decimal(arguments, "yemek") ?? 0m;
+        var transportAllowance = ToolArgs.Decimal(arguments, "yol") ?? 0m;
+        var otherAllowances = ToolArgs.Decimal(arguments, "diger") ?? 0m;
+        if (mealAllowance < 0 || transportAllowance < 0 || otherAllowances < 0)
         {
             return Task.FromResult(ToolResult.Error("yemek, yol ve diger negatif olamaz."));
         }
 
-        var toplamGun = end.DayNumber - start.DayNumber;
-        if (toplamGun < 365)
+        var totalDays = end.DayNumber - start.DayNumber;
+        if (totalDays < 365)
         {
             return Task.FromResult(ToolResult.Error(
                 "Kıdem 1 yıldan az: 1475 sK m.14 uyarınca kıdem tazminatı hakkı, en az 1 tam yıl çalışmayla doğar. Bu kıdemle kıdem tazminatı 0 TL'dir."));
         }
 
-        if (SeveranceCeiling.At(end) is not { } tavanDonemi)
+        if (SeveranceCeiling.At(end) is not { } ceilingPeriod)
         {
             return Task.FromResult(ToolResult.Error(
                 $"Kıdem tavanı tablosu {SeveranceCeiling.Periods[0].From:dd.MM.yyyy} öncesini kapsamıyor; bu fesih tarihi için dönem tavanını elle doğrulayın."));
         }
 
-        var giydirilmis = maas + yemek + yol + diger;
-        var tavanUygulandi = giydirilmis > tavanDonemi.Amount;
-        var esasUcret = tavanUygulandi ? tavanDonemi.Amount : giydirilmis;
+        var grossedUp = baseSalary + mealAllowance + transportAllowance + otherAllowances;
+        var ceilingApplied = grossedUp > ceilingPeriod.Amount;
+        var baseWage = ceilingApplied ? ceilingPeriod.Amount : grossedUp;
 
-        var tamYil = toplamGun / 365;
-        var kalanGun = toplamGun % 365;
-        var brutTazminat = (esasUcret * tamYil) + (esasUcret * kalanGun / 365m);
-        var damga = decimal.Round(brutTazminat * PayrollParameters2026.DamgaOrani, 2);
-        var brut = decimal.Round(brutTazminat, 2);
+        var fullYears = totalDays / 365;
+        var remainingDays = totalDays % 365;
+        var grossSeverance = (baseWage * fullYears) + (baseWage * remainingDays / 365m);
+        var stampTax = decimal.Round(grossSeverance * PayrollParameters2026.DamgaOrani, 2);
+        var grossSeveranceRounded = decimal.Round(grossSeverance, 2);
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            KidemSuresiGun = toplamGun,
-            TamYil = tamYil,
-            KalanGun = kalanGun,
-            GiydirilmisBrut = decimal.Round(giydirilmis, 2),
-            Tavan = tavanDonemi.Amount,
-            TavanDonemi = Donem(tavanDonemi),
-            TavanUygulandi = tavanUygulandi,
-            EsasUcret = decimal.Round(esasUcret, 2),
-            BrutKidemTazminati = brut,
-            DamgaVergisi = damga,
-            NetKidemTazminati = brut - damga,
+            KidemSuresiGun = totalDays,
+            TamYil = fullYears,
+            KalanGun = remainingDays,
+            GiydirilmisBrut = decimal.Round(grossedUp, 2),
+            Tavan = ceilingPeriod.Amount,
+            TavanDonemi = FormatPeriod(ceilingPeriod),
+            TavanUygulandi = ceilingApplied,
+            EsasUcret = decimal.Round(baseWage, 2),
+            BrutKidemTazminati = grossSeveranceRounded,
+            DamgaVergisi = stampTax,
+            NetKidemTazminati = grossSeveranceRounded - stampTax,
             Not = "Kıdem tazminatından yalnızca binde 7,59 damga vergisi kesilir; gelir vergisi ve SGK primi kesilmez. Hesap, son giydirilmiş brüt ücretin fesih tarihindeki tavanla sınırlanmasıyla yapılır.",
             Kaynak = SeveranceCeiling.Kaynak,
         })));
     }
 
-    private static string Donem(AmountPeriod p)
+    private static string FormatPeriod(AmountPeriod p)
         => p.To is { } to ? $"{p.From:dd.MM.yyyy} - {to.AddDays(-1):dd.MM.yyyy}" : $"{p.From:dd.MM.yyyy} - devam ediyor";
 }
