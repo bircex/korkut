@@ -10,7 +10,7 @@ namespace Korkut.Tools.Calc;
 /// pasif dönem AGİ hariç net asgari ücret); tazminat işverenin kusur oranıyla çarpılır ve SGK
 /// tarafından sürekli iş göremezlik geliri bağlandıysa peşin sermaye değeri düşülür.
 /// </summary>
-public sealed class IsKazasiTazminatiTool : IAgentTool
+public sealed class WorkAccidentCompensationTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -41,56 +41,56 @@ public sealed class IsKazasiTazminatiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var cinsiyet = Trh2010.NormalizeCinsiyet(ToolArgs.String(arguments, "cinsiyet"));
-        var yas = ToolArgs.Int(arguments, "yas");
-        var oran = ToolArgs.Decimal(arguments, "surekli_is_goremezlik_orani");
-        if (cinsiyet is null || yas is not { } y || oran is not { } m || m <= 0 || m > 100)
+        var gender = Trh2010.NormalizeCinsiyet(ToolArgs.String(arguments, "cinsiyet"));
+        var age = ToolArgs.Int(arguments, "yas");
+        var disabilityRate = ToolArgs.Decimal(arguments, "surekli_is_goremezlik_orani");
+        if (gender is null || age is not { } ageValue || disabilityRate is not { } disabilityValue || disabilityValue <= 0 || disabilityValue > 100)
         {
             return Task.FromResult(ToolResult.Error(
                 "cinsiyet (erkek|kadin), yas ve 0-100 arası surekli_is_goremezlik_orani zorunludur."));
         }
 
-        var isverenKusur = ToolArgs.Decimal(arguments, "isveren_kusur_orani") ?? 100m;
-        if (isverenKusur is <= 0 or > 100)
+        var employerFaultRate = ToolArgs.Decimal(arguments, "isveren_kusur_orani") ?? 100m;
+        if (employerFaultRate is <= 0 or > 100)
         {
             return Task.FromResult(ToolResult.Error("isveren_kusur_orani 0'dan büyük ve en çok 100 olmalıdır."));
         }
 
-        var geciciAy = ToolArgs.Decimal(arguments, "gecici_is_goremezlik_ay") ?? 0m;
-        if (geciciAy < 0)
+        var temporaryDisabilityMonths = ToolArgs.Decimal(arguments, "gecici_is_goremezlik_ay") ?? 0m;
+        if (temporaryDisabilityMonths < 0)
         {
             return Task.FromResult(ToolResult.Error("gecici_is_goremezlik_ay negatif olamaz."));
         }
 
-        var aylikGelir = ToolArgs.Decimal(arguments, "aylik_net_gelir") ?? MinimumWage.GuncelAylikNet;
-        if (aylikGelir <= 0)
+        var monthlyIncome = ToolArgs.Decimal(arguments, "aylik_net_gelir") ?? MinimumWage.GuncelAylikNet;
+        if (monthlyIncome <= 0)
         {
             return Task.FromResult(ToolResult.Error("aylik_net_gelir pozitif olmalıdır."));
         }
 
-        var pesinSermaye = ToolArgs.Decimal(arguments, "sgk_pesin_sermaye");
-        if (pesinSermaye is { } ps && ps < 0)
+        var capitalizedValue = ToolArgs.Decimal(arguments, "sgk_pesin_sermaye");
+        if (capitalizedValue is { } capitalizedCheck && capitalizedCheck < 0)
         {
             return Task.FromResult(ToolResult.Error("sgk_pesin_sermaye negatif olamaz."));
         }
 
-        if (ActuarialMethod.Hesapla(cinsiyet, y) is not { } donem)
+        if (ActuarialMethod.Hesapla(gender, ageValue) is not { } period)
         {
             return Task.FromResult(ToolResult.Error("yas 0-100 aralığında olmalıdır."));
         }
 
-        var maluliyetOran = m / 100m;
-        var yillikGelir = aylikGelir * 12m;
+        var disabilityFraction = disabilityValue / 100m;
+        var annualIncome = monthlyIncome * 12m;
 
-        var aktifKayip = decimal.Round(yillikGelir * donem.AktifYil * maluliyetOran, 2);
-        var pasifKayip = decimal.Round(MinimumWage.GuncelYillikNet * donem.PasifYil * maluliyetOran, 2);
-        var geciciKayip = decimal.Round(aylikGelir * geciciAy, 2);
-        var brutToplam = aktifKayip + pasifKayip + geciciKayip;
-        var kusurluTazminat = decimal.Round(brutToplam * (isverenKusur / 100m), 2);
-        var sgkIndirimi = pesinSermaye is { } sermaye ? decimal.Round(Math.Min(sermaye, kusurluTazminat), 2) : 0m;
-        var netTazminat = kusurluTazminat - sgkIndirimi;
+        var activeLoss = decimal.Round(annualIncome * period.AktifYil * disabilityFraction, 2);
+        var passiveLoss = decimal.Round(MinimumWage.GuncelYillikNet * period.PasifYil * disabilityFraction, 2);
+        var temporaryLoss = decimal.Round(monthlyIncome * temporaryDisabilityMonths, 2);
+        var grossTotal = activeLoss + passiveLoss + temporaryLoss;
+        var compensationAfterFault = decimal.Round(grossTotal * (employerFaultRate / 100m), 2);
+        var socialSecurityDeduction = capitalizedValue is { } capitalAmount ? decimal.Round(Math.Min(capitalAmount, compensationAfterFault), 2) : 0m;
+        var netCompensation = compensationAfterFault - socialSecurityDeduction;
 
-        var varsayimlar = new List<string>
+        var assumptions = new List<string>
         {
             "Bakiye ömür TRH-2010 tablosundan, cinsiyet ve kaza yaşına göre alındı.",
             "Mahkeme modu progresif rant: %10 artırım + %10 iskonto birbirini götürür, net teknik faiz %0; toplam kayıp = yıllık kayıp x yıl.",
@@ -99,29 +99,29 @@ public sealed class IsKazasiTazminatiTool : IAgentTool
             "Geçici iş göremezlik döneminde %100 iş göremezlik ve işçinin kendi ücreti esas alındı.",
             "Tazminat işverenin kusur oranıyla çarpılır; işçinin müterafik kusuru ve kaçınılmazlık indirimi bu orana yansıtılmalıdır.",
         };
-        if (ToolArgs.Bool(arguments, "sgk_gelir_baglandi") && pesinSermaye is null)
+        if (ToolArgs.Bool(arguments, "sgk_gelir_baglandi") && capitalizedValue is null)
         {
-            varsayimlar.Add(
+            assumptions.Add(
                 "SGK sürekli iş göremezlik geliri bağlandığı bildirildi ancak peşin sermaye değeri verilmedi: SGK'nın bildireceği ilk peşin sermaye değeri tazminattan ayrıca düşülmelidir; buradaki sonuç indirimsizdir.");
         }
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
             Yontem = "İş kazası maddi tazminatı, mahkeme modu (TRH-2010 + progresif rant %0 net teknik faiz)",
-            BakiyeOmurYil = decimal.Round(donem.BakiyeOmur, 2),
-            AktifDonemYil = decimal.Round(donem.AktifYil, 2),
-            PasifDonemYil = decimal.Round(donem.PasifYil, 2),
-            EsasAlinanAylikNetGelir = decimal.Round(aylikGelir, 2),
-            AktifDonemKaybi = aktifKayip,
-            PasifDonemKaybi = pasifKayip,
-            GeciciIsGoremezlikKaybi = geciciKayip,
-            BrutToplam = brutToplam,
-            IsverenKusurOrani = isverenKusur,
-            KusurSonrasiTazminat = kusurluTazminat,
-            SgkPesinSermayeIndirimi = sgkIndirimi,
-            NetTazminat = netTazminat,
+            BakiyeOmurYil = decimal.Round(period.BakiyeOmur, 2),
+            AktifDonemYil = decimal.Round(period.AktifYil, 2),
+            PasifDonemYil = decimal.Round(period.PasifYil, 2),
+            EsasAlinanAylikNetGelir = decimal.Round(monthlyIncome, 2),
+            AktifDonemKaybi = activeLoss,
+            PasifDonemKaybi = passiveLoss,
+            GeciciIsGoremezlikKaybi = temporaryLoss,
+            BrutToplam = grossTotal,
+            IsverenKusurOrani = employerFaultRate,
+            KusurSonrasiTazminat = compensationAfterFault,
+            SgkPesinSermayeIndirimi = socialSecurityDeduction,
+            NetTazminat = netCompensation,
             Uyari = "Bilirkişi hesabı ücret artışları, belgeli çalışma süresi ve SGK peşin sermaye güncellemeleriyle bu sonuçtan sapabilir; sonuç yaklaşık değerdir.",
-            Varsayimlar = varsayimlar,
+            Varsayimlar = assumptions,
             Kaynak = $"{Trh2010.Kaynak}; {MinimumWage.Kaynak}",
         })));
     }

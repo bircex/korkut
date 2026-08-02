@@ -10,7 +10,7 @@ namespace Korkut.Tools.Calc;
 /// yılına ait TÜFE on iki aylık ortalamalara göre değişim oranını geçemez. Uygulamada yenileme
 /// ayından bir önceki ayın (son açıklanan endeks ayının) oranı esas alınır.
 /// </summary>
-public sealed class KiraArtisTool : IAgentTool
+public sealed class RentIncreaseTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -37,49 +37,49 @@ public sealed class KiraArtisTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var kira = ToolArgs.Decimal(arguments, "mevcut_kira");
-        var yenilemeAyi = ToolArgs.String(arguments, "yenileme_ayi");
-        if (kira is not { } mevcutKira || mevcutKira <= 0 || yenilemeAyi is null)
+        var rent = ToolArgs.Decimal(arguments, "mevcut_kira");
+        var renewalMonth = ToolArgs.String(arguments, "yenileme_ayi");
+        if (rent is not { } currentRent || currentRent <= 0 || renewalMonth is null)
         {
             return Task.FromResult(ToolResult.Error("Pozitif mevcut_kira ve yenileme_ayi (YYYY-MM) zorunludur."));
         }
 
         if (!DateOnly.TryParseExact(
-                yenilemeAyi + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var yenileme))
+                renewalMonth + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var renewalDate))
         {
             return Task.FromResult(ToolResult.Error("yenileme_ayi YYYY-MM biçiminde olmalıdır (örn. 2026-07)."));
         }
 
         // TBK m.344 uygulaması: yenileme ayında son açıklanan endeks, bir önceki ayın endeksidir.
-        var endeks = yenileme.AddMonths(-1);
-        var ozelOran = ToolArgs.Decimal(arguments, "tufe_orani");
-        if (ozelOran is { } verilen && verilen < 0)
+        var indexDate = renewalDate.AddMonths(-1);
+        var customRate = ToolArgs.Decimal(arguments, "tufe_orani");
+        if (customRate is { } customRateValue && customRateValue < 0)
         {
             return Task.FromResult(ToolResult.Error("tufe_orani negatif olamaz."));
         }
 
-        var oran = ozelOran ?? TufeTwelveMonthAverage.For(endeks.Year, endeks.Month);
-        if (oran is not { } uygulananOran)
+        var rate = customRate ?? TufeTwelveMonthAverage.For(indexDate.Year, indexDate.Month);
+        if (rate is not { } appliedRate)
         {
             return Task.FromResult(ToolResult.Error(
-                $"{endeks.Year:0000}-{endeks.Month:00} endeks ayı için 12 aylık ortalama TÜFE gömülü tabloda yok; "
+                $"{indexDate.Year:0000}-{indexDate.Month:00} endeks ayı için 12 aylık ortalama TÜFE gömülü tabloda yok; "
                 + "TÜİK'in o ay için açıkladığı oranı tufe_orani parametresiyle verin."));
         }
 
-        var artis = decimal.Round(mevcutKira * uygulananOran / 100m, 2);
-        var kaynak = ozelOran is null
-            ? $"{TufeTwelveMonthAverage.Kaynak} (endeks ayı {endeks.Year:0000}-{endeks.Month:00})"
+        var increase = decimal.Round(currentRent * appliedRate / 100m, 2);
+        var source = customRate is null
+            ? $"{TufeTwelveMonthAverage.Kaynak} (endeks ayı {indexDate.Year:0000}-{indexDate.Month:00})"
             : "Kullanıcının verdiği TÜFE oranı; TBK m.344";
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            MevcutKira = decimal.Round(mevcutKira, 2),
-            UygulananOran = uygulananOran,
-            EndeksAyi = $"{endeks.Year:0000}-{endeks.Month:00}",
-            AzamiArtisTutari = artis,
-            AzamiYeniKira = decimal.Round(mevcutKira + artis, 2),
+            MevcutKira = decimal.Round(currentRent, 2),
+            UygulananOran = appliedRate,
+            EndeksAyi = $"{indexDate.Year:0000}-{indexDate.Month:00}",
+            AzamiArtisTutari = increase,
+            AzamiYeniKira = decimal.Round(currentRent + increase, 2),
             Not = "TBK m.344: artış üst sınırı bir önceki kira yılına ait 12 aylık ortalama TÜFE'dir; "
                 + "çatılı işyeri kiralarında da TÜFE sınırı uygulanır. Taraflar daha düşük bir oran kararlaştırabilir.",
-            Kaynak = kaynak,
+            Kaynak = source,
         })));
     }
 }

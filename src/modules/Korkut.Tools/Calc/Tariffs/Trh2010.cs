@@ -20,7 +20,7 @@ public static class Trh2010
         "TRH-2010 Türkiye Kadın-Erkek Hayat Tablosu (Hacettepe Ü. Aktüerya Bilimleri + BNB, Hazine/SEDDK yayını); ex serisi hukuk pratiğinde yayımlanan tablodan (tazminathukuku.com / damlaseyhan.av.tr)";
 
     /// <summary>Erkek bakiye ömür (ex), indeks = yaş (0-99).</summary>
-    private static readonly decimal[] Erkek =
+    private static readonly decimal[] Male =
     [
         71.93m, 72.35m, 71.42m, 70.47m, 69.52m, 68.57m, 67.60m, 66.63m, 65.66m, 64.68m, // 0-9
         63.70m, 62.72m, 61.74m, 60.76m, 59.78m, 58.80m, 57.84m, 56.87m, 55.91m, 54.95m, // 10-19
@@ -35,7 +35,7 @@ public static class Trh2010
     ];
 
     /// <summary>Kadın bakiye ömür (ex), indeks = yaş (0-99).</summary>
-    private static readonly decimal[] Kadin =
+    private static readonly decimal[] Female =
     [
         78.02m, 77.66m, 76.68m, 75.70m, 74.72m, 73.73m, 72.74m, 71.75m, 70.76m, 69.76m, // 0-9
         68.77m, 67.78m, 66.78m, 65.79m, 64.79m, 63.80m, 62.81m, 61.82m, 60.83m, 59.84m, // 10-19
@@ -67,7 +67,7 @@ public static class Trh2010
             return null;
         }
 
-        var table = c == "erkek" ? Erkek : Kadin;
+        var table = c == "erkek" ? Male : Female;
         return table[Math.Min(yas, table.Length - 1)];
     }
 }

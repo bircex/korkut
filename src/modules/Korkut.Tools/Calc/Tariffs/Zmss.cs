@@ -55,11 +55,11 @@ public static class Zmss
             return null;
         }
 
-        foreach (var basamak in KmKatsayilari)
+        foreach (var tier in KmKatsayilari)
         {
-            if (kilometre >= basamak.Alt && (basamak.Ust is not { } ust || kilometre <= ust))
+            if (kilometre >= tier.Alt && (tier.Ust is not { } upperBound || kilometre <= upperBound))
             {
-                return basamak.Katsayi;
+                return tier.Katsayi;
             }
         }
 

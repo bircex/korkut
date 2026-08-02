@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class GecikmeZammiToolTests
+public class LatePaymentSurchargeToolTests
 {
     private static readonly AgentToolContext Ctx = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class GecikmeZammiToolTests
     public async Task Tam_aylar_tek_donemde_aylik_oranla_hesaplanir()
     {
         // %4,5 dönemi içinde 2 tam ay: 10000 x 0,045 x 2 = 900.
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10000, "vade_tarihi": "2025-01-15", "odeme_tarihi": "2025-03-15" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -31,7 +31,7 @@ public class GecikmeZammiToolTests
     public async Task Ay_kesri_gunluk_oranla_hesaplanir()
     {
         // 10 gün, %4,5: 10000 x 0,045 x 10/30 = 150.
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10000, "vade_tarihi": "2025-01-15", "odeme_tarihi": "2025-01-25" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -45,7 +45,7 @@ public class GecikmeZammiToolTests
     public async Task Oran_degisiminde_donemler_ayri_ayri_hesaplanir()
     {
         // 13.10.2025 - 13.12.2025: bir ay %4,5 (13.10-13.11), bir ay %3,7 (13.11-13.12).
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10000, "vade_tarihi": "2025-10-13", "odeme_tarihi": "2025-12-13" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -63,7 +63,7 @@ public class GecikmeZammiToolTests
     public async Task Bir_liranin_altindaki_zam_asgari_bir_liraya_tamamlanir()
     {
         // 10 TL, 1 gün, %3,7: 10 x 0,037 / 30 = 0,01 -> asgari 1 TL (m.51/2).
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10, "vade_tarihi": "2026-01-05", "odeme_tarihi": "2026-01-06" }"""), Ctx);
 
         Assert.False(result.IsError);
@@ -75,7 +75,7 @@ public class GecikmeZammiToolTests
     [Fact]
     public async Task Tablo_oncesi_vade_hata_doner()
     {
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10000, "vade_tarihi": "2019-01-01", "odeme_tarihi": "2020-01-01" }"""), Ctx);
 
         Assert.True(result.IsError);
@@ -85,11 +85,11 @@ public class GecikmeZammiToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new GecikmeZammiTool().InvokeAsync(Args(
+        var result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": -1, "vade_tarihi": "2025-01-01", "odeme_tarihi": "2025-02-01" }"""), Ctx);
         Assert.True(result.IsError);
 
-        result = await new GecikmeZammiTool().InvokeAsync(Args(
+        result = await new LatePaymentSurchargeTool().InvokeAsync(Args(
             """{ "ana_para": 10000, "vade_tarihi": "2025-02-01", "odeme_tarihi": "2025-01-01" }"""), Ctx);
         Assert.True(result.IsError);
     }
