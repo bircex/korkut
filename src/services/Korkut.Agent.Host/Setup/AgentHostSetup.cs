@@ -70,6 +70,14 @@ public static class AgentHostSetup
             c.Timeout = TimeSpan.FromSeconds(30);
         });
 
+        // TCMB daily exchange-rate bulletins (get_exchange_rates). The TcmbRatesClient class itself
+        // is picked up by the *Client auto-registration loop above; only its named transport is here.
+        services.AddHttpClient("tcmb", c =>
+        {
+            c.BaseAddress = new Uri("https://www.tcmb.gov.tr");
+            c.Timeout = TimeSpan.FromSeconds(30);
+        });
+
         // The four Bedesten court sources — each pins its own itemTypeList (the API's court-type enum)
         // and is exposed as an ISourceClient the search/fetch tools dispatch to by name. Yargıtay and
         // Danıştay support chamber (daire) filtering; Emsal (yerel + istinaf) and KYB do not.
