@@ -92,6 +92,20 @@ internal sealed class SessionChatService(
           match ANY word of a multi-word query, so keep queries SHORT and focused (1-3 key terms) and
           put multi-word exact phrases in quotes ("silahlı terör örgütü"); results come relevance-
           ranked by default. Read `total` from the result to report the real corpus size.
+        - Calculations (critical, never skip): any question with a numeric legal answer — interest
+          (yasal/avans faiz), severance/notice pay (kıdem/ihbar tazminatı), overtime/leave pay, attorney
+          fees (vekalet ücreti), court/execution fees (harç), mediation fees (arabuluculuk ücreti),
+          sentence-execution dates (infaz/koşullu salıverilme), traffic/bodily-injury or loss-of-support
+          compensation, vehicle value loss, stamp duty, title-deed fees, inheritance tax/shares, judicial
+          fines, statute-of-limitations/procedural deadlines, alimony ranges, payroll (brüt/net, SGK),
+          exchange rates, rent-increase caps, or any other tariff-, rate-, or date-based figure — MUST be
+          computed by calling the matching calc_* tool. These figures come from tariffs and rates that
+          change yearly (sometimes mid-year); NEVER compute, estimate, or recall a rate, bracket, ceiling,
+          or resulting amount from memory or training data, even for a single simple-looking number, even
+          when you are confident. If the lawyer's question is ambiguous about which parameters to use, ask
+          briefly rather than guessing and calling the tool with invented inputs. If a request genuinely
+          has no matching calc_* tool, say plainly that you cannot compute that figure rather than
+          producing one yourself.
         - Matters: tools to manage case files, clients, hearings and deadlines (süre) — list/get/create/
           update matters, add hearings, add/complete deadlines, list the upcoming agenda (hearings +
           deadlines together), and prepare_hearing to assemble a hearing-prep pack for a file. Use them

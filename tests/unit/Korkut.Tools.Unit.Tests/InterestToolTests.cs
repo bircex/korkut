@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class FaizToolTests
+public class InterestToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -15,7 +15,7 @@ public class FaizToolTests
     [Fact]
     public async Task Ozel_oran_tam_yil_basit_faiz()
     {
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "ozel", "ozel_oran": 10, "ana_para": 100000, "baslangic": "2025-01-01", "bitis": "2026-01-01" }"""), Context);
 
         Assert.False(result.IsError);
@@ -29,7 +29,7 @@ public class FaizToolTests
     public async Task Yasal_faiz_donem_gecisinde_parcali_hesaplanir()
     {
         // 2024: 152 gün %9 (01.01-01.06) + 214 gün %24 (01.06-01.01.2025).
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "yasal", "ana_para": 100000, "baslangic": "2024-01-01", "bitis": "2025-01-01" }"""), Context);
 
         Assert.False(result.IsError);
@@ -42,7 +42,7 @@ public class FaizToolTests
     [Fact]
     public async Task Yasal_faiz_31_07_2026_sonrasi_yuzde_31()
     {
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "yasal", "ana_para": 365000, "baslangic": "2026-07-31", "bitis": "2026-08-01" }"""), Context);
 
         Assert.False(result.IsError);
@@ -53,7 +53,7 @@ public class FaizToolTests
     [Fact]
     public async Task Bitis_dahil_bir_gun_ekler()
     {
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "ozel", "ozel_oran": 10, "ana_para": 100000, "baslangic": "2025-01-01", "bitis": "2026-01-01", "bitis_dahil": true }"""), Context);
 
         Assert.Equal(366, Payload(result).GetProperty("toplam_gun").GetInt32());
@@ -62,7 +62,7 @@ public class FaizToolTests
     [Fact]
     public async Task Avans_tablosu_oncesi_baslangic_hata_doner()
     {
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "avans", "ana_para": 100000, "baslangic": "2022-01-01", "bitis": "2024-01-01" }"""), Context);
 
         Assert.True(result.IsError);
@@ -71,7 +71,7 @@ public class FaizToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new FaizTool().InvokeAsync(Args(
+        var result = await new InterestTool().InvokeAsync(Args(
             """{ "faiz_turu": "yasal", "ana_para": -5, "baslangic": "2025-01-01", "bitis": "2026-01-01" }"""), Context);
 
         Assert.True(result.IsError);
