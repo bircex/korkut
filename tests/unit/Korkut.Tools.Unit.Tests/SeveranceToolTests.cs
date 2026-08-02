@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class KidemTazminatiToolTests
+public class SeveranceToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class KidemTazminatiToolTests
     public async Task Alti_yil_kidem_yan_haklarla_hesaplanir()
     {
         // 01.01.2020 - 01.08.2026: 2404 gün = 6 tam yıl + 214 gün; giydirilmiş 53.000 < tavan 73.729,87.
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2020-01-01", "isten_cikis": "2026-08-01", "brut_maas": 50000, "yemek": 2000, "yol": 1000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -34,7 +34,7 @@ public class KidemTazminatiToolTests
     public async Task Tavani_asan_ucret_tavandan_hesaplanir()
     {
         // Çıkış 01.03.2026: 2026 ilk yarı tavanı 64.948,77; giydirilmiş 100.000 tavana iner.
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2016-03-01", "isten_cikis": "2026-03-01", "brut_maas": 100000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -48,7 +48,7 @@ public class KidemTazminatiToolTests
     [Fact]
     public async Task Temmuz_2026_sonrasi_cikista_yeni_tavan_secilir()
     {
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2020-01-01", "isten_cikis": "2026-07-15", "brut_maas": 90000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -58,7 +58,7 @@ public class KidemTazminatiToolTests
     [Fact]
     public async Task Bir_yildan_az_kidem_hata_doner()
     {
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2026-01-01", "isten_cikis": "2026-06-01", "brut_maas": 50000 }"""), Context);
 
         Assert.True(result.IsError);
@@ -67,7 +67,7 @@ public class KidemTazminatiToolTests
     [Fact]
     public async Task Tavan_tablosu_oncesi_cikis_hata_doner()
     {
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2020-01-01", "isten_cikis": "2023-06-01", "brut_maas": 50000 }"""), Context);
 
         Assert.True(result.IsError);
@@ -76,7 +76,7 @@ public class KidemTazminatiToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new KidemTazminatiTool().InvokeAsync(Args(
+        var result = await new SeveranceTool().InvokeAsync(Args(
             """{ "ise_giris": "2020-01-01", "isten_cikis": "2026-08-01", "brut_maas": -1 }"""), Context);
 
         Assert.True(result.IsError);

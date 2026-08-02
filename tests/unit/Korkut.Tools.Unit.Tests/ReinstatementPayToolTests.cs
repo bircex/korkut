@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class IseIadeTazminatiToolTests
+public class ReinstatementPayToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -15,7 +15,7 @@ public class IseIadeTazminatiToolTests
     [Fact]
     public async Task Uc_yil_kidem_4_5_ay_bandi()
     {
-        var result = await new IseIadeTazminatiTool().InvokeAsync(Args(
+        var result = await new ReinstatementPayTool().InvokeAsync(Args(
             """{ "aylik_brut": 50000, "kidem_yil": 3 }"""), Context);
 
         Assert.False(result.IsError);
@@ -35,7 +35,7 @@ public class IseIadeTazminatiToolTests
     [InlineData(20, "6-8 ay")]
     public async Task Kideme_gore_bant_secilir(double kidemYil, string beklenenAralik)
     {
-        var result = await new IseIadeTazminatiTool().InvokeAsync(Args(
+        var result = await new ReinstatementPayTool().InvokeAsync(Args(
             $$"""{ "aylik_brut": 50000, "kidem_yil": {{kidemYil}} }"""), Context);
 
         Assert.False(result.IsError);
@@ -45,7 +45,7 @@ public class IseIadeTazminatiToolTests
     [Fact]
     public async Task Yirmi_yil_kidem_6_8_ay_tutarlari()
     {
-        var result = await new IseIadeTazminatiTool().InvokeAsync(Args(
+        var result = await new ReinstatementPayTool().InvokeAsync(Args(
             """{ "aylik_brut": 50000, "kidem_yil": 20 }"""), Context);
 
         Assert.False(result.IsError);
@@ -57,7 +57,7 @@ public class IseIadeTazminatiToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new IseIadeTazminatiTool().InvokeAsync(Args(
+        var result = await new ReinstatementPayTool().InvokeAsync(Args(
             """{ "aylik_brut": -1, "kidem_yil": 3 }"""), Context);
 
         Assert.True(result.IsError);

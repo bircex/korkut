@@ -58,19 +58,19 @@ public static class PayrollParameters2026
             return 0m;
         }
 
-        decimal vergi = 0m;
-        decimal alt = 0m;
-        foreach (var dilim in UcretTarifesi)
+        decimal tax = 0m;
+        decimal floor = 0m;
+        foreach (var bracket in UcretTarifesi)
         {
-            if (kumulatifMatrah <= alt)
+            if (kumulatifMatrah <= floor)
             {
                 break;
             }
 
-            vergi += (Math.Min(kumulatifMatrah, dilim.UpTo) - alt) * dilim.Rate;
-            alt = dilim.UpTo;
+            tax += (Math.Min(kumulatifMatrah, bracket.UpTo) - floor) * bracket.Rate;
+            floor = bracket.UpTo;
         }
 
-        return vergi;
+        return tax;
     }
 }
