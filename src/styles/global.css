@@ -130,6 +130,62 @@ h2 {
   border-bottom: 1px solid var(--line);
 }
 
+/* İçerik sayfaları (hukuki metinler, güvenlik): dar sütun, okunabilir tipografi. */
+.prose-page {
+  padding: 56px 0 96px;
+}
+.prose {
+  max-width: 760px;
+}
+.prose h1 {
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -0.024em;
+  font-weight: 800;
+  line-height: 1.12;
+  margin-bottom: 10px;
+}
+.prose .updated {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 36px;
+}
+.prose h2 {
+  font-size: 21px;
+  letter-spacing: -0.012em;
+  font-weight: 700;
+  margin: 38px 0 10px;
+}
+.prose p,
+.prose li {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: #2f3237;
+}
+.prose p {
+  margin: 10px 0 14px;
+}
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+  margin: 10px 0 16px;
+}
+.prose li {
+  margin-bottom: 6px;
+}
+.prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose .note {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 18px 0;
+}
+
 /* Accessibility helper */
 .visually-hidden {
   position: absolute !important;

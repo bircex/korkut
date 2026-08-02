@@ -33,4 +33,20 @@ if (cspLine.includes("'unsafe-inline'") && cspLine.match(/script-src[^;]*'unsafe
   process.exit(1);
 }
 
-console.log("check-headers: OK — required security headers present with a strict CSP.");
+// The CSP is declared twice (public/_headers for the host, <meta> in Layout.astro as a
+// fallback). They must stay byte-identical so a policy edit can never drift silently.
+const layout = readFileSync("src/layouts/Layout.astro", "utf8");
+const metaCsp = layout.match(/http-equiv="Content-Security-Policy"\s*\n?\s*content="([^"]+)"/)?.[1];
+const headerCsp = cspLine.replace(/^\s*Content-Security-Policy:\s*/, "").trim();
+if (!metaCsp) {
+  console.error("check-headers: no CSP <meta> found in src/layouts/Layout.astro.");
+  process.exit(1);
+}
+if (metaCsp.trim() !== headerCsp) {
+  console.error("check-headers: CSP drift between Layout.astro <meta> and public/_headers:");
+  console.error(`  meta:    ${metaCsp.trim()}`);
+  console.error(`  headers: ${headerCsp}`);
+  process.exit(1);
+}
+
+console.log("check-headers: OK — required security headers present, strict CSP, meta/_headers in sync.");

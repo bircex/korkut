@@ -7,7 +7,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // /demo artık uygulamanın kayıt sayfasına anlık meta-refresh ile yönlenir; sayfa-düzeyi
 // denetimler gerçek sayfalara uygulanır, /demo ayrı bir yönlendirme testiyle doğrulanır.
-const PAGES = ["/"];
+const PAGES = ["/", "/guvenlik/", "/kvkk/", "/gizlilik/", "/kosullar/"];
 
 async function assertNoSeriousA11y(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();

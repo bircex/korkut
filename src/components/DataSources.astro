@@ -1,4 +1,5 @@
 ---
+// "Trusted by" bandı: hero'nun hemen altında, resmî kaynak kartları grid'i.
 // Kurum logoları resmî sitelerinden alınmıştır; her biri ilgili kuruma aittir.
 const sources = [
   { logo: "/logos/sources/yargitay.png", name: "Yargıtay", sub: "Temyiz kararları & içtihat" },
@@ -13,43 +14,20 @@ const sources = [
   { logo: "/logos/sources/gib.png", name: "GİB", sub: "Özelge, tebliğ & sirküler" },
   { logo: "/logos/sources/kvkk.png", name: "KVKK", sub: "Veri Koruma Kurulu kararları" },
 ];
-// İki kopya: kesintisiz (seamless) kayan şerit için.
-const loop = [...sources, ...sources];
 const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
 ---
 
-<section id="kaynaklar">
+<section id="kaynaklar" class="src-band">
   <div class="wrap center">
-    <span class="eyebrow">Veri kaynakları</span>
-    <h2>Türkiye'nin resmî hukuki kaynaklarından</h2>
-    <p class="section-lead">
-      Araştırma modülü, resmî ve yarı-resmî kaynaklarda canlı arama yapar,
-      sonuçları özetler ve <strong>daima kaynak gösterir</strong>. Uydurma
-      atıfları önlemek için her sonuç kaynağına bağlanır.
+    <p class="trust">
+      <b>10 milyondan fazla</b> karar &amp; mevzuat belgesine
+      <b>11 resmî kaynakta</b> canlı erişim, daima atıfla
     </p>
 
-    <div class="src-stats">
-      <div class="src-stat">
-        <b>10M+</b>
-        <span>karar &amp; mevzuat belgesine erişim</span>
-      </div>
-      <div class="src-stat">
-        <b>11</b>
-        <span>resmî &amp; yarı-resmî kaynak</span>
-      </div>
-      <div class="src-stat">
-        <b>Canlı</b>
-        <span>arama &amp; daima atıf</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Kaynaklar kayan şerit (slider). Duraklatmak için üzerine gelin. -->
-  <div class="marquee">
-    <ul class="marquee-track">
+    <div class="src-grid">
       {
-        loop.map((s, i) => (
-          <li class="src-tile" aria-hidden={i >= sources.length ? "true" : undefined}>
+        sources.map((s) => (
+          <div class="src-tile">
             <div class="src-logo">
               <img src={`${base}${s.logo.slice(1)}`} alt={`${s.name} logosu`} loading="lazy" />
             </div>
@@ -57,90 +35,60 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
               <b>{s.name}</b>
               <span>{s.sub}</span>
             </div>
-          </li>
+          </div>
         ))
       }
-    </ul>
-  </div>
+    </div>
 
-  <div class="wrap center">
     <p class="src-note">
-      Kaynak listesi büyümeye devam ediyor; Uyuşmazlık Mahkemesi, BDDK ve sigorta
-      tahkim kararları da kapsam dahilindedir.
+      Kaynak listesi büyümeye devam ediyor; Uyuşmazlık Mahkemesi, BDDK ve
+      sigorta tahkim kararları da kapsam dahilindedir. Uydurma atıfları
+      önlemek için her sonuç kaynağına bağlanır.
     </p>
   </div>
 </section>
 
 <style>
-  .src-stats {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px 52px;
-    margin-top: 40px;
+  .src-band {
+    padding: 56px 0 72px;
   }
-  .src-stat b {
-    display: block;
-    font-size: 36px;
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 1.1;
-  }
-  .src-stat span {
+  .trust {
     color: var(--muted);
-    font-size: 14px;
+    font-size: 15.5px;
+    margin-bottom: 36px;
   }
-
-  /* Full-bleed kayan şerit, kenarlarda yumuşak solma (fade) maskesiyle. */
-  .marquee {
-    margin-top: 48px;
-    overflow: hidden;
-    -webkit-mask-image: linear-gradient(
-      90deg,
-      transparent,
-      #000 7%,
-      #000 93%,
-      transparent
-    );
-    mask-image: linear-gradient(
-      90deg,
-      transparent,
-      #000 7%,
-      #000 93%,
-      transparent
-    );
+  .trust b {
+    color: var(--ink);
+    font-weight: 700;
   }
-  .marquee-track {
-    display: flex;
-    width: max-content;
-    list-style: none;
-    animation: src-scroll 46s linear infinite;
+  .src-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    text-align: left;
   }
-  .marquee:hover .marquee-track {
-    animation-play-state: paused;
-  }
-  @keyframes src-scroll {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      /* Şerit iki özdeş kopyadan oluşur; yarısı kadar kaydırınca kesintisiz döner. */
-      transform: translateX(-50%);
+  @media (max-width: 980px) {
+    .src-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-
+  /* Dar ekran ve 200% zoom: tek sütun, kartlar daralabilir. */
+  @media (max-width: 720px) {
+    .src-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .src-text {
+    min-width: 0;
+  }
   .src-tile {
     display: flex;
     align-items: center;
     gap: 14px;
-    flex: none;
-    width: 248px;
-    margin-right: 16px;
-    background: #fff;
+    background: var(--bg-soft);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     padding: 16px 18px;
-    text-align: left;
   }
   .src-logo {
     flex: none;
@@ -148,7 +96,7 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
     height: 44px;
     border-radius: 10px;
     border: 1px solid var(--line);
-    background: var(--bg-soft);
+    background: #fff;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -160,37 +108,17 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
   }
   .src-text b {
     display: block;
-    font-size: 15px;
+    font-size: 14.5px;
     letter-spacing: -0.01em;
   }
   .src-text span {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12.5px;
   }
   .src-note {
     color: var(--muted);
-    font-size: 14.5px;
-    margin: 32px auto 0;
-    max-width: 620px;
-  }
-
-  /* Hareket azaltma tercihinde şerit durur ve merkezli grid'e döner. */
-  @media (prefers-reduced-motion: reduce) {
-    .marquee {
-      -webkit-mask-image: none;
-      mask-image: none;
-    }
-    .marquee-track {
-      animation: none;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: auto;
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-    .src-tile[aria-hidden="true"] {
-      display: none;
-    }
+    font-size: 14px;
+    margin: 30px auto 0;
+    max-width: 640px;
   }
 </style>

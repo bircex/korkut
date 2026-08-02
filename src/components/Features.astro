@@ -1,6 +1,6 @@
 ---
-// Yetenekler: iki grup (Hukuk / Ofis), her biri attacklens.io "Discover and
-// assess" tarzı sekmeli showcase. Sekmelerin sağ paneline ss/video gelecek:
+// Yetenekler: üç grup (Hukuk / Ofis / Özelleştirme). Her alt yetenek kendi
+// bloğunda, medya bir sağda bir solda akacak şekilde (zigzag) listelenir:
 //   shot: "/shots/arastirma.png"  → görsel
 //   video: "/shots/dilekce.mp4"   → video
 // İkisi de boşsa yer tutucu (placeholder) gösterilir.
@@ -38,27 +38,40 @@ const groups: Group[] = [
       {
         id: "dilekce",
         tab: "Dilekçe",
-        title: "Dilekçe & sözleşme taslağı",
-        body: "Canvas editöründe dava türüne uygun dilekçe ve sözleşme taslakları üretir; birlikte düzenler, DOCX/UDF olarak dışa aktarır.",
+        title: "Dilekçe yazımı",
+        body: "Dava, cevap ve beyan dilekçelerini sohbetten üretir; yan yana açılan editörde birlikte düzenlersiniz. Mahkeme başlık düzeni ve talep sonucu kalıpları hazır gelir.",
         points: [
-          "Şablon kataloğundan belge türünü algılar",
-          "Canvas'ta canlı, madde madde düzenleme",
+          "Şablon kataloğundan dilekçe türünü algılar",
+          "İçtihat atıflarını esas ve karar numarasıyla ekler",
           "DOCX ve UYAP (UDF) formatında dışa aktarım",
         ],
         shot: "/shots/dilekce.png",
         video: null,
       },
       {
-        id: "belge",
-        tab: "Belge inceleme",
-        title: "Belge inceleme & çıkarım",
-        body: "Yüklenen evrağın metnini yerelde, güvenle çıkarır. Dosya diske yazılmaz; içerik 'güvenilmez veri' olarak izole edilir.",
+        id: "sozlesme",
+        tab: "Sözleşme",
+        title: "Sözleşme taslağı",
+        body: "Hizmet, lisans ve kira dahil sözleşmeleri madde madde kurar; SLA, bedel, gizlilik ve fesih hükümlerini işinize göre uyarlar, riskli hükümlerde sizi uyarır.",
         points: [
-          "Yerelde metin çıkarımı (bayt içeriği diske yazılmaz)",
-          "Katı dosya doğrulama (magic-number) ve boyut sınırı",
-          "Prompt injection'a karşı içerik izolasyonu",
+          "Madde bazlı kurgu: kapsam, SLA, bedel, gizlilik, fesih",
+          "Geçerlilik riski taşıyan hükümlerde uyarı",
+          "Pazarlık turları sürüm geçmişiyle saklanır",
         ],
-        shot: null,
+        shot: "/shots/sozlesme.png",
+        video: null,
+      },
+      {
+        id: "belgeler",
+        tab: "Belgeler",
+        title: "Belge kütüphanesi",
+        body: "Üretilen her taslak tek kütüphanede durur: sözleşmeler ve dilekçeler ayrı gruplanır, her belge bağlandığı sohbet ve dosyayla birlikte açılır.",
+        points: [
+          "Sözleşme / dilekçe ayrımıyla düzenli arşiv",
+          "Her belgede sürüm geçmişi ve değişiklik notu",
+          "Belgeden ilgili sohbete tek tıkla dönüş",
+        ],
+        shot: "/shots/belgeler.png",
         video: null,
       },
     ],
@@ -67,7 +80,7 @@ const groups: Group[] = [
     key: "ofis",
     eyebrow: "Ofis yetenekleri",
     title: "Büronun günlük işleyişi",
-    lead: "Dosya, takvim, görev, bütçe ve yazışma dahil, büronun idari tarafı da aynı asistanda ve aynı onay akışında.",
+    lead: "Dosya, takvim, görev ve bütçe dahil, büronun idari tarafı da aynı asistanda ve aynı onay akışında.",
     tabs: [
       {
         id: "dosya",
@@ -134,19 +147,6 @@ const groups: Group[] = [
         shot: "/shots/butce.png",
         video: null,
       },
-      {
-        id: "yazisma",
-        tab: "Yazışma",
-        title: "Kanallar arası yazışma",
-        body: "Telegram, WhatsApp ve e-posta üzerinden iki yönlü iletişim; öner-ve-onayla ile hiçbir mesaj siz onaylamadan gitmez.",
-        points: [
-          "Telegram, WhatsApp ve e-posta (SMTP/IMAP)",
-          "Öner-ve-onayla: giden mesaj önce önünüze gelir",
-          "Yanıtlar doğrudan ilgili dosyayla ilişkilenir",
-        ],
-        shot: null,
-        video: null,
-      },
     ],
   },
   {
@@ -211,32 +211,13 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
             <p class="section-lead">{g.lead}</p>
           </div>
 
-          <div
-            class="tablist"
-            role="tablist"
-            aria-label={g.eyebrow}
-          >
-            {g.tabs.map((t, i) => (
-              <button
-                class={`tab ${i === 0 ? "is-active" : ""}`}
-                role="tab"
-                type="button"
-                aria-selected={i === 0 ? "true" : "false"}
-                aria-controls={`${g.key}-${t.id}`}
-              >
-                {t.tab}
-              </button>
-            ))}
-          </div>
-
-          <div class="panels">
+          <div class="rows">
             {g.tabs.map((t, i) => (
               <div
-                class={`panel ${i === 0 ? "is-active" : ""}`}
+                class={`row ${i % 2 === 1 ? "row-flip" : ""}`}
                 id={`${g.key}-${t.id}`}
-                role="tabpanel"
               >
-                <div class="panel-text">
+                <div class="row-text">
                   <h3>{t.title}</h3>
                   <p>{t.body}</p>
                   <ul class="checks">
@@ -249,7 +230,7 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
                   </ul>
                 </div>
 
-                <div class="panel-media">
+                <div class="row-media">
                   <div class="frame">
                     <div class="frame-bar" aria-hidden="true">
                       <span /> <span /> <span />
@@ -300,62 +281,44 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
   .head {
     max-width: 640px;
   }
-  .tablist {
+  .rows {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
-    margin: 36px 0;
+    flex-direction: column;
+    gap: 76px;
+    margin-top: 44px;
   }
-  .tab {
-    padding: 9px 18px;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: 0.15s ease;
-    background: transparent;
-    border: 1px solid transparent;
-    font-family: inherit;
-  }
-  .tab:hover {
-    color: var(--ink);
-    background: var(--soft);
-  }
-  .tab.is-active {
-    background: var(--ink);
-    color: #fff;
-  }
-  .tab:focus-visible {
-    outline: 2px solid var(--ink);
-    outline-offset: 2px;
-  }
-
-  .panel {
-    display: none;
+  .row {
+    display: grid;
     grid-template-columns: 0.85fr 1.15fr;
     gap: 48px;
     align-items: center;
   }
-  .panel.is-active {
-    display: grid;
+  /* Zigzag: her ikinci blokta medya sola, metin sağa geçer. */
+  .row-flip {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+  .row-flip .row-media {
+    order: -1;
   }
   @media (max-width: 900px) {
-    .panel.is-active {
+    .row,
+    .row-flip {
       grid-template-columns: 1fr;
       gap: 28px;
     }
+    /* Dar ekranda sıra her zaman metin, sonra medya. */
+    .row-flip .row-media {
+      order: 0;
+    }
   }
 
-  .panel-text h3 {
+  .row-text h3 {
     font-size: clamp(22px, 2.4vw, 28px);
     letter-spacing: -0.02em;
     font-weight: 800;
     margin-bottom: 14px;
   }
-  .panel-text > p {
+  .row-text > p {
     color: var(--muted);
     font-size: 17px;
     margin-bottom: 22px;
@@ -505,26 +468,6 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
     }
   }
 </style>
-
-<script>
-  // Sekme geçişi (JS iyileştirmesi; JS yoksa ilk panel görünür kalır).
-  document.querySelectorAll<HTMLElement>("#ozellikler .showcase").forEach((sc) => {
-    const tabs = [...sc.querySelectorAll<HTMLButtonElement>(".tab")];
-    const panels = [...sc.querySelectorAll<HTMLElement>(".panel")];
-    tabs.forEach((tab, i) => {
-      tab.addEventListener("click", () => {
-        tabs.forEach((t) => {
-          t.classList.remove("is-active");
-          t.setAttribute("aria-selected", "false");
-        });
-        panels.forEach((p) => p.classList.remove("is-active"));
-        tab.classList.add("is-active");
-        tab.setAttribute("aria-selected", "true");
-        panels[i]?.classList.add("is-active");
-      });
-    });
-  });
-</script>
 
 <script>
   // Ekran görüntüsüne tıklayınca tam ekran gösterim (lightbox).

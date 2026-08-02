@@ -1,94 +1,91 @@
 ---
+const base = import.meta.env.BASE_URL;
 const items = [
   {
     title: "Her büro tamamen izole",
-    body: "Her büro veritabanı düzeyinde (satır düzeyi güvenlik ile) ayrılır ve hassas alanlar şifrelenir. Hiçbir büro bir diğerinin verisini göremez.",
+    body: "Her büro veritabanı düzeyinde satır düzeyi güvenlik ile ayrılır. Hiçbir büro bir diğerinin verisini göremez.",
   },
   {
-    title: "Buluta giderken en iyi çaba ile rumuzlama",
-    body: "Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgiler önce rumuzlanır. Bu bir güvence değil, azaltıcı bir önlemdir (bkz. DISCLAIMER).",
+    title: "Buluta giderken rumuzlama",
+    body: "Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgiler önce en iyi çaba ile rumuzlanır.",
   },
   {
     title: "Onaysız kalıcı işlem yok",
-    body: "Siz onaylamadan hiçbir duruşma, dilekçe ya da veri kaydedilmez ya da gönderilmez. Her giden mesaj önce önünüze gelir.",
+    body: "Siz onaylamadan hiçbir kayıt oluşturulmaz, hiçbir mesaj gönderilmez. Her giden mesaj önce önünüze gelir.",
   },
   {
-    title: "Google ile güçlü kimlik doğrulama",
-    body: "Giriş Google üzerinden yapılır; iki adımlı doğrulama Google tarafında yönetilir. Her kurulum tek büroya hizmet eder.",
+    title: "Güçlü kimlik doğrulama",
+    body: "Google ile giriş veya e-posta ve parola; yönetim panelinde zorunlu iki adımlı doğrulama (TOTP).",
+  },
+  {
+    title: "Şifreli hassas alanlar",
+    body: "Müvekkil kimlik bilgileri gibi hassas alanlar veritabanında ayrıca şifrelenir.",
+  },
+  {
+    title: "Her model çağrısı kayıtlı",
+    body: "Yapay zekaya yapılan her çağrı büro bazında kayıt altındadır; sistem tek bir denetlenen giriş noktasının arkasında çalışır.",
   },
 ];
 ---
 
 <section id="guvenlik" class="band">
-  <div class="wrap band-grid">
-    <div>
-      <span class="eyebrow">Gizlilik &amp; Güvenlik</span>
-      <h2>Veriler kontrolünüzde kalır</h2>
-      <p class="section-lead">
-        Müvekkil verisi en hassas varlığınızdır. Korkut baştan sona bu ilkeyle
-        tasarlandı; KVKK sorumluluğu sizde, kontrol de sizde kalır.
-      </p>
-      <p class="disclaimer">
-        Korkut “OLDUĞU GİBİ”, garanti verilmeksizin sunulur ve hukuki tavsiye
-        değildir. Her çıktı, nitelikli bir avukatın gözden geçirmesi gereken bir
-        taslaktır.
-      </p>
-    </div>
+  <div class="wrap center">
+    <span class="eyebrow">Gizlilik &amp; Güvenlik</span>
+    <h2>Veriler kontrolünüzde kalır</h2>
+    <p class="section-lead">
+      Müvekkil verisi en hassas varlığınızdır. Korkut baştan sona bu ilkeyle
+      tasarlandı; KVKK sorumluluğu sizde, kontrol de sizde kalır.
+    </p>
+  </div>
 
-    <ul class="checklist">
-      {
-        items.map((i) => (
-          <li>
-            <span class="tick" aria-hidden="true">
-              ✓
-            </span>
-            <div>
-              <b>{i.title}</b>
-              <span>{i.body}</span>
-            </div>
-          </li>
-        ))
-      }
-    </ul>
+  <div class="wrap sec-grid">
+    {
+      items.map((i) => (
+        <div class="sec-card">
+          <span class="tick" aria-hidden="true">✓</span>
+          <b>{i.title}</b>
+          <span class="body">{i.body}</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="wrap center foot-row">
+    <p class="disclaimer">
+      Korkut hukuki tavsiye vermez; her çıktı, nitelikli bir avukatın gözden
+      geçirmesi gereken bir taslaktır. Ayrıntılar
+      <a href={`${base}kosullar/`}>Kullanım Koşulları</a>'nda yer alır.
+    </p>
+    <a class="more" href={`${base}guvenlik/`}>Ayrıntılı güvenlik sayfası →</a>
   </div>
 </section>
 
 <style>
-  .band-grid {
+  .sec-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 56px;
-    align-items: center;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 44px;
   }
   @media (max-width: 900px) {
-    .band-grid {
-      grid-template-columns: 1fr;
-      gap: 32px;
+    .sec-grid {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
-  .disclaimer {
-    margin-top: 20px;
-    font-size: 13.5px;
-    color: var(--muted);
-    border-left: 3px solid var(--line-strong);
-    padding-left: 14px;
+  @media (max-width: 560px) {
+    .sec-grid {
+      grid-template-columns: 1fr;
+    }
   }
-  .checklist {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  .sec-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 22px 20px;
   }
-  .checklist li {
-    display: flex;
-    gap: 13px;
-    align-items: flex-start;
-    font-size: 15.5px;
-  }
-  .tick {
-    flex: none;
-    width: 24px;
-    height: 24px;
+  .sec-card .tick {
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: var(--ink);
     color: #fff;
@@ -96,13 +93,38 @@ const items = [
     place-items: center;
     font-size: 13px;
     font-weight: 800;
-    margin-top: 1px;
+    margin-bottom: 14px;
   }
-  .checklist b {
+  .sec-card b {
     display: block;
+    font-size: 16px;
+    letter-spacing: -0.012em;
+    margin-bottom: 6px;
   }
-  .checklist span {
+  .sec-card .body {
     color: var(--muted);
     font-size: 14.5px;
+    line-height: 1.6;
+  }
+  .foot-row {
+    margin-top: 36px;
+  }
+  .disclaimer {
+    font-size: 13.5px;
+    color: var(--muted);
+    max-width: 560px;
+    margin: 0 auto 16px;
+  }
+  .disclaimer a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .more {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .more:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 </style>

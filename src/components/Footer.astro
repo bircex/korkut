@@ -2,50 +2,95 @@
 import { REGISTER_URL, CONTACT_EMAIL, APP_URL } from "../consts";
 const year = 2026;
 const base = import.meta.env.BASE_URL;
+
+const columns = [
+  {
+    title: "Ürün",
+    links: [
+      { href: `${base}#ozellikler`, label: "Özellikler" },
+      { href: `${base}#kaynaklar`, label: "Veri kaynakları" },
+      { href: `${base}guvenlik/`, label: "Güvenlik" },
+      { href: `${base}#sss`, label: "SSS" },
+    ],
+  },
+  {
+    title: "Hesap",
+    links: [
+      { href: APP_URL, label: "Giriş yap" },
+      { href: REGISTER_URL, label: "Ücretsiz Başla" },
+      { href: `mailto:${CONTACT_EMAIL}`, label: "İletişim" },
+    ],
+  },
+  {
+    title: "Hukuki",
+    links: [
+      { href: `${base}kvkk/`, label: "KVKK Aydınlatma Metni" },
+      { href: `${base}gizlilik/`, label: "Gizlilik Politikası" },
+      { href: `${base}kosullar/`, label: "Kullanım Koşulları" },
+    ],
+  },
+];
 ---
 
 <footer>
   <div class="wrap foot">
-    <div class="foot-brand">
-      <img
-        src={`${base}korkut-logo.svg`}
-        alt="Korkut logosu"
-        width="28"
-        height="28"
-      />
-      <span>Korkut</span>
+    <div class="foot-brand-col">
+      <div class="foot-brand">
+        <img
+          src={`${base}korkut-logo.svg`}
+          alt="Korkut logosu"
+          width="28"
+          height="28"
+        />
+        <span>Korkut</span>
+      </div>
+      <p class="muted tagline">
+        Hukuk büroları için, her büroyu izole tutan yapay zeka asistanı.
+      </p>
+      <a class="muted mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
     </div>
 
-    <p class="muted tagline">
-      Hukuk büroları için, her büroyu izole tutan yapay zeka asistanı.
-    </p>
-
-    <nav class="foot-links" aria-label="Alt menü">
-      <a href={APP_URL}>Giriş yap</a>
-      <a href={REGISTER_URL}>Ücretsiz Başla</a>
-      <a href={`${base}#guvenlik`}>Güvenlik</a>
-      <a href={`mailto:${CONTACT_EMAIL}`}>İletişim</a>
-    </nav>
+    {
+      columns.map((col) => (
+        <nav class="foot-col" aria-label={col.title}>
+          <b>{col.title}</b>
+          {col.links.map((l) => (
+            <a href={l.href}>{l.label}</a>
+          ))}
+        </nav>
+      ))
+    }
   </div>
   <div class="wrap foot-bottom">
     <span class="muted">© {year} Korkut</span>
-    <span class="muted"
-      >Hukuki tavsiye değildir. “OLDUĞU GİBİ”, garanti verilmeksizin sunulur.</span
-    >
+    <span class="muted">
+      Korkut hukuki tavsiye vermez; ayrıntılar için
+      <a class="terms" href={`${base}kosullar/`}>Kullanım Koşulları</a>.
+    </span>
   </div>
 </footer>
 
 <style>
   footer {
     border-top: 1px solid var(--line);
-    padding: 44px 0 32px;
+    padding: 52px 0 32px;
+    background: var(--bg-soft);
   }
   .foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 18px;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .foot {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .foot {
+      grid-template-columns: 1fr;
+    }
   }
   .foot-brand {
     display: flex;
@@ -58,21 +103,33 @@ const base = import.meta.env.BASE_URL;
     border-radius: 8px;
     border: 1px solid var(--line);
     padding: 2px;
+    background: #fff;
   }
   .tagline {
-    flex: 1 1 260px;
-    min-width: 200px;
+    margin: 12px 0 8px;
+    max-width: 280px;
   }
-  .foot-links {
+  .mail:hover {
+    color: var(--ink);
+  }
+  .foot-col {
     display: flex;
-    gap: 22px;
+    flex-direction: column;
+    gap: 9px;
   }
-  .foot-links a {
+  .foot-col b {
+    font-size: 13.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .foot-col a {
     color: var(--muted);
     font-size: 14.5px;
     font-weight: 500;
   }
-  .foot-links a:hover {
+  .foot-col a:hover {
     color: var(--ink);
   }
   .muted {
@@ -84,8 +141,15 @@ const base = import.meta.env.BASE_URL;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 24px;
+    margin-top: 36px;
     padding-top: 22px;
     border-top: 1px solid var(--line);
+  }
+  .terms {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .terms:hover {
+    color: var(--ink);
   }
 </style>

@@ -50,12 +50,14 @@ export const FAQS = [
   },
 ] as const;
 
+// Hukuki metinlerin son güncelleme tarihi (her metin değişikliğinde güncellenir).
+export const LEGAL_UPDATED = "2 Ağustos 2026";
+
 // Navigasyon bağlantıları. "#..." olanlar ana sayfa bölümleridir (alt sayfalarda
 // otomatik olarak "/#..." biçimine çözülür); diğerleri ayrı sayfa yollarıdır.
 export const NAV_LINKS = [
-  { href: "#ozellikler", label: "Özellikler" },
-  { href: "#entegrasyonlar", label: "Entegrasyonlar" },
   { href: "#kaynaklar", label: "Veri kaynakları" },
+  { href: "#ozellikler", label: "Özellikler" },
   { href: "#guvenlik", label: "Güvenlik" },
   { href: "#sss", label: "SSS" },
 ] as const;
