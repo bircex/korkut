@@ -361,6 +361,13 @@ async function probe<T>(path: string, opts: RequestInit = {}): Promise<T> {
   return sessionRequest<T>(path, opts, { auth: false });
 }
 
+// Streaming/multipart/blob endpoints can't ride sessionRequest (they need the raw
+// Response), but they still get the same 401 → refresh → retry-once contract.
+async function protectedFetch(path: string, opts: RequestInit = {}): Promise<Response> {
+  const { sessionFetch } = await import("./session");
+  return sessionFetch(path, opts);
+}
+
 export const api = {
   me: () => probe<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
@@ -496,9 +503,8 @@ export const api = {
     return request<{ items: CalendarEvent[] }>(`/api/calendar/events${qs ? `?${qs}` : ""}`);
   },
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
-    const res = await fetch("/api/export", {
+    const res = await protectedFetch("/api/export", {
       method: "POST",
-      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ format, title, markdown }),
     });
@@ -586,9 +592,8 @@ export const api = {
       onDocument?: (doc: DocumentRef) => void;
     },
   ) => {
-    const res = await fetch(`/api/sessions/${id}/chat/stream`, {
+    const res = await protectedFetch(`/api/sessions/${id}/chat/stream`, {
       method: "POST",
-      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
@@ -654,9 +659,8 @@ export const api = {
     fd.append("file", file);
     fd.append("text", text);
     // No JSON Content-Type — the browser sets the multipart boundary.
-    const res = await fetch(`/api/sessions/${id}/upload`, {
+    const res = await protectedFetch(`/api/sessions/${id}/upload`, {
       method: "POST",
-      credentials: "same-origin",
       body: fd,
     });
     if (!res.ok) {
