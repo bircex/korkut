@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class FazlaMesaiToolTests
+public class OvertimePayToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -17,7 +17,7 @@ public class FazlaMesaiToolTests
     {
         // Saatlik 45.000/225 = 200; günlük 1.500.
         // FM: 10 x 200 x 1,5 = 3.000; HT: 8 x 200 x 2,5 = 4.000; RT: 2 x 1.500 x 2 = 6.000.
-        var result = await new FazlaMesaiTool().InvokeAsync(Args(
+        var result = await new OvertimePayTool().InvokeAsync(Args(
             """{ "aylik_brut_ucret": 45000, "fazla_mesai_saat": 10, "hafta_tatili_saat": 8, "resmi_tatil_gun": 2 }"""), Context);
 
         Assert.False(result.IsError);
@@ -33,7 +33,7 @@ public class FazlaMesaiToolTests
     [Fact]
     public async Task Verilmeyen_kalemler_sifir_sayilir()
     {
-        var result = await new FazlaMesaiTool().InvokeAsync(Args(
+        var result = await new OvertimePayTool().InvokeAsync(Args(
             """{ "aylik_brut_ucret": 45000, "fazla_mesai_saat": 4 }"""), Context);
 
         Assert.False(result.IsError);
@@ -47,7 +47,7 @@ public class FazlaMesaiToolTests
     [Fact]
     public async Task Negatif_saat_hata_doner()
     {
-        var result = await new FazlaMesaiTool().InvokeAsync(Args(
+        var result = await new OvertimePayTool().InvokeAsync(Args(
             """{ "aylik_brut_ucret": 45000, "fazla_mesai_saat": -3 }"""), Context);
 
         Assert.True(result.IsError);
@@ -56,7 +56,7 @@ public class FazlaMesaiToolTests
     [Fact]
     public async Task Ucret_olmadan_hata_doner()
     {
-        var result = await new FazlaMesaiTool().InvokeAsync(Args(
+        var result = await new OvertimePayTool().InvokeAsync(Args(
             """{ "fazla_mesai_saat": 10 }"""), Context);
 
         Assert.True(result.IsError);

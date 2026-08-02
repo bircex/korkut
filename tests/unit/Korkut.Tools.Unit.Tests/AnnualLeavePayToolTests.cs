@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class YillikIzinUcretiToolTests
+public class AnnualLeavePayToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -21,7 +21,7 @@ public class YillikIzinUcretiToolTests
     [InlineData(25, 26)]
     public async Task Izin_hakki_4857_m53_basamaklarina_uyar(double kidemYil, int beklenenGun)
     {
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             $$"""{ "kidem_yil": {{kidemYil}}, "gunluk_brut_ucret": 1500 }"""), Context);
 
         Assert.False(result.IsError);
@@ -32,7 +32,7 @@ public class YillikIzinUcretiToolTests
     public async Task Gun_verilmezse_hak_uzerinden_ucret_hesaplanir()
     {
         // 3 yıl kıdem -> 14 gün x 1.500 = 21.000.
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             """{ "kidem_yil": 3, "gunluk_brut_ucret": 1500 }"""), Context);
 
         Assert.False(result.IsError);
@@ -44,7 +44,7 @@ public class YillikIzinUcretiToolTests
     [Fact]
     public async Task Kullanilmayan_gun_verilirse_onunla_hesaplanir()
     {
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             """{ "kidem_yil": 3, "gunluk_brut_ucret": 1500, "kullanilmayan_izin_gunu": 30 }"""), Context);
 
         Assert.False(result.IsError);
@@ -54,7 +54,7 @@ public class YillikIzinUcretiToolTests
     [Fact]
     public async Task Elli_yas_ve_uzeri_asgari_20_gun()
     {
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             """{ "kidem_yil": 3, "gunluk_brut_ucret": 1500, "yas": 52 }"""), Context);
 
         Assert.False(result.IsError);
@@ -66,7 +66,7 @@ public class YillikIzinUcretiToolTests
     [Fact]
     public async Task Bir_yildan_az_kidem_hata_doner()
     {
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             """{ "kidem_yil": 0.5, "gunluk_brut_ucret": 1500 }"""), Context);
 
         Assert.True(result.IsError);
@@ -75,7 +75,7 @@ public class YillikIzinUcretiToolTests
     [Fact]
     public async Task Gecersiz_ucret_hata_doner()
     {
-        var result = await new YillikIzinUcretiTool().InvokeAsync(Args(
+        var result = await new AnnualLeavePayTool().InvokeAsync(Args(
             """{ "kidem_yil": 3, "gunluk_brut_ucret": 0 }"""), Context);
 
         Assert.True(result.IsError);
