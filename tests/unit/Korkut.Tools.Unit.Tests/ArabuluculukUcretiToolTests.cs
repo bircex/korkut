@@ -26,6 +26,17 @@ public class ArabuluculukUcretiToolTests
     }
 
     [Fact]
+    public async Task Aile_hukuku_saatlik_ucreti_tuketiciyle_ayni()
+    {
+        // RG 26.12.2025/33119 madde 1: aile hukuku, tüketici ve diğer aynı saatlik tutarları paylaşır.
+        var result = await new ArabuluculukUcretiTool().InvokeAsync(Args(
+            """{ "uyusmazlik_turu": "aile", "anlasma": false, "saat": 1 }"""), Context);
+
+        Assert.False(result.IsError);
+        Assert.Equal(1000.00m, Payload(result).GetProperty("ucret").GetDecimal());
+    }
+
+    [Fact]
     public async Task Taraf_sayisi_bandi_sinirlari()
     {
         // İşçi-işveren: 5 taraf 3-5 bandında (2.460), 6 taraf 6-10 bandında (2.560).

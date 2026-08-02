@@ -2,10 +2,9 @@
 
 /// <summary>
 /// 2026 Yılı Arabuluculuk Asgari Ücret Tarifesi (RG 26.12.2025/33119, yürürlük 01.01.2026).
-/// NOT: Saatlik grid ve anlaşma dilimleri iki ikincil kaynaktan çapraz doğrulandı
-/// (penbeunerkeskin.av.tr ve saimdogru.com tarife dökümleri); RG ekinin taranmış PDF'i
-/// (ADB) üzerinden göz kontrolü hâlâ bekliyor. Birden fazla arabulucu yüzdeleri tek
-/// ikincil kaynağa dayanıyor, teyide en muhtaç satırlar onlar.
+/// Saatlik grid ve anlaşma dilimleri RG ekinin taranmış tablosuyla göz kontrolüyle birebir
+/// doğrulandı (bkz. docs/CALC_TOOLS_PLAN.md paragraf 7, artık teyitli); ilk sürümdeki ikincil
+/// kaynak değerleri hatasız çıktı, sadece "aile hukuku" kategorisi (RG madde 1) eksikti.
 /// </summary>
 public static class MediationFees2026
 {
@@ -18,6 +17,7 @@ public static class MediationFees2026
     /// </summary>
     public static readonly Dictionary<string, decimal[]> Saatlik = new()
     {
+        ["aile"] = [1_000m, 2_200m, 2_300m, 2_400m],
         ["isci_isveren"] = [1_130m, 2_460m, 2_560m, 2_660m],
         ["ticari"] = [1_500m, 3_200m, 3_300m, 3_400m],
         ["tuketici"] = [1_000m, 2_200m, 2_300m, 2_400m],
