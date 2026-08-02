@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Yasal faiz, avans (ticari temerrüt) faizi veya özel oranla basit faiz hesaplar.</summary>
-public sealed class FaizTool : IAgentTool
+public sealed class InterestTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -38,11 +38,11 @@ public sealed class FaizTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var tur = ToolArgs.String(arguments, "faiz_turu");
-        var anaPara = ToolArgs.Decimal(arguments, "ana_para");
-        var baslangic = ToolArgs.Date(arguments, "baslangic");
-        var bitis = ToolArgs.Date(arguments, "bitis");
-        if (tur is null || anaPara is not { } p || p <= 0 || baslangic is not { } start || bitis is not { } end)
+        var interestType = ToolArgs.String(arguments, "faiz_turu");
+        var principal = ToolArgs.Decimal(arguments, "ana_para");
+        var startDate = ToolArgs.Date(arguments, "baslangic");
+        var endDate = ToolArgs.Date(arguments, "bitis");
+        if (interestType is null || principal is not { } p || p <= 0 || startDate is not { } start || endDate is not { } end)
         {
             return Task.FromResult(ToolResult.Error("faiz_turu, pozitif ana_para, baslangic ve bitis zorunludur."));
         }
@@ -54,7 +54,7 @@ public sealed class FaizTool : IAgentTool
         }
 
         RatePeriod[] table;
-        switch (tur)
+        switch (interestType)
         {
             case "yasal":
                 table = LegalInterestRates.Yasal;
@@ -63,12 +63,12 @@ public sealed class FaizTool : IAgentTool
                 table = LegalInterestRates.Avans;
                 break;
             case "ozel":
-                if (ToolArgs.Decimal(arguments, "ozel_oran") is not { } oran || oran <= 0)
+                if (ToolArgs.Decimal(arguments, "ozel_oran") is not { } customRate || customRate <= 0)
                 {
                     return Task.FromResult(ToolResult.Error("faiz_turu=ozel için pozitif ozel_oran gerekir."));
                 }
 
-                table = [new RatePeriod(DateOnly.MinValue, null, oran)];
+                table = [new RatePeriod(DateOnly.MinValue, null, customRate)];
                 break;
             default:
                 return Task.FromResult(ToolResult.Error("faiz_turu yasal, avans veya ozel olmalıdır."));
@@ -77,34 +77,34 @@ public sealed class FaizTool : IAgentTool
         if (!RateSchedule.Covers(table, start))
         {
             return Task.FromResult(ToolResult.Error(
-                $"{tur} faiz tablosu {table[0].From:dd.MM.yyyy} öncesini kapsamıyor; daha eski dönem için ozel_oran ile hesaplayın."));
+                $"{interestType} faiz tablosu {table[0].From:dd.MM.yyyy} öncesini kapsamıyor; daha eski dönem için ozel_oran ile hesaplayın."));
         }
 
         var segments = RateSchedule.Segments(table, start, endExclusive);
-        decimal toplamFaiz = 0;
-        var kirilim = new List<object>(segments.Count);
+        decimal totalInterest = 0;
+        var breakdown = new List<object>(segments.Count);
         foreach (var s in segments)
         {
-            var faiz = p * (s.AnnualPercent / 100m) * s.Days / 365m;
-            toplamFaiz += faiz;
-            kirilim.Add(new
+            var interest = p * (s.AnnualPercent / 100m) * s.Days / 365m;
+            totalInterest += interest;
+            breakdown.Add(new
             {
                 Baslangic = s.From,
                 Bitis = s.To,
                 YillikOran = s.AnnualPercent,
                 Gun = s.Days,
-                Faiz = decimal.Round(faiz, 2),
+                Faiz = decimal.Round(interest, 2),
             });
         }
 
-        toplamFaiz = decimal.Round(toplamFaiz, 2);
+        totalInterest = decimal.Round(totalInterest, 2);
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
             Yontem = "Basit faiz, ACT/365, dönem tablosuna göre parçalı",
             ToplamGun = endExclusive.DayNumber - start.DayNumber,
-            DonemKirilimi = kirilim,
-            ToplamFaiz = toplamFaiz,
-            AnaParaArtiFaiz = decimal.Round(p + toplamFaiz, 2),
+            DonemKirilimi = breakdown,
+            ToplamFaiz = totalInterest,
+            AnaParaArtiFaiz = decimal.Round(p + totalInterest, 2),
             Kaynak = LegalInterestRates.Kaynak,
         })));
     }
