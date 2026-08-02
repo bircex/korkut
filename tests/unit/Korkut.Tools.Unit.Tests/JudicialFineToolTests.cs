@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class AdliParaCezasiToolTests
+public class JudicialFineToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -15,7 +15,7 @@ public class AdliParaCezasiToolTests
     [Fact]
     public async Task Toplam_ve_hapse_cevirme_hesaplanir()
     {
-        var result = await new AdliParaCezasiTool().InvokeAsync(Args(
+        var result = await new JudicialFineTool().InvokeAsync(Args(
             """{ "gun_sayisi": 100, "gunluk_miktar": 200 }"""), Context);
 
         Assert.False(result.IsError);
@@ -28,18 +28,18 @@ public class AdliParaCezasiToolTests
     [Fact]
     public async Task Taksit_istenirse_kural_doner()
     {
-        var result = await new AdliParaCezasiTool().InvokeAsync(Args(
+        var result = await new JudicialFineTool().InvokeAsync(Args(
             """{ "gun_sayisi": 100, "gunluk_miktar": 200, "taksit": true }"""), Context);
 
-        var kural = Payload(result).GetProperty("taksit_kurali").GetString();
-        Assert.NotNull(kural);
-        Assert.Contains("5000", kural, StringComparison.Ordinal); // 20000 / 4
+        var rule = Payload(result).GetProperty("taksit_kurali").GetString();
+        Assert.NotNull(rule);
+        Assert.Contains("5000", rule, StringComparison.Ordinal); // 20000 / 4
     }
 
     [Fact]
     public async Task Guncel_aralik_disi_gunluk_miktar_uyari_verir()
     {
-        var result = await new AdliParaCezasiTool().InvokeAsync(Args(
+        var result = await new JudicialFineTool().InvokeAsync(Args(
             """{ "gun_sayisi": 100, "gunluk_miktar": 50 }"""), Context);
 
         Assert.False(result.IsError);
@@ -49,7 +49,7 @@ public class AdliParaCezasiToolTests
     [Fact]
     public async Task Aralik_disi_gun_sayisi_uyari_verir()
     {
-        var result = await new AdliParaCezasiTool().InvokeAsync(Args(
+        var result = await new JudicialFineTool().InvokeAsync(Args(
             """{ "gun_sayisi": 800, "gunluk_miktar": 200 }"""), Context);
 
         Assert.Contains(Payload(result).GetProperty("uyarilar").EnumerateArray(), u => u.GetString()!.Contains("5-730", StringComparison.Ordinal));
@@ -58,7 +58,7 @@ public class AdliParaCezasiToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new AdliParaCezasiTool().InvokeAsync(Args(
+        var result = await new JudicialFineTool().InvokeAsync(Args(
             """{ "gun_sayisi": 0, "gunluk_miktar": 200 }"""), Context);
 
         Assert.True(result.IsError);

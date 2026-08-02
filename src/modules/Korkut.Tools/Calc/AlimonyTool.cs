@@ -4,22 +4,22 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Nafaka tahmini: yerleşik uygulama bantlarına göre aralık verir; bağlayıcı formül yoktur.</summary>
-public sealed class NafakaTool : IAgentTool
+public sealed class AlimonyTool : IAgentTool
 {
-    private const string Kaynak =
+    private const string Source =
         "TMK m.169 (tedbir nafakası), m.175 (yoksulluk nafakası), m.182 ve m.330 (iştirak nafakası); oran bantları yerleşik uygulamadan alınmış tahminlerdir, kanuni bir formül yoktur";
 
     /// <summary>Yerleşik uygulama bantları (gelirin yüzdesi).</summary>
-    private const decimal YoksullukAlt = 0.20m;
+    private const decimal PovertyLower = 0.20m;
 
-    private const decimal YoksullukUst = 0.25m;
+    private const decimal PovertyUpper = 0.25m;
 
-    private const decimal IstirakCocukBasiAlt = 0.15m;
+    private const decimal ChildSupportPerChildLower = 0.15m;
 
-    private const decimal IstirakCocukBasiUst = 0.20m;
+    private const decimal ChildSupportPerChildUpper = 0.20m;
 
     /// <summary>Toplam nafakaların gelire oranı için uygulamada gözetilen tavan.</summary>
-    private const decimal ToplamTavan = 0.50m;
+    private const decimal TotalCap = 0.50m;
 
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -50,78 +50,78 @@ public sealed class NafakaTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var tur = ToolArgs.String(arguments, "nafaka_turu");
-        if (tur is not ("yoksulluk" or "istirak" or "tedbir") || ToolArgs.Decimal(arguments, "yukumlu_net_gelir") is not { } gelir || gelir <= 0)
+        var alimonyType = ToolArgs.String(arguments, "nafaka_turu");
+        if (alimonyType is not ("yoksulluk" or "istirak" or "tedbir") || ToolArgs.Decimal(arguments, "yukumlu_net_gelir") is not { } income || income <= 0)
         {
             return Task.FromResult(ToolResult.Error("Geçerli nafaka_turu ve pozitif yukumlu_net_gelir zorunludur."));
         }
 
-        var uyarilar = new List<string>();
-        decimal altOran;
-        decimal ustOran;
-        string bandAciklama;
+        var warnings = new List<string>();
+        decimal lowerRatio;
+        decimal upperRatio;
+        string bandDescription;
 
-        if (tur == "istirak")
+        if (alimonyType == "istirak")
         {
-            if (ToolArgs.Int(arguments, "cocuk_sayisi") is not { } cocuk || cocuk <= 0)
+            if (ToolArgs.Int(arguments, "cocuk_sayisi") is not { } childCount || childCount <= 0)
             {
                 return Task.FromResult(ToolResult.Error("İştirak nafakası için pozitif cocuk_sayisi zorunludur."));
             }
 
-            altOran = IstirakCocukBasiAlt * cocuk;
-            ustOran = IstirakCocukBasiUst * cocuk;
-            bandAciklama = $"Çocuk başına %{IstirakCocukBasiAlt * 100:0}-{IstirakCocukBasiUst * 100:0} bandı x {cocuk} çocuk";
-            uyarilar.Add("İştirak nafakası çocuğun yaşı, eğitim gideri ve tarafların mali gücüne göre belirlenir; çocuk büyüdükçe artırım davası açılabilir (TMK m.331).");
+            lowerRatio = ChildSupportPerChildLower * childCount;
+            upperRatio = ChildSupportPerChildUpper * childCount;
+            bandDescription = $"Çocuk başına %{ChildSupportPerChildLower * 100:0}-{ChildSupportPerChildUpper * 100:0} bandı x {childCount} çocuk";
+            warnings.Add("İştirak nafakası çocuğun yaşı, eğitim gideri ve tarafların mali gücüne göre belirlenir; çocuk büyüdükçe artırım davası açılabilir (TMK m.331).");
         }
         else
         {
-            altOran = YoksullukAlt;
-            ustOran = YoksullukUst;
-            bandAciklama = $"Gelirin %{YoksullukAlt * 100:0}-{YoksullukUst * 100:0} bandı";
-            if (tur == "yoksulluk")
+            lowerRatio = PovertyLower;
+            upperRatio = PovertyUpper;
+            bandDescription = $"Gelirin %{PovertyLower * 100:0}-{PovertyUpper * 100:0} bandı";
+            if (alimonyType == "yoksulluk")
             {
-                uyarilar.Add("Yoksulluk nafakası için talep edenin boşanma yüzünden yoksulluğa düşecek olması ve kusurunun daha ağır olmaması gerekir (TMK m.175).");
+                warnings.Add("Yoksulluk nafakası için talep edenin boşanma yüzünden yoksulluğa düşecek olması ve kusurunun daha ağır olmaması gerekir (TMK m.175).");
                 if (ToolArgs.Bool(arguments, "es_calisiyor"))
                 {
-                    uyarilar.Add("Talep eden eş çalışıyor: düzenli ve yeterli geliri varsa yoksulluk koşulu oluşmayabilir ve nafaka hiç takdir edilmeyebilir.");
+                    warnings.Add("Talep eden eş çalışıyor: düzenli ve yeterli geliri varsa yoksulluk koşulu oluşmayabilir ve nafaka hiç takdir edilmeyebilir.");
                 }
             }
             else
             {
-                uyarilar.Add("Tedbir nafakası dava süresince geçerlidir ve kusur aranmaz (TMK m.169); müşterek çocuklar için ayrıca çocuk başına %15-20 bandında tedbir nafakası eklenebilir.");
+                warnings.Add("Tedbir nafakası dava süresince geçerlidir ve kusur aranmaz (TMK m.169); müşterek çocuklar için ayrıca çocuk başına %15-20 bandında tedbir nafakası eklenebilir.");
             }
         }
 
-        var tavanUygulandi = false;
-        if (ustOran > ToplamTavan)
+        var capApplied = false;
+        if (upperRatio > TotalCap)
         {
-            ustOran = ToplamTavan;
-            tavanUygulandi = true;
+            upperRatio = TotalCap;
+            capApplied = true;
         }
 
-        if (altOran > ToplamTavan)
+        if (lowerRatio > TotalCap)
         {
-            altOran = ToplamTavan;
-            tavanUygulandi = true;
+            lowerRatio = TotalCap;
+            capApplied = true;
         }
 
-        if (tavanUygulandi)
+        if (capApplied)
         {
-            uyarilar.Add($"Toplam nafakaların gelirin yaklaşık %{ToplamTavan * 100:0}'sini aşmaması yönündeki uygulama gözetilerek aralık tavandan kırpıldı.");
+            warnings.Add($"Toplam nafakaların gelirin yaklaşık %{TotalCap * 100:0}'sini aşmaması yönündeki uygulama gözetilerek aralık tavandan kırpıldı.");
         }
 
-        uyarilar.Add(
+        warnings.Add(
             "BU BİR TAHMİNDİR, HUKUKİ DAYANAK DEĞİLDİR: nafakada yerleşik bir formül yoktur; tutar, tarafların sosyoekonomik durumu, ihtiyaçlar ve hakkaniyet gözetilerek tamamen hakimin takdiriyle belirlenir. Emsal kararlar ve tarafların yaşam düzeyi somut dosyada incelenmelidir.");
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            NafakaTuru = tur,
-            YukumluNetGelir = gelir,
-            OranBandi = bandAciklama,
-            TahminiAltSinirTl = decimal.Round(gelir * altOran, 2),
-            TahminiUstSinirTl = decimal.Round(gelir * ustOran, 2),
-            Uyarilar = uyarilar,
-            Kaynak = Kaynak,
+            NafakaTuru = alimonyType,
+            YukumluNetGelir = income,
+            OranBandi = bandDescription,
+            TahminiAltSinirTl = decimal.Round(income * lowerRatio, 2),
+            TahminiUstSinirTl = decimal.Round(income * upperRatio, 2),
+            Uyarilar = warnings,
+            Kaynak = Source,
         })));
     }
 }
