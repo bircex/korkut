@@ -5,7 +5,7 @@
 /// 2026-2027 tarifesi henüz yayımlanmadı (Ekim-Kasım 2026'da beklenir); çıktığında yeni
 /// dosya eklenir, bu sabitler dönem kaydı olarak kalır.
 /// </summary>
-public static class Aaut20252026
+public static class AttorneyFeeTariff2025To2026
 {
     public const string Kaynak = "Avukatlık Asgari Ücret Tarifesi 2025-2026 (RG 04.11.2025/33067)";
 

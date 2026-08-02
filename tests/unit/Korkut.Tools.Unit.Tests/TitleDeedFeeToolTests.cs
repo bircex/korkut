@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class TapuHarciToolTests
+public class TitleDeedFeeToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -15,7 +15,7 @@ public class TapuHarciToolTests
     [Fact]
     public async Task Toplam_harc_alici_arti_satici_binde_yirmiser()
     {
-        var result = await new TapuHarciTool().InvokeAsync(Args(
+        var result = await new TitleDeedFeeTool().InvokeAsync(Args(
             """{ "satis_bedeli": 5000000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -28,7 +28,7 @@ public class TapuHarciToolTests
     [Fact]
     public async Task Tek_taraf_istendiginde_yalniz_o_taraf_doner()
     {
-        var result = await new TapuHarciTool().InvokeAsync(Args(
+        var result = await new TitleDeedFeeTool().InvokeAsync(Args(
             """{ "satis_bedeli": 5000000, "taraf": "alici" }"""), Context);
 
         Assert.Equal(100000.00m, Payload(result).GetProperty("harc").GetDecimal());
@@ -37,7 +37,7 @@ public class TapuHarciToolTests
     [Fact]
     public async Task Doner_sermaye_notu_ciktida_yer_alir()
     {
-        var result = await new TapuHarciTool().InvokeAsync(Args(
+        var result = await new TitleDeedFeeTool().InvokeAsync(Args(
             """{ "satis_bedeli": 1000000 }"""), Context);
 
         Assert.Contains("Döner sermaye", Payload(result).GetProperty("not").GetString());
@@ -46,9 +46,9 @@ public class TapuHarciToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var bedel = await new TapuHarciTool().InvokeAsync(Args(
+        var bedel = await new TitleDeedFeeTool().InvokeAsync(Args(
             """{ "satis_bedeli": 0 }"""), Context);
-        var taraf = await new TapuHarciTool().InvokeAsync(Args(
+        var taraf = await new TitleDeedFeeTool().InvokeAsync(Args(
             """{ "satis_bedeli": 1000, "taraf": "noter" }"""), Context);
 
         Assert.True(bedel.IsError);

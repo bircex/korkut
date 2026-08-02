@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>AAÜT 2025-2026'ya göre nispi veya maktu asgari vekalet ücretini hesaplar.</summary>
-public sealed class VekaletUcretiTool : IAgentTool
+public sealed class AttorneyFeeTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -46,65 +46,65 @@ public sealed class VekaletUcretiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var kategori = ToolArgs.String(arguments, "kategori");
-        if (kategori is null)
+        var category = ToolArgs.String(arguments, "kategori");
+        if (category is null)
         {
             return Task.FromResult(ToolResult.Error("kategori zorunludur."));
         }
 
-        if (kategori != "para_davasi")
+        if (category != "para_davasi")
         {
-            if (!Aaut20252026.Maktu.TryGetValue(kategori, out var maktu))
+            if (!AttorneyFeeTariff2025To2026.Maktu.TryGetValue(category, out var fixedFee))
             {
                 return Task.FromResult(ToolResult.Error(
-                    "Bilinmeyen kategori. Geçerli değerler: para_davasi, " + string.Join(", ", Aaut20252026.Maktu.Keys) + "."));
+                    "Bilinmeyen kategori. Geçerli değerler: para_davasi, " + string.Join(", ", AttorneyFeeTariff2025To2026.Maktu.Keys) + "."));
             }
 
             return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
             {
-                Kategori = kategori,
+                Kategori = category,
                 UcretTuru = "maktu",
-                Ucret = decimal.Round(maktu, 2),
-                TarifeDonemi = Aaut20252026.Donem,
-                Kaynak = Aaut20252026.Kaynak,
+                Ucret = decimal.Round(fixedFee, 2),
+                TarifeDonemi = AttorneyFeeTariff2025To2026.Donem,
+                Kaynak = AttorneyFeeTariff2025To2026.Kaynak,
             })));
         }
 
-        if (ToolArgs.Decimal(arguments, "dava_degeri") is not { } deger || deger <= 0)
+        if (ToolArgs.Decimal(arguments, "dava_degeri") is not { } value || value <= 0)
         {
             return Task.FromResult(ToolResult.Error("kategori=para_davasi için pozitif dava_degeri zorunludur."));
         }
 
-        var tabanKategori = ToolArgs.String(arguments, "taban_kategori") ?? "asliye";
-        if (!Aaut20252026.Maktu.TryGetValue(tabanKategori, out var taban))
+        var baseCategory = ToolArgs.String(arguments, "taban_kategori") ?? "asliye";
+        if (!AttorneyFeeTariff2025To2026.Maktu.TryGetValue(baseCategory, out var baseFee))
         {
             return Task.FromResult(ToolResult.Error(
-                "Bilinmeyen taban_kategori. Geçerli değerler: " + string.Join(", ", Aaut20252026.Maktu.Keys) + "."));
+                "Bilinmeyen taban_kategori. Geçerli değerler: " + string.Join(", ", AttorneyFeeTariff2025To2026.Maktu.Keys) + "."));
         }
 
-        var slices = BracketSchedule.Apply(Aaut20252026.Nispi, deger);
-        var nispi = decimal.Round(BracketSchedule.Total(slices), 2);
-        var tabanUygulandi = nispi < taban;
-        var kirilim = new List<object>(slices.Length);
+        var slices = BracketSchedule.Apply(AttorneyFeeTariff2025To2026.Nispi, value);
+        var proportionalFee = decimal.Round(BracketSchedule.Total(slices), 2);
+        var baseApplied = proportionalFee < baseFee;
+        var breakdown = new List<object>(slices.Length);
         foreach (var s in slices)
         {
-            kirilim.Add(new { Dilim = s.DilimTutari, Yuzde = s.Yuzde, Ucret = decimal.Round(s.Pay, 2) });
+            breakdown.Add(new { Dilim = s.DilimTutari, Yuzde = s.Yuzde, Ucret = decimal.Round(s.Pay, 2) });
         }
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            Kategori = kategori,
+            Kategori = category,
             UcretTuru = "nispi",
-            DavaDegeri = deger,
-            DilimKirilimi = kirilim,
-            NispiUcret = nispi,
-            MaktuTaban = taban,
-            TabanKategori = tabanKategori,
-            TabanUygulandi = tabanUygulandi,
-            Ucret = tabanUygulandi ? taban : nispi,
+            DavaDegeri = value,
+            DilimKirilimi = breakdown,
+            NispiUcret = proportionalFee,
+            MaktuTaban = baseFee,
+            TabanKategori = baseCategory,
+            TabanUygulandi = baseApplied,
+            Ucret = baseApplied ? baseFee : proportionalFee,
             Not = "Nispi ücret ilgili mahkemenin maktu ücretinin altına inemez (AAÜT m.13); taban varsayılan olarak asliye maktusudur, taban_kategori ile değiştirilebilir.",
-            TarifeDonemi = Aaut20252026.Donem,
-            Kaynak = Aaut20252026.Kaynak,
+            TarifeDonemi = AttorneyFeeTariff2025To2026.Donem,
+            Kaynak = AttorneyFeeTariff2025To2026.Kaynak,
         })));
     }
 }

@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>2026 yargı harçlarını (başvurma + peşin karar-ilam + ıslah + kanun yolu + icra) kalem kalem hesaplar.</summary>
-public sealed class HarcTool : IAgentTool
+public sealed class CourtFeeTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -47,45 +47,45 @@ public sealed class HarcTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var islem = ToolArgs.String(arguments, "islem");
-        var davaTuru = ToolArgs.String(arguments, "dava_turu") ?? "genel";
-        if (davaTuru is not ("genel" or "olum_cismani"))
+        var operation = ToolArgs.String(arguments, "islem");
+        var caseType = ToolArgs.String(arguments, "dava_turu") ?? "genel";
+        if (caseType is not ("genel" or "olum_cismani"))
         {
             return Task.FromResult(ToolResult.Error("dava_turu genel veya olum_cismani olmalıdır."));
         }
 
-        var pesinOran = davaTuru == "olum_cismani" ? CourtFees2026.OlumCismaniPesinOran : CourtFees2026.PesinOran;
-        var deger = ToolArgs.Decimal(arguments, "dava_degeri");
-        var kalemler = new List<HarcKalemi>();
-        var notlar = new List<string>();
+        var advanceRate = caseType == "olum_cismani" ? CourtFees2026.OlumCismaniPesinOran : CourtFees2026.PesinOran;
+        var value = ToolArgs.Decimal(arguments, "dava_degeri");
+        var items = new List<CourtFeeItem>();
+        var notes = new List<string>();
 
-        switch (islem)
+        switch (operation)
         {
             case "dava_acilis":
             {
-                var basvurma = ToolArgs.String(arguments, "mahkeme") switch
+                var filingFee = ToolArgs.String(arguments, "mahkeme") switch
                 {
                     "sulh" => CourtFees2026.BasvurmaSulh,
                     _ => CourtFees2026.BasvurmaAsliyeIdare,
                 };
-                Ekle(kalemler, "Başvurma harcı", basvurma);
+                Add(items, "Başvurma harcı", filingFee);
                 if (ToolArgs.Bool(arguments, "maktu"))
                 {
-                    Ekle(kalemler, "Maktu karar ve ilam harcı (peşin)", CourtFees2026.MaktuKararIlam);
+                    Add(items, "Maktu karar ve ilam harcı (peşin)", CourtFees2026.MaktuKararIlam);
                 }
                 else
                 {
-                    if (deger is not { } d || d <= 0)
+                    if (value is not { } amount || amount <= 0)
                     {
                         return Task.FromResult(ToolResult.Error("dava_acilis nispi hesabı için pozitif dava_degeri gerekir (maktu dava için maktu=true gönderin)."));
                     }
 
-                    var kararIlam = d * CourtFees2026.KararIlamNispiOran;
-                    var pesin = decimal.Round(kararIlam * pesinOran, 2);
-                    Ekle(kalemler, davaTuru == "olum_cismani"
+                    var decisionFee = amount * CourtFees2026.KararIlamNispiOran;
+                    var advance = decimal.Round(decisionFee * advanceRate, 2);
+                    Add(items, caseType == "olum_cismani"
                         ? "Nispi karar ve ilam harcı peşini (1/20, ölüm/cismani zarar)"
-                        : "Nispi karar ve ilam harcı peşini (1/4)", pesin);
-                    notlar.Add($"Nispi karar ve ilam harcının tamamı (binde 68,31) {decimal.Round(kararIlam, 2)} TL'dir; kalan kısım karar kesinleşmeden önce tamamlatılır.");
+                        : "Nispi karar ve ilam harcı peşini (1/4)", advance);
+                    notes.Add($"Nispi karar ve ilam harcının tamamı (binde 68,31) {decimal.Round(decisionFee, 2)} TL'dir; kalan kısım karar kesinleşmeden önce tamamlatılır.");
                 }
 
                 break;
@@ -93,39 +93,39 @@ public sealed class HarcTool : IAgentTool
 
             case "islah_deger_artirimi":
             {
-                var eski = ToolArgs.Decimal(arguments, "eski_deger");
-                var yeni = ToolArgs.Decimal(arguments, "yeni_deger");
-                if (eski is not { } e || yeni is not { } y || e < 0 || y <= e)
+                var oldValue = ToolArgs.Decimal(arguments, "eski_deger");
+                var newValue = ToolArgs.Decimal(arguments, "yeni_deger");
+                if (oldValue is not { } o || newValue is not { } n || o < 0 || n <= o)
                 {
                     return Task.FromResult(ToolResult.Error("islah_deger_artirimi için eski_deger ve ondan büyük yeni_deger zorunludur."));
                 }
 
-                var ek = decimal.Round((y - e) * CourtFees2026.KararIlamNispiOran * pesinOran, 2);
-                Ekle(kalemler, "Islah/değer artırımı ek peşin harcı", ek);
-                notlar.Add($"Ek harç = (yeni değer - eski değer) x binde 68,31 x peşin oran; artırılan tutar {decimal.Round(y - e, 2)} TL.");
+                var additionalFee = decimal.Round((n - o) * CourtFees2026.KararIlamNispiOran * advanceRate, 2);
+                Add(items, "Islah/değer artırımı ek peşin harcı", additionalFee);
+                notes.Add($"Ek harç = (yeni değer - eski değer) x binde 68,31 x peşin oran; artırılan tutar {decimal.Round(n - o, 2)} TL.");
                 break;
             }
 
             case "istinaf":
-                Ekle(kalemler, "İstinaf kanun yoluna başvurma harcı", CourtFees2026.IstinafBasvurma);
-                Ekle(kalemler, "İstinaf karar harcı (maktu)", CourtFees2026.MaktuKararIlam);
+                Add(items, "İstinaf kanun yoluna başvurma harcı", CourtFees2026.IstinafBasvurma);
+                Add(items, "İstinaf karar harcı (maktu)", CourtFees2026.MaktuKararIlam);
                 break;
 
             case "temyiz":
-                Ekle(kalemler, "Temyiz kanun yoluna başvurma harcı", CourtFees2026.TemyizBasvurma);
-                Ekle(kalemler, "Temyiz karar harcı (maktu)", CourtFees2026.MaktuKararIlam);
+                Add(items, "Temyiz kanun yoluna başvurma harcı", CourtFees2026.TemyizBasvurma);
+                Add(items, "Temyiz karar harcı (maktu)", CourtFees2026.MaktuKararIlam);
                 break;
 
             case "icra_takip":
             {
-                if (deger is not { } d || d <= 0)
+                if (value is not { } amount || amount <= 0)
                 {
                     return Task.FromResult(ToolResult.Error("icra_takip için pozitif dava_degeri (takip tutarı) gerekir."));
                 }
 
-                Ekle(kalemler, "İcra başvurma harcı", CourtFees2026.BasvurmaIcra);
-                Ekle(kalemler, "İcra peşin harcı (binde 5)", decimal.Round(d * CourtFees2026.IcraPesinOran, 2));
-                notlar.Add("Tahsil harcı tahsilat aşamasına göre ayrıca doğar: hacizden önce %4,55, hacizden sonra %9,10, satıştan sonra %11,38.");
+                Add(items, "İcra başvurma harcı", CourtFees2026.BasvurmaIcra);
+                Add(items, "İcra peşin harcı (binde 5)", decimal.Round(amount * CourtFees2026.IcraPesinOran, 2));
+                notes.Add("Tahsil harcı tahsilat aşamasına göre ayrıca doğar: hacizden önce %4,55, hacizden sonra %9,10, satıştan sonra %11,38.");
                 break;
             }
 
@@ -133,27 +133,27 @@ public sealed class HarcTool : IAgentTool
                 return Task.FromResult(ToolResult.Error("islem dava_acilis, islah_deger_artirimi, istinaf, temyiz veya icra_takip olmalıdır."));
         }
 
-        decimal toplam = 0;
-        foreach (var k in kalemler)
+        decimal total = 0;
+        foreach (var item in items)
         {
-            toplam += k.Tutar;
+            total += item.Tutar;
         }
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            Islem = islem,
-            DavaTuru = davaTuru,
-            Kalemler = kalemler,
-            Toplam = decimal.Round(toplam, 2),
-            Notlar = notlar,
+            Islem = operation,
+            DavaTuru = caseType,
+            Kalemler = items,
+            Toplam = decimal.Round(total, 2),
+            Notlar = notes,
             TarifeDonemi = CourtFees2026.Donem,
             Kaynak = CourtFees2026.Kaynak,
         })));
     }
 
     /// <summary>Çıktıdaki tek harç kalemi (kalem adı + 2 haneye yuvarlanmış tutar).</summary>
-    private sealed record HarcKalemi(string Kalem, decimal Tutar);
+    private sealed record CourtFeeItem(string Kalem, decimal Tutar);
 
-    private static void Ekle(List<HarcKalemi> kalemler, string ad, decimal tutar)
-        => kalemler.Add(new HarcKalemi(ad, decimal.Round(tutar, 2)));
+    private static void Add(List<CourtFeeItem> items, string name, decimal amount)
+        => items.Add(new CourtFeeItem(name, decimal.Round(amount, 2)));
 }
