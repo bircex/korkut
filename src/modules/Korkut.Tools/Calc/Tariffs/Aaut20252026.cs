@@ -27,9 +27,10 @@ public static class Aaut20252026
     ];
 
     /// <summary>
-    /// Maktu ücretler (TL). NOT: fshm (55.000) ve idare_vergi_durusmali (40.000) kalemleri
-    /// ikincil kaynaktan (kadimhukuk.com.tr, 2025-2026 tarife dökümü) doğrulandı; RG ekinin
-    /// taranmış PDF'i üzerinden göz kontrolü hâlâ bekliyor (bkz. docs/CALC_TOOLS_PLAN.md paragraf 7).
+    /// Maktu ücretler (TL). Tamamı RG 04.11.2025/33067 ekinin taranmış tablosundan göz kontrolüyle
+    /// birebir doğrulandı (bkz. docs/CALC_TOOLS_PLAN.md paragraf 7, artık teyitli). İstinaf/temyiz/
+    /// Danıştay/AYM kalemleri ilk sürümde hatalıydı (tek kalem sanılmıştı); tablo aslında her biri
+    /// için ayrı satırlar içeriyor, aşağıda RG'deki İkinci Kısım İkinci Bölüm sıra numaralarıyla.
     /// </summary>
     public static readonly Dictionary<string, decimal> Maktu = new()
     {
@@ -47,10 +48,18 @@ public static class Aaut20252026
         ["agir_ceza"] = 65_000m,
         ["cocuk"] = 45_000m,
         ["cocuk_agir_ceza"] = 65_000m,
-        ["istinaf"] = 22_000m,
-        ["yargitay_durusmasiz"] = 22_000m,
-        ["yargitay_durusmali"] = 55_000m,
-        ["danistay"] = 55_000m,
-        ["aym_bireysel_basvuru"] = 55_000m,
+        // RG madde 18: Bölge Adliye/Bölge İdare Mahkemelerinde görülen işlerin takipleri.
+        ["bam_ilk_derece"] = 35_000m, // a) İlk derecede görülen davalar
+        ["istinaf_tek_durusma"] = 22_000m, // b) İstinaf yolu ile görülen bir duruşması olan işler
+        ["istinaf_coklu_durusma"] = 42_000m, // c) Birden fazla duruşma veya keşif gibi işlemler
+        ["yargitay_ilk_derece"] = 65_000m, // RG madde 20: Yargıtay'da ilk derecede görülen davalar
+        ["danistay_ilk_derece_durusmasiz"] = 40_000m, // RG madde 21-a
+        ["danistay_ilk_derece_durusmali"] = 65_000m, // RG madde 21-b
+        ["temyiz_durusmali"] = 40_000m, // RG madde 22: Yargıtay/Danıştay/Sayıştay'da temyiz duruşması (tek kalem)
+        ["uyusmazlik_mahkemesi"] = 40_000m, // RG madde 23
+        ["aym_yuce_divan"] = 120_000m, // RG madde 24-a
+        ["aym_bireysel_durusmasiz"] = 40_000m, // RG madde 24-b, duruşmasız
+        ["aym_bireysel_durusmali"] = 80_000m, // RG madde 24-b, duruşmalı
+        ["aym_diger_dava_isler"] = 90_000m, // RG madde 24-c
     };
 }

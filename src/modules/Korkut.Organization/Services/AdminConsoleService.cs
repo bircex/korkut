@@ -48,6 +48,8 @@ public sealed class AdminConsoleService(
     public async Task<Result<IReadOnlyList<AdminOfficeResponse>>> OfficesAsync(CancellationToken ct = default)
     {
         var all = await offices.ListAsync(ct);
+        var assignments = await db.Set<AdminOfficeModel>().AsNoTracking().ToListAsync(ct);
+        var catalog = LoadCatalog();
         var rows = new List<AdminOfficeResponse>(all.Count);
         foreach (var office in all)
         {
@@ -59,7 +61,13 @@ public sealed class AdminConsoleService(
                 .Select(u => u.Email)
                 .FirstOrDefaultAsync(ct);
             await scope.CommitAsync(ct);
-            rows.Add(new AdminOfficeResponse(office.Id, office.Name, office.Disabled, owner, members, office.CreatedAt));
+            var assignment = assignments.FirstOrDefault(a => a.OfficeId == office.Id);
+            var label = assignment?.ModelKey is { } key
+                ? catalog.FirstOrDefault(c => c.Key == key)?.Label
+                : null;
+            rows.Add(new AdminOfficeResponse(
+                office.Id, office.Name, office.Disabled, owner, members, office.CreatedAt,
+                new AdminOfficeModelState(assignment?.Enabled ?? false, assignment?.ModelKey, label)));
         }
 
         return Result<IReadOnlyList<AdminOfficeResponse>>.Ok(rows);
@@ -109,8 +117,25 @@ public sealed class AdminConsoleService(
             perMember));
     }
 
-    public Task<Result<IReadOnlyList<AdminModelResponse>>> ModelsAsync(CancellationToken ct = default)
-        => Task.FromResult(Result<IReadOnlyList<AdminModelResponse>>.Ok(LoadCatalog()));
+    public async Task<Result<IReadOnlyList<AdminModelResponse>>> ModelsAsync(CancellationToken ct = default)
+    {
+        var catalog = LoadCatalog();
+        var assignments = await db.Set<AdminOfficeModel>().AsNoTracking()
+            .Where(a => a.ModelKey != null)
+            .ToListAsync(ct);
+        var names = (await offices.ListAsync(ct)).ToDictionary(o => o.Id, o => o.Name);
+        var rows = catalog
+            .Select(m => m with
+            {
+                AssignedOffices = assignments
+                    .Where(a => a.ModelKey == m.Key && names.ContainsKey(a.OfficeId))
+                    .Select(a => new AdminModelOfficeRef(a.OfficeId, names[a.OfficeId], a.Enabled))
+                    .OrderBy(o => o.Name)
+                    .ToList(),
+            })
+            .ToList();
+        return Result<IReadOnlyList<AdminModelResponse>>.Ok(rows);
+    }
 
     public async Task<Result<AdminOfficeDetailResponse>> AssignModelAsync(
         Guid officeId, string? modelKey, bool enabled, CancellationToken ct = default)
@@ -148,7 +173,7 @@ public sealed class AdminConsoleService(
             return parsed
                 .Where(m => !string.IsNullOrWhiteSpace(m.Key))
                 .Select(m => new AdminModelResponse(
-                    m.Key!, m.Label ?? m.Key!, m.Model ?? string.Empty, m.BaseUrl ?? string.Empty, m.IsLocal))
+                    m.Key!, m.Label ?? m.Key!, m.Model ?? string.Empty, m.BaseUrl ?? string.Empty, m.IsLocal, []))
                 .ToList();
         }
         catch (JsonException)

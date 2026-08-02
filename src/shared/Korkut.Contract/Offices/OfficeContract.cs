@@ -40,12 +40,19 @@ public interface IOfficeProvisioner
 /// <summary>Admin-console stats in the SPA's shape (pending = disabled offices awaiting approval).</summary>
 public sealed record AdminStatsResponse(int Offices, int Active, int Pending, int Users);
 
-/// <summary>An office row as the admin console lists it (owner + member count included).</summary>
+/// <summary>An office row as the admin console lists it (owner + member count + assigned model).</summary>
 public sealed record AdminOfficeResponse(
-    Guid Id, string Name, bool Disabled, string? OwnerEmail, int Members, DateTimeOffset? CreatedAt);
+    Guid Id, string Name, bool Disabled, string? OwnerEmail, int Members, DateTimeOffset? CreatedAt,
+    AdminOfficeModelState Model);
 
-/// <summary>A catalog model — read-only, from the operator's server-side JSON file (no API keys).</summary>
-public sealed record AdminModelResponse(string Key, string Label, string Model, string BaseUrl, bool IsLocal);
+/// <summary>An office that a catalog model is assigned to (the model → offices reverse view).</summary>
+public sealed record AdminModelOfficeRef(Guid Id, string Name, bool Enabled);
+
+/// <summary>A catalog model — read-only, from the operator's server-side JSON file (no API keys) —
+/// plus the offices it is currently assigned to.</summary>
+public sealed record AdminModelResponse(
+    string Key, string Label, string Model, string BaseUrl, bool IsLocal,
+    IReadOnlyList<AdminModelOfficeRef> AssignedOffices);
 
 public sealed record AdminOfficeMemberResponse(Guid Id, string Email, string? Name, string Role, int Chats, int Messages);
 

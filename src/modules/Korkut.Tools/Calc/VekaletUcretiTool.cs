@@ -18,8 +18,10 @@ public sealed class VekaletUcretiTool : IAgentTool
                 "para_davasi", "icra_takibi", "tahliyeli_icra_takibi", "icra_mahkemesi_durusmali",
                 "icra_mahkemesi_durusmasiz", "sulh_hukuk", "sulh_ceza_infaz", "asliye", "tuketici",
                 "fshm", "idare_vergi_durusmasiz", "idare_vergi_durusmali", "agir_ceza", "cocuk",
-                "cocuk_agir_ceza", "istinaf", "yargitay_durusmasiz", "yargitay_durusmali",
-                "danistay", "aym_bireysel_basvuru"
+                "cocuk_agir_ceza", "bam_ilk_derece", "istinaf_tek_durusma", "istinaf_coklu_durusma",
+                "yargitay_ilk_derece", "danistay_ilk_derece_durusmasiz", "danistay_ilk_derece_durusmali",
+                "temyiz_durusmali", "uyusmazlik_mahkemesi", "aym_yuce_divan", "aym_bireysel_durusmasiz",
+                "aym_bireysel_durusmali", "aym_diger_dava_isler"
               ],
               "description": "para_davasi = konusu para olan dava (nispi tarife); diğerleri maktu kalemlerdir"
             },

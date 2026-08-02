@@ -14,7 +14,7 @@ public sealed class ArabuluculukUcretiTool : IAgentTool
           "properties": {
             "uyusmazlik_turu": {
               "type": "string",
-              "enum": ["isci_isveren", "tuketici", "kira", "ortakligin_giderilmesi", "ticari", "diger"],
+              "enum": ["aile", "isci_isveren", "tuketici", "kira", "ortakligin_giderilmesi", "ticari", "diger"],
               "description": "kira = kira, komşu hakkı ve kat mülkiyeti uyuşmazlıkları"
             },
             "anlasma": { "type": "boolean", "description": "Süreç anlaşmayla mı sonuçlandı" },

@@ -91,6 +91,30 @@ public class VekaletUcretiToolTests
         Assert.True(result.IsError);
     }
 
+    [Theory]
+    [InlineData("bam_ilk_derece", 35000.00)]
+    [InlineData("istinaf_tek_durusma", 22000.00)]
+    [InlineData("istinaf_coklu_durusma", 42000.00)]
+    [InlineData("yargitay_ilk_derece", 65000.00)]
+    [InlineData("danistay_ilk_derece_durusmasiz", 40000.00)]
+    [InlineData("danistay_ilk_derece_durusmali", 65000.00)]
+    [InlineData("temyiz_durusmali", 40000.00)]
+    [InlineData("uyusmazlik_mahkemesi", 40000.00)]
+    [InlineData("aym_yuce_divan", 120000.00)]
+    [InlineData("aym_bireysel_durusmasiz", 40000.00)]
+    [InlineData("aym_bireysel_durusmali", 80000.00)]
+    [InlineData("aym_diger_dava_isler", 90000.00)]
+    public async Task Ust_derece_maktu_kalemleri_RG_ekiyle_birebir_esler(string kategori, decimal beklenen)
+    {
+        // RG 04.11.2025/33067 ekinin taranmış tablosundan göz kontrolüyle doğrulanan değerler
+        // (docs/CALC_TOOLS_PLAN.md paragraf 7); ilk sürümdeki tek-kalemli istinaf/yargitay/danistay/aym
+        // varsayımı yanlıştı, tablo her biri için ayrı satır içeriyor.
+        var result = await new VekaletUcretiTool().InvokeAsync(Args($$"""{ "kategori": "{{kategori}}" }"""), Context);
+
+        Assert.False(result.IsError);
+        Assert.Equal(beklenen, Payload(result).GetProperty("ucret").GetDecimal());
+    }
+
     [Fact]
     public async Task Bilinmeyen_kategori_hata_doner()
     {
