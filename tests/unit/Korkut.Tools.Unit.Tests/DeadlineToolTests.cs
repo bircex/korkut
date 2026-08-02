@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class SureToolTests
+public class DeadlineToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -12,10 +12,10 @@ public class SureToolTests
 
     private static JsonElement Payload(ToolResult result) => JsonDocument.Parse(result.Content).RootElement;
 
-    private static async Task<JsonElement> SonGunAsync(string sureTuru, string teblig)
+    private static async Task<JsonElement> SonGunAsync(string durationType, string serviceDate)
     {
-        var result = await new SureTool().InvokeAsync(Args(
-            $$"""{ "sure_turu": "{{sureTuru}}", "teblig_tarihi": "{{teblig}}" }"""), Context);
+        var result = await new DeadlineTool().InvokeAsync(Args(
+            $$"""{ "sure_turu": "{{durationType}}", "teblig_tarihi": "{{serviceDate}}" }"""), Context);
         Assert.False(result.IsError);
         return Payload(result);
     }
@@ -89,7 +89,7 @@ public class SureToolTests
     [Fact]
     public async Task Gecersiz_girdi_hata_doner()
     {
-        var result = await new SureTool().InvokeAsync(Args(
+        var result = await new DeadlineTool().InvokeAsync(Args(
             """{ "sure_turu": "istinaf_hukuk" }"""), Context);
 
         Assert.True(result.IsError);
