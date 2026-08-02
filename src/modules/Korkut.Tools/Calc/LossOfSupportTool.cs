@@ -10,7 +10,7 @@ namespace Korkut.Tools.Calc;
 /// asgari ücret. Pay dağılımı yerleşik uygulamadır: müteveffa 2, eş 2, her çocuk 1, anne/baba 1'er
 /// pay; müteveffanın payı kendi tüketimi olarak dağıtılmaz (klasik havuz yöntemi).
 /// </summary>
-public sealed class DestektenYoksunlukTool : IAgentTool
+public sealed class LossOfSupportTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -44,46 +44,46 @@ public sealed class DestektenYoksunlukTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var cinsiyet = Trh2010.NormalizeCinsiyet(ToolArgs.String(arguments, "cinsiyet"));
-        var yas = ToolArgs.Int(arguments, "yas");
-        if (cinsiyet is null || yas is not { } y)
+        var gender = Trh2010.NormalizeCinsiyet(ToolArgs.String(arguments, "cinsiyet"));
+        var age = ToolArgs.Int(arguments, "yas");
+        if (gender is null || age is not { } ageValue)
         {
             return Task.FromResult(ToolResult.Error("cinsiyet (erkek|kadin) ve yas zorunludur."));
         }
 
-        var kusur = ToolArgs.Decimal(arguments, "kusur_orani") ?? 0m;
-        if (kusur is < 0 or > 100)
+        var faultRate = ToolArgs.Decimal(arguments, "kusur_orani") ?? 0m;
+        if (faultRate is < 0 or > 100)
         {
             return Task.FromResult(ToolResult.Error("kusur_orani 0-100 arasında olmalıdır."));
         }
 
-        var aylikGelir = ToolArgs.Decimal(arguments, "aylik_net_gelir") ?? MinimumWage.GuncelAylikNet;
-        if (aylikGelir <= 0)
+        var monthlyIncome = ToolArgs.Decimal(arguments, "aylik_net_gelir") ?? MinimumWage.GuncelAylikNet;
+        if (monthlyIncome <= 0)
         {
             return Task.FromResult(ToolResult.Error("aylik_net_gelir pozitif olmalıdır."));
         }
 
-        if (ActuarialMethod.Hesapla(cinsiyet, y) is not { } donem)
+        if (ActuarialMethod.Hesapla(gender, ageValue) is not { } period)
         {
             return Task.FromResult(ToolResult.Error("yas 0-100 aralığında olmalıdır."));
         }
 
-        var cocukYaslari = CocukYaslari(arguments);
-        if (cocukYaslari is null)
+        var childAges = ChildAges(arguments);
+        if (childAges is null)
         {
             return Task.FromResult(ToolResult.Error("cocuklar tam sayı yaş listesi olmalıdır (0-100)."));
         }
 
-        var esVar = ToolArgs.Bool(arguments, "es_var");
-        var anneVar = ToolArgs.Bool(arguments, "anne_var");
-        var babaVar = ToolArgs.Bool(arguments, "baba_var");
-        if (!esVar && !anneVar && !babaVar && cocukYaslari.Length == 0)
+        var hasSpouse = ToolArgs.Bool(arguments, "es_var");
+        var hasMother = ToolArgs.Bool(arguments, "anne_var");
+        var hasFather = ToolArgs.Bool(arguments, "baba_var");
+        if (!hasSpouse && !hasMother && !hasFather && childAges.Length == 0)
         {
             return Task.FromResult(ToolResult.Error(
                 "En az bir hak sahibi (es_var, cocuklar, anne_var, baba_var) belirtilmelidir."));
         }
 
-        var varsayimlar = new List<string>
+        var assumptions = new List<string>
         {
             "Bakiye ömürler TRH-2010 tablosundan alındı; destek süresi her hak sahibi için müteveffanın bakiye ömrüyle sınırlıdır.",
             "Mahkeme modu progresif rant: %10 artırım + %10 iskonto birbirini götürür, net teknik faiz %0; destek = yıllık destek x yıl.",
@@ -94,86 +94,86 @@ public sealed class DestektenYoksunlukTool : IAgentTool
         };
 
         // Hak sahipleri ve pay havuzu (müteveffa 2 pay ile havuzda kalır, kendi payı dağıtılmaz).
-        var sahipler = new List<(string Ad, int Yas, string Cinsiyet, int Pay, decimal? DestekYili)>();
-        if (esVar)
+        var beneficiaries = new List<(string Name, int Age, string Gender, int Share, decimal? SupportYears)>();
+        if (hasSpouse)
         {
-            var esYasi = ToolArgs.Int(arguments, "es_yasi") ?? y;
+            var spouseAge = ToolArgs.Int(arguments, "es_yasi") ?? ageValue;
             if (ToolArgs.Int(arguments, "es_yasi") is null)
             {
-                varsayimlar.Add("es_yasi verilmediğinden eş müteveffayla aynı yaşta varsayıldı.");
+                assumptions.Add("es_yasi verilmediğinden eş müteveffayla aynı yaşta varsayıldı.");
             }
 
-            var esCinsiyet = cinsiyet == "erkek" ? "kadin" : "erkek";
-            varsayimlar.Add("Eşin cinsiyeti müteveffanın karşı cinsi varsayıldı (bakiye ömür tablosu seçimi için).");
-            sahipler.Add(("es", esYasi, esCinsiyet, 2, null));
+            var spouseGender = gender == "erkek" ? "kadin" : "erkek";
+            assumptions.Add("Eşin cinsiyeti müteveffanın karşı cinsi varsayıldı (bakiye ömür tablosu seçimi için).");
+            beneficiaries.Add(("es", spouseAge, spouseGender, 2, null));
         }
 
-        for (var i = 0; i < cocukYaslari.Length; i++)
+        for (var i = 0; i < childAges.Length; i++)
         {
-            sahipler.Add(($"cocuk_{i + 1}", cocukYaslari[i], cinsiyet, 1, Math.Max(0m, 18 - cocukYaslari[i])));
+            beneficiaries.Add(($"cocuk_{i + 1}", childAges[i], gender, 1, Math.Max(0m, 18 - childAges[i])));
         }
 
-        if (anneVar)
+        if (hasMother)
         {
-            var anneYasi = ToolArgs.Int(arguments, "anne_yasi") ?? Math.Min(y + 25, 100);
+            var motherAge = ToolArgs.Int(arguments, "anne_yasi") ?? Math.Min(ageValue + 25, 100);
             if (ToolArgs.Int(arguments, "anne_yasi") is null)
             {
-                varsayimlar.Add("anne_yasi verilmediğinden müteveffanın yaşı + 25 varsayıldı.");
+                assumptions.Add("anne_yasi verilmediğinden müteveffanın yaşı + 25 varsayıldı.");
             }
 
-            sahipler.Add(("anne", anneYasi, "kadin", 1, null));
+            beneficiaries.Add(("anne", motherAge, "kadin", 1, null));
         }
 
-        if (babaVar)
+        if (hasFather)
         {
-            var babaYasi = ToolArgs.Int(arguments, "baba_yasi") ?? Math.Min(y + 25, 100);
+            var fatherAge = ToolArgs.Int(arguments, "baba_yasi") ?? Math.Min(ageValue + 25, 100);
             if (ToolArgs.Int(arguments, "baba_yasi") is null)
             {
-                varsayimlar.Add("baba_yasi verilmediğinden müteveffanın yaşı + 25 varsayıldı.");
+                assumptions.Add("baba_yasi verilmediğinden müteveffanın yaşı + 25 varsayıldı.");
             }
 
-            sahipler.Add(("baba", babaYasi, "erkek", 1, null));
+            beneficiaries.Add(("baba", fatherAge, "erkek", 1, null));
         }
 
-        var toplamPay = 2 + sahipler.Sum(s => s.Pay);
-        var kusurOran = kusur / 100m;
-        var yillikGelir = aylikGelir * 12m;
-        var yillikAsgari = MinimumWage.GuncelYillikNet;
+        var totalShares = 2 + beneficiaries.Sum(b => b.Share);
+        var faultFraction = faultRate / 100m;
+        var annualIncome = monthlyIncome * 12m;
+        var annualMinimumWage = MinimumWage.GuncelYillikNet;
 
-        decimal brutToplam = 0, netToplam = 0;
-        var dokum = new List<object>(sahipler.Count);
-        foreach (var (ad, sYas, sCinsiyet, pay, sabitSure) in sahipler)
+        decimal grossTotal = 0, netTotal = 0;
+        var breakdown = new List<object>(beneficiaries.Count);
+        foreach (var (name, beneficiaryAge, beneficiaryGender, share, fixedSupportYears) in beneficiaries)
         {
-            decimal sure;
-            if (sabitSure is { } cocukSure)
+            decimal supportYears;
+            if (fixedSupportYears is { } childFixedYears)
             {
-                sure = Math.Min(cocukSure, donem.BakiyeOmur);
+                supportYears = Math.Min(childFixedYears, period.BakiyeOmur);
             }
-            else if (Trh2010.BakiyeOmur(sCinsiyet, sYas) is { } kendiBakiye)
+            else if (Trh2010.BakiyeOmur(beneficiaryGender, beneficiaryAge) is { } ownResidualLife)
             {
-                sure = Math.Min(kendiBakiye, donem.BakiyeOmur);
+                supportYears = Math.Min(ownResidualLife, period.BakiyeOmur);
             }
             else
             {
-                return Task.FromResult(ToolResult.Error($"{ad} için yaş 0-100 aralığında olmalıdır."));
+                return Task.FromResult(ToolResult.Error($"{name} için yaş 0-100 aralığında olmalıdır."));
             }
 
-            var aktifPart = Math.Min(sure, donem.AktifYil);
-            var pasifPart = Math.Max(0m, sure - aktifPart);
-            var payOrani = (decimal)pay / toplamPay;
-            var brut = decimal.Round((yillikGelir * aktifPart + yillikAsgari * pasifPart) * payOrani, 2);
-            var net = decimal.Round(brut * (1m - kusurOran), 2);
-            brutToplam += brut;
-            netToplam += net;
-            dokum.Add(new
+            var activePart = Math.Min(supportYears, period.AktifYil);
+            var passivePart = Math.Max(0m, supportYears - activePart);
+            var shareFraction = (decimal)share / totalShares;
+            var gross = decimal.Round((annualIncome * activePart + annualMinimumWage * passivePart) * shareFraction, 2);
+            var net = decimal.Round(gross * (1m - faultFraction), 2);
+            grossTotal += gross;
+            netTotal += net;
+            breakdown.Add(new
             {
-                HakSahibi = ad,
-                Yas = sYas,
-                Pay = pay,
-                DestekYili = decimal.Round(sure, 2),
-                AktifYil = decimal.Round(aktifPart, 2),
-                PasifYil = decimal.Round(pasifPart, 2),
-                BrutDestek = brut,
+                HakSahibi = name,
+                Yas = beneficiaryAge,
+                Pay = share,
+                DestekYili = decimal.Round(supportYears, 2),
+                AktifYil = decimal.Round(activePart, 2),
+                PasifYil = decimal.Round(passivePart, 2),
+                BrutDestek = gross,
                 NetDestek = net,
             });
         }
@@ -181,22 +181,22 @@ public sealed class DestektenYoksunlukTool : IAgentTool
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
             Yontem = "Destekten yoksun kalma tazminatı, mahkeme modu (TRH-2010 + progresif rant %0 net teknik faiz, klasik pay havuzu)",
-            MuteveffaBakiyeOmurYil = decimal.Round(donem.BakiyeOmur, 2),
-            AktifDonemYil = decimal.Round(donem.AktifYil, 2),
-            PasifDonemYil = decimal.Round(donem.PasifYil, 2),
-            EsasAlinanAylikNetGelir = decimal.Round(aylikGelir, 2),
-            ToplamPay = toplamPay,
-            KusurOrani = kusur,
-            HakSahipleri = dokum,
-            BrutToplam = brutToplam,
-            NetToplam = netToplam,
-            Varsayimlar = varsayimlar,
+            MuteveffaBakiyeOmurYil = decimal.Round(period.BakiyeOmur, 2),
+            AktifDonemYil = decimal.Round(period.AktifYil, 2),
+            PasifDonemYil = decimal.Round(period.PasifYil, 2),
+            EsasAlinanAylikNetGelir = decimal.Round(monthlyIncome, 2),
+            ToplamPay = totalShares,
+            KusurOrani = faultRate,
+            HakSahipleri = breakdown,
+            BrutToplam = grossTotal,
+            NetToplam = netTotal,
+            Varsayimlar = assumptions,
             Kaynak = $"{Trh2010.Kaynak}; {MinimumWage.Kaynak}",
         })));
     }
 
     /// <summary>cocuklar dizisini okur; yoksa boş dizi, biçim bozuksa null.</summary>
-    private static int[]? CocukYaslari(JsonElement arguments)
+    private static int[]? ChildAges(JsonElement arguments)
     {
         if (!arguments.TryGetProperty("cocuklar", out var arr) || arr.ValueKind == JsonValueKind.Null)
         {
@@ -208,18 +208,18 @@ public sealed class DestektenYoksunlukTool : IAgentTool
             return null;
         }
 
-        var yaslar = new int[arr.GetArrayLength()];
+        var ages = new int[arr.GetArrayLength()];
         var i = 0;
         foreach (var item in arr.EnumerateArray())
         {
-            if (!item.TryGetInt32(out var cy) || cy is < 0 or > 100)
+            if (!item.TryGetInt32(out var childAge) || childAge is < 0 or > 100)
             {
                 return null;
             }
 
-            yaslar[i++] = cy;
+            ages[i++] = childAge;
         }
 
-        return yaslar;
+        return ages;
     }
 }

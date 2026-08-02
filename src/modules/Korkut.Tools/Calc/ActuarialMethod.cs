@@ -20,12 +20,12 @@ public static class ActuarialMethod
     /// <summary>TRH-2010'a göre dönemleri hesaplar; cinsiyet/yaş geçersizse null.</summary>
     public static Donemler? Hesapla(string cinsiyet, int yas)
     {
-        if (Trh2010.BakiyeOmur(cinsiyet, yas) is not { } bakiyeOmur)
+        if (Trh2010.BakiyeOmur(cinsiyet, yas) is not { } residualLife)
         {
             return null;
         }
 
-        var aktif = yas >= AktifDonemSonuYas ? 0m : Math.Min(AktifDonemSonuYas - yas, bakiyeOmur);
-        return new Donemler(bakiyeOmur, aktif, Math.Max(0m, bakiyeOmur - aktif));
+        var activeYears = yas >= AktifDonemSonuYas ? 0m : Math.Min(AktifDonemSonuYas - yas, residualLife);
+        return new Donemler(residualLife, activeYears, Math.Max(0m, residualLife - activeYears));
     }
 }
