@@ -4,7 +4,7 @@ using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Unit.Tests;
 
-public class VekaletUcretiToolTests
+public class AttorneyFeeToolTests
 {
     private static readonly AgentToolContext Context = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
 
@@ -16,7 +16,7 @@ public class VekaletUcretiToolTests
     public async Task Nispi_iki_dilime_yayilan_dava_degeri()
     {
         // 600.000 x %16 + 400.000 x %15 = 96.000 + 60.000 = 156.000
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi", "dava_degeri": 1000000 }"""), Context);
 
         Assert.False(result.IsError);
@@ -29,7 +29,7 @@ public class VekaletUcretiToolTests
     [Fact]
     public async Task Nispi_ilk_dilim_siniri_tek_dilimde_kalir()
     {
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi", "dava_degeri": 600000 }"""), Context);
 
         var payload = Payload(result);
@@ -41,7 +41,7 @@ public class VekaletUcretiToolTests
     public async Task Nispi_tum_dilimleri_asan_deger()
     {
         // 18.600.000 TL'lik dilimler + 1.400.000 x %1 = 1.256.000
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi", "dava_degeri": 20000000 }"""), Context);
 
         var payload = Payload(result);
@@ -53,7 +53,7 @@ public class VekaletUcretiToolTests
     public async Task Nispi_dusuk_degerde_asliye_maktu_tabani_uygulanir()
     {
         // 100.000 x %16 = 16.000 < asliye maktu 45.000
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi", "dava_degeri": 100000 }"""), Context);
 
         var payload = Payload(result);
@@ -65,7 +65,7 @@ public class VekaletUcretiToolTests
     [Fact]
     public async Task Taban_kategori_parametresi_tabani_degistirir()
     {
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi", "dava_degeri": 100000, "taban_kategori": "tuketici" }"""), Context);
 
         Assert.Equal(22500.00m, Payload(result).GetProperty("ucret").GetDecimal());
@@ -74,7 +74,7 @@ public class VekaletUcretiToolTests
     [Fact]
     public async Task Maktu_kategori_dogrudan_tarife_degerini_doner()
     {
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "agir_ceza" }"""), Context);
 
         var payload = Payload(result);
@@ -85,7 +85,7 @@ public class VekaletUcretiToolTests
     [Fact]
     public async Task Para_davasi_dava_degeri_olmadan_hata_doner()
     {
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "para_davasi" }"""), Context);
 
         Assert.True(result.IsError);
@@ -109,7 +109,7 @@ public class VekaletUcretiToolTests
         // RG 04.11.2025/33067 ekinin taranmış tablosundan göz kontrolüyle doğrulanan değerler
         // (docs/CALC_TOOLS_PLAN.md paragraf 7); ilk sürümdeki tek-kalemli istinaf/yargitay/danistay/aym
         // varsayımı yanlıştı, tablo her biri için ayrı satır içeriyor.
-        var result = await new VekaletUcretiTool().InvokeAsync(Args($$"""{ "kategori": "{{kategori}}" }"""), Context);
+        var result = await new AttorneyFeeTool().InvokeAsync(Args($$"""{ "kategori": "{{kategori}}" }"""), Context);
 
         Assert.False(result.IsError);
         Assert.Equal(beklenen, Payload(result).GetProperty("ucret").GetDecimal());
@@ -118,7 +118,7 @@ public class VekaletUcretiToolTests
     [Fact]
     public async Task Bilinmeyen_kategori_hata_doner()
     {
-        var result = await new VekaletUcretiTool().InvokeAsync(Args(
+        var result = await new AttorneyFeeTool().InvokeAsync(Args(
             """{ "kategori": "uzay_mahkemesi" }"""), Context);
 
         Assert.True(result.IsError);

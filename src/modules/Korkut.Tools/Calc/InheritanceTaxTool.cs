@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Veraset ve intikal vergisini (7338 sK, 2026 dilim ve istisnalarıyla) kademeli hesaplar.</summary>
-public sealed class VerasetIntikalTool : IAgentTool
+public sealed class InheritanceTaxTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -38,37 +38,37 @@ public sealed class VerasetIntikalTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var tur = ToolArgs.String(arguments, "intikal_turu");
-        var matrah = ToolArgs.Decimal(arguments, "matrah");
-        if (tur is not ("veraset" or "ivazsiz") || matrah is not { } m || m <= 0)
+        var transferType = ToolArgs.String(arguments, "intikal_turu");
+        var baseAmount = ToolArgs.Decimal(arguments, "matrah");
+        if (transferType is not ("veraset" or "ivazsiz") || baseAmount is not { } value || value <= 0)
         {
             return Task.FromResult(ToolResult.Error("intikal_turu (veraset | ivazsiz) ve pozitif matrah zorunludur."));
         }
 
-        var esTekBasina = ToolArgs.Bool(arguments, "es_tek_basina");
-        var istisna = tur == "veraset"
-            ? (esTekBasina ? InheritanceTax2026.IstisnaEsTekBasina : InheritanceTax2026.IstisnaFuruVeEs)
+        var spouseOnly = ToolArgs.Bool(arguments, "es_tek_basina");
+        var exemption = transferType == "veraset"
+            ? (spouseOnly ? InheritanceTax2026.IstisnaEsTekBasina : InheritanceTax2026.IstisnaFuruVeEs)
             : InheritanceTax2026.IstisnaIvazsiz;
-        var tabiMatrah = m > istisna ? m - istisna : 0m;
+        var taxableAmount = value > exemption ? value - exemption : 0m;
 
-        var tablo = tur == "veraset" ? InheritanceTax2026.Veraset : InheritanceTax2026.Ivazsiz;
-        var slices = BracketSchedule.Apply(tablo, tabiMatrah);
-        var vergi = decimal.Round(BracketSchedule.Total(slices), 2);
-        var kirilim = new List<object>(slices.Length);
+        var table = transferType == "veraset" ? InheritanceTax2026.Veraset : InheritanceTax2026.Ivazsiz;
+        var slices = BracketSchedule.Apply(table, taxableAmount);
+        var tax = decimal.Round(BracketSchedule.Total(slices), 2);
+        var breakdown = new List<object>(slices.Length);
         foreach (var s in slices)
         {
-            kirilim.Add(new { Dilim = s.DilimTutari, Yuzde = s.Yuzde, Vergi = decimal.Round(s.Pay, 2) });
+            breakdown.Add(new { Dilim = s.DilimTutari, Yuzde = s.Yuzde, Vergi = decimal.Round(s.Pay, 2) });
         }
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            IntikalTuru = tur,
-            Matrah = m,
-            Istisna = istisna,
-            VergiyeTabiMatrah = tabiMatrah,
-            DilimKirilimi = kirilim,
-            Vergi = vergi,
-            EfektifOranYuzde = decimal.Round(vergi / m * 100m, 2),
+            IntikalTuru = transferType,
+            Matrah = value,
+            Istisna = exemption,
+            VergiyeTabiMatrah = taxableAmount,
+            DilimKirilimi = breakdown,
+            Vergi = tax,
+            EfektifOranYuzde = decimal.Round(tax / value * 100m, 2),
             Not = "Veraset istisnası mirasçı başına hisse üzerinden uygulanır. Ana, baba, eş ve çocuklardan ivazsız intikalde tarife oranlarının yarısı uygulanır (7338 sK m.16), bu araç bu indirimi otomatik uygulamaz.",
             TarifeDonemi = InheritanceTax2026.Donem,
             Kaynak = InheritanceTax2026.Kaynak,

@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Belli parayı ihtiva eden kağıtların damga vergisini (488 sK, 2026 azami sınırıyla) hesaplar.</summary>
-public sealed class DamgaVergisiTool : IAgentTool
+public sealed class StampDutyTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -34,31 +34,31 @@ public sealed class DamgaVergisiTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var kagitTuru = ToolArgs.String(arguments, "kagit_turu");
-        var tutar = ToolArgs.Decimal(arguments, "tutar");
-        if (kagitTuru is null || !StampDuty2026.Binde.TryGetValue(kagitTuru, out var binde))
+        var documentType = ToolArgs.String(arguments, "kagit_turu");
+        var amount = ToolArgs.Decimal(arguments, "tutar");
+        if (documentType is null || !StampDuty2026.Binde.TryGetValue(documentType, out var perMilleRate))
         {
             return Task.FromResult(ToolResult.Error(
                 "kagit_turu zorunludur; geçerli değerler: " + string.Join(", ", StampDuty2026.Binde.Keys) + "."));
         }
 
-        if (tutar is not { } t || t <= 0)
+        if (amount is not { } value || value <= 0)
         {
             return Task.FromResult(ToolResult.Error("Pozitif tutar zorunludur."));
         }
 
-        var hesaplanan = decimal.Round(t * binde / 1000m, 2);
-        var azamiUygulandi = hesaplanan > StampDuty2026.AzamiVergi;
+        var calculated = decimal.Round(value * perMilleRate / 1000m, 2);
+        var capApplied = calculated > StampDuty2026.AzamiVergi;
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            KagitTuru = kagitTuru,
-            Tutar = t,
-            BindeOran = binde,
-            HesaplananVergi = hesaplanan,
+            KagitTuru = documentType,
+            Tutar = value,
+            BindeOran = perMilleRate,
+            HesaplananVergi = calculated,
             AzamiSinir = StampDuty2026.AzamiVergi,
-            AzamiUygulandi = azamiUygulandi,
-            Vergi = azamiUygulandi ? StampDuty2026.AzamiVergi : hesaplanan,
+            AzamiUygulandi = capApplied,
+            Vergi = capApplied ? StampDuty2026.AzamiVergi : calculated,
             TarifeDonemi = StampDuty2026.Donem,
             Kaynak = StampDuty2026.Kaynak,
         })));

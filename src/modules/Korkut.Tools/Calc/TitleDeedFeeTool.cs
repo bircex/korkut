@@ -5,7 +5,7 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Calc;
 
 /// <summary>Gayrimenkul satışında tapu harcını (alıcı + satıcı, binde 20 + binde 20) hesaplar.</summary>
-public sealed class TapuHarciTool : IAgentTool
+public sealed class TitleDeedFeeTool : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -34,33 +34,33 @@ public sealed class TapuHarciTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        if (ToolArgs.Decimal(arguments, "satis_bedeli") is not { } bedel || bedel <= 0)
+        if (ToolArgs.Decimal(arguments, "satis_bedeli") is not { } price || price <= 0)
         {
             return Task.FromResult(ToolResult.Error("Pozitif satis_bedeli zorunludur."));
         }
 
-        var taraf = ToolArgs.String(arguments, "taraf") ?? "toplam";
-        if (taraf is not ("alici" or "satici" or "toplam"))
+        var party = ToolArgs.String(arguments, "taraf") ?? "toplam";
+        if (party is not ("alici" or "satici" or "toplam"))
         {
             return Task.FromResult(ToolResult.Error("taraf alici, satici veya toplam olmalıdır."));
         }
 
-        var alici = decimal.Round(bedel * TitleDeedFees2026.AliciOran, 2);
-        var satici = decimal.Round(bedel * TitleDeedFees2026.SaticiOran, 2);
-        var harc = taraf switch
+        var buyerFee = decimal.Round(price * TitleDeedFees2026.AliciOran, 2);
+        var sellerFee = decimal.Round(price * TitleDeedFees2026.SaticiOran, 2);
+        var fee = party switch
         {
-            "alici" => alici,
-            "satici" => satici,
-            _ => alici + satici,
+            "alici" => buyerFee,
+            "satici" => sellerFee,
+            _ => buyerFee + sellerFee,
         };
 
         return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
         {
-            SatisBedeli = bedel,
-            Taraf = taraf,
-            AliciHarci = alici,
-            SaticiHarci = satici,
-            Harc = harc,
+            SatisBedeli = price,
+            Taraf = party,
+            AliciHarci = buyerFee,
+            SaticiHarci = sellerFee,
+            Harc = fee,
             Not = "Harç, beyan edilen satış bedeli ile emlak vergisi değerinin yükseği üzerinden alınır. " + TitleDeedFees2026.DonerSermayeNotu,
             TarifeDonemi = TitleDeedFees2026.Donem,
             Kaynak = TitleDeedFees2026.Kaynak,
