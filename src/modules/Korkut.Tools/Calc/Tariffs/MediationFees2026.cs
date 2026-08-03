@@ -14,16 +14,21 @@ public static class MediationFees2026
 
     /// <summary>
     /// Saatlik ücretler (TL/saat). Dizin: taraf sayısı bandı (0: 2 kişi, 1: 3-5, 2: 6-10, 3: 11+).
+    /// İlk sürümde "2 kişi" sütunu yanlışlıkla doğru değerin yarısıydı (ör. ticari 1.500 yerine
+    /// 3.000 olmalıydı); ADB'nin resmi tarife hesap motoruyla (consensusdanismanlik.com.tr
+    /// arabuluculuk-ucreti-hesaplama, gömülü CONFIG.hourlyRates) birebir doğrulanarak düzeltildi ve
+    /// eksik olan "tarımsal üretim sözleşmeleri" kategorisi eklendi.
     /// </summary>
     public static readonly Dictionary<string, decimal[]> Saatlik = new()
     {
-        ["aile"] = [1_000m, 2_200m, 2_300m, 2_400m],
-        ["isci_isveren"] = [1_130m, 2_460m, 2_560m, 2_660m],
-        ["ticari"] = [1_500m, 3_200m, 3_300m, 3_400m],
-        ["tuketici"] = [1_000m, 2_200m, 2_300m, 2_400m],
-        ["kira"] = [1_170m, 2_540m, 2_640m, 2_740m],
-        ["ortakligin_giderilmesi"] = [1_170m, 2_540m, 2_640m, 2_740m],
-        ["diger"] = [1_000m, 2_200m, 2_300m, 2_400m],
+        ["aile"] = [2_000m, 2_200m, 2_300m, 2_400m],
+        ["isci_isveren"] = [2_260m, 2_460m, 2_560m, 2_660m],
+        ["ticari"] = [3_000m, 3_200m, 3_300m, 3_400m],
+        ["tuketici"] = [2_000m, 2_200m, 2_300m, 2_400m],
+        ["kira"] = [2_340m, 2_540m, 2_640m, 2_740m],
+        ["ortakligin_giderilmesi"] = [2_340m, 2_540m, 2_640m, 2_740m],
+        ["tarimsal"] = [2_000m, 2_200m, 2_300m, 2_400m],
+        ["diger"] = [2_000m, 2_200m, 2_300m, 2_400m],
     };
 
     /// <summary>Anlaşma halinde nispi ücret dilimleri, tek arabulucu (Tarife İkinci Kısım).</summary>

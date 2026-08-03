@@ -14,14 +14,15 @@ public sealed class MediationFeeTool : IAgentTool
           "properties": {
             "uyusmazlik_turu": {
               "type": "string",
-              "enum": ["aile", "isci_isveren", "tuketici", "kira", "ortakligin_giderilmesi", "ticari", "diger"],
-              "description": "kira = kira, komşu hakkı ve kat mülkiyeti uyuşmazlıkları"
+              "enum": ["aile", "isci_isveren", "tuketici", "kira", "ortakligin_giderilmesi", "ticari", "tarimsal", "diger"],
+              "description": "kira = kira, komşu hakkı ve kat mülkiyeti uyuşmazlıkları; tarimsal = tarımsal üretim sözleşmelerinden kaynaklanan uyuşmazlıklar"
             },
             "anlasma": { "type": "boolean", "description": "Süreç anlaşmayla mı sonuçlandı" },
             "anlasma_tutari": { "type": "number", "description": "TL; anlaşma varsa üzerinde anlaşılan tutar" },
             "taraf_sayisi": { "type": "integer", "description": "Varsayılan 2" },
             "saat": { "type": "integer", "description": "Anlaşma yoksa harcanan saat sayısı" },
-            "arabulucu_sayisi": { "type": "integer", "description": "Varsayılan 1; birden fazla arabulucuda anlaşma dilim yüzdeleri artar" }
+            "arabulucu_sayisi": { "type": "integer", "description": "Varsayılan 1; birden fazla arabulucuda anlaşma dilim yüzdeleri artar" },
+            "dava_sarti": { "type": "boolean", "description": "Dava şartı arabuluculuk mu (varsayılan evet). Hayır ise (ihtiyari arabuluculuk) anlaşma halinde asgari ücret tabanı uygulanmaz." }
           },
           "required": ["uyusmazlik_turu", "anlasma"]
         }
@@ -85,9 +86,16 @@ public sealed class MediationFeeTool : IAgentTool
         var table = multipleMediators ? MediationFees2026.AnlasmaCokluArabulucu : MediationFees2026.AnlasmaTekArabulucu;
         var slices = BracketSchedule.Apply(table, amount);
         var proportionalFee = decimal.Round(BracketSchedule.Total(slices), 2);
-        var minimumFee = disputeType is "ticari" or "ortakligin_giderilmesi"
-            ? MediationFees2026.AsgariAnlasmaTicariOrtaklik
-            : MediationFees2026.AsgariAnlasmaGenel;
+
+        // Asgari ücret tabanı yalnızca dava şartı arabuluculukta uygulanır (Tarife m.7); ihtiyari
+        // arabuluculukta anlaşma ücreti tamamen nispi dilim tablosundan hesaplanır, tavanı yoktur.
+        var mandatoryMediation = !arguments.TryGetProperty("dava_sarti", out var mandatoryEl)
+            || mandatoryEl.ValueKind != JsonValueKind.False;
+        var minimumFee = mandatoryMediation
+            ? disputeType is "ticari" or "ortakligin_giderilmesi"
+                ? MediationFees2026.AsgariAnlasmaTicariOrtaklik
+                : MediationFees2026.AsgariAnlasmaGenel
+            : 0m;
         var minimumApplied = proportionalFee < minimumFee;
         var breakdown = new List<object>(slices.Length);
         foreach (var s in slices)
@@ -99,6 +107,7 @@ public sealed class MediationFeeTool : IAgentTool
         {
             UyusmazlikTuru = disputeType,
             UcretTuru = "anlasma_nispi",
+            DavaSarti = mandatoryMediation,
             AnlasmaTutari = amount,
             ArabulucuSayisi = multipleMediators ? "birden_fazla" : "tek",
             DilimKirilimi = breakdown,
@@ -106,7 +115,9 @@ public sealed class MediationFeeTool : IAgentTool
             AsgariAnlasmaUcreti = minimumFee,
             AsgariUygulandi = minimumApplied,
             Ucret = minimumApplied ? minimumFee : proportionalFee,
-            Not = MandatoryMediationNote,
+            Not = mandatoryMediation
+                ? MandatoryMediationNote
+                : "İhtiyari arabuluculukta anlaşma ücretine asgari ücret tabanı uygulanmaz; ücret tamamen nispi dilim tablosundan hesaplanır.",
             TarifeDonemi = MediationFees2026.Donem,
             Kaynak = MediationFees2026.Kaynak,
         })));
