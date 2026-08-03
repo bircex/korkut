@@ -15,14 +15,14 @@ public class MediationFeeToolTests
     [Fact]
     public async Task Saatlik_ticari_iki_taraf()
     {
-        // 1.500 TL/saat x 5 saat = 7.500
+        // 3.000 TL/saat x 5 saat = 15.000
         var result = await new MediationFeeTool().InvokeAsync(Args(
             """{ "uyusmazlik_turu": "ticari", "anlasma": false, "saat": 5 }"""), Context);
 
         Assert.False(result.IsError);
         var payload = Payload(result);
-        Assert.Equal(1500.00m, payload.GetProperty("saatlik_ucret").GetDecimal());
-        Assert.Equal(7500.00m, payload.GetProperty("ucret").GetDecimal());
+        Assert.Equal(3000.00m, payload.GetProperty("saatlik_ucret").GetDecimal());
+        Assert.Equal(15000.00m, payload.GetProperty("ucret").GetDecimal());
     }
 
     [Fact]
@@ -33,7 +33,17 @@ public class MediationFeeToolTests
             """{ "uyusmazlik_turu": "aile", "anlasma": false, "saat": 1 }"""), Context);
 
         Assert.False(result.IsError);
-        Assert.Equal(1000.00m, Payload(result).GetProperty("ucret").GetDecimal());
+        Assert.Equal(2000.00m, Payload(result).GetProperty("ucret").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Tarimsal_saatlik_ucreti_tuketiciyle_ayni()
+    {
+        var result = await new MediationFeeTool().InvokeAsync(Args(
+            """{ "uyusmazlik_turu": "tarimsal", "anlasma": false, "saat": 1 }"""), Context);
+
+        Assert.False(result.IsError);
+        Assert.Equal(2000.00m, Payload(result).GetProperty("ucret").GetDecimal());
     }
 
     [Fact]
@@ -82,6 +92,19 @@ public class MediationFeeToolTests
             """{ "uyusmazlik_turu": "ticari", "anlasma": true, "anlasma_tutari": 100000 }"""), Context);
 
         Assert.Equal(13000.00m, Payload(result).GetProperty("ucret").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Ihtiyari_arabuluculukta_asgari_ucret_uygulanmaz()
+    {
+        // 50.000 x %6 = 3.000; dava_sarti=false olduğu için asgari 9.000 tabanı devre dışı.
+        var result = await new MediationFeeTool().InvokeAsync(Args(
+            """{ "uyusmazlik_turu": "isci_isveren", "anlasma": true, "anlasma_tutari": 50000, "dava_sarti": false }"""), Context);
+
+        var payload = Payload(result);
+        Assert.False(payload.GetProperty("asgari_uygulandi").GetBoolean());
+        Assert.Equal(3000.00m, payload.GetProperty("ucret").GetDecimal());
+        Assert.False(payload.GetProperty("dava_sarti").GetBoolean());
     }
 
     [Fact]
