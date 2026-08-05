@@ -43,6 +43,58 @@ export type SourceRef = {
   snippet?: string | null;
 };
 
+// Karar Arama sayfasının bir arama sonucu (backend LawClientsSearchResult, snake_case) — SourceRef
+// ile aynı alanları taşır, ayrıca mevzuat'a özgü gazette_number/gerekce_id içerir.
+export type LawSearchResult = {
+  source: string;
+  id: string;
+  title: string;
+  date?: string | null;
+  case_number?: string | null;
+  decision_number?: string | null;
+  court?: string | null;
+  chamber?: string | null;
+  url?: string | null;
+  snippet?: string | null;
+  gazette_number?: string | null;
+  gerekce_id?: string | null;
+  // Bedesten kaynakları (yargitay/danistay/emsal/kyb) için: kararTuru/kesinlesmeDurumu ve
+  // itemType.description (Yargıtay Kararı / Yerel Hukuk Mahkemesi Kararı / İstinaf Hukuk
+  // Mahkemesi Kararı — "emsal" kaynağının kendi içinde ayırt ettiği mahkeme sistemi etiketi).
+  decision_type?: string | null;
+  finalization_status?: string | null;
+  court_type?: string | null;
+};
+export type LawSearchResponse = { total: number | null; count: number; results: LawSearchResult[] };
+
+// Mevzuat madde ağacı (backend LawClientsMaddeTreeNode/Response, snake_case): kısım/bölüm başlıkları
+// ve MADDE yaprakları iç içe. Yaprak düğümlerde madde_no+madde_id dolu; başlık düğümlerinde boş.
+export type MaddeTreeNode = {
+  title: string | null;
+  madde_no: string | null;
+  madde_id: string | null;
+  gerekce_id: string | null;
+  children: MaddeTreeNode[];
+};
+export type MaddeTreeResponse = { count: number; nodes: MaddeTreeNode[] };
+
+// Kararlarım: Karar Arama sonuçlarından ya da sohbetteki İlgili Kararlar'dan kaydedilen kararlar
+// (backend SavedDecisionResponse, snake_case). `external_id` LawSearchResult/SourceRef'in `id`'sidir.
+export type SavedDecision = {
+  id: string;
+  source: string;
+  external_id: string;
+  title: string;
+  date?: string | null;
+  case_number?: string | null;
+  decision_number?: string | null;
+  court?: string | null;
+  chamber?: string | null;
+  url?: string | null;
+  snippet?: string | null;
+  created_at: string;
+};
+
 // Turun ürettiği/güncellediği taslak belge — chat'teki belge kartı + editörü açma sinyali.
 export type DocumentRef = { doc_id: number; title: string; summary: string | null };
 
@@ -680,11 +732,84 @@ export const api = {
       sources: SourceRef[] | null;
     };
   },
+  // Karar Arama sayfası: tek bir kaynakta (yargitay/danistay/emsal/kyb/anayasa/mevzuat...) arama.
+  // Alan seti backend'in LawClientsSearchRequest'iyle birebir — her kaynak yalnız desteklediği
+  // filtreyi okur, gerisini yok sayar (bkz. Korkut.Tools/Law/SearchDecisionsTool.cs şeması).
+  legalSearch: (params: {
+    source: string;
+    query: string;
+    page?: number;
+    limit?: number;
+    sort?: "relevance" | "date";
+    dateStart?: string;
+    dateEnd?: string;
+    chamber?: string;
+    decisionType?: string;
+    applicationType?: string;
+    scope?: string;
+    legislationType?: string;
+    searchScope?: string;
+    tamCumle?: boolean;
+    mevzuatNo?: string;
+    gazetteNumber?: string;
+  }) => {
+    const qs = new URLSearchParams({ source: params.source, query: params.query });
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.sort) qs.set("sort", params.sort);
+    if (params.dateStart) qs.set("dateStart", params.dateStart);
+    if (params.dateEnd) qs.set("dateEnd", params.dateEnd);
+    if (params.chamber) qs.set("chamber", params.chamber);
+    if (params.decisionType) qs.set("decisionType", params.decisionType);
+    if (params.applicationType) qs.set("applicationType", params.applicationType);
+    if (params.scope) qs.set("scope", params.scope);
+    if (params.legislationType) qs.set("legislationType", params.legislationType);
+    if (params.searchScope) qs.set("searchScope", params.searchScope);
+    if (params.tamCumle) qs.set("tamCumle", "true");
+    if (params.mevzuatNo) qs.set("mevzuatNo", params.mevzuatNo);
+    if (params.gazetteNumber) qs.set("gazetteNumber", params.gazetteNumber);
+    return request<LawSearchResponse>(`/api/legal/search?${qs.toString()}`);
+  },
   // Bir SourceRef'in (source+id) tam metni — İlgili Kararlar drawer'ındaki detay görünümü.
-  legalDocument: (source: string, id: string) =>
-    request<{ source: string; id: string; content_md: string }>(
-      `/api/legal/documents?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`,
-    ),
+  // articleId verilirse (mevzuat madde ağacından bir madde_id) yalnız o maddenin metni döner.
+  legalDocument: (source: string, id: string, articleId?: string) => {
+    const qs = new URLSearchParams({ source, id });
+    if (articleId) qs.set("articleId", articleId);
+    return request<{ source: string; id: string; content_md: string }>(`/api/legal/documents?${qs.toString()}`);
+  },
+  // Bir mevzuatın madde ağacı (kısım/bölüm/madde) — Mevzuat detayının AĞAÇ YAPISI görünümünü besler.
+  legalMaddeTree: (mevzuatId: string) =>
+    request<MaddeTreeResponse>(`/api/legal/madde-tree?mevzuatId=${encodeURIComponent(mevzuatId)}`),
+  // Kararlarım: kaydedilmiş kararların listesi, kaydetme (idempotent) ve kaldırma.
+  savedDecisions: () => request<{ items: SavedDecision[] }>("/api/saved-decisions"),
+  saveDecision: (input: {
+    source: string;
+    externalId: string;
+    title: string;
+    date?: string | null;
+    caseNumber?: string | null;
+    decisionNumber?: string | null;
+    court?: string | null;
+    chamber?: string | null;
+    url?: string | null;
+    snippet?: string | null;
+  }) =>
+    request<SavedDecision>("/api/saved-decisions", {
+      method: "POST",
+      body: JSON.stringify({
+        source: input.source,
+        external_id: input.externalId,
+        title: input.title,
+        date: input.date ?? null,
+        case_number: input.caseNumber ?? null,
+        decision_number: input.decisionNumber ?? null,
+        court: input.court ?? null,
+        chamber: input.chamber ?? null,
+        url: input.url ?? null,
+        snippet: input.snippet ?? null,
+      }),
+    }),
+  removeSavedDecision: (id: string) => request<void>(`/api/saved-decisions/${id}`, { method: "DELETE" }),
   // AI taslak belgeleri (Belgeler sekmesi) — /api/documents operasyonel evrak kütüphanesidir,
   // taslak listesi kendi yolundan gelir (gateway path'e göre yönlendirir).
   documents: () => request<DocBrief[]>("/api/draft-documents"),

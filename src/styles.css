@@ -244,3 +244,21 @@ body {
     40% { opacity: 1; transform: none; }
   }
 }
+
+/* Mevzuat/karar detayı yazdırma: sayfada yalnız .print-area görünür kalır (drawer chrome,
+   sidebar, ağaç paneli gizlenir) — MevzuatDetail/DecisionDetail'in yazdır düğmesi bunu kullanır.
+   Klasik visibility hilesi: gizlenen öğeler layout'ta kalır ama boş basılır; .print-area kendini
+   sayfanın köşesine mutlak konumlayarak tek başına görünür. */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+    color: #000;
+  }
+}

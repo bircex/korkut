@@ -43,4 +43,9 @@ export {
   ArrowSquareOut,
   MagnifyingGlass,
   BookOpenText,
+  // Mevzuat madde ağacı (MevzuatDetail)
+  Printer,
+  Funnel,
+  // Karar Arama sonuç tablosu
+  Eye,
 } from "@phosphor-icons/react";

@@ -14,6 +14,8 @@ import {
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
+import { KararAramaPanel } from "./KararAramaPanel";
+import { KararlarimPanel } from "./KararlarimPanel";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
@@ -27,6 +29,7 @@ import { matchPath, navigate, usePath } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
+  BookmarkSimple,
   BookOpenText,
   CalendarBlank,
   CaretDown,
@@ -36,6 +39,7 @@ import {
   FileText,
   Folder,
   List,
+  MagnifyingGlass,
   Monitor,
   Moon,
   Paperclip,
@@ -144,6 +148,8 @@ const NAV_ICON: Record<string, Icon> = {
   tasks: CheckSquare,
   calendar: CalendarBlank,
   docs: FileText,
+  kararlarim: BookmarkSimple,
+  kararArama: MagnifyingGlass,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -207,7 +213,9 @@ type SidebarView =
   | "clients"
   | "finance"
   | "tasks"
-  | "calendar";
+  | "calendar"
+  | "kararlarim"
+  | "kararArama";
 
 // Top-level page URLs — a page can be bookmarked, shared, or survive a reload; the specific chat
 // or matter open within "chats" is deliberately not part of the URL (out of scope, see Settings.tsx
@@ -221,6 +229,8 @@ const VIEW_PATH: Record<SidebarView, string> = {
   finance: "/mali",
   tasks: "/gorevler",
   calendar: "/takvim",
+  kararlarim: "/kararlarim",
+  kararArama: "/karar-arama",
 };
 
 function viewFromPath(path: string): SidebarView {
@@ -256,7 +266,30 @@ const VIEW_TITLE: Record<SidebarView, string> = {
   finance: "Mali",
   tasks: "Görevler",
   calendar: "Takvim",
+  kararlarim: "Kararlarım",
+  kararArama: "Karar Arama",
 };
+
+// Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama ve gelecekteki hesap makineleri vb.),
+// Sohbetler (ayrı, kendi listesiyle aşağıda).
+const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string }[] }[] = [
+  {
+    label: "Ofisim",
+    items: [
+      { key: "matters", label: "Dosyalar" },
+      { key: "clients", label: "Müvekkiller" },
+      { key: "finance", label: "Mali" },
+      { key: "tasks", label: "Görevler" },
+      { key: "calendar", label: "Takvim" },
+      { key: "docs", label: "Belgeler" },
+      { key: "kararlarim", label: "Kararlarım" },
+    ],
+  },
+  {
+    label: "Araçlar",
+    items: [{ key: "kararArama", label: "Karar Arama" }],
+  },
+];
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -785,44 +818,39 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <>
             <div className="fixed inset-0 z-10 bg-black/30 sm:hidden" onClick={() => setSidebarOpen(false)} />
             <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-zinc-200 bg-white sm:static sm:z-auto">
-              <div className="px-3 pt-3">
-                <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                  Menü
-                </div>
-                <nav className="flex flex-col gap-0.5">
-                  {(
-                    [
-                      { key: "matters", label: "Dosyalar" },
-                      { key: "clients", label: "Müvekkiller" },
-                      { key: "finance", label: "Mali" },
-                      { key: "tasks", label: "Görevler" },
-                      { key: "calendar", label: "Takvim" },
-                      { key: "docs", label: "Belgeler" },
-                    ] as { key: SidebarView; label: string }[]
-                  ).map((it) => (
-                    <a
-                      key={it.key}
-                      href={VIEW_PATH[it.key]}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate(VIEW_PATH[it.key]);
-                        if (it.key === "docs") loadDocs();
-                        closeSidebarOnMobile();
-                      }}
-                      className={
-                        "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm " +
-                        (view === it.key
-                          ? "bg-zinc-100 font-medium text-zinc-900"
-                          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
-                      }
-                    >
-                      <span className={view === it.key ? "text-zinc-700" : "text-zinc-400"}>
-                        <NavIcon name={it.key} />
-                      </span>
-                      {it.label}
-                    </a>
-                  ))}
-                </nav>
+              <div className="flex flex-col gap-3 px-3 pt-3">
+                {NAV_GROUPS.map((g) => (
+                  <div key={g.label}>
+                    <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                      {g.label}
+                    </div>
+                    <nav className="flex flex-col gap-0.5">
+                      {g.items.map((it) => (
+                        <a
+                          key={it.key}
+                          href={VIEW_PATH[it.key]}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate(VIEW_PATH[it.key]);
+                            if (it.key === "docs") loadDocs();
+                            closeSidebarOnMobile();
+                          }}
+                          className={
+                            "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm " +
+                            (view === it.key
+                              ? "bg-zinc-100 font-medium text-zinc-900"
+                              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
+                          }
+                        >
+                          <span className={view === it.key ? "text-zinc-700" : "text-zinc-400"}>
+                            <NavIcon name={it.key} />
+                          </span>
+                          {it.label}
+                        </a>
+                      ))}
+                    </nav>
+                  </div>
+                ))}
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-zinc-200 px-4 pb-1 pt-3">
@@ -968,6 +996,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <TasksPanel />
         ) : view === "calendar" ? (
           <CalendarPanel />
+        ) : view === "kararlarim" ? (
+          <KararlarimPanel />
+        ) : view === "kararArama" ? (
+          <KararAramaPanel />
         ) : (
         <>
         <div className="flex min-w-0 flex-1 flex-col">
