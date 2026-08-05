@@ -1,24 +1,13 @@
 using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Adli para cezası hesabı: gün sayısı x günlük miktar, hapse çevirme karşılığı ve taksit kuralı.</summary>
-public sealed class JudicialFineTool : IAgentTool
+/// <summary>Adli para cezası hesabı: gün sayısı x günlük miktar, hapse çevirme karşılığı ve taksit kuralı. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class JudicialFineTool(ICalculatorService calc) : IAgentTool
 {
-    /// <summary>TCK m.52/2, 7499 sK (RG 12.03.2024) ile değişik: günlük miktar alt/üst sınırı.</summary>
-    private const decimal DailyAmountMin = 100m;
-
-    private const decimal DailyAmountMax = 500m;
-
-    /// <summary>TCK m.52/1: tam gün sayısı alt/üst sınırı.</summary>
-    private const int DayCountMin = 5;
-
-    private const int DayCountMax = 730;
-
-    private const string Source =
-        "TCK m.52 (günlük miktar 100-500 TL: 7499 sK m.9, RG 12.03.2024/32487; 12.03.2024 öncesi işlenen suçlarda 20-100 TL); 5275 sK m.106 (ödenmeyen adli para cezasının hapse çevrilmesi)";
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -43,43 +32,18 @@ public sealed class JudicialFineTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var dayCount = ToolArgs.Int(arguments, "gun_sayisi");
-        var dailyAmount = ToolArgs.Decimal(arguments, "gunluk_miktar");
-        if (dayCount is not { } days || days <= 0 || dailyAmount is not { } amount || amount <= 0)
-        {
-            return Task.FromResult(ToolResult.Error("Pozitif gun_sayisi ve gunluk_miktar zorunludur."));
-        }
+        var request = new JudicialFineRequest(
+            ToolArgs.Int(arguments, "gun_sayisi") ?? -1,
+            ToolArgs.Decimal(arguments, "gunluk_miktar") ?? -1m,
+            ToolArgs.Bool(arguments, "taksit"));
 
-        var warnings = new List<string>();
-        if (days is < DayCountMin or > DayCountMax)
+        try
         {
-            warnings.Add($"Gün sayısı TCK m.52/1'deki {DayCountMin}-{DayCountMax} gün aralığının dışında; kanunda daha yüksek gün öngören özel hükümler saklıdır.");
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcJudicialFine(request))));
         }
-
-        if (amount is < DailyAmountMin or > DailyAmountMax)
+        catch (BadRequestException ex)
         {
-            warnings.Add($"Günlük miktar güncel {DailyAmountMin:0}-{DailyAmountMax:0} TL aralığının dışında (7499 sK, 12.03.2024 sonrası suçlar); 12.03.2024 öncesi işlenen suçlarda 20-100 TL aralığı uygulanır.");
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var total = decimal.Round(days * amount, 2);
-        string? installmentRule = null;
-        if (ToolArgs.Bool(arguments, "taksit"))
-        {
-            installmentRule =
-                $"TCK m.52/4: taksitle ödemeye karar verilebilir; taksit süresi 2 yılı geçemez ve taksit sayısı 4'ten az olamaz. Örnek 4 eşit taksit: {decimal.Round(total / 4, 2)} TL. Taksitlerden biri zamanında ödenmezse kalan kısmın tamamı tahsil edilir, ödenmeyen kısım hapse çevrilir.";
-        }
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            GunSayisi = days,
-            GunlukMiktar = amount,
-            ToplamCeza = total,
-            HapseCevirmeGun = days,
-            HapseCevirmeAciklama =
-                "Adli para cezası ödenmezse gün sayısı kadar hapse çevrilir (5275 m.106); kamuya yararlı işte çalışma seçeneği saklıdır.",
-            TaksitKurali = installmentRule,
-            Uyarilar = warnings,
-            Kaynak = Source,
-        })));
     }
 }

@@ -1,15 +1,15 @@
 using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
 /// <summary>
 /// Yaralanmalı trafik kazasında sürekli/geçici iş göremezlik (bedensel) tazminatını mahkeme
-/// modunda hesaplar: TRH-2010 bakiye ömür, progresif rant (%10 artırım + %10 iskonto, net teknik
-/// faiz %0), aktif dönem sonu 60 yaş, pasif dönem AGİ hariç net asgari ücret.
+/// modunda hesaplar. Thin adapter over <see cref="ICalculatorService"/>.
 /// </summary>
-public sealed class BodilyInjuryCompensationTool : IAgentTool
+public sealed class BodilyInjuryCompensationTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -38,80 +38,21 @@ public sealed class BodilyInjuryCompensationTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var gender = Trh2010.NormalizeCinsiyet(ToolArgs.String(arguments, "cinsiyet"));
-        var age = ToolArgs.Int(arguments, "yas");
-        var disabilityRate = ToolArgs.Decimal(arguments, "maluliyet_orani");
-        if (gender is null || age is not { } ageValue || disabilityRate is not { } disabilityValue || disabilityValue <= 0 || disabilityValue > 100)
+        var request = new BodilyInjuryCompensationRequest(
+            ToolArgs.String(arguments, "cinsiyet") ?? "",
+            ToolArgs.Int(arguments, "yas") ?? -1,
+            ToolArgs.Decimal(arguments, "maluliyet_orani") ?? -1m,
+            ToolArgs.Decimal(arguments, "kusur_orani"),
+            ToolArgs.Decimal(arguments, "aylik_net_gelir"),
+            ToolArgs.Decimal(arguments, "gecici_is_goremezlik_ay"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error(
-                "cinsiyet (erkek|kadin), yas ve 0-100 arası maluliyet_orani zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcBodilyInjuryCompensation(request))));
         }
-
-        var faultRate = ToolArgs.Decimal(arguments, "kusur_orani") ?? 0m;
-        if (faultRate is < 0 or > 100)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("kusur_orani 0-100 arasında olmalıdır."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var temporaryDisabilityMonths = ToolArgs.Decimal(arguments, "gecici_is_goremezlik_ay") ?? 0m;
-        if (temporaryDisabilityMonths < 0)
-        {
-            return Task.FromResult(ToolResult.Error("gecici_is_goremezlik_ay negatif olamaz."));
-        }
-
-        var monthlyIncome = ToolArgs.Decimal(arguments, "aylik_net_gelir") ?? MinimumWage.GuncelAylikNet;
-        if (monthlyIncome <= 0)
-        {
-            return Task.FromResult(ToolResult.Error("aylik_net_gelir pozitif olmalıdır."));
-        }
-
-        if (ActuarialMethod.Hesapla(gender, ageValue) is not { } period)
-        {
-            return Task.FromResult(ToolResult.Error("yas 0-100 aralığında olmalıdır."));
-        }
-
-        var disabilityFraction = disabilityValue / 100m;
-        var faultFraction = faultRate / 100m;
-        var annualIncome = monthlyIncome * 12m;
-
-        var activeLoss = decimal.Round(annualIncome * period.AktifYil * disabilityFraction, 2);
-        var passiveLoss = decimal.Round(MinimumWage.GuncelYillikNet * period.PasifYil * disabilityFraction, 2);
-        var temporaryLoss = decimal.Round(monthlyIncome * temporaryDisabilityMonths, 2);
-        var grossTotal = activeLoss + passiveLoss + temporaryLoss;
-        var faultDeduction = decimal.Round(grossTotal * faultFraction, 2);
-        var netCompensation = grossTotal - faultDeduction;
-
-        var assumptions = new List<string>
-        {
-            "Bakiye ömür TRH-2010 tablosundan, cinsiyet ve kaza yaşına göre alındı.",
-            "Mahkeme modu progresif rant: %10 artırım + %10 iskonto birbirini götürür, net teknik faiz %0; toplam kayıp = yıllık kayıp x yıl.",
-            $"Aktif dönem kaza yaşından {ActuarialMethod.AktifDonemSonuYas} yaşına kadardır; {ActuarialMethod.AktifDonemSonuYas} ve üzeri yaşta aktif dönem 0 alınır (çalışmanın sürdüğü belgelenirse hesap değişir).",
-            $"Pasif dönem geliri AGİ hariç net asgari ücrettir ({MinimumWage.GuncelAylikNet:N2} TL/ay).",
-            "Geçici iş göremezlik döneminde %100 iş göremezlik ve mağdurun kendi geliri esas alındı.",
-            "Kusur indirimi mağdurun kusur oranıdır; karşı tarafın kusuru girilmemelidir.",
-        };
-        if (ToolArgs.Decimal(arguments, "aylik_net_gelir") is null)
-        {
-            assumptions.Add("aylik_net_gelir verilmediğinden aktif dönem için de AGİ hariç net asgari ücret esas alındı.");
-        }
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Yontem = "Aktüeryal bedensel tazminat, mahkeme modu (TRH-2010 + progresif rant %0 net teknik faiz)",
-            BakiyeOmurYil = decimal.Round(period.BakiyeOmur, 2),
-            AktifDonemYil = decimal.Round(period.AktifYil, 2),
-            PasifDonemYil = decimal.Round(period.PasifYil, 2),
-            EsasAlinanAylikNetGelir = decimal.Round(monthlyIncome, 2),
-            AktifDonemKaybi = activeLoss,
-            PasifDonemKaybi = passiveLoss,
-            GeciciIsGoremezlikKaybi = temporaryLoss,
-            BrutToplam = grossTotal,
-            KusurOrani = faultRate,
-            KusurIndirimi = faultDeduction,
-            NetTazminat = netCompensation,
-            ZmssLimitNotu = $"ZMSS (trafik sigortası) 2026 kişi başı sakatlık teminat limiti {Zmss.KisiBasiTeminatLimiti2026:N2} TL'dir; sigortacıdan talep bu limitle sınırlıdır, aşan kısım işletene/sürücüye yöneltilir.",
-            Varsayimlar = assumptions,
-            Kaynak = $"{Trh2010.Kaynak}; {MinimumWage.Kaynak}; {Zmss.TeminatKaynak}",
-        })));
     }
 }

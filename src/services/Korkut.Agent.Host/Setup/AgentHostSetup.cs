@@ -43,57 +43,12 @@ public static class AgentHostSetup
         services.AddScoped<ILlmCallRepository, LlmCallRepository>();
         services.AddScoped<IAgentUnitOfWork, AgentUnitOfWork>();
 
-        // Law/source clients the legal tools depend on: every concrete *Client whose constructor
-        // needs only injectable deps (IHttpClientFactory / IEnvironment / another *Client) is
-        // self-registered, and the ISourceClient ones are also exposed as the IEnumerable<ISourceClient>
-        // the fetch/search tools iterate. Parameterized clients (e.g. BedestenClient, one instance per
-        // court source) are skipped here — they need their per-source config registered explicitly.
-        static bool Injectable(Type p) =>
-            p == typeof(System.Net.Http.IHttpClientFactory) || p == typeof(Korkut.Core.IEnvironment)
-            || p.Name.EndsWith("Client", StringComparison.Ordinal);
-        foreach (var clientType in typeof(Korkut.Tools.Law.ISourceClient).Assembly.GetTypes()
-                     .Where(t => t is { IsAbstract: false, IsInterface: false } && t.Name.EndsWith("Client"))
-                     .Where(t => t.GetConstructors().FirstOrDefault()?.GetParameters().All(pi => Injectable(pi.ParameterType)) == true))
-        {
-            services.AddScoped(clientType);
-            if (typeof(Korkut.Tools.Law.ISourceClient).IsAssignableFrom(clientType))
-            {
-                services.AddScoped(typeof(Korkut.Tools.Law.ISourceClient), sp => sp.GetRequiredService(clientType));
-            }
-        }
-
-        // Bedesten (Ministry of Justice, bedesten.adalet.gov.tr) is a base-relative API shared by the
-        // court-decision sources AND Mevzuat, so it needs its base URL configured.
-        services.AddHttpClient("bedesten", c =>
-        {
-            c.BaseAddress = new Uri("https://bedesten.adalet.gov.tr");
-            c.Timeout = TimeSpan.FromSeconds(30);
-        });
-
-        // TCMB daily exchange-rate bulletins (get_exchange_rates). The TcmbRatesClient class itself
-        // is picked up by the *Client auto-registration loop above; only its named transport is here.
-        services.AddHttpClient("tcmb", c =>
-        {
-            c.BaseAddress = new Uri("https://www.tcmb.gov.tr");
-            c.Timeout = TimeSpan.FromSeconds(30);
-        });
-
-        // The four Bedesten court sources — each pins its own itemTypeList (the API's court-type enum)
-        // and is exposed as an ISourceClient the search/fetch tools dispatch to by name. Yargıtay and
-        // Danıştay support chamber (daire) filtering; Emsal (yerel + istinaf) and KYB do not.
-        void Bedesten(string source, string[] itemTypes, bool chamber) =>
-            services.AddScoped<Korkut.Tools.Law.ISourceClient>(sp => new Korkut.Tools.Law.BedestenClient(
-                sp.GetRequiredService<System.Net.Http.IHttpClientFactory>(), source, itemTypes, chamber));
-        Bedesten("yargitay", ["YARGITAYKARARI"], chamber: true);
-        Bedesten("danistay", ["DANISTAYKARAR"], chamber: true);
-        Bedesten("emsal", ["YERELHUKUK", "ISTINAFHUKUK"], chamber: false);
-        Bedesten("kyb", ["KYB"], chamber: false);
-
-        // Tool registry: every IAgentTool in Korkut.Tools, plus the catalog that gates them.
+        // Tool registry: every IAgentTool in Korkut.Tools, plus the catalog that gates them. Their
+        // dependencies (ILawClientsSearchService/ILawClientsDocumentService, ICalculatorService) are
+        // registered by the LawClients/Calculators modules via AddKorkutDomain above (both this host
+        // and Korkut.Api call it, so a tool resolves them the same way any Contract service is
+        // consumed — no host-specific wiring left here).
         services.AddScoped<IToolCatalog, ToolCatalog>();
-
-        // Full-text lookup for the UI's sources drawer — same source clients as fetch_document.
-        services.AddScoped<Korkut.Contract.Agent.Legal.ILegalDocumentAppService, Korkut.Tools.Law.LegalDocumentAppService>();
         foreach (var tool in typeof(ToolCatalog).Assembly.GetTypes()
                      .Where(t => typeof(IAgentTool).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false }))
         {

@@ -1,3 +1,4 @@
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Tools.Core;
@@ -6,14 +7,11 @@ namespace Korkut.Tools.Law;
 
 /// <summary>
 /// Composite legal-fetch tool: fetches the full text of a document returned by
-/// <c>search_decisions</c>. Dispatches by <c>source</c> to the matching <see cref="ISourceClient"/>
-/// and passes the <c>id</c> that source's search result gave.
+/// <c>search_decisions</c>. Thin adapter over <see cref="ILawClientsDocumentService"/> — the same
+/// service the UI's İlgili Kararlar drawer uses.
 /// </summary>
-public sealed class FetchDocumentTool(IEnumerable<ISourceClient> clients, IEnvironment env) : IAgentTool
+public sealed class FetchDocumentTool(ILawClientsDocumentService documents) : IAgentTool
 {
-    private readonly Dictionary<string, ISourceClient> _bySource =
-        clients.ToDictionary(c => c.Source, StringComparer.OrdinalIgnoreCase);
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -41,37 +39,21 @@ public sealed class FetchDocumentTool(IEnumerable<ISourceClient> clients, IEnvir
     {
         var source = ToolArgs.String(arguments, "source");
         var id = ToolArgs.String(arguments, "id");
-        
+
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(id))
         {
             return ToolResult.Error("'source' ve 'id' gereklidir.");
         }
 
-        if (!_bySource.TryGetValue(source, out var client))
-        {
-            return ToolResult.Error($"Desteklenmeyen kaynak: {source}");
-        }
-
-        if (!client.SupportsFetch)
-        {
-            return ToolResult.Error($"'{source}' kaynağı belge getirmeyi desteklemiyor.");
-        }
-
-        if (client.RequiresKey is { } key && string.IsNullOrWhiteSpace(env.Get(key)))
-        {
-            return ToolResult.Error($"'{source}' kaynağı için API anahtarı yapılandırılmamış.");
-        }
-
         try
         {
-            var text = await client.FetchAsync(id.Trim(), arguments, ct);
-            return string.IsNullOrWhiteSpace(text)
-                ? ToolResult.Ok("Belge bulunamadı.")
-                : ToolResult.Ok(text);
+            var doc = await documents.GetAsync(
+                source.Trim(), id.Trim(), ToolArgs.String(arguments, "article_id"), ToolArgs.Int(arguments, "page"), ct);
+            return ToolResult.Ok(doc.ContentMd);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or FormatException)
+        catch (Exception ex) when (ex is BadRequestException or NotFoundException)
         {
-            return ToolResult.Error($"'{source}' belgesi getirilemedi: {ex.Message}");
+            return ToolResult.Error(ex.Message);
         }
     }
 }

@@ -1,15 +1,15 @@
 using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
 /// <summary>
 /// 6183 sayılı AATUHK m.51 gecikme zammı hesaplar (vergi, SGK primi ve diğer amme alacakları).
-/// Tam aylar aylık oranla, ay kesirleri günlük (aylık oran / 30) hesaplanır; oran değişikliğinde
-/// her dönem kendi oranıyla ayrı hesaplanır.
+/// Thin adapter over <see cref="ICalculatorService"/>.
 /// </summary>
-public sealed class LatePaymentSurchargeTool : IAgentTool
+public sealed class LatePaymentSurchargeTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -36,84 +36,18 @@ public sealed class LatePaymentSurchargeTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var principal = ToolArgs.Decimal(arguments, "ana_para");
-        var dueDate = ToolArgs.Date(arguments, "vade_tarihi");
-        var paymentDate = ToolArgs.Date(arguments, "odeme_tarihi");
-        if (principal is not { } principalValue || principalValue <= 0 || dueDate is not { } start || paymentDate is not { } end)
+        var request = new LatePaymentSurchargeRequest(
+            ToolArgs.Decimal(arguments, "ana_para") ?? -1m,
+            ToolArgs.Date(arguments, "vade_tarihi"),
+            ToolArgs.Date(arguments, "odeme_tarihi"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("Pozitif ana_para, vade_tarihi ve odeme_tarihi zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcLatePaymentSurcharge(request))));
         }
-
-        if (start >= end)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error(
-                "odeme_tarihi vade_tarihi'nden sonra olmalıdır; vadesinde veya öncesinde ödemede gecikme zammı doğmaz."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var table = DelaySurchargeRates.Table;
-        if (start < table[0].From)
-        {
-            return Task.FromResult(ToolResult.Error(
-                $"Gecikme zammı oran tablosu {table[0].From:dd.MM.yyyy} öncesini kapsamıyor; daha eski vadeler için dönem oranlarını ayrıca doğrulayın."));
-        }
-
-        decimal totalSurcharge = 0;
-        var totalMonths = 0;
-        var totalFractionDays = 0;
-        var breakdown = new List<object>();
-        foreach (var period in table)
-        {
-            var from = period.From > start ? period.From : start;
-            var to = period.To is { } t && t < end ? t : end;
-            if (from >= to)
-            {
-                continue;
-            }
-
-            // Tam aylar: dönem başından ay ay ilerle (m.51 ay esası); artan süre gün kesridir.
-            var anchor = from;
-            var months = 0;
-            while (anchor.AddMonths(1) <= to)
-            {
-                anchor = anchor.AddMonths(1);
-                months++;
-            }
-
-            var days = to.DayNumber - anchor.DayNumber;
-            var surcharge = principalValue * (period.MonthlyPercent / 100m) * (months + days / 30m);
-            totalSurcharge += surcharge;
-            totalMonths += months;
-            totalFractionDays += days;
-            breakdown.Add(new
-            {
-                Baslangic = from,
-                Bitis = to,
-                AylikOran = period.MonthlyPercent,
-                TamAy = months,
-                KesirGun = days,
-                Zam = decimal.Round(surcharge, 2),
-            });
-        }
-
-        totalSurcharge = decimal.Round(totalSurcharge, 2);
-        string? note = null;
-        if (totalSurcharge < 1m)
-        {
-            totalSurcharge = 1.00m; // m.51/2: gecikme zammı 1 TL'den az olamaz.
-            note = "Hesaplanan zam 1 TL'nin altında kaldığından asgari 1 TL uygulandı (6183 m.51/2).";
-        }
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Yontem = "6183 m.51: süre vade tarihinden ödeme tarihine kadardır; tam aylar aylık oranla, "
-                + "ay kesirleri günlük (aylık oran / 30) hesaplanır, oran dönemleri ayrı ayrı uygulanır.",
-            ToplamTamAy = totalMonths,
-            ToplamKesirGun = totalFractionDays,
-            DonemKirilimi = breakdown,
-            ToplamZam = totalSurcharge,
-            GenelToplam = decimal.Round(principalValue + totalSurcharge, 2),
-            Not = note,
-            Kaynak = DelaySurchargeRates.Kaynak,
-        })));
     }
 }

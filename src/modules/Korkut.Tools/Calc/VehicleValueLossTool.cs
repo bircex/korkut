@@ -1,14 +1,15 @@
 using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
 /// <summary>
-/// Kazalı aracın değer kaybını ZMSS Genel Şartları ekindeki resmi formülle hesaplar:
-/// Toplam = (rayiç değer x %19) x hasar boyutu katsayısı x kilometre katsayısı.
+/// Kazalı aracın değer kaybını ZMSS Genel Şartları ekindeki resmi formülle hesaplar. Thin adapter
+/// over <see cref="ICalculatorService"/>.
 /// </summary>
-public sealed class VehicleValueLossTool : IAgentTool
+public sealed class VehicleValueLossTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -35,58 +36,19 @@ public sealed class VehicleValueLossTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var marketValue = ToolArgs.Decimal(arguments, "piyasa_degeri");
-        var mileage = ToolArgs.Int(arguments, "kilometre");
-        if (marketValue is not { } value || value <= 0 || mileage is not { } mileageValue || mileageValue < 0)
+        var request = new VehicleValueLossRequest(
+            ToolArgs.Decimal(arguments, "piyasa_degeri") ?? -1m,
+            ToolArgs.Int(arguments, "kilometre") ?? -1,
+            ToolArgs.String(arguments, "hasar_boyutu"),
+            ToolArgs.Decimal(arguments, "hasar_tutari"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("Pozitif piyasa_degeri ve negatif olmayan kilometre zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcVehicleValueLoss(request))));
         }
-
-        var assumptions = new List<string>
+        catch (BadRequestException ex)
         {
-            "Resmi formül: Toplam Değer Kaybı = Baz Değer Kaybı (rayiç x %19) x hasar boyutu katsayısı x kilometre katsayısı (ZMSS Genel Şartları eki).",
-        };
-
-        var damageSize = ToolArgs.String(arguments, "hasar_boyutu");
-        if (damageSize is null)
-        {
-            if (ToolArgs.Decimal(arguments, "hasar_tutari") is not { } repairAmount || repairAmount <= 0)
-            {
-                return Task.FromResult(ToolResult.Error("hasar_boyutu (buyuk|orta|kucuk|basit) veya pozitif hasar_tutari verilmelidir."));
-            }
-
-            var ratio = repairAmount / value;
-            damageSize = ratio switch
-            {
-                <= 0.05m => "basit",
-                <= 0.15m => "kucuk",
-                <= 0.25m => "orta",
-                _ => "buyuk",
-            };
-            assumptions.Add(
-                "Hasar boyutu onarım tutarının rayice oranından türetildi (pratik yaklaşım, Genel Şartlar'da yer almaz): %5'e kadar basit, %15'e kadar küçük, %25'e kadar orta, üzeri büyük.");
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        if (Zmss.HasarBoyutuKatsayisi(damageSize) is not { } damageCoefficient)
-        {
-            return Task.FromResult(ToolResult.Error("hasar_boyutu buyuk, orta, kucuk veya basit olmalıdır."));
-        }
-
-        var mileageCoefficient = Zmss.KilometreKatsayisi(mileageValue) ?? 0m;
-        var baseAmount = decimal.Round(value * Zmss.BazDegerKaybiOrani, 2);
-        var valueLoss = decimal.Round(value * Zmss.BazDegerKaybiOrani * damageCoefficient * mileageCoefficient, 2);
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Yontem = "ZMSS Genel Şartları eki resmi değer kaybı formülü",
-            BazDegerKaybi = baseAmount,
-            HasarBoyutu = damageSize,
-            HasarBoyutuKatsayisi = damageCoefficient,
-            KilometreKatsayisi = mileageCoefficient,
-            DegerKaybi = valueLoss,
-            Uyari = "Bu tutar sigorta tahkim/başvuru aşaması için Genel Şartlar formülüdür; mahkemede bilirkişi serbest piyasa (rayiç fark) yöntemiyle farklı ve çoğu kez daha yüksek bir tutara ulaşabilir.",
-            Varsayimlar = assumptions,
-            Kaynak = Zmss.DegerKaybiKaynak,
-        })));
     }
 }

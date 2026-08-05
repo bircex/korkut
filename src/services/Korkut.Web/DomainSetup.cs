@@ -71,6 +71,14 @@ public static class DomainSetup
         // Reports module (read-only office dashboard). It composes the overview from each domain's
         // Contract lookup, so there is no host-level aggregation query to register.
         new ReportsModule().Register(services, configuration);
+        // LawClients (public Turkish legal database search/fetch) + Calculators (legal/financial
+        // calculators): stateless capability modules, consumed both by this host's own Controllers
+        // (UI/REST) and by the agent tool loop (Korkut.Tools, through the same Contract interface —
+        // see Korkut.Agent.Host's AddKorkutDomain call, which wires the same modules in-process).
+        new Korkut.LawClients.Extensions.LawClientsModule().Register(services, configuration);
+        new Korkut.Calculators.Extensions.CalculatorsModule().Register(services, configuration);
+        // Kararlarım: the office's bookmarked decisions from Karar Arama / İlgili Kararlar.
+        new Korkut.SavedDecisions.Extensions.SavedDecisionsModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());

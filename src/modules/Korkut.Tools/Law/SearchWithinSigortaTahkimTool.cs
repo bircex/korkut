@@ -1,3 +1,4 @@
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Tools.Core;
@@ -5,16 +6,12 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Law;
 
 /// <summary>
-/// Search for a keyword within one Sigorta Tahkim journal issue: downloads the issue PDF (by number
-/// from a <c>search_decisions</c> source=sigorta_tahkim result), splits it into individual
-/// arbitration decisions, and returns those mentioning the keyword, ranked by match count with a
-/// short excerpt. Direct PDF download — no API key. Ported from Python
-/// <c>search_within_sigorta_tahkim</c>.
+/// Search for a keyword within one Sigorta Tahkim journal issue: splits it into individual
+/// arbitration decisions and returns those mentioning the keyword, ranked by match count with a
+/// short excerpt. Thin adapter over <see cref="ILawClientsSearchService"/>.
 /// </summary>
-public sealed class SearchWithinSigortaTahkimTool(SigortaTahkimClient client) : IAgentTool
+public sealed class SearchWithinSigortaTahkimTool(ILawClientsSearchService search) : IAgentTool
 {
-    private const int ExcerptRadius = 200;
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -46,66 +43,21 @@ public sealed class SearchWithinSigortaTahkimTool(SigortaTahkimClient client) : 
         }
         var maxResults = Math.Max(1, ToolArgs.Int(arguments, "max_results") ?? 10);
 
-        var (text, _) = await client.DownloadIssueTextAsync(issueNumber, ct);
-        if (string.IsNullOrEmpty(text))
+        try
         {
-            return ToolResult.Error($"Sayı {issueNumber} indirilemedi.");
-        }
-
-        var decisions = SigortaTahkim.SplitIntoDecisions(text);
-        var keywordLower = SigortaTahkim.TurkishLower(keyword);
-
-        var matches = new List<Match>();
-        foreach (var (header, body) in decisions)
-        {
-            var bodyLower = SigortaTahkim.TurkishLower(body);
-            var count = CountOccurrences(bodyLower, keywordLower);
-            if (count == 0)
+            var response = await search.SearchWithinSigortaTahkimAsync(issueNumber, keyword, maxResults, ct);
+            return ToolResult.Ok(ToolArgs.Result(new
             {
-                continue;
-            }
-            var pos = bodyLower.IndexOf(keywordLower, StringComparison.Ordinal);
-            var start = Math.Max(0, pos - ExcerptRadius);
-            var end = Math.Min(body.Length, pos + keyword.Length + ExcerptRadius);
-            var excerpt = body[start..end].Trim();
-            if (start > 0)
-            {
-                excerpt = "..." + excerpt;
-            }
-            if (end < body.Length)
-            {
-                excerpt += "...";
-            }
-            matches.Add(new Match(header, count, excerpt, body.Length));
+                issue_number = response.IssueNumber,
+                keyword = response.Keyword,
+                total_decisions = response.TotalDecisions,
+                matching_decisions = response.MatchingDecisions,
+                results = response.Results,
+            }));
         }
-
-        var ranked = matches.OrderByDescending(m => m.RelevanceScore).Take(maxResults).ToList();
-
-        return ToolResult.Ok(ToolArgs.Result(new
+        catch (Exception ex) when (ex is BadRequestException or NotFoundException)
         {
-            issue_number = issueNumber,
-            keyword,
-            total_decisions = decisions.Count,
-            matching_decisions = ranked.Count,
-            results = ranked,
-        }));
-    }
-
-    private sealed record Match(string Header, int RelevanceScore, string Excerpt, int BodyLength);
-
-    private static int CountOccurrences(string haystack, string needle)
-    {
-        if (needle.Length == 0)
-        {
-            return 0;
+            return ToolResult.Error(ex.Message);
         }
-        var count = 0;
-        var index = 0;
-        while ((index = haystack.IndexOf(needle, index, StringComparison.Ordinal)) >= 0)
-        {
-            count++;
-            index += needle.Length;
-        }
-        return count;
     }
 }

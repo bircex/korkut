@@ -39,6 +39,8 @@
     <ProjectReference Include="..\..\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Reports\Korkut.Reports.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Documents\Korkut.Documents.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.LawClients\Korkut.LawClients.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.Calculators\Korkut.Calculators.csproj" />
       <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
       <ProjectReference Include="..\..\modules\Korkut.Coverage\Korkut.Coverage.csproj" />
   </ItemGroup>

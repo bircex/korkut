@@ -27,6 +27,9 @@
     <Project Path="src/modules/Korkut.Documents/Korkut.Documents.csproj" />
     <Project Path="src/modules/Korkut.Pii/Korkut.Pii.csproj" />
     <Project Path="src/modules/Korkut.Reports/Korkut.Reports.csproj" />
+    <Project Path="src/modules/Korkut.LawClients/Korkut.LawClients.csproj" />
+    <Project Path="src/modules/Korkut.Calculators/Korkut.Calculators.csproj" />
+    <Project Path="src/modules/Korkut.SavedDecisions/Korkut.SavedDecisions.csproj" />
     <Project Path="src/modules/Korkut.Coverage/Korkut.Coverage.csproj" />
     <Project Path="src/modules/Korkut.Jobs/Korkut.Jobs.csproj" />
     <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />
@@ -56,6 +59,8 @@
     <Project Path="tests/unit/Korkut.Security.Unit.Tests/Korkut.Security.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Pii.Unit.Tests/Korkut.Pii.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Jobs.Unit.Tests/Korkut.Jobs.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.LawClients.Unit.Tests/Korkut.LawClients.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Calculators.Unit.Tests/Korkut.Calculators.Unit.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
     <Project Path="tests/integration/Korkut.Matters.Integration.Tests/Korkut.Matters.Integration.Tests.csproj" />
@@ -72,6 +77,8 @@
     <Project Path="tests/integration/Korkut.Deadlines.Integration.Tests/Korkut.Deadlines.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Tasks.Integration.Tests/Korkut.Tasks.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.LawClients.Integration.Tests/Korkut.LawClients.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Calculators.Integration.Tests/Korkut.Calculators.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/bdd/">
   </Folder>

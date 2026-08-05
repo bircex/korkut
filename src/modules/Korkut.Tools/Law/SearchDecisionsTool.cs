@@ -1,3 +1,4 @@
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Tools.Core;
@@ -5,15 +6,13 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Law;
 
 /// <summary>
-/// Composite legal-search tool: searches a chosen public Turkish legal database. Dispatches by
-/// <c>source</c> to the matching <see cref="ISourceClient"/>. Returns result metadata (ids, dates,
-/// case/decision numbers); the model passes an id to <c>fetch_document</c> for the full text.
+/// Composite legal-search tool: searches a chosen public Turkish legal database. Thin adapter over
+/// <see cref="ILawClientsSearchService"/> (same pattern as <c>Korkut.Tools/Office/FinanceSummaryTool.cs</c>
+/// over <c>IFinanceService</c>) — the dispatch-by-source logic lives in the LawClients module now,
+/// shared with the Karar Arama UI's search endpoint.
 /// </summary>
-public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnvironment env) : IAgentTool
+public sealed class SearchDecisionsTool(ILawClientsSearchService search) : IAgentTool
 {
-    private readonly Dictionary<string, ISourceClient> _bySource =
-        clients.ToDictionary(c => c.Source, StringComparer.OrdinalIgnoreCase);
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -57,24 +56,30 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
             return ToolResult.Error("'source' ve 'query' gereklidir.");
         }
 
-        if (!_bySource.TryGetValue(source, out var client))
-        {
-            return ToolResult.Error($"Desteklenmeyen kaynak: {source}");
-        }
-
-        if (client.RequiresKey is { } key && string.IsNullOrWhiteSpace(env.Get(key)))
-        {
-            return ToolResult.Error($"'{source}' kaynağı için API anahtarı yapılandırılmamış.");
-        }
+        var request = new LawClientsSearchRequest(
+            query.Trim(),
+            ToolArgs.Int(arguments, "limit"),
+            ToolArgs.Int(arguments, "page"),
+            ToolArgs.String(arguments, "sort"),
+            ToolArgs.String(arguments, "date_start"),
+            ToolArgs.String(arguments, "date_end"),
+            ToolArgs.String(arguments, "chamber"),
+            ToolArgs.String(arguments, "decision_type"),
+            ToolArgs.String(arguments, "application_type"),
+            ToolArgs.String(arguments, "scope"),
+            ToolArgs.String(arguments, "legislation_type"),
+            ToolArgs.String(arguments, "search_scope"),
+            ToolArgs.Bool(arguments, "tam_cumle"),
+            ToolArgs.String(arguments, "mevzuat_no"),
+            ToolArgs.String(arguments, "gazette_number"));
 
         try
         {
-            var outcome = await client.SearchPagedAsync(query.Trim(), arguments, ct);
-            var results = outcome.Items;
+            var response = await search.SearchAsync(source, request, ct);
             // The model reads the JSON text; the SourceRef list rides along for the UI's sources
             // drawer (kind splits legislation from case law — "mevzuat" is the only statute source).
             var kind = source.Equals("mevzuat", StringComparison.OrdinalIgnoreCase) ? "mevzuat" : "ictihat";
-            var sources = results
+            var sources = response.Results
                 .Select(r => new Korkut.Contract.Agent.Chat.SourceRef(
                     kind, r.Source, r.Id, r.Title, r.Date, r.CaseNumber, r.DecisionNumber,
                     r.Court, r.Chamber, r.Url, r.Snippet))
@@ -82,11 +87,11 @@ public sealed class SearchDecisionsTool(IEnumerable<ISourceClient> clients, IEnv
             // total = the database's full match count (null when the source doesn't report one);
             // count = the hits actually pulled. The persona's coverage-transparency rule reads these.
             return ToolResult.Ok(
-                ToolArgs.Result(new { total = outcome.Total, count = results.Count, results }), sources);
+                ToolArgs.Result(new { total = response.Total, count = response.Count, results = response.Results }), sources);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+        catch (Exception ex) when (ex is BadRequestException or NotFoundException)
         {
-            return ToolResult.Error($"'{source}' kaynağında arama başarısız oldu: {ex.Message}");
+            return ToolResult.Error(ex.Message);
         }
     }
 }

@@ -1,3 +1,4 @@
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Tools.Core;
@@ -8,10 +9,10 @@ namespace Korkut.Tools.Law;
 /// Law rationale (gerekçe): the published reasoning behind a law — general rationale, committee
 /// reports and article-by-article justifications. Accepts the law-level <c>gerekce_id</c> from a
 /// <c>search_decisions</c> source=mevzuat result or an article-level one from
-/// <c>get_mevzuat_madde_tree</c>. Long rationales are paged like <c>fetch_document</c>. Ported
-/// from the Python <c>get_mevzuat_gerekce</c>.
+/// <c>get_mevzuat_madde_tree</c>. Long rationales are paged like <c>fetch_document</c>. Thin
+/// adapter over <see cref="ILawClientsDocumentService"/>.
 /// </summary>
-public sealed class GetMevzuatGerekceTool(MevzuatClient client) : IAgentTool
+public sealed class GetMevzuatGerekceTool(ILawClientsDocumentService documents) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -42,27 +43,20 @@ public sealed class GetMevzuatGerekceTool(MevzuatClient client) : IAgentTool
             return ToolResult.Error("'gerekce_id' gereklidir.");
         }
 
-        (string? MevzuatId, string Text)? gerekce;
+        var page = ToolArgs.Int(arguments, "page") ?? 1;
+        var pageSize = ToolArgs.Int(arguments, "page_size") ?? 5000;
+
         try
         {
-            gerekce = await client.GetGerekceAsync(gerekceId.Trim(), ct);
+            var gerekce = await documents.GetGerekceAsync(gerekceId.Trim(), page, pageSize, ct);
+            var header = gerekce.MevzuatId is { } mevzuatId
+                ? $"Gerekçe {gerekceId} (mevzuat {mevzuatId}), sayfa {gerekce.Page}/{gerekce.TotalPages}"
+                : $"Gerekçe {gerekceId}, sayfa {gerekce.Page}/{gerekce.TotalPages}";
+            return ToolResult.Ok($"{header}\n\n{gerekce.Text}");
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or FormatException)
+        catch (Exception ex) when (ex is BadRequestException or NotFoundException)
         {
-            return ToolResult.Error($"Gerekçe getirilemedi: {ex.Message}");
+            return ToolResult.Error(ex.Message);
         }
-        if (gerekce is not { } found)
-        {
-            return ToolResult.Error($"'{gerekceId}' için yayımlanmış bir gerekçe bulunamadı.");
-        }
-
-        var page = ToolArgs.Int(arguments, "page") ?? 1;
-        var pageSize = Math.Clamp(ToolArgs.Int(arguments, "page_size") ?? 5000, 500, 20000);
-        var (chunk, actualPage, totalPages) = LegalText.ChunkMarkdown(found.Text, page, pageSize);
-
-        var header = found.MevzuatId is { } mevzuatId
-            ? $"Gerekçe {gerekceId} (mevzuat {mevzuatId}), sayfa {actualPage}/{totalPages}"
-            : $"Gerekçe {gerekceId}, sayfa {actualPage}/{totalPages}";
-        return ToolResult.Ok($"{header}\n\n{chunk}");
     }
 }

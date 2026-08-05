@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- LawClients module: the public Turkish legal database clients (Bedesten/Yargıtay/Danıştay/
+       Emsal/KYB/Mevzuat/Anayasa/GİB/KİK/Rekabet/Sayıştay/Uyuşmazlık/KVKK/BDDK/Sigorta Tahkim) behind
+       one search + one document-fetch service. No persistence — stateless HTTP wrappers, so this
+       follows the Reports template (no Korkut.Persistence reference). Consumed by both the agent
+       tool loop (Korkut.Tools, via Contract DI) and this module's own Controllers (UI/REST). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PdfPig" />
+    <!-- Microsoft.Extensions.Http itself ships in the AspNetCore.App shared framework (above);
+         only the resilience package needs an explicit reference. -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The module's internals (source clients, the service impl) are hidden from other modules
+         but visible to this module's own isolated unit-test project. -->
+    <InternalsVisibleTo Include="Korkut.LawClients.Unit.Tests" />
+  </ItemGroup>
+</Project>

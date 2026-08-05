@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using Korkut.Tools.Core;
 using Korkut.Tools.Law;
@@ -8,28 +9,29 @@ namespace Korkut.Tools.Unit.Tests;
 /// <summary>
 /// search_decisions surfaces its hits twice off one search: the JSON text the model reads, and the
 /// structured <c>SourceRef</c> list the UI's sources drawer consumes (kind = mevzuat for the
-/// legislation source, ictihat for every court source).
+/// legislation source, ictihat for every court source). The dispatch-by-source logic itself now
+/// lives in ILawClientsSearchService (Korkut.LawClients); this only pins the tool's own mapping.
 /// </summary>
 public class SearchDecisionsToolTests
 {
-    private sealed class FakeClient(string source, params SourceResult[] results) : ISourceClient
+    private sealed class FakeSearchService(string knownSource, params LawClientsSearchResult[] results) : ILawClientsSearchService
     {
-        public string Source => source;
+        public Task<LawClientsSearchResponse> SearchAsync(string source, LawClientsSearchRequest request, CancellationToken ct = default)
+        {
+            if (!source.Equals(knownSource, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BadRequestException($"Desteklenmeyen kaynak: {source}");
+            }
+            return Task.FromResult(new LawClientsSearchResponse(results.Length, results.Length, results));
+        }
 
-        public string? RequiresKey => null;
+        public Task<LawClientsArticleSearchResponse> SearchWithinMevzuatAsync(
+            string mevzuatId, string keyword, bool caseSensitive, int maxResults, CancellationToken ct = default)
+            => throw new NotSupportedException();
 
-        public bool SupportsFetch => false;
-
-        public Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default)
-            => Task.FromResult<IReadOnlyList<SourceResult>>(results);
-
-        public Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default)
-            => Task.FromResult<string?>(null);
-    }
-
-    private sealed class FakeEnv : IEnvironment
-    {
-        public string? Get(string key) => null;
+        public Task<LawClientsInsuranceSearchResponse> SearchWithinSigortaTahkimAsync(
+            string issueNumber, string keyword, int maxResults, CancellationToken ct = default)
+            => throw new NotSupportedException();
     }
 
     private static readonly AgentToolContext Ctx = new(Guid.NewGuid(), Guid.NewGuid(), new HashSet<string>());
@@ -40,10 +42,10 @@ public class SearchDecisionsToolTests
     [Fact]
     public async Task Court_hits_are_attached_as_ictihat_sources_with_all_metadata()
     {
-        var hit = new SourceResult(
+        var hit = new LawClientsSearchResult(
             "yargitay", "id-1", "CGK 2015/89 E. 2018/140 K.", "2018-04-02", "2015/89", "2018/140",
             "Yargıtay", "Ceza Genel Kurulu", "https://example.org/k", "kaypak adamsın…");
-        var tool = new SearchDecisionsTool([new FakeClient("yargitay", hit)], new FakeEnv());
+        var tool = new SearchDecisionsTool(new FakeSearchService("yargitay", hit));
 
         var result = await tool.InvokeAsync(Args("yargitay"), Ctx);
 
@@ -59,8 +61,8 @@ public class SearchDecisionsToolTests
     [Fact]
     public async Task Legislation_hits_are_attached_as_mevzuat_sources()
     {
-        var hit = new SourceResult("mevzuat", "5237", "Türk Ceza Kanunu");
-        var tool = new SearchDecisionsTool([new FakeClient("mevzuat", hit)], new FakeEnv());
+        var hit = new LawClientsSearchResult("mevzuat", "5237", "Türk Ceza Kanunu", null, null, null, null, null, null, null);
+        var tool = new SearchDecisionsTool(new FakeSearchService("mevzuat", hit));
 
         var result = await tool.InvokeAsync(Args("mevzuat"), Ctx);
 
@@ -71,7 +73,7 @@ public class SearchDecisionsToolTests
     [Fact]
     public async Task An_unsupported_source_errors_without_sources()
     {
-        var tool = new SearchDecisionsTool([new FakeClient("yargitay")], new FakeEnv());
+        var tool = new SearchDecisionsTool(new FakeSearchService("yargitay"));
 
         var result = await tool.InvokeAsync(Args("bilinmeyen"), Ctx);
 
