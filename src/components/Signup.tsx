@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "../api";
 import { navigate } from "../router";
 import { AuthShell, Brand } from "../ui";
+import { API_MODE } from "../session";
+import { SignIn } from "./SignIn";
 
 const inputCls =
   "rounded-[10px] border border-zinc-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-zinc-900";
 
-// Reached after a Google-verified sign-in with no existing account (callback → /kayit). The signup
-// ticket cookie carries the verified email; here the firm requests a demo. The office it creates is
-// disabled until a superadmin approves it, so there is no session — we show a "pending" screen.
+// /kayit is the register URL, reached two ways: (1) a Google-verified sign-in with no existing
+// account (callback → /kayit) leaves a signup ticket cookie carrying the verified email — this
+// component then collects the office name and creates a disabled office pending superadmin
+// approval; (2) a direct visit (e.g. the website's "Ücretsiz Başla" button) has no ticket, so we
+// fall back to the local e-mail/password register form (SignIn in "register" mode).
 export function Signup() {
   const [email, setEmail] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [noTicket, setNoTicket] = useState(false);
   const [officeName, setOfficeName] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +30,16 @@ export function Signup() {
         setEmail(r.email);
         setChecking(false);
       })
-      .catch(() => navigate("/giris", { replace: true })); // no/expired ticket, or demo closed
+      .catch(() => {
+        // No/expired ticket: not a Google-verified continuation, just a direct visit to /kayit
+        // (e.g. the website's "Ücretsiz Başla" button). Fall back to local self-serve register.
+        if (API_MODE === "dotnet") {
+          setNoTicket(true);
+          setChecking(false);
+        } else {
+          navigate("/giris", { replace: true });
+        }
+      });
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -43,6 +57,10 @@ export function Signup() {
 
   if (checking) {
     return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
+  }
+
+  if (noTicket) {
+    return <SignIn initialMode="register" />;
   }
 
   if (done) {

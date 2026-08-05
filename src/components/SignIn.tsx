@@ -15,7 +15,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 type Mode = "login" | "register" | "forgot" | "reset" | "invite";
 
-export function SignIn() {
+// initialMode lets a caller land straight on the register form (e.g. /kayit reached without
+// a Google signup ticket — see Signup.tsx) instead of always defaulting to login.
+export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "register" } = {}) {
   // Read the callback's ?error once at mount (a lazy initializer avoids a cascading render).
   const [error] = useState<string | null>(() => {
     const code = new URLSearchParams(window.location.search).get("error");
@@ -35,7 +37,8 @@ export function SignIn() {
   const [mode, setMode] = useState<Mode>(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("invite")) return "invite";
-    return params.get("reset") ? "reset" : "login";
+    if (params.get("reset")) return "reset";
+    return initialMode;
   });
 
   useEffect(() => {
