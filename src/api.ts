@@ -430,7 +430,10 @@ export const api = {
     `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
   // Self-serve demo request (after a Google-verified redirect to /kayit). Creates a DISABLED office
   // pending a superadmin's approval; no session is issued.
-  signupPending: () => request<{ email: string }>("/api/signup/pending"),
+  // probe(), not request(): an anonymous /kayit visit has no signup ticket, so a 401 here is the
+  // expected "no ticket" outcome — routing it through the authed session layer made it look like
+  // a session expiry and force-navigated to /giris before Signup.tsx's own noTicket branch could run.
+  signupPending: () => probe<{ email: string }>("/api/signup/pending"),
   demoRequest: (office_name: string, full_name?: string) =>
     request<{ pending: boolean }>("/api/demo-request", {
       method: "POST",
