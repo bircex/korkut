@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type MatterBrief, type MatterDetail, type User } from "../api";
+import { api, type ClientBrief, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
 import { ArrowLeft, CaretRight } from "../icons";
 import { DataTable } from "./DataTable";
@@ -23,17 +23,17 @@ export function MattersPanel({
   onOpenSession: (sessionId: number) => void;
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
+  const [clients, setClients] = useState<ClientBrief[]>([]);
   const [detail, setDetail] = useState<MatterDetail | null>(null); // /dosyalar/:id yüklenince dolar
   const path = usePath();
   // Açık dosya URL'den okunur: /dosyalar → liste, /dosyalar/:id → detay.
-  const midParam = matchPath("/dosyalar/:id", path)?.id;
-  const routeMid = midParam !== undefined && Number.isFinite(Number(midParam)) ? Number(midParam) : null;
+  const routeMid = matchPath("/dosyalar/:id", path)?.id ?? null;
   const [adding, setAdding] = useState<"matter" | "hearing" | "deadline" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New-matter form.
-  const [nm, setNm] = useState({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
+  // New-matter form. Müvekkil id ile bağlanır (selectbox) — serbest metin kabul edilmez.
+  const [nm, setNm] = useState({ title: "", client_id: "", court: "", case_type: "", counterparty: "" });
   // Add-hearing / add-deadline forms (within a detail).
   const [nh, setNh] = useState({ date: "", time: "", type: "", location: "" });
   const [nd, setNd] = useState({ due_date: "", title: "", type: "" });
@@ -51,8 +51,15 @@ export function MattersPanel({
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    api
+      .clients()
+      .then((c) => setClients(c.items))
+      .catch(() => {});
+  }, []);
+
   // Listeye dönüşte (URL /dosyalar olunca) detay kapanır — render sırasında state uyarlama deseni.
-  const [viewedMid, setViewedMid] = useState<number | null>(routeMid);
+  const [viewedMid, setViewedMid] = useState<string | null>(routeMid);
   if (routeMid !== viewedMid) {
     setViewedMid(routeMid);
     if (routeMid === null) setDetail(null);
@@ -70,26 +77,28 @@ export function MattersPanel({
       .catch(() => setError("Dosya açılamadı."));
   }, [routeMid, detail?.id]);
 
-  function openMatter(id: number) {
+  function openMatter(id: string) {
     navigate(`/dosyalar/${id}`); // yükleme URL efektinde
   }
 
   async function createMatter() {
-    if (!nm.title.trim()) return;
+    if (!nm.title.trim() || !nm.client_id) return;
     setBusy(true);
     setError(null);
     try {
       const d = await api.createMatter({
         title: nm.title.trim(),
-        client_name: nm.client_name.trim() || null,
+        client_id: nm.client_id,
         court: nm.court.trim() || null,
         case_type: nm.case_type.trim() || null,
         counterparty: nm.counterparty.trim() || null,
       });
-      setNm({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
+      setNm({ title: "", client_id: "", court: "", case_type: "", counterparty: "" });
       setAdding(null);
       await refresh();
-      setDetail(d); // navigate'ten önce — URL efekti aynı dosyayı yeniden çekmesin
+      // Create sadece özet döner — tam detay (müvekkil/duruşma/süre) burada çekilir; navigate'ten
+      // önce set edilir ki URL efekti aynı dosyayı yeniden çekmesin.
+      setDetail(await api.getMatter(d.id));
       navigate(`/dosyalar/${d.id}`);
     } catch {
       setError("Dosya oluşturulamadı.");
@@ -516,7 +525,7 @@ export function MattersPanel({
               </button>
               <button
                 onClick={createMatter}
-                disabled={busy || !nm.title.trim()}
+                disabled={busy || !nm.title.trim() || !nm.client_id}
                 className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
                 Ekle
@@ -536,12 +545,24 @@ export function MattersPanel({
               />
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
-              Müvekkil
-              <input
+              Müvekkil *
+              <select
                 className={input}
-                value={nm.client_name}
-                onChange={(e) => setNm({ ...nm, client_name: e.target.value })}
-              />
+                value={nm.client_id}
+                onChange={(e) => setNm({ ...nm, client_id: e.target.value })}
+              >
+                <option value="">Müvekkil seçin…</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name}
+                  </option>
+                ))}
+              </select>
+              {clients.length === 0 && (
+                <span className="text-xs text-amber-600">
+                  Henüz müvekkil yok, önce Müvekkiller sayfasından ekleyin.
+                </span>
+              )}
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
               Mahkeme

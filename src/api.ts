@@ -196,7 +196,7 @@ export type Hearing = {
   notes: string | null;
 };
 export type ClientBrief = {
-  id: number;
+  id: string;
   full_name: string;
   /** "individual" | "corporate" — tüzel kişiler listede rozetle ayrışır. */
   kind?: string;
@@ -299,7 +299,7 @@ export type ReportsOverview = {
   evrak: { total: number; by_direction: Record<string, number> };
 };
 export type MatterBrief = {
-  id: number;
+  id: string;
   title: string;
   client_name: string | null;
   file_no: string | null;
@@ -370,13 +370,14 @@ export type MatterDetail = MatterBrief & {
 };
 export type MatterInput = {
   title: string;
-  client_name?: string | null;
+  // The matter is always bound to an existing client by id — no free-text client name.
+  client_id: string;
   file_no?: string | null;
   court?: string | null;
   case_type?: string | null;
   counterparty?: string | null;
 };
-export type MatterPatch = Partial<Omit<MatterInput, "client_name">> & { status?: string; notes?: string };
+export type MatterPatch = Partial<MatterInput> & { status?: string; notes?: string };
 export type HearingInput = {
   date: string;
   time?: string | null;
@@ -483,25 +484,27 @@ export const api = {
     request<{ items: MatterBrief[]; total: number }>(
       `/api/matters${status ? `?status=${encodeURIComponent(status)}` : ""}`,
     ),
-  getMatter: (id: number) => request<MatterDetail>(`/api/matters/${id}`),
+  getMatter: (id: string) => request<MatterDetail>(`/api/matters/${id}`),
   createMatter: (input: MatterInput) =>
-    request<MatterDetail>("/api/matters", { method: "POST", body: JSON.stringify(input) }),
-  updateMatter: (id: number, patch: MatterPatch) =>
+    // The create endpoint returns the brief shape (no hearings/deadlines/documents/client) —
+    // callers that need the full detail should follow up with getMatter(id).
+    request<MatterBrief>("/api/matters", { method: "POST", body: JSON.stringify(input) }),
+  updateMatter: (id: string, patch: MatterPatch) =>
     request<MatterDetail>(`/api/matters/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
-  deleteMatter: (id: number) =>
+  deleteMatter: (id: string) =>
     request<{ ok: boolean }>(`/api/matters/${id}`, { method: "DELETE" }),
-  addHearing: (id: number, input: HearingInput) =>
+  addHearing: (id: string, input: HearingInput) =>
     request<Hearing>(`/api/matters/${id}/hearings`, { method: "POST", body: JSON.stringify(input) }),
   agenda: (days = 14) =>
     request<{ items: AgendaItem[]; days: number }>(`/api/calendar/upcoming?days=${days}`),
-  addDeadline: (id: number, input: DeadlineInput) =>
+  addDeadline: (id: string, input: DeadlineInput) =>
     request<Deadline>(`/api/matters/${id}/deadlines`, { method: "POST", body: JSON.stringify(input) }),
   completeDeadline: (did: number) =>
     request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
   createClient: (input: ClientPatch & { full_name: string }) =>
     request<ClientBrief>("/api/clients", { method: "POST", body: JSON.stringify(input) }),
-  updateClient: (id: number, patch: ClientPatch) =>
+  updateClient: (id: string, patch: ClientPatch) =>
     request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   invoices: () => request<{ items: Invoice[] }>("/api/finance/invoices"),
   createInvoice: (input: Partial<Invoice>) =>
@@ -598,7 +601,7 @@ export const api = {
     }),
   sessions: (limit = 20, offset = 0) =>
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
-  createSession: (matterId?: number) =>
+  createSession: (matterId?: string) =>
     request<SessionBrief>(
       `/api/sessions${matterId ? `?matter_id=${matterId}` : ""}`,
       { method: "POST" },
