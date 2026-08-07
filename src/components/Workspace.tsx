@@ -16,6 +16,7 @@ import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
 import { KararAramaPanel } from "./KararAramaPanel";
 import { KararlarimPanel } from "./KararlarimPanel";
+import { CalculatorsPanel } from "./CalculatorsPanel";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
@@ -31,6 +32,7 @@ import {
   type Icon,
   BookmarkSimple,
   BookOpenText,
+  Calculator,
   CalendarBlank,
   CaretDown,
   Check,
@@ -150,6 +152,7 @@ const NAV_ICON: Record<string, Icon> = {
   docs: FileText,
   kararlarim: BookmarkSimple,
   kararArama: MagnifyingGlass,
+  calculators: Calculator,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -215,7 +218,8 @@ type SidebarView =
   | "tasks"
   | "calendar"
   | "kararlarim"
-  | "kararArama";
+  | "kararArama"
+  | "calculators";
 
 // Top-level page URLs — a page can be bookmarked, shared, or survive a reload; the specific chat
 // or matter open within "chats" is deliberately not part of the URL (out of scope, see Settings.tsx
@@ -231,6 +235,7 @@ const VIEW_PATH: Record<SidebarView, string> = {
   calendar: "/takvim",
   kararlarim: "/kararlarim",
   kararArama: "/karar-arama",
+  calculators: "/hesap-makineleri",
 };
 
 function viewFromPath(path: string): SidebarView {
@@ -268,9 +273,10 @@ const VIEW_TITLE: Record<SidebarView, string> = {
   calendar: "Takvim",
   kararlarim: "Kararlarım",
   kararArama: "Karar Arama",
+  calculators: "Hesap Makineleri",
 };
 
-// Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama ve gelecekteki hesap makineleri vb.),
+// Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama, Hesap Makineleri),
 // Sohbetler (ayrı, kendi listesiyle aşağıda).
 const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string }[] }[] = [
   {
@@ -287,7 +293,10 @@ const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string }[] 
   },
   {
     label: "Araçlar",
-    items: [{ key: "kararArama", label: "Karar Arama" }],
+    items: [
+      { key: "kararArama", label: "Karar Arama" },
+      { key: "calculators", label: "Hesap Makineleri" },
+    ],
   },
 ];
 
@@ -1000,6 +1009,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <KararlarimPanel />
         ) : view === "kararArama" ? (
           <KararAramaPanel />
+        ) : view === "calculators" ? (
+          <CalculatorsPanel />
         ) : (
         <>
         <div className="flex min-w-0 flex-1 flex-col">

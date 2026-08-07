@@ -816,6 +816,23 @@ export const api = {
       }),
     }),
   removeSavedDecision: (id: string) => request<void>(`/api/saved-decisions/${id}`, { method: "DELETE" }),
+  // Hesap Makineleri (Araçlar sayfası): 33 ICalculatorService metodunun hepsi tek generic çağrıyla
+  // sürülür (bkz. calcDefinitions.ts) — response şekli hesap makinesine göre değiştiği için tip
+  // introspect ederek render edilir (CalculatorForm.tsx). GET'te dizi değerler (örn. para_birimleri)
+  // aynı anahtarla tekrarlanan query parametreleri olarak eklenir (.NET'in query-array bağlama biçimi).
+  calc: (endpoint: string, body: Record<string, unknown>, method: "GET" | "POST" = "POST") => {
+    if (method === "GET") {
+      const qs = new URLSearchParams();
+      for (const [key, value] of Object.entries(body)) {
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value)) value.forEach((v) => qs.append(key, String(v)));
+        else qs.set(key, String(value));
+      }
+      const suffix = qs.toString();
+      return request<Record<string, unknown>>(`${endpoint}${suffix ? `?${suffix}` : ""}`);
+    }
+    return request<Record<string, unknown>>(endpoint, { method: "POST", body: JSON.stringify(body) });
+  },
   // AI taslak belgeleri (Belgeler sekmesi) — /api/documents operasyonel evrak kütüphanesidir,
   // taslak listesi kendi yolundan gelir (gateway path'e göre yönlendirir).
   documents: () => request<DocBrief[]>("/api/draft-documents"),
