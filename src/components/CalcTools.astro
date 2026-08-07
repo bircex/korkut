@@ -1,0 +1,108 @@
+---
+// Hesaplama araçları bandı: DataSources ile aynı "trust band" deseni, ikonsuz
+// kartlar, statik grid. Liste korkut-backend/src/modules/Korkut.Tools/Calc
+// altındaki 27 tool ile birebir eşleşir (bkz. docs/CALC_TOOLS_PLAN.md).
+const tools = [
+  { name: "Vekalet Ücreti", sub: "Dava değerine göre vekalet ücretini hesaplar" },
+  { name: "Faiz", sub: "Gecikme faizini gün gün, doğru oranla hesaplar" },
+  { name: "Kıdem Tazminatı", sub: "Tavan ve kesintileriyle net tutarı bulur" },
+  { name: "İhbar Tazminatı", sub: "Çalışma süresine göre ihbar tutarını bulur" },
+  { name: "İnfaz Hesabı", sub: "Cezanın ne zaman biteceğini hesaplar" },
+  { name: "Yargı Harcı", sub: "Dava açarken ödenecek harcı hesaplar" },
+  { name: "Araç Değer Kaybı", sub: "Kaza sonrası değer kaybını hesaplar" },
+  { name: "Bedensel Tazminat", sub: "Trafik kazasında tazminat tutarını bulur" },
+  { name: "Destekten Yoksun Kalma", sub: "Vefat eden yakının ailesine ödenecek tazminatı hesaplar" },
+  { name: "Fazla Mesai", sub: "Fazla çalışma ücretini net olarak hesaplar" },
+  { name: "Yıllık İzin Ücreti", sub: "Kullanılmayan izin gününün karşılığını bulur" },
+  { name: "İşe İade Tazminatı", sub: "İşe iade davasında ödenecek tutarı hesaplar" },
+  { name: "Brüt/Net Maaş", sub: "Maaşı brütten nete, netten brüte çevirir" },
+  { name: "Arabuluculuk Ücreti", sub: "Arabulucuya ödenecek ücreti güncel tarifeyle bulur" },
+  { name: "Serbest Meslek Makbuzu", sub: "Makbuzu KDV ve stopajla birlikte hesaplar" },
+  { name: "Gecikme Zammı", sub: "Geciken kamu alacağına uygulanacak zammı hesaplar" },
+  { name: "Usul Süreleri", sub: "İtiraz, istinaf ve temyiz süresinin son gününü bulur" },
+  { name: "Zamanaşımı", sub: "Alacağın veya suçun zamanaşımı tarihini hesaplar" },
+  { name: "Tapu Harcı", sub: "Tapu devrinde ödenecek harcı hesaplar" },
+  { name: "Damga Vergisi", sub: "Sözleşmede ödenecek damga vergisini hesaplar" },
+  { name: "Veraset & İntikal Vergisi", sub: "Miras ve bağıştaki vergiyi hesaplar" },
+  { name: "Kira Artış Oranı", sub: "Kira zammının yasal üst sınırını hesaplar" },
+  { name: "Adli Para Cezası", sub: "Adli para cezası tutarını hesaplar" },
+  { name: "Miras Payı", sub: "Mirasçıların payını ve saklı payı hesaplar" },
+  { name: "Nafaka", sub: "Emsal kararlara göre nafaka aralığı sunar" },
+  { name: "İş Kazası Tazminatı", sub: "SGK ödemesinden sonra kalan tazminatı hesaplar" },
+  { name: "Döviz & Altın Kurları", sub: "Güncel döviz ve altın kurunu anında getirir" },
+];
+---
+
+<section id="hesaplama" class="calc-band">
+  <div class="wrap center">
+    <p class="trust">
+      <b>27 hukuki hesaplama aracı</b> vekalet ücretinden tazminata, harçtan
+      süreye, sohbetten tek satır cevap
+    </p>
+
+    <div class="calc-grid">
+      {
+        tools.map((t) => (
+          <div class="calc-tile">
+            <b>{t.name}</b>
+            <span>{t.sub}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .calc-band {
+    padding: 0 0 72px;
+  }
+  .trust {
+    color: var(--muted);
+    font-size: 15.5px;
+    margin-bottom: 36px;
+  }
+  .trust b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    text-align: left;
+  }
+  @media (max-width: 980px) {
+    .calc-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 720px) {
+    .calc-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 460px) {
+    .calc-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .calc-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .calc-tile b {
+    font-size: 14.5px;
+    letter-spacing: -0.01em;
+  }
+  .calc-tile span {
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+</style>
