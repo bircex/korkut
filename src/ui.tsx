@@ -2,16 +2,10 @@ import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type Re
 
 export function Brand({ title = "Korkut", subtitle }: { title?: string; subtitle?: string }) {
   return (
-    <div className="flex items-center gap-3.5">
-      <img
-        src="/korkut-logo.svg"
-        alt="Korkut"
-        className="h-12 w-12 rounded-xl bg-[#ffffff] p-1 ring-1 ring-black/10"
-      />
-      <div>
-        <h1 className="m-0 text-xl font-bold text-zinc-900">{title}</h1>
-        {subtitle && <p className="m-0 mt-0.5 text-[13px] text-zinc-500">{subtitle}</p>}
-      </div>
+    <div className="flex flex-col items-center gap-2 text-center">
+      <img src="/korkut-character/korkut-waving.png" alt="Korkut" className="h-24 w-24 object-contain" />
+      <h1 className="m-0 text-xl font-bold text-zinc-900">{title}</h1>
+      {subtitle && <p className="m-0 text-[13px] text-zinc-500">{subtitle}</p>}
     </div>
   );
 }

@@ -149,10 +149,7 @@ export function LocalAuth({
 
   if (mode === "register") {
     return (
-      <form onSubmit={submitRegister} className="flex flex-col gap-3" aria-labelledby="register-heading">
-        <h2 id="register-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
-          Yeni büro kaydı
-        </h2>
+      <form onSubmit={submitRegister} className="flex flex-col gap-3" aria-label="Yeni büro kaydı">
         <Field
           label="Ad Soyad"
           autoComplete="name"
@@ -229,10 +226,7 @@ export function LocalAuth({
   }
 
   return (
-    <form onSubmit={submitCredentials} className="flex flex-col gap-3" aria-labelledby="login-heading">
-      <h2 id="login-heading" className="m-0 text-[15px] font-semibold text-zinc-800">
-        E-posta ile giriş
-      </h2>
+    <form onSubmit={submitCredentials} className="flex flex-col gap-3" aria-label="E-posta ile giriş">
       <Field
         label="E-posta"
         type="email"

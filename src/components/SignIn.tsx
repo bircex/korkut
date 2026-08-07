@@ -60,7 +60,7 @@ export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "reg
   return (
     <AuthShell>
       <div className="mb-4">
-        <Brand subtitle="Hukuk asistanınız" />
+        <Brand subtitle={mode === "register" ? "Yeni büro kaydı" : "Hukuk asistanınız"} />
       </div>
       {error && (
         <div className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
