@@ -60,6 +60,85 @@
         ],
         "type": "object"
       },
+      "AlimonyRequest": {
+        "properties": {
+          "cocuk_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "es_calisiyor": {
+            "type": "boolean"
+          },
+          "nafaka_turu": {
+            "type": "string"
+          },
+          "yukumlu_net_gelir": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "nafaka_turu",
+          "yukumlu_net_gelir",
+          "cocuk_sayisi",
+          "es_calisiyor"
+        ],
+        "type": "object"
+      },
+      "AnnualLeavePayRequest": {
+        "properties": {
+          "gunluk_brut_ucret": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "kidem_yil": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "kullanilmayan_izin_gunu": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yas": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "kidem_yil",
+          "gunluk_brut_ucret",
+          "kullanilmayan_izin_gunu",
+          "yas"
+        ],
+        "type": "object"
+      },
       "AssignModelRequest": {
         "properties": {
           "enabled": {
@@ -78,6 +157,93 @@
         ],
         "type": "object"
       },
+      "AttorneyFeeRequest": {
+        "properties": {
+          "dava_degeri": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "kategori": {
+            "type": "string"
+          },
+          "taban_kategori": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "kategori",
+          "dava_degeri",
+          "taban_kategori"
+        ],
+        "type": "object"
+      },
+      "BodilyInjuryCompensationRequest": {
+        "properties": {
+          "aylik_net_gelir": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "cinsiyet": {
+            "type": "string"
+          },
+          "gecici_is_goremezlik_ay": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "kusur_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "maluliyet_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "yas": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "cinsiyet",
+          "yas",
+          "maluliyet_orani",
+          "kusur_orani",
+          "aylik_net_gelir",
+          "gecici_is_goremezlik_ay"
+        ],
+        "type": "object"
+      },
       "ChangeMemberRoleRequest": {
         "properties": {
           "role": {
@@ -90,6 +256,65 @@
         },
         "required": [
           "role"
+        ],
+        "type": "object"
+      },
+      "CourtFeeRequest": {
+        "properties": {
+          "dava_degeri": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "dava_turu": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eski_deger": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "islem": {
+            "type": "string"
+          },
+          "mahkeme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "maktu": {
+            "type": "boolean"
+          },
+          "yeni_deger": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "islem",
+          "dava_turu",
+          "dava_degeri",
+          "eski_deger",
+          "yeni_deger",
+          "maktu",
+          "mahkeme"
         ],
         "type": "object"
       },
@@ -446,13 +671,6 @@
               "string"
             ]
           },
-          "client_name": {
-            "maxLength": "400",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
           "counterparty": {
             "maxLength": "400",
             "type": [
@@ -693,6 +911,25 @@
         ],
         "type": "object"
       },
+      "DeadlineRequest": {
+        "properties": {
+          "sure_turu": {
+            "type": "string"
+          },
+          "teblig_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "sure_turu",
+          "teblig_tarihi"
+        ],
+        "type": "object"
+      },
       "DemoRequestRequest": {
         "properties": {
           "full_name": {
@@ -760,9 +997,269 @@
         ],
         "type": "object"
       },
+      "FreelanceReceiptRequest": {
+        "properties": {
+          "kdv_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "kdv_tevkifati": {
+            "type": "boolean"
+          },
+          "stopaj_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "yon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "yon",
+          "tutar",
+          "kdv_orani",
+          "stopaj_orani",
+          "kdv_tevkifati"
+        ],
+        "type": "object"
+      },
+      "GrossNetSalaryRequest": {
+        "properties": {
+          "ay": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "yon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "yon",
+          "tutar",
+          "ay"
+        ],
+        "type": "object"
+      },
       "IFormFile": {
         "format": "binary",
         "type": "string"
+      },
+      "InheritanceShareRequest": {
+        "properties": {
+          "anne_var": {
+            "type": "boolean"
+          },
+          "baba_var": {
+            "type": "boolean"
+          },
+          "cocuk_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "es_var": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "kardes_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "miras_degeri": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "es_var",
+          "cocuk_sayisi",
+          "anne_var",
+          "baba_var",
+          "kardes_sayisi",
+          "miras_degeri"
+        ],
+        "type": "object"
+      },
+      "InheritanceTaxRequest": {
+        "properties": {
+          "es_tek_basina": {
+            "type": "boolean"
+          },
+          "intikal_turu": {
+            "type": "string"
+          },
+          "matrah": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "intikal_turu",
+          "matrah",
+          "es_tek_basina"
+        ],
+        "type": "object"
+      },
+      "InterestRequest": {
+        "properties": {
+          "ana_para": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "baslangic": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bitis": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bitis_dahil": {
+            "type": "boolean"
+          },
+          "faiz_turu": {
+            "type": "string"
+          },
+          "ozel_oran": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "faiz_turu",
+          "ana_para",
+          "baslangic",
+          "bitis",
+          "bitis_dahil",
+          "ozel_oran"
+        ],
+        "type": "object"
+      },
+      "JudicialFineRequest": {
+        "properties": {
+          "gun_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "gunluk_miktar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "taksit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "gun_sayisi",
+          "gunluk_miktar",
+          "taksit"
+        ],
+        "type": "object"
+      },
+      "LatePaymentSurchargeRequest": {
+        "properties": {
+          "ana_para": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "odeme_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vade_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "ana_para",
+          "vade_tarihi",
+          "odeme_tarihi"
+        ],
+        "type": "object"
       },
       "LinkDocumentRequest": {
         "properties": {
@@ -808,6 +1305,283 @@
         ],
         "type": "object"
       },
+      "LossOfSupportRequest": {
+        "properties": {
+          "anne_var": {
+            "type": "boolean"
+          },
+          "anne_yasi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "aylik_net_gelir": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "baba_var": {
+            "type": "boolean"
+          },
+          "baba_yasi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "cinsiyet": {
+            "type": "string"
+          },
+          "cocuklar": {
+            "items": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "type": [
+              "null",
+              "array"
+            ]
+          },
+          "es_var": {
+            "type": "boolean"
+          },
+          "es_yasi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "kusur_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yas": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "cinsiyet",
+          "yas",
+          "aylik_net_gelir",
+          "kusur_orani",
+          "es_var",
+          "es_yasi",
+          "cocuklar",
+          "anne_var",
+          "anne_yasi",
+          "baba_var",
+          "baba_yasi"
+        ],
+        "type": "object"
+      },
+      "MediationFeeRequest": {
+        "properties": {
+          "anlasma": {
+            "type": "boolean"
+          },
+          "anlasma_tutari": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "arabulucu_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "dava_sarti": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "saat": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "taraf_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "uyusmazlik_turu": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uyusmazlik_turu",
+          "anlasma",
+          "anlasma_tutari",
+          "taraf_sayisi",
+          "saat",
+          "arabulucu_sayisi",
+          "dava_sarti"
+        ],
+        "type": "object"
+      },
+      "NoticePayRequest": {
+        "properties": {
+          "brut_maas": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "diger": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "ise_giris": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isten_cikis": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kidem_ay": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yemek": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yol": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "kidem_ay",
+          "ise_giris",
+          "isten_cikis",
+          "brut_maas",
+          "yemek",
+          "yol",
+          "diger"
+        ],
+        "type": "object"
+      },
+      "OvertimePayRequest": {
+        "properties": {
+          "aylik_brut_ucret": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "fazla_mesai_saat": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "hafta_tatili_saat": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "resmi_tatil_gun": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "aylik_brut_ucret",
+          "fazla_mesai_saat",
+          "hafta_tatili_saat",
+          "resmi_tatil_gun"
+        ],
+        "type": "object"
+      },
       "RegisterRequest": {
         "properties": {
           "email": {
@@ -847,6 +1621,61 @@
         ],
         "type": "object"
       },
+      "ReinstatementPayRequest": {
+        "properties": {
+          "aylik_brut": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "kidem_yil": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "aylik_brut",
+          "kidem_yil"
+        ],
+        "type": "object"
+      },
+      "RentIncreaseRequest": {
+        "properties": {
+          "mevcut_kira": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "tufe_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yenileme_ayi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mevcut_kira",
+          "yenileme_ayi",
+          "tufe_orani"
+        ],
+        "type": "object"
+      },
       "RequestPasswordResetRequest": {
         "properties": {
           "email": {
@@ -880,6 +1709,74 @@
         "required": [
           "token",
           "password"
+        ],
+        "type": "object"
+      },
+      "SaveDecisionRequest": {
+        "properties": {
+          "case_number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "chamber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "court": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "decision_number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "external_id",
+          "title",
+          "date",
+          "case_number",
+          "decision_number",
+          "court",
+          "chamber",
+          "url",
+          "snippet"
         ],
         "type": "object"
       },
@@ -946,6 +1843,243 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "SentenceExecutionRequest": {
+        "properties": {
+          "ceza_ay": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "ceza_gun": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "ceza_turu": {
+            "type": "string"
+          },
+          "ceza_yil": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "dogum_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "infaz_baslangic": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mahsup_gun": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "ozel_durum": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "suc_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "suc_tipi": {
+            "type": "string"
+          },
+          "tekerrur": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "suc_tarihi",
+          "dogum_tarihi",
+          "ceza_turu",
+          "ceza_yil",
+          "ceza_ay",
+          "ceza_gun",
+          "suc_tipi",
+          "tekerrur",
+          "infaz_baslangic",
+          "mahsup_gun",
+          "ozel_durum"
+        ],
+        "type": "object"
+      },
+      "SeveranceRequest": {
+        "properties": {
+          "brut_maas": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "diger": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "ise_giris": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isten_cikis": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "yemek": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "yol": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "ise_giris",
+          "isten_cikis",
+          "brut_maas",
+          "yemek",
+          "yol",
+          "diger"
+        ],
+        "type": "object"
+      },
+      "StampDutyRequest": {
+        "properties": {
+          "kagit_turu": {
+            "type": "string"
+          },
+          "tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "kagit_turu",
+          "tutar"
+        ],
+        "type": "object"
+      },
+      "StatuteOfLimitationsRequest": {
+        "properties": {
+          "alan": {
+            "type": "string"
+          },
+          "ceza_turu": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ceza_ust_siniri_yil": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "olay_tarihi": {
+            "format": "date",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "alan",
+          "olay_tarihi",
+          "ceza_ust_siniri_yil",
+          "ceza_turu"
+        ],
+        "type": "object"
+      },
+      "TitleDeedFeeRequest": {
+        "properties": {
+          "satis_bedeli": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "taraf": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "satis_bedeli",
+          "taraf"
+        ],
         "type": "object"
       },
       "TotpRequest": {
@@ -1044,6 +2178,13 @@
       "UpdateMatterRequest": {
         "properties": {
           "case_type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "client_id": {
+            "format": "uuid",
             "type": [
               "null",
               "string"
@@ -1207,6 +2348,121 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "VehicleValueLossRequest": {
+        "properties": {
+          "hasar_boyutu": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasar_tutari": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "kilometre": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "piyasa_degeri": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "piyasa_degeri",
+          "kilometre",
+          "hasar_boyutu",
+          "hasar_tutari"
+        ],
+        "type": "object"
+      },
+      "WorkAccidentCompensationRequest": {
+        "properties": {
+          "aylik_net_gelir": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "cinsiyet": {
+            "type": "string"
+          },
+          "gecici_is_goremezlik_ay": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "isveren_kusur_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "sgk_gelir_baglandi": {
+            "type": "boolean"
+          },
+          "sgk_pesin_sermaye": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
+          "surekli_is_goremezlik_orani": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "yas": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "cinsiyet",
+          "yas",
+          "surekli_is_goremezlik_orani",
+          "isveren_kusur_orani",
+          "aylik_net_gelir",
+          "gecici_is_goremezlik_ay",
+          "sgk_gelir_baglandi",
+          "sgk_pesin_sermaye"
+        ],
         "type": "object"
       }
     }
@@ -1866,6 +3122,870 @@
         },
         "tags": [
           "Onboarding"
+        ]
+      }
+    },
+    "/api/calc/adli-para-cezasi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/JudicialFineRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JudicialFineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JudicialFineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/arabuluculuk-ucreti": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MediationFeeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediationFeeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediationFeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/arac-deger-kaybi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleValueLossRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleValueLossRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleValueLossRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/bedensel-tazminat": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/BodilyInjuryCompensationRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BodilyInjuryCompensationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BodilyInjuryCompensationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/brut-net-maas": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/GrossNetSalaryRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrossNetSalaryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrossNetSalaryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/damga-vergisi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/StampDutyRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StampDutyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StampDutyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/destekten-yoksunluk": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LossOfSupportRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LossOfSupportRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LossOfSupportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/doviz-kurlari": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "para_birimleri",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tarih",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/faiz": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/InterestRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterestRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/fazla-mesai": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/OvertimePayRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OvertimePayRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OvertimePayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/gecikme-zammi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/LatePaymentSurchargeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LatePaymentSurchargeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LatePaymentSurchargeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/harc": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtFeeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtFeeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourtFeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/ihbar-tazminati": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticePayRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticePayRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticePayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/infaz": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SentenceExecutionRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SentenceExecutionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SentenceExecutionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/is-kazasi-tazminati": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkAccidentCompensationRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkAccidentCompensationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkAccidentCompensationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/ise-iade-tazminati": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinstatementPayRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinstatementPayRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinstatementPayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/kidem-tazminati": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SeveranceRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeveranceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeveranceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/kira-artis": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RentIncreaseRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentIncreaseRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentIncreaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/miras-pay": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceShareRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceShareRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/nafaka": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AlimonyRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlimonyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlimonyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/smm": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/FreelanceReceiptRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreelanceReceiptRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreelanceReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/sure": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/DeadlineRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeadlineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeadlineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/tapu-harci": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleDeedFeeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleDeedFeeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleDeedFeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/vekalet-ucreti": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AttorneyFeeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttorneyFeeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttorneyFeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/veraset-intikal": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceTaxRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceTaxRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InheritanceTaxRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/yillik-izin-ucreti": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnualLeavePayRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnualLeavePayRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnualLeavePayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/zamanasimi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/StatuteOfLimitationsRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatuteOfLimitationsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatuteOfLimitationsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
         ]
       }
     },
@@ -2837,6 +4957,210 @@
         ]
       }
     },
+    "/api/legal/documents": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "articleId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Legal"
+        ]
+      }
+    },
+    "/api/legal/madde-tree": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mevzuatId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Legal"
+        ]
+      }
+    },
+    "/api/legal/search": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateStart",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateEnd",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "chamber",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "decisionType",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "applicationType",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "legislationType",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "searchScope",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tamCumle",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mevzuatNo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gazetteNumber",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Legal"
+        ]
+      }
+    },
     "/api/logout": {
       "post": {
         "responses": {
@@ -3472,6 +5796,71 @@
         ]
       }
     },
+    "/api/saved-decisions": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SavedDecisions"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDecisionRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDecisionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SavedDecisions"
+        ]
+      }
+    },
+    "/api/saved-decisions/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SavedDecisions"
+        ]
+      }
+    },
     "/api/signup/pending": {
       "get": {
         "responses": {
@@ -3832,6 +6221,9 @@
       "name": "PetitionTypes"
     },
     {
+      "name": "Calculators"
+    },
+    {
       "name": "Calendar"
     },
     {
@@ -3850,6 +6242,9 @@
       "name": "Hearings"
     },
     {
+      "name": "Legal"
+    },
+    {
       "name": "Matters"
     },
     {
@@ -3863,6 +6258,9 @@
     },
     {
       "name": "Reports"
+    },
+    {
+      "name": "SavedDecisions"
     },
     {
       "name": "MailPreference"
