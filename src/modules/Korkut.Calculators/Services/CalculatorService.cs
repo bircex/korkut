@@ -525,7 +525,7 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
     {
         string[] assumptions =
         [
-            "2026 parametreleri: brüt asgari ücret 33.030,00 TL, SGK işçi %14 + işsizlik %1, SGK tavanı 247.725,00 TL/ay, damga binde 7,59",
+            "2026 parametreleri: brüt asgari ücret 33.030,00 TL, SGK işçi %14 + işsizlik %1, SGK tavanı 297.270,00 TL/ay (7566 sK m.24 ile 9x, 01.01.2026), damga binde 7,59",
             "Gelir vergisi 2026 ücret tarifesi; kümülatif matrah, tüm aylarda aynı brüt ücret varsayımıyla ay konumuna göre hesaplanır",
             "Asgari ücret istisnası uygulanır: ücretin asgari ücrete isabet eden kısmının gelir ve damga vergisi alınmaz",
             "Tek işveren, 4/a sigortalısı; engellilik indirimi, BES kesintisi, özel sigorta ve teşvikler hesaba katılmamıştır",

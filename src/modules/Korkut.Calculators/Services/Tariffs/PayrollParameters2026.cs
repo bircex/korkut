@@ -8,7 +8,9 @@ internal sealed record TaxBracket(decimal UpTo, decimal Rate);
 /// - Asgari ücret 2026: Asgari Ücret Tespit Komisyonu kararı (Aralık 2025); brüt 33.030,00 TL/ay
 ///   (günlük 1.101,00 TL), net 28.075,50 TL/ay. Tek dönem, tüm yıl geçerli.
 /// - SGK işçi payı %14 + işsizlik sigortası işçi payı %1 (5510 sK m.81, 4447 sK m.49).
-/// - Prime esas kazanç tavanı: brüt asgari ücret x 7,5 = 247.725,00 TL/ay (5510 sK m.82).
+/// - Prime esas kazanç tavanı: brüt asgari ücret x 9 = 297.270,00 TL/ay (5510 sK m.82; çarpan
+///   7566 sayılı Kanun m.24 ile 01.01.2026'dan itibaren 7,5'ten 9'a çıkarıldı — RG 19.12.2025/33112;
+///   sgk.gov.tr'nin 2026 "Prime Esas Kazanç Miktarları" sayfasıyla doğrulandı).
 /// - Gelir vergisi 2026 ücret tarifesi (GVK m.103, 2026 için yeniden değerlenen tutarlar):
 ///   190.000 TL'ye kadar %15; 400.000 TL'ye kadar %20; 1.500.000 TL'ye kadar %27 (ücret
 ///   gelirlerinde; ücret dışında bu sınır 1.000.000 TL); 5.300.000 TL'ye kadar %35; üstü %40.
@@ -20,7 +22,7 @@ internal sealed record TaxBracket(decimal UpTo, decimal Rate);
 internal static class PayrollParameters2026
 {
     public const string Kaynak =
-        "5510 sK m.81-82; 4447 sK m.49; GVK m.103 (2026 tarifesi) ve m.23/18; 488 sK IV/1-b ve ek m.2; Asgari Ücret Tespit Komisyonu 2026 kararı";
+        "5510 sK m.81-82 (tavan çarpanı 7566 sK m.24 ile 9'a çıkarıldı, RG 19.12.2025/33112); 4447 sK m.49; GVK m.103 (2026 tarifesi) ve m.23/18; 488 sK IV/1-b ve ek m.2; Asgari Ücret Tespit Komisyonu 2026 kararı";
 
     /// <summary>Aylık brüt asgari ücret, 2026.</summary>
     public const decimal AsgariUcretBrut = 33_030.00m;
@@ -34,8 +36,8 @@ internal static class PayrollParameters2026
     /// <summary>İşsizlik sigortası işçi payı (%1).</summary>
     public const decimal IssizlikIsciOrani = 0.01m;
 
-    /// <summary>SGK prime esas kazanç aylık tavanı (brüt asgari ücret x 7,5).</summary>
-    public const decimal SgkTavanAylik = 247_725.00m;
+    /// <summary>SGK prime esas kazanç aylık tavanı (brüt asgari ücret x 9, 01.01.2026'dan itibaren).</summary>
+    public const decimal SgkTavanAylik = 297_270.00m;
 
     /// <summary>Damga vergisi oranı (binde 7,59).</summary>
     public const decimal DamgaOrani = 0.00759m;

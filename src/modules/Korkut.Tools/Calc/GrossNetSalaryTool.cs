@@ -27,7 +27,7 @@ public sealed class GrossNetSalaryTool(ICalculatorService calc) : IAgentTool
 
     public ToolSpec Spec => new(
         "calc_brut_net_maas",
-        "2026 bordro parametreleriyle brütten nete veya netten brüte maaş hesaplar: SGK işçi %14 + işsizlik %1 (tavan 247.725 TL), 2026 gelir vergisi ücret tarifesi, damga binde 7,59 ve asgari ücret istisnası. Netten brüte iteratif çözülür; yıllık projeksiyon da verilir.",
+        "2026 bordro parametreleriyle brütten nete veya netten brüte maaş hesaplar: SGK işçi %14 + işsizlik %1 (tavan 297.270 TL), 2026 gelir vergisi ücret tarifesi, damga binde 7,59 ve asgari ücret istisnası. Netten brüte iteratif çözülür; yıllık projeksiyon da verilir.",
         Schema);
 
     public string? RequiresKey => null;

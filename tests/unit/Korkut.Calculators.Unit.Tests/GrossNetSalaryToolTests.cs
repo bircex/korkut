@@ -61,16 +61,16 @@ public class GrossNetSalaryToolTests
     [Fact]
     public async Task Sgk_tavani_uygulanir()
     {
-        // Brüt 300.000 > tavan 247.725: SGK 34.681,50 + işsizlik 2.477,25; net 221.958,03.
+        // Brüt 300.000 > tavan 297.270 (2026, 9x — 7566 sK m.24): SGK 41.617,80 + işsizlik 2.972,70.
         var result = await new GrossNetSalaryTool(TestCalc.Service).InvokeAsync(Args(
             """{ "yon": "brutten_nete", "tutar": 300000 }"""), Context);
 
         Assert.False(result.IsError);
         var payload = Payload(result);
         var kesintiler = payload.GetProperty("kesintiler");
-        Assert.Equal(34681.50m, kesintiler.GetProperty("sgk_isci").GetDecimal());
-        Assert.Equal(2477.25m, kesintiler.GetProperty("issizlik_isci").GetDecimal());
-        Assert.Equal(221958.03m, payload.GetProperty("net_aylik").GetDecimal());
+        Assert.Equal(41617.80m, kesintiler.GetProperty("sgk_isci").GetDecimal());
+        Assert.Equal(2972.70m, kesintiler.GetProperty("issizlik_isci").GetDecimal());
+        Assert.Equal(216012.62m, payload.GetProperty("net_aylik").GetDecimal());
     }
 
     [Fact]
