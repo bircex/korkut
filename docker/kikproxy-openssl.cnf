@@ -1,0 +1,19 @@
+# Scoped to Korkut.KikProxy ONLY (via ENV OPENSSL_CONF in docker/Dockerfile.kikproxy) — this
+# process talks to nothing but ekap.kik.gov.tr, a legacy .gov.tr host whose TLS handshake fails
+# under OpenSSL 3's default SECLEVEL=2 ("sslv3 alert handshake failure": no cipher suite both
+# sides will agree on). SECLEVEL=1 still requires ~80-bit security (no export ciphers, no RC4),
+# it just permits the older non-forward-secret suites this specific server needs.
+#
+# Deliberately NOT applied to Korkut.Api/Korkut.Agent.Host — see LawClientsHttp.cs — so every
+# other outbound HTTPS call those hosts make (model providers, Bedesten, etc.) keeps the default,
+# stricter policy.
+openssl_conf = default_conf
+
+[default_conf]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+CipherString = DEFAULT@SECLEVEL=1

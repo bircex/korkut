@@ -116,6 +116,7 @@ services:
       KORKUT_SMTP_FROM_NAME: ${KORKUT_SMTP_FROM_NAME:-Korkut}
       KORKUT_ADMIN_NOTIFY_EMAIL: ${KORKUT_ADMIN_NOTIFY_EMAIL:-}
       KORKUT_APP_URL: ${KORKUT_APP_URL:-}
+      KORKUT_KIK_PROXY_URL: http://kikproxy:8080
     depends_on:
       migrator:
         condition: service_completed_successfully
@@ -148,6 +149,7 @@ services:
       KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_AGENT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_KNOWLEDGE_URL: http://knowledge:8080
+      KORKUT_KIK_PROXY_URL: http://kikproxy:8080
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -187,6 +189,17 @@ services:
       dockerfile: docker/Dockerfile.ocr
     environment:
       <<: *app-env
+    restart: unless-stopped
+
+  # Single-purpose sidecar for the KİK (Kamu İhale Kurulu) source: ekap.kik.gov.tr's TLS
+  # handshake only completes under a relaxed OpenSSL SECLEVEL (docker/kikproxy-openssl.cnf),
+  # kept in its own process so that relaxation never touches api/agent's own outbound calls —
+  # see LawClientsHttp.cs / KikProxyClient.cs. Stateless, no DB, not internet-facing beyond
+  # the one gov.tr host it talks to.
+  kikproxy:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.kikproxy
     restart: unless-stopped
 
   gateway:

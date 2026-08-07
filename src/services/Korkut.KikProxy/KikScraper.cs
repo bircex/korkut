@@ -1,25 +1,27 @@
 using System.Net;
-using System.Text.Json;
 using System.Text.RegularExpressions;
-using Korkut.LawClients.Services.Shared;
 
-namespace Korkut.LawClients.Services.Sources;
+namespace Korkut.KikProxy;
+
+/// <summary>One normalized KİK board decision hit — the JSON shape KikProxyClient (in Korkut.LawClients) deserializes.</summary>
+public sealed record KikResult(string Id, string Title, string? Date, string? Court, string? Url);
 
 /// <summary>
 /// KİK (Public Procurement Authority) board decisions from the legacy citizen portal
 /// (ekap.kik.gov.tr). A classic ASP.NET WebForms grid: a GET seeds the <c>__VIEWSTATE</c> tokens +
 /// session cookie, a POST replays them with the filter fields and the search button; each row's
-/// preview postback reveals its <c>KararGoster</c> permalink. <c>decision_type</c> picks the
-/// decision family. Legacy TLS host; search-only. Ported from Python <c>search_kik</c>.
+/// preview postback reveals its <c>KararGoster</c> permalink. Search-only (no full-text fetch —
+/// the portal never exposed one). Ported from Python <c>search_kik</c>, then moved here (out of
+/// Korkut.LawClients) because ekap.kik.gov.tr's TLS handshake only completes under a relaxed
+/// OpenSSL SECLEVEL — see docker/Dockerfile.kikproxy.
 /// </summary>
-internal sealed partial class KikClient(IHttpClientFactory httpClientFactory) : ISourceClient
+internal static partial class KikScraper
 {
     private const string BaseUrl = "https://ekap.kik.gov.tr";
     private const string SearchPath = "/EKAP/Vatandas/KurulKararSorgu.aspx";
     private const string DocumentUrl = BaseUrl + "/EKAP/Vatandas/KararGoster.aspx?KararId=";
     private const string Prefix = "ctl00$ContentPlaceHolder1$";
     private const string SearchButton = Prefix + "btnAra";
-    private const int PageSize = 10;
 
     private static readonly string[] StateFields =
     [
@@ -34,37 +36,29 @@ internal sealed partial class KikClient(IHttpClientFactory httpClientFactory) : 
         ["mahkeme"] = ("rbMahkeme", "mahkeme"),
     };
 
-    public string Source => "kik";
-    public string? RequiresKey => null;
-    public bool SupportsFetch => false;
-
-    public async Task<IReadOnlyList<SourceResult>> SearchAsync(string query, JsonElement args, CancellationToken ct = default)
+    public static async Task<IReadOnlyList<KikResult>> SearchAsync(
+        HttpClient client, string query, string? decisionType, int? page, int? limit,
+        string? kararNo, string? basvuran, string? idareAdi, string? subject,
+        string? dateStart, string? dateEnd, string? year, CancellationToken ct = default)
     {
-        var decisionType = (ToolArgs.String(args, "decision_type") ?? "uyusmazlik").Trim();
-        if (!DecisionTypes.TryGetValue(decisionType, out var dt))
+        var typeKey = (decisionType ?? "uyusmazlik").Trim();
+        if (!DecisionTypes.TryGetValue(typeKey, out var dt))
         {
             dt = DecisionTypes["uyusmazlik"];
         }
-        var page = Math.Max(1, ToolArgs.Int(args, "page") ?? 1);
-        var limit = Math.Max(1, ToolArgs.Int(args, "limit") ?? 10);
+        var targetPage = Math.Max(1, page ?? 1);
+        var take = Math.Max(1, limit ?? 10);
 
         var fields = FilterFields(dt.Radio, query,
-            ToolArgs.String(args, "karar_no") ?? "",
-            ToolArgs.String(args, "basvuran") ?? "",
-            ToolArgs.String(args, "idare_adi") ?? "",
-            ToolArgs.String(args, "subject") ?? "",
-            ToolArgs.String(args, "date_start") ?? "",
-            ToolArgs.String(args, "date_end") ?? "",
-            ToolArgs.String(args, "year") ?? "");
-
-        var client = httpClientFactory.CreateClient("legal-insecure");
+            kararNo ?? "", basvuran ?? "", idareAdi ?? "", subject ?? "",
+            dateStart ?? "", dateEnd ?? "", year ?? "");
 
         var seed = await GetAsync(client, ct);
         var current = await PostAsync(client, fields, seed, SearchButton, ct);
 
-        for (var target = 2; target <= page; target++)
+        for (var t = 2; t <= targetPage; t++)
         {
-            var pageTarget = PageTarget(current, target);
+            var pageTarget = PageTarget(current, t);
             if (pageTarget is null)
             {
                 break;
@@ -72,15 +66,14 @@ internal sealed partial class KikClient(IHttpClientFactory httpClientFactory) : 
             current = await PostAsync(client, fields, current, pageTarget, ct);
         }
 
-        var rows = ParseRows(current).Take(limit).ToList();
-        var results = new List<SourceResult>(rows.Count);
+        var rows = ParseRows(current).Take(take).ToList();
+        var results = new List<KikResult>(rows.Count);
         foreach (var row in rows)
         {
             var url = await ResolveUrlAsync(client, fields, current, row.Preview, ct);
             var title = !string.IsNullOrEmpty(row.Subject) ? row.Subject
                 : !string.IsNullOrEmpty(row.Idare) ? row.Idare : row.KararNo;
-            results.Add(new SourceResult(
-                Source: "kik",
+            results.Add(new KikResult(
                 Id: row.KararNo,
                 Title: title,
                 Date: IsoDate(row.Date),
@@ -89,9 +82,6 @@ internal sealed partial class KikClient(IHttpClientFactory httpClientFactory) : 
         }
         return results;
     }
-
-    public Task<string?> FetchAsync(string id, JsonElement args, CancellationToken ct = default) =>
-        Task.FromResult<string?>(null);
 
     private static List<KeyValuePair<string, string>> FilterFields(
         string radio, string query, string kararNo, string basvuran, string idareAdi,
@@ -132,20 +122,20 @@ internal sealed partial class KikClient(IHttpClientFactory httpClientFactory) : 
         {
             Content = new FormUrlEncodedContent(body),
         };
-        
+
         request.Headers.Referrer = new Uri($"{BaseUrl}{SearchPath}");
         request.Headers.Add("Origin", BaseUrl);
-        
+
         using var resp = await client.SendAsync(request, ct);
         resp.EnsureSuccessStatusCode();
-        
+
         var text = await resp.Content.ReadAsStringAsync(ct);
-        
+
         if (text.Contains("Sayfada hata oluştu", StringComparison.Ordinal))
         {
             throw new InvalidOperationException("KİK arama portalı hata sayfası döndürdü; form düzeni değişmiş olabilir.");
         }
-        
+
         return text;
     }
 

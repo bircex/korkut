@@ -49,6 +49,7 @@
     <Project Path="src/services/Korkut.Agent.Host/Korkut.Agent.Host.csproj" />
     <Project Path="src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj" />
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
+    <Project Path="src/services/Korkut.KikProxy/Korkut.KikProxy.csproj" />
   </Folder>
   <Folder Name="/tests/unit/">
     <Project Path="tests/unit/Korkut.Agent.Brain.Unit.Tests/Korkut.Agent.Brain.Unit.Tests.csproj" />

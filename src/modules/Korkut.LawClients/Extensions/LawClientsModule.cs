@@ -24,8 +24,9 @@ public sealed class LawClientsModule : IModule
         services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<AnayasaClient>());
         services.AddScoped<GibClient>();
         services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<GibClient>());
-        services.AddScoped<KikClient>();
-        services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<KikClient>());
+        // KİK is proxied out-of-process — see KikProxyClient and docker/Dockerfile.kikproxy.
+        services.AddScoped<KikProxyClient>();
+        services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<KikProxyClient>());
         services.AddScoped<MevzuatClient>();
         services.AddScoped<ISourceClient>(sp => sp.GetRequiredService<MevzuatClient>());
         services.AddScoped<RekabetClient>();

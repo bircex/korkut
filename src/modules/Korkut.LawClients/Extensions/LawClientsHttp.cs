@@ -27,14 +27,15 @@ internal static class LawClientsHttp
             .AddResilienceHandler("lawclients-bedesten", builder => Configure(builder,
                 CreateLimiter(permitLimit: 1, window: TimeSpan.FromSeconds(4))));
 
-        // The Rekabet/GİB/KVKK/BDDK/Anayasa/KİK/Sayıştay/Uyuşmazlık clients each build their own
-        // absolute URL per call (no shared BaseAddress) — "legal" for the normal-TLS sources,
-        // "legal-insecure" kept as its own name for the ones that had it before (no special TLS
-        // handling either way; both just needed the timeout + resilience they never had).
+        // The Rekabet/GİB/KVKK/BDDK/Anayasa/Sayıştay/Uyuşmazlık clients each build their own
+        // absolute URL per call (no shared BaseAddress) — "legal" for the normal-TLS sources.
         services.AddHttpClient("legal", c => c.Timeout = TimeSpan.FromSeconds(30))
             .AddResilienceHandler("lawclients-legal", builder => Configure(builder,
                 CreateLimiter(permitLimit: 5, window: TimeSpan.FromSeconds(10))));
 
+        // Kept as its own named client (its own rate-limit bucket) for Uyuşmazlık, which was
+        // grouped with KİK historically even though — unlike KİK — it never actually needed any
+        // special TLS handling (kararlar.uyusmazlik.gov.tr completes a normal handshake).
         services.AddHttpClient("legal-insecure", c => c.Timeout = TimeSpan.FromSeconds(30))
             .AddResilienceHandler("lawclients-legal-insecure", builder => Configure(builder,
                 CreateLimiter(permitLimit: 5, window: TimeSpan.FromSeconds(10))));
@@ -42,6 +43,21 @@ internal static class LawClientsHttp
         services.AddHttpClient("tavily", c => c.Timeout = TimeSpan.FromSeconds(30))
             .AddResilienceHandler("lawclients-tavily", builder => Configure(builder,
                 CreateLimiter(permitLimit: 10, window: TimeSpan.FromSeconds(10))));
+
+        // KİK is proxied through Korkut.KikProxy (KORKUT_KIK_PROXY_URL), a separate process/
+        // container so its relaxed OpenSSL SECLEVEL (needed for ekap.kik.gov.tr's legacy TLS —
+        // see docker/Dockerfile.kikproxy) never applies to this host's own outbound calls. This is
+        // a plain internal call, so no public-API politeness limiter — the proxy already paces
+        // its own upstream requests.
+        services.AddHttpClient("kik-proxy", c => c.Timeout = TimeSpan.FromSeconds(30))
+            .AddResilienceHandler("lawclients-kik-proxy", builder => builder
+                .AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 2,
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true,
+                })
+                .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions()));
     }
 
     // A shared, queuing sliding-window limiter: at most `permitLimit` requests per `window` per

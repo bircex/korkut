@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Standalone on purpose: no ProjectReference to Korkut.Web/Infrastructure/etc. This host talks
+       to nothing but ekap.kik.gov.tr and answers one internal, unauthenticated endpoint that only
+       Korkut.LawClients (running in Api/Agent.Host) calls — see docker/Dockerfile.kikproxy for why
+       it's a separate process at all (a relaxed OpenSSL SECLEVEL that must not leak process-wide). -->
+</Project>
