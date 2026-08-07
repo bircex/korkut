@@ -31,7 +31,13 @@ public sealed class CourtFeeTool(ICalculatorService calc) : IAgentTool
               "type": "string",
               "enum": ["sulh", "asliye_idare"],
               "description": "Başvurma harcı için mahkeme (varsayılan asliye_idare)"
-            }
+            },
+            "tahsilat_asamasi": {
+              "type": "string",
+              "enum": ["haciz_oncesi", "haciz_sonrasi", "satis_sonrasi"],
+              "description": "icra_takip için: tahsil harcı hangi aşamada doğuyor (varsayılan haciz_oncesi)"
+            },
+            "tahsilat_tutari": { "type": "number", "description": "TL; icra_takip için fiilen tahsil edilen tutar, tahsil harcı hesabına dahil edilir" }
           },
           "required": ["islem"]
         }
@@ -55,7 +61,9 @@ public sealed class CourtFeeTool(ICalculatorService calc) : IAgentTool
             ToolArgs.Decimal(arguments, "eski_deger"),
             ToolArgs.Decimal(arguments, "yeni_deger"),
             ToolArgs.Bool(arguments, "maktu"),
-            ToolArgs.String(arguments, "mahkeme"));
+            ToolArgs.String(arguments, "mahkeme"),
+            ToolArgs.String(arguments, "tahsilat_asamasi"),
+            ToolArgs.Decimal(arguments, "tahsilat_tutari"));
 
         try
         {

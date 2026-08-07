@@ -297,6 +297,21 @@
           "maktu": {
             "type": "boolean"
           },
+          "tahsilat_asamasi": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tahsilat_tutari": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          },
           "yeni_deger": {
             "format": "double",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
@@ -314,7 +329,9 @@
           "eski_deger",
           "yeni_deger",
           "maktu",
-          "mahkeme"
+          "mahkeme",
+          "tahsilat_asamasi",
+          "tahsilat_tutari"
         ],
         "type": "object"
       },
@@ -1464,6 +1481,32 @@
         ],
         "type": "object"
       },
+      "MilitaryServiceBorrowingRequest": {
+        "properties": {
+          "gun_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "gunluk_tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "gun_sayisi",
+          "gunluk_tutar"
+        ],
+        "type": "object"
+      },
       "NoticePayRequest": {
         "properties": {
           "brut_maas": {
@@ -1533,6 +1576,32 @@
           "yemek",
           "yol",
           "diger"
+        ],
+        "type": "object"
+      },
+      "OverseasBorrowingRequest": {
+        "properties": {
+          "gun_sayisi": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "gunluk_tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "gun_sayisi",
+          "gunluk_tutar"
         ],
         "type": "object"
       },
@@ -1676,6 +1745,30 @@
         ],
         "type": "object"
       },
+      "RentWithholdingRequest": {
+        "properties": {
+          "odeyen_stopaja_tabi": {
+            "type": "boolean"
+          },
+          "tutar": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "yon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "yon",
+          "tutar",
+          "odeyen_stopaja_tabi"
+        ],
+        "type": "object"
+      },
       "RequestPasswordResetRequest": {
         "properties": {
           "email": {
@@ -1709,6 +1802,31 @@
         "required": [
           "token",
           "password"
+        ],
+        "type": "object"
+      },
+      "RetirementBonusRequest": {
+        "properties": {
+          "ekeat_brut": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "hizmet_yili": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "ekeat_brut",
+          "hizmet_yili"
         ],
         "type": "object"
       },
@@ -2097,6 +2215,73 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "TrafficFineRequest": {
+        "properties": {
+          "hiz_asim_km_sa": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "ihlal_turu": {
+            "type": "string"
+          },
+          "tekrar": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "yerlesim_yeri_ici": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "required": [
+          "ihlal_turu",
+          "hiz_asim_km_sa",
+          "yerlesim_yeri_ici",
+          "tekrar"
+        ],
+        "type": "object"
+      },
+      "UnemploymentBenefitRequest": {
+        "properties": {
+          "son120_gun_kesintisiz_calisti": {
+            "type": "boolean"
+          },
+          "son3_yilda_prim_gunu": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "son4_ay_toplam_prime_esas_kazanc": {
+            "format": "double",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "son120_gun_kesintisiz_calisti",
+          "son3_yilda_prim_gunu",
+          "son4_ay_toplam_prime_esas_kazanc"
+        ],
         "type": "object"
       },
       "UpdateClientRequest": {
@@ -3221,6 +3406,38 @@
         ]
       }
     },
+    "/api/calc/askerlik-borclanmasi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MilitaryServiceBorrowingRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MilitaryServiceBorrowingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MilitaryServiceBorrowingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
     "/api/calc/bedensel-tazminat": {
       "post": {
         "requestBody": {
@@ -3371,6 +3588,38 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/emeklilik-ikramiyesi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RetirementBonusRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetirementBonusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetirementBonusRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -3637,6 +3886,38 @@
         ]
       }
     },
+    "/api/calc/issizlik-odenegi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UnemploymentBenefitRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnemploymentBenefitRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnemploymentBenefitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
     "/api/calc/kidem-tazminati": {
       "post": {
         "requestBody": {
@@ -3686,6 +3967,38 @@
             "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/RentIncreaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/kira-stopaji": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RentWithholdingRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentWithholdingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentWithholdingRequest"
               }
             }
           },
@@ -3861,6 +4174,38 @@
         ]
       }
     },
+    "/api/calc/trafik-cezasi": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficFineRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficFineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrafficFineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
     "/api/calc/vekalet-ucreti": {
       "post": {
         "requestBody": {
@@ -3942,6 +4287,38 @@
             "text/json": {
               "schema": {
                 "$ref": "#/components/schemas/AnnualLeavePayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/yurtdisi-borclanma": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/OverseasBorrowingRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverseasBorrowingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverseasBorrowingRequest"
               }
             }
           },

@@ -96,4 +96,22 @@ public sealed class CalculatorsController(ICalculatorService calc) : ControllerB
 
     [HttpPost("is-kazasi-tazminati")]
     public IActionResult WorkAccidentCompensation([FromBody] WorkAccidentCompensationRequest request) => Ok(calc.CalcWorkAccidentCompensation(request));
+
+    [HttpPost("askerlik-borclanmasi")]
+    public IActionResult MilitaryServiceBorrowing([FromBody] MilitaryServiceBorrowingRequest request) => Ok(calc.CalcMilitaryServiceBorrowing(request));
+
+    [HttpPost("yurtdisi-borclanma")]
+    public IActionResult OverseasBorrowing([FromBody] OverseasBorrowingRequest request) => Ok(calc.CalcOverseasBorrowing(request));
+
+    [HttpPost("kira-stopaji")]
+    public IActionResult RentWithholding([FromBody] RentWithholdingRequest request) => Ok(calc.CalcRentWithholding(request));
+
+    [HttpPost("emeklilik-ikramiyesi")]
+    public IActionResult RetirementBonus([FromBody] RetirementBonusRequest request) => Ok(calc.CalcRetirementBonus(request));
+
+    [HttpPost("trafik-cezasi")]
+    public IActionResult TrafficFine([FromBody] TrafficFineRequest request) => Ok(calc.CalcTrafficFine(request));
+
+    [HttpPost("issizlik-odenegi")]
+    public IActionResult UnemploymentBenefit([FromBody] UnemploymentBenefitRequest request) => Ok(calc.CalcUnemploymentBenefit(request));
 }

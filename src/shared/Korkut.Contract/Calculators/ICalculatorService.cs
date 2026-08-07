@@ -31,7 +31,8 @@ public sealed record BodilyInjuryCompensationResponse(
 
 // ---- calc_harc ----
 public sealed record CourtFeeRequest(
-    string Islem, string? DavaTuru, decimal? DavaDegeri, decimal? EskiDeger, decimal? YeniDeger, bool Maktu, string? Mahkeme);
+    string Islem, string? DavaTuru, decimal? DavaDegeri, decimal? EskiDeger, decimal? YeniDeger, bool Maktu,
+    string? Mahkeme, string? TahsilatAsamasi, decimal? TahsilatTutari);
 public sealed record CourtFeeItem(string Kalem, decimal Tutar);
 public sealed record CourtFeeResponse(
     string Islem, string DavaTuru, IReadOnlyList<CourtFeeItem> Kalemler, decimal Toplam,
@@ -115,6 +116,12 @@ public sealed record LossOfSupportResponse(
     decimal EsasAlinanAylikNetGelir, int ToplamPay, decimal KusurOrani, IReadOnlyList<LossOfSupportBeneficiary> HakSahipleri,
     decimal BrutToplam, decimal NetToplam, IReadOnlyList<string> Varsayimlar, string Kaynak);
 
+// ---- calc_askerlik_borclanmasi ----
+public sealed record MilitaryServiceBorrowingRequest(int GunSayisi, decimal? GunlukTutar);
+public sealed record MilitaryServiceBorrowingResponse(
+    int GunSayisi, decimal GunlukTutar, decimal GunlukAltSinir, decimal GunlukUstSinir, decimal PrimOrani,
+    decimal BorclanmaTutari, IReadOnlyList<string> Uyarilar, string Kaynak);
+
 // ---- calc_arabuluculuk_ucreti ----
 public sealed record MediationFeeRequest(
     string UyusmazlikTuru, bool Anlasma, decimal? AnlasmaTutari, int? TarafSayisi, int? Saat, int? ArabulucuSayisi, bool? DavaSarti);
@@ -132,6 +139,12 @@ public sealed record NoticePayResponse(
     decimal KidemAy, int IhbarSuresiHafta, decimal GiydirilmisBrut, decimal GunlukUcret, decimal BrutIhbarTazminati,
     decimal GelirVergisiYaklasik, decimal DamgaVergisi, decimal NetIhbarTazminatiYaklasik, string Not, string Kaynak);
 
+// ---- calc_yurtdisi_borclanma ----
+public sealed record OverseasBorrowingRequest(int GunSayisi, decimal? GunlukTutar);
+public sealed record OverseasBorrowingResponse(
+    int GunSayisi, decimal GunlukTutar, decimal GunlukAltSinir, decimal GunlukUstSinir, decimal PrimOrani,
+    decimal BorclanmaTutari, IReadOnlyList<string> Uyarilar, string Kaynak);
+
 // ---- calc_fazla_mesai ----
 public sealed record OvertimePayRequest(decimal AylikBrutUcret, decimal? FazlaMesaiSaat, decimal? HaftaTatiliSaat, decimal? ResmiTatilGun);
 public sealed record OvertimePayResponse(
@@ -144,10 +157,21 @@ public sealed record ReinstatementPayResponse(
     int BostaGecenSureAy, decimal BostaGecenSureUcreti, string IseBaslatmamaAyAraligi, decimal IseBaslatmamaTazminatiMin,
     decimal IseBaslatmamaTazminatiMax, decimal ToplamMin, decimal ToplamMax, string Uyari, string Kaynak);
 
+// ---- calc_emeklilik_ikramiyesi ----
+public sealed record RetirementBonusRequest(decimal EkeatBrut, decimal HizmetYili);
+public sealed record RetirementBonusResponse(
+    decimal EkeatBrut, decimal TamHizmetYili, decimal KesirYil, decimal Ikramiye, IReadOnlyList<string> Uyarilar, string Kaynak);
+
 // ---- calc_kira_artis ----
 public sealed record RentIncreaseRequest(decimal MevcutKira, string YenilemeAyi, decimal? TufeOrani);
 public sealed record RentIncreaseResponse(
     decimal MevcutKira, decimal UygulananOran, string EndeksAyi, decimal AzamiArtisTutari, decimal AzamiYeniKira,
+    string Not, string Kaynak);
+
+// ---- calc_kira_stopaji ----
+public sealed record RentWithholdingRequest(string Yon, decimal Tutar, bool OdeyenStopajaTabi);
+public sealed record RentWithholdingResponse(
+    string Yon, decimal NetKira, decimal StopajOrani, decimal Stopaj, decimal BrutKira, bool StopajUygulandi,
     string Not, string Kaynak);
 
 // ---- calc_infaz ----
@@ -183,6 +207,19 @@ public sealed record TitleDeedFeeRequest(decimal SatisBedeli, string? Taraf);
 public sealed record TitleDeedFeeResponse(
     decimal SatisBedeli, string Taraf, decimal AliciHarci, decimal SaticiHarci, decimal Harc, string Not,
     string TarifeDonemi, string Kaynak);
+
+// ---- calc_trafik_cezasi ----
+public sealed record TrafficFineRequest(string IhlalTuru, int? HizAsimKmSa, bool? YerlesimYeriIci, int? Tekrar);
+public sealed record TrafficFineResponse(
+    string IhlalTuru, string Madde, decimal Ceza, decimal PesinOdemeIndirimliTutar, string? EkYaptirim,
+    IReadOnlyList<string> Uyarilar, string Kaynak);
+
+// ---- calc_issizlik_odenegi ----
+public sealed record UnemploymentBenefitRequest(
+    bool Son120GunKesintisizCalisti, int Son3YildaPrimGunu, decimal Son4AyToplamPrimeEsasKazanc);
+public sealed record UnemploymentBenefitResponse(
+    bool HakKazandi, int? OdenekSuresiGun, decimal? GunlukOdenekBrut, decimal? AylikOdenekBrut,
+    decimal? AylikOdenekTavani, decimal? DamgaVergisi, decimal? AylikOdenekNet, IReadOnlyList<string> Uyarilar, string Kaynak);
 
 // ---- calc_arac_deger_kaybi ----
 public sealed record VehicleValueLossRequest(decimal PiyasaDegeri, int Kilometre, string? HasarBoyutu, decimal? HasarTutari);
@@ -223,15 +260,21 @@ public interface ICalculatorService
     LatePaymentSurchargeResponse CalcLatePaymentSurcharge(LatePaymentSurchargeRequest request);
     LossOfSupportResponse CalcLossOfSupport(LossOfSupportRequest request);
     MediationFeeResponse CalcMediationFee(MediationFeeRequest request);
+    MilitaryServiceBorrowingResponse CalcMilitaryServiceBorrowing(MilitaryServiceBorrowingRequest request);
     NoticePayResponse CalcNoticePay(NoticePayRequest request);
+    OverseasBorrowingResponse CalcOverseasBorrowing(OverseasBorrowingRequest request);
     OvertimePayResponse CalcOvertimePay(OvertimePayRequest request);
     ReinstatementPayResponse CalcReinstatementPay(ReinstatementPayRequest request);
     RentIncreaseResponse CalcRentIncrease(RentIncreaseRequest request);
+    RentWithholdingResponse CalcRentWithholding(RentWithholdingRequest request);
+    RetirementBonusResponse CalcRetirementBonus(RetirementBonusRequest request);
     SentenceExecutionResponse CalcSentenceExecution(SentenceExecutionRequest request);
     SeveranceResponse CalcSeverance(SeveranceRequest request);
     StampDutyResponse CalcStampDuty(StampDutyRequest request);
     StatuteOfLimitationsResponse CalcStatuteOfLimitations(StatuteOfLimitationsRequest request);
     TitleDeedFeeResponse CalcTitleDeedFee(TitleDeedFeeRequest request);
+    TrafficFineResponse CalcTrafficFine(TrafficFineRequest request);
+    UnemploymentBenefitResponse CalcUnemploymentBenefit(UnemploymentBenefitRequest request);
     VehicleValueLossResponse CalcVehicleValueLoss(VehicleValueLossRequest request);
     WorkAccidentCompensationResponse CalcWorkAccidentCompensation(WorkAccidentCompensationRequest request);
 }

@@ -325,7 +325,23 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
 
                 Add("İcra başvurma harcı", CourtFees2026.BasvurmaIcra);
                 Add("İcra peşin harcı (binde 5)", decimal.Round(amount * CourtFees2026.IcraPesinOran, 2));
-                notes.Add("Tahsil harcı tahsilat aşamasına göre ayrıca doğar: hacizden önce %4,55, hacizden sonra %9,10, satıştan sonra %11,38.");
+
+                if (request.TahsilatTutari is { } collected && collected > 0)
+                {
+                    var (collectionRate, collectionLabel) = request.TahsilatAsamasi switch
+                    {
+                        "haciz_sonrasi" => (CourtFees2026.IcraTahsilHacizdenSonra, "Tahsil harcı (hacizden sonra, %9,10)"),
+                        "satis_sonrasi" => (CourtFees2026.IcraTahsilSatistanSonra, "Tahsil harcı (satıştan sonra, %11,38)"),
+                        null or "haciz_oncesi" => (CourtFees2026.IcraTahsilHacizdenOnce, "Tahsil harcı (hacizden önce, %4,55)"),
+                        _ => throw new BadRequestException("tahsilat_asamasi haciz_oncesi, haciz_sonrasi veya satis_sonrasi olmalıdır."),
+                    };
+                    Add(collectionLabel, decimal.Round(collected * collectionRate, 2));
+                }
+                else
+                {
+                    notes.Add("Tahsil harcı tahsilat aşamasına göre ayrıca doğar: hacizden önce %4,55, hacizden sonra %9,10, satıştan sonra %11,38. Hesaba katmak için tahsilat_tutari ve tahsilat_asamasi gönderin.");
+                }
+
                 break;
             }
 
@@ -1132,6 +1148,35 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
             $"{Trh2010.Kaynak}; {MinimumWage.Kaynak}");
     }
 
+    // ---- calc_askerlik_borclanmasi ----
+
+    public MilitaryServiceBorrowingResponse CalcMilitaryServiceBorrowing(MilitaryServiceBorrowingRequest request)
+    {
+        if (request.GunSayisi <= 0)
+        {
+            throw new BadRequestException("gun_sayisi pozitif olmalıdır.");
+        }
+
+        var dailyRate = request.GunlukTutar ?? PensionBuyback2026.GunlukAltSinir;
+        if (dailyRate < PensionBuyback2026.GunlukAltSinir || dailyRate > PensionBuyback2026.GunlukUstSinir)
+        {
+            throw new BadRequestException(
+                $"gunluk_tutar {PensionBuyback2026.GunlukAltSinir:N2} ile {PensionBuyback2026.GunlukUstSinir:N2} TL arasında olmalıdır.");
+        }
+
+        var amount = decimal.Round(dailyRate * request.GunSayisi * PensionBuyback2026.AskerlikPrimOrani, 2);
+
+        var warnings = new List<string>
+        {
+            "Borçlanma tutarının tamamı, borcun tebliğ tarihinden itibaren 1 ay içinde tek seferde ödenmelidir; süresinde ödenmeyen borçlanma için yeniden başvuru gerekir (taksit yoktur).",
+            "Gün sayısı, terhis belgesindeki fiili askerlik süresini (silah altına alınmadan terhise kadar) yansıtmalıdır; hava değişimi/istirahat gibi hizmetten sayılmayan süreler borçlanılamaz.",
+        };
+
+        return new MilitaryServiceBorrowingResponse(
+            request.GunSayisi, dailyRate, PensionBuyback2026.GunlukAltSinir, PensionBuyback2026.GunlukUstSinir,
+            PensionBuyback2026.AskerlikPrimOrani, amount, warnings, PensionBuyback2026.AskerlikKaynak);
+    }
+
     // ---- calc_arabuluculuk_ucreti ----
 
     public MediationFeeResponse CalcMediationFee(MediationFeeRequest request)
@@ -1253,6 +1298,35 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
             "4857 sK m.17; GVK m.61 ve m.103 (2026 tarifesi); 488 sK IV/1-b (binde 7,59)");
     }
 
+    // ---- calc_yurtdisi_borclanma ----
+
+    public OverseasBorrowingResponse CalcOverseasBorrowing(OverseasBorrowingRequest request)
+    {
+        if (request.GunSayisi <= 0)
+        {
+            throw new BadRequestException("gun_sayisi pozitif olmalıdır.");
+        }
+
+        var dailyRate = request.GunlukTutar ?? PensionBuyback2026.GunlukAltSinir;
+        if (dailyRate < PensionBuyback2026.GunlukAltSinir || dailyRate > PensionBuyback2026.GunlukUstSinir)
+        {
+            throw new BadRequestException(
+                $"gunluk_tutar {PensionBuyback2026.GunlukAltSinir:N2} ile {PensionBuyback2026.GunlukUstSinir:N2} TL arasında olmalıdır.");
+        }
+
+        var amount = decimal.Round(dailyRate * request.GunSayisi * PensionBuyback2026.YurtdisiPrimOrani, 2);
+
+        var warnings = new List<string>
+        {
+            "Tahakkuk eden borç, tebliğ tarihinden itibaren 3 ay içinde ödenmelidir; kısmi ödemede yalnızca ödenen tutara karşılık gelen gün kredilendirilir, süresinde ödenmeyen kısım için başvuru geçersiz sayılır ve o tarihteki güncel tutarlarla yeniden başvurulması gerekir.",
+            "Yurtdışında geçen sigortalılık/çalışma süreleri, işsizlik süreleri (dönem başına en çok 1 yıl) ve ev kadınlığı süreleri borçlanılabilir; salt öğrenim süreleri (yanında sigortalı çalışma olmadıkça), 18 yaşından önceki süreler ve Türk vatandaşlığı dışındaki dönemler kapsam dışıdır.",
+        };
+
+        return new OverseasBorrowingResponse(
+            request.GunSayisi, dailyRate, PensionBuyback2026.GunlukAltSinir, PensionBuyback2026.GunlukUstSinir,
+            PensionBuyback2026.YurtdisiPrimOrani, amount, warnings, PensionBuyback2026.YurtdisiKaynak);
+    }
+
     // ---- calc_fazla_mesai ----
 
     public OvertimePayResponse CalcOvertimePay(OvertimePayRequest request)
@@ -1318,6 +1392,40 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
             "4857 sK m.18 (iş güvencesi kapsamı) ve m.21 (işe başlatmama tazminatı 4-8 ay, boşta geçen süre en çok 4 ay)");
     }
 
+    // ---- calc_emeklilik_ikramiyesi ----
+
+    public RetirementBonusResponse CalcRetirementBonus(RetirementBonusRequest request)
+    {
+        if (request.EkeatBrut <= 0)
+        {
+            throw new BadRequestException("ekeat_brut pozitif olmalıdır.");
+        }
+        if (request.HizmetYili < 0)
+        {
+            throw new BadRequestException("hizmet_yili negatif olamaz.");
+        }
+
+        var fullYears = Math.Floor(request.HizmetYili);
+        var fraction = request.HizmetYili - fullYears;
+        var bonus = decimal.Round(request.EkeatBrut * fullYears, 2);
+
+        var warnings = new List<string>
+        {
+            "5434 sK m.89'daki 30 yıllık tavan, Anayasa Mahkemesi'nin 25.12.2014 tarihli E.2013/111, K.2014/195 sayılı kararıyla (RG 07.01.2015) iptal edildi; 30 yılı aşan hizmet için de her tam yıl için ikramiye ödenir.",
+            "Yalnızca TAM hizmet yılları hesaba katılır; kesirli son yıl (varsa) ikramiyeye dahil edilmez.",
+            "EKEAT (emekli keseneğine esas aylık tutarı) memurun brüt maaşı DEĞİLDİR — gösterge + ek gösterge + taban aylık + kıdem aylığının katsayılarla çarpımıdır; döner sermaye, ek ders ücreti, fazla mesai gibi kalemleri içermez. Bu değeri bordronuzdan veya e-Devlet hizmet dökümünüzden doğrudan girin; brüt maaşı yaklaşık değer olarak kullanmayın.",
+            "Gelir vergisinden istisnadır (GVK m.25/3); damga vergisi durumu bu hesaba dahil edilmemiştir, ayrıca teyit edilmesi önerilir.",
+        };
+        if (fraction > 0)
+        {
+            warnings.Add($"Girilen hizmet süresindeki yaklaşık {decimal.Round(fraction * 12, 1)} aylık kesir, ikramiyeye dahil edilmedi.");
+        }
+
+        return new RetirementBonusResponse(
+            request.EkeatBrut, fullYears, fraction, bonus, warnings,
+            "5434 sK m.89 (emekli ikramiyesi); AYM 25.12.2014 E.2013/111 K.2014/195 (30 yıl tavanının iptali, RG 07.01.2015); GVK m.25/3 (gelir vergisi istisnası)");
+    }
+
     // ---- calc_kira_artis ----
 
     public RentIncreaseResponse CalcRentIncrease(RentIncreaseRequest request)
@@ -1359,6 +1467,41 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
             decimal.Round(currentRent + increase, 2),
             "TBK m.344: artış üst sınırı bir önceki kira yılına ait 12 aylık ortalama TÜFE'dir; çatılı işyeri kiralarında da TÜFE sınırı uygulanır. Taraflar daha düşük bir oran kararlaştırabilir.",
             source);
+    }
+
+    // ---- calc_kira_stopaji ----
+
+    public RentWithholdingResponse CalcRentWithholding(RentWithholdingRequest request)
+    {
+        if (request.Tutar <= 0)
+        {
+            throw new BadRequestException("tutar pozitif olmalıdır.");
+        }
+        if (request.Yon is not ("netten_brute" or "brutten_nete"))
+        {
+            throw new BadRequestException("yon netten_brute veya brutten_nete olmalıdır.");
+        }
+
+        var rate = request.OdeyenStopajaTabi ? RentWithholding.StopajOrani : 0m;
+
+        decimal net, gross;
+        if (request.Yon == "netten_brute")
+        {
+            net = decimal.Round(request.Tutar, 2);
+            gross = rate > 0 ? decimal.Round(net / (1 - rate), 2) : net;
+        }
+        else
+        {
+            gross = decimal.Round(request.Tutar, 2);
+            net = rate > 0 ? decimal.Round(gross * (1 - rate), 2) : gross;
+        }
+        var withheld = decimal.Round(gross - net, 2);
+
+        var note = request.OdeyenStopajaTabi
+            ? "Stopaj, GVK m.94'te sayılan ödeyen kategorileri (kurumlar, gerçek usul mükellefleri, kamu idareleri, dernek/vakıflar vb.) işyeri kirası öderken uygulanır; basit usul mükellefinden veya özel şahıstan özel şahsa ödemede stopaj yükümlülüğü doğmaz. Kiralayan KDV mükellefiyse ayrıca %20 KDV eklenir (bu hesaba dahil değildir); kiralayan KDV mükellefi olmayan gerçek kişiyse ve kiracı KDV mükellefiyse, kiracı KDV'yi sorumlu sıfatıyla tam tevkifatla beyan eder."
+            : "Ödeyen GVK m.94'te sayılan kategorilerde değilse (örn. özel şahıstan özel şahsa konut kirası) stopaj yükümlülüğü doğmaz; kiraya veren geliri yıllık beyanname ile beyan eder. Not: ödeyen bir kurum/işletmeyse, kiralanan konut olsa bile stopaj uygulanabilir — bu durumda odeyen_stopaja_tabi=true seçin.";
+
+        return new RentWithholdingResponse(request.Yon, net, rate, withheld, gross, request.OdeyenStopajaTabi, note, RentWithholding.Kaynak);
     }
 
     // ---- calc_infaz ----
@@ -1676,6 +1819,150 @@ internal sealed class CalculatorService(TcmbRatesClient tcmb) : ICalculatorServi
             price, party, buyerFee, sellerFee, fee,
             "Harç, beyan edilen satış bedeli ile emlak vergisi değerinin yükseği üzerinden alınır. " + TitleDeedFees2026.DonerSermayeNotu,
             TitleDeedFees2026.Donem, TitleDeedFees2026.Kaynak);
+    }
+
+    // ---- calc_trafik_cezasi ----
+
+    public TrafficFineResponse CalcTrafficFine(TrafficFineRequest request)
+    {
+        var violation = request.IhlalTuru;
+        decimal fine;
+        string madde;
+        string? extra = null;
+
+        switch (violation)
+        {
+            case "hiz":
+            {
+                if (request.HizAsimKmSa is not { } excess || excess <= 0)
+                {
+                    throw new BadRequestException("hiz ihlali için pozitif hiz_asim_km_sa gerekir.");
+                }
+
+                var inSettlement = request.YerlesimYeriIci ?? true;
+                var tiers = inSettlement ? TrafficFines2026.HizYerlesimIci : TrafficFines2026.HizYerlesimDisi;
+                var tier = tiers.FirstOrDefault(t => excess <= t.UstSinirKmSa) ?? tiers[^1];
+                fine = tier.Ceza;
+                extra = tier.EkYaptirim;
+                madde = inSettlement ? "KTK m.51/2-a" : "KTK m.51/2-b";
+                break;
+            }
+
+            case "emniyet_kemeri":
+                fine = TrafficFines2026.EmniyetKemeri;
+                madde = "KTK m.78/1-a";
+                break;
+
+            case "alkol":
+            {
+                var count = Math.Clamp(request.Tekrar ?? 1, 1, 3);
+                fine = TrafficFines2026.Alkol[count];
+                madde = "KTK m.48/5";
+                extra = count switch
+                {
+                    1 => TrafficFines2026.AlkolEkYaptirim1,
+                    2 => TrafficFines2026.AlkolEkYaptirim2,
+                    _ => TrafficFines2026.AlkolEkYaptirim3,
+                };
+                break;
+            }
+
+            case "kirmizi_isik":
+            {
+                var count = Math.Clamp(request.Tekrar ?? 1, 1, 6);
+                fine = TrafficFines2026.KirmiziIsik[count];
+                madde = "KTK m.47/1-b";
+                extra = count == 6 ? TrafficFines2026.KirmiziIsik6EkYaptirim : null;
+                break;
+            }
+
+            case "cep_telefonu":
+            {
+                var count = Math.Clamp(request.Tekrar ?? 1, 1, 3);
+                fine = TrafficFines2026.CepTelefonu[count];
+                madde = "KTK m.73/c";
+                extra = count == 3 ? TrafficFines2026.CepTelefonu3EkYaptirim : null;
+                break;
+            }
+
+            case "trafik_sigortasi_yok":
+                fine = TrafficFines2026.TrafikSigortasiYok;
+                madde = "KTK m.91";
+                break;
+
+            case "muayenesiz":
+            {
+                var repeat = (request.Tekrar ?? 1) > 1;
+                fine = repeat ? TrafficFines2026.MuayenesizAracTekrar : TrafficFines2026.MuayenesizArac;
+                madde = repeat ? "KTK m.34/b" : "KTK m.34/a";
+                break;
+            }
+
+            default:
+                throw new BadRequestException(
+                    "ihlal_turu hiz, emniyet_kemeri, alkol, kirmizi_isik, cep_telefonu, trafik_sigortasi_yok veya muayenesiz olmalıdır.");
+        }
+
+        var discounted = decimal.Round(fine * (1 - TrafficFines2026.PesinIndirimOrani), 2);
+        var warnings = new List<string>
+        {
+            "Peşin ödeme indirimi (%25), tutanağın tebliğ tarihinden itibaren 1 ay içinde ödemede uygulanır (KTK m.115).",
+        };
+
+        return new TrafficFineResponse(violation, madde, fine, discounted, extra, warnings, TrafficFines2026.Kaynak);
+    }
+
+    // ---- calc_issizlik_odenegi ----
+
+    public UnemploymentBenefitResponse CalcUnemploymentBenefit(UnemploymentBenefitRequest request)
+    {
+        if (request.Son3YildaPrimGunu < 0)
+        {
+            throw new BadRequestException("son_3_yilda_prim_gunu negatif olamaz.");
+        }
+        if (request.Son4AyToplamPrimeEsasKazanc < 0)
+        {
+            throw new BadRequestException("son_4_ay_toplam_prime_esas_kazanc negatif olamaz.");
+        }
+
+        var warnings = new List<string>
+        {
+            "İşten ayrılış kendi isteği (istifa) veya kendi kusuruyla olmuşsa hak kazanılmaz (4447 sK m.51); bu hesaplama yalnızca haklı bir sebeple işsiz kalındığını varsayar.",
+        };
+
+        if (!request.Son120GunKesintisizCalisti || request.Son3YildaPrimGunu < UnemploymentInsurance.MinPrimGunu)
+        {
+            warnings.Add("Hak kazanma şartları sağlanmadı: son 120 gün kesintisiz çalışma VE son 3 yılda en az 600 gün prim ödemesi birlikte aranır (4447 sK m.50).");
+            return new UnemploymentBenefitResponse(false, null, null, null, null, null, null, warnings, UnemploymentInsurance.Kaynak);
+        }
+
+        var tier = UnemploymentInsurance.SureKademeleri.FirstOrDefault(t =>
+            request.Son3YildaPrimGunu >= t.MinGun && request.Son3YildaPrimGunu <= t.MaxGun);
+        if (tier is null)
+        {
+            warnings.Add("Hak kazanma şartları sağlanmadı: son 120 gün kesintisiz çalışma VE son 3 yılda en az 600 gün prim ödemesi birlikte aranır (4447 sK m.50).");
+            return new UnemploymentBenefitResponse(false, null, null, null, null, null, null, warnings, UnemploymentInsurance.Kaynak);
+        }
+
+        var dailyAverage = request.Son4AyToplamPrimeEsasKazanc / 120m;
+        var dailyBenefit = decimal.Round(dailyAverage * UnemploymentInsurance.OdenekOrani, 2);
+        var monthlyCap = decimal.Round(PayrollParameters2026.AsgariUcretBrut * UnemploymentInsurance.TavanOrani, 2);
+        var dailyCap = decimal.Round(monthlyCap / 30m, 2);
+        var cappedDaily = Math.Min(dailyBenefit, dailyCap);
+        var monthlyGross = decimal.Round(cappedDaily * 30m, 2);
+        if (dailyBenefit > dailyCap)
+        {
+            warnings.Add($"Hesaplanan ödenek tavanı aştığı için brüt asgari ücretin %80'i olan {monthlyCap:N2} TL/ay tavanına düşürüldü.");
+        }
+
+        var stampDuty = decimal.Round(monthlyGross * PayrollParameters2026.DamgaOrani, 2);
+        var monthlyNet = decimal.Round(monthlyGross - stampDuty, 2);
+
+        warnings.Add("İşsizlik ödeneği damga vergisi hariç hiçbir vergi ve kesintiye tabi değildir (4447 sK m.50); yalnızca binde 7,59 damga vergisi kesilir.");
+
+        return new UnemploymentBenefitResponse(
+            true, tier.OdenekSuresiGun, cappedDaily, monthlyGross, monthlyCap, stampDuty, monthlyNet, warnings,
+            $"{UnemploymentInsurance.Kaynak}; {PayrollParameters2026.Kaynak}");
     }
 
     // ---- calc_arac_deger_kaybi ----

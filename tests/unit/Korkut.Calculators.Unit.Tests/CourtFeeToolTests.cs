@@ -86,6 +86,28 @@ public class CourtFeeToolTests
     }
 
     [Fact]
+    public async Task Icra_takip_tahsilat_verilirse_tahsil_harci_eklenir()
+    {
+        // Başvurma 732,00 + peşin 500.000 x 0,005 = 2.500,00 + tahsil (hacizden önce) 200.000 x 0,0455 = 9.100,00
+        var result = await new CourtFeeTool(TestCalc.Service).InvokeAsync(Args(
+            """{ "islem": "icra_takip", "dava_degeri": 500000, "tahsilat_tutari": 200000 }"""), Context);
+
+        var payload = Payload(result);
+        Assert.Equal(3, payload.GetProperty("kalemler").GetArrayLength());
+        Assert.Equal(12332.00m, payload.GetProperty("toplam").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Icra_takip_haciz_sonrasi_tahsilat_daha_yuksek_orandan_hesaplanir()
+    {
+        // 732,00 + 2.500,00 + 200.000 x 0,0910 = 18.200,00 => 21.432,00
+        var result = await new CourtFeeTool(TestCalc.Service).InvokeAsync(Args(
+            """{ "islem": "icra_takip", "dava_degeri": 500000, "tahsilat_tutari": 200000, "tahsilat_asamasi": "haciz_sonrasi" }"""), Context);
+
+        Assert.Equal(21432.00m, Payload(result).GetProperty("toplam").GetDecimal());
+    }
+
+    [Fact]
     public async Task Islah_yeni_deger_eskiden_kucukse_hata_doner()
     {
         var result = await new CourtFeeTool(TestCalc.Service).InvokeAsync(Args(
