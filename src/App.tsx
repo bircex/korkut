@@ -4,6 +4,7 @@ import { onSessionExpired, onAuthChanged } from "./session";
 import { SignIn } from "./components/SignIn";
 import { Signup } from "./components/Signup";
 import { Workspace } from "./components/Workspace";
+import { AdminConsole } from "./components/AdminConsole";
 import { navigate, usePath } from "./router";
 
 // A deep link visited while signed out (e.g. /dosyalar/12). Google sign-in is a full-page
@@ -15,7 +16,13 @@ export function App() {
   const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
 
+  // Platform admin console route operates on its own session audience under /admin/api
+  if (path.startsWith("/admin")) {
+    return <AdminConsole />;
+  }
+
   // Probe the session cookie. Runs on mount and again whenever a fresh sign-in
+
   // (local login / TOTP) signals an auth change — no full-page reload needed.
   useEffect(() => {
     function checkSession() {

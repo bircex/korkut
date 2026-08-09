@@ -687,3 +687,90 @@ export const api = {
   exportUrl: (docId: number, format: "docx" | "udf") =>
     `/api/documents/${docId}/export?format=${format}`,
 };
+
+export type AdminSessionState = {
+  state: "anon" | "authed" | "totp_required" | "bootstrap_required" | "denied";
+  email?: string | null;
+};
+
+export type AdminStats = {
+  offices: number;
+  active: number;
+  pending: number;
+  users: number;
+};
+
+export type AdminOffice = {
+  id: string;
+  name: string;
+  disabled: boolean;
+  owner_email: string | null;
+  members: number;
+  created_at: string | null;
+};
+
+export type AdminModel = {
+  key: string;
+  label: string;
+  model: string;
+  base_url: string;
+  is_local: boolean;
+};
+
+export type AdminOfficeMember = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  chats: number;
+  messages: number;
+};
+
+export type AdminOfficeDetail = {
+  id: string;
+  name: string;
+  disabled: boolean;
+  created_at: string | null;
+  model: {
+    enabled: boolean;
+    model_key: string | null;
+    label: string | null;
+  };
+  totals: {
+    chats: number;
+    messages: number;
+    tokens: number;
+  };
+  members: AdminOfficeMember[];
+};
+
+export const adminApi = {
+  session: () => request<AdminSessionState>("/admin/api/session"),
+  stats: () => request<AdminStats>("/admin/api/stats"),
+  offices: () => request<AdminOffice[]>("/admin/api/offices"),
+  officeDetail: (id: string) => request<AdminOfficeDetail>(`/admin/api/offices/${id}`),
+  enableOffice: (id: string) => request<void>(`/admin/api/offices/${id}/enable`, { method: "POST" }),
+  disableOffice: (id: string) => request<void>(`/admin/api/offices/${id}/disable`, { method: "POST" }),
+  assignModel: (id: string, modelKey: string | null, enabled: boolean) =>
+    request<AdminOfficeDetail>(`/admin/api/offices/${id}/model`, {
+      method: "PUT",
+      body: JSON.stringify({ model_key: modelKey, enabled }),
+    }),
+  models: () => request<AdminModel[]>("/admin/api/models"),
+  challenge2fa: (code: string) =>
+    request<void>("/admin/api/2fa/challenge", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+  enrollStart2fa: () =>
+    request<{ provisioning_uri: string; secret: string }>("/admin/api/2fa/enroll/start", {
+      method: "POST",
+    }),
+  enrollConfirm2fa: (code: string) =>
+    request<{ recovery_codes: string[] }>("/admin/api/2fa/enroll/confirm", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+  logout: () => request<void>("/admin/api/logout", { method: "POST" }),
+};
+

@@ -43,4 +43,12 @@ export {
   ArrowSquareOut,
   MagnifyingGlass,
   BookOpenText,
+  Copy,
+  // Dosya ve ek ikonları
+  FilePdf,
+  FileDoc,
+  FileImage,
+  FileCode,
+  FileZip,
+  File,
 } from "@phosphor-icons/react";
