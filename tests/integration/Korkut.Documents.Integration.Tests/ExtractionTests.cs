@@ -32,7 +32,9 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     /// <summary>A second parser with a distinct version — simulates a parser upgrade.</summary>
     private sealed class UpperExtractorService : ITextExtractorService
     {
-        public string ParserVersion => "plaintext-v2";
+        // Distinct from PlainTextExtractorService's own "plaintext-v2" (bumped when it gained real
+        // PDF support) so the two stay distinguishable in the coexisting-artifacts test below.
+        public string ParserVersion => "plaintext-v3";
 
         public Task<IReadOnlyList<TextExtractorServiceResult>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
         {
@@ -85,7 +87,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         {
             Assert.Equal(docId, s.DocumentId);
             Assert.Equal(1, s.DocumentVersion);
-            Assert.Equal("plaintext-v1", s.ParserVersion);
+            Assert.Equal("plaintext-v2", s.ParserVersion);
             Assert.NotEmpty(s.SourceChecksumSha256);
             Assert.NotEmpty(s.SourceObjectKey);
         });
@@ -134,8 +136,8 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
             .Where(x => x.DocumentId == docId).GroupBy(x => x.ParserVersion)
             .Select(g => new { g.Key, Text = g.First().Text }).ToListAsync();
         Assert.Equal(2, byParser.Count); // both artifact versions coexist
-        Assert.Contains(byParser, x => x is { Key: "plaintext-v1", Text: "metin" });
-        Assert.Contains(byParser, x => x is { Key: "plaintext-v2", Text: "METIN" });
+        Assert.Contains(byParser, x => x is { Key: "plaintext-v2", Text: "metin" });
+        Assert.Contains(byParser, x => x is { Key: "plaintext-v3", Text: "METIN" });
     }
 
     [Fact]
