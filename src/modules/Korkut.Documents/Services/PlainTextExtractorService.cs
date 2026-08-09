@@ -1,6 +1,7 @@
 using System.Text;
 using Korkut.Contract.Documents;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using UglyToad.PdfPig;
 
 namespace Korkut.Documents.Services;
@@ -13,8 +14,11 @@ namespace Korkut.Documents.Services;
 /// the request — the OCR/PDF-raster extractor plugs in behind <see cref="ITextExtractorService"/>
 /// in production for those.
 /// </summary>
-public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractorService> logger) : ITextExtractorService
+public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractorService>? logger = null) : ITextExtractorService
 {
+    // Optional so tests/call sites outside DI (`new PlainTextExtractorService()`) keep working.
+    private readonly ILogger<PlainTextExtractorService> _logger = logger ?? NullLogger<PlainTextExtractorService>.Instance;
+
     public string ParserVersion => "plaintext-v2";
 
     public async Task<IReadOnlyList<TextExtractorServiceResult>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
@@ -46,7 +50,7 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
         }
         catch (Exception ex)
         {
-            PdfExtractionFailed(logger, ex);
+            PdfExtractionFailed(_logger, ex);
             return [];
         }
     }
