@@ -100,6 +100,28 @@ async function raw(path: string, opts: RequestInit): Promise<Response> {
 }
 
 /**
+ * Raw variant of sessionRequest for endpoints whose Response must reach the
+ * caller intact (SSE stream, multipart upload, blob export): same 401 →
+ * single-flight refresh → retry-once contract, but no JSON parsing and no
+ * forced Content-Type (multipart needs the browser's own boundary header).
+ * On exhausted refresh the 401 Response is returned — the caller's normal
+ * !ok path reports it, while emitExpired() already drops the app to sign-in.
+ */
+export async function sessionFetch(path: string, opts: RequestInit = {}): Promise<Response> {
+  let res = await fetch(path, { credentials: "same-origin", ...opts });
+  if (res.status === 401) {
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      emitExpired();
+      return res;
+    }
+    res = await fetch(path, { credentials: "same-origin", ...opts });
+    if (res.status === 401) emitExpired();
+  }
+  return res;
+}
+
+/**
  * Perform a request with automatic refresh-and-retry-once on 401.
  * `auth: false` opts out (used by the refresh/login calls themselves) so we can
  * never recurse into a refresh loop.

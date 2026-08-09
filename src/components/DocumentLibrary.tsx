@@ -42,7 +42,7 @@ function Section({
             {slice.map((d) => (
               <a
                 key={d.id}
-                href={`/sohbet/${d.conversation_id}/belge`}
+                href={`/belgeler/${d.conversation_id}`}
                 onClick={(e) => {
                   e.preventDefault();
                   onOpen(d);

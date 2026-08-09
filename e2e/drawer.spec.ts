@@ -44,8 +44,15 @@ async function stubSignedInChat(page: Page) {
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ total_decisions: 1000, by_court: [], decision_sources: [] }) }));
   await page.route("**/api/tasks**", (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) }));
-  await page.route("**/api/documents", (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) }));
+  // Sohbetin belgesi Belgeler listesinden (conversation_id eşleşmesi) türer — sohbetteki belge
+  // chip'inin veri kaynağı budur (header'da artık Editör düğmesi yok).
+  await page.route("**/api/draft-documents", (r) =>
+    r.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify([
+        { id: "d1", conversation_id: "s1", title: "Taslak", kind: null, updated_at: "2026-07-31T10:00:00Z" },
+      ]),
+    }));
   await page.route("**/api/sessions?*", (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [SESSION], total: 1 }) }));
   await page.route("**/api/sessions/s1", (r) =>
@@ -118,8 +125,8 @@ test.describe("İlgili Kararlar drawer'ı", () => {
     await stubSignedInChat(page);
     await page.goto("/sohbet/s1");
 
-    // Editörü aç (push modda sohbet görünür kalır).
-    await page.getByRole("button", { name: "Editör" }).click();
+    // Editörü belge chip'inden aç (header'da Editör düğmesi yok; push modda sohbet görünür kalır).
+    await page.getByRole("button", { name: "Taslak" }).click();
     await expect(page).toHaveURL(/\/sohbet\/s1\/belge$/);
     await expect(page.getByRole("complementary", { name: "Belge editörü" })).toBeVisible();
 
@@ -128,8 +135,8 @@ test.describe("İlgili Kararlar drawer'ı", () => {
     await expect(page).toHaveURL(/\/sohbet\/s1$/);
     await expect(page.getByRole("complementary", { name: "İlgili Kararlar (2)" })).toBeVisible();
 
-    // Editör toggle'ı kararları kapatıp editörü açar.
-    await page.getByRole("button", { name: "Editör" }).click();
+    // Belge chip'i kararları kapatıp editörü açar.
+    await page.getByRole("button", { name: "Taslak" }).click();
     await expect(page.getByRole("complementary", { name: "Belge editörü" })).toBeVisible();
     await expect(page.getByRole("complementary", { name: "İlgili Kararlar (2)" })).toHaveCount(0);
   });

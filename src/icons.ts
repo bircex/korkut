@@ -51,4 +51,11 @@ export {
   FileCode,
   FileZip,
   File,
+  // Mevzuat madde ağacı (MevzuatDetail)
+  Printer,
+  Funnel,
+  // Karar Arama sonuç tablosu
+  Eye,
+  // Hesap Makineleri
+  Calculator,
 } from "@phosphor-icons/react";

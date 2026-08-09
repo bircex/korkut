@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type AgendaItem, type MatterBrief, type MatterDetail, type User } from "../api";
+import { api, type ClientBrief, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
 import { ArrowLeft, CaretRight } from "../icons";
+import { DataTable } from "./DataTable";
 import { matchPath, navigate, usePath } from "../router";
 import { Modal } from "./Modal";
 
@@ -22,29 +23,26 @@ export function MattersPanel({
   onOpenSession: (sessionId: number) => void;
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
-  const [agenda, setAgenda] = useState<AgendaItem[]>([]);
+  const [clients, setClients] = useState<ClientBrief[]>([]);
   const [detail, setDetail] = useState<MatterDetail | null>(null); // /dosyalar/:id yüklenince dolar
   const path = usePath();
   // Açık dosya URL'den okunur: /dosyalar → liste, /dosyalar/:id → detay.
-  const midParam = matchPath("/dosyalar/:id", path)?.id;
-  const routeMid = midParam !== undefined && Number.isFinite(Number(midParam)) ? Number(midParam) : null;
+  const routeMid = matchPath("/dosyalar/:id", path)?.id ?? null;
   const [adding, setAdding] = useState<"matter" | "hearing" | "deadline" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New-matter form.
-  const [nm, setNm] = useState({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
+  // New-matter form. Müvekkil id ile bağlanır (selectbox) — serbest metin kabul edilmez.
+  const [nm, setNm] = useState({ title: "", client_id: "", court: "", case_type: "", counterparty: "" });
   // Add-hearing / add-deadline forms (within a detail).
   const [nh, setNh] = useState({ date: "", time: "", type: "", location: "" });
   const [nd, setNd] = useState({ due_date: "", title: "", type: "" });
 
   const refresh = useCallback(
     () =>
-      Promise.all([api.matters(), api.agenda(30)])
-        .then(([m, a]) => {
-          setMatters(m.items);
-          setAgenda(a.items);
-        })
+      api
+        .matters()
+        .then((m) => setMatters(m.items))
         .catch(() => setError("Dosyalar yüklenemedi.")),
     [],
   );
@@ -53,8 +51,15 @@ export function MattersPanel({
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    api
+      .clients()
+      .then((c) => setClients(c.items))
+      .catch(() => {});
+  }, []);
+
   // Listeye dönüşte (URL /dosyalar olunca) detay kapanır — render sırasında state uyarlama deseni.
-  const [viewedMid, setViewedMid] = useState<number | null>(routeMid);
+  const [viewedMid, setViewedMid] = useState<string | null>(routeMid);
   if (routeMid !== viewedMid) {
     setViewedMid(routeMid);
     if (routeMid === null) setDetail(null);
@@ -72,26 +77,28 @@ export function MattersPanel({
       .catch(() => setError("Dosya açılamadı."));
   }, [routeMid, detail?.id]);
 
-  function openMatter(id: number) {
+  function openMatter(id: string) {
     navigate(`/dosyalar/${id}`); // yükleme URL efektinde
   }
 
   async function createMatter() {
-    if (!nm.title.trim()) return;
+    if (!nm.title.trim() || !nm.client_id) return;
     setBusy(true);
     setError(null);
     try {
       const d = await api.createMatter({
         title: nm.title.trim(),
-        client_name: nm.client_name.trim() || null,
+        client_id: nm.client_id,
         court: nm.court.trim() || null,
         case_type: nm.case_type.trim() || null,
         counterparty: nm.counterparty.trim() || null,
       });
-      setNm({ title: "", client_name: "", court: "", case_type: "", counterparty: "" });
+      setNm({ title: "", client_id: "", court: "", case_type: "", counterparty: "" });
       setAdding(null);
       await refresh();
-      setDetail(d); // navigate'ten önce — URL efekti aynı dosyayı yeniden çekmesin
+      // Create sadece özet döner — tam detay (müvekkil/duruşma/süre) burada çekilir; navigate'ten
+      // önce set edilir ki URL efekti aynı dosyayı yeniden çekmesin.
+      setDetail(await api.getMatter(d.id));
       navigate(`/dosyalar/${d.id}`);
     } catch {
       setError("Dosya oluşturulamadı.");
@@ -429,80 +436,61 @@ export function MattersPanel({
   // uioption varyantlarının paylaştığı parçalar: durum rozeti, ajanda kartı, satır listesi.
   const statusBadge = (m: MatterBrief) => (
     <span
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
-        m.status === "closed" ? "bg-zinc-200 text-zinc-500" : "bg-emerald-500/15 text-emerald-600"
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+        m.status === "closed" ? "bg-zinc-100 text-zinc-500" : "bg-emerald-500/15 text-emerald-700"
       }`}
     >
       {STATUS_LABEL[m.status] ?? m.status}
     </span>
   );
 
-  const agendaCard = (limit: number) =>
-    agenda.length > 0 && (
-      <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-          Yaklaşan ({agenda.length})
-        </div>
-        <div className="space-y-0.5">
-          {agenda.slice(0, limit).map((a) => (
-            <button
-              key={`${a.kind}-${a.id}`}
-              onClick={() => openMatter(a.matter_id)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-amber-100/60"
-            >
-              <span className="font-medium text-amber-900">
-                {a.date}
-                {a.time ? ` ${a.time}` : ""}
-              </span>
-              <span className="truncate text-amber-800">
-                {a.kind === "deadline" ? a.title : a.type ?? "Duruşma"}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-
   const errorNote = error && <div className="mb-3 text-xs text-red-600">{error}</div>;
 
-  const matterTable = () =>
-    matters.length === 0 ? (
-      <div className="px-4 py-12 text-center text-sm text-zinc-400">Henüz dosya yok.</div>
-    ) : (
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            <th className="py-2 pr-3 font-semibold">Dosya</th>
-            <th className="hidden py-2 pr-3 font-semibold sm:table-cell">Müvekkil</th>
-            <th className="hidden py-2 pr-3 font-semibold md:table-cell">Mahkeme</th>
-            <th className="hidden py-2 pr-3 font-semibold lg:table-cell">Tür</th>
-            <th className="py-2 font-semibold">Durum</th>
-          </tr>
-        </thead>
-        <tbody>
-          {matters.map((m) => (
-            <tr
-              key={m.id}
-              onClick={() => openMatter(m.id)}
-              className="cursor-pointer border-b border-zinc-100 hover:bg-zinc-50"
-            >
-              <td className="py-2.5 pr-3">
-                <div className="font-medium text-zinc-800">{m.title}</div>
-                {m.file_no && <div className="text-xs text-zinc-400">{m.file_no}</div>}
-              </td>
-              <td className="hidden py-2.5 pr-3 text-zinc-600 sm:table-cell">
-                {m.client_name ?? "—"}
-              </td>
-              <td className="hidden py-2.5 pr-3 text-zinc-500 md:table-cell">{m.court ?? "—"}</td>
-              <td className="hidden py-2.5 pr-3 text-zinc-500 lg:table-cell">
-                {m.case_type ?? "—"}
-              </td>
-              <td className="py-2.5">{statusBadge(m)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+  // Aranabilir + sayfalı veri tablosu (DataTable); satıra tıklayınca dosya açılır.
+  const matterTable = () => (
+    <DataTable
+      rows={matters}
+      rowKey={(m) => m.id}
+      onRowClick={(m) => openMatter(m.id)}
+      pageSize={10}
+      empty="Henüz dosya yok."
+      searchPlaceholder="Dosya, müvekkil, mahkeme ara…"
+      searchText={(m) =>
+        [m.title, m.file_no, m.client_name, m.court, m.case_type].filter(Boolean).join(" ")
+      }
+      columns={[
+        {
+          key: "title",
+          label: "Dosya",
+          render: (m) => (
+            <>
+              <div className="font-medium text-zinc-900">{m.title}</div>
+              {m.file_no && <div className="text-xs text-zinc-400">{m.file_no}</div>}
+            </>
+          ),
+        },
+        {
+          key: "client",
+          label: "Müvekkil",
+          className: "hidden sm:table-cell",
+          render: (m) => <span className="text-zinc-600">{m.client_name ?? "-"}</span>,
+        },
+        {
+          key: "court",
+          label: "Mahkeme",
+          className: "hidden md:table-cell",
+          render: (m) => <span className="text-zinc-500">{m.court ?? "-"}</span>,
+        },
+        {
+          key: "type",
+          label: "Tür",
+          className: "hidden lg:table-cell",
+          render: (m) => <span className="text-zinc-500">{m.case_type ?? "-"}</span>,
+        },
+        { key: "status", label: "Durum", render: (m) => statusBadge(m) },
+      ]}
+    />
+  );
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
@@ -517,20 +505,9 @@ export function MattersPanel({
         </button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-5xl items-start gap-6 px-4 py-4">
-          <div className="min-w-0 flex-1">
-            {errorNote}
-            {matterTable()}
-          </div>
-          <aside className="sticky top-4 hidden w-72 shrink-0 lg:block">
-            {agenda.length > 0 ? (
-              agendaCard(10)
-            ) : (
-              <div className="rounded-xl border border-zinc-200 p-3 text-center text-xs text-zinc-400">
-                Yaklaşan duruşma/süre yok.
-              </div>
-            )}
-          </aside>
+        <div className="mx-auto max-w-5xl px-4 py-4">
+          {errorNote}
+          {matterTable()}
         </div>
       </div>
 
@@ -548,7 +525,7 @@ export function MattersPanel({
               </button>
               <button
                 onClick={createMatter}
-                disabled={busy || !nm.title.trim()}
+                disabled={busy || !nm.title.trim() || !nm.client_id}
                 className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
                 Ekle
@@ -568,12 +545,24 @@ export function MattersPanel({
               />
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
-              Müvekkil
-              <input
+              Müvekkil *
+              <select
                 className={input}
-                value={nm.client_name}
-                onChange={(e) => setNm({ ...nm, client_name: e.target.value })}
-              />
+                value={nm.client_id}
+                onChange={(e) => setNm({ ...nm, client_id: e.target.value })}
+              >
+                <option value="">Müvekkil seçin…</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name}
+                  </option>
+                ))}
+              </select>
+              {clients.length === 0 && (
+                <span className="text-xs text-amber-600">
+                  Henüz müvekkil yok, önce Müvekkiller sayfasından ekleyin.
+                </span>
+              )}
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
               Mahkeme

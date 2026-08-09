@@ -43,6 +43,61 @@ export type SourceRef = {
   snippet?: string | null;
 };
 
+// Karar Arama sayfasının bir arama sonucu (backend LawClientsSearchResult, snake_case) — SourceRef
+// ile aynı alanları taşır, ayrıca mevzuat'a özgü gazette_number/gerekce_id içerir.
+export type LawSearchResult = {
+  source: string;
+  id: string;
+  title: string;
+  date?: string | null;
+  case_number?: string | null;
+  decision_number?: string | null;
+  court?: string | null;
+  chamber?: string | null;
+  url?: string | null;
+  snippet?: string | null;
+  gazette_number?: string | null;
+  gerekce_id?: string | null;
+  // Bedesten kaynakları (yargitay/danistay/emsal/kyb) için: kararTuru/kesinlesmeDurumu ve
+  // itemType.description (Yargıtay Kararı / Yerel Hukuk Mahkemesi Kararı / İstinaf Hukuk
+  // Mahkemesi Kararı — "emsal" kaynağının kendi içinde ayırt ettiği mahkeme sistemi etiketi).
+  decision_type?: string | null;
+  finalization_status?: string | null;
+  court_type?: string | null;
+};
+export type LawSearchResponse = { total: number | null; count: number; results: LawSearchResult[] };
+
+// Mevzuat madde ağacı (backend LawClientsMaddeTreeNode/Response, snake_case): kısım/bölüm başlıkları
+// ve MADDE yaprakları iç içe. Yaprak düğümlerde madde_no+madde_id dolu; başlık düğümlerinde boş.
+export type MaddeTreeNode = {
+  title: string | null;
+  madde_no: string | null;
+  madde_id: string | null;
+  gerekce_id: string | null;
+  children: MaddeTreeNode[];
+};
+export type MaddeTreeResponse = { count: number; nodes: MaddeTreeNode[] };
+
+// Kararlarım: Karar Arama sonuçlarından ya da sohbetteki İlgili Kararlar'dan kaydedilen kararlar
+// (backend SavedDecisionResponse, snake_case). `external_id` LawSearchResult/SourceRef'in `id`'sidir.
+export type SavedDecision = {
+  id: string;
+  source: string;
+  external_id: string;
+  title: string;
+  date?: string | null;
+  case_number?: string | null;
+  decision_number?: string | null;
+  court?: string | null;
+  chamber?: string | null;
+  url?: string | null;
+  snippet?: string | null;
+  created_at: string;
+};
+
+// Turun ürettiği/güncellediği taslak belge — chat'teki belge kartı + editörü açma sinyali.
+export type DocumentRef = { doc_id: number; title: string; summary: string | null };
+
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -51,6 +106,12 @@ export type ChatMessage = {
   sources?: SourceRef[] | null;
   // Yalnız canlı turda bilinir (SSE `tool` çerçevelerinden sayılır); geçmişte persist edilmez.
   searches?: number;
+  // Bu turda hazırlanan taslak belge (SSE `document` çerçevesi) — yalnız canlı turda bilinir;
+  // geçmişte belge kartı Belgeler listesinden (conversation_id eşleşmesi) türetilir.
+  document?: DocumentRef | null;
+  // Araç çağrılarından ÖNCE akan ara anlatım parçaları ("düşünme" izi) — balona değil, üstteki
+  // silik katlanabilir bloğa gider. Yalnız canlı turda bilinir; persist Faz B (parts_json) işi.
+  thinking?: string[];
 };
 export type SessionBrief = {
   id: number;
@@ -135,8 +196,10 @@ export type Hearing = {
   notes: string | null;
 };
 export type ClientBrief = {
-  id: number;
+  id: string;
   full_name: string;
+  /** "individual" | "corporate" — tüzel kişiler listede rozetle ayrışır. */
+  kind?: string;
   phone: string | null;
   email: string | null;
   national_id: string | null;
@@ -236,7 +299,7 @@ export type ReportsOverview = {
   evrak: { total: number; by_direction: Record<string, number> };
 };
 export type MatterBrief = {
-  id: number;
+  id: string;
   title: string;
   client_name: string | null;
   file_no: string | null;
@@ -307,13 +370,14 @@ export type MatterDetail = MatterBrief & {
 };
 export type MatterInput = {
   title: string;
-  client_name?: string | null;
+  // The matter is always bound to an existing client by id — no free-text client name.
+  client_id: string;
   file_no?: string | null;
   court?: string | null;
   case_type?: string | null;
   counterparty?: string | null;
 };
-export type MatterPatch = Partial<Omit<MatterInput, "client_name">> & { status?: string; notes?: string };
+export type MatterPatch = Partial<MatterInput> & { status?: string; notes?: string };
 export type HearingInput = {
   date: string;
   time?: string | null;
@@ -350,6 +414,13 @@ async function probe<T>(path: string, opts: RequestInit = {}): Promise<T> {
   return sessionRequest<T>(path, opts, { auth: false });
 }
 
+// Streaming/multipart/blob endpoints can't ride sessionRequest (they need the raw
+// Response), but they still get the same 401 → refresh → retry-once contract.
+async function protectedFetch(path: string, opts: RequestInit = {}): Promise<Response> {
+  const { sessionFetch } = await import("./session");
+  return sessionFetch(path, opts);
+}
+
 export const api = {
   me: () => probe<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
@@ -359,7 +430,10 @@ export const api = {
     `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
   // Self-serve demo request (after a Google-verified redirect to /kayit). Creates a DISABLED office
   // pending a superadmin's approval; no session is issued.
-  signupPending: () => request<{ email: string }>("/api/signup/pending"),
+  // probe(), not request(): an anonymous /kayit visit has no signup ticket, so a 401 here is the
+  // expected "no ticket" outcome — routing it through the authed session layer made it look like
+  // a session expiry and force-navigated to /giris before Signup.tsx's own noTicket branch could run.
+  signupPending: () => probe<{ email: string }>("/api/signup/pending"),
   demoRequest: (office_name: string, full_name?: string) =>
     request<{ pending: boolean }>("/api/demo-request", {
       method: "POST",
@@ -413,25 +487,27 @@ export const api = {
     request<{ items: MatterBrief[]; total: number }>(
       `/api/matters${status ? `?status=${encodeURIComponent(status)}` : ""}`,
     ),
-  getMatter: (id: number) => request<MatterDetail>(`/api/matters/${id}`),
+  getMatter: (id: string) => request<MatterDetail>(`/api/matters/${id}`),
   createMatter: (input: MatterInput) =>
-    request<MatterDetail>("/api/matters", { method: "POST", body: JSON.stringify(input) }),
-  updateMatter: (id: number, patch: MatterPatch) =>
+    // The create endpoint returns the brief shape (no hearings/deadlines/documents/client) —
+    // callers that need the full detail should follow up with getMatter(id).
+    request<MatterBrief>("/api/matters", { method: "POST", body: JSON.stringify(input) }),
+  updateMatter: (id: string, patch: MatterPatch) =>
     request<MatterDetail>(`/api/matters/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
-  deleteMatter: (id: number) =>
+  deleteMatter: (id: string) =>
     request<{ ok: boolean }>(`/api/matters/${id}`, { method: "DELETE" }),
-  addHearing: (id: number, input: HearingInput) =>
+  addHearing: (id: string, input: HearingInput) =>
     request<Hearing>(`/api/matters/${id}/hearings`, { method: "POST", body: JSON.stringify(input) }),
   agenda: (days = 14) =>
     request<{ items: AgendaItem[]; days: number }>(`/api/calendar/upcoming?days=${days}`),
-  addDeadline: (id: number, input: DeadlineInput) =>
+  addDeadline: (id: string, input: DeadlineInput) =>
     request<Deadline>(`/api/matters/${id}/deadlines`, { method: "POST", body: JSON.stringify(input) }),
   completeDeadline: (did: number) =>
     request<Deadline>(`/api/deadlines/${did}/complete`, { method: "POST" }),
   clients: () => request<{ items: ClientBrief[] }>("/api/clients"),
   createClient: (input: ClientPatch & { full_name: string }) =>
     request<ClientBrief>("/api/clients", { method: "POST", body: JSON.stringify(input) }),
-  updateClient: (id: number, patch: ClientPatch) =>
+  updateClient: (id: string, patch: ClientPatch) =>
     request<ClientBrief>(`/api/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   invoices: () => request<{ items: Invoice[] }>("/api/finance/invoices"),
   createInvoice: (input: Partial<Invoice>) =>
@@ -485,9 +561,8 @@ export const api = {
     return request<{ items: CalendarEvent[] }>(`/api/calendar/events${qs ? `?${qs}` : ""}`);
   },
   exportMarkdown: async (format: ExportFormat, title: string, markdown: string): Promise<Blob> => {
-    const res = await fetch("/api/export", {
+    const res = await protectedFetch("/api/export", {
       method: "POST",
-      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ format, title, markdown }),
     });
@@ -529,7 +604,7 @@ export const api = {
     }),
   sessions: (limit = 20, offset = 0) =>
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
-  createSession: (matterId?: number) =>
+  createSession: (matterId?: string) =>
     request<SessionBrief>(
       `/api/sessions${matterId ? `?matter_id=${matterId}` : ""}`,
       { method: "POST" },
@@ -557,6 +632,7 @@ export const api = {
       open_document: number | null;
       pending_email: number | null;
       sources: SourceRef[] | null;
+      document?: DocumentRef | null;
     }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
   // Streaming twin of sessionChat: activity steps + answer tokens arrive live over SSE. `onStep`
   // and `onToken` fire as events land; `onTool` gets each raw tool name (structured, for UI
@@ -571,11 +647,11 @@ export const api = {
       onToken?: (t: string) => void;
       onTool?: (name: string) => void;
       onSources?: (items: SourceRef[]) => void;
+      onDocument?: (doc: DocumentRef) => void;
     },
   ) => {
-    const res = await fetch(`/api/sessions/${id}/chat/stream`, {
+    const res = await protectedFetch(`/api/sessions/${id}/chat/stream`, {
       method: "POST",
-      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
@@ -596,6 +672,7 @@ export const api = {
       open_document: number | null;
       pending_email: number | null;
       sources: SourceRef[] | null;
+      document?: DocumentRef | null;
     };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -616,6 +693,7 @@ export const api = {
       else if (event === "token") on.onToken?.(parsed.text as string);
       else if (event === "tool") on.onTool?.(parsed.name as string);
       else if (event === "sources") on.onSources?.(parsed.items as SourceRef[]);
+      else if (event === "document") on.onDocument?.(parsed as DocumentRef);
       else if (event === "done") done = parsed as Done;
       else if (event === "error") errorDetail = parsed.detail as string;
     };
@@ -639,9 +717,8 @@ export const api = {
     fd.append("file", file);
     fd.append("text", text);
     // No JSON Content-Type — the browser sets the multipart boundary.
-    const res = await fetch(`/api/sessions/${id}/upload`, {
+    const res = await protectedFetch(`/api/sessions/${id}/upload`, {
       method: "POST",
-      credentials: "same-origin",
       body: fd,
     });
     if (!res.ok) {
@@ -661,12 +738,104 @@ export const api = {
       sources: SourceRef[] | null;
     };
   },
+  // Karar Arama sayfası: tek bir kaynakta (yargitay/danistay/emsal/kyb/anayasa/mevzuat...) arama.
+  // Alan seti backend'in LawClientsSearchRequest'iyle birebir — her kaynak yalnız desteklediği
+  // filtreyi okur, gerisini yok sayar (bkz. Korkut.Tools/Law/SearchDecisionsTool.cs şeması).
+  legalSearch: (params: {
+    source: string;
+    query: string;
+    page?: number;
+    limit?: number;
+    sort?: "relevance" | "date";
+    dateStart?: string;
+    dateEnd?: string;
+    chamber?: string;
+    decisionType?: string;
+    applicationType?: string;
+    scope?: string;
+    legislationType?: string;
+    searchScope?: string;
+    tamCumle?: boolean;
+    mevzuatNo?: string;
+    gazetteNumber?: string;
+  }) => {
+    const qs = new URLSearchParams({ source: params.source, query: params.query });
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.sort) qs.set("sort", params.sort);
+    if (params.dateStart) qs.set("dateStart", params.dateStart);
+    if (params.dateEnd) qs.set("dateEnd", params.dateEnd);
+    if (params.chamber) qs.set("chamber", params.chamber);
+    if (params.decisionType) qs.set("decisionType", params.decisionType);
+    if (params.applicationType) qs.set("applicationType", params.applicationType);
+    if (params.scope) qs.set("scope", params.scope);
+    if (params.legislationType) qs.set("legislationType", params.legislationType);
+    if (params.searchScope) qs.set("searchScope", params.searchScope);
+    if (params.tamCumle) qs.set("tamCumle", "true");
+    if (params.mevzuatNo) qs.set("mevzuatNo", params.mevzuatNo);
+    if (params.gazetteNumber) qs.set("gazetteNumber", params.gazetteNumber);
+    return request<LawSearchResponse>(`/api/legal/search?${qs.toString()}`);
+  },
   // Bir SourceRef'in (source+id) tam metni — İlgili Kararlar drawer'ındaki detay görünümü.
-  legalDocument: (source: string, id: string) =>
-    request<{ source: string; id: string; content_md: string }>(
-      `/api/legal/documents?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`,
-    ),
-  documents: () => request<DocBrief[]>("/api/documents"),
+  // articleId verilirse (mevzuat madde ağacından bir madde_id) yalnız o maddenin metni döner.
+  legalDocument: (source: string, id: string, articleId?: string) => {
+    const qs = new URLSearchParams({ source, id });
+    if (articleId) qs.set("articleId", articleId);
+    return request<{ source: string; id: string; content_md: string }>(`/api/legal/documents?${qs.toString()}`);
+  },
+  // Bir mevzuatın madde ağacı (kısım/bölüm/madde) — Mevzuat detayının AĞAÇ YAPISI görünümünü besler.
+  legalMaddeTree: (mevzuatId: string) =>
+    request<MaddeTreeResponse>(`/api/legal/madde-tree?mevzuatId=${encodeURIComponent(mevzuatId)}`),
+  // Kararlarım: kaydedilmiş kararların listesi, kaydetme (idempotent) ve kaldırma.
+  savedDecisions: () => request<{ items: SavedDecision[] }>("/api/saved-decisions"),
+  saveDecision: (input: {
+    source: string;
+    externalId: string;
+    title: string;
+    date?: string | null;
+    caseNumber?: string | null;
+    decisionNumber?: string | null;
+    court?: string | null;
+    chamber?: string | null;
+    url?: string | null;
+    snippet?: string | null;
+  }) =>
+    request<SavedDecision>("/api/saved-decisions", {
+      method: "POST",
+      body: JSON.stringify({
+        source: input.source,
+        external_id: input.externalId,
+        title: input.title,
+        date: input.date ?? null,
+        case_number: input.caseNumber ?? null,
+        decision_number: input.decisionNumber ?? null,
+        court: input.court ?? null,
+        chamber: input.chamber ?? null,
+        url: input.url ?? null,
+        snippet: input.snippet ?? null,
+      }),
+    }),
+  removeSavedDecision: (id: string) => request<void>(`/api/saved-decisions/${id}`, { method: "DELETE" }),
+  // Hesap Makineleri (Araçlar sayfası): 33 ICalculatorService metodunun hepsi tek generic çağrıyla
+  // sürülür (bkz. calcDefinitions.ts) — response şekli hesap makinesine göre değiştiği için tip
+  // introspect ederek render edilir (CalculatorForm.tsx). GET'te dizi değerler (örn. para_birimleri)
+  // aynı anahtarla tekrarlanan query parametreleri olarak eklenir (.NET'in query-array bağlama biçimi).
+  calc: (endpoint: string, body: Record<string, unknown>, method: "GET" | "POST" = "POST") => {
+    if (method === "GET") {
+      const qs = new URLSearchParams();
+      for (const [key, value] of Object.entries(body)) {
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value)) value.forEach((v) => qs.append(key, String(v)));
+        else qs.set(key, String(value));
+      }
+      const suffix = qs.toString();
+      return request<Record<string, unknown>>(`${endpoint}${suffix ? `?${suffix}` : ""}`);
+    }
+    return request<Record<string, unknown>>(endpoint, { method: "POST", body: JSON.stringify(body) });
+  },
+  // AI taslak belgeleri (Belgeler sekmesi) — /api/documents operasyonel evrak kütüphanesidir,
+  // taslak listesi kendi yolundan gelir (gateway path'e göre yönlendirir).
+  documents: () => request<DocBrief[]>("/api/draft-documents"),
   petitionTypes: () => request<PetitionCategory[]>("/api/petition-types"),
   getDocument: (sessionId: number) =>
     request<DocumentData>(`/api/sessions/${sessionId}/document`),

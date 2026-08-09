@@ -3,8 +3,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api, ApiError, type SourceRef } from "../api";
 import { ArrowLeft, ArrowSquareOut, BookOpenText, Scales } from "../icons";
+import { Spinner } from "../a11y";
 import { formatLegalText } from "./legalFormat";
 import { RightDrawer } from "./RightDrawer";
+import { SaveDecisionButton } from "./SaveDecisionButton";
+import { MevzuatDetail } from "./MevzuatDetail";
+import { drawerWidthFor, isMevzuat } from "./DecisionDetail";
 
 // "İlgili Kararlar" drawer'ı (bkz. docs/DRAWER_ROADMAP.md): bir asistan mesajının dayandığı
 // hukuki kaynakları kart listesi olarak gösterir — içtihatlar önde, mevzuat ayrı bölümde.
@@ -57,6 +61,9 @@ function SourceCard({ source, onOpen }: { source: SourceRef; onOpen: () => void 
           </button>
         </h3>
         <Badge ictihat={ictihat} />
+        <span onClick={(e) => e.stopPropagation()}>
+          <SaveDecisionButton decision={source} />
+        </span>
         {source.url && <ExternalLink url={source.url} />}
       </div>
       {(source.date || source.snippet) && (
@@ -75,8 +82,10 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
   const [doc, setDoc] = useState<DocState>({ state: "loading" });
 
   // Not: bileşen `key`lenerek mount edilir (aşağıda), her kaynak için taze "loading" ile başlar;
-  // efekt içinde senkron setState'e gerek kalmaz.
+  // efekt içinde senkron setState'e gerek kalmaz. Mevzuat kaynaklarını MevzuatDetail kendi
+  // getirir (madde ağacı + seçili maddeye göre) — burada ayrıca çekmeye gerek yok.
   useEffect(() => {
+    if (isMevzuat(source)) return;
     let stale = false;
     api
       .legalDocument(source.source, source.id)
@@ -106,6 +115,33 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
     .filter(Boolean)
     .join(" · ");
 
+  const backHeader = (
+    <div className="flex items-center gap-2 border-b border-zinc-200 px-3.5 py-2">
+      {/* Detaya geçişte focus buraya taşınır — klavye/ekran okuyucu görünüm değişimini duyar. */}
+      <button
+        autoFocus
+        onClick={onBack}
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-[13px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        <ArrowLeft size={13} aria-hidden /> Listeye dön
+      </button>
+    </div>
+  );
+
+  if (isMevzuat(source)) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        {backHeader}
+        <MevzuatDetail
+          mevzuatId={source.id}
+          title={source.title}
+          url={source.url}
+          action={<SaveDecisionButton decision={source} />}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 border-b border-zinc-200 px-3.5 py-2">
@@ -117,13 +153,20 @@ function SourceDetail({ source, onBack }: { source: SourceRef; onBack: () => voi
         >
           <ArrowLeft size={13} aria-hidden /> Listeye dön
         </button>
-        {source.url && <span className="ml-auto"><ExternalLink url={source.url} /></span>}
+        <span className="ml-auto flex items-center gap-1.5">
+          <SaveDecisionButton decision={source} />
+          {source.url && <ExternalLink url={source.url} />}
+        </span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
         <h3 className="text-[14px] font-semibold leading-snug text-zinc-900">{source.title}</h3>
         {kunye && <p className="mt-1 text-[12px] text-zinc-600">{kunye}</p>}
         <div className="mt-3 border-t border-zinc-100 pt-3 text-[13.5px] leading-relaxed text-zinc-800">
-          {doc.state === "loading" && <p className="italic text-zinc-400">Belge yükleniyor…</p>}
+          {doc.state === "loading" && (
+            <div className="flex justify-center py-8">
+              <Spinner label="Belge yükleniyor…" />
+            </div>
+          )}
           {doc.state === "error" && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
               {doc.detail}
@@ -162,7 +205,7 @@ export function SourcesDrawer({
   const title = kararlar.length > 0 ? `İlgili Kararlar (${kararlar.length})` : `Kaynaklar (${sources.length})`;
 
   return (
-    <RightDrawer open onClose={onClose} label={title} title={title} width="440px">
+    <RightDrawer open onClose={onClose} label={title} title={title} width={detail ? drawerWidthFor(detail) : "440px"}>
       {detail ? (
         <SourceDetail key={`${detail.source}:${detail.id}`} source={detail} onBack={() => setDetail(null)} />
       ) : (

@@ -6,6 +6,7 @@ import {
   ApiError,
   type ChatMessage,
   type DocBrief,
+  type DocumentRef,
   type SourceRef,
   type SessionBrief,
   type Task,
@@ -13,6 +14,9 @@ import {
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
 import { DocumentLibrary } from "./DocumentLibrary";
+import { KararAramaPanel } from "./KararAramaPanel";
+import { KararlarimPanel } from "./KararlarimPanel";
+import { CalculatorsPanel } from "./CalculatorsPanel";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
@@ -47,7 +51,9 @@ import { matchPath, navigate, usePath } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
+  BookmarkSimple,
   BookOpenText,
+  Calculator,
   CalendarBlank,
   CaretDown,
   Check,
@@ -56,6 +62,7 @@ import {
   FileText,
   Folder,
   List,
+  MagnifyingGlass,
   Monitor,
   Moon,
   Paperclip,
@@ -103,18 +110,7 @@ function initials(u: User): string {
   return base.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-// Chat avatars: Korkut's logo for the assistant, the signed-in user's initials for our messages.
-function KorkutAvatar({ size = 28 }: { size?: number }) {
-  return (
-    <div
-      style={{ width: size, height: size }}
-      className="grid shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-white"
-    >
-      <img src="/korkut-logo.svg" alt="Korkut" className="h-[70%] w-[70%]" />
-    </div>
-  );
-}
-
+// Chat avatar: only the signed-in user's initials — the assistant speaks without an icon.
 function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
   return (
     <div
@@ -127,6 +123,46 @@ function UserAvatar({ user, size = 28 }: { user: User; size?: number }) {
   );
 }
 
+// Animasyonlu "yazıyor" göstergesi: gerçek bir etkinlik etiketi (araç adımı) ya da ilk token
+// gelene kadar balonda üç nokta oynar — jenerik "hazırlanıyor/üretiliyor" metinleri yok.
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1 py-2" role="status" aria-label="Korkut yazıyor">
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400" />
+      ))}
+    </span>
+  );
+}
+
+// Cevabın üstündeki silik "düşünme" izi (Claude/ChatGPT deseni): araç çağrılarından önce akan ara
+// anlatım burada gösterilir — canlıda açık ve soluk akar, tur bitince tek satıra katlanır,
+// tıklayınca yeniden açılır. Nihai cevap her zaman balondadır; bu blok cevabın parçası değildir.
+function ThinkingTrail({ segments, live }: { segments: string[]; live: boolean }) {
+  const [open, setOpen] = useState(false);
+  const show = live || open;
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-400 hover:text-zinc-600"
+      >
+        <CaretDown
+          size={11}
+          aria-hidden
+          className={"transition-transform " + (show ? "" : "-rotate-90")}
+        />
+        {live ? "Düşünüyor…" : "Düşünme süreci"}
+      </button>
+      {show && (
+        <div className="mt-1.5 whitespace-pre-wrap border-l-2 border-zinc-200 pl-3 text-[12.5px] leading-relaxed text-zinc-400">
+          {segments.join("\n\n")}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Sol menü ikonları — Phosphor set'inden (bkz. ../icons.ts).
 const NAV_ICON: Record<string, Icon> = {
   matters: Folder,
@@ -135,6 +171,9 @@ const NAV_ICON: Record<string, Icon> = {
   tasks: CheckSquare,
   calendar: CalendarBlank,
   docs: FileText,
+  kararlarim: BookmarkSimple,
+  kararArama: MagnifyingGlass,
+  calculators: Calculator,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -198,7 +237,10 @@ type SidebarView =
   | "clients"
   | "finance"
   | "tasks"
-  | "calendar";
+  | "calendar"
+  | "kararlarim"
+  | "kararArama"
+  | "calculators";
 
 // Top-level page URLs — a page can be bookmarked, shared, or survive a reload; the specific chat
 // or matter open within "chats" is deliberately not part of the URL (out of scope, see Settings.tsx
@@ -212,6 +254,9 @@ const VIEW_PATH: Record<SidebarView, string> = {
   finance: "/mali",
   tasks: "/gorevler",
   calendar: "/takvim",
+  kararlarim: "/kararlarim",
+  kararArama: "/karar-arama",
+  calculators: "/hesap-makineleri",
 };
 
 function viewFromPath(path: string): SidebarView {
@@ -231,6 +276,13 @@ function chatRoute(path: string): { id: number; pane: "chat" | "document" } | nu
   return { id: m.id as unknown as number, pane: doc ? "document" : "chat" };
 }
 
+// /belgeler/:id — Belgeler'den TAM SAYFA açılan editör (id = belgenin sohbet kimliği). Chat'teki
+// drawer'ın aksine editör tüm kanvası kaplar; kapatınca Belgeler listesine dönülür.
+function docRoute(path: string): number | null {
+  const m = matchPath("/belgeler/:id", path);
+  return m?.id ? (m.id as unknown as number) : null;
+}
+
 const VIEW_TITLE: Record<SidebarView, string> = {
   chats: "Sohbet",
   docs: "Belgeler",
@@ -240,7 +292,34 @@ const VIEW_TITLE: Record<SidebarView, string> = {
   finance: "Mali",
   tasks: "Görevler",
   calendar: "Takvim",
+  kararlarim: "Kararlarım",
+  kararArama: "Karar Arama",
+  calculators: "Hesap Makineleri",
 };
+
+// Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama, Hesap Makineleri),
+// Sohbetler (ayrı, kendi listesiyle aşağıda).
+const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string }[] }[] = [
+  {
+    label: "Ofisim",
+    items: [
+      { key: "matters", label: "Dosyalar" },
+      { key: "clients", label: "Müvekkiller" },
+      { key: "finance", label: "Mali" },
+      { key: "tasks", label: "Görevler" },
+      { key: "calendar", label: "Takvim" },
+      { key: "docs", label: "Belgeler" },
+      { key: "kararlarim", label: "Kararlarım" },
+    ],
+  },
+  {
+    label: "Araçlar",
+    items: [
+      { key: "kararArama", label: "Karar Arama" },
+      { key: "calculators", label: "Hesap Makineleri" },
+    ],
+  },
+];
 
 export function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [sessions, setSessions] = useState<SessionBrief[]>([]);
@@ -254,6 +333,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const route = view === "chats" ? chatRoute(path) : null;
   const currentId = route?.id ?? null;
   const pane: "chat" | "document" = route?.pane ?? "chat";
+  // Belgeler'den tam sayfa açılan belge (sohbet kimliği) — yalnız docs görünümünde anlamlı.
+  const fullDocId = view === "docs" ? docRoute(path) : null;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [text, setText] = useState("");
@@ -276,6 +357,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [rowMenuId, setRowMenuId] = useState<number | null>(null);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameText, setRenameText] = useState("");
+
+  // Bu sohbetin (varsa) belgesi — Belgeler listesinden conversation_id eşleşmesiyle türer; canlı
+  // taslak sonrası loadDocs() listeyi tazelediği için chip yeni belgeyi de görür.
+  const sessionDoc = currentId !== null ? (docs.find((d) => d.conversation_id === currentId) ?? null) : null;
 
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -315,9 +400,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   useEffect(() => {
     currentIdRef.current = currentId;
     // Başka sohbete geçiş editörü (varsa) kapatır; bayat dirty bayrağı beforeunload'u yanlış
-    // tetiklemesin.
+    // tetiklemesin. Tam sayfa belge değişiminde de aynısı geçerli.
     docDirtyRef.current = false;
-  }, [currentId]);
+  }, [currentId, fullDocId]);
 
   // Ana ekrana dönüşte önceki sohbetin mesajları kalmasın — render sırasında state uyarlama
   // deseni (React'ın "adjust state when props change" önerisi); efekt içinde setState'ten kaçınır.
@@ -368,13 +453,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false);
   }
 
-  // Editör drawer'ını kapatma isteği: dirty ise önce onay iste, değilse sohbet URL'ine dön.
-  function requestCloseEditor() {
+  // Editörü kapatma isteği (drawer VE tam sayfa): dirty ise önce onay iste, değilse hedefe dön.
+  // Onay diyaloğu kapatmayı onaylarsa aynı hedefe gider (closeDocTargetRef).
+  const closeDocTargetRef = useRef<string | null>(null);
+  function requestCloseDoc(target: string) {
     if (docDirtyRef.current) {
+      closeDocTargetRef.current = target;
       setConfirmDocClose(true);
       return;
     }
-    if (currentId !== null) navigate(`/sohbet/${currentId}`);
+    navigate(target);
+  }
+
+  function requestCloseEditor() {
+    if (currentId !== null) requestCloseDoc(`/sohbet/${currentId}`);
   }
 
   // Tek drawer kuralı: kaynaklar açılırken editör kapanır (dirty ise önce onay akışı çalışır ve
@@ -443,9 +535,17 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
+  // Belgeler listesinden belge TAM SAYFA açılır (chat'teki drawer'ın aksine).
   function openDocFromList(d: DocBrief) {
     closeSidebarOnMobile();
-    navigate(`/sohbet/${d.conversation_id}/belge`);
+    navigate(`/belgeler/${d.conversation_id}`);
+  }
+
+  // Chat'ten editör drawer'ını açar (belge kartı ve belge chip'i buradan geçer).
+  function openEditorDrawer() {
+    if (currentId === null) return;
+    setSourcesFor(null); // tek drawer kuralı
+    navigate(`/sohbet/${currentId}/belge`);
   }
 
   async function cloneChat(id: number) {
@@ -545,6 +645,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         open_document?: number | null;
         pending_email?: number | null;
         sources?: SourceRef[] | null;
+        document?: DocumentRef | null;
       };
       if (file) {
         // Uploads aren't streamed (the file is processed server-side, then answered).
@@ -554,19 +655,45 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         }
       } else {
         // Stream the answer: show activity steps, then grow the assistant bubble token by token.
+        // Akış modeli (Claude/ChatGPT deseni): `acc` o anki model turunun metnidir. Tur bir araç
+        // çağrısıyla biterse (SSE `tool` çerçevesi) o metin CEVAP DEĞİL ara anlatımdır — balondan
+        // çıkarılıp üstteki silik "Düşünüyor" izine (thinking) taşınır. Yalnız son turun metni
+        // (araçsız biten) cevap balonunda kalır.
         let acc = "";
         let started = false;
         let searches = 0; // canlı arama sayacı (SSE `tool` çerçeveleri; persist edilmez)
+        const thinking: string[] = []; // araç öncesi ara anlatım segmentleri (canlı tur izi)
         let liveSources: SourceRef[] | null = null; // SSE `sources` çerçevesi (done'dan önce gelir)
+        let liveDocument: DocumentRef | null = null; // SSE `document` çerçevesi (done'dan önce gelir)
+        const paint = () => {
+          if (!showsThisChat()) return;
+          setMessages((m) => {
+            const copy = m.slice();
+            copy[copy.length - 1] = { role: "assistant", content: acc, thinking: [...thinking] };
+            return copy;
+          });
+        };
         res = await api.sessionChatStream(targetId, t, {
           onStep: (label) => {
-            if (!started && showsThisChat()) setActivity(label);
+            // Eski agent sürümlerinin jenerik faz etiketleri yok sayılır — onların yerinde
+            // animasyonlu üç nokta oynar; yalnız gerçek araç adımları metin olarak görünür.
+            if (label === "Bağlam hazırlanıyor" || label === "Yanıt üretiliyor") return;
+            if (showsThisChat()) setActivity(label); // balon boşken ve araçlar dönerken görünür
           },
           onTool: (name) => {
             if (name === "search_decisions") searches += 1;
+            // Bu turun metni araç çağrısıyla bitti → ara anlatımdı; düşünme izine taşı.
+            if (acc.trim()) {
+              thinking.push(acc.trim());
+              acc = "";
+              if (started) paint();
+            }
           },
           onSources: (items) => {
             liveSources = items;
+          },
+          onDocument: (doc) => {
+            liveDocument = doc;
           },
           onToken: (tok) => {
             acc += tok;
@@ -577,11 +704,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               setActivity(null);
               setMessages((m) => [...m, { role: "assistant", content: "" }]);
             }
-            setMessages((m) => {
-              const copy = m.slice();
-              copy[copy.length - 1] = { role: "assistant", content: acc };
-              return copy;
-            });
+            paint();
           },
         });
         // Reconcile with the authoritative reply (e.g. the cloud path streams no tokens, or the
@@ -594,14 +717,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             content: res.reply || acc,
             sources,
             searches: searches || undefined,
+            document: liveDocument ?? res.document ?? null,
+            thinking: thinking.length ? thinking : undefined,
           };
           setMessages((m) => (started ? [...m.slice(0, -1), finalMsg] : [...m, finalMsg]));
         }
       }
-      if (!file && showsThisChat() && res.open_document) {
-        navigate(`/sohbet/${targetId}/belge`); // editör paneli URL'de — Back sohbete döner
-        setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
-        loadDocs(); // a new draft may have landed → refresh the Belgeler list
+      if (!file && (res.document || res.open_document)) {
+        loadDocs(); // yeni taslak düştü → Belgeler listesi (ve sohbetin belge chip'i) tazelensin
+        if (showsThisChat()) {
+          setDocRefresh((n) => n + 1); // Korkut drafted into the editor → reload it
+          navigate(`/sohbet/${targetId}/belge`); // editör drawer'ı URL'de — Back sohbete döner
+        }
       }
       // The sidebar entry updates regardless of which chat is on screen — it's keyed by targetId.
       const fixedId = targetId;
@@ -666,31 +793,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </span>
           )}
         </div>
-        {view === "chats" && currentId !== null && (
-          // Editör artık ayrı bir sayfa değil, sağ drawer — anahtar yerine tek toggle.
-          <div className="absolute left-1/2 flex -translate-x-1/2 rounded-lg border border-zinc-200 bg-white p-1 text-[13px] font-medium shadow-sm">
-            <button
-              onClick={() => {
-                if (pane === "document") {
-                  requestCloseEditor();
-                } else {
-                  setSourcesFor(null); // tek drawer kuralı
-                  navigate(`/sohbet/${currentId}/belge`);
-                }
-              }}
-              aria-pressed={pane === "document"}
-              className={
-                "flex items-center gap-1.5 rounded-md px-4 py-1 " +
-                (pane === "document"
-                  ? "bg-zinc-900 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800")
-              }
-            >
-              <FileText size={15} aria-hidden />
-              Editör
-            </button>
-          </div>
-        )}
         <div className="ml-auto flex items-center gap-2">
           <ThemeMenu />
           <div className="relative">
@@ -746,44 +848,39 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <>
             <div className="fixed inset-0 z-10 bg-black/30 sm:hidden" onClick={() => setSidebarOpen(false)} />
             <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-zinc-200 bg-white sm:static sm:z-auto">
-              <div className="px-3 pt-3">
-                <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                  Menü
-                </div>
-                <nav className="flex flex-col gap-0.5">
-                  {(
-                    [
-                      { key: "matters", label: "Dosyalar" },
-                      { key: "clients", label: "Müvekkiller" },
-                      { key: "finance", label: "Mali" },
-                      { key: "tasks", label: "Görevler" },
-                      { key: "calendar", label: "Takvim" },
-                      { key: "docs", label: "Belgeler" },
-                    ] as { key: SidebarView; label: string }[]
-                  ).map((it) => (
-                    <a
-                      key={it.key}
-                      href={VIEW_PATH[it.key]}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate(VIEW_PATH[it.key]);
-                        if (it.key === "docs") loadDocs();
-                        closeSidebarOnMobile();
-                      }}
-                      className={
-                        "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm " +
-                        (view === it.key
-                          ? "bg-zinc-100 font-medium text-zinc-900"
-                          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
-                      }
-                    >
-                      <span className={view === it.key ? "text-zinc-700" : "text-zinc-400"}>
-                        <NavIcon name={it.key} />
-                      </span>
-                      {it.label}
-                    </a>
-                  ))}
-                </nav>
+              <div className="flex flex-col gap-3 px-3 pt-3">
+                {NAV_GROUPS.map((g) => (
+                  <div key={g.label}>
+                    <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                      {g.label}
+                    </div>
+                    <nav className="flex flex-col gap-0.5">
+                      {g.items.map((it) => (
+                        <a
+                          key={it.key}
+                          href={VIEW_PATH[it.key]}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate(VIEW_PATH[it.key]);
+                            if (it.key === "docs") loadDocs();
+                            closeSidebarOnMobile();
+                          }}
+                          className={
+                            "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm " +
+                            (view === it.key
+                              ? "bg-zinc-100 font-medium text-zinc-900"
+                              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
+                          }
+                        >
+                          <span className={view === it.key ? "text-zinc-700" : "text-zinc-400"}>
+                            <NavIcon name={it.key} />
+                          </span>
+                          {it.label}
+                        </a>
+                      ))}
+                    </nav>
+                  </div>
+                ))}
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-zinc-200 px-4 pb-1 pt-3">
@@ -829,7 +926,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                         className="flex min-w-0 flex-1 items-center gap-2 text-left"
                         title={s.title}
                       >
-                        <KorkutAvatar size={24} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-zinc-800">{s.title}</div>
                           <div className="truncate text-[11px] text-zinc-400">
@@ -886,6 +982,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   </button>
                 )}
               </nav>
+              {/* Sol alt: oturum açan kullanıcının profili. */}
+              <div className="flex items-center gap-2.5 border-t border-zinc-200 px-3 py-3">
+                <UserAvatar user={user} size={32} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-medium text-zinc-800">
+                    {user.full_name ?? user.username}
+                  </div>
+                  <div className="truncate text-[11px] text-zinc-400">
+                    {user.role === "owner" ? "Kurucu" : "Avukat"}
+                  </div>
+                </div>
+              </div>
             </aside>
           </>
         )}
@@ -894,7 +1002,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         {view === "settings" ? (
           <Settings user={user} />
         ) : view === "docs" ? (
-          <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
+          fullDocId !== null ? (
+            // Belgeler'den açılan belge: TAM SAYFA editör (kapatınca listeye döner).
+            <DocumentPanel
+              key={fullDocId}
+              sessionId={fullDocId}
+              refreshKey={0}
+              onClose={() => requestCloseDoc(VIEW_PATH.docs)}
+              onDirtyChange={(dirty) => {
+                docDirtyRef.current = dirty;
+              }}
+            />
+          ) : (
+            <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
+          )
         ) : view === "matters" ? (
           <MattersPanel user={user} onOpenSession={(id) => openSession(id)} />
         ) : view === "clients" ? (
@@ -905,6 +1026,12 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           <TasksPanel />
         ) : view === "calendar" ? (
           <CalendarPanel />
+        ) : view === "kararlarim" ? (
+          <KararlarimPanel />
+        ) : view === "kararArama" ? (
+          <KararAramaPanel />
+        ) : view === "calculators" ? (
+          <CalculatorsPanel />
         ) : (
         <>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -966,6 +1093,20 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </section>
           ) : (
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
+            {/* Belge chip'i: bu sohbetin belgesi varsa (geçmişte de) editöre buradan dönülür —
+                header'da artık Editör düğmesi yok. */}
+            {sessionDoc && pane !== "document" && (
+              <div className="pointer-events-none sticky top-0 z-10 -my-1 flex justify-end">
+                <button
+                  onClick={openEditorDrawer}
+                  title={sessionDoc.title}
+                  className="pointer-events-auto flex max-w-[60%] items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
+                >
+                  <FileText size={14} aria-hidden className="shrink-0 text-zinc-500" />
+                  <span className="truncate">{sessionDoc.title}</span>
+                </button>
+              </div>
+            )}
             {messages.map((m, i) => (
               <div
                 key={i}
@@ -973,7 +1114,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   "flex items-end gap-2 " + (m.role === "user" ? "flex-row-reverse" : "flex-row")
                 }
               >
-                {m.role === "user" ? <UserAvatar user={user} /> : <KorkutAvatar />}
+                {m.role === "user" && <UserAvatar user={user} />}
                 <div
                   className={
                     "flex min-w-0 flex-col items-start gap-1.5 " +
@@ -993,6 +1134,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       <CaretDown size={11} aria-hidden className="text-zinc-400" />
                     </button>
                   )}
+                  {/* Silik düşünme izi: araç öncesi ara anlatım — canlıda soluk akar, sonra katlanır. */}
+                  {m.role === "assistant" && (m.thinking?.length ?? 0) > 0 && (
+                    <ThinkingTrail
+                      segments={m.thinking!}
+                      live={streaming && sendingId === currentId && i === messages.length - 1}
+                    />
+                  )}
                   <div
                     className={
                       m.role === "user"
@@ -1010,10 +1158,36 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                           </div>
                         );
                       })()
-                    ) : (
+                    ) : m.content ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    ) : activity ? (
+                      // Ara anlatım ize taşındı, cevap henüz akmıyor — balonda o anki adım görünür.
+                      <span className="italic text-zinc-400">{activity}</span>
+                    ) : (
+                      <TypingDots />
                     )}
                   </div>
+                  {/* Belge kartı: bu turda hazırlanan taslak — tıklayınca editör drawer'ı açılır
+                      (artifact deseni; başlıkta ayrıca düğme yok). */}
+                  {m.role === "assistant" && m.document && (
+                    <button
+                      onClick={openEditorDrawer}
+                      className="flex w-full max-w-sm items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-left shadow-sm transition hover:border-zinc-400 hover:shadow"
+                    >
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-700">
+                        <FileText size={18} aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13.5px] font-semibold text-zinc-900">
+                          {m.document.title}
+                        </span>
+                        <span className="block text-[12px] text-zinc-500">
+                          Taslak hazırlandı · Editörde aç
+                        </span>
+                      </span>
+                      <CaretDown size={12} aria-hidden className="shrink-0 -rotate-90 text-zinc-400" />
+                    </button>
+                  )}
                   {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
                     <button
                       onClick={() => openSources(i)}
@@ -1028,9 +1202,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             ))}
             {sending && sendingId === currentId && !streaming && (
               <div className="flex items-end gap-2">
-                <KorkutAvatar />
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2.5 text-[15px] italic text-zinc-400">
-                  {activity ? activity : "Korkut yazıyor…"}
+                  {activity ? activity : <TypingDots />}
                 </div>
               </div>
             )}
@@ -1122,24 +1295,29 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             onClose={() => setSourcesFor(null)}
           />
         )}
-        <ConfirmDialog
-          open={confirmDocClose}
-          title="Kaydedilmemiş değişiklikler"
-          message="Belgede kaydedilmemiş değişiklikler var. Kaydetmeden kapatılsın mı?"
-          confirmLabel="Kapat"
-          cancelLabel="Vazgeç"
-          destructive
-          onCancel={() => setConfirmDocClose(false)}
-          onConfirm={() => {
-            setConfirmDocClose(false);
-            docDirtyRef.current = false;
-            if (currentId !== null) navigate(`/sohbet/${currentId}`);
-          }}
-        />
         </>
         )}
         </div>
       </div>
+
+      {/* Editör kapatma onayı (drawer VE tam sayfa) — hedef requestCloseDoc'ta belirlenir. */}
+      <ConfirmDialog
+        open={confirmDocClose}
+        title="Kaydedilmemiş değişiklikler"
+        message="Belgede kaydedilmemiş değişiklikler var. Kaydetmeden kapatılsın mı?"
+        confirmLabel="Kapat"
+        cancelLabel="Vazgeç"
+        destructive
+        onCancel={() => setConfirmDocClose(false)}
+        onConfirm={() => {
+          setConfirmDocClose(false);
+          docDirtyRef.current = false;
+          const target =
+            closeDocTargetRef.current ?? (currentId !== null ? `/sohbet/${currentId}` : VIEW_PATH.docs);
+          closeDocTargetRef.current = null;
+          navigate(target);
+        }}
+      />
 
       <footer className="border-t border-zinc-200 bg-white px-4 py-1.5 text-center text-[12px] text-zinc-500">
         {coverage > 0
