@@ -21,6 +21,27 @@ import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
 import { Settings } from "./Settings";
+import { FileAttachmentCard } from "./FileAttachmentCard";
+
+function parseChatMessageContent(content: string): { text: string; attachmentName: string | null } {
+  // What the backend actually persists for an upload turn: "{caption}\n\n[Ekli belge: {fileName}]\n{extracted
+  // document text…}" (SessionChatService.UploadAsync) — the extracted text is model context only, never
+  // meant to render, so anything after the marker is dropped.
+  const uploaded = content.match(/^(?:([\s\S]*?)\n\n)?\[Ekli belge: (.+?)\](?:\n[\s\S]*)?$/);
+  if (uploaded) {
+    return { text: (uploaded[1] || "").trim(), attachmentName: uploaded[2].trim() };
+  }
+
+  // The optimistic local echo set right after send, before the DB round-trip lands: "{caption}\n\nEk: {fileName}".
+  const match = content.match(/^(?:([\s\S]*?)\n\n)?Ek:\s*(.+)$/);
+  if (match) {
+    return {
+      text: (match[1] || "").trim(),
+      attachmentName: match[2].trim(),
+    };
+  }
+  return { text: content, attachmentName: null };
+}
 import { ClientsPanel } from "./ClientsPanel";
 import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
@@ -1128,7 +1149,15 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     }
                   >
                     {m.role === "user" ? (
-                      m.content
+                      (() => {
+                        const { text: promptText, attachmentName } = parseChatMessageContent(m.content);
+                        return (
+                          <div className="flex flex-col gap-2">
+                            {attachmentName && <FileAttachmentCard fileName={attachmentName} mode="bubble" />}
+                            {promptText && <div>{promptText}</div>}
+                          </div>
+                        );
+                      })()
                     ) : m.content ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                     ) : activity ? (
@@ -1183,11 +1212,13 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           )}
 
           {attachment && (
-            <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-2 text-[13px] text-zinc-500">
-              <span className="truncate rounded-md border border-zinc-300 bg-white px-2 py-1">Ek: {attachment.name}</span>
-              <button type="button" onClick={() => setAttachment(null)} className="shrink-0 text-zinc-400 hover:text-red-500">
-                kaldır
-              </button>
+            <div className="mx-auto flex w-full max-w-3xl items-center px-4 pt-2">
+              <FileAttachmentCard
+                fileName={attachment.name}
+                fileSize={attachment.size}
+                mode="draft"
+                onRemove={() => setAttachment(null)}
+              />
             </div>
           )}
           <form
