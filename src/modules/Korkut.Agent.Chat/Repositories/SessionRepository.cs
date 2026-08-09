@@ -50,11 +50,17 @@ internal sealed class SessionRepository(DbContext db)
 
     public async Task AppendMessageAsync(Guid officeId, Guid conversationId, string role, string content, DateTimeOffset now, string? sourcesJson = null, CancellationToken ct = default)
     {
-        Messages.Add(new ConversationMessage(officeId, conversationId, role, content, now, sourcesJson));
+        Messages.Add(new ConversationMessage(officeId, conversationId, role, StripNul(content), now, sourcesJson));
         await Conversations.Where(x => x.OfficeId == officeId && x.Id == conversationId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedAt, now), ct);
         await Db.SaveChangesAsync(ct);
     }
+
+    // Postgres' "text" columns reject the NUL byte (22021: invalid byte sequence for encoding
+    // "UTF8": 0x00). Content can carry one from a misread upload (e.g. a binary file read as
+    // text) — strip it here at the DB boundary so a bad byte can never take the insert down,
+    // regardless of which upstream source produced it.
+    private static string StripNul(string content) => content.Contains('\0') ? content.Replace("\0", "") : content;
 
     public async Task<bool> RenameAsync(Guid officeId, Guid id, string title, DateTimeOffset now, CancellationToken ct = default)
         => await Conversations.Where(x => x.OfficeId == officeId && x.Id == id)
