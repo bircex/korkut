@@ -4,6 +4,7 @@
        Test.Sdk, discovers no tests. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <Using Include="Xunit" />
