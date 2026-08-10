@@ -1,5 +1,8 @@
 using System.Text.Json;
+using Korkut.Agent.Chat.Repositories;
+using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent.Chat;
+using Korkut.Contract.Agent;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 

@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Korkut.TestSupport;
 
-namespace Korkut.Calculators.Integration.Tests;
+namespace Korkut.Calculators.Tests;
 
 /// <summary>
 /// Routing + auth + DI wiring for /api/calc/* through the real API host: proves CalculatorsModule
