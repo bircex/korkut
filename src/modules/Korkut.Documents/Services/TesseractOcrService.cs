@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Korkut.Contract.Documents.OCR;
+using Korkut.Core;
 
 namespace Korkut.Documents.Services;
 
@@ -75,16 +76,31 @@ public sealed class TesseractOcrService : IOcrService
         return new OcrServiceResult(string.Join("\n\n", texts).Trim(), pages.Count);
     }
 
-    // tesseract <image> stdout -l <langs> → recognised text on stdout.
+    // tesseract <image> stdout -l <langs> → recognised text on stdout. Sanitized here (the one
+    // place raw OCR output enters this service) so neither this nor any future caller that
+    // persists it to Postgres can be taken down by a stray control byte in the scan.
     private async Task<string> OcrImageAsync(string imagePath, CancellationToken ct)
-        => (await RunAsync("tesseract", [imagePath, "stdout", "-l", _langs], ct)).Trim();
+        => PostgresTextSanitizer.StripInvalidChars((await RunAsync("tesseract", [imagePath, "stdout", "-l", _langs], ct)).Trim());
 
     private static async Task<bool> LooksLikePdfAsync(string path, CancellationToken ct)
     {
         await using var fs = File.OpenRead(path);
-        var head = new byte[5];
-        var read = await fs.ReadAsync(head, ct);
-        return read >= 5 && head[0] == '%' && head[1] == 'P' && head[2] == 'D' && head[3] == 'F';
+        // Read in a loop — Stream.ReadAsync may return fewer bytes than requested in a single
+        // call even when more data follows, which could misdetect a real PDF as non-PDF.
+        var head = new byte[4];
+        var filled = 0;
+        while (filled < head.Length)
+        {
+            var read = await fs.ReadAsync(head.AsMemory(filled), ct);
+            if (read == 0)
+            {
+                break;
+            }
+
+            filled += read;
+        }
+
+        return filled == head.Length && head[0] == '%' && head[1] == 'P' && head[2] == 'D' && head[3] == 'F';
     }
 
     private async Task<string> RunAsync(string fileName, string[] args, CancellationToken ct)

@@ -35,6 +35,7 @@ using Korkut.Documents.Entities;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Finance.Entities;
+using Korkut.SavedDecisions.Entities;
 
 namespace Korkut.Infrastructure.Tests;
 
@@ -102,6 +103,9 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var conversation = new Conversation(office, $"conv{i}", null, null, DateTimeOffset.UtcNow);
             db.Conversations.Add(conversation);
             db.ChatMessages.Add(new ConversationMessage(office, conversation.Id, "user", $"cm{i}", DateTimeOffset.UtcNow));
+            db.SavedDecisions.Add(new SavedDecision(
+                office, Guid.CreateVersion7(), "yargitay", $"ext{office:N}{i}", $"Karar {i}",
+                null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
             if (i == 0)
             {
                 db.Personas.Add(new Persona(office)); // one per office

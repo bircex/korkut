@@ -23,7 +23,7 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
             return existing;
         }
 
-        var doc = new GeneratedDocument(officeId, conversationId, title, now);
+        var doc = new GeneratedDocument(officeId, conversationId, PostgresTextSanitizer.StripInvalidChars(title), now);
         Db.GeneratedDocuments.Add(doc);
         await Db.SaveChangesAsync(ct);
         return doc;
@@ -46,12 +46,15 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
 
     public async Task<Guid?> StagePendingAsync(Guid officeId, Guid docId, string contentMd, string summary, DateTimeOffset now, CancellationToken ct = default)
     {
+        // contentMd/summary are LLM-generated and can be derived from ingested document text
+        // (e.g. a PDF's extracted content) — strip bytes Postgres' "text" columns reject before
+        // they reach SaveChangesAsync, same as chat message persistence.
         var pendingId = UuidV7.NewId();
         var affected = await Db.GeneratedDocuments.Where(x => x.OfficeId == officeId && x.Id == docId)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(x => x.PendingId, pendingId)
-                .SetProperty(x => x.PendingContentMd, contentMd)
-                .SetProperty(x => x.PendingSummary, summary)
+                .SetProperty(x => x.PendingContentMd, PostgresTextSanitizer.StripInvalidChars(contentMd))
+                .SetProperty(x => x.PendingSummary, PostgresTextSanitizer.StripInvalidChars(summary))
                 .SetProperty(x => x.UpdatedAt, now), ct);
         return affected > 0 ? pendingId : null;
     }
@@ -85,8 +88,10 @@ public sealed class DraftDocumentRepository(AgentDbContext db) : EfRepository<Ge
             return false;
         }
 
-        doc.Save(title, contentMd, now);
-        Db.DocumentVersions.Add(new DocumentVersion(officeId, docId, contentMd, author, "Elle kaydedildi", now));
+        var cleanTitle = PostgresTextSanitizer.StripInvalidChars(title);
+        var cleanContentMd = PostgresTextSanitizer.StripInvalidChars(contentMd);
+        doc.Save(cleanTitle, cleanContentMd, now);
+        Db.DocumentVersions.Add(new DocumentVersion(officeId, docId, cleanContentMd, author, "Elle kaydedildi", now));
         await Db.SaveChangesAsync(ct);
         return true;
     }
