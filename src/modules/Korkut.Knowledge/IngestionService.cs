@@ -24,8 +24,12 @@ public sealed class IngestionService(
         var office = currentUser.OfficeId;
         return unitOfWork.InTenantScopeAsync(office, async () =>
         {
+            // Strip bytes Postgres' "text" columns reject before anything else touches this text —
+            // the caller can be document-extraction output (a misread PDF/OCR page) or arbitrary
+            // ingest input, neither of which can be trusted not to carry a NUL byte.
+            var clean = PostgresTextSanitizer.StripInvalidChars(text);
             // Mask PII before anything is chunked, embedded or stored — the index must never hold it.
-            var masked = redactorService.Redact(text).Text;
+            var masked = redactorService.Redact(clean).Text;
             var chunks = chunkerService.Chunk(masked);
             if (chunks.Count == 0)
             {

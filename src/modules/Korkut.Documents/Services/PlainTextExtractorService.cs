@@ -1,5 +1,6 @@
 using System.Text;
 using Korkut.Contract.Documents;
+using Korkut.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using UglyToad.PdfPig;
@@ -78,31 +79,7 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
         return spans;
     }
 
-    // Postgres' "text" columns reject the NUL byte outright (and other C0 controls are noise from
-    // a binary misread), so strip them here at the source rather than let a bad byte blow up every
-    // downstream consumer (chat persistence, search indexing, ...).
-    private static string Sanitize(string text)
-    {
-        var trimmed = text.Trim();
-        if (trimmed.Length == 0)
-        {
-            return trimmed;
-        }
-
-        Span<char> buffer = trimmed.Length <= 4096 ? stackalloc char[trimmed.Length] : new char[trimmed.Length];
-        var written = 0;
-        foreach (var ch in trimmed)
-        {
-            if (ch == '\0' || (char.IsControl(ch) && ch is not ('\n' or '\r' or '\t')))
-            {
-                continue;
-            }
-
-            buffer[written++] = ch;
-        }
-
-        return new string(buffer[..written]);
-    }
+    private static string Sanitize(string text) => PostgresTextSanitizer.StripInvalidChars(text.Trim());
 
     private static async Task<bool> LooksLikePdfAsync(Stream content, string contentType, CancellationToken ct)
     {

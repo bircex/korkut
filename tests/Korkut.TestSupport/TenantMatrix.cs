@@ -43,6 +43,7 @@ public static class TenantMatrix
             ["mail_preferences"] = (1, 1), // one mail-preference row per office (seeded once)
             ["conversations"] = (1, 2),
             ["chat_messages"] = (1, 2),
+            ["saved_decisions"] = (1, 2),
             // generated_documents / document_versions live in the Agent DB (schema korkut_agent)
             // — covered by AgentTenantIsolationTests. Chat (conversations/messages) is a general
             // operational feature and stays here.
