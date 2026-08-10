@@ -1,4 +1,5 @@
 using Korkut.Contract.Export;
+using Korkut.Core;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
@@ -19,8 +20,11 @@ public static class MarkdownDocumentExporter
 
     public static ExportedDocument Export(string format, string title, string markdown)
     {
-        var blocks = MarkdownBlock.Parse(markdown);
-        var safeName = Slug(title);
+        // NUL/control bytes are illegal in XML content outright (System.Xml throws, not just a
+        // Postgres concern) — title/markdown can be LLM-generated content derived from ingested
+        // document text, so strip them here before anything is parsed or serialized.
+        var blocks = MarkdownBlock.Parse(PostgresTextSanitizer.StripInvalidChars(markdown));
+        var safeName = Slug(PostgresTextSanitizer.StripInvalidChars(title));
         return format switch
         {
             "docx" => new ExportedDocument(BuildDocx(blocks), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{safeName}.docx"),
