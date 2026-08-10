@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text;
 using Korkut.Contract.Upload;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
@@ -22,6 +23,7 @@ public sealed class UploadValidatorService : IUploadValidatorService
     private int MaxArchiveEntries { get; init; } = 2_000;
 
     // Extension -> the magic-byte prefixes that a real file of that type must start with.
+    // .txt has no magic bytes (any byte sequence can be plain text) so it is handled separately.
     private static readonly Dictionary<string, byte[][]> Signatures = new()
     {
         [".pdf"] = [[0x25, 0x50, 0x44, 0x46]], // %PDF
@@ -31,7 +33,11 @@ public sealed class UploadValidatorService : IUploadValidatorService
         [".docx"] = [[0x50, 0x4B, 0x03, 0x04]], // zip container
         [".xlsx"] = [[0x50, 0x4B, 0x03, 0x04]],
         [".zip"] = [[0x50, 0x4B, 0x03, 0x04]],
+        [".udf"] = [[0x50, 0x4B, 0x03, 0x04]], // UYAP document format — also a zip container
+        [".doc"] = [[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]], // legacy OLE2 compound file
     };
+
+    private const string TextExtension = ".txt";
 
     public UploadValidationResult Validate(string declaredFilename, Stream content)
     {
@@ -47,6 +53,13 @@ public sealed class UploadValidatorService : IUploadValidatorService
         }
 
         var ext = Path.GetExtension(safe).ToLowerInvariant();
+        if (ext == TextExtension)
+        {
+            return LooksLikeText(content)
+                ? new UploadValidationResult(true, UploadValidatorRejection.None, safe, ext.TrimStart('.'))
+                : new UploadValidationResult(false, UploadValidatorRejection.ContentTypeMismatch, safe);
+        }
+
         if (!Signatures.TryGetValue(ext, out var magics))
         {
             return new UploadValidationResult(false, UploadValidatorRejection.DisallowedExtension, safe);
@@ -128,6 +141,45 @@ public sealed class UploadValidatorService : IUploadValidatorService
         {
             content.Position = 0;
         }
+    }
+
+    /// <summary>
+    /// .txt has no magic-byte signature — any byte sequence is technically valid text — so
+    /// "the bytes decide the type" instead means: this sample is not obviously binary. A file
+    /// misdeclared as .txt (e.g. an .exe or .pdf renamed) is rejected because binary content
+    /// almost always contains a NUL byte early on or fails strict UTF-8 decoding.
+    /// </summary>
+    private static bool LooksLikeText(Stream content)
+    {
+        var sample = ReadHeader(content, 4096);
+        if (sample.Length == 0)
+        {
+            return true; // an empty file is valid (empty) text
+        }
+
+        if (Array.IndexOf(sample, (byte)0) >= 0)
+        {
+            return false;
+        }
+
+        // A 4096-byte sample can cut a multi-byte UTF-8 character in half at the boundary — that
+        // is a truncation artifact, not invalid text. UTF-8 characters are at most 4 bytes, so
+        // retry against a slightly shorter prefix before concluding the content isn't text.
+        var strict = new UTF8Encoding(false, throwOnInvalidBytes: true);
+        for (var trim = 0; trim <= 3 && trim < sample.Length; trim++)
+        {
+            try
+            {
+                strict.GetString(sample.AsSpan(0, sample.Length - trim));
+                return true;
+            }
+            catch (DecoderFallbackException)
+            {
+                // try a shorter prefix
+            }
+        }
+
+        return false;
     }
 
     private static byte[] ReadHeader(Stream content, int n)

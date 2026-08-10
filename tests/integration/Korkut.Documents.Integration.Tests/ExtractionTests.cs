@@ -32,9 +32,10 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
     /// <summary>A second parser with a distinct version — simulates a parser upgrade.</summary>
     private sealed class UpperExtractorService : ITextExtractorService
     {
-        // Distinct from PlainTextExtractorService's own "plaintext-v2" (bumped when it gained real
-        // PDF support) so the two stay distinguishable in the coexisting-artifacts test below.
-        public string ParserVersion => "plaintext-v3";
+        // A fake test double's own version scheme, deliberately decoupled from
+        // PlainTextExtractorService's "plaintext-vN" numbering so the two stay distinguishable
+        // in the coexisting-artifacts test below regardless of how the real parser evolves.
+        public string ParserVersion => "test-upper-v1";
 
         public Task<IReadOnlyList<TextExtractorServiceResult>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
         {
@@ -98,7 +99,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         {
             Assert.Equal(docId, s.DocumentId);
             Assert.Equal(1, s.DocumentVersion);
-            Assert.Equal("plaintext-v2", s.ParserVersion);
+            Assert.Equal("plaintext-v3", s.ParserVersion);
             Assert.NotEmpty(s.SourceChecksumSha256);
             Assert.NotEmpty(s.SourceObjectKey);
         });
@@ -147,8 +148,8 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
             .Where(x => x.DocumentId == docId).GroupBy(x => x.ParserVersion)
             .Select(g => new { g.Key, Text = g.First().Text }).ToListAsync();
         Assert.Equal(2, byParser.Count); // both artifact versions coexist
-        Assert.Contains(byParser, x => x is { Key: "plaintext-v2", Text: "metin" });
-        Assert.Contains(byParser, x => x is { Key: "plaintext-v3", Text: "METIN" });
+        Assert.Contains(byParser, x => x is { Key: "plaintext-v3", Text: "metin" });
+        Assert.Contains(byParser, x => x is { Key: "test-upper-v1", Text: "METIN" });
     }
 
     [Fact]
@@ -229,7 +230,7 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
 
         var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
         Assert.Contains(spans, s => s.Text.Contains("Vekaletname"));
-        Assert.All(spans, s => Assert.Equal("plaintext-v2", s.ParserVersion));
+        Assert.All(spans, s => Assert.Equal("plaintext-v3", s.ParserVersion));
     }
 
     /// <summary>
@@ -289,5 +290,59 @@ public class ExtractionTests(PostgresFixture pg, MinioFixture minio)
         Assert.Equal(ExtractionOutcome.Extracted, result.Outcome);
         var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
         Assert.Contains(spans, s => s.Text.Contains("Yanlis"));
+    }
+
+    /// <summary>
+    /// End-to-end for DOCX upload: the fixture is built by MarkdownDocumentExporter (the same
+    /// code real "taslak belge indir" downloads go through), so this proves the whole
+    /// export → upload → extract round trip, not just the extractor in isolation.
+    /// </summary>
+    [Fact]
+    public async Task Uploaded_docx_is_extracted_and_persisted_end_to_end()
+    {
+        await using var db = pg.NewContext();
+        var docx = MarkdownDocumentExporter.Export("docx", "Dilekce", "# Basvuru\n\nSayin Mahkeme Baskanligina sunulmustur.");
+        var docId = await SeedCleanDocumentAsync(docx.Bytes, "dilekce.docx", "application/docx");
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new IndexOutboxService(db, new Clock(DateTimeOffset.UtcNow)), new Clock(DateTimeOffset.UtcNow));
+
+        var result = await svc.ExtractAsync(_office, docId);
+
+        Assert.Equal(ExtractionOutcome.Extracted, result.Outcome);
+        var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
+        Assert.Contains(spans, s => s.Text.Contains("Basvuru"));
+        Assert.Contains(spans, s => s.Text.Contains("Sayin Mahkeme"));
+        Assert.All(spans, s => Assert.Equal("plaintext-v3", s.ParserVersion));
+    }
+
+    /// <summary>End-to-end for UDF (UYAP) upload — the format this fix was specifically requested for.</summary>
+    [Fact]
+    public async Task Uploaded_udf_is_extracted_and_persisted_end_to_end()
+    {
+        await using var db = pg.NewContext();
+        var udf = MarkdownDocumentExporter.Export("udf", "Vekaletname", "# Madde 1\n\nIsbu vekaletname ile yetki verilmistir.");
+        var docId = await SeedCleanDocumentAsync(udf.Bytes, "vekaletname.udf", "application/udf");
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new IndexOutboxService(db, new Clock(DateTimeOffset.UtcNow)), new Clock(DateTimeOffset.UtcNow));
+
+        var result = await svc.ExtractAsync(_office, docId);
+
+        Assert.Equal(ExtractionOutcome.Extracted, result.Outcome);
+        var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
+        Assert.Contains(spans, s => s.Text.Contains("Madde 1"));
+        Assert.Contains(spans, s => s.Text.Contains("Isbu vekaletname"));
+    }
+
+    /// <summary>Legacy .doc is accepted end-to-end (stored, marked clean) even though text extraction isn't implemented for it yet — no crash, just zero spans.</summary>
+    [Fact]
+    public async Task Uploaded_legacy_doc_does_not_fail_the_extraction_run()
+    {
+        await using var db = pg.NewContext();
+        byte[] ole2 = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1, 0, 0, 0, 0];
+        var docId = await SeedCleanDocumentAsync(ole2, "eski-sozlesme.doc", "application/doc");
+        var svc = new ExtractionService(db, minio.StoreService, new PlainTextExtractorService(), new IndexOutboxService(db, new Clock(DateTimeOffset.UtcNow)), new Clock(DateTimeOffset.UtcNow));
+
+        var result = await svc.ExtractAsync(_office, docId);
+
+        Assert.Equal(ExtractionOutcome.Extracted, result.Outcome);
+        Assert.Equal(0, result.SpanCount);
     }
 }

@@ -108,6 +108,54 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
     }
 
     [Theory]
+    [InlineData("dilekce.udf")]
+    [InlineData("sozlesme.doc")]
+    [InlineData("not.txt")]
+    public async Task Udf_doc_and_txt_uploads_are_no_longer_rejected_at_the_gate(string filename)
+    {
+        // Before this fix, UploadValidatorService only allowlisted .pdf/.png/.jpg/.jpeg/
+        // .docx/.xlsx/.zip — .udf/.doc/.txt were rejected with DisallowedExtension before ever
+        // reaching extraction, regardless of how well PlainTextExtractorService supported them.
+        var ext = Path.GetExtension(filename);
+        var bytes = ext switch
+        {
+            ".udf" => MarkdownDocumentExporter.Export("udf", "Dilekce", "Sayin Mahkeme Baskanligina.").Bytes,
+            ".doc" => [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1, 0, 0, 0, 0],
+            _ => "Duz metin belge."u8.ToArray(),
+        };
+
+        await using var db = pg.NewContext();
+        var outcome = await Pipeline(db).IngestAsync(_office, null, new MemoryStream(bytes), filename);
+
+        Assert.Equal(SafeUploadStatus.Clean, outcome.Status);
+        var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
+        Assert.Equal("clean", doc.Status);
+    }
+
+    [Fact]
+    public async Task Pdf_renamed_to_udf_is_still_rejected_by_magic_bytes()
+    {
+        // .udf shares the zip signature with .docx/.xlsx/.zip, but a PDF's bytes match none of
+        // them — the per-extension magic-byte check still applies to the new extension.
+        await using var db = pg.NewContext();
+        var outcome = await Pipeline(db).IngestAsync(_office, null, Pdf(), "sahte.udf");
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(UploadValidatorRejection.ContentTypeMismatch, outcome.ValidatorRejection);
+    }
+
+    [Fact]
+    public async Task Binary_content_renamed_to_txt_is_rejected()
+    {
+        // .txt has no magic bytes, so "the bytes decide the type" instead means: reject content
+        // that is obviously not text (a NUL byte early on, or invalid UTF-8).
+        var binary = new MemoryStream([0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00]);
+        await using var db = pg.NewContext();
+        var outcome = await Pipeline(db).IngestAsync(_office, null, binary, "notepad.txt");
+        Assert.Equal(SafeUploadStatus.Rejected, outcome.Status);
+        Assert.Equal(UploadValidatorRejection.ContentTypeMismatch, outcome.ValidatorRejection);
+    }
+
+    [Theory]
     [InlineData("../../etc/passwd", UploadValidatorRejection.DisallowedExtension)] // leaf "passwd" has no allowed ext
     [InlineData("x\0.pdf", UploadValidatorRejection.UnsafeFilename)]                // null byte
     public async Task Malicious_filenames_are_rejected(string filename, UploadValidatorRejection expected)
