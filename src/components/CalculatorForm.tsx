@@ -1,49 +1,29 @@
-import { useState, type ReactNode } from "react";
-import { api, ApiError } from "../api";
+import { useEffect, useState } from "react";
+import { api, ApiError, type CalcSchemaResponse } from "../api";
 import { Calculator, Warning } from "../icons";
-import { Spinner } from "../a11y";
+import { CheckboxField, DateField, Field, NumberField, RepeatableListField, SelectField, Spinner } from "../a11y";
 import type { CalcDefinition, CalcField } from "../calcDefinitions";
+import { JsonValueGrid } from "./JsonValueView";
 
 // Tek hesap makinesinin formu + sonucu. `def.fields`'e göre generic render edilir — 33 hesap
 // makinesinin hepsi bu TEK komponenti kullanır (bkz. calcDefinitions.ts başındaki açıklama).
+// Alan tipine göre render, ortak a11y/FormFields.tsx primitive'lerine devredilir (NumberField
+// min/max ile, DateField native date picker'la, RepeatableListField gerçek satır ekle/sil ile).
 
-const INPUT_CLS =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[13.5px] text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900";
-
-function Field({
-  label,
-  required,
-  help,
-  invalid,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  help?: string;
-  invalid?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-zinc-600">
-      <span>
-        {label}
-        {required && <span className="text-red-500"> *</span>}
-      </span>
-      {children}
-      {help && <span className="text-[11.5px] font-normal text-zinc-400">{help}</span>}
-      {invalid && <span className="text-[11.5px] font-normal text-red-500">Bu alan zorunlu.</span>}
-    </label>
-  );
-}
-
-type FormState = Record<string, string>; // text/decimal/int/date/list/enum/boolOptional ortak metin değeri
+type FormState = Record<string, string>; // text/decimal/int/date/enum/boolOptional ortak metin değeri
 type BoolState = Record<string, boolean>; // yalnız type:"bool" (checkbox)
+type ListState = Record<string, string[]>; // yalnız type:"list"
 
-function buildBody(def: CalcDefinition, values: FormState, bools: BoolState): Record<string, unknown> {
+function buildBody(def: CalcDefinition, values: FormState, bools: BoolState, lists: ListState): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const f of def.fields) {
     if (f.type === "bool") {
       body[f.key] = bools[f.key] ?? false;
+      continue;
+    }
+    if (f.type === "list") {
+      const items = (lists[f.key] ?? []).map((s) => s.trim()).filter(Boolean);
+      if (items.length > 0) body[f.key] = f.listItem === "int" ? items.map((s) => parseInt(s, 10)) : items;
       continue;
     }
     const raw = (values[f.key] ?? "").trim();
@@ -67,11 +47,6 @@ function buildBody(def: CalcDefinition, values: FormState, bools: BoolState): Re
       case "enum":
         body[f.key] = f.numeric ? Number(raw) : raw;
         break;
-      case "list": {
-        const items = raw.split(",").map((s) => s.trim()).filter(Boolean);
-        if (items.length > 0) body[f.key] = f.listItem === "int" ? items.map((s) => parseInt(s, 10)) : items;
-        break;
-      }
       default: // text, date
         body[f.key] = raw;
     }
@@ -79,86 +54,127 @@ function buildBody(def: CalcDefinition, values: FormState, bools: BoolState): Re
   return body;
 }
 
-function missingRequired(def: CalcDefinition, values: FormState): Set<string> {
+function missingRequired(def: CalcDefinition, values: FormState, lists: ListState): Set<string> {
   const missing = new Set<string>();
   for (const f of def.fields) {
     if (!f.required || f.type === "bool") continue; // bool zorunluları her zaman dolu (checkbox)
+    if (f.type === "list") {
+      if ((lists[f.key] ?? []).filter((s) => s.trim()).length === 0) missing.add(f.key);
+      continue;
+    }
     if (!(values[f.key] ?? "").trim()) missing.add(f.key);
   }
   return missing;
 }
 
-function FieldInput({
+function FieldRenderer({
   field,
   value,
   onChange,
   boolValue,
   onBoolChange,
+  listValue,
+  onListChange,
+  invalid,
 }: {
   field: CalcField;
   value: string;
   onChange: (v: string) => void;
   boolValue: boolean;
   onBoolChange: (v: boolean) => void;
+  listValue: string[];
+  onListChange: (v: string[]) => void;
+  invalid: boolean;
 }) {
+  const requiredError = invalid ? "Bu alan zorunlu." : undefined;
   switch (field.type) {
     case "bool":
-      return (
-        <label className="flex items-center gap-1.5 text-[13px] text-zinc-700">
-          <input type="checkbox" checked={boolValue} onChange={(e) => onBoolChange(e.target.checked)} />
-          Evet
-        </label>
-      );
+      return <CheckboxField label={field.label} checked={boolValue} onChange={onBoolChange} hint={field.help} />;
     case "boolOptional":
       return (
-        <select value={value} onChange={(e) => onChange(e.target.value)} className={INPUT_CLS}>
-          <option value="">(Belirtilmedi)</option>
-          <option value="true">Evet</option>
-          <option value="false">Hayır</option>
-        </select>
+        <SelectField
+          label={field.label}
+          hint={field.help}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          options={[
+            { value: "true", label: "Evet" },
+            { value: "false", label: "Hayır" },
+          ]}
+          placeholder="(Belirtilmedi)"
+        />
       );
     case "enum":
       return (
-        <select value={value} onChange={(e) => onChange(e.target.value)} className={INPUT_CLS}>
-          <option value="">Seçiniz</option>
-          {field.options?.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <SelectField
+          label={field.label}
+          required={field.required}
+          hint={field.help}
+          error={requiredError}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          options={field.options ?? []}
+        />
       );
     case "date":
-      return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className={INPUT_CLS} />;
+      return (
+        <DateField
+          label={field.label}
+          required={field.required}
+          hint={field.help}
+          error={requiredError}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      );
     case "decimal":
     case "int":
       return (
-        <input
+        <NumberField
+          label={field.label}
+          required={field.required}
+          hint={field.help}
+          error={requiredError}
+          min={field.min}
+          max={field.max}
+          step={field.type === "int" ? 1 : "any"}
+          placeholder={field.placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          inputMode={field.type === "int" ? "numeric" : "decimal"}
-          placeholder={field.placeholder}
-          className={INPUT_CLS}
+        />
+      );
+    case "list":
+      return (
+        <RepeatableListField
+          label={field.label}
+          required={field.required}
+          hint={field.help}
+          error={requiredError}
+          items={listValue}
+          itemType={field.listItem === "int" ? "int" : "text"}
+          itemPlaceholder={field.placeholder}
+          onChange={onListChange}
         />
       );
     default:
       return (
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} className={INPUT_CLS} />
+        <Field
+          label={field.label}
+          required={field.required}
+          hint={field.help}
+          error={requiredError}
+          placeholder={field.placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
       );
   }
 }
 
 // ---- Sonuç render'ı: 33 farklı response şeklini introspect ederek çizer (per-calculator özel kod yok) ----
+// Grid/tablo mantığı JsonValueView.tsx'te ortak — ToolCallCard (chat) da aynı introspection'ı kullanır.
 
 const META_KEYS = ["kaynak", "tarife_donemi", "uyarilar", "varsayimlar", "notlar", "not"];
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function labelize(key: string): string {
-  return key
-    .split("_")
-    .map((w) => (w.length > 0 ? w[0].toLocaleUpperCase("tr-TR") + w.slice(1) : w))
-    .join(" ");
-}
 
 function formatNumber(key: string, n: number): string {
   // "binde_oran" (StampDutyResponse) tek istisna: yüzde değil, binde (per-mille) — % işareti yanıltıcı olur.
@@ -170,92 +186,6 @@ function formatNumber(key: string, n: number): string {
     return n.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
   }
   return `${n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
-}
-
-function formatScalar(key: string, value: unknown): string {
-  if (value === null || value === undefined) return "–";
-  if (typeof value === "boolean") return value ? "Evet" : "Hayır";
-  if (typeof value === "number") return formatNumber(key, value);
-  if (typeof value === "string") {
-    if (ISO_DATE_RE.test(value)) {
-      const [y, m, d] = value.split("-");
-      return `${d}.${m}.${y}`;
-    }
-    return value;
-  }
-  return String(value);
-}
-
-function ItemsTable({ items }: { items: Record<string, unknown>[] }) {
-  const columns = Object.keys(items[0] ?? {});
-  return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200">
-      <table className="w-full text-[12.5px]">
-        <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-50">
-            {columns.map((c) => (
-              <th key={c} className="px-3 py-2 text-left font-semibold text-zinc-500">
-                {labelize(c)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((row, i) => (
-            <tr key={i} className="border-b border-zinc-100 last:border-0">
-              {columns.map((c) => (
-                <td key={c} className="px-3 py-2 text-zinc-700">
-                  {formatScalar(c, row[c])}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function ResultGrid({ entries }: { entries: [string, unknown][] }) {
-  return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-      {entries.map(([key, value]) => {
-        if (value === null || value === undefined) return null;
-        if (Array.isArray(value)) {
-          if (value.length === 0) return null;
-          const isObjectArray = typeof value[0] === "object" && value[0] !== null;
-          return (
-            <div key={key} className="sm:col-span-2">
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{labelize(key)}</div>
-              {isObjectArray ? (
-                <ItemsTable items={value as Record<string, unknown>[]} />
-              ) : (
-                <div className="text-[13.5px] text-zinc-800">
-                  {(value as unknown[]).map((v) => formatScalar(key, v)).join(", ")}
-                </div>
-              )}
-            </div>
-          );
-        }
-        if (typeof value === "object") {
-          return (
-            <div key={key} className="sm:col-span-2">
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{labelize(key)}</div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/60 p-3">
-                <ResultGrid entries={Object.entries(value as Record<string, unknown>)} />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={key}>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{labelize(key)}</div>
-            <div className="text-[13.5px] text-zinc-800">{formatScalar(key, value)}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 function ResultView({ result }: { result: Record<string, unknown> }) {
@@ -273,7 +203,7 @@ function ResultView({ result }: { result: Record<string, unknown> }) {
         <Calculator size={16} aria-hidden />
         Sonuç
       </div>
-      <ResultGrid entries={mainEntries} />
+      <JsonValueGrid entries={mainEntries} formatNumber={formatNumber} />
       {notes.length > 0 && (
         <ul className="mt-4 flex flex-col gap-1.5 border-t border-zinc-100 pt-4 text-[12.5px] text-zinc-500">
           {notes.map((n, i) => (
@@ -299,12 +229,30 @@ type SubmitState = { state: "idle" } | { state: "loading" } | { state: "error"; 
 export function CalculatorForm({ def }: { def: CalcDefinition }) {
   const [values, setValues] = useState<FormState>({});
   const [bools, setBools] = useState<BoolState>({});
+  const [lists, setLists] = useState<ListState>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [submit, setSubmit] = useState<SubmitState>({ state: "idle" });
+  const [schema, setSchema] = useState<CalcSchemaResponse | null>(null);
+
+  // Faz 3: backend'in [Range] Contract attribute'larından türettiği canlı min/max, aşağıdaki
+  // render'da calcDefinitions.ts'teki elle yazılmış değerlerin üstüne uygulanır — bkz. api.ts.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .calcSchema()
+      .then((s) => {
+        if (!cancelled) setSchema(s);
+      })
+      .catch(() => {}); // sessizce calcDefinitions.ts'teki sabit min/max'e düşülür
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const liveFields = schema?.[def.slug];
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const missing = missingRequired(def, values);
+    const missing = missingRequired(def, values, lists);
     if (missing.size > 0) {
       setInvalid(missing);
       return;
@@ -312,7 +260,7 @@ export function CalculatorForm({ def }: { def: CalcDefinition }) {
     setInvalid(new Set());
     setSubmit({ state: "loading" });
     try {
-      const body = buildBody(def, values, bools);
+      const body = buildBody(def, values, bools, lists);
       const result = await api.calc(def.endpoint, body, def.method ?? "POST");
       setSubmit({ state: "ready", result });
     } catch (err) {
@@ -327,17 +275,23 @@ export function CalculatorForm({ def }: { def: CalcDefinition }) {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">
       <form onSubmit={onSubmit} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-          {def.fields.map((f) => (
-            <Field key={f.key} label={f.label} required={f.required} help={f.help} invalid={invalid.has(f.key)}>
-              <FieldInput
-                field={f}
+          {def.fields.map((f) => {
+            const live = liveFields?.[f.key];
+            const field = live ? { ...f, min: live.minimum ?? f.min, max: live.maximum ?? f.max } : f;
+            return (
+              <FieldRenderer
+                key={f.key}
+                field={field}
                 value={values[f.key] ?? ""}
                 onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
                 boolValue={bools[f.key] ?? false}
                 onBoolChange={(v) => setBools((s) => ({ ...s, [f.key]: v }))}
+                listValue={lists[f.key] ?? []}
+                onListChange={(v) => setLists((s) => ({ ...s, [f.key]: v }))}
+                invalid={invalid.has(f.key)}
               />
-            </Field>
-          ))}
+            );
+          })}
         </div>
         <div className="mt-5 flex justify-end border-t border-zinc-100 pt-4">
           <button

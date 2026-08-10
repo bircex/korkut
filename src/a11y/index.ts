@@ -3,6 +3,7 @@
 // management, live regions, keyboard operability) hold everywhere by construction.
 export { Button } from "./Button";
 export { Field, TextArea } from "./Field";
+export { NumberField, DateField, DateRangeField, SelectField, CheckboxField, RepeatableListField } from "./FormFields";
 export { Dialog, ConfirmDialog } from "./Dialog";
 export { Menu, type MenuItem } from "./Menu";
 export { ToastProvider, useToast } from "./Toast";

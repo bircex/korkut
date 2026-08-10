@@ -112,7 +112,11 @@ export type ChatMessage = {
   // Araç çağrılarından ÖNCE akan ara anlatım parçaları ("düşünme" izi) — balona değil, üstteki
   // silik katlanabilir bloğa gider. Yalnız canlı turda bilinir; persist Faz B (parts_json) işi.
   thinking?: string[];
+  // Bu turda çalışan araç çağrıları, argüman + sonuçlarıyla (SSE `tool_call`/`tool_result`
+  // çerçeveleri) — ToolCallCard'da gösterilir. Yalnız canlı turda bilinir; persist edilmez.
+  toolCalls?: ToolCallInfo[];
 };
+export type ToolCallInfo = { name: string; arguments: unknown; result?: { content: string; isError: boolean } };
 export type SessionBrief = {
   id: number;
   title: string;
@@ -392,6 +396,12 @@ export type Coverage = {
   legislation: string;
 };
 
+// GET /api/calc/schema (KDM roadmap Faz 3): backend'in [Range] Contract attribute'larından
+// reflection'la türettiği canlı required/min/max — CalculatorForm bunu calcDefinitions.ts'teki
+// elle yazılmış değerlerin üstüne uygular, böylece render edilen kısıt backend'le hiç drift etmez.
+export type CalcFieldConstraint = { required: boolean; minimum: number | null; maximum: number | null };
+export type CalcSchemaResponse = Record<string, Record<string, CalcFieldConstraint>>;
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -635,17 +645,20 @@ export const api = {
       document?: DocumentRef | null;
     }>(`/api/sessions/${id}/chat`, { method: "POST", body: JSON.stringify({ text }) }),
   // Streaming twin of sessionChat: activity steps + answer tokens arrive live over SSE. `onStep`
-  // and `onToken` fire as events land; `onTool` gets each raw tool name (structured, for UI
-  // counters); `onSources` gets the turn's legal sources just before `done`. The promise resolves
-  // with the same payload as sessionChat (or rejects with an ApiError carrying the friendly
-  // detail from an `error` event).
+  // and `onToken` fire as events land; `onToolCall` fires with a tool's raw name + JSON arguments
+  // right before it runs, `onToolResult` with the same name + result content/error flag right
+  // after (a structured signal for tool-call cards, unlike the human-facing `onStep` copy);
+  // `onSources` gets the turn's legal sources just before `done`. The promise resolves with the
+  // same payload as sessionChat (or rejects with an ApiError carrying the friendly detail from an
+  // `error` event).
   sessionChatStream: async (
     id: number,
     text: string,
     on: {
       onStep?: (label: string) => void;
       onToken?: (t: string) => void;
-      onTool?: (name: string) => void;
+      onToolCall?: (name: string, args: unknown) => void;
+      onToolResult?: (name: string, content: string, isError: boolean) => void;
       onSources?: (items: SourceRef[]) => void;
       onDocument?: (doc: DocumentRef) => void;
     },
@@ -691,7 +704,8 @@ export const api = {
       const parsed = JSON.parse(data);
       if (event === "step") on.onStep?.(parsed.label as string);
       else if (event === "token") on.onToken?.(parsed.text as string);
-      else if (event === "tool") on.onTool?.(parsed.name as string);
+      else if (event === "tool_call") on.onToolCall?.(parsed.name as string, parsed.arguments);
+      else if (event === "tool_result") on.onToolResult?.(parsed.name as string, parsed.content as string, parsed.is_error as boolean);
       else if (event === "sources") on.onSources?.(parsed.items as SourceRef[]);
       else if (event === "document") on.onDocument?.(parsed as DocumentRef);
       else if (event === "done") done = parsed as Done;
@@ -833,6 +847,11 @@ export const api = {
     }
     return request<Record<string, unknown>>(endpoint, { method: "POST", body: JSON.stringify(body) });
   },
+  // Tek uçuşluk cache: panel açıkken tekrar tekrar hesap makinesi değiştirmek yeniden fetch etmesin.
+  calcSchema: (() => {
+    let cache: Promise<CalcSchemaResponse> | null = null;
+    return () => (cache ??= request<CalcSchemaResponse>("/api/calc/schema"));
+  })(),
   // AI taslak belgeleri (Belgeler sekmesi) — /api/documents operasyonel evrak kütüphanesidir,
   // taslak listesi kendi yolundan gelir (gateway path'e göre yönlendirir).
   documents: () => request<DocBrief[]>("/api/draft-documents"),

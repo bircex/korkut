@@ -3,7 +3,22 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axeComponent } from "../test/axe";
 import { describe, it, expect, vi } from "vitest";
-import { Button, Field, Dialog, ConfirmDialog, Menu, ToastProvider, useToast, Spinner, ErrorState } from ".";
+import {
+  Button,
+  Field,
+  Dialog,
+  ConfirmDialog,
+  Menu,
+  ToastProvider,
+  useToast,
+  Spinner,
+  ErrorState,
+  NumberField,
+  DateField,
+  SelectField,
+  CheckboxField,
+  RepeatableListField,
+} from ".";
 
 describe("Field", () => {
   it("associates its label and exposes errors to assistive tech", async () => {
@@ -141,6 +156,85 @@ describe("Toast", () => {
     await user.click(screen.getByRole("button", { name: "Bildir" }));
     expect(screen.getByRole("status")).toHaveTextContent("Kaydedildi");
     expect(await axeComponent(document.body)).toHaveNoViolations();
+  });
+});
+
+describe("NumberField", () => {
+  it("renders a native number input, applies min/max and auto-generates a range hint", async () => {
+    render(<NumberField label="Gün sayısı" min={5} max={730} required value="" onChange={() => {}} />);
+    const input = screen.getByLabelText(/Gün sayısı/);
+    expect(input).toHaveAttribute("type", "number");
+    expect(input).toHaveAttribute("min", "5");
+    expect(input).toHaveAttribute("max", "730");
+    expect(screen.getByText("5 - 730 arası")).toBeInTheDocument();
+    expect(await axeComponent(document.body)).toHaveNoViolations();
+  });
+
+  it("prefers an explicit hint over the auto range hint", () => {
+    render(<NumberField label="Oran" min={0} max={100} hint="Yüzde olarak girin" value="" onChange={() => {}} />);
+    expect(screen.getByText("Yüzde olarak girin")).toBeInTheDocument();
+    expect(screen.queryByText("0 - 100 arası")).toBeNull();
+  });
+});
+
+describe("DateField", () => {
+  it("renders a native date input", () => {
+    render(<DateField label="Başlangıç tarihi" value="" onChange={() => {}} />);
+    expect(screen.getByLabelText("Başlangıç tarihi")).toHaveAttribute("type", "date");
+  });
+});
+
+describe("SelectField", () => {
+  it("lists the given options behind a placeholder", () => {
+    render(
+      <SelectField
+        label="Faiz türü"
+        value=""
+        onChange={() => {}}
+        options={[
+          { value: "yasal", label: "Yasal" },
+          { value: "avans", label: "Avans" },
+        ]}
+      />,
+    );
+    const select = screen.getByLabelText("Faiz türü") as HTMLSelectElement;
+    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Seçiniz", "Yasal", "Avans"]);
+  });
+});
+
+describe("CheckboxField", () => {
+  it("toggles via its label and passes axe", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<CheckboxField label="Taksitle ödeme" checked={false} onChange={onChange} />);
+    await user.click(screen.getByLabelText("Taksitle ödeme"));
+    expect(onChange).toHaveBeenCalledWith(true);
+    expect(await axeComponent(document.body)).toHaveNoViolations();
+  });
+});
+
+describe("RepeatableListField", () => {
+  function Harness() {
+    const [items, setItems] = useState<string[]>([]);
+    return <RepeatableListField label="Çocukların yaşları" itemType="int" items={items} onChange={setItems} />;
+  }
+
+  it("adds and removes rows", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.getByText("Henüz eklenmedi.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "+ Ekle" }));
+    await user.click(screen.getByRole("button", { name: "+ Ekle" }));
+    const rows = screen.getAllByLabelText(/Çocukların yaşları - satır/);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveAttribute("type", "number");
+
+    await user.type(rows[0], "9");
+    expect(rows[0]).toHaveValue(9);
+
+    await user.click(screen.getAllByRole("button", { name: "Satırı sil" })[0]);
+    expect(screen.getAllByLabelText(/Çocukların yaşları - satır/)).toHaveLength(1);
   });
 });
 

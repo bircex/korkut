@@ -58,4 +58,6 @@ export {
   Eye,
   // Hesap Makineleri
   Calculator,
+  // Sohbette araç çağrısı kartı (ToolCallCard)
+  Wrench,
 } from "@phosphor-icons/react";

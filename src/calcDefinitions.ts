@@ -22,6 +22,9 @@ export type CalcField = {
   listItem?: "int" | "text";
   placeholder?: string;
   help?: string;
+  /** type: "decimal"/"int" — backend şemasındaki minimum/maximum (örn. TCK m.52/1: 5-730 gün). Native input'ta hem hint hem hard constraint olarak uygulanır. */
+  min?: number;
+  max?: number;
 };
 
 export type CalcDefinition = {
@@ -176,7 +179,7 @@ export const CALC_DEFINITIONS: CalcDefinition[] = [
         ],
       },
       { key: "tutar", label: "Tutar (TL)", type: "decimal", required: true },
-      { key: "ay", label: "Yılın ayı (1-12)", type: "int", placeholder: "1", help: "Varsayılan 1" },
+      { key: "ay", label: "Yılın ayı", type: "int", placeholder: "1", help: "Varsayılan 1", min: 1, max: 12 },
     ],
   },
 
@@ -189,9 +192,9 @@ export const CALC_DEFINITIONS: CalcDefinition[] = [
     description: "Yaralanmalı trafik kazasında sürekli/geçici iş göremezlik tazminatını mahkeme modunda hesaplar.",
     fields: [
       { key: "cinsiyet", label: "Cinsiyet", type: "enum", required: true, options: GENDER_OPTIONS },
-      { key: "yas", label: "Kaza tarihindeki yaş", type: "int", required: true },
-      { key: "maluliyet_orani", label: "Sürekli maluliyet oranı (%)", type: "decimal", required: true },
-      { key: "kusur_orani", label: "Mağdurun kendi kusuru (%)", type: "decimal", help: "Verilmezse 0 alınır" },
+      { key: "yas", label: "Kaza tarihindeki yaş", type: "int", required: true, min: 0, max: 100 },
+      { key: "maluliyet_orani", label: "Sürekli maluliyet oranı (%)", type: "decimal", required: true, min: 0, max: 100 },
+      { key: "kusur_orani", label: "Mağdurun kendi kusuru (%)", type: "decimal", help: "Verilmezse 0 alınır", min: 0, max: 100 },
       { key: "aylik_net_gelir", label: "Aylık net gelir (TL)", type: "decimal", help: "Verilmezse AGİ hariç net asgari ücret alınır" },
       { key: "gecici_is_goremezlik_ay", label: "Geçici iş göremezlik süresi (ay)", type: "decimal" },
     ],
@@ -204,9 +207,9 @@ export const CALC_DEFINITIONS: CalcDefinition[] = [
     description: "İş kazasında işçinin sürekli/geçici iş göremezlik (maddi) tazminatını mahkeme modunda hesaplar.",
     fields: [
       { key: "cinsiyet", label: "Cinsiyet", type: "enum", required: true, options: GENDER_OPTIONS },
-      { key: "yas", label: "Kaza tarihindeki yaş", type: "int", required: true },
-      { key: "surekli_is_goremezlik_orani", label: "Sürekli iş göremezlik oranı (%)", type: "decimal", required: true },
-      { key: "isveren_kusur_orani", label: "İşverenin kusur oranı (%)", type: "decimal", help: "Verilmezse 100 alınır" },
+      { key: "yas", label: "Kaza tarihindeki yaş", type: "int", required: true, min: 0, max: 100 },
+      { key: "surekli_is_goremezlik_orani", label: "Sürekli iş göremezlik oranı (%)", type: "decimal", required: true, min: 0, max: 100 },
+      { key: "isveren_kusur_orani", label: "İşverenin kusur oranı (%)", type: "decimal", help: "Verilmezse 100 alınır", min: 0, max: 100 },
       { key: "aylik_net_gelir", label: "Aylık net gelir (TL)", type: "decimal", help: "Verilmezse AGİ hariç net asgari ücret alınır" },
       { key: "gecici_is_goremezlik_ay", label: "Geçici iş göremezlik süresi (ay)", type: "decimal" },
       { key: "sgk_gelir_baglandi", label: "SGK sürekli iş göremezlik geliri bağladı mı", type: "bool", required: true },
@@ -221,9 +224,9 @@ export const CALC_DEFINITIONS: CalcDefinition[] = [
     description: "Ölümlü olayda hak sahibi bazında destekten yoksun kalma tazminatını mahkeme modunda hesaplar.",
     fields: [
       { key: "cinsiyet", label: "Müteveffanın cinsiyeti", type: "enum", required: true, options: GENDER_OPTIONS },
-      { key: "yas", label: "Ölüm tarihindeki yaş", type: "int", required: true },
+      { key: "yas", label: "Ölüm tarihindeki yaş", type: "int", required: true, min: 0, max: 100 },
       { key: "aylik_net_gelir", label: "Aylık net gelir (TL)", type: "decimal", help: "Verilmezse AGİ hariç net asgari ücret alınır" },
-      { key: "kusur_orani", label: "Müteveffanın kendi kusuru (%)", type: "decimal", help: "Verilmezse 0 alınır" },
+      { key: "kusur_orani", label: "Müteveffanın kendi kusuru (%)", type: "decimal", help: "Verilmezse 0 alınır", min: 0, max: 100 },
       { key: "es_var", label: "Sağ kalan eş var mı", type: "bool", required: true },
       { key: "es_yasi", label: "Eşin yaşı", type: "int", help: "Verilmezse müteveffanın yaşıyla aynı varsayılır" },
       { key: "cocuklar", label: "Çocukların yaşları", type: "list", listItem: "int", placeholder: "örn. 4, 9, 15", help: "Virgülle ayırın" },
@@ -468,8 +471,8 @@ export const CALC_DEFINITIONS: CalcDefinition[] = [
     category: "Ceza Hukuku",
     description: "Gün sayısı x günlük miktar üzerinden adli para cezasını ve hapse çevirme karşılığını hesaplar.",
     fields: [
-      { key: "gun_sayisi", label: "Gün sayısı (TCK m.52/1: 5-730)", type: "int", required: true },
-      { key: "gunluk_miktar", label: "Günlük miktar (TL)", type: "decimal", required: true },
+      { key: "gun_sayisi", label: "Gün sayısı", type: "int", required: true, min: 5, max: 730, help: "TCK m.52/1" },
+      { key: "gunluk_miktar", label: "Günlük miktar (TL)", type: "decimal", required: true, min: 100, max: 500, help: "TCK m.52/2 güncel aralık" },
       { key: "taksit", label: "Taksitle ödeme bilgisi de istensin mi", type: "bool", required: true },
     ],
   },

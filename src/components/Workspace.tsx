@@ -10,6 +10,7 @@ import {
   type SourceRef,
   type SessionBrief,
   type Task,
+  type ToolCallInfo,
   type User,
 } from "../api";
 import { DocumentPanel } from "./DocumentPanel";
@@ -17,6 +18,7 @@ import { DocumentLibrary } from "./DocumentLibrary";
 import { KararAramaPanel } from "./KararAramaPanel";
 import { KararlarimPanel } from "./KararlarimPanel";
 import { CalculatorsPanel } from "./CalculatorsPanel";
+import { ToolCallCard } from "./ToolCallCard";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
@@ -661,15 +663,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         // (araçsız biten) cevap balonunda kalır.
         let acc = "";
         let started = false;
-        let searches = 0; // canlı arama sayacı (SSE `tool` çerçeveleri; persist edilmez)
+        let searches = 0; // canlı arama sayacı (SSE `tool_call` çerçeveleri; persist edilmez)
         const thinking: string[] = []; // araç öncesi ara anlatım segmentleri (canlı tur izi)
+        const toolCalls: ToolCallInfo[] = []; // bu turda çalışan araçlar (SSE tool_call/tool_result)
         let liveSources: SourceRef[] | null = null; // SSE `sources` çerçevesi (done'dan önce gelir)
         let liveDocument: DocumentRef | null = null; // SSE `document` çerçevesi (done'dan önce gelir)
         const paint = () => {
           if (!showsThisChat()) return;
           setMessages((m) => {
             const copy = m.slice();
-            copy[copy.length - 1] = { role: "assistant", content: acc, thinking: [...thinking] };
+            copy[copy.length - 1] = { role: "assistant", content: acc, thinking: [...thinking], toolCalls: [...toolCalls] };
             return copy;
           });
         };
@@ -680,14 +683,21 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             if (label === "Bağlam hazırlanıyor" || label === "Yanıt üretiliyor") return;
             if (showsThisChat()) setActivity(label); // balon boşken ve araçlar dönerken görünür
           },
-          onTool: (name) => {
+          onToolCall: (name, args) => {
             if (name === "search_decisions") searches += 1;
+            toolCalls.push({ name, arguments: args });
             // Bu turun metni araç çağrısıyla bitti → ara anlatımdı; düşünme izine taşı.
             if (acc.trim()) {
               thinking.push(acc.trim());
               acc = "";
-              if (started) paint();
             }
+            if (started) paint();
+          },
+          onToolResult: (name, content, isError) => {
+            // Aynı turda aynı tool birden çok kez çağrılabilir — sonucu bekleyen İLK eşleşen kayda yaz.
+            const pending = toolCalls.find((c) => c.name === name && !c.result);
+            if (pending) pending.result = { content, isError };
+            if (started) paint();
           },
           onSources: (items) => {
             liveSources = items;
@@ -719,6 +729,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             searches: searches || undefined,
             document: liveDocument ?? res.document ?? null,
             thinking: thinking.length ? thinking : undefined,
+            toolCalls: toolCalls.length ? toolCalls : undefined,
           };
           setMessages((m) => (started ? [...m.slice(0, -1), finalMsg] : [...m, finalMsg]));
         }
@@ -1141,6 +1152,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       live={streaming && sendingId === currentId && i === messages.length - 1}
                     />
                   )}
+                  {/* Araç çağrısı kartları: bu turda çalışan tool'lar, argüman + sonuçlarıyla (katlanmış). */}
+                  {m.role === "assistant" && (m.toolCalls?.length ?? 0) > 0 && <ToolCallCard calls={m.toolCalls!} />}
                   <div
                     className={
                       m.role === "user"
@@ -1265,18 +1278,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
           </form>
         </div>
 
-        {/* Editör: sohbetin yanında sağ drawer (geniş ekranda push, darda overlay). URL tek
-            gerçek kaynak kuralı sürer: /sohbet/:id/belge = drawer açık. Kanvas 21cm (A4)
-            istediği için 1200px altında push yerine overlay açılır (bkz. DRAWER_ROADMAP R1). */}
+        {/* Editör: sohbetin üstünde tam ekran (sol menü hariç) drawer. URL tek gerçek kaynak
+            kuralı sürer: /sohbet/:id/belge = drawer açık (bkz. DRAWER_ROADMAP Faz 7). */}
         {currentId !== null && (
-          <RightDrawer
-            open={pane === "document"}
-            onClose={requestCloseEditor}
-            label="Belge editörü"
-            width="clamp(680px, 55vw, 900px)"
-            overlayWidth="900px"
-            overlayBelow={1200}
-          >
+          <RightDrawer open={pane === "document"} onClose={requestCloseEditor} label="Belge editörü">
             <DocumentPanel
               key={currentId}
               sessionId={currentId}
