@@ -13,8 +13,8 @@ public sealed class JudicialFineTool(ICalculatorService calc) : IAgentTool
         {
           "type": "object",
           "properties": {
-            "gun_sayisi": { "type": "integer", "description": "Hükmedilen tam gün sayısı (TCK m.52/1: 5-730 gün)" },
-            "gunluk_miktar": { "type": "number", "description": "Bir gün karşılığı miktar, TL (TCK m.52/2: güncel aralık 100-500 TL)" },
+            "gun_sayisi": { "type": "integer", "minimum": 5, "maximum": 730, "description": "Hükmedilen tam gün sayısı (TCK m.52/1: 5-730 gün)" },
+            "gunluk_miktar": { "type": "number", "minimum": 100, "maximum": 500, "description": "Bir gün karşılığı miktar, TL (TCK m.52/2: güncel aralık 100-500 TL)" },
             "taksit": { "type": "boolean", "description": "Taksitle ödeme bilgisi de istenirse true (TCK m.52/4)" }
           },
           "required": ["gun_sayisi", "gunluk_miktar"]

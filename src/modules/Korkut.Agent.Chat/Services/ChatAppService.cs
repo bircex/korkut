@@ -1,7 +1,5 @@
-using Korkut.Agent.Chat.Repositories;
-using Korkut.Agent.Chat.Abstractions;
+using System.Text.Json;
 using Korkut.Contract.Agent.Chat;
-using Korkut.Contract.Agent;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
@@ -36,10 +34,11 @@ internal sealed class ChatAppService(ICurrentUser current, ISessionChatService c
     /// is missing (the caller emits an error frame).</summary>
     public async Task<ChatResponse?> StreamAsync(
         Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken,
-        Func<string, Task>? onTool = null, CancellationToken ct = default)
+        Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
+        CancellationToken ct = default)
     {
         var outcome = await chat.ChatStreamAsync(
-            current.OfficeId, current.UserId, id, text.Trim(), current.Permissions, onStep, onToken, onTool, ct);
+            current.OfficeId, current.UserId, id, text.Trim(), current.Permissions, onStep, onToken, onToolCall, onToolResult, ct);
         return outcome is null ? null : Map(outcome);
     }
 
