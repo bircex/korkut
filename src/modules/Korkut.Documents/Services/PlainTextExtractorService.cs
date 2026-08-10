@@ -111,8 +111,23 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
             return true;
         }
 
-        var head = new byte[5];
-        var read = await content.ReadAsync(head.AsMemory(0, 5), ct);
-        return read >= 5 && head[0] == '%' && head[1] == 'P' && head[2] == 'D' && head[3] == 'F';
+        // ReadAsync may return fewer bytes than requested in a single call even when more data
+        // follows (Stream's contract, not just theoretical for network-backed streams) — read in
+        // a loop rather than trusting one call to fill the buffer, or short streams risk a false
+        // "not a PDF" verdict.
+        var head = new byte[4];
+        var filled = 0;
+        while (filled < head.Length)
+        {
+            var read = await content.ReadAsync(head.AsMemory(filled), ct);
+            if (read == 0)
+            {
+                break; // end of stream before 4 bytes were available
+            }
+
+            filled += read;
+        }
+
+        return filled == head.Length && head[0] == '%' && head[1] == 'P' && head[2] == 'D' && head[3] == 'F';
     }
 }

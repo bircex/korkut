@@ -64,11 +64,13 @@ internal sealed class SessionRepository(DbContext db)
 
     public async Task<bool> RenameAsync(Guid officeId, Guid id, string title, DateTimeOffset now, CancellationToken ct = default)
         => await Conversations.Where(x => x.OfficeId == officeId && x.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Title, title).SetProperty(x => x.UpdatedAt, now), ct) > 0;
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Title, StripNul(title)).SetProperty(x => x.UpdatedAt, now), ct) > 0;
 
+    // Auto-generated from an LLM summary of the conversation (see SessionChatService), which can
+    // itself be derived from ingested document text — same NUL-byte exposure as AppendMessageAsync.
     public async Task<bool> SetTitleIfDefaultAsync(Guid officeId, Guid id, string title, CancellationToken ct = default)
         => await Conversations.Where(x => x.OfficeId == officeId && x.Id == id && x.Title == Session.DefaultTitle)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Title, title), ct) > 0;
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Title, StripNul(title)), ct) > 0;
 
     public async Task<bool> DeleteAsync(Guid officeId, Guid id, CancellationToken ct = default)
     {
