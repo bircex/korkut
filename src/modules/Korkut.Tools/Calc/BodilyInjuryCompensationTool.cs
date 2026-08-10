@@ -17,9 +17,9 @@ public sealed class BodilyInjuryCompensationTool(ICalculatorService calc) : IAge
           "type": "object",
           "properties": {
             "cinsiyet": { "type": "string", "enum": ["erkek", "kadin"], "description": "Mağdurun cinsiyeti (TRH-2010 bakiye ömrü için)" },
-            "yas": { "type": "integer", "description": "Kaza tarihindeki yaş (0-100)" },
-            "maluliyet_orani": { "type": "number", "description": "Sürekli maluliyet (iş göremezlik) oranı, yüzde (0-100)" },
-            "kusur_orani": { "type": "number", "description": "MAĞDURUN kendi kusuru, yüzde (0-100); karşı tarafın kusuru DEĞİL. Verilmezse 0 alınır" },
+            "yas": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Kaza tarihindeki yaş (0-100)" },
+            "maluliyet_orani": { "type": "number", "minimum": 0, "maximum": 100, "description": "Sürekli maluliyet (iş göremezlik) oranı, yüzde (0-100)" },
+            "kusur_orani": { "type": "number", "minimum": 0, "maximum": 100, "description": "MAĞDURUN kendi kusuru, yüzde (0-100); karşı tarafın kusuru DEĞİL. Verilmezse 0 alınır" },
             "aylik_net_gelir": { "type": "number", "description": "Mağdurun aylık net geliri (TL); verilmezse AGİ hariç net asgari ücret alınır (2026: 28.075,50 TL)" },
             "gecici_is_goremezlik_ay": { "type": "number", "description": "Geçici iş göremezlik (iyileşme) süresi, ay; bu dönem %100 iş göremezlikle hesaplanır" }
           },

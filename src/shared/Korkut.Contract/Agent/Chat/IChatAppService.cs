@@ -1,3 +1,4 @@
+using System.Text.Json;
 
 namespace Korkut.Contract.Agent.Chat;
 
@@ -8,7 +9,13 @@ public interface IChatAppService
 
     Task<UploadResponse> UploadAsync(Guid id, string fileName, string contentType, Stream content, string text, CancellationToken ct = default);
 
+    /// <summary>
+    /// <paramref name="onToolCall"/> fires with a tool's name + raw JSON arguments right before it
+    /// runs; <paramref name="onToolResult"/> fires with the same name + result content/error flag
+    /// right after.
+    /// </summary>
     Task<ChatResponse?> StreamAsync(
         Guid id, string text, Func<string, Task> onStep, Func<string, Task> onToken,
-        Func<string, Task>? onTool = null, CancellationToken ct = default);
+        Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
+        CancellationToken ct = default);
 }

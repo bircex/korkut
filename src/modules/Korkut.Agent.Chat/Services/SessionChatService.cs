@@ -7,6 +7,7 @@ using Korkut.Agent.Brain.Abstractions;
 using Korkut.Contract.Agent.Model;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using Korkut.Settings.Entities;
 using Korkut.Core;
 using Korkut.Knowledge;
@@ -200,9 +201,10 @@ internal sealed class SessionChatService(
     /// </summary>
     public Task<ChatOutcome?> ChatStreamAsync(
         Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions,
-        Func<string, Task> onStep, Func<string, Task> onToken, Func<string, Task>? onTool = null,
+        Func<string, Task> onStep, Func<string, Task> onToken,
+        Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
         CancellationToken ct = default)
-        => RunTurnAsync(officeId, userId, conversationId, text, text, permissions, onStep, onToken, onTool, ct);
+        => RunTurnAsync(officeId, userId, conversationId, text, text, permissions, onStep, onToken, onToolCall, onToolResult, ct);
 
     /// <summary>
     /// One assistant turn, split so a DB connection is NEVER held across the (slow) model calls:
@@ -216,7 +218,8 @@ internal sealed class SessionChatService(
         Guid officeId, Guid userId, Guid conversationId, string userContent, string titleSeed,
         IReadOnlySet<string> permissions,
         Func<string, Task>? onStep = null, Func<string, Task>? onToken = null,
-        Func<string, Task>? onTool = null, CancellationToken ct = default)
+        Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
+        CancellationToken ct = default)
     {
         // No generic phase labels here — the UI shows an animated typing indicator until a real
         // activity label (a tool step from the loop) or the first token arrives.
@@ -234,7 +237,7 @@ internal sealed class SessionChatService(
         var timer = Stopwatch.StartNew();
         var reply = await toolLoopService.RunAsync(
             system, prep.Messages, new AgentToolContext(officeId, userId, permissions, conversationId),
-            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, onTool, ct);
+            ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, onToolCall, onToolResult, ct);
         timer.Stop();
 
         // Phase 3 — short agent scope: persist the reply + auto-title; ledger write is best-effort.

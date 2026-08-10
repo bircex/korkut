@@ -3,6 +3,7 @@ using Korkut.Core;
 using Korkut.Tools.Core;
 using Korkut.Contract.Agent.Model;
 using System.Text;
+using System.Text.Json;
 
 namespace Korkut.Agent.Brain.Services;
 
@@ -32,7 +33,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         string system, IReadOnlyList<ChatMessage> messages, AgentToolContext context,
         string specialty, int? maxTokens = null,
         Func<string, Task>? onStep = null, Func<string, Task>? onToken = null,
-        Func<string, Task>? onTool = null, CancellationToken ct = default)
+        Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
+        CancellationToken ct = default)
     {
         var tools = catalog.AvailableSpecs(context)
             .Select(s => new ToolDefinition(s.Name, s.Description, s.Parameters))
@@ -72,9 +74,9 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
                     await onStep(StepLabel(call));
                 }
 
-                if (onTool is not null)
+                if (onToolCall is not null)
                 {
-                    await onTool(call.Name);
+                    await onToolCall(call.Name, call.Arguments);
                 }
 
                 var result = await catalog.InvokeAsync(call.Name, call.Arguments, context, ct);
@@ -87,6 +89,11 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
                 if (result.Document is { } doc)
                 {
                     document = doc;
+                }
+
+                if (onToolResult is not null)
+                {
+                    await onToolResult(call.Name, result.Content, result.IsError);
                 }
             }
 

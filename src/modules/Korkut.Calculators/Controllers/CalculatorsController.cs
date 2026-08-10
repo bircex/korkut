@@ -1,6 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using System.Text.Json;
 using Korkut.Contract.Calculators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace Korkut.Calculators.Controllers;
 
@@ -14,6 +18,43 @@ namespace Korkut.Calculators.Controllers;
 [Authorize]
 public sealed class CalculatorsController(ICalculatorService calc) : ControllerBase
 {
+    /// <summary>
+    /// Field constraints (required + [Range] minimum/maximum) for every calculator's request body,
+    /// keyed by the same route slug used above. Reflects the [FromBody] request records directly —
+    /// this IS the canonical source the FE reads at runtime, so the frontend's field metadata can
+    /// never drift from what this controller actually accepts (KDM roadmap Faz 3).
+    /// </summary>
+    [HttpGet("schema")]
+    public IActionResult Schema()
+    {
+        var nullability = new NullabilityInfoContext();
+        var schema = new Dictionary<string, Dictionary<string, object>>();
+
+        foreach (var method in typeof(CalculatorsController).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+        {
+            var route = method.GetCustomAttributes<HttpMethodAttribute>().FirstOrDefault();
+            var bodyParam = method.GetParameters().FirstOrDefault(p => p.GetCustomAttribute<FromBodyAttribute>() is not null);
+            if (route?.Template is null || bodyParam is null) continue;
+
+            var fields = new Dictionary<string, object>();
+            foreach (var prop in bodyParam.ParameterType.GetProperties())
+            {
+                var range = prop.GetCustomAttribute<RangeAttribute>();
+                var isOptional = Nullable.GetUnderlyingType(prop.PropertyType) is not null
+                    || (!prop.PropertyType.IsValueType && nullability.Create(prop).WriteState == NullabilityState.Nullable);
+                fields[JsonNamingPolicy.SnakeCaseLower.ConvertName(prop.Name)] = new
+                {
+                    required = !isOptional,
+                    minimum = range?.Minimum,
+                    maximum = range?.Maximum,
+                };
+            }
+            schema[route.Template] = fields;
+        }
+
+        return Ok(schema);
+    }
+
     [HttpPost("nafaka")]
     public IActionResult Alimony([FromBody] AlimonyRequest request) => Ok(calc.CalcAlimony(request));
 

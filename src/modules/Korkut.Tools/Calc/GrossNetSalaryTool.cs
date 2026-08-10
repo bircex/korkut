@@ -19,7 +19,7 @@ public sealed class GrossNetSalaryTool(ICalculatorService calc) : IAgentTool
               "description": "Hesap yönü"
             },
             "tutar": { "type": "number", "description": "yon=brutten_nete ise aylık brüt, yon=netten_brute ise hedef aylık net, TL" },
-            "ay": { "type": "integer", "description": "Yılın kaçıncı ayı (1-12, varsayılan 1); kümülatif vergi matrahı bu ay konumuna göre, tüm aylarda aynı brüt varsayımıyla hesaplanır" }
+            "ay": { "type": "integer", "minimum": 1, "maximum": 12, "description": "Yılın kaçıncı ayı (1-12, varsayılan 1); kümülatif vergi matrahı bu ay konumuna göre, tüm aylarda aynı brüt varsayımıyla hesaplanır" }
           },
           "required": ["yon", "tutar"]
         }

@@ -55,4 +55,41 @@ public class CalculatorsControllerTests(KorkutApiFactory factory)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    /// <summary>
+    /// The schema endpoint is the FE's single source of truth for required/min/max (KDM roadmap
+    /// Faz 3) — this round-trips it through the real routing + JSON pipeline to make sure the
+    /// route-slug keys and snake_case field names actually line up with what calcDefinitions.ts
+    /// (and the request bodies above) expect, not just what the reflection code intends.
+    /// </summary>
+    [Fact]
+    public async Task Schema_exposes_required_and_range_constraints_keyed_by_route_slug()
+    {
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+
+        var response = await client.GetAsync("/api/calc/schema");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
+
+        var judicialFine = body.GetProperty("adli-para-cezasi");
+        var gunSayisi = judicialFine.GetProperty("gun_sayisi");
+        Assert.True(gunSayisi.GetProperty("required").GetBoolean());
+        Assert.Equal(5, gunSayisi.GetProperty("minimum").GetInt32());
+        Assert.Equal(730, gunSayisi.GetProperty("maximum").GetInt32());
+
+        var taksit = judicialFine.GetProperty("taksit");
+        Assert.True(taksit.GetProperty("required").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, taksit.GetProperty("minimum").ValueKind);
+
+        var salary = body.GetProperty("brut-net-maas");
+        var ay = salary.GetProperty("ay");
+        Assert.False(ay.GetProperty("required").GetBoolean()); // int? Ay — optional
+        Assert.Equal(1, ay.GetProperty("minimum").GetInt32());
+        Assert.Equal(12, ay.GetProperty("maximum").GetInt32());
+
+        // GET-only endpoints with no [FromBody] request (exchange rates) have nothing to render as a form.
+        Assert.False(body.TryGetProperty("doviz-kurlari", out _));
+    }
 }

@@ -17,9 +17,9 @@ public sealed class WorkAccidentCompensationTool(ICalculatorService calc) : IAge
           "type": "object",
           "properties": {
             "cinsiyet": { "type": "string", "enum": ["erkek", "kadin"], "description": "İşçinin cinsiyeti (TRH-2010 bakiye ömrü için)" },
-            "yas": { "type": "integer", "description": "Kaza tarihindeki yaş (0-100)" },
-            "surekli_is_goremezlik_orani": { "type": "number", "description": "Sürekli iş göremezlik (maluliyet) oranı, yüzde (0-100)" },
-            "isveren_kusur_orani": { "type": "number", "description": "İşverenin kusur oranı, yüzde (0-100); tazminat bu oranla çarpılır. Verilmezse 100 alınır" },
+            "yas": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Kaza tarihindeki yaş (0-100)" },
+            "surekli_is_goremezlik_orani": { "type": "number", "minimum": 0, "maximum": 100, "description": "Sürekli iş göremezlik (maluliyet) oranı, yüzde (0-100)" },
+            "isveren_kusur_orani": { "type": "number", "minimum": 0, "maximum": 100, "description": "İşverenin kusur oranı, yüzde (0-100); tazminat bu oranla çarpılır. Verilmezse 100 alınır" },
             "aylik_net_gelir": { "type": "number", "description": "İşçinin aylık net ücreti (TL); verilmezse AGİ hariç net asgari ücret alınır (2026: 28.075,50 TL)" },
             "gecici_is_goremezlik_ay": { "type": "number", "description": "Geçici iş göremezlik (istirahat) süresi, ay; bu dönem %100 iş göremezlikle hesaplanır" },
             "sgk_gelir_baglandi": { "type": "boolean", "description": "SGK sürekli iş göremezlik geliri bağladı mı" },

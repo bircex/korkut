@@ -17,9 +17,9 @@ public sealed class LossOfSupportTool(ICalculatorService calc) : IAgentTool
           "type": "object",
           "properties": {
             "cinsiyet": { "type": "string", "enum": ["erkek", "kadin"], "description": "Müteveffanın cinsiyeti (TRH-2010 bakiye ömrü için)" },
-            "yas": { "type": "integer", "description": "Müteveffanın ölüm tarihindeki yaşı (0-100)" },
+            "yas": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Müteveffanın ölüm tarihindeki yaşı (0-100)" },
             "aylik_net_gelir": { "type": "number", "description": "Müteveffanın aylık net geliri (TL); verilmezse AGİ hariç net asgari ücret alınır (2026: 28.075,50 TL)" },
-            "kusur_orani": { "type": "number", "description": "MÜTEVEFFANIN kendi kusuru, yüzde (0-100); verilmezse 0 alınır" },
+            "kusur_orani": { "type": "number", "minimum": 0, "maximum": 100, "description": "MÜTEVEFFANIN kendi kusuru, yüzde (0-100); verilmezse 0 alınır" },
             "es_var": { "type": "boolean", "description": "Sağ kalan eş var mı" },
             "es_yasi": { "type": "integer", "description": "Eşin yaşı; verilmezse müteveffanın yaşıyla aynı varsayılır" },
             "cocuklar": { "type": "array", "items": { "type": "integer" }, "description": "Çocukların yaşları (destek 18 yaşına kadar)" },

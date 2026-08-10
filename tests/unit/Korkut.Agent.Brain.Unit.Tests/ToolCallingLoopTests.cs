@@ -195,22 +195,28 @@ public class ToolCallingLoopTests
     }
 
     [Fact]
-    public async Task OnTool_receives_each_raw_tool_name_as_it_runs()
+    public async Task OnToolCall_and_onToolResult_fire_for_each_call_with_its_arguments_and_outcome()
     {
+        var args = JsonDocument.Parse("""{"source": "yargitay"}""").RootElement;
         var callTurn = new ChatReply("", new ChatUsage("fake", "m", 1, 1),
             ToolCalls:
             [
-                new ToolInvocation("c1", "search_decisions", NoArgs),
+                new ToolInvocation("c1", "search_decisions", args),
                 new ToolInvocation("c2", "create_matter", NoArgs),
             ]);
         var final = new ChatReply("Bitti.", new ChatUsage("fake", "m", 1, 1));
         var loop = new ToolCallingLoopService(new ScriptedModel(callTurn, final), new FakeCatalog("search_decisions", "create_matter"));
 
-        var toolNames = new List<string>();
+        var calls = new List<(string Name, JsonElement Arguments)>();
+        var results = new List<(string Name, string Content, bool IsError)>();
         await loop.RunAsync("sys", [new ChatMessage("user", "soru")], Context(),
-            ModelSpecialty.Dispatcher, onTool: n => { toolNames.Add(n); return Task.CompletedTask; });
+            ModelSpecialty.Dispatcher,
+            onToolCall: (n, a) => { calls.Add((n, a)); return Task.CompletedTask; },
+            onToolResult: (n, c, e) => { results.Add((n, c, e)); return Task.CompletedTask; });
 
-        Assert.Equal(["search_decisions", "create_matter"], toolNames);
+        Assert.Equal(["search_decisions", "create_matter"], calls.Select(c => c.Name));
+        Assert.Equal("yargitay", calls[0].Arguments.GetProperty("source").GetString());
+        Assert.Equal([("search_decisions", "search_decisions sonucu", false), ("create_matter", "create_matter sonucu", false)], results);
     }
 
     [Fact]

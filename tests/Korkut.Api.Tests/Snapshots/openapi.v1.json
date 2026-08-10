@@ -210,6 +210,8 @@
           },
           "kusur_orani": {
             "format": "double",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "null",
@@ -219,6 +221,8 @@
           },
           "maluliyet_orani": {
             "format": "double",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "number",
@@ -227,6 +231,8 @@
           },
           "yas": {
             "format": "int32",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -1062,6 +1068,8 @@
         "properties": {
           "ay": {
             "format": "int32",
+            "maximum": "12",
+            "minimum": "1",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
@@ -1221,6 +1229,8 @@
         "properties": {
           "gun_sayisi": {
             "format": "int32",
+            "maximum": "730",
+            "minimum": "5",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -1229,6 +1239,8 @@
           },
           "gunluk_miktar": {
             "format": "double",
+            "maximum": "500",
+            "minimum": "100",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "number",
@@ -1388,6 +1400,8 @@
           },
           "kusur_orani": {
             "format": "double",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "null",
@@ -1397,6 +1411,8 @@
           },
           "yas": {
             "format": "int32",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -2602,6 +2618,8 @@
           },
           "isveren_kusur_orani": {
             "format": "double",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "null",
@@ -2623,6 +2641,8 @@
           },
           "surekli_is_goremezlik_orani": {
             "format": "double",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "number",
@@ -2631,6 +2651,8 @@
           },
           "yas": {
             "format": "int32",
+            "maximum": "100",
+            "minimum": "0",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -4068,6 +4090,18 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Calculators"
+        ]
+      }
+    },
+    "/api/calc/schema": {
+      "get": {
         "responses": {
           "200": {
             "description": "OK"

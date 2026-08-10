@@ -98,12 +98,15 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
 
         try
         {
-            // Frame order: step/tool/token live during the turn, then one `sources` frame (the
-            // structured drawer data, when any legal search ran) and one `document` frame (the
-            // draft the turn staged, when any), then the terminal `done`.
+            // Frame order: step/tool_call/tool_result/token live during the turn, then one `sources`
+            // frame (the structured drawer data, when any legal search ran) and one `document` frame
+            // (the draft the turn staged, when any), then the terminal `done`. tool_call/tool_result
+            // are keyed pairwise by `name` (a turn may call the same tool more than once) so the FE
+            // can render a per-call card with arguments and, once it lands, the result.
             var outcome = await chat.StreamAsync(id, body.Text!,
                 label => Frame("step", new { label }), token => Frame("token", new { text = token }),
-                name => Frame("tool", new { name }), ct);
+                (name, arguments) => Frame("tool_call", new { name, arguments }),
+                (name, content, isError) => Frame("tool_result", new { name, content, isError }), ct);
             if (outcome is null)
             {
                 await Frame("error", new { detail = "Görüşme bulunamadı." });

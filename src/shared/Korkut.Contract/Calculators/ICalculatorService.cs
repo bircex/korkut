@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Korkut.Contract.Calculators;
 
 // ---- calc_nafaka ----
@@ -22,7 +24,12 @@ public sealed record AttorneyFeeResponse(
 
 // ---- calc_bedensel_tazminat ----
 public sealed record BodilyInjuryCompensationRequest(
-    string Cinsiyet, int Yas, decimal MaluliyetOrani, decimal? KusurOrani, decimal? AylikNetGelir, decimal? GeciciIsGoremezlikAy);
+    string Cinsiyet,
+    [property: Range(0, 100)] int Yas,
+    [property: Range(0, 100)] decimal MaluliyetOrani,
+    [property: Range(0, 100)] decimal? KusurOrani,
+    decimal? AylikNetGelir,
+    decimal? GeciciIsGoremezlikAy);
 public sealed record BodilyInjuryCompensationResponse(
     string Yontem, decimal BakiyeOmurYil, decimal AktifDonemYil, decimal PasifDonemYil, decimal EsasAlinanAylikNetGelir,
     decimal AktifDonemKaybi, decimal PasifDonemKaybi, decimal GeciciIsGoremezlikKaybi, decimal BrutToplam,
@@ -57,7 +64,7 @@ public sealed record FreelanceReceiptResponse(
     decimal KdvTevkifati, decimal TahsilEdilecekToplam, string Not, string Kaynak);
 
 // ---- calc_brut_net_maas ----
-public sealed record GrossNetSalaryRequest(string Yon, decimal Tutar, int? Ay);
+public sealed record GrossNetSalaryRequest(string Yon, decimal Tutar, [property: Range(1, 12)] int? Ay);
 public sealed record GrossNetSalaryDeductions(decimal SgkIsci, decimal IssizlikIsci, decimal GelirVergisi, decimal DamgaVergisi, decimal Toplam);
 public sealed record GrossNetSalaryExemption(decimal GelirVergisi, decimal DamgaVergisi);
 public sealed record GrossNetSalaryProjection(decimal YillikBrut, decimal YillikNet, string Aciklama);
@@ -93,7 +100,8 @@ public sealed record InterestResponse(
     decimal AnaParaArtiFaiz, string Kaynak);
 
 // ---- calc_adli_para_cezasi ----
-public sealed record JudicialFineRequest(int GunSayisi, decimal GunlukMiktar, bool Taksit);
+public sealed record JudicialFineRequest(
+    [property: Range(5, 730)] int GunSayisi, [property: Range(100, 500)] decimal GunlukMiktar, bool Taksit);
 public sealed record JudicialFineResponse(
     int GunSayisi, decimal GunlukMiktar, decimal ToplamCeza, int HapseCevirmeGun, string HapseCevirmeAciklama,
     string? TaksitKurali, IReadOnlyList<string> Uyarilar, string Kaynak);
@@ -107,7 +115,11 @@ public sealed record LatePaymentSurchargeResponse(
 
 // ---- calc_destekten_yoksunluk ----
 public sealed record LossOfSupportRequest(
-    string Cinsiyet, int Yas, decimal? AylikNetGelir, decimal? KusurOrani, bool EsVar, int? EsYasi,
+    string Cinsiyet,
+    [property: Range(0, 100)] int Yas,
+    decimal? AylikNetGelir,
+    [property: Range(0, 100)] decimal? KusurOrani,
+    bool EsVar, int? EsYasi,
     IReadOnlyList<int>? Cocuklar, bool AnneVar, int? AnneYasi, bool BabaVar, int? BabaYasi);
 public sealed record LossOfSupportBeneficiary(
     string HakSahibi, int Yas, int Pay, decimal DestekYili, decimal AktifYil, decimal PasifYil, decimal BrutDestek, decimal NetDestek);
@@ -229,7 +241,11 @@ public sealed record VehicleValueLossResponse(
 
 // ---- calc_is_kazasi_tazminati ----
 public sealed record WorkAccidentCompensationRequest(
-    string Cinsiyet, int Yas, decimal SurekliIsGoremezlikOrani, decimal? IsverenKusurOrani, decimal? AylikNetGelir,
+    string Cinsiyet,
+    [property: Range(0, 100)] int Yas,
+    [property: Range(0, 100)] decimal SurekliIsGoremezlikOrani,
+    [property: Range(0, 100)] decimal? IsverenKusurOrani,
+    decimal? AylikNetGelir,
     decimal? GeciciIsGoremezlikAy, bool SgkGelirBaglandi, decimal? SgkPesinSermaye);
 public sealed record WorkAccidentCompensationResponse(
     string Yontem, decimal BakiyeOmurYil, decimal AktifDonemYil, decimal PasifDonemYil, decimal EsasAlinanAylikNetGelir,
