@@ -1,16 +1,16 @@
-using System.Globalization;
 using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
 /// <summary>
 /// TBK m.344 kira artışı üst sınırını hesaplar: yenilenen kira döneminde artış, bir önceki kira
-/// yılına ait TÜFE on iki aylık ortalamalara göre değişim oranını geçemez. Uygulamada yenileme
-/// ayından bir önceki ayın (son açıklanan endeks ayının) oranı esas alınır.
+/// yılına ait TÜFE on iki aylık ortalamalara göre değişim oranını geçemez. Thin adapter over
+/// <see cref="ICalculatorService"/>.
 /// </summary>
-public sealed class RentIncreaseTool : IAgentTool
+public sealed class RentIncreaseTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -37,49 +37,18 @@ public sealed class RentIncreaseTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var rent = ToolArgs.Decimal(arguments, "mevcut_kira");
-        var renewalMonth = ToolArgs.String(arguments, "yenileme_ayi");
-        if (rent is not { } currentRent || currentRent <= 0 || renewalMonth is null)
-        {
-            return Task.FromResult(ToolResult.Error("Pozitif mevcut_kira ve yenileme_ayi (YYYY-MM) zorunludur."));
-        }
+        var request = new RentIncreaseRequest(
+            ToolArgs.Decimal(arguments, "mevcut_kira") ?? -1m,
+            ToolArgs.String(arguments, "yenileme_ayi") ?? "",
+            ToolArgs.Decimal(arguments, "tufe_orani"));
 
-        if (!DateOnly.TryParseExact(
-                renewalMonth + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var renewalDate))
+        try
         {
-            return Task.FromResult(ToolResult.Error("yenileme_ayi YYYY-MM biçiminde olmalıdır (örn. 2026-07)."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcRentIncrease(request))));
         }
-
-        // TBK m.344 uygulaması: yenileme ayında son açıklanan endeks, bir önceki ayın endeksidir.
-        var indexDate = renewalDate.AddMonths(-1);
-        var customRate = ToolArgs.Decimal(arguments, "tufe_orani");
-        if (customRate is { } customRateValue && customRateValue < 0)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("tufe_orani negatif olamaz."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var rate = customRate ?? TufeTwelveMonthAverage.For(indexDate.Year, indexDate.Month);
-        if (rate is not { } appliedRate)
-        {
-            return Task.FromResult(ToolResult.Error(
-                $"{indexDate.Year:0000}-{indexDate.Month:00} endeks ayı için 12 aylık ortalama TÜFE gömülü tabloda yok; "
-                + "TÜİK'in o ay için açıkladığı oranı tufe_orani parametresiyle verin."));
-        }
-
-        var increase = decimal.Round(currentRent * appliedRate / 100m, 2);
-        var source = customRate is null
-            ? $"{TufeTwelveMonthAverage.Kaynak} (endeks ayı {indexDate.Year:0000}-{indexDate.Month:00})"
-            : "Kullanıcının verdiği TÜFE oranı; TBK m.344";
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            MevcutKira = decimal.Round(currentRent, 2),
-            UygulananOran = appliedRate,
-            EndeksAyi = $"{indexDate.Year:0000}-{indexDate.Month:00}",
-            AzamiArtisTutari = increase,
-            AzamiYeniKira = decimal.Round(currentRent + increase, 2),
-            Not = "TBK m.344: artış üst sınırı bir önceki kira yılına ait 12 aylık ortalama TÜFE'dir; "
-                + "çatılı işyeri kiralarında da TÜFE sınırı uygulanır. Taraflar daha düşük bir oran kararlaştırabilir.",
-            Kaynak = source,
-        })));
     }
 }

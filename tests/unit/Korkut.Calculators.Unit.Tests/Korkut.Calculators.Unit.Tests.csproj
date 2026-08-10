@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Fast, isolated unit tests for the Calculators module (no network, no DB). Can reach module
+       internals (CalculatorService, Tariffs, TcmbRatesClient) via [InternalsVisibleTo] declared on
+       Korkut.Calculators. Also references Korkut.Tools to test the agent tool adapters end-to-end
+       against a real CalculatorService, mirroring Korkut.LawClients.Unit.Tests. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Calculators\Korkut.Calculators.csproj" />
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Tools\Korkut.Tools.csproj" />
+    <ProjectReference Include="..\..\..\src\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+</Project>

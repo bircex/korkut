@@ -1,11 +1,12 @@
 using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Yasal faiz, avans (ticari temerrüt) faizi veya özel oranla basit faiz hesaplar.</summary>
-public sealed class InterestTool : IAgentTool
+/// <summary>Yasal faiz, avans (ticari temerrüt) faizi veya özel oranla basit faiz hesaplar. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class InterestTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -38,74 +39,21 @@ public sealed class InterestTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var interestType = ToolArgs.String(arguments, "faiz_turu");
-        var principal = ToolArgs.Decimal(arguments, "ana_para");
-        var startDate = ToolArgs.Date(arguments, "baslangic");
-        var endDate = ToolArgs.Date(arguments, "bitis");
-        if (interestType is null || principal is not { } p || p <= 0 || startDate is not { } start || endDate is not { } end)
+        var request = new InterestRequest(
+            ToolArgs.String(arguments, "faiz_turu") ?? "",
+            ToolArgs.Decimal(arguments, "ana_para") ?? -1m,
+            ToolArgs.Date(arguments, "baslangic"),
+            ToolArgs.Date(arguments, "bitis"),
+            ToolArgs.Bool(arguments, "bitis_dahil"),
+            ToolArgs.Decimal(arguments, "ozel_oran"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("faiz_turu, pozitif ana_para, baslangic ve bitis zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcInterest(request))));
         }
-
-        var endExclusive = ToolArgs.Bool(arguments, "bitis_dahil") ? end.AddDays(1) : end;
-        if (start >= endExclusive)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("baslangic, bitis tarihinden önce olmalıdır."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        RatePeriod[] table;
-        switch (interestType)
-        {
-            case "yasal":
-                table = LegalInterestRates.Yasal;
-                break;
-            case "avans":
-                table = LegalInterestRates.Avans;
-                break;
-            case "ozel":
-                if (ToolArgs.Decimal(arguments, "ozel_oran") is not { } customRate || customRate <= 0)
-                {
-                    return Task.FromResult(ToolResult.Error("faiz_turu=ozel için pozitif ozel_oran gerekir."));
-                }
-
-                table = [new RatePeriod(DateOnly.MinValue, null, customRate)];
-                break;
-            default:
-                return Task.FromResult(ToolResult.Error("faiz_turu yasal, avans veya ozel olmalıdır."));
-        }
-
-        if (!RateSchedule.Covers(table, start))
-        {
-            return Task.FromResult(ToolResult.Error(
-                $"{interestType} faiz tablosu {table[0].From:dd.MM.yyyy} öncesini kapsamıyor; daha eski dönem için ozel_oran ile hesaplayın."));
-        }
-
-        var segments = RateSchedule.Segments(table, start, endExclusive);
-        decimal totalInterest = 0;
-        var breakdown = new List<object>(segments.Count);
-        foreach (var s in segments)
-        {
-            var interest = p * (s.AnnualPercent / 100m) * s.Days / 365m;
-            totalInterest += interest;
-            breakdown.Add(new
-            {
-                Baslangic = s.From,
-                Bitis = s.To,
-                YillikOran = s.AnnualPercent,
-                Gun = s.Days,
-                Faiz = decimal.Round(interest, 2),
-            });
-        }
-
-        totalInterest = decimal.Round(totalInterest, 2);
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Yontem = "Basit faiz, ACT/365, dönem tablosuna göre parçalı",
-            ToplamGun = endExclusive.DayNumber - start.DayNumber,
-            DonemKirilimi = breakdown,
-            ToplamFaiz = totalInterest,
-            AnaParaArtiFaiz = decimal.Round(p + totalInterest, 2),
-            Kaynak = LegalInterestRates.Kaynak,
-        })));
     }
 }

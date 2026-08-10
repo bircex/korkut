@@ -37,10 +37,11 @@ public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
 
     public string Title { get; private set; } = string.Empty;
 
-    /// <summary>Optional tenant-aware link to the client (composite FK on (office_id, client_id)).</summary>
+    /// <summary>Tenant-aware link to the client (composite FK on (office_id, client_id)). The matter
+    /// is always bound by id — never by free-text name.</summary>
     public Guid? ClientId { get; private set; }
 
-    /// <summary>The client name as typed when opening the matter (the UI works with a name, not an id).</summary>
+    /// <summary>IMMUTABLE snapshot of the client's name at bind time — never rewritten by a client rename.</summary>
     public string? ClientNameSnapshot { get; private set; }
 
     public string? FileNo { get; private set; }
@@ -69,10 +70,15 @@ public sealed class Matter : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
     public DateTimeOffset CreatedAt { get; private set; }
 
     public void Update(
-        string? title, string? fileNo, string? caseType, string? counterparty, string? status,
-        string? notes, DateTimeOffset updatedAt)
+        string? title, Guid? clientId, string? clientNameSnapshot, string? fileNo, string? caseType,
+        string? counterparty, string? status, string? notes, DateTimeOffset updatedAt)
     {
         if (title is not null) Title = title;
+        if (clientId is not null)
+        {
+            ClientId = clientId;
+            ClientNameSnapshot = clientNameSnapshot;
+        }
         FileNo = fileNo ?? FileNo;
         CaseType = caseType ?? CaseType;
         Counterparty = counterparty ?? Counterparty;

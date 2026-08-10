@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Fast, isolated unit tests for the LawClients module (no network, no DB). Can reach module
+       internals (source clients, LawClientsService) via [InternalsVisibleTo] declared on
+       Korkut.LawClients. Also references Korkut.Tools to test the agent tool adapters
+       (SearchDecisionsTool, FetchDocumentTool, ...) end-to-end against a real LawClientsService
+       wired to a scripted HTTP transport, mirroring the tests that used to live in
+       Korkut.Tools.Unit.Tests before the source clients moved out of Korkut.Tools. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\modules\Korkut.LawClients\Korkut.LawClients.csproj" />
+    <ProjectReference Include="..\..\..\src\modules\Korkut.Tools\Korkut.Tools.csproj" />
+    <ProjectReference Include="..\..\..\src\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+</Project>

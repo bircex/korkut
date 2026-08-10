@@ -81,6 +81,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Chat.Entities.ConversationMessage> ChatMessages => Set<Korkut.Chat.Entities.ConversationMessage>();
 
+    public DbSet<Korkut.SavedDecisions.Entities.SavedDecision> SavedDecisions => Set<Korkut.SavedDecisions.Entities.SavedDecision>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -126,6 +128,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Chat.Entities.ConversationConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Chat.Entities.ConversationMessageConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.SavedDecisions.Entities.SavedDecisionConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Documents.Entities.DocumentConfiguration());
 

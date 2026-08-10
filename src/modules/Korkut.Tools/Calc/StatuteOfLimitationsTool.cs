@@ -1,14 +1,13 @@
 using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Zamanaşımı hesabı: TBK alacak zamanaşımları ile TCK dava ve ceza (infaz) zamanaşımı.</summary>
-public sealed class StatuteOfLimitationsTool : IAgentTool
+/// <summary>Zamanaşımı hesabı: TBK alacak zamanaşımları ile TCK dava ve ceza (infaz) zamanaşımı. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class StatuteOfLimitationsTool(ICalculatorService calc) : IAgentTool
 {
-    private const string Source =
-        "TBK m.146 (genel 10 yıl), m.147 (5 yıllık süreler), m.72 (haksız fiil 2/10 yıl); TCK m.66 (dava zamanaşımı), m.67 (durma-kesilme), m.68 (ceza zamanaşımı)";
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -42,97 +41,19 @@ public sealed class StatuteOfLimitationsTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var domain = ToolArgs.String(arguments, "alan");
-        if (domain is null || ToolArgs.Date(arguments, "olay_tarihi") is not { } eventDate)
+        var request = new StatuteOfLimitationsRequest(
+            ToolArgs.String(arguments, "alan") ?? "",
+            ToolArgs.Date(arguments, "olay_tarihi"),
+            ToolArgs.Int(arguments, "ceza_ust_siniri_yil"),
+            ToolArgs.String(arguments, "ceza_turu"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("alan ve olay_tarihi zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcStatuteOfLimitations(request))));
         }
-
-        var warnings = new List<string>();
-        int periodYears;
-        string basis;
-        int? extendedPeriodYears = null;
-
-        switch (domain)
+        catch (BadRequestException ex)
         {
-            case "tbk_genel":
-                periodYears = 10;
-                basis = "TBK m.146: kanunda aksine hüküm yoksa her alacak 10 yıllık zamanaşımına tabidir.";
-                break;
-            case "haksiz_fiil":
-                periodYears = 2;
-                extendedPeriodYears = 10;
-                basis = "TBK m.72: zarar görenin zararı ve tazminat yükümlüsünü öğrenmesinden itibaren 2 yıl, her halde fiilden itibaren 10 yıl.";
-                warnings.Add("2 yıllık süre öğrenme tarihinden işler; burada öğrenme tarihi olay tarihi varsayıldı. Fiil aynı zamanda suç oluşturuyorsa daha uzun olan ceza dava zamanaşımı uygulanır (TBK m.72/1).");
-                break;
-            case "kira":
-                periodYears = 5;
-                basis = "TBK m.147/1: kira bedelleri, anapara faizleri ve ücret gibi dönemsel edimler 5 yıllık zamanaşımına tabidir.";
-                break;
-            case "ticari_satis":
-                periodYears = 5;
-                basis = "TBK m.147/3: perakende satışlardan doğan alacaklar 5 yıllık zamanaşımına tabidir.";
-                warnings.Add("Tacirler arası/toptan satış sözleşmesinden doğan alacaklarda genel 10 yıllık süre (TBK m.146), ayıptan sorumlulukta ise 2 yıllık süre (TBK m.231) uygulanabilir; sözleşmenin niteliği belirleyicidir.");
-                break;
-            case "ceza_dava":
-            case "ceza_infaz":
-            {
-                var sentenceType = ToolArgs.String(arguments, "ceza_turu") ?? "sureli";
-                var upperLimitYears = ToolArgs.Int(arguments, "ceza_ust_siniri_yil");
-                if (sentenceType == "sureli" && upperLimitYears is not > 0)
-                {
-                    return Task.FromResult(ToolResult.Error("Süreli hapiste ceza_ust_siniri_yil (pozitif yıl) zorunludur."));
-                }
-
-                if (domain == "ceza_dava")
-                {
-                    (periodYears, basis) = sentenceType switch
-                    {
-                        "agirlastirilmis_muebbet" => (30, "TCK m.66/1-a: ağırlaştırılmış müebbet gerektiren suçlarda dava zamanaşımı 30 yıl."),
-                        "muebbet" => (25, "TCK m.66/1-b: müebbet hapis gerektiren suçlarda dava zamanaşımı 25 yıl."),
-                        _ => upperLimitYears >= 20
-                            ? (20, "TCK m.66/1-c: 20 yıldan aşağı olmayan hapis gerektiren suçlarda dava zamanaşımı 20 yıl.")
-                            : upperLimitYears > 5
-                                ? (15, "TCK m.66/1-d: 5 yıldan fazla, 20 yıldan az hapis gerektiren suçlarda dava zamanaşımı 15 yıl.")
-                                : (8, "TCK m.66/1-e: 5 yıldan fazla olmayan hapis veya adli para cezası gerektiren suçlarda dava zamanaşımı 8 yıl."),
-                    };
-                    warnings.Add("Süre, suçun kanundaki cezasının üst sınırına göre belirlenir (TCK m.66/3, ağırlaştırıcı nitelikli haller dahil). Fiili işlediğinde 12-15 yaş grubundakiler için sürelerin yarısı, 15-18 yaş için üçte ikisi uygulanır (m.66/2). Kesilme halinde süre en fazla yarısına kadar uzar (m.67/4).");
-                }
-                else
-                {
-                    (periodYears, basis) = sentenceType switch
-                    {
-                        "agirlastirilmis_muebbet" => (40, "TCK m.68/1-a: ağırlaştırılmış müebbet hapiste ceza zamanaşımı 40 yıl."),
-                        "muebbet" => (30, "TCK m.68/1-b: müebbet hapiste ceza zamanaşımı 30 yıl."),
-                        _ => upperLimitYears >= 20
-                            ? (24, "TCK m.68/1-c: 20 yıl ve daha fazla süreli hapiste ceza zamanaşımı 24 yıl.")
-                            : upperLimitYears > 5
-                                ? (20, "TCK m.68/1-d: 5 yıldan fazla hapiste ceza zamanaşımı 20 yıl.")
-                                : (10, "TCK m.68/1-e: 5 yıla kadar hapis ve adli para cezalarında ceza zamanaşımı 10 yıl."),
-                    };
-                    warnings.Add("Süre hükmün kesinleştiği veya infazın kesintiye uğradığı günden işler (TCK m.68/5); olay_tarihi olarak kesinleşme tarihi girilmelidir. 12-18 yaş indirimleri m.68/2'de saklıdır.");
-                }
-
-                break;
-            }
-
-            default:
-                return Task.FromResult(ToolResult.Error("Geçersiz alan."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        warnings.Add(
-            "Zamanaşımını kesen ve durduran sebepler (TBK m.152-154: dava, icra takibi, borç ikrarı; TCK m.67: iddianame, sorgu, mahkumiyet vb.) hesaba katılmadı; kesin değerlendirme dosya üzerinden yapılmalıdır. Bu bir tahmindir, hukuki dayanak değildir.");
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Alan = domain,
-            SureYil = periodYears,
-            TahminiSonTarih = eventDate.AddYears(periodYears),
-            UzunSureYil = extendedPeriodYears,
-            UzunSureSonTarih = extendedPeriodYears is { } u ? eventDate.AddYears(u) : (DateOnly?)null,
-            Dayanak = basis,
-            Uyarilar = warnings,
-            Kaynak = Source,
-        })));
     }
 }

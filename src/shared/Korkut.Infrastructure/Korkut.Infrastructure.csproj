@@ -39,6 +39,7 @@
     <ProjectReference Include="..\..\modules\Korkut.Tools\Korkut.Tools.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Chat\Korkut.Chat.csproj" />
     <ProjectReference Include="..\..\modules\Korkut.Jobs\Korkut.Jobs.csproj" />
+    <ProjectReference Include="..\..\modules\Korkut.SavedDecisions\Korkut.SavedDecisions.csproj" />
   </ItemGroup>
   <ItemGroup>
       <ProjectReference Include="..\..\modules\Korkut.Pii\Korkut.Pii.csproj" />

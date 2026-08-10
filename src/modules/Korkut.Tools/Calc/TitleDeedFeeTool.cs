@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Gayrimenkul satışında tapu harcını (alıcı + satıcı, binde 20 + binde 20) hesaplar.</summary>
-public sealed class TitleDeedFeeTool : IAgentTool
+/// <summary>Gayrimenkul satışında tapu harcını (alıcı + satıcı, binde 20 + binde 20) hesaplar. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class TitleDeedFeeTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -34,36 +35,17 @@ public sealed class TitleDeedFeeTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        if (ToolArgs.Decimal(arguments, "satis_bedeli") is not { } price || price <= 0)
+        var request = new TitleDeedFeeRequest(
+            ToolArgs.Decimal(arguments, "satis_bedeli") ?? -1m,
+            ToolArgs.String(arguments, "taraf"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("Pozitif satis_bedeli zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcTitleDeedFee(request))));
         }
-
-        var party = ToolArgs.String(arguments, "taraf") ?? "toplam";
-        if (party is not ("alici" or "satici" or "toplam"))
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("taraf alici, satici veya toplam olmalıdır."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var buyerFee = decimal.Round(price * TitleDeedFees2026.AliciOran, 2);
-        var sellerFee = decimal.Round(price * TitleDeedFees2026.SaticiOran, 2);
-        var fee = party switch
-        {
-            "alici" => buyerFee,
-            "satici" => sellerFee,
-            _ => buyerFee + sellerFee,
-        };
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            SatisBedeli = price,
-            Taraf = party,
-            AliciHarci = buyerFee,
-            SaticiHarci = sellerFee,
-            Harc = fee,
-            Not = "Harç, beyan edilen satış bedeli ile emlak vergisi değerinin yükseği üzerinden alınır. " + TitleDeedFees2026.DonerSermayeNotu,
-            TarifeDonemi = TitleDeedFees2026.Donem,
-            Kaynak = TitleDeedFees2026.Kaynak,
-        })));
     }
 }

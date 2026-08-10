@@ -1,14 +1,13 @@
 using System.Text.Json;
-using Korkut.Tools.Calc.Rates;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>TCMB günlük gösterge döviz kurlarını (döviz alış/satış) getirir.</summary>
-public sealed class ExchangeRatesTool(TcmbRatesClient tcmb) : IAgentTool
+/// <summary>TCMB günlük gösterge döviz kurlarını (döviz alış/satış) getirir. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class ExchangeRatesTool(ICalculatorService calc) : IAgentTool
 {
-    private static readonly string[] DefaultCurrencies = ["USD", "EUR", "GBP"];
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -40,75 +39,23 @@ public sealed class ExchangeRatesTool(TcmbRatesClient tcmb) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var codes = DefaultCurrencies;
+        List<string>? codes = null;
         if (arguments.TryGetProperty("para_birimleri", out var requested) && requested.ValueKind == JsonValueKind.Array)
         {
             codes = requested.EnumerateArray()
                 .Where(e => e.ValueKind == JsonValueKind.String)
-                .Select(e => e.GetString()!.Trim().ToUpperInvariant())
-                .Where(s => s.Length > 0)
-                .Distinct()
-                .ToArray();
-            if (codes.Length == 0)
-            {
-                return ToolResult.Error("para_birimleri boş olamaz; en az bir ISO kodu verin (örn. USD).");
-            }
+                .Select(e => e.GetString()!)
+                .ToList();
         }
 
-        var date = ToolArgs.Date(arguments, "tarih");
-        TcmbBulletin? bulletin;
+        var request = new ExchangeRatesRequest(codes, ToolArgs.Date(arguments, "tarih"));
         try
         {
-            bulletin = date is { } d ? await tcmb.GetForDateAsync(d, ct) : await tcmb.GetLatestAsync(ct);
+            return ToolResult.Ok(ToolArgs.Result(await calc.GetExchangeRatesAsync(request, ct)));
         }
-        catch (HttpRequestException)
+        catch (BadRequestException ex)
         {
-            return ToolResult.Error("TCMB kur servisine ulaşılamadı; lütfen daha sonra tekrar deneyin.");
+            return ToolResult.Error(ex.Message);
         }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return ToolResult.Error("TCMB kur servisi zaman aşımına uğradı; lütfen daha sonra tekrar deneyin.");
-        }
-
-        if (bulletin is null)
-        {
-            return ToolResult.Error(
-                "İstenen tarih için TCMB kur bülteni bulunamadı (7 güne kadar önceki iş günlerine de bakıldı); tarihi kontrol edin.");
-        }
-
-        var rateList = new List<object>(codes.Length);
-        var missingCodes = new List<string>();
-        foreach (var code in codes)
-        {
-            var rate = bulletin.Rates.FirstOrDefault(r =>
-                string.Equals(r.Code, code, StringComparison.OrdinalIgnoreCase));
-            if (rate is null)
-            {
-                missingCodes.Add(code);
-                continue;
-            }
-
-            rateList.Add(new
-            {
-                Kod = rate.Code,
-                Birim = rate.Unit,
-                Alis = rate.ForexBuying,
-                Satis = rate.ForexSelling,
-            });
-        }
-
-        if (rateList.Count == 0)
-        {
-            return ToolResult.Error(
-                $"İstenen para birimleri TCMB bülteninde bulunamadı: {string.Join(", ", missingCodes)}.");
-        }
-
-        return ToolResult.Ok(ToolArgs.Result(new
-        {
-            KurTarihi = bulletin.Date,
-            Kurlar = rateList,
-            BulunamayanKodlar = missingCodes,
-            Kaynak = "TCMB Gösterge Kurları",
-        }));
     }
 }

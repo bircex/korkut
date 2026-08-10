@@ -8,6 +8,9 @@ public sealed record UpdateMatterRequest
     [MaxLength(500, ErrorMessage = "Başlık en fazla 500 karakter olabilir.")]
     public string? Title { get; init; }
 
+    /// <summary>Rebinds the matter to a different client (or attaches one for the first time).</summary>
+    public Guid? ClientId { get; init; }
+
     public string? FileNo { get; init; }
 
     public string? CaseType { get; init; }

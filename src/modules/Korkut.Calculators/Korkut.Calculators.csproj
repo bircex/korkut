@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Calculators module: the 27 legal/financial calculators (severance, alimony, court fees,
+       interest, compensation, tariffs...) behind one ICalculatorService. Stateless pure math (one
+       exception: exchange rates hits TCMB over HTTP) — no persistence, Reports template. Consumed
+       by both the agent tool loop (Korkut.Tools, via Contract DI) and this module's own Controllers
+       (UI/REST). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Microsoft.Extensions.Http itself ships in the AspNetCore.App shared framework (above);
+         only the resilience package needs an explicit reference. -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Calculators.Unit.Tests" />
+  </ItemGroup>
+</Project>

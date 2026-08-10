@@ -1,6 +1,7 @@
 using Korkut.Matters.Repositories;
 using Korkut.Matters.Entities;
 using Korkut.Contract;
+using Korkut.Contract.Clients;
 using Korkut.Contract.Courts;
 using Korkut.Contract.Deadlines;
 using Korkut.Contract.Hearings;
@@ -11,12 +12,13 @@ namespace Korkut.Matters.Services;
 
 /// <summary>
 /// Matter use-cases over the repository port; every call runs in the caller's tenant scope and
-/// RETURNS a <see cref="Result"/>. Owns the court-title snapshot rule. Cross-module reads (court
-/// name, a matter's hearings + deadlines) go through Contract lookups, never other modules' entities.
+/// RETURNS a <see cref="Result"/>. Owns the court-title snapshot rule. Cross-module reads (client
+/// brief, court name, a matter's hearings + deadlines) go through Contract lookups, never other
+/// modules' entities.
 /// </summary>
 internal sealed class MatterService(
     IMatterRepository matters, IHearingLookup hearings, IDeadlineLookup deadlines, ICourtLookup courts,
-    IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
+    IClientLookup clients, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
 {
     public Task<Result<IReadOnlyList<MatterResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -33,15 +35,28 @@ internal sealed class MatterService(
 
             var hearingRows = await hearings.ListForMatterAsync(office, id, ct);
             var deadlineRows = await deadlines.ListInRangeAsync(office, null, null, id, ct);
+            var client = matter.ClientId is { } clientId ? await clients.BriefAsync(office, clientId, ct) : null;
             return Result<MatterDetailResponse>.Ok(new MatterDetailResponse(
                 matter.Id, matter.Title, matter.ClientNameSnapshot, matter.FileNo, matter.CourtNameSnapshot,
                 matter.CaseType, matter.Counterparty, matter.Status, matter.OpenedAt, matter.UpdatedAt,
-                Client: null, matter.Notes, hearingRows, deadlineRows, Documents: []));
+                client, matter.Notes, hearingRows, deadlineRows, Documents: []));
         }, ct);
 
     public Task<Result<MatterResponse>> CreateAsync(CreateMatterRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
+            // The client is bound by id and its name snapshotted at link time: a later client
+            // rename never rewrites the matter's historical text.
+            string? clientName = null;
+            if (request.ClientId is { } clientId)
+            {
+                clientName = await clients.GetNameAsync(office, clientId, ct);
+                if (clientName is null)
+                {
+                    return Result<MatterResponse>.NotFound("Müvekkil bulunamadı.");
+                }
+            }
+
             // The court title is snapshotted: use the free-text value if given, else the linked
             // court's CURRENT title. A later court rename never rewrites the matter's text.
             var courtName = string.IsNullOrWhiteSpace(request.Court)
@@ -49,7 +64,7 @@ internal sealed class MatterService(
                 : request.Court.Trim();
 
             var matter = new Matter(
-                office, request.Title!.Trim(), request.ClientId, request.ClientName?.Trim(),
+                office, request.Title!.Trim(), request.ClientId, clientName,
                 request.FileNo?.Trim(), request.CaseType?.Trim(), request.Counterparty?.Trim(),
                 request.CourtId, courtName, clock.UtcNow);
             await matters.AddAsync(matter, ct);
@@ -65,8 +80,18 @@ internal sealed class MatterService(
                 return Result<MatterResponse>.NotFound("Dosya bulunamadı.");
             }
 
-            matter.Update(request.Title?.Trim(), request.FileNo?.Trim(), request.CaseType?.Trim(),
-                request.Counterparty?.Trim(), request.Status, request.Notes?.Trim(), clock.UtcNow);
+            string? clientName = null;
+            if (request.ClientId is { } clientId)
+            {
+                clientName = await clients.GetNameAsync(office, clientId, ct);
+                if (clientName is null)
+                {
+                    return Result<MatterResponse>.NotFound("Müvekkil bulunamadı.");
+                }
+            }
+
+            matter.Update(request.Title?.Trim(), request.ClientId, clientName, request.FileNo?.Trim(),
+                request.CaseType?.Trim(), request.Counterparty?.Trim(), request.Status, request.Notes?.Trim(), clock.UtcNow);
             await matters.SaveChangesAsync(ct);
             return Result<MatterResponse>.Ok(ToResponse(matter));
         }, ct);

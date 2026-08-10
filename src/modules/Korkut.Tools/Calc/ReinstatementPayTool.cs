@@ -1,10 +1,12 @@
 using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>İşe iade davası parasal sonuçlarını hesaplar (4857 sK m.21: boşta geçen süre + işe başlatmama tazminatı).</summary>
-public sealed class ReinstatementPayTool : IAgentTool
+/// <summary>İşe iade davası parasal sonuçlarını hesaplar (4857 sK m.21: boşta geçen süre + işe başlatmama tazminatı). Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class ReinstatementPayTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -29,38 +31,17 @@ public sealed class ReinstatementPayTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var monthlyGrossArg = ToolArgs.Decimal(arguments, "aylik_brut");
-        var seniorityYearsArg = ToolArgs.Decimal(arguments, "kidem_yil");
-        if (monthlyGrossArg is not { } monthlyGross || monthlyGross <= 0 || seniorityYearsArg is not { } seniorityYears || seniorityYears < 0)
+        var request = new ReinstatementPayRequest(
+            ToolArgs.Decimal(arguments, "aylik_brut") ?? -1m,
+            ToolArgs.Decimal(arguments, "kidem_yil") ?? -1m);
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("Pozitif aylik_brut ve negatif olmayan kidem_yil zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcReinstatementPay(request))));
         }
-
-        // 4857 m.21/3: kararın kesinleşmesine kadar çalıştırılmayan süre için en çok 4 aya kadar ücret.
-        const int IdlePeriodMonths = 4;
-        var idlePeriodPay = decimal.Round(monthlyGross * IdlePeriodMonths, 2);
-
-        // 4857 m.21/1: işe başlatmama tazminatı 4-8 aylık ücret; miktar mahkeme takdirinde.
-        // Yerleşik pratik bant: 6 aydan az kıdemde 4 ay; 5 yıla kadar 4-5 ay; 15 yıla kadar 5-6 ay; üstü 6-8 ay.
-        var (minMonths, maxMonths) = seniorityYears switch
+        catch (BadRequestException ex)
         {
-            < 0.5m => (4, 4),
-            < 5m => (4, 5),
-            < 15m => (5, 6),
-            _ => (6, 8),
-        };
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            BostaGecenSureAy = IdlePeriodMonths,
-            BostaGecenSureUcreti = idlePeriodPay,
-            IseBaslatmamaAyAraligi = $"{minMonths}-{maxMonths} ay",
-            IseBaslatmamaTazminatiMin = decimal.Round(monthlyGross * minMonths, 2),
-            IseBaslatmamaTazminatiMax = decimal.Round(monthlyGross * maxMonths, 2),
-            ToplamMin = decimal.Round(monthlyGross * (IdlePeriodMonths + minMonths), 2),
-            ToplamMax = decimal.Round(monthlyGross * (IdlePeriodMonths + maxMonths), 2),
-            Uyari = "İşe başlatmama tazminatının ay sayısı 4-8 aralığında mahkeme takdirindedir; verilen bant yerleşik uygulamadan çıkarılan pratik bir tahmindir. Boşta geçen süre ücreti giydirilmiş ücretten, işe başlatmama tazminatı çıplak brüt ücretten hesaplanır. İş güvencesi için en az 30 işçili işyeri, 6 ay kıdem ve belirsiz süreli sözleşme şartları aranır (4857 sK m.18).",
-            Kaynak = "4857 sK m.18 (iş güvencesi kapsamı) ve m.21 (işe başlatmama tazminatı 4-8 ay, boşta geçen süre en çok 4 ay)",
-        })));
+            return Task.FromResult(ToolResult.Error(ex.Message));
+        }
     }
 }

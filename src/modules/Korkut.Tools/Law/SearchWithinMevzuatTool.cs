@@ -1,3 +1,4 @@
+using Korkut.Contract.LawClients;
 using Korkut.Core;
 using System.Text.Json;
 using Korkut.Tools.Core;
@@ -5,13 +6,12 @@ using Korkut.Tools.Core;
 namespace Korkut.Tools.Law;
 
 /// <summary>
-/// Search inside one piece of legislation at article level: downloads the full text (by mevzuatId
-/// from a <c>search_decisions</c> source=mevzuat result), splits it into MADDE blocks and returns
-/// the articles matching a boolean keyword query, ranked by match count with full article text.
-/// The right tool for large laws (TCK, TTK...) where <c>fetch_document</c> would return far too
-/// much. Ported from the Python <c>search_within_mevzuat</c>.
+/// Search inside one piece of legislation at article level: splits the full text into MADDE blocks
+/// and returns the articles matching a boolean keyword query, ranked by match count with full
+/// article text. The right tool for large laws (TCK, TTK...) where <c>fetch_document</c> would
+/// return far too much. Thin adapter over <see cref="ILawClientsSearchService"/>.
 /// </summary>
-public sealed class SearchWithinMevzuatTool(MevzuatClient client) : IAgentTool
+public sealed class SearchWithinMevzuatTool(ILawClientsSearchService search) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -46,56 +46,28 @@ public sealed class SearchWithinMevzuatTool(MevzuatClient client) : IAgentTool
         var caseSensitive = ToolArgs.Bool(arguments, "case_sensitive");
         var maxResults = Math.Clamp(ToolArgs.Int(arguments, "max_results") ?? 25, 1, 50);
 
-        string? text;
         try
         {
-            text = await client.GetDocumentTextAsync(mevzuatId.Trim(), ct);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or FormatException)
-        {
-            return ToolResult.Error($"Mevzuat metni getirilemedi: {ex.Message}");
-        }
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return ToolResult.Error($"'{mevzuatId}' için mevzuat metni bulunamadı.");
-        }
-
-        var articles = MaddeSearch.Split(text);
-        if (articles.Count == 0)
-        {
-            return ToolResult.Error(
-                $"'{mevzuatId}' metni maddelere ayrılamadı (MADDE başlığı bulunamadı); tam metin için fetch_document kullanın.");
-        }
-
-        var matches = new List<(MaddeSearch.Madde Madde, int Score)>();
-        foreach (var madde in articles)
-        {
-            var (isMatch, score) = MaddeSearch.Matches(madde.Content, keyword, caseSensitive);
-            if (isMatch && score > 0)
+            var response = await search.SearchWithinMevzuatAsync(mevzuatId.Trim(), keyword, caseSensitive, maxResults, ct);
+            var results = response.Results.Select(m => new
             {
-                matches.Add((madde, score));
-            }
-        }
-
-        var ranked = matches
-            .OrderByDescending(m => m.Score)
-            .Take(maxResults)
-            .Select(m => new
+                madde_no = m.MaddeNo,
+                match_count = m.MatchCount,
+                preview = m.Preview,
+                content = m.Content,
+            });
+            return ToolResult.Ok(ToolArgs.Result(new
             {
-                madde_no = m.Madde.No,
-                match_count = m.Score,
-                preview = MaddeSearch.Preview(m.Madde.Content, keyword, caseSensitive),
-                content = m.Madde.Content,
-            })
-            .ToList();
-
-        return ToolResult.Ok(ToolArgs.Result(new
+                mevzuat_id = response.MevzuatId,
+                keyword = response.Keyword,
+                total_articles = response.TotalArticles,
+                matching_articles = response.MatchingArticles,
+                results,
+            }));
+        }
+        catch (Exception ex) when (ex is BadRequestException or NotFoundException)
         {
-            mevzuat_id = mevzuatId,
-            keyword,
-            total_articles = articles.Count,
-            matching_articles = matches.Count,
-            results = ranked,
-        }));
+            return ToolResult.Error(ex.Message);
+        }
     }
 }

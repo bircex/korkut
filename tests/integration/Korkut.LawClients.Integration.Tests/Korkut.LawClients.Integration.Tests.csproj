@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Integration tests for the LawClients module: routing + auth + DI wiring through the real API
+       host and Postgres (RLS/auth only — the module itself is stateless, no LawClients tables).
+       No live calls to the public legal databases (flaky, slow, and not ours to hammer in CI) — these
+       pin the wiring (controller reachable, documents.read enforced, BadRequestException -> 400)
+       with inputs that fail before any outbound HTTP call, mirroring the Reports integration tests. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.Minio" />
+    <PackageReference Include="Minio" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\modules\Korkut.LawClients\Korkut.LawClients.csproj" />
+    <ProjectReference Include="..\..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\services\Korkut.Api\Korkut.Api.csproj" />
+    <ProjectReference Include="..\..\..\tests\Korkut.TestSupport\Korkut.TestSupport.csproj" />
+  </ItemGroup>
+</Project>

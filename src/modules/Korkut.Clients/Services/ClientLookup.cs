@@ -30,4 +30,17 @@ internal sealed class ClientLookup(DbContext db) : IClientLookup
 
     public async Task<bool> ExistsAsync(Guid officeId, Guid clientId, CancellationToken ct = default)
         => await db.Set<Client>().AsNoTracking().AnyAsync(c => c.OfficeId == officeId && c.Id == clientId, ct);
+
+    public async Task<string?> GetNameAsync(Guid officeId, Guid clientId, CancellationToken ct = default)
+        => await db.Set<Client>().AsNoTracking()
+            .Where(c => c.OfficeId == officeId && c.Id == clientId)
+            .Select(c => c.FullName)
+            .FirstOrDefaultAsync(ct);
+
+    public async Task<ClientResponse?> BriefAsync(Guid officeId, Guid clientId, CancellationToken ct = default)
+        => await db.Set<Client>().AsNoTracking()
+            .Where(c => c.OfficeId == officeId && c.Id == clientId)
+            .Select(c => new ClientResponse(
+                c.Id, c.FullName, c.Kind, c.Email, c.Phone, c.NationalId, c.Address, c.DateOfBirth, c.CreatedAt))
+            .FirstOrDefaultAsync(ct);
 }

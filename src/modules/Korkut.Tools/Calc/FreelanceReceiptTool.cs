@@ -1,14 +1,13 @@
-﻿using System.Text.Json;
+using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Serbest meslek makbuzu hesaplar: brüt/net/KDV dahil tutardan stopaj, KDV ve tahsil edilecek toplamı çıkarır.</summary>
-public sealed class FreelanceReceiptTool : IAgentTool
+/// <summary>Serbest meslek makbuzu hesaplar: brüt/net/KDV dahil tutardan stopaj, KDV ve tahsil edilecek toplamı çıkarır. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class FreelanceReceiptTool(ICalculatorService calc) : IAgentTool
 {
-    private const string Source =
-        "GVK m.94/2-b (serbest meslek stopajı %20); KDV genel oranı %20 (7346 CB Kararı); avukatlık hizmetlerinde 5/10 KDV tevkifatı: KDV Genel Uygulama Tebliği I/C-2.1.3.2.13";
-
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
         {
@@ -42,57 +41,20 @@ public sealed class FreelanceReceiptTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var direction = ToolArgs.String(arguments, "yon");
-        var amount = ToolArgs.Decimal(arguments, "tutar");
-        if (direction is null || amount is not { } value || value <= 0)
+        var request = new FreelanceReceiptRequest(
+            ToolArgs.String(arguments, "yon") ?? "",
+            ToolArgs.Decimal(arguments, "tutar") ?? -1m,
+            ToolArgs.Decimal(arguments, "kdv_orani"),
+            ToolArgs.Decimal(arguments, "stopaj_orani"),
+            ToolArgs.Bool(arguments, "kdv_tevkifati"));
+
+        try
         {
-            return Task.FromResult(ToolResult.Error("yon ve pozitif tutar zorunludur."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcFreelanceReceipt(request))));
         }
-
-        var vatRate = ToolArgs.Decimal(arguments, "kdv_orani") ?? 20m;
-        var withholdingRate = ToolArgs.Decimal(arguments, "stopaj_orani") ?? 20m;
-        if (vatRate is < 0 or > 100 || withholdingRate is < 0 or >= 100)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("kdv_orani 0-100, stopaj_orani 0-99 aralığında olmalıdır."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var vatFraction = vatRate / 100m;
-        var withholdingFraction = withholdingRate / 100m;
-        decimal gross;
-        switch (direction)
-        {
-            case "brutten":
-                gross = value;
-                break;
-            case "netten":
-                gross = value / (1m - withholdingFraction);
-                break;
-            case "kdv_dahilden":
-                gross = value / (1m + vatFraction);
-                break;
-            default:
-                return Task.FromResult(ToolResult.Error("yon brutten, netten veya kdv_dahilden olmalıdır."));
-        }
-
-        var reverseCharge = ToolArgs.Bool(arguments, "kdv_tevkifati");
-        var withholdingAmount = gross * withholdingFraction;
-        var vatAmount = gross * vatFraction;
-        var vatReverseChargeAmount = reverseCharge ? vatAmount * 0.5m : 0m;
-        var net = gross - withholdingAmount;
-        var totalCollected = net + vatAmount - vatReverseChargeAmount;
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            Brut = decimal.Round(gross, 2),
-            StopajOrani = withholdingRate,
-            Stopaj = decimal.Round(withholdingAmount, 2),
-            NetEleGecen = decimal.Round(net, 2),
-            KdvOrani = vatRate,
-            Kdv = decimal.Round(vatAmount, 2),
-            KdvTevkifati = decimal.Round(vatReverseChargeAmount, 2),
-            TahsilEdilecekToplam = decimal.Round(totalCollected, 2),
-            Not = "Stopaj yalnızca GVK m.94 kapsamındaki vergi sorumlusu ödeyicilerde (şirket, kurum vb.) kesilir; nihai tüketiciye makbuzda stopaj uygulanmaz. 5/10 KDV tevkifatı yalnızca tevkifat yükümlüsü alıcılarda geçerlidir.",
-            Kaynak = Source,
-        })));
     }
 }

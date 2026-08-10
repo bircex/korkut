@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
-using Korkut.Tools.Calc.Tariffs;
+using System.Text.Json;
+using Korkut.Contract.Calculators;
+using Korkut.Core;
 using Korkut.Tools.Core;
 
 namespace Korkut.Tools.Calc;
 
-/// <summary>Belli parayı ihtiva eden kağıtların damga vergisini (488 sK, 2026 azami sınırıyla) hesaplar.</summary>
-public sealed class StampDutyTool : IAgentTool
+/// <summary>Belli parayı ihtiva eden kağıtların damga vergisini (488 sK, 2026 azami sınırıyla) hesaplar. Thin adapter over <see cref="ICalculatorService"/>.</summary>
+public sealed class StampDutyTool(ICalculatorService calc) : IAgentTool
 {
     private static readonly JsonElement Schema = ToolSchema.Parse(
         """
@@ -34,33 +35,17 @@ public sealed class StampDutyTool : IAgentTool
 
     public Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var documentType = ToolArgs.String(arguments, "kagit_turu");
-        var amount = ToolArgs.Decimal(arguments, "tutar");
-        if (documentType is null || !StampDuty2026.Binde.TryGetValue(documentType, out var perMilleRate))
+        var request = new StampDutyRequest(
+            ToolArgs.String(arguments, "kagit_turu") ?? "",
+            ToolArgs.Decimal(arguments, "tutar") ?? -1m);
+
+        try
         {
-            return Task.FromResult(ToolResult.Error(
-                "kagit_turu zorunludur; geçerli değerler: " + string.Join(", ", StampDuty2026.Binde.Keys) + "."));
+            return Task.FromResult(ToolResult.Ok(ToolArgs.Result(calc.CalcStampDuty(request))));
         }
-
-        if (amount is not { } value || value <= 0)
+        catch (BadRequestException ex)
         {
-            return Task.FromResult(ToolResult.Error("Pozitif tutar zorunludur."));
+            return Task.FromResult(ToolResult.Error(ex.Message));
         }
-
-        var calculated = decimal.Round(value * perMilleRate / 1000m, 2);
-        var capApplied = calculated > StampDuty2026.AzamiVergi;
-
-        return Task.FromResult(ToolResult.Ok(ToolArgs.Result(new
-        {
-            KagitTuru = documentType,
-            Tutar = value,
-            BindeOran = perMilleRate,
-            HesaplananVergi = calculated,
-            AzamiSinir = StampDuty2026.AzamiVergi,
-            AzamiUygulandi = capApplied,
-            Vergi = capApplied ? StampDuty2026.AzamiVergi : calculated,
-            TarifeDonemi = StampDuty2026.Donem,
-            Kaynak = StampDuty2026.Kaynak,
-        })));
     }
 }

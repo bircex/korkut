@@ -16,4 +16,11 @@ public interface IClientLookup
 
     /// <summary>Whether an active client with this id exists in the office.</summary>
     Task<bool> ExistsAsync(Guid officeId, Guid clientId, CancellationToken ct = default);
+
+    /// <summary>The client's current display name, or null if no such client in the office. Used
+    /// to snapshot the name onto a linking record (e.g. a matter) at bind time.</summary>
+    Task<string?> GetNameAsync(Guid officeId, Guid clientId, CancellationToken ct = default);
+
+    /// <summary>The client's full brief, or null if no such client in the office.</summary>
+    Task<ClientResponse?> BriefAsync(Guid officeId, Guid clientId, CancellationToken ct = default);
 }
