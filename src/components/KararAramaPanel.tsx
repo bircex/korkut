@@ -12,7 +12,7 @@ import {
 } from "../icons";
 import { Spinner } from "../a11y";
 import { RightDrawer } from "./RightDrawer";
-import { SmartDecisionDetail, drawerWidthFor } from "./DecisionDetail";
+import { SmartDecisionDetail } from "./DecisionDetail";
 import { SaveDecisionButton } from "./SaveDecisionButton";
 
 // Karar Arama: Araçlar altında bağımsız bir sayfa. Sohbetteki "İlgili Kararlar" drawer'ıyla aynı
@@ -633,7 +633,6 @@ export function KararAramaPanel() {
         onClose={() => setDetail(null)}
         label="Karar detayı"
         title={detail?.title ?? "Karar detayı"}
-        width={drawerWidthFor(detail)}
       >
         {detail && (
           <SmartDecisionDetail

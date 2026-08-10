@@ -34,7 +34,7 @@ const KANUN: SourceRef = {
 describe("SourcesDrawer", () => {
   it("içtihatları sayan başlıkla açılır ve kartları çizer", () => {
     render(<SourcesDrawer sources={[KARAR, { ...KARAR, id: "k2", title: "İkinci Karar" }]} onClose={() => {}} />);
-    expect(screen.getByRole("complementary", { name: "İlgili Kararlar (2)" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "İlgili Kararlar (2)" })).toBeInTheDocument();
     expect(screen.getByText(KARAR.title)).toBeVisible();
     expect(screen.getByText("İkinci Karar")).toBeVisible();
     expect(screen.getAllByText(/Karar tarihi: 2018-04-02/).length).toBeGreaterThan(0);
@@ -50,7 +50,7 @@ describe("SourcesDrawer", () => {
 
   it("yalnız mevzuat varsa başlık Kaynaklar olur", () => {
     render(<SourcesDrawer sources={[KANUN]} onClose={() => {}} />);
-    expect(screen.getByRole("complementary", { name: "Kaynaklar (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Kaynaklar (1)" })).toBeInTheDocument();
   });
 
   it("url'li kart yeni sekmeye güvenli dış bağlantı verir, url'siz kart vermez", () => {

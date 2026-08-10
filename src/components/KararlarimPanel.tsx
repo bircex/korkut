@@ -3,7 +3,7 @@ import { api, ApiError, type SavedDecision } from "../api";
 import { ArrowSquareOut, BookmarkSimple, Scales, Warning, X } from "../icons";
 import { LoadingOverlay } from "../a11y";
 import { RightDrawer } from "./RightDrawer";
-import { SmartDecisionDetail, drawerWidthFor, kunyeOf, type DecisionLike } from "./DecisionDetail";
+import { SmartDecisionDetail, kunyeOf, type DecisionLike } from "./DecisionDetail";
 
 // Kararlarım: Ofisim altında, Karar Arama'dan ve sohbetteki İlgili Kararlar'dan "Ekle" ile
 // kaydedilen kararların listesi. Aynı detay drawer'ını kullanır (DecisionDetail), yalnız action
@@ -132,7 +132,6 @@ export function KararlarimPanel() {
         onClose={() => setDetail(null)}
         label="Karar detayı"
         title={detail?.title ?? "Karar detayı"}
-        width={drawerWidthFor(detail && toDecision(detail))}
       >
         {detail && (
           <SmartDecisionDetail

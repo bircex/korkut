@@ -116,15 +116,9 @@ export function DecisionDetail({ decision, action }: { decision: DecisionLike; a
 }
 
 // mevzuat kaynaklı kararların madde ağacı vardır (kısım/bölüm/madde); diğer tüm kaynaklar (Yargıtay,
-// Danıştay, Anayasa vb.) tekil belgedir. Bu ayrım drawer genişliğini de belirler (bkz. drawerWidthFor).
+// Danıştay, Anayasa vb.) tekil belgedir.
 export function isMevzuat(decision: DecisionLike): boolean {
   return decision.source === "mevzuat";
-}
-
-// RightDrawer'ın width/overlayWidth prop'larına verilir: mevzuat için madde ağacının sığması adına
-// geniş (%60), tekil kararlar için mevcut dar drawer genişliği.
-export function drawerWidthFor(decision: DecisionLike | null): string {
-  return decision && isMevzuat(decision) ? "60vw" : "480px";
 }
 
 /// Karar/mevzuat detayının tek giriş noktası: kaynağa göre MevzuatDetail (ağaç+yazdır) ya da

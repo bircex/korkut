@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -54,7 +54,6 @@ import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
   BookmarkSimple,
-  BookOpenText,
   Calculator,
   CalendarBlank,
   CaretDown,
@@ -69,6 +68,7 @@ import {
   Moon,
   Paperclip,
   Plus,
+  Scales,
   Sun,
   Users,
   Wallet,
@@ -1111,7 +1111,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 <button
                   onClick={openEditorDrawer}
                   title={sessionDoc.title}
-                  className="pointer-events-auto flex max-w-[60%] items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
+                  className="pointer-events-auto flex max-w-[60%] items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
                 >
                   <FileText size={14} aria-hidden className="shrink-0 text-zinc-500" />
                   <span className="truncate">{sessionDoc.title}</span>
@@ -1119,8 +1119,24 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               </div>
             )}
             {messages.map((m, i) => (
+              <Fragment key={i}>
+                {/* İçtihat bildirimi: dilekçe chip'iyle aynı dil — sağa yapışık, ikon + isim, tek
+                    tetikleyici (eskiden balon üstü + altı iki ayrı düğme aynı işi yapıyordu). */}
+                {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
+                  <div className="flex w-full justify-end">
+                    <button
+                      onClick={() => openSources(i)}
+                      className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
+                    >
+                      <Scales size={13} aria-hidden className="shrink-0 text-zinc-500" />
+                      <span className="truncate">
+                        {m.searches ? `${m.searches} arama · ` : ""}
+                        {m.sources!.length} kaynak
+                      </span>
+                    </button>
+                  </div>
+                )}
               <div
-                key={i}
                 className={
                   "flex items-end gap-2 " + (m.role === "user" ? "flex-row-reverse" : "flex-row")
                 }
@@ -1132,19 +1148,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     (m.role === "user" ? "max-w-[80%]" : "max-w-[85%]")
                   }
                 >
-                  {/* Arama chip'i: bu yanıt hukuki kaynaklara dayanıyorsa balonun üstünde görünür
-                      ve İlgili Kararlar drawer'ını açar. Arama sayısı yalnız canlı turda bilinir. */}
-                  {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
-                    <button
-                      onClick={() => openSources(i)}
-                      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
-                    >
-                      <Check size={13} weight="bold" aria-hidden className="text-zinc-500" />
-                      {m.searches ? `${m.searches} arama · ` : ""}
-                      {m.sources!.length} kaynak
-                      <CaretDown size={11} aria-hidden className="text-zinc-400" />
-                    </button>
-                  )}
                   {/* Silik düşünme izi: araç öncesi ara anlatım — canlıda soluk akar, sonra katlanır. */}
                   {m.role === "assistant" && (m.thinking?.length ?? 0) > 0 && (
                     <ThinkingTrail
@@ -1201,17 +1204,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       <CaretDown size={12} aria-hidden className="shrink-0 -rotate-90 text-zinc-400" />
                     </button>
                   )}
-                  {m.role === "assistant" && (m.sources?.length ?? 0) > 0 && (
-                    <button
-                      onClick={() => openSources(i)}
-                      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-600 shadow-sm hover:border-zinc-400 hover:text-zinc-900"
-                    >
-                      <BookOpenText size={13} aria-hidden className="text-zinc-500" />
-                      Kaynaklar ({m.sources!.length})
-                    </button>
-                  )}
                 </div>
               </div>
+              </Fragment>
             ))}
             {sending && sendingId === currentId && !streaming && (
               <div className="flex items-end gap-2">

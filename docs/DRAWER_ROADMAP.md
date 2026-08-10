@@ -108,6 +108,11 @@ Her faz kendi başına merge edilebilir PR dilimi olacak şekilde sıralandı.
 > Knowledge hit'leri belge adı/başlık taşımıyor (yalnız chunk metni), anlamlı bir kart için önce
 > Knowledge search yanıtına belge adı eklenmeli. Uygulama kabuğunun (sidebar/başlık etiketleri)
 > mevcut kontrast ihlalleri bu işin dışında; ayrı görev olarak işaretlendi.
+>
+> **Durum (2026-08-10) — Faz 7 TAMAM:** Push/overlay ayrımı ve içerik türüne göre değişen
+> genişlikler (480px/60vw karar-mevzuat, `clamp(680px,55vw,900px)` editör) kaldırıldı; tek
+> drawer davranışına geçildi — bkz. §7 aşağıda. R1'in push-modu mitigasyonu bu pivotla
+> supersede edildi (ayrıntı R1 notunun altında).
 
 ### Faz 1: UI drawer altyapısı
 - `src/components/RightDrawer.tsx`: push (masaüstü) + overlay (mobil), Esc/kapama, başlık
@@ -157,6 +162,27 @@ Her faz kendi başına merge edilebilir PR dilimi olacak şekilde sıralandı.
 - A11y turu (focus sırası, ekran okuyucu etiketleri), mobil ince ayar, koyu tema.
 - Playwright e2e: arama yapan bir soru → chip → drawer → detay akışı (mock backend ile).
 
+### Faz 7: Tek tam ekran drawer (2026-08-10, TAMAM)
+İçerik türüne göre değişen genişlikler (karar/mevzuat önizlemesi 480px/60vw, editör
+`clamp(680px,55vw,900px)`) ve push/overlay kesme noktası ayrımı kaldırıldı; tüm drawer'lar
+(karar arama detayı, Kararlarım detayı, İlgili Kararlar, dilekçe editörü) TEK davranışı
+paylaşıyor: sol menü hariç içerik alanını uçtan uca kaplayan, `role="dialog"` semantiğiyle
+açılan tek panel.
+- `RightDrawer`: `width`/`overlayWidth`/`overlayBelow` prop'ları ve `useIsNarrow` kesme
+  noktası mantığı kaldırıldı; tek render yolu — `absolute inset-0` ile en yakın `position:
+  relative` atayı (Workspace'te sol menünün dışındaki içerik sarmalayıcısı) kaplar. Odak
+  hapsi + Esc her zaman aktif (önceden yalnız dar ekranda / overlay modunda aktifti).
+- Kapatma: `title` verilen drawer'larda header'daki X (`aria-label="Kapat"`); dilekçe
+  editöründe olduğu gibi chrome'suz kullanımda içeriğin kendi "Geri" düğmesi (`DocumentEditor`)
+  kapatma görevini üstlenir. Liste→detay gezinmesi olan İlgili Kararlar drawer'ında ayrıca
+  içerik içi "Listeye dön" düğmesi (drawer'ı kapatmadan bir seviye geri) korunuyor — X ve
+  geri aynı anda, farklı amaçlarla bir arada.
+- Etkilenen dosyalar: `KararAramaPanel.tsx`, `KararlarimPanel.tsx`, `SourcesDrawer.tsx`,
+  `Workspace.tsx` (editör drawer çağrısı), `DecisionDetail.tsx` (artık kullanılmayan
+  `drawerWidthFor` kaldırıldı). Testler: `RightDrawer.test.tsx` tek moda göre yeniden yazıldı,
+  `SourcesDrawer.test.tsx` ve `e2e/drawer.spec.ts` `complementary` beklentilerini `dialog`'a
+  çevirdi, viewport'a göre dallanan e2e senaryosu (1200px altı skip) kaldırıldı.
+
 ## 5. Risk kaydı (kod üzerinde doğrulanmış)
 
 Her risk için kanıt ilgili dosyadan okunarak doğrulandı; "Mit." kolonu bağlayıcı karardır.
@@ -170,6 +196,14 @@ overlay'leri ve sticky toolbar kayar. **Mit.:** Ölçekleme yok. Kesme noktalı 
 ≥ ~1200px iken push drawer (editör `min(900px, 65vw)`, chat en az ~380px kalır); altında
 editör drawer'ı overlay'e döner ve kanvası tam genişlik kullanır. 794px'in de altında mevcut
 yatay scroll davranışı fallback olarak kalır.
+>
+> **Faz 7 güncellemesi:** Kesme noktalı push/overlay ayrımı tamamen kaldırıldı; editör drawer'ı
+> artık her viewport'ta içerik alanının tamamını (sol menü hariç) kullanıyor. Bu, R1'in asıl
+> endişesini (dar panelde sıkışan 21cm kanvas) ortadan kaldırıyor — kanvas artık her zaman en az
+> ~680-900px'ten geniş bir alanda `margin: 0 auto` ile ortalanıyor (`styles.css:106`), yatay
+> scroll yalnızca gerçekten dar (< ~900px) mobil viewport'larda fallback olarak kalıyor. Ölçekleme
+> yok kararı geçerliliğini koruyor; toolbar konumlandırma riski genişlikte küçülme değil büyüme
+> yönünde olduğundan azaldı.
 
 ### R2: Kaydedilmemiş değişiklik kaybı. Etki: Yüksek, Olasılık: Orta
 `DocumentEditor` yalnız Kaydet düğmesi ve başlık blur'unda yazar; pane değişimi CKEditor'ü

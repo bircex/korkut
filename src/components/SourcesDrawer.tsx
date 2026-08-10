@@ -8,7 +8,7 @@ import { formatLegalText } from "./legalFormat";
 import { RightDrawer } from "./RightDrawer";
 import { SaveDecisionButton } from "./SaveDecisionButton";
 import { MevzuatDetail } from "./MevzuatDetail";
-import { drawerWidthFor, isMevzuat } from "./DecisionDetail";
+import { isMevzuat } from "./DecisionDetail";
 
 // "İlgili Kararlar" drawer'ı (bkz. docs/DRAWER_ROADMAP.md): bir asistan mesajının dayandığı
 // hukuki kaynakları kart listesi olarak gösterir — içtihatlar önde, mevzuat ayrı bölümde.
@@ -205,7 +205,7 @@ export function SourcesDrawer({
   const title = kararlar.length > 0 ? `İlgili Kararlar (${kararlar.length})` : `Kaynaklar (${sources.length})`;
 
   return (
-    <RightDrawer open onClose={onClose} label={title} title={title} width={detail ? drawerWidthFor(detail) : "440px"}>
+    <RightDrawer open onClose={onClose} label={title} title={title}>
       {detail ? (
         <SourceDetail key={`${detail.source}:${detail.id}`} source={detail} onBack={() => setDetail(null)} />
       ) : (

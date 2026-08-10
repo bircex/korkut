@@ -1,40 +1,29 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { X } from "../icons";
 
-// Sağ drawer (bkz. docs/DRAWER_ROADMAP.md): geniş ekranda içeriği İTEREK açılan kalıcı panel
-// (push modu, role="complementary"), `overlayBelow` altındaki ekranlarda üstte açılan overlay
-// (dialog semantiği: focus trap, Esc, backdrop). Tek bileşen iki modu da taşır ki çağıran
-// yalnızca open/onClose ve içerikle ilgilensin.
+// Sağ drawer (bkz. docs/DRAWER_ROADMAP.md Faz 7): tüm ikincil içerikler (karar/mevzuat
+// önizlemesi, dilekçe editörü, İlgili Kararlar) TEK drawer davranışını paylaşır — içerik
+// alanını (sol menü hariç) uçtan uca kaplayan, dialog semantiğiyle (focus trap, Esc, X) açılan
+// tek bir panel. İçerik türüne göre genişlik farkı yoktur.
+//
+// Konumlama: `absolute inset-0` ile en yakın `position: relative` atayı kaplar — Workspace'te
+// bu, sol menünün DIŞINDAKİ içerik sarmalayıcısıdır, yani sol menü her zaman görünür/tıklanabilir
+// kalır. Aynı DOM konumu mobilde de doğru sonucu verir: dar ekranda sol menü akıştan çıkıp
+// (fixed) kendi katmanında açıldığından içerik sarmalayıcısı zaten tüm viewport'u kaplar.
 //
 // Başlık isteğe bağlıdır: `title` verilirse drawer kendi header'ını (başlık + kapat) çizer;
 // verilmezse chrome'suz kalır ve içerik kendi header'ını getirir (ör. DocumentEditor'ün
-// Geri/Kaydet/İndir şeridi). `label` her iki modda erişilebilir ad olarak zorunludur.
+// Geri/Kaydet/İndir şeridi — "Geri" düğmesi kapatma görevi görür). `label` her durumda
+// erişilebilir ad olarak zorunludur.
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
-
-// Kesme noktası takibi: matchMedia jsdom'da olmadığı için resize dinleyicisiyle.
-function useIsNarrow(breakpoint: number): boolean {
-  const [narrow, setNarrow] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < breakpoint,
-  );
-  useEffect(() => {
-    const update = () => setNarrow(window.innerWidth < breakpoint);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [breakpoint]);
-  return narrow;
-}
 
 export function RightDrawer({
   open,
   onClose,
   label,
   title,
-  width = "440px",
-  overlayWidth,
-  overlayBelow = 1024,
   headerExtra,
   children,
 }: {
@@ -44,16 +33,9 @@ export function RightDrawer({
   label: string;
   /** Verilirse drawer kendi header'ını çizer; verilmezse içerik kendi header'ını getirir. */
   title?: string;
-  /** Push modunda panel genişliği; CSS ifadesi olabilir (ör. "clamp(680px, 55vw, 900px)"). */
-  width?: string;
-  /** Overlay modunda azami genişlik; verilmezse `width` kullanılır. */
-  overlayWidth?: string;
-  /** Bu viewport genişliğinin altında push yerine overlay açılır. */
-  overlayBelow?: number;
   headerExtra?: ReactNode;
   children: ReactNode;
 }) {
-  const overlay = useIsNarrow(overlayBelow);
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreTo = useRef<HTMLElement | null>(null);
 
@@ -65,11 +47,12 @@ export function RightDrawer({
     [],
   );
 
-  // Overlay modu dialog gibi davranır: focus içeri taşınır ve hapsedilir, Esc kapatır,
-  // kapanışta focus tetikleyene döner. Push modunda Esc BİLEREK bağlanmaz — CKEditor gibi
-  // içerikler Esc'i kendi balonları için kullanır; kalıcı panel X/Geri ile kapanır.
+  // Dialog gibi davranır: açılışta focus içeri taşınır ve hapsedilir, Esc kapatır, kapanışta
+  // focus tetikleyene döner. Esc, yalnız `defaultPrevented` değilse kapatır — CKEditor gibi
+  // içerikler kendi balonlarını (link/tablo araç çubuğu) kapatırken Esc'i tüketir, bu da drawer'ı
+  // erken kapatmaz.
   useEffect(() => {
-    if (!open || !overlay) return;
+    if (!open) return;
     restoreTo.current = document.activeElement as HTMLElement | null;
     const first = focusables()[0] ?? panelRef.current;
     first?.focus();
@@ -107,7 +90,7 @@ export function RightDrawer({
       document.body.style.overflow = prevOverflow;
       restoreTo.current?.focus?.();
     };
-  }, [open, overlay, onClose, focusables]);
+  }, [open, onClose, focusables]);
 
   if (!open) return null;
 
@@ -125,39 +108,17 @@ export function RightDrawer({
     </header>
   ) : null;
 
-  if (overlay) {
-    return (
-      <div
-        className="fixed inset-0 z-40 flex justify-end bg-black/30"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={label}
-          tabIndex={-1}
-          style={{ maxWidth: overlayWidth ?? width }}
-          className="drawer-anim flex h-full w-full min-w-0 flex-col border-l border-zinc-200 bg-white shadow-xl outline-none"
-        >
-          {header}
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <aside
-      role="complementary"
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
       aria-label={label}
-      style={{ width }}
-      className="drawer-anim flex min-h-0 shrink-0 flex-col overflow-hidden border-l border-zinc-200 bg-white"
+      tabIndex={-1}
+      className="drawer-anim absolute inset-0 z-30 flex min-h-0 min-w-0 flex-col overflow-hidden bg-white outline-none"
     >
       {header}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
-    </aside>
+    </div>
   );
 }

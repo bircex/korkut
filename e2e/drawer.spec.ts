@@ -1,10 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
 import { assertNoSeriousA11yViolations } from "./support";
 
-// Drawer e2e (DRAWER_ROADMAP Faz 6): sourced bir sohbet açılır, kaynak chip'i İlgili Kararlar
+// Drawer e2e (DRAWER_ROADMAP Faz 7): sourced bir sohbet açılır, kaynak chip'i İlgili Kararlar
 // drawer'ını açar, kart drawer içi tam metne gider; editör drawer'ı ile tek-drawer kuralı
-// korunur. Geniş ekranda drawer'lar push (complementary), dar ekranda overlay (dialog) açılır;
-// aynı spec üç viewport projesinde de koşar ve beklenen rolü viewport'tan türetir.
+// korunur. Tüm drawer'lar tek davranışı paylaşır: sol menü hariç tam ekran, dialog semantiği
+// (role="dialog"); viewport'a göre değişmez, aynı spec üç viewport projesinde de koşar.
 
 const USER = {
   username: "av", email: "av@example.com", full_name: "Av. Test",
@@ -82,11 +82,6 @@ async function stubSignedInChat(page: Page) {
   });
 }
 
-// Kaynaklar drawer'ı 1024px altında, editör drawer'ı 1200px altında overlay'e düşer.
-function drawerRole(page: Page, overlayBelow: number): "complementary" | "dialog" {
-  return (page.viewportSize()?.width ?? 1280) >= overlayBelow ? "complementary" : "dialog";
-}
-
 test.describe("İlgili Kararlar drawer'ı", () => {
   test("chip → kart listesi → tam metin → hata fallback akışı", async ({ page }) => {
     await stubSignedInChat(page);
@@ -96,7 +91,7 @@ test.describe("İlgili Kararlar drawer'ı", () => {
     await expect(page.getByRole("button", { name: "3 kaynak" })).toBeVisible();
     await page.getByRole("button", { name: "Kaynaklar (3)" }).click();
 
-    const drawer = page.getByRole(drawerRole(page, 1024), { name: "İlgili Kararlar (2)" });
+    const drawer = page.getByRole("dialog", { name: "İlgili Kararlar (2)" });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText("İçtihat")).toHaveCount(2);
     await expect(drawer.getByRole("heading", { name: "Mevzuat" })).toBeVisible();
@@ -119,25 +114,23 @@ test.describe("İlgili Kararlar drawer'ı", () => {
   });
 
   test("tek drawer kuralı: editör ve kararlar birbirini kapatır", async ({ page }) => {
-    const width = page.viewportSize()?.width ?? 1280;
-    test.skip(width < 1200, "dar ekranda editör overlay chat'i kapatır; geçiş masaüstü davranışıdır");
-
     await stubSignedInChat(page);
     await page.goto("/sohbet/s1");
 
-    // Editörü belge chip'inden aç (header'da Editör düğmesi yok; push modda sohbet görünür kalır).
+    // Editörü belge chip'inden aç (header'da Editör düğmesi yok; DocumentEditor kendi Geri
+    // düğmesini getirdiği için editör drawer'ı chrome'suzdur — role="dialog", başlıksız).
     await page.getByRole("button", { name: "Taslak" }).click();
     await expect(page).toHaveURL(/\/sohbet\/s1\/belge$/);
-    await expect(page.getByRole("complementary", { name: "Belge editörü" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Belge editörü" })).toBeVisible();
 
     // Kaynak chip'i editörü kapatıp kararları açar.
     await page.getByRole("button", { name: "3 kaynak" }).click();
     await expect(page).toHaveURL(/\/sohbet\/s1$/);
-    await expect(page.getByRole("complementary", { name: "İlgili Kararlar (2)" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "İlgili Kararlar (2)" })).toBeVisible();
 
     // Belge chip'i kararları kapatıp editörü açar.
     await page.getByRole("button", { name: "Taslak" }).click();
-    await expect(page.getByRole("complementary", { name: "Belge editörü" })).toBeVisible();
-    await expect(page.getByRole("complementary", { name: "İlgili Kararlar (2)" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "Belge editörü" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "İlgili Kararlar (2)" })).toHaveCount(0);
   });
 });
