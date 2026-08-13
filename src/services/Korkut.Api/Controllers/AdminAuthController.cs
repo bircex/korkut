@@ -44,7 +44,7 @@ public sealed class AdminAuthController(
         if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(state) || string.IsNullOrEmpty(code))
         {
             session.SetDenied(Response);
-            return SeeOther("/");
+            return SeeOther("/admin");
         }
 
         var result = await google.CompleteAsync(state, code, ct);
@@ -62,7 +62,10 @@ public sealed class AdminAuthController(
                 break;
         }
 
-        return SeeOther("/");
+        // The admin SPA only mounts AdminConsole (and reads the pending-TOTP cookie we just
+        // set) under the /admin path — redirecting to "/" would drop the admin back into the
+        // regular member sign-in screen with the cookie never observed.
+        return SeeOther("/admin");
     }
 
     /// <summary>The single source of the SPA's auth state.</summary>

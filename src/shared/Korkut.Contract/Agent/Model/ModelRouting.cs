@@ -1,24 +1,18 @@
 namespace Korkut.Contract.Agent.Model;
 
 /// <summary>
-/// Ported model-routing rules from <c>config/model-routing.yaml</c> (KDM-033),
-/// preserving the Python router's semantics exactly:
-/// <list type="bullet">
-/// <item>each <b>tier</b> (cloud|local) maps to a provider name (swappable);</item>
-/// <item>a <b>specialty</b> resolves to a tier, defaulting to <see cref="DefaultTier"/>
-/// (<c>cloud</c>) when unlisted;</item>
-/// <item>if a <c>local</c> tier is requested but the local model is unavailable, fall
-/// back to <c>cloud</c> when <see cref="FallbackToCloudIfNoLocal"/>, else fail-fast.</item>
-/// </list>
+/// The specialty → tier rule (ported from <c>config/model-routing.yaml</c>, KDM-033): which task
+/// intents (dispatcher/hearing/petition/research) prefer the LOCAL backend for privacy/cost reasons,
+/// independent of which cloud vendor is in use. This is the only remaining "routing" decision in the
+/// system — WHICH cloud provider serves a "cloud" tier request is no longer a compile-time choice
+/// baked in here; it is the dynamic system default (see IOfficeModelOverrideService), resolved fresh
+/// on every request from the admin console's configuration.
 /// </summary>
 public sealed class ModelRouting(
-    IReadOnlyDictionary<string, string> backends,
     IReadOnlyDictionary<string, string> specialties,
     bool fallbackToCloudIfNoLocal,
     string defaultTier = "cloud")
 {
-    public IReadOnlyDictionary<string, string> Backends => backends;
-
     public IReadOnlyDictionary<string, string> Specialties => specialties;
 
     public bool FallbackToCloudIfNoLocal => fallbackToCloudIfNoLocal;
@@ -45,20 +39,5 @@ public sealed class ModelRouting(
         }
 
         return tier;
-    }
-
-    /// <summary>
-    /// The provider name backing a tier. Mirrors Python <c>_provider_for</c>: an
-    /// unmapped tier, or one whose provider isn't registered, is a hard error.
-    /// </summary>
-    public string ProviderForTier(string tier, IReadOnlySet<string> registeredProviders)
-    {
-        if (!backends.TryGetValue(tier, out var name) || string.IsNullOrEmpty(name) || !registeredProviders.Contains(name))
-        {
-            throw new InvalidOperationException(
-                $"no provider configured for tier '{tier}' (backend={name ?? "null"})");
-        }
-
-        return name;
     }
 }

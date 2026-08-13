@@ -240,7 +240,7 @@ internal sealed class SessionChatService(
         // Phase 3 — short agent scope: persist the reply + auto-title; ledger write is best-effort.
         var sources = MessageSources.Normalize(reply.Sources);
         var title = await PersistReplyAsync(officeId, conversationId, prep.Title, titleSeed, reply.Text, sources, ct);
-        await RecordCallAsync(officeId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
+        await RecordCallAsync(officeId, userId, LlmFeature.Chat, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
         return new ChatOutcome(
             reply.Text, title, OpenDocument: reply.Document?.DocId, PendingEmail: null, sources, reply.Document);
     }
@@ -312,14 +312,16 @@ internal sealed class SessionChatService(
 
     // Record the model call for cost/telemetry. Best-effort: a telemetry failure must never break
     // the chat turn, so any error here is swallowed (cancellation still propagates).
-    private async Task RecordCallAsync(Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct)
+    private async Task RecordCallAsync(
+        Guid officeId, Guid userId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint,
+        CancellationToken ct)
     {
         try
         {
             // Own short agent scope so a ledger failure can't abort the reply's transaction.
             await uow.InScopeAsync(officeId, async () =>
             {
-                await callLogService.RecordAsync(officeId, feature, usage, latency, promptFingerprint, ct);
+                await callLogService.RecordAsync(officeId, userId, feature, usage, latency, promptFingerprint, ct);
                 return true;
             }, ct);
         }

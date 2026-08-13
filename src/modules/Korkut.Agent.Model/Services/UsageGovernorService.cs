@@ -36,7 +36,7 @@ internal sealed class UsageGovernorService(
             var used = await calls.SumMonthTokensAsync(officeId, monthStart, ct);
             if (used >= budget)
             {
-                throw new BudgetExceededException("Aylık yapay zeka jeton bütçesi aşıldı.");
+                throw new BudgetExceededException("Aylık yapay zeka token bütçesi aşıldı.");
             }
         }
 

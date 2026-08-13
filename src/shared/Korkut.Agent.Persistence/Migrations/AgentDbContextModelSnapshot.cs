@@ -178,10 +178,17 @@ namespace Korkut.Agent.Persistence.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("provider");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OfficeId", "CreatedAt")
                         .HasDatabaseName("ix_llm_calls_office_created");
+
+                    b.HasIndex("OfficeId", "UserId", "CreatedAt")
+                        .HasDatabaseName("ix_llm_calls_office_user_created");
 
                     b.ToTable("llm_calls", "korkut_agent");
                 });

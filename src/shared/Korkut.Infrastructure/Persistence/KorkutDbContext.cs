@@ -81,6 +81,12 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Chat.Entities.ConversationMessage> ChatMessages => Set<Korkut.Chat.Entities.ConversationMessage>();
 
+    /// <summary>The admin-managed model catalog every office assignment / the platform default points into.</summary>
+    public DbSet<Organization.Entities.ModelCatalogEntry> ModelCatalog => Set<Korkut.Organization.Entities.ModelCatalogEntry>();
+
+    /// <summary>Platform-wide admin dials (e.g. the default model key). Cross-tenant, no RLS.</summary>
+    public DbSet<Organization.Entities.PlatformSetting> PlatformSettings => Set<Korkut.Organization.Entities.PlatformSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -148,6 +154,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.AdminRecoveryCodeConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.AdminOfficeModelConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.ModelCatalogEntryConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.PlatformSettingConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.RefreshTokenConfiguration());
 

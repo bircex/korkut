@@ -48,17 +48,37 @@ public sealed record AdminOfficeResponse(
 /// <summary>An office that a catalog model is assigned to (the model → offices reverse view).</summary>
 public sealed record AdminModelOfficeRef(Guid Id, string Name, bool Enabled);
 
-/// <summary>A catalog model — read-only, from the operator's server-side JSON file (no API keys) —
-/// plus the offices it is currently assigned to.</summary>
+/// <summary>A catalog model — an admin-editable row of the DB catalog (no API keys) — plus the
+/// offices it is currently assigned to. <see cref="Provider"/> names the registered
+/// IChatProviderService this entry routes to ("claude" | "deepseek" | "gemini" | "gpt" | "groq" |
+/// "ollama"); an office assignment (or the platform default) resolves to a real chat-model
+/// selection via this field (see Korkut.Contract.Agent.Model.IOfficeModelOverrideService).
+/// <see cref="ProviderConfigured"/> reports whether that provider's key is present in the
+/// environment — an unconfigured entry is listed but cannot serve traffic.</summary>
 public sealed record AdminModelResponse(
-    string Key, string Label, string Model, string BaseUrl, bool IsLocal,
-    IReadOnlyList<AdminModelOfficeRef> AssignedOffices);
+    string Key, string Label, string Model, string BaseUrl, bool IsLocal, string Provider,
+    IReadOnlyList<AdminModelOfficeRef> AssignedOffices, int? MaxTokens = null, bool Enabled = true,
+    int SortOrder = 0, bool ProviderConfigured = true, bool IsPlatformDefault = false);
 
-public sealed record AdminOfficeMemberResponse(Guid Id, string Email, string? Name, string Role, int Chats, int Messages);
+public sealed record AdminOfficeMemberResponse(
+    Guid Id, string Email, string? Name, string Role, int Chats, int Messages, AdminUsageTotals Usage);
 
-public sealed record AdminOfficeModelState(bool Enabled, string? ModelKey, string? Label);
+/// <summary>A user row as the admin console lists it — platform-wide, across every office.</summary>
+public sealed record AdminUserResponse(
+    Guid Id, string Email, string? Name, string Role,
+    Guid OfficeId, string OfficeName, bool OfficeDisabled, DateTimeOffset CreatedAt);
 
-public sealed record AdminOfficeTotals(int Chats, int Messages, long Tokens);
+/// <summary>
+/// An office's model assignment as the console shows it. <see cref="Enabled"/> false (or a null
+/// <see cref="ModelKey"/>) means the office is NOT pinned and follows the platform default —
+/// <see cref="EffectiveModelKey"/> then names whatever it actually resolves to, so the console can
+/// show the live answer rather than making the admin infer it.
+/// </summary>
+public sealed record AdminOfficeModelState(
+    bool Enabled, string? ModelKey, string? Label,
+    string? EffectiveModelKey = null, string? EffectiveLabel = null, string? EffectiveSource = null);
+
+public sealed record AdminOfficeTotals(int Chats, int Messages, long Tokens, decimal Cost = 0m);
 
 /// <summary>Office drill-down for the admin console.</summary>
 public sealed record AdminOfficeDetailResponse(
@@ -67,7 +87,8 @@ public sealed record AdminOfficeDetailResponse(
 
 /// <summary>
 /// The admin console's data surface (cross-tenant; per-office reads open their own short tenant
-/// scope). Model assignment is bookkeeping only — the runtime router does not consume it yet.
+/// scope). Model assignment is LIVE: what an admin pins here is what the chat router uses, ahead of
+/// the platform default (see <see cref="IModelCatalogService"/>) and the env-driven specialty router.
 /// </summary>
 public interface IAdminConsoleService
 {
@@ -76,6 +97,9 @@ public interface IAdminConsoleService
     Task<Result<IReadOnlyList<AdminOfficeResponse>>> OfficesAsync(CancellationToken ct = default);
 
     Task<Result<AdminOfficeDetailResponse>> OfficeDetailAsync(Guid officeId, CancellationToken ct = default);
+
+    /// <summary>Every user, across every office — read-only (bkz. AdminUserResponse).</summary>
+    Task<Result<IReadOnlyList<AdminUserResponse>>> UsersAsync(CancellationToken ct = default);
 
     Task<Result<IReadOnlyList<AdminModelResponse>>> ModelsAsync(CancellationToken ct = default);
 

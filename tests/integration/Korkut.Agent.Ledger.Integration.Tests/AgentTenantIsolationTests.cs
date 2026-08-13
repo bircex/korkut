@@ -49,7 +49,8 @@ public class AgentTenantIsolationTests(PostgresFixture pg) : IClassFixture<Postg
             var docId = generated.Id;
             db.GeneratedDocuments.Add(generated);
             db.DocumentVersions.Add(new DocumentVersion(office, docId, "x", null, null, DateTimeOffset.UtcNow));
-            db.LlmCalls.Add(new LlmCall(office, "chat", "fake", "fake-model", "", 1, 1, 0m, 1, DateTimeOffset.UtcNow));
+            db.LlmCalls.Add(new LlmCall(
+                office, Guid.CreateVersion7(), "chat", "fake", "fake-model", "", 1, 1, 0m, 1, DateTimeOffset.UtcNow));
         }
 
         await db.SaveChangesAsync();

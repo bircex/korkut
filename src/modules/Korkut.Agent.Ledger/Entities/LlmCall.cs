@@ -11,11 +11,12 @@ namespace Korkut.Agent.Ledger.Entities;
 public sealed class LlmCall : Entity, ITenantOwned, IAggregateRoot
 {
     public LlmCall(
-        Guid officeId, string feature, string provider, string modelId, string promptFingerprint,
+        Guid officeId, Guid? userId, string feature, string provider, string modelId, string promptFingerprint,
         int promptTokens, int completionTokens, decimal cost, int latencyMs, DateTimeOffset createdAt)
         : base(NewId())
     {
         OfficeId = officeId;
+        UserId = userId;
         Feature = feature;
         Provider = provider;
         ModelId = modelId;
@@ -33,6 +34,10 @@ public sealed class LlmCall : Entity, ITenantOwned, IAggregateRoot
     }
 
     public Guid OfficeId { get; private set; }
+
+    /// <summary>Who the call was made for — the seam per-member usage reporting reads. Null for rows
+    /// written before per-user attribution existed, and for calls with no human initiator (jobs).</summary>
+    public Guid? UserId { get; private set; }
 
     /// <summary>The call site: "chat" | "drafting" | …</summary>
     public string Feature { get; private set; } = string.Empty;

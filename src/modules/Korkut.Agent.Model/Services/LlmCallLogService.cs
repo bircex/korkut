@@ -16,7 +16,8 @@ internal sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) 
     private static readonly ActivitySource Source = new(Korkut.Core.Observability.ActivitySourceName);
 
     public async Task RecordAsync(
-        Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default)
+        Guid officeId, Guid? userId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint,
+        CancellationToken ct = default)
     {
         var cost = ModelPricing.Cost(usage.ModelId, usage.PromptTokens, usage.CompletionTokens);
 
@@ -32,12 +33,13 @@ internal sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) 
                 span.SetTag("cost", (double)cost);
                 span.SetTag("latency_ms", latency.TotalMilliseconds);
                 span.SetTag("office_id", officeId);
+                span.SetTag("user_id", userId);
                 span.SetTag("feature", feature);
             }
         }
 
         await calls.AddAsync(new LlmCallEntry(
-            officeId, feature, usage.Provider, usage.ModelId, promptFingerprint,
+            officeId, userId, feature, usage.Provider, usage.ModelId, promptFingerprint,
             usage.PromptTokens, usage.CompletionTokens, cost, (int)latency.TotalMilliseconds, clock.UtcNow), ct);
     }
 }

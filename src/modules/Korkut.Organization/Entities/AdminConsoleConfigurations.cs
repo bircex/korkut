@@ -42,3 +42,32 @@ public sealed class AdminOfficeModelConfiguration : IEntityTypeConfiguration<Adm
         builder.HasIndex(x => x.OfficeId).IsUnique().HasDatabaseName("ux_admin_office_models_office");
     }
 }
+
+public sealed class ModelCatalogEntryConfiguration : IEntityTypeConfiguration<ModelCatalogEntry>
+{
+    public void Configure(EntityTypeBuilder<ModelCatalogEntry> builder)
+    {
+        builder.ToTable("admin_model_catalog");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Key).HasMaxLength(100);
+        builder.Property(x => x.Label).HasMaxLength(200);
+        builder.Property(x => x.Provider).HasMaxLength(40);
+        builder.Property(x => x.ModelId).HasMaxLength(120);
+        builder.Property(x => x.BaseUrl).HasMaxLength(300);
+        builder.HasIndex(x => x.Key).IsUnique().HasDatabaseName("ux_admin_model_catalog_key");
+    }
+}
+
+public sealed class PlatformSettingConfiguration : IEntityTypeConfiguration<PlatformSetting>
+{
+    public void Configure(EntityTypeBuilder<PlatformSetting> builder)
+    {
+        builder.ToTable("admin_platform_settings");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Key).HasMaxLength(100);
+        builder.Property(x => x.Value).HasMaxLength(500);
+        builder.HasIndex(x => x.Key).IsUnique().HasDatabaseName("ux_admin_platform_settings_key");
+    }
+}

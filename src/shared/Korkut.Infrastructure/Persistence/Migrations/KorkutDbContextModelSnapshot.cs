@@ -1216,6 +1216,74 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("invites", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Organization.Entities.ModelCatalogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BaseUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("base_url");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<bool>("IsLocal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_local");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("label");
+
+                    b.Property<int?>("MaxTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_tokens");
+
+                    b.Property<string>("ModelId")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("model_id");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("provider");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ux_admin_model_catalog_key");
+
+                    b.ToTable("admin_model_catalog", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Organization.Entities.Office", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1323,6 +1391,36 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_reset_tokens_office_hash");
 
                     b.ToTable("password_reset_tokens", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Organization.Entities.PlatformSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ux_admin_platform_settings_key");
+
+                    b.ToTable("admin_platform_settings", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Organization.Entities.RecoveryCode", b =>

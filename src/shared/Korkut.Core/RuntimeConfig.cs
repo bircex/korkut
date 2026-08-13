@@ -19,7 +19,19 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public string OpenAiModel => env.Get("OPENAI_MODEL") ?? "gpt-4o";
 
+    public string OpenAiBaseUrl => Url("OPENAI_BASE_URL", "https://api.openai.com/v1");
+
     public string GroqModel => env.Get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+
+    public string GroqBaseUrl => Url("GROQ_BASE_URL", "https://api.groq.com/openai/v1");
+
+    /// <summary>
+    /// The local (Ollama/vLLM) OpenAI-compatible endpoint. Null when unset — unlike the cloud
+    /// providers there is no sensible default host to guess, so no URL means no local adapter.
+    /// </summary>
+    public string? OllamaBaseUrl => env.Get("KORKUT_OLLAMA_URL")?.Trim() is { Length: > 0 } url
+        ? url.TrimEnd('/').EndsWith("/v1", StringComparison.Ordinal) ? url : $"{url.TrimEnd('/')}/v1"
+        : null;
 
     // DeepSeek is OpenAI-compatible (base https://api.deepseek.com). deepseek-chat = V3, deepseek-reasoner = R1.
     public string DeepSeekModel => env.Get("DEEPSEEK_MODEL") ?? "deepseek-chat";
@@ -27,6 +39,15 @@ public sealed class RuntimeConfig(IEnvironment env)
     public string DeepSeekBaseUrl => env.Get("DEEPSEEK_BASE_URL")?.Trim() is { Length: > 0 } url ? url : "https://api.deepseek.com";
 
     public int DeepSeekMaxTokens => ParseInt(env.Get("DEEPSEEK_MAX_TOKENS"), 8000);
+
+    // Gemini is OpenAI-compatible via Google's compatibility layer (base .../v1beta/openai).
+    public string GeminiModel => env.Get("GEMINI_MODEL") ?? "gemini-3.5-flash";
+
+    public string GeminiBaseUrl => env.Get("GEMINI_BASE_URL")?.Trim() is { Length: > 0 } url
+        ? url
+        : "https://generativelanguage.googleapis.com/v1beta/openai";
+
+    public int GeminiMaxTokens => ParseInt(env.Get("GEMINI_MAX_TOKENS"), 8000);
 
     // --- Context budget (tokens) ---
     public int ContextWindow => ParseInt(env.Get("KORKUT_CONTEXT_WINDOW"), 128000);
@@ -67,6 +88,8 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public bool HasDeepSeekKey => IsSet("DEEPSEEK_API_KEY");
 
+    public bool HasGeminiKey => IsSet("GEMINI_API_KEY");
+
     /// <summary>
     /// Compatibility guard (KDM-033): <c>KORKUT_MODELS_FILE</c> is a documented-but-
     /// aspirational contract that the Python runtime does NOT read. Activating it would
@@ -90,6 +113,9 @@ public sealed class RuntimeConfig(IEnvironment env)
     private const bool SuperadminActivationEnabled = false;
 
     private bool IsSet(string name) => !string.IsNullOrWhiteSpace(env.Get(name));
+
+    private string Url(string name, string fallback)
+        => env.Get(name)?.Trim() is { Length: > 0 } url ? url : fallback;
 
     private static int ParseInt(string? raw, int fallback)
     {

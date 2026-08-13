@@ -49,7 +49,7 @@ internal sealed class DraftingService(
         timer.Stop();
         try
         {
-            await callLogService.RecordAsync(officeId, LlmFeature.Drafting, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
+            await callLogService.RecordAsync(officeId, userId, LlmFeature.Drafting, reply.Usage, timer.Elapsed, PromptFingerprint.Of(system), ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
@@ -96,7 +96,7 @@ internal sealed class DraftingService(
         var summary = Summarize(instruction);
         var pendingId = await uow.InScopeAsync(
             officeId, () => documents.StagePendingAsync(officeId, prep.DocId, reply.Text, summary, ct), ct);
-        await RecordDraftCallAsync(officeId, reply.Usage, timer.Elapsed, prep.System, ct);
+        await RecordDraftCallAsync(officeId, userId, reply.Usage, timer.Elapsed, prep.System, ct);
         return pendingId is null ? null : new SessionDraftResult(prep.DocId, prep.Title, summary);
     }
 
@@ -127,13 +127,14 @@ internal sealed class DraftingService(
     }
 
     // Ledger write in its own short scope so a telemetry failure can never abort the staged edit.
-    private async Task RecordDraftCallAsync(Guid officeId, ChatUsage usage, TimeSpan latency, string system, CancellationToken ct)
+    private async Task RecordDraftCallAsync(
+        Guid officeId, Guid userId, ChatUsage usage, TimeSpan latency, string system, CancellationToken ct)
     {
         try
         {
             await uow.InScopeAsync(officeId, async () =>
             {
-                await callLogService.RecordAsync(officeId, LlmFeature.Drafting, usage, latency, PromptFingerprint.Of(system), ct);
+                await callLogService.RecordAsync(officeId, userId, LlmFeature.Drafting, usage, latency, PromptFingerprint.Of(system), ct);
                 return true;
             }, ct);
         }

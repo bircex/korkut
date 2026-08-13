@@ -3,9 +3,11 @@ using Korkut.Core;
 namespace Korkut.Organization.Entities;
 
 /// <summary>
-/// The admin console's per-office model assignment (catalog key + enabled flag). Assignment
-/// only — API keys never live here, and the runtime router does not consume this yet (it is
-/// the operator's bookkeeping surface, mirrored from the pre-.NET console).
+/// The admin console's per-office model assignment (catalog key + enabled flag). API keys never
+/// live here — only a reference into the DB model catalog (<see cref="ModelCatalogEntry"/>). When
+/// enabled it is the TOP rung of the routing chain: this office uses this model, ahead of the
+/// platform default and the env specialty router (see
+/// Korkut.Contract.Agent.Model.IOfficeModelOverrideService, implemented by OfficeModelResolver).
 /// </summary>
 public sealed class AdminOfficeModel : Entity, IAggregateRoot
 {

@@ -11,7 +11,7 @@ public sealed class LlmCallRepository(AgentDbContext db) : EfRepository<LlmCall>
     public async Task AddAsync(LlmCallEntry entry, CancellationToken ct = default)
     {
         Db.LlmCalls.Add(new LlmCall(
-            entry.OfficeId, entry.Feature, entry.Provider, entry.ModelId, entry.PromptFingerprint,
+            entry.OfficeId, entry.UserId, entry.Feature, entry.Provider, entry.ModelId, entry.PromptFingerprint,
             entry.PromptTokens, entry.CompletionTokens, entry.Cost, entry.LatencyMs, entry.CreatedAt));
         await Db.SaveChangesAsync(ct);
     }

@@ -6,6 +6,7 @@ using Korkut.Contract.Offices;
 using Korkut.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Korkut.Organization.Extensions;
 
@@ -21,6 +22,20 @@ public sealed class OrganizationModule : IModule
         services.AddScoped<IOfficeRepository, OfficeRepository>();
         services.AddScoped<IOfficeAdminService, OfficeAdminService>();
         services.AddScoped<Korkut.Contract.Offices.IAdminConsoleService, AdminConsoleService>();
+
+        // The dynamic model plane. The cache is process-wide (one snapshot per replica, TTL-refreshed)
+        // so the chat router does not re-read admin config on every turn; the reader is scoped because
+        // it needs the request's DbContext. OfficeModelResolver is the router's seam: office
+        // assignment, then (interleaved with the local/hearing decision by the caller) the system
+        // default — see IOfficeModelOverrideService for the full chain. The bootstrapper guarantees
+        // that system default is never a silent gap on a fresh install; every host that wires this
+        // module runs it once at startup.
+        services.AddSingleton<ModelPlaneCache>();
+        services.AddScoped<ModelPlaneReader>();
+        services.AddScoped<Korkut.Contract.Agent.Model.IOfficeModelOverrideService, OfficeModelResolver>();
+        services.AddScoped<Korkut.Contract.Offices.IModelCatalogService, ModelCatalogService>();
+        services.AddScoped<Korkut.Contract.Offices.IUsageReportService, UsageReportService>();
+        services.AddHostedService<PlatformDefaultBootstrapper>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<Korkut.Contract.Organization.IUserLookup, UserLookup>();
         services.AddScoped<Korkut.Core.IUserLookupService, UserLookupService>();

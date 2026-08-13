@@ -46,6 +46,63 @@
         ],
         "type": "object"
       },
+      "AdminModelUpsertRequest": {
+        "properties": {
+          "base_url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "is_local": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "max_tokens": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "model_id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sort_order": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "provider",
+          "model_id",
+          "base_url",
+          "max_tokens",
+          "is_local",
+          "enabled",
+          "sort_order"
+        ],
+        "type": "object"
+      },
       "AdminTotpRequest": {
         "properties": {
           "code": {
@@ -948,6 +1005,17 @@
         },
         "type": "object"
       },
+      "SetDefaultModelRequest": {
+        "properties": {
+          "model_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_key"
+        ],
+        "type": "object"
+      },
       "TotpRequest": {
         "properties": {
           "code": {
@@ -1420,6 +1488,68 @@
         ]
       }
     },
+    "/admin/api/models/{key}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminModelUpsertRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminModelUpsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminModelUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
     "/admin/api/offices": {
       "get": {
         "responses": {
@@ -1544,6 +1674,57 @@
         ]
       }
     },
+    "/admin/api/offices/{id}/usage": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
+    "/admin/api/providers": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
     "/admin/api/session": {
       "get": {
         "responses": {
@@ -1556,7 +1737,91 @@
         ]
       }
     },
+    "/admin/api/settings/default-model": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultModelRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultModelRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultModelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
     "/admin/api/stats": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
+    "/admin/api/usage/summary": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminConsole"
+        ]
+      }
+    },
+    "/admin/api/users": {
       "get": {
         "responses": {
           "200": {

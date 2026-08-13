@@ -17,5 +17,6 @@ public sealed class LlmCallConfiguration : IEntityTypeConfiguration<LlmCall>
         builder.Property(x => x.PromptFingerprint).HasMaxLength(32);
         builder.Property(x => x.Cost).HasColumnType("numeric(12,6)");
         builder.HasIndex(x => new { x.OfficeId, x.CreatedAt }).HasDatabaseName("ix_llm_calls_office_created");
+        builder.HasIndex(x => new { x.OfficeId, x.UserId, x.CreatedAt }).HasDatabaseName("ix_llm_calls_office_user_created");
     }
 }

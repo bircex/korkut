@@ -26,15 +26,16 @@ public static class AgentModelSetup
 {
     public static IServiceCollection AddKorkutAgentModel(this IServiceCollection services)
     {
-        // Inspect the env once at startup to decide which cloud provider backs the routing.
+        // Inspect the env once at startup only for provider transport config (base URLs) — never to
+        // pick a preferred VENDOR. That choice is 100% dynamic admin config from here on (see
+        // IOfficeModelOverrideService); nothing in this method encodes "deepseek" or "claude" as a
+        // fallback favourite.
         var config = new RuntimeConfig(new SystemEnvironment());
 
-        // Routing (specialty → tier → provider). The cloud tier uses DeepSeek when a key is set,
-        // otherwise the always-on Anthropic. hearing stays local and falls back to cloud until the
-        // GPU/Ollama host is wired. This is the single place the model wiring is decided.
-        var cloudProvider = config.HasDeepSeekKey ? "deepseek" : "claude";
+        // The only routing decision left at this layer: does a specialty prefer the LOCAL backend
+        // (hearing, for on-prem/cost reasons), independent of which cloud vendor is configured.
+        // hearing falls back to cloud until the GPU/Ollama host is wired.
         services.AddSingleton(new ModelRouting(
-            backends: new Dictionary<string, string> { ["cloud"] = cloudProvider, ["local"] = "ollama" },
             specialties: new Dictionary<string, string>
             {
                 ["dispatcher"] = "cloud",
@@ -49,20 +50,41 @@ public static class AgentModelSetup
         // Providers. Every cloud provider is wrapped with the PII-redaction decorator so raw office
         // data never reaches the cloud; local providers (Ollama/vLLM) would not need it. Providers
         // are keyed by Name inside RoutingChatModelService.
+        //
+        // Registration is UNCONDITIONAL — deliberately. Model choice is now runtime admin config
+        // (a catalog + a platform default, both in the DB), so gating the adapter on its key being
+        // present at BOOT would mean an operator who adds a key can still never select that provider
+        // until the process restarts, which is exactly the coupling the dynamic model plane removes.
+        // A provider whose key is missing fails its own call with a clear message
+        // ("<provider> API anahtarı yapılandırılmamış."), and the admin console greys it out up front
+        // via ChatProviders + RuntimeConfig key presence, so an admin never picks a dead one blind.
         services.AddScoped<IChatProviderService>(sp => new RedactingChatProviderService(
             ActivatorUtilities.CreateInstance<AnthropicChatProviderService>(sp),
             sp.GetRequiredService<IPiiRedactorService>()));
 
-        // DeepSeek (OpenAI-compatible) — registered when DEEPSEEK_API_KEY is present.
-        if (config.HasDeepSeekKey)
+        // The OpenAI-compatible family — one adapter, four endpoints.
+        OpenAiCompatible(ChatProviders.DeepSeek, config.DeepSeekBaseUrl, "DEEPSEEK_API_KEY");
+        OpenAiCompatible(ChatProviders.Gemini, config.GeminiBaseUrl, "GEMINI_API_KEY");
+        OpenAiCompatible(ChatProviders.OpenAi, config.OpenAiBaseUrl, "OPENAI_API_KEY");
+        OpenAiCompatible(ChatProviders.Groq, config.GroqBaseUrl, "GROQ_API_KEY");
+
+        // Local backend (Ollama/vLLM): no key, and no PII redaction needed — office data never
+        // leaves the cluster. Only registered when the operator points KORKUT_OLLAMA_URL somewhere.
+        if (config.OllamaBaseUrl is { } ollamaUrl)
         {
+            services.AddScoped<IChatProviderService>(sp => new OpenAiCompatibleChatProviderService(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),
+                sp.GetRequiredService<IEnvironment>(),
+                ChatProviders.Ollama, ollamaUrl, apiKeyEnvVar: null));
+        }
+
+        void OpenAiCompatible(string name, string baseUrl, string apiKeyEnvVar) =>
             services.AddScoped<IChatProviderService>(sp => new RedactingChatProviderService(
                 new OpenAiCompatibleChatProviderService(
                     sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),
                     sp.GetRequiredService<IEnvironment>(),
-                    "deepseek", config.DeepSeekBaseUrl, "DEEPSEEK_API_KEY"),
+                    name, baseUrl, apiKeyEnvVar),
                 sp.GetRequiredService<IPiiRedactorService>()));
-        }
 
         // The routing facade the reasoning layer calls.
         services.AddScoped<IChatModelService, RoutingChatModelService>();

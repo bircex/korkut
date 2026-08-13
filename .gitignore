@@ -5,6 +5,10 @@ data/
 .env.*
 !.env.example
 secrets/
+
+# Operator's real model catalog (KORKUT_MODELS_FILE) — config/models.example.json is the
+# committed template; each environment keeps its own config/models.json.
+config/models.json
 *.key
 *.pem
 
@@ -59,3 +63,6 @@ TestResults/
 *.trx
 *.nupkg
 project.lock.json
+
+# Local-only compose overrides (host port publishing etc. for native dotnet run / VS dev)
+docker-compose.override.yml
