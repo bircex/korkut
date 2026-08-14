@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { ToolCallCard } from "./ToolCallCard";
 import type { ToolCallInfo } from "../api";
 
@@ -10,17 +9,23 @@ describe("ToolCallCard", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows the tool name collapsed, with a spinner while the result is still pending", () => {
+  it("shows a Turkish label (never the raw tool name), with a spinner while the result is still pending", () => {
     const calls: ToolCallInfo[] = [{ name: "search_decisions", arguments: { source: "yargitay" } }];
     render(<ToolCallCard calls={calls} />);
 
-    expect(screen.getByText("search_decisions")).toBeInTheDocument();
+    expect(screen.getByText("Karar aranıyor")).toBeInTheDocument();
+    expect(screen.queryByText("search_decisions")).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Çalışıyor");
-    expect(screen.queryByText("yargitay")).not.toBeInTheDocument(); // henüz açılmadı
   });
 
-  it("expands to show arguments and a JSON result once it arrives", async () => {
-    const user = userEvent.setup();
+  it("falls back to a humanized name for a tool missing from the label map", () => {
+    const calls: ToolCallInfo[] = [{ name: "some_future_tool", arguments: { x: 1 } }];
+    render(<ToolCallCard calls={calls} />);
+
+    expect(screen.getByText("Some future tool")).toBeInTheDocument();
+  });
+
+  it("never renders arguments, results, or any expandable detail — even once the result arrives", () => {
     const calls: ToolCallInfo[] = [
       {
         name: "calc_adli_para_cezasi",
@@ -30,22 +35,20 @@ describe("ToolCallCard", () => {
     ];
     render(<ToolCallCard calls={calls} />);
 
-    await user.click(screen.getByRole("button", { name: /calc_adli_para_cezasi/ }));
-
-    expect(screen.getByText("Girdi")).toBeInTheDocument();
-    expect(screen.getByText("100")).toBeInTheDocument();
-    expect(screen.getByText("Sonuç")).toBeInTheDocument();
-    expect(screen.getByText(/20[.,]?000/)).toBeInTheDocument();
+    expect(screen.getByText("Adli para cezası hesaplanıyor")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText("Girdi")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sonuç")).not.toBeInTheDocument();
+    expect(screen.queryByText("100")).not.toBeInTheDocument();
+    expect(screen.queryByText(/20[.,]?000/)).not.toBeInTheDocument();
   });
 
-  it("renders an error result as plain text under a Hata heading", async () => {
-    const user = userEvent.setup();
+  it("signals an error result with a warning icon, never the raw error text", () => {
     const calls: ToolCallInfo[] = [{ name: "create_matter", arguments: {}, result: { content: "Yetkiniz yok.", isError: true } }];
     render(<ToolCallCard calls={calls} />);
 
-    await user.click(screen.getByRole("button", { name: /create_matter/ }));
-
-    expect(screen.getByText("Hata")).toBeInTheDocument();
-    expect(screen.getByText("Yetkiniz yok.")).toBeInTheDocument();
+    expect(screen.getByText("Dosya açılıyor")).toBeInTheDocument();
+    expect(screen.queryByText("Yetkiniz yok.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hata")).not.toBeInTheDocument();
   });
 });

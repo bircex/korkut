@@ -172,7 +172,7 @@ function FieldRenderer({
 }
 
 // ---- Sonuç render'ı: 33 farklı response şeklini introspect ederek çizer (per-calculator özel kod yok) ----
-// Grid/tablo mantığı JsonValueView.tsx'te ortak — ToolCallCard (chat) da aynı introspection'ı kullanır.
+// Grid/tablo mantığı JsonValueView.tsx'te ortak.
 
 const META_KEYS = ["kaynak", "tarife_donemi", "uyarilar", "varsayimlar", "notlar", "not"];
 

@@ -1,8 +1,6 @@
 // Generic JSON-object renderer: introspects an arbitrary key/value object (no per-shape code) and
 // renders it as a label/value grid, recursing into nested objects and arrays-of-objects (as a
-// table). Originally built for CalculatorForm.tsx's 33 differently-shaped calculator responses;
-// reused by ToolCallCard (Workspace.tsx) to render arbitrary tool-call arguments/results in chat —
-// both are "render whatever JSON came back" problems with the same shape.
+// table). Built for CalculatorForm.tsx's 33 differently-shaped calculator responses.
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
