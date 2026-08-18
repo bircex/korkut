@@ -50,6 +50,10 @@
     <PackageVersion Include="Pgvector" Version="0.3.2" />
     <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
+    <!-- Transitive via Testcontainers (SSH tunnelling). 2025.1.0 and earlier carry
+         GHSA-q939-rpr3-3284 (high: ScpClient recursive download allows arbitrary file write),
+         which fails the build under NuGetAudit; pinned here to the patched release. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <!-- Google OIDC (KDM-016) -->
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.19.2" />
