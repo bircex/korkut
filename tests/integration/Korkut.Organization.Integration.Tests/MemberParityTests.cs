@@ -1,10 +1,9 @@
-using Korkut.TestSupport;
-using Korkut.Core;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Security;
+using Korkut.Core;
+using Korkut.TestSupport;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// Member parity: the members list now carries full_name / bar_registry_no (settable on

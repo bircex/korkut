@@ -1,8 +1,8 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// Password-reset endpoints over the real API + real PostgreSQL (endpoint migration,

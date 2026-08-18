@@ -82,8 +82,6 @@
     <Project Path="tests/integration/Korkut.LawClients.Integration.Tests/Korkut.LawClients.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Calculators.Integration.Tests/Korkut.Calculators.Integration.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/bdd/">
-  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />
     <Project Path="tests/Korkut.Knowledge.Tests/Korkut.Knowledge.Tests.csproj" />

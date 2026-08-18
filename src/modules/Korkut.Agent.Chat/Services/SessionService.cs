@@ -1,6 +1,5 @@
 using Korkut.Agent.Chat.Repositories;
 using Korkut.Agent.Chat.Abstractions;
-using Korkut.Contract.Agent.Chat;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 using Korkut.Core;

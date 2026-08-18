@@ -14,8 +14,9 @@ using Korkut.Deadlines;
 using Korkut.Deadlines.Entities;
 using Korkut.Correspondence;
 using Korkut.Correspondence.Entities;
+using Korkut.Reports.Integration.Tests;
 
-namespace Korkut.Reports.Tests;
+namespace Korkut.Reports.Integration.Tests;
 
 /// <summary>
 /// Reports overview over the real API + real PostgreSQL with RLS (endpoint migration,

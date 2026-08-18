@@ -1,6 +1,5 @@
 using Korkut.Agent.Drafting.Repositories;
 using Korkut.Agent.Drafting.Abstractions;
-using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Core;
 

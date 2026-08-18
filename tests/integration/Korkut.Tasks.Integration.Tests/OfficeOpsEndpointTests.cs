@@ -1,9 +1,9 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Tasks.Tests;
+namespace Korkut.Tasks.Integration.Tests;
 
 /// <summary>
 /// Office-ops endpoints (tasks, deadlines, notes) over the real API + real PostgreSQL

@@ -1,6 +1,6 @@
 using Korkut.TestSupport;
 
-namespace Korkut.Finance.Tests;
+namespace Korkut.Finance.Integration.Tests;
 
 /// <summary>Shares one KorkutApiFactory (a single Postgres + MinIO container set + host) across the module's endpoint tests.</summary>
 [CollectionDefinition(IntegrationSuite.Name)]

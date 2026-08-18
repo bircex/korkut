@@ -1,9 +1,9 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Correspondence.Tests;
+namespace Korkut.Correspondence.Integration.Tests;
 
 /// <summary>
 /// Correspondence register ("evrak") over the real API + real PostgreSQL with RLS

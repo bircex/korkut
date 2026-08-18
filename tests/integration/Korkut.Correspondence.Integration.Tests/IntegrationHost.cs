@@ -1,6 +1,6 @@
 using Korkut.TestSupport;
 
-namespace Korkut.Correspondence.Tests;
+namespace Korkut.Correspondence.Integration.Tests;
 
 /// <summary>Shares one KorkutApiFactory (single Postgres + MinIO container set + host) across the module's endpoint tests.</summary>
 [CollectionDefinition(IntegrationSuite.Name)]

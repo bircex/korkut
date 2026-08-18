@@ -1,18 +1,14 @@
-using Korkut.Jobs.Persistence;
-using Korkut.TestSupport;
-using Korkut.Contract.Documents.Storage;
+using System.Text;
 using Korkut.Contract.Documents;
 using Korkut.Core;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
-using System.Text;
-using Korkut.Contract.Documents.OCR;
 using Korkut.Documents.Services;
 using Korkut.Documents.Storage;
-using Korkut.Infrastructure.Persistence;
+using Korkut.Jobs.Persistence;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>
 /// Document extraction + lifecycle over real MinIO + real PostgreSQL (KDM-027):

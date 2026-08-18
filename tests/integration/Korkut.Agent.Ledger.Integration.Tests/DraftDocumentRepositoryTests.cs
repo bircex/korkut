@@ -2,7 +2,7 @@ using Korkut.TestSupport;
 using Korkut.Agent.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Agent.Ledger.Tests;
+namespace Korkut.Agent.Ledger.Integration.Tests;
 
 /// <summary>
 /// contentMd/title/summary are LLM-generated and can be derived from ingested document text (a

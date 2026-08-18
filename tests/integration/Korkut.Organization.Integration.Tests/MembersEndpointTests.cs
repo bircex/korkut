@@ -1,11 +1,10 @@
-using Korkut.TestSupport;
-using Korkut.Core;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Security;
+using Korkut.Core;
+using Korkut.TestSupport;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// Office-membership endpoints over the real API + real PostgreSQL with RLS (endpoint

@@ -1,11 +1,11 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>
 /// Secure-document endpoints over the real API + real PostgreSQL + real MinIO (endpoint

@@ -1,17 +1,14 @@
-using Korkut.TestSupport;
-using Korkut.Contract.Documents.Storage;
-using Korkut.Documents.Services;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
 using System.Security.Cryptography;
 using System.Text;
-using Korkut.Contract.Documents;
+using Korkut.Core;
+using Korkut.Documents.Services;
 using Korkut.Documents.Storage;
 using Korkut.Infrastructure.Persistence;
-using Korkut.Core;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>Document storage over real MinIO + real PostgreSQL.</summary>
 public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
