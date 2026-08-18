@@ -13,6 +13,9 @@ namespace Korkut.Documents.Services;
 /// </summary>
 public sealed class TesseractOcrService : IOcrService
 {
+    /// <summary>Ceiling on concurrent per-page tesseract processes (see <c>OcrPdfAsync</c>).</summary>
+    private const int MaxPageParallelism = 4;
+
     private readonly string _langs;
     private readonly int _dpi;
     private readonly TimeSpan _perPageTimeout;
@@ -67,13 +70,18 @@ public sealed class TesseractOcrService : IOcrService
             throw new OcrUnavailableException("PDF sayfaları görüntüye dönüştürülemedi.");
         }
 
-        var texts = new List<string>(pages.Count);
-        foreach (var page in pages)
-        {
-            texts.Add(await OcrImageAsync(page, ct));
-        }
+        // Recognition is CPU-bound and per-page independent, and a lawyer waits on this inside a
+        // chat turn — so pages run concurrently rather than one after another (a 9-page scan is
+        // otherwise ~9x a single page). Capped: the host serves every tenant's OCR, so one
+        // document must not take the whole box. Results are written by index, keeping page order.
+        var texts = new string[pages.Count];
+        var parallelism = Math.Clamp(System.Environment.ProcessorCount, 1, MaxPageParallelism);
+        await Parallel.ForEachAsync(
+            Enumerable.Range(0, pages.Count),
+            new ParallelOptions { MaxDegreeOfParallelism = parallelism, CancellationToken = ct },
+            async (index, token) => texts[index] = await OcrImageAsync(pages[index], token));
 
-        return new OcrServiceResult(string.Join("\n\n", texts).Trim(), pages.Count);
+        return new OcrServiceResult(string.Join("\n\n", texts).Trim(), pages.Count, texts);
     }
 
     // tesseract <image> stdout -l <langs> → recognised text on stdout. Sanitized here (the one

@@ -6,6 +6,7 @@ using Korkut.Contract.Upload.Malware;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
 using Korkut.Documents.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -46,7 +47,7 @@ public static partial class StorageSetup
         // Upload pipeline primitives.
         services.AddSingleton<IUploadValidatorService, UploadValidatorService>();
         services.AddSingleton<IMalwareScanService, MalwareScannerService>();
-        services.AddSingleton<ITextExtractorService, PlainTextExtractorService>();
+        AddTextExtraction(services, configuration);
 
         // Document services (scoped — they take the per-request DbContext). The upload,
         // relation and lifecycle pipelines are what the Documents use-case orchestrates.
@@ -63,6 +64,34 @@ public static partial class StorageSetup
 
         services.AddHostedService<EnsureBucketsHostedService>();
         return services;
+    }
+
+    /// <summary>
+    /// Text extraction, and the OCR fallback behind it. The plain extractor only reads an EMBEDDED
+    /// text layer, so a scanned document (no text layer at all) needs the OCR host: when
+    /// <c>KORKUT_OCR_URL</c> points at Korkut.Ocr the extractor is wrapped so those documents are
+    /// recognised instead of coming back empty. With no URL configured the registration is exactly
+    /// what it was — text-layer only — so a host without OCR still behaves and boots.
+    /// </summary>
+    private static void AddTextExtraction(IServiceCollection services, IConfiguration configuration)
+    {
+        var ocrUrl = configuration["KORKUT_OCR_URL"]?.Trim();
+        if (string.IsNullOrWhiteSpace(ocrUrl))
+        {
+            services.AddSingleton<ITextExtractorService, PlainTextExtractorService>();
+            return;
+        }
+
+        services.AddHttpContextAccessor();
+        services.AddHttpClient(OcrHttpClient.Name, client => client.Timeout = OcrHttpClient.Timeout);
+        services.AddSingleton<IOcrService>(sp => new HttpOcrService(
+            sp.GetRequiredService<IHttpClientFactory>(),
+            sp.GetRequiredService<IHttpContextAccessor>(),
+            ocrUrl));
+        services.AddSingleton<ITextExtractorService>(sp => new OcrFallbackTextExtractorService(
+            new PlainTextExtractorService(sp.GetRequiredService<ILogger<PlainTextExtractorService>>()),
+            sp.GetRequiredService<IOcrService>(),
+            sp.GetRequiredService<ILogger<OcrFallbackTextExtractorService>>()));
     }
 
     private sealed partial class EnsureBucketsHostedService(IObjectStoreService storeService, ILogger<EnsureBucketsHostedService> logger) : IHostedService

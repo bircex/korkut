@@ -55,7 +55,7 @@ public sealed class KorkutOcrFactory : OcrFactoryBase
         {
             using var reader = new StreamReader(content, Encoding.UTF8);
             var text = await reader.ReadToEndAsync(ct);
-            return new OcrServiceResult($"OCR: {text}", 1);
+            return new OcrServiceResult($"OCR: {text}", 1, [$"OCR: {text}"]);
         }
     }
 }

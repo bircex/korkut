@@ -4,16 +4,19 @@
        upload SERVICES are cross-cutting infra and stay in Infrastructure, consuming this module's
        repository + entities. References only kernel/persistence. -->
   <ItemGroup>
+    <!-- The OCR fallback reaches the Korkut.Ocr host over HTTP and forwards the caller's own auth
+         (HttpOcrService), so this module needs the HttpClient factory + IHttpContextAccessor. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Microsoft.Extensions.* abstractions (hosting/config/DI/logging/http) all come from the
+         framework reference above, so they are deliberately not listed as packages here. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Minio" />
     <PackageReference Include="PdfPig" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-</ItemGroup>
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
     <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
