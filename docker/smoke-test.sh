@@ -14,6 +14,25 @@ PORT="${PORT:-18080}"
 pass=0; fail=0
 check() { if [ "$1" = "0" ]; then echo "  ok   $2"; pass=$((pass+1)); else echo "  FAIL $2"; fail=$((fail+1)); fi; }
 
+# Every docker run here is expected to finish on its own. When one does not — the migrator used to
+# hang forever on arm64 instead of exiting — an unbounded run turns a failing assertion into a job
+# that never ends. Bound them so a hang is reported as a failure like any other.
+run_bounded() { # run_bounded <seconds> <docker run args...>
+  local limit="$1"; shift
+  docker run "$@" &
+  local pid=$!
+  local waited=0
+  while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$limit" ]; do
+    sleep 1; waited=$((waited+1))
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -9 "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
+    return 124
+  fi
+  wait "$pid"
+}
+
 cleanup() { docker rm -f korkut-api-smoke korkut-agent-smoke >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
@@ -33,8 +52,8 @@ echo "== migrator one-shot =="
 # The migrator applies schema only under the elevated migrator role; without a DB URL
 # it must FAIL FAST (never migrate blindly). This DB-less smoke asserts that safe
 # one-shot behaviour on a read-only fs; real migrate/rollback is covered by KDM-035.
-out=$(docker run --rm --read-only --tmpfs /tmp korkut-migrator:$TAG info 2>&1); rc=$?
-[ "$rc" -ne 0 ]; check $? "migrator fails fast (exit $rc) with no KORKUT_ADMIN_DB_URL"
+out=$(run_bounded 30 --rm --read-only --tmpfs /tmp korkut-migrator:$TAG info 2>&1); rc=$?
+{ [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ]; }; check $? "migrator fails fast (exit $rc) with no KORKUT_ADMIN_DB_URL"
 echo "$out" | grep -q "KORKUT_ADMIN_DB_URL is required"; check $? "migrator prints the required-var message"
 
 echo "== api on READ-ONLY filesystem =="

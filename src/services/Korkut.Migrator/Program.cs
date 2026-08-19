@@ -86,33 +86,46 @@ static async Task InfoAsync(DbContext db, string label)
     }
 }
 
-switch (command)
+// A missing required connection string is a CONFIGURATION error, not a crash. Letting the
+// InvalidOperationException go unhandled makes the runtime abort the process: CI saw that as
+// exit 139 (SIGSEGV) and on arm64 the container did not terminate at all, hanging the smoke
+// test indefinitely. Catching it here turns the same failure into a deterministic, portable
+// non-zero exit with the message on stderr, which is what a one-shot CLI owes its caller.
+try
 {
-    case "migrate":
+    switch (command)
     {
-        await using var ops = BuildContext();
-        await MigrateAsync(ops, "operational");
-        await using var agent = BuildAgentContext();
-        await MigrateAsync(agent, "agent");
-        await using var knowledge = BuildKnowledgeContext();
-        await MigrateAsync(knowledge, "knowledge");
-        return 0;
-    }
+        case "migrate":
+        {
+            await using var ops = BuildContext();
+            await MigrateAsync(ops, "operational");
+            await using var agent = BuildAgentContext();
+            await MigrateAsync(agent, "agent");
+            await using var knowledge = BuildKnowledgeContext();
+            await MigrateAsync(knowledge, "knowledge");
+            return 0;
+        }
 
-    case "info":
-    {
-        await using var ops = BuildContext();
-        await InfoAsync(ops, "operational");
-        await using var agent = BuildAgentContext();
-        await InfoAsync(agent, "agent");
-        await using var knowledge = BuildKnowledgeContext();
-        await InfoAsync(knowledge, "knowledge");
-        return 0;
-    }
+        case "info":
+        {
+            await using var ops = BuildContext();
+            await InfoAsync(ops, "operational");
+            await using var agent = BuildAgentContext();
+            await InfoAsync(agent, "agent");
+            await using var knowledge = BuildKnowledgeContext();
+            await InfoAsync(knowledge, "knowledge");
+            return 0;
+        }
 
-    default:
-        Console.WriteLine("Usage: Korkut.Migrator <migrate|info>");
-        Console.WriteLine("  migrate  Apply pending EF Core migrations for both schemas (migrator role).");
-        Console.WriteLine("  info     Print applied/pending migration status for both schemas.");
-        return command == "help" ? 0 : 1;
+        default:
+            Console.WriteLine("Usage: Korkut.Migrator <migrate|info>");
+            Console.WriteLine("  migrate  Apply pending EF Core migrations for both schemas (migrator role).");
+            Console.WriteLine("  info     Print applied/pending migration status for both schemas.");
+            return command == "help" ? 0 : 1;
+    }
+}
+catch (InvalidOperationException ex)
+{
+    await Console.Error.WriteLineAsync(ex.Message);
+    return 2;
 }
