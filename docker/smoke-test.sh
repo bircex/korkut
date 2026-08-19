@@ -74,13 +74,21 @@ elapsed=$(( $(date +%s) - start ))
 { [ "$rc" = "0" ] && [ "$elapsed" -lt 15 ]; }; check $? "SIGTERM -> clean exit (code=$rc, ${elapsed}s < grace)"
 
 echo "== agent host (stateless) on READ-ONLY filesystem =="
-# The agent is a stateless host that shares the libraries and connects to the SAME DB;
-# the skeleton wires observability + health only, so it boots with no extra config.
+# The agent is a stateless host that shares the libraries and connects to the SAME DB. It was a
+# health-only skeleton when this test was written and booted with no configuration; it now hosts
+# the operational domain plus its own Agent DB, so it fail-fasts without the connection strings
+# (KORKUT_DB_URL is required by AddKorkutDomain). Same dummy-DSN trick as the API above: the
+# connections are lazy, so these values are never dialled and liveness still proves the read-only
+# rootfs boot.
 AGENT_PORT=$(( PORT + 1 ))
+AGENT_DSN="Host=127.0.0.1;Port=5432;Database=korkut;Username=korkut_app;Password=none"
 docker run -d --name korkut-agent-smoke \
   --read-only --tmpfs /tmp \
   --cap-drop ALL --security-opt no-new-privileges \
   -e ASPNETCORE_URLS="http://+:8080" \
+  -e KORKUT_SECRET="$API_SECRET" \
+  -e KORKUT_DB_URL="$AGENT_DSN" \
+  -e KORKUT_AGENT_DB_URL="$AGENT_DSN" \
   -p $AGENT_PORT:8080 korkut-agent:$TAG >/dev/null; check $? "agent starts read-only, cap-drop ALL"
 agent_ready=1
 for _ in $(seq 1 30); do
