@@ -1,12 +1,9 @@
-using Korkut.Agent.Drafting.Entities;
-using Korkut.Agent.Drafting.Repositories;
 using Korkut.Agent.Drafting.Abstractions;
 using Korkut.Contract.Agent;
 using Korkut.Contract.Agent.Drafting;
 using Korkut.Contract.Agent.Model;
 using System.Diagnostics;
 using System.Text;
-using Korkut.Settings;
 using Korkut.Settings.Entities;
 using Korkut.Contract.Templates;
 using Korkut.Settings.Repositories;

@@ -1,26 +1,21 @@
-using Korkut.TestSupport;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
-using Korkut.Core;
-using Korkut.Contract.Matters;
-using Korkut.Clients;
 using Korkut.Clients.Entities;
 using Korkut.Clients.Services;
-using Korkut.Courts;
-using Korkut.Courts.Services;
-using Korkut.Courts.Repositories;
+using Korkut.Contract.Matters;
+using Korkut.Core;
 using Korkut.Courts.Entities;
-using Korkut.Matters;
-using Korkut.Matters.Services;
-using Korkut.Matters.Repositories;
-using Korkut.Matters.Entities;
-using Korkut.Hearings;
-using Korkut.Hearings.Services;
+using Korkut.Courts.Repositories;
+using Korkut.Courts.Services;
 using Korkut.Hearings.Repositories;
+using Korkut.Hearings.Services;
 using Korkut.Infrastructure.Persistence;
+using Korkut.Matters.Entities;
+using Korkut.Matters.Repositories;
+using Korkut.Matters.Services;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Matters.Tests;
+namespace Korkut.Matters.Integration.Tests;
 
 public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

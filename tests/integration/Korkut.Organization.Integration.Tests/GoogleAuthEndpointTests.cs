@@ -1,9 +1,9 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Web;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// Google OIDC sign-in over the real API + real PostgreSQL (endpoint migration, slice

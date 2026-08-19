@@ -1,12 +1,10 @@
-using Korkut.TestSupport;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
-using Korkut.Infrastructure.Persistence;
-using Korkut.Security;
 using Korkut.Core;
+using Korkut.Infrastructure.Persistence;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Security.Tests;
+namespace Korkut.Security.Integration.Tests;
 
 public class RefreshTokenServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

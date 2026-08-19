@@ -1,12 +1,10 @@
-using Korkut.TestSupport;
-using Korkut.Contract.Agent.Drafting;
 using Korkut.Agent.Drafting.Entities;
-using Korkut.Agent.Ledger;
 using Korkut.Agent.Ledger.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Korkut.Agent.Ledger.Tests;
+namespace Korkut.Agent.Ledger.Integration.Tests;
 
 /// <summary>
 /// Tenant-isolation coverage for the Agent DB (schema korkut_agent), mirroring the

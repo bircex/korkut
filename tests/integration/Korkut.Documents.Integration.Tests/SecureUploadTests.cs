@@ -1,22 +1,18 @@
-using Korkut.TestSupport;
-using Korkut.Contract.Documents.Storage;
-using Korkut.Audit;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
 using System.IO.Compression;
 using System.Text;
-using Korkut.Contract.Documents;
-using Korkut.Documents.Storage;
-using Korkut.Contract.Upload;
+using Korkut.Audit;
 using Korkut.Contract.Upload.Malware;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Contract.Upload.Validator;
-using Korkut.Documents.Services;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
+using Korkut.Documents.Services;
+using Korkut.Documents.Storage;
+using Korkut.Infrastructure.Persistence;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
     : IClassFixture<PostgresFixture>, IClassFixture<MinioFixture>, IAsyncLifetime

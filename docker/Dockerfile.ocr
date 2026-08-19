@@ -2,11 +2,11 @@
 # Multi-stage: SDK builds/publishes; the final image is a chiseled ASP.NET runtime
 # (no shell, non-root 'app'). Base images pinned by digest. Build context is the repo root.
 #
-# NOTE: this ships the in-code OCR SCAFFOLD (DisabledOcrEngine → 503). The REAL engine
-# (Tesseract) is a NATIVE deploy-time dependency: to enable it, switch the final stage to a
-# non-chiseled base (e.g. mcr.microsoft.com/dotnet/aspnet:10.0-noble) and
-#   RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-tur poppler-utils
-# then register the real IOcrEngine adapter (TryAdd is overridden by the concrete registration).
+# The native engine ships IN this image (tesseract + tesseract-ocr-tur/eng + poppler-utils, see the
+# final stage), which is why the base is the full noble runtime and not the chiseled one. The image
+# alone is not enough though: the host still starts on the DisabledOcrService scaffold (→ 503) unless
+# KORKUT_OCR_ENGINE=tesseract is set in the environment (see Korkut.Ocr/Program.cs). Both compose
+# files set it; a deployment that does not will answer 503 to every /extract with no other symptom.
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664 AS build

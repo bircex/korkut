@@ -1,16 +1,12 @@
-using Korkut.TestSupport;
-using Korkut.Audit;
 using Korkut.Contract.Audit;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
 using Korkut.Core;
-using Korkut.Infrastructure.Persistence;
+using Korkut.Matters.Entities;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Korkut.Matters;
-using Korkut.Matters.Entities;
 
-namespace Korkut.Audit.Tests;
+namespace Korkut.Audit.Integration.Tests;
 
 public class AuditConcurrencyTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

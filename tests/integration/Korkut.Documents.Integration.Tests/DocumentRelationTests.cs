@@ -1,25 +1,20 @@
-using Korkut.Jobs.Persistence;
-using Korkut.Matters.Repositories;
-using Korkut.Matters.Services;
-using Korkut.Clients.Services;
-using Korkut.TestSupport;
 using Korkut.Audit;
-using Korkut.Core;
-using Korkut.Documents;
-using Korkut.Documents.Entities;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
-using System.Text;
+using Korkut.Clients.Entities;
+using Korkut.Clients.Services;
 using Korkut.Contract.Documents;
+using Korkut.Core;
+using Korkut.Documents.Entities;
 using Korkut.Documents.Services;
 using Korkut.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Korkut.Clients;
-using Korkut.Clients.Entities;
-using Korkut.Matters;
+using Korkut.Jobs.Persistence;
 using Korkut.Matters.Entities;
+using Korkut.Matters.Repositories;
+using Korkut.Matters.Services;
+using Korkut.Organization.Entities;
+using Korkut.TestSupport;
+using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>
 /// Typed document relations, index outbox events, and their RLS/audit/idempotency

@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Korkut.Ocr.Controllers;
 
-/// <summary>The text extracted from an uploaded image or text-less PDF, and how many pages it spanned.</summary>
-public sealed record OcrResponse(string Text, int Pages);
+/// <summary>
+/// The text extracted from an uploaded image or text-less PDF, how many pages it spanned, and the
+/// per-page split (<c>page_texts</c>) so the caller can attribute a passage to its real page.
+/// </summary>
+public sealed record OcrResponse(string Text, int Pages, IReadOnlyList<string> PageTexts);
 
 /// <summary>
 /// The internal OCR surface: turn a scanned image or a text-less PDF into text. Authenticated with
@@ -31,6 +34,6 @@ public sealed class OcrController(IOcrService service) : ControllerBase
 
         await using var stream = file.OpenReadStream();
         var result = await service.ExtractAsync(stream, file.ContentType ?? "application/octet-stream", ct);
-        return Ok(new OcrResponse(result.Text, result.Pages));
+        return Ok(new OcrResponse(result.Text, result.Pages, result.PageTextsOrWhole));
     }
 }

@@ -1,11 +1,10 @@
-using Korkut.TestSupport;
-using Korkut.Core;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Security;
+using Korkut.Core;
+using Korkut.TestSupport;
 
-namespace Korkut.Settings.Tests;
+namespace Korkut.Settings.Integration.Tests;
 
 /// <summary>
 /// Office mail preference over the real API + real PostgreSQL with RLS. Covers the upsert,

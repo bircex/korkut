@@ -165,7 +165,12 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
 
     // --- shared ---
 
-    private static List<TextExtractorServiceResult> SpansFromPages(string[] pages)
+    /// <summary>
+    /// Page texts to sanitized paragraph spans. Internal rather than private so
+    /// <see cref="OcrFallbackTextExtractorService"/> turns OCR page output into spans through this
+    /// same path — one paragraph-splitting and sanitizing rule for both text sources, not two.
+    /// </summary>
+    internal static List<TextExtractorServiceResult> SpansFromPages(string[] pages)
     {
         var spans = new List<TextExtractorServiceResult>();
         for (var p = 0; p < pages.Length; p++)

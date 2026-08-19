@@ -1,11 +1,11 @@
-using Korkut.TestSupport;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>
 /// Document export (markdown → .docx / .udf) over the real API (endpoint migration,

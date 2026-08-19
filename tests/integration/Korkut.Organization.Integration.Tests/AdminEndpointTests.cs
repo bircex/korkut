@@ -1,11 +1,10 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Security;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// Platform-admin office management over the real API + real PostgreSQL (endpoint

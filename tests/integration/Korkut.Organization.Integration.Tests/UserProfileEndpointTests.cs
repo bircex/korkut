@@ -1,9 +1,9 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Organization.Tests;
+namespace Korkut.Organization.Integration.Tests;
 
 /// <summary>
 /// User-profile parity: /api/me returns full_name + bar_registry_no, and PATCH /api/me

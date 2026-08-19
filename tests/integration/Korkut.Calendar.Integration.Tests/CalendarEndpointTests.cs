@@ -1,15 +1,12 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Matters;
-using Korkut.Matters.Entities;
-using Korkut.Hearings;
-using Korkut.Hearings.Entities;
-using Korkut.Deadlines;
 using Korkut.Deadlines.Entities;
+using Korkut.Hearings.Entities;
+using Korkut.Matters.Entities;
+using Korkut.TestSupport;
 
-namespace Korkut.Calendar.Tests;
+namespace Korkut.Calendar.Integration.Tests;
 
 /// <summary>
 /// Calendar + agenda over the real API + real PostgreSQL with RLS. The calendar owns no table:

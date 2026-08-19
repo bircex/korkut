@@ -1,11 +1,10 @@
-using Korkut.TestSupport;
-using Korkut.Core;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Korkut.Security;
+using Korkut.Core;
+using Korkut.TestSupport;
 
-namespace Korkut.Matters.Tests;
+namespace Korkut.Matters.Integration.Tests;
 
 /// <summary>
 /// Office-core endpoints over the REAL API + real PostgreSQL with RLS in force

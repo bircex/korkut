@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Korkut.Documents.Tests;
+namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>
 /// Hand-built, byte-exact minimal PDFs (correct xref offsets, no external PDF library) for

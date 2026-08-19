@@ -1,13 +1,12 @@
-using Korkut.TestSupport;
-using Korkut.Jobs.Persistence;
-using Korkut.Jobs.Entities;
-using Korkut.Jobs.Abstractions;
-using Korkut.Jobs.Services;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
+using Korkut.Jobs.Abstractions;
+using Korkut.Jobs.Entities;
+using Korkut.Jobs.Persistence;
+using Korkut.Jobs.Services;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Jobs.Tests;
+namespace Korkut.Jobs.Integration.Tests;
 
 public class JobPersistenceTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

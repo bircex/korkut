@@ -43,6 +43,19 @@ public class OcrEndpointTests : IClassFixture<KorkutOcrFactory>, IClassFixture<D
     }
 
     [Fact]
+    public async Task Extract_returns_the_per_page_split_as_page_texts()
+    {
+        // The caller (HttpOcrService, behind the extractor's OCR fallback) builds page-numbered
+        // spans from this field, so both its snake_case name and its shape are contract.
+        var res = await _withEngine.AuthedClient().PostAsync("/extract", File("tarama.png", "Sayfa metni"));
+        var body = await res.Content.ReadFromJsonAsync<JsonElement>(Json);
+
+        var pageTexts = body.GetProperty("page_texts");
+        Assert.Equal(JsonValueKind.Array, pageTexts.ValueKind);
+        Assert.Contains("Sayfa metni", pageTexts[0].GetString());
+    }
+
+    [Fact]
     public async Task Extract_without_a_file_is_rejected()
     {
         var form = new MultipartFormDataContent { { new StringContent("hi"), "note" } };

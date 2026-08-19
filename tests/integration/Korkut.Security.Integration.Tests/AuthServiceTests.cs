@@ -1,17 +1,16 @@
-using Korkut.TestSupport;
 using Korkut.Contract.Organization;
-using Korkut.Security;
+using Korkut.Core;
+using Korkut.Infrastructure.Persistence;
 using Korkut.Organization;
+using Korkut.Organization.Entities;
 using Korkut.Organization.Repositories;
 using Korkut.Organization.Services;
-using Korkut.Organization.Entities;
-using Korkut.Core;
-using Korkut.Security.Auth;
 using Korkut.Persistence;
-using Korkut.Infrastructure.Persistence;
+using Korkut.Security.Auth;
+using Korkut.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Security.Tests;
+namespace Korkut.Security.Integration.Tests;
 
 public class AuthServiceTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {

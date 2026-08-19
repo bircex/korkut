@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Korkut.TestSupport;
 
-namespace Korkut.LawClients.Tests;
+namespace Korkut.LawClients.Integration.Tests;
 
 /// <summary>
 /// Routing + auth + DI wiring for /api/legal/* through the real API host: proves LawClientsModule

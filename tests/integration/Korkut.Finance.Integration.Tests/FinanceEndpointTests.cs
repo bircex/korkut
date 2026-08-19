@@ -1,9 +1,9 @@
-using Korkut.TestSupport;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Korkut.TestSupport;
 
-namespace Korkut.Finance.Tests;
+namespace Korkut.Finance.Integration.Tests;
 
 /// <summary>
 /// Finance (invoices, expenses, summary) over the real API + real PostgreSQL with RLS

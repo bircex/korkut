@@ -104,6 +104,9 @@ services:
       KORKUT_MINIO_ENDPOINT: minio:9000
       KORKUT_MINIO_ACCESS_KEY: ${KORKUT_MINIO_ACCESS_KEY}
       KORKUT_MINIO_SECRET_KEY: ${KORKUT_MINIO_SECRET_KEY}
+      # Same OCR fallback for the document-extraction pipeline (a scanned evrak must become
+      # searchable text, not an empty extraction artifact).
+      KORKUT_OCR_URL: http://ocr:8080
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
@@ -149,6 +152,9 @@ services:
       KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_AGENT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_KNOWLEDGE_URL: http://knowledge:8080
+      # Scanned uploads (no text layer) are recognised by the OCR host; without this the extractor
+      # is text-layer only and a scanned dilekçe reaches the model as "metin çıkarılamadı".
+      KORKUT_OCR_URL: http://ocr:8080
       KORKUT_KIK_PROXY_URL: http://kikproxy:8080
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
@@ -189,6 +195,10 @@ services:
       dockerfile: docker/Dockerfile.ocr
     environment:
       <<: *app-env
+      # The image ships the native binaries (tesseract + poppler), but the host defaults to the
+      # in-code scaffold that answers 503 — this flag is what activates the real engine.
+      KORKUT_OCR_ENGINE: ${KORKUT_OCR_ENGINE:-tesseract}
+      KORKUT_OCR_LANGS: ${KORKUT_OCR_LANGS:-tur+eng}
     restart: unless-stopped
 
   # Single-purpose sidecar for the KİK (Kamu İhale Kurulu) source: ekap.kik.gov.tr's TLS

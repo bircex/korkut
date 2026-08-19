@@ -1,16 +1,12 @@
-using Korkut.Jobs.Persistence;
-using Korkut.TestSupport;
-using Korkut.Organization;
-using Korkut.Organization.Entities;
-using Korkut.Infrastructure.Persistence;
 using Korkut.Core;
-using Microsoft.EntityFrameworkCore;
-using Korkut.Deadlines;
 using Korkut.Deadlines.Entities;
-using Korkut.Tasks;
+using Korkut.Jobs.Persistence;
+using Korkut.Organization.Entities;
 using Korkut.Tasks.Entities;
+using Korkut.TestSupport;
+using Microsoft.EntityFrameworkCore;
 
-namespace Korkut.Deadlines.Tests;
+namespace Korkut.Deadlines.Integration.Tests;
 
 public class OfficeOpsTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
