@@ -12,8 +12,16 @@ namespace Korkut.Security.Auth;
 /// </summary>
 public sealed class AccountLocator(DbContext db) : IAccountLocator
 {
-    public async Task<IReadOnlyList<AccountLocation>> FindByEmailAsync(
+    public Task<IReadOnlyList<AccountLocation>> FindByEmailAsync(
         string normalizedEmail, CancellationToken ct = default)
+        => ResolveAsync("korkut.resolve_users_by_email", normalizedEmail, ct);
+
+    public Task<IReadOnlyList<AccountLocation>> FindAnyByEmailAsync(
+        string normalizedEmail, CancellationToken ct = default)
+        => ResolveAsync("korkut.resolve_all_users_by_email", normalizedEmail, ct);
+
+    private async Task<IReadOnlyList<AccountLocation>> ResolveAsync(
+        string function, string normalizedEmail, CancellationToken ct)
     {
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();
         if (conn.State != System.Data.ConnectionState.Open)
@@ -21,8 +29,9 @@ public sealed class AccountLocator(DbContext db) : IAccountLocator
             await conn.OpenAsync(ct);
         }
 
+        // function is a fixed internal constant (never caller input); the e-mail is parameterized.
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM korkut.resolve_users_by_email(@p)";
+        cmd.CommandText = $"SELECT * FROM {function}(@p)";
         cmd.Parameters.AddWithValue("p", normalizedEmail);
         var accounts = new List<AccountLocation>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);

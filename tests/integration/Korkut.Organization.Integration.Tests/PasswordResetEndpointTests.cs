@@ -39,6 +39,29 @@ public class PasswordResetEndpointTests(KorkutApiFactory factory)
     }
 
     [Fact]
+    public async Task Reset_request_issues_a_token_for_a_google_only_account()
+    {
+        // A user who signed up with Google has no local password; a reset request must still issue
+        // a token (and send the link) so they can set one. The password-only locator would skip them.
+        var (_, user, email) = await factory.SeedGoogleUserAsync();
+        var client = factory.CookieClient();
+
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/password/reset-request", new { email })).StatusCode);
+        Assert.Equal(1, await factory.CountActiveResetTokensAsync(user));
+    }
+
+    [Fact]
+    public async Task Reset_request_issues_no_token_for_an_unknown_email()
+    {
+        // Guards the enumeration-safe no-op: unknown e-mail is still 200 but creates nothing.
+        var (_, user, _) = await factory.SeedGoogleUserAsync();
+        var client = factory.CookieClient();
+
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/password/reset-request", new { email = "nobody@example.com" })).StatusCode);
+        Assert.Equal(0, await factory.CountActiveResetTokensAsync(user));
+    }
+
+    [Fact]
     public async Task An_invalid_token_is_400()
     {
         var client = factory.CookieClient();
