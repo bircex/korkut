@@ -70,7 +70,9 @@ public sealed class AuthService(
     public async Task RequestPasswordResetAsync(RequestPasswordResetRequest request, CancellationToken ct = default)
     {
         var email = Normalize(request.Email!);
-        var office = await LocateSingleAccountAsync(email, ct);
+        // SSO-inclusive: a Google-linked account (no local password yet) can still request a
+        // reset link and set a password — unlike sign-in, which stays password-only.
+        var office = await LocateSingleAccountAsync(email, includeSso: true, ct);
         if (office is null)
         {
             return; // silently no-op: no enumeration signal
@@ -196,9 +198,14 @@ public sealed class AuthService(
     /// (the same e-mail in two offices) cannot be disambiguated without asking, which would
     /// itself leak that the accounts exist. Both answer the same way.
     /// </summary>
-    private async Task<Guid?> LocateSingleAccountAsync(string email, CancellationToken ct)
+    private Task<Guid?> LocateSingleAccountAsync(string email, CancellationToken ct)
+        => LocateSingleAccountAsync(email, includeSso: false, ct);
+
+    private async Task<Guid?> LocateSingleAccountAsync(string email, bool includeSso, CancellationToken ct)
     {
-        var candidates = await accounts.FindByEmailAsync(email, ct);
+        var candidates = includeSso
+            ? await accounts.FindAnyByEmailAsync(email, ct)
+            : await accounts.FindByEmailAsync(email, ct);
         return candidates.Count == 1 ? candidates[0].OfficeId : null;
     }
 

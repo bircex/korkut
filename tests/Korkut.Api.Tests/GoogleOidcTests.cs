@@ -124,6 +124,7 @@ public class GoogleOidcTests
 
         public Task<AccountLocation?> FindByGoogleSubAsync(string s, CancellationToken ct = default) => Task.FromResult(BySub.Find(u => true));
         public Task<IReadOnlyList<AccountLocation>> FindByEmailAsync(string e, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<AccountLocation>>(ByEmail);
+        public Task<IReadOnlyList<AccountLocation>> FindAnyByEmailAsync(string e, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<AccountLocation>>(ByEmail);
         public Task LinkGoogleSubAsync(Guid userId, string s, CancellationToken ct = default) { Linked.Add((userId, s)); return Task.CompletedTask; }
         public Task<bool> IsOfficeDisabledAsync(Guid o, CancellationToken ct = default) => Task.FromResult(DisabledOffices.Contains(o));
         public Task<bool> OfficeRequiresTwoFactorAsync(Guid o, CancellationToken ct = default) => Task.FromResult(false);

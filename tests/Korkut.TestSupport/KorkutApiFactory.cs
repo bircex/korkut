@@ -161,6 +161,32 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         return (officeId, user.Id, email);
     }
 
+    /// <summary>
+    /// Seed an office + a Google-linked user WITHOUT a local password (SSO-only). Used to prove a
+    /// reset request now issues a token for such accounts too.
+    /// </summary>
+    public async Task<(Guid OfficeId, Guid UserId, string Email)> SeedGoogleUserAsync(string role = Roles.OfficeOwner)
+    {
+        var officeId = Guid.CreateVersion7();
+        var email = $"user-{Guid.CreateVersion7():N}@example.com";
+        await using var db = OwnerContext();
+        db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
+        var user = new User(officeId, email, role, null, null, DateTimeOffset.UtcNow);
+        user.LinkGoogle($"google-sub-{Guid.CreateVersion7():N}");
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        return (officeId, user.Id, email);
+    }
+
+    /// <summary>Count active (unused, unexpired) reset tokens for a user — asserts a request issued one.</summary>
+    public async Task<int> CountActiveResetTokensAsync(Guid userId)
+    {
+        await using var db = OwnerContext();
+        return await db.PasswordResetTokens
+            .Where(t => t.UserId == userId && t.UsedAt == null && t.ExpiresAt > DateTimeOffset.UtcNow)
+            .CountAsync();
+    }
+
     /// <summary>A cookie-aware client (no auth) — for exercising the login → cookie → /me flow.</summary>
     public HttpClient CookieClient() => CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
 
