@@ -8,7 +8,7 @@
 # Build context is the repository root.
 
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:096ca98743616ccfa14dccaa2a86615fd7345bd0c4535445226e98dbd46af2b5 AS build
 WORKDIR /src
 
 # Restore with only the project graph + central config (better layer caching).
