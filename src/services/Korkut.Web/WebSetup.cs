@@ -55,19 +55,17 @@ public static class WebSetup
         // Strict by default; overridable via KORKUT_SENSITIVE_RATE_LIMIT so integration
         // tests (which share one host and one client IP) aren't throttled.
         var sensitiveLimit = int.TryParse(configuration["KORKUT_SENSITIVE_RATE_LIMIT"], out var n) ? n : 5;
+        var clientIpHeader = configuration[ClientAddress.HeaderSetting];
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            // Partition by the REAL client, not the socket peer: behind the proxy chain
-            // (Cloudflare → caddy → ui nginx → gateway) RemoteIpAddress is always the previous
-            // hop's container IP, which would put the whole world in ONE bucket — the login+2FA
-            // flow alone (~5 requests) then starves everyone. Cloudflare sets CF-Connecting-IP
-            // to the true client on every proxied request; local/direct traffic falls back to
-            // the socket address (tests unchanged).
+            // Partition by the REAL client, not the socket peer: behind a reverse proxy
+            // RemoteIpAddress is always the proxy's address, which would put the whole world in
+            // ONE bucket and let the login+2FA flow alone (~5 requests) starve everyone. The
+            // proxy's client header is trusted only when the operator names it; see ClientAddress.
             options.AddPolicy(SensitivePolicy, context =>
                 RateLimitPartition.GetFixedWindowLimiter(
-                    context.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
-                        ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    ClientAddress.Resolve(context, clientIpHeader),
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = sensitiveLimit,
