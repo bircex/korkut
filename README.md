@@ -47,11 +47,11 @@ make migrate   # apply EF Core migrations via the migrator
 
 Full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
-## Repositories
+## Layout
 
-Korkut is split across repos: **korkut-backend** (this repo — the .NET API + worker +
-migrator), **korkut-ui** (the React SPA), **korkut-admin** (the admin SPA), and
-**korkut-website** (the Astro landing/marketing site).
+Everything lives in this repository: the .NET hosts and modules under `src/`, and the React
+app under `ui/`, which is built into the gateway image and served from the same origin as
+the API.
 
 ## Documentation
 

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "../api";
 import { navigate } from "../router";
 import { AuthShell, Brand } from "../ui";
-import { API_MODE } from "../session";
 import { SignIn } from "./SignIn";
 
 const inputCls =
@@ -33,12 +32,8 @@ export function Signup() {
       .catch(() => {
         // No/expired ticket: not a Google-verified continuation, just a direct visit to /kayit
         // (e.g. the website's "Ücretsiz Başla" button). Fall back to local self-serve register.
-        if (API_MODE === "dotnet") {
-          setNoTicket(true);
-          setChecking(false);
-        } else {
-          navigate("/giris", { replace: true });
-        }
+        setNoTicket(true);
+        setChecking(false);
       });
   }, []);
 

@@ -35,10 +35,10 @@ app.UseKorkutWeb();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Ok(new { service = "Korkut.Gateway", status = "ok" }));
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 app.MapReverseProxy();
+app.UseKorkutSpa();
 
 app.Run();
 

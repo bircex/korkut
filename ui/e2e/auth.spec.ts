@@ -1,19 +1,12 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { assertNoSeriousA11yViolations } from "./support";
 
 // .NET auth contract e2e (KDM-030): local login → policy-driven TOTP → session
 // re-probe, all cookie-based with no token in storage. The .NET endpoints are stubbed
 // so the flow is deterministic without a live backend.
 
-async function dotnetMode(page: Page) {
-  await page.addInitScript(() => {
-    (window as unknown as { __KORKUT_API_MODE__?: string }).__KORKUT_API_MODE__ = "dotnet";
-  });
-}
-
 test.describe("Local sign-in + TOTP", () => {
   test("email/password then TOTP re-probes the session, cookie-only", async ({ page }) => {
-    await dotnetMode(page);
 
     const meCalls: string[] = [];
     await page.route("**/api/me", (r) => {
@@ -62,7 +55,6 @@ test.describe("Local sign-in + TOTP", () => {
   });
 
   test("switching to the recovery-code field keeps the form accessible", async ({ page }) => {
-    await dotnetMode(page);
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
     await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ demo_enabled: false }) }));
     await page.route("**/api/auth/login", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ totp_required: true }) }));
@@ -79,7 +71,6 @@ test.describe("Local sign-in + TOTP", () => {
   });
 
   test("a wrong password surfaces an accessible error", async ({ page }) => {
-    await dotnetMode(page);
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
     await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ demo_enabled: false }) }));
     await page.route("**/api/auth/login", (r) =>

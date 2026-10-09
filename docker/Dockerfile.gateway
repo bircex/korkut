@@ -1,7 +1,15 @@
-# KDM-009 — hardened Korkut.Gateway image (the single public entry, YARP reverse proxy).
+# KDM-009 — hardened Korkut.Gateway image (the single public entry: YARP reverse proxy + the SPA).
 # Multi-stage: SDK builds/publishes; the final image is a chiseled ASP.NET runtime
 # (no shell, no package manager, non-root 'app' UID 1654 by default). Base images
 # are pinned by digest for reproducibility. Build context is the repository root.
+
+# SPA stage: the React app in ui/, built once and served by the gateway as static files.
+FROM node:22-alpine AS ui
+WORKDIR /ui
+COPY ui/package.json ui/package-lock.json ./
+RUN npm ci
+COPY ui/ ./
+RUN npm run build
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664 AS build
@@ -18,6 +26,7 @@ RUN dotnet publish src/services/Korkut.Gateway/Korkut.Gateway.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled@sha256:70d6f993bf715a031f027832a19cfb7f894df66c8b5eb40be0aaee820ad5d119 AS final
 WORKDIR /app
 COPY --from=build /app ./
+COPY --from=ui /ui/dist ./wwwroot
 
 # Bind on 8080 (non-privileged). Runtime config comes from the environment, never
 # baked in. Needs KORKUT_SECRET (to validate access tokens at the edge) and the

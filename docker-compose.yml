@@ -12,7 +12,8 @@ name: korkut
 
 x-app-env: &app-env
   KORKUT_SECRET: ${KORKUT_SECRET}
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4317
+  # Empty = no telemetry export. With `--profile ops`, set it to http://lgtm:4317 in .env.
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
   OTEL_EXPORTER_OTLP_PROTOCOL: grpc
   ASPNETCORE_ENVIRONMENT: Production
 
@@ -79,8 +80,10 @@ services:
   # swap for a full LGTM/Seq cluster by pointing OTEL_EXPORTER_OTLP_ENDPOINT elsewhere.
   lgtm:
     image: grafana/otel-lgtm:0.8.1
+    # Optional: `docker compose --profile ops up -d`, then point OTEL_EXPORTER_OTLP_ENDPOINT here.
+    profiles: [ops]
     ports:
-      - "3000:3000"
+      - "${KORKUT_GRAFANA_PORT:-3000}:3000"
     restart: unless-stopped
 
   minio:
@@ -220,25 +223,14 @@ services:
       <<: *app-env
       KORKUT_API_URL: http://api:8080
       KORKUT_AGENT_URL: http://agent:8080
-    expose:
-      - "8080"
+    # The browser entry: serves the React app from ui/ and proxies /api, all on one origin so
+    # session cookies and the Google OAuth callback stay same-origin.
+    ports:
+      - "${KORKUT_HTTP_PORT:-8090}:8080"
     depends_on:
       api:
         condition: service_started
       agent:
-        condition: service_started
-    restart: unless-stopped
-
-  # The browser entry (:8090): serves the built React SPA and reverse-proxies /api to the gateway,
-  # so it's a single same-origin (session cookies + the Google OAuth callback keep working).
-  ui:
-    build:
-      context: ../korkut-ui
-      dockerfile: Dockerfile
-    ports:
-      - "8090:80"
-    depends_on:
-      gateway:
         condition: service_started
     restart: unless-stopped
 

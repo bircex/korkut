@@ -8,31 +8,9 @@ import { ApiError } from "./api";
 //   * On a 401 from a protected call we attempt exactly ONE refresh, shared across
 //     concurrent callers (single-flight), then retry the original request ONCE. A
 //     second 401 (or a failed refresh) ends the session — we never loop.
-//   * The Python endpoints stay reachable behind API_MODE === "python"; flip the
-//     flag (VITE_API_MODE=dotnet) to cut over, and delete the "python" branch once
-//     the migration completes. The fallback is isolated to this module.
 
-export type ApiMode = "python" | "dotnet";
-
-declare global {
-  interface Window {
-    /** Runtime override for the API contract (e2e/staging); build env wins in prod. */
-    __KORKUT_API_MODE__?: ApiMode;
-  }
-}
-
-function resolveMode(): ApiMode {
-  const runtime = typeof window !== "undefined" ? window.__KORKUT_API_MODE__ : undefined;
-  if (runtime === "dotnet" || runtime === "python") return runtime;
-  return (import.meta.env.VITE_API_MODE as ApiMode) === "dotnet" ? "dotnet" : "python";
-}
-
-export const API_MODE: ApiMode = resolveMode();
-
-// Endpoint contracts per mode. Only auth/session differs in shape; office-core paths
-// are identical, so the domain code is untouched by the cutover.
 export const routes = {
-  refresh: API_MODE === "dotnet" ? "/api/auth/refresh" : "/api/auth/session/refresh",
+  refresh: "/api/auth/refresh",
   login: "/api/auth/login",
   totp: "/api/auth/2fa",
   logout: "/api/auth/logout",

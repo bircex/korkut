@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Button, Field } from "../a11y";
-import { API_MODE, signalAuthChanged } from "../session";
+import { signalAuthChanged } from "../session";
 import { LocalAuth } from "./LocalAuth";
 import { AuthShell, Brand } from "../ui";
 
@@ -67,18 +67,17 @@ export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "reg
           {error}
         </div>
       )}
-      {/* .NET auth contract: local e-posta/parola + policy-driven TOTP. Behind the
-          migration flag so Python mode stays Google-only (behaviour parity). */}
-      {API_MODE === "dotnet" && mode === "invite" && (
+      {/* Local e-posta/parola + policy-driven TOTP. */}
+      {mode === "invite" && (
         <InviteJoin token={inviteToken} onAuthed={signalAuthChanged} />
       )}
-      {API_MODE === "dotnet" && mode === "forgot" && (
+      {mode === "forgot" && (
         <ForgotPassword onBack={() => setMode("login")} />
       )}
-      {API_MODE === "dotnet" && mode === "reset" && (
+      {mode === "reset" && (
         <ResetPassword token={resetToken} onDone={() => setMode("login")} />
       )}
-      {API_MODE === "dotnet" && (mode === "login" || mode === "register") && (
+      {(mode === "login" || mode === "register") && (
         <>
           <LocalAuth
             key={mode}
