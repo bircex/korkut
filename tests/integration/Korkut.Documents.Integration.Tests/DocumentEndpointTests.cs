@@ -45,11 +45,23 @@ public class DocumentEndpointTests(KorkutApiFactory factory)
         var list = await client.GetFromJsonAsync<List<JsonElement>>("/api/documents", Json);
         Assert.Contains(list!, d => d.GetProperty("id").GetGuid() == id);
 
-        // Download → a presigned URL.
+        // Download → a signed, short-lived link on the app's own origin...
         var dl = await client.GetAsync($"/api/documents/{id}/download");
         Assert.Equal(HttpStatusCode.OK, dl.StatusCode);
-        var url = (await dl.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("url").GetString();
-        Assert.Contains("X-Amz-", url, StringComparison.OrdinalIgnoreCase);
+        var url = (await dl.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("url").GetString()!;
+        Assert.StartsWith("/api/documents/files/", url, StringComparison.Ordinal);
+
+        // ...that serves the bytes without a session, the way a presigned URL does.
+        var anonymous = factory.CreateClient();
+        var file = await anonymous.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, file.StatusCode);
+        Assert.Equal("application/pdf", file.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(Pdf(), await file.Content.ReadAsByteArrayAsync());
+        Assert.True(file.Headers.CacheControl?.NoStore);
+
+        // A link whose signature was tampered with opens nothing.
+        var tampered = url[..^1] + (url[^1] == 'A' ? 'B' : 'A');
+        Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync(tampered)).StatusCode);
     }
 
     [Fact]
