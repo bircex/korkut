@@ -1,0 +1,264 @@
+@import "tailwindcss";
+
+/* dark: variant'ı OS medya sorgusuna değil <html data-theme="dark"> attribute'una bakar —
+   tema navbar'daki seçiciden (Açık/Koyu/Sistem) yönetilir, bkz. theme.ts. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #18181b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Rendered markdown (assistant bubbles, proposal preview) — light. */
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0.5em 0; }
+.md h1, .md h2, .md h3, .md h4 { margin: 0.9em 0 0.4em; font-weight: 700; line-height: 1.3; }
+.md h1 { font-size: 1.3em; }
+.md h2 { font-size: 1.15em; }
+.md h3 { font-size: 1.05em; }
+.md ul, .md ol { margin: 0.5em 0; padding-left: 1.4em; }
+.md li { margin: 0.25em 0; }
+.md li > p { margin: 0.2em 0; }
+.md a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 2px; }
+.md strong { font-weight: 700; }
+.md blockquote {
+  margin: 0.6em 0;
+  border-left: 3px solid #d4d4d8;
+  padding-left: 0.9em;
+  color: #52525b;
+}
+.md code {
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 5px;
+  padding: 0.05em 0.35em;
+  font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.md pre {
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.md pre code { background: none; border: none; padding: 0; }
+.md table {
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  width: 100%;
+  font-size: 0.92em;
+  display: block;
+  overflow-x: auto;
+}
+.md th, .md td { border: 1px solid #d4d4d8; padding: 0.4em 0.6em; text-align: left; }
+.md th { background: #f4f4f5; font-weight: 600; }
+.md hr { border: none; border-top: 1px solid #e4e4e7; margin: 1em 0; }
+
+/* Sağ drawer girişi (RightDrawer): yalnız transform+opacity — genişlik animasyonu yok ki
+   içindeki ağır içerik (CKEditor) mount olurken layout tekrar tekrar hesaplanmasın. */
+@keyframes drawer-in {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.drawer-anim { animation: drawer-in 0.18s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .drawer-anim { animation: none; }
+}
+
+/* CKEditor — UYAP/Word-like A4 document page floating on a gray canvas. */
+.doc-canvas {
+  background: #e9eaed;
+}
+.doc-canvas .ck.ck-editor {
+  background: #e9eaed;
+}
+.doc-canvas .ck-editor__main {
+  background: #e9eaed;
+  padding: 28px 0;
+}
+.doc-canvas .ck.ck-editor__editable {
+  width: 21cm; /* A4 width — the page; scrolls horizontally in narrow panels */
+  max-width: none;
+  min-height: 29.7cm; /* A4 height */
+  margin: 0 auto;
+  padding: 2.5cm 2.2cm; /* document margins */
+  background: #ffffff;
+  border: 1px solid #d4d4d8;
+  border-radius: 2px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+  font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  text-align: justify; /* justified body, like legal documents */
+  color: #111111;
+}
+.doc-canvas .ck.ck-toolbar {
+  /* Belge dünyası her iki temada da kağıt-beyaz kalır (CKEditor içi de açık temadır),
+     o yüzden tema değişkenleri yerine sabit açık renkler. */
+  border: none;
+  border-bottom: 1px solid #e4e4e7;
+  border-radius: 0;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.doc-canvas .ck-editor__editable:focus {
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+}
+/* Centered headings give the centered court-header / title look of legal documents. */
+.doc-canvas .ck-content h1,
+.doc-canvas .ck-content h2,
+.doc-canvas .ck-content h3 {
+  text-align: center;
+  font-weight: 700;
+}
+.ck-content h1 { font-size: 1.6em; }
+.ck-content h2 { font-size: 1.3em; }
+.ck-content h3 { font-size: 1.1em; }
+
+/* ---------------- karanlık tema ----------------
+   <html data-theme="dark"> iken devreye girer (seçici: navbar; "Sistem" modunda theme.ts
+   OS tercihini izleyip attribute'u günceller). Tailwind 4 renk utility'leri CSS değişkenine
+   derlendiği için palet burada, kontrast oranları korunarak yeniden eşlenir: sayfa en koyu,
+   kartlar bir tık açık, birincil buton/metin (zinc-900) beyaza yakın; text-white koyuya döner
+   ki "koyu zemin + beyaz yazı" çiftleri otomatik "açık zemin + koyu yazı" olsun. */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    /* eski tema değişkenleri (body bunları kullanır) */
+    --bg: #17171a;
+    --surface: #1e1e22;
+    --border: #33333a;
+    --text: #f1f1f4;
+    --muted: #9d9da8;
+    --accent: #f1f1f4;
+
+    /* nötr yüzeyler ve metin */
+    --color-white: #1e1e22;   /* kart/yüzey */
+    --color-zinc-50: #27272c; /* yüzey üstü hover */
+    --color-zinc-100: #17171a;/* sayfa zemini */
+    --color-zinc-200: #33333a;
+    --color-zinc-300: #43434c;
+    --color-zinc-400: #85858f;
+    --color-zinc-500: #9d9da8;
+    --color-zinc-600: #bcbcc6;
+    --color-zinc-700: #d2d2da;
+    --color-zinc-800: #e4e4e9;
+    --color-zinc-900: #f1f1f4;/* ana metin + birincil buton */
+    --color-zinc-950: #ffffff;/* /10 ve /5 tonlarında ince beyaz çizgiler */
+
+    /* uyarı/ajanda amberleri: koyu zeminde koyu kehribar yüzey + açık metin */
+    --color-amber-50: #2b2110;
+    --color-amber-100: #3a2c14;
+    --color-amber-200: #52401d;
+    --color-amber-300: #6b5426;
+    --color-amber-600: #e8b45a;
+    --color-amber-700: #ecc06e;
+    --color-amber-800: #f2cf8c;
+    --color-amber-900: #f8e0ae;
+
+    /* durum renkleri: yüzeyler koyulaşır, metinler aydınlanır */
+    --color-emerald-50: #12271c;
+    --color-emerald-100: #1a3527;
+    --color-emerald-600: #34d399;
+    --color-emerald-700: #56dfa5;
+    --color-emerald-800: #86efc4;
+    --color-sky-600: #4cc3f7;
+    --color-red-50: #2e1a1a;
+    --color-red-100: #3f2222;
+    --color-red-400: #b45555;
+    --color-red-500: #ef6a6a;
+    --color-red-600: #f47f7f;
+    --color-red-700: #f79c9c;
+    --color-indigo-100: #2b2b45;
+    --color-indigo-700: #a5b0f5;
+  }
+
+  /* Koyu temada gölge yok — katmanlar çizgiyle ayrılır. */
+  [data-theme="dark"] .shadow-sm,
+  [data-theme="dark"] .shadow-lg,
+  [data-theme="dark"] .shadow-xl,
+  [data-theme="dark"] .hover\:shadow-md:hover {
+    box-shadow: none;
+  }
+
+  /* Rendered markdown koyu eşlenikleri. */
+  [data-theme="dark"] .md a { color: #93b4ff; }
+  [data-theme="dark"] .md blockquote { border-left-color: #43434c; color: #9d9da8; }
+  [data-theme="dark"] .md code { background: #26262b; border-color: #3a3a42; }
+  [data-theme="dark"] .md pre { background: #26262b; border-color: #3a3a42; }
+  [data-theme="dark"] .md th { background: #26262b; }
+  [data-theme="dark"] .md th,
+  [data-theme="dark"] .md td { border-color: #43434c; }
+  [data-theme="dark"] .md hr { border-top-color: #33333a; }
+
+  /* Belge kanvası: zemin koyulaşır, A4 sayfa kağıt-beyaz kalır (baskı sadakati). */
+  [data-theme="dark"] .doc-canvas,
+  [data-theme="dark"] .doc-canvas .ck.ck-editor,
+  [data-theme="dark"] .doc-canvas .ck-editor__main {
+    background: #101012;
+  }
+  [data-theme="dark"] .doc-canvas .ck.ck-editor__editable,
+  [data-theme="dark"] .doc-canvas .ck-editor__editable:focus {
+    border-color: #000000;
+    box-shadow: none;
+  }
+
+/* Yazıyor göstergesi: üç noktanın sırayla soluklaşıp yükseldiği klasik animasyon
+   (prefers-reduced-motion'a saygılı — hareket azaltılınca yalnız opaklık değişir). */
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+.typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  @keyframes typing-dot {
+    0%, 80%, 100% { opacity: 0.3; transform: none; }
+    40% { opacity: 1; transform: none; }
+  }
+}
+
+/* Mevzuat/karar detayı yazdırma: sayfada yalnız .print-area görünür kalır (drawer chrome,
+   sidebar, ağaç paneli gizlenir) — MevzuatDetail/DecisionDetail'in yazdır düğmesi bunu kullanır.
+   Klasik visibility hilesi: gizlenen öğeler layout'ta kalır ama boş basılır; .print-area kendini
+   sayfanın köşesine mutlak konumlayarak tek başına görünür. */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+    color: #000;
+  }
+}
