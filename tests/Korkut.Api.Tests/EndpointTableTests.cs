@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,12 +46,29 @@ public class EndpointTableTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
-    public async Task An_unknown_api_path_is_a_404_not_the_app_shell()
+    public async Task App_routes_get_the_shell_and_unknown_api_paths_do_not()
     {
-        var response = await factory.CreateClient().GetAsync("/api/no-such-endpoint");
+        // The image ships the built app in wwwroot; stand one in so the fallback has a shell to serve.
+        var webRoot = Directory.CreateTempSubdirectory("korkut-wwwroot-").FullName;
+        await File.WriteAllTextAsync(Path.Combine(webRoot, "index.html"), "<!doctype html><title>Korkut</title>");
+        try
+        {
+            using var app = factory.WithWebHostBuilder(b => b.UseWebRoot(webRoot));
+            var client = app.CreateClient();
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.NotEqual("text/html", response.Content.Headers.ContentType?.MediaType);
+            var shell = await client.GetAsync("/sohbet/12");
+            Assert.Equal(HttpStatusCode.OK, shell.StatusCode);
+            Assert.Equal("text/html", shell.Content.Headers.ContentType?.MediaType);
+            Assert.Contains("script-src 'self'", shell.Headers.GetValues("Content-Security-Policy").Single());
+
+            var missing = await client.GetAsync("/api/no-such-endpoint");
+            Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+            Assert.NotEqual("text/html", missing.Content.Headers.ContentType?.MediaType);
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
     }
 
     // "/api/x/{id:guid}" and "api/x/{docId}" are the same route to the router.

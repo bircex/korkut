@@ -53,6 +53,7 @@ public sealed class KnowledgeFixture : IAsyncLifetime
 
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IClock>(SystemClock.Instance);
         services.AddKorkutKnowledge(appConnection);
         services.AddKorkutAi();
         services.RemoveAll<IEmbedder>();

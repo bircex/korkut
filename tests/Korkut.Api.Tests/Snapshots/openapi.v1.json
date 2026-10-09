@@ -265,6 +265,21 @@
         ],
         "type": "object"
       },
+      "ChatRequest": {
+        "properties": {
+          "text": {
+            "maxLength": "40000",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
       "CourtFeeRequest": {
         "properties": {
           "dava_degeri": {
@@ -972,6 +987,28 @@
         },
         "required": [
           "office_name"
+        ],
+        "type": "object"
+      },
+      "DraftRequest": {
+        "properties": {
+          "instruction": {
+            "maxLength": "4000",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "petition_type": {
+            "maxLength": "100",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "instruction"
         ],
         "type": "object"
       },
@@ -1731,6 +1768,21 @@
         ],
         "type": "object"
       },
+      "RenameSessionRequest": {
+        "properties": {
+          "title": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
       "RentIncreaseRequest": {
         "properties": {
           "mevcut_kira": {
@@ -1911,6 +1963,28 @@
           "chamber",
           "url",
           "snippet"
+        ],
+        "type": "object"
+      },
+      "SaveDocumentRequest": {
+        "properties": {
+          "content_md": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "maxLength": "300",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "content_md"
         ],
         "type": "object"
       },
@@ -2680,18 +2754,6 @@
   },
   "openapi": "3.1.1",
   "paths": {
-    "/": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Korkut.Api"
-        ]
-      }
-    },
     "/admin/api/2fa/challenge": {
       "post": {
         "requestBody": {
@@ -4821,6 +4883,168 @@
         ]
       }
     },
+    "/api/documents/{docId}": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "docId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDocumentRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
+    "/api/documents/{docId}/accept": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "docId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
+    "/api/documents/{docId}/draft": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "docId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
+    "/api/documents/{docId}/export": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "docId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
+    "/api/documents/{docId}/revert": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "docId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
     "/api/documents/{id}": {
       "delete": {
         "parameters": [
@@ -4948,6 +5172,18 @@
         },
         "tags": [
           "Documents"
+        ]
+      }
+    },
+    "/api/draft-documents": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
         ]
       }
     },
@@ -6294,6 +6530,304 @@
         ]
       }
     },
+    "/api/sessions": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameSessionRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameSessionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/chat": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/chat/stream": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/clone": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/upload": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/{sessionId}/document": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DraftDocuments"
+        ]
+      }
+    },
     "/api/signup/pending": {
       "get": {
         "responses": {
@@ -6612,9 +7146,6 @@
   ],
   "tags": [
     {
-      "name": "Korkut.Api"
-    },
-    {
       "name": "AdminAuth"
     },
     {
@@ -6652,6 +7183,12 @@
     },
     {
       "name": "PetitionTypes"
+    },
+    {
+      "name": "DraftDocuments"
+    },
+    {
+      "name": "Sessions"
     },
     {
       "name": "Calculators"

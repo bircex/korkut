@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [api, agent, worker, knowledge, ocr, gateway, migrator, kikproxy]
+        host: [api, worker, ocr, migrator, kikproxy]
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2

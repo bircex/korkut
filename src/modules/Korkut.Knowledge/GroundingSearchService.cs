@@ -1,3 +1,4 @@
+using Korkut.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Korkut.Knowledge;
@@ -20,12 +21,22 @@ public sealed partial class GroundingSearchService(IRetrievalService retrieval, 
         {
             throw;
         }
+        catch (ModelUnavailableException ex)
+        {
+            // No embedding backend is a configuration, not a fault: it would otherwise log a stack
+            // trace on every chat turn of an install that simply has not set one up.
+            NoEmbedder(logger, ex.Message);
+            return [];
+        }
         catch (Exception ex)
         {
             RetrievalFailed(logger, ex);
             return [];
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Knowledge retrieval skipped: {Reason}")]
+    private static partial void NoEmbedder(ILogger logger, string reason);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Knowledge retrieval failed; answering ungrounded.")]
     private static partial void RetrievalFailed(ILogger logger, Exception ex);
