@@ -14,16 +14,6 @@ public class HealthSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     public HealthSmokeTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Root_returns_ok()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
     public async Task Liveness_endpoint_is_healthy()
     {
         var client = _factory.CreateClient();

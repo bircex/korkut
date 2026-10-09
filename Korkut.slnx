@@ -42,12 +42,9 @@
   </Folder>
   <Folder Name="/src/services/">
     <Project Path="src/services/Korkut.Api/Korkut.Api.csproj" />
-    <Project Path="src/services/Korkut.Gateway/Korkut.Gateway.csproj" />
     <Project Path="src/services/Korkut.Web/Korkut.Web.csproj" />
     <Project Path="src/services/Korkut.Worker/Korkut.Worker.csproj" />
     <Project Path="src/services/Korkut.Migrator/Korkut.Migrator.csproj" />
-    <Project Path="src/services/Korkut.Agent.Host/Korkut.Agent.Host.csproj" />
-    <Project Path="src/services/Korkut.Knowledge.Host/Korkut.Knowledge.Host.csproj" />
     <Project Path="src/services/Korkut.Ocr/Korkut.Ocr.csproj" />
     <Project Path="src/services/Korkut.KikProxy/Korkut.KikProxy.csproj" />
   </Folder>

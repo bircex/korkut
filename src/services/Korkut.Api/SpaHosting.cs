@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
 
-namespace Korkut.Gateway;
+namespace Korkut.Api;
 
 /// <summary>
 /// Serves the built React app (ui/, copied into wwwroot by the image) from the public entry, so

@@ -2,12 +2,10 @@
 namespace Korkut.Knowledge;
 
 /// <summary>
-/// The retrieval port the AGENT depends on to ground a chat turn. Its adapter calls the internal
-/// Korkut.Knowledge <c>/search</c> endpoint over HTTP, forwarding the caller's token so Knowledge
-/// derives the office (RLS) itself — the office is never passed in the body. Retrieval logic can
-/// evolve inside Knowledge without redeploying the Agent. When Knowledge is unconfigured or
-/// unreachable the adapter returns an empty list, so chat degrades gracefully (ungrounded) rather
-/// than failing.
+/// The retrieval port the agent depends on to ground a chat turn and to answer the search tool.
+/// Unlike <see cref="IRetrievalService"/> it never throws: with no embedding backend configured, or
+/// the index unreachable, it returns an empty list, so chat degrades to ungrounded rather than
+/// failing the turn.
 /// </summary>
 public interface IKnowledgeSearchService
 {

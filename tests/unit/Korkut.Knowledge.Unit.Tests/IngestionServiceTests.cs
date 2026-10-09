@@ -61,7 +61,7 @@ public class IngestionServiceTests
         public IPiiRedactionScope NewScope() => throw new NotSupportedException();
     }
 
-    private sealed class InlineUnitOfWork : IUnitOfWork
+    private sealed class InlineUnitOfWork : IKnowledgeUnitOfWork
     {
         public Task<T> InTenantScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default) => work();
     }
