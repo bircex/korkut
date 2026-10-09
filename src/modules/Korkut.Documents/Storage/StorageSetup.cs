@@ -1,4 +1,5 @@
 using Korkut.Contract.Documents;
+using Korkut.Core;
 using Korkut.Documents.Repositories;
 using Korkut.Contract.Documents.OCR;
 using Korkut.Contract.Documents.Storage;
@@ -9,6 +10,7 @@ using Korkut.Documents.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Minio;
@@ -16,33 +18,33 @@ using Minio;
 namespace Korkut.Documents.Storage;
 
 /// <summary>
-/// Registers MinIO object storage + the document pipeline services (KDM-025..028).
-/// The MinIO client is built from env (never connects at construction, so container
-/// validation is safe); buckets are ensured best-effort on startup so a host without
-/// MinIO still boots (uploads then fail loudly, non-document endpoints are unaffected).
+/// Registers object storage + the document pipeline services (KDM-025..028).
+/// <c>KORKUT_STORAGE</c> picks the store: <c>filesystem</c> (a directory, <c>KORKUT_STORAGE_PATH</c>)
+/// or <c>s3</c> (MinIO or any S3-compatible server, <c>KORKUT_MINIO_*</c>). Unset, an install that
+/// already names an S3 endpoint keeps using it and everything else gets the filesystem, so an
+/// existing deployment never silently starts writing somewhere new. Buckets are ensured
+/// best-effort on startup so a host without storage still boots (uploads then fail loudly,
+/// non-document endpoints are unaffected).
 /// </summary>
 public static partial class StorageSetup
 {
+    public const string DefaultStoragePath = "/var/lib/korkut/objects";
+
     public static IServiceCollection AddKorkutStorage(this IServiceCollection services, IConfiguration configuration)
     {
-        var endpoint = configuration["KORKUT_MINIO_ENDPOINT"] ?? "localhost:9000";
-        var accessKey = configuration["KORKUT_MINIO_ACCESS_KEY"] ?? "minioadmin";
-        var secretKey = configuration["KORKUT_MINIO_SECRET_KEY"] ?? "minioadmin";
-        var secure = configuration["KORKUT_MINIO_SECURE"] == "1";
-        var host = endpoint.Split(':', 2);
-
-        services.AddSingleton<IMinioClient>(_ =>
+        var mode = configuration["KORKUT_STORAGE"]?.Trim().ToLowerInvariant();
+        mode ??= string.IsNullOrWhiteSpace(configuration["KORKUT_MINIO_ENDPOINT"]) ? "filesystem" : "s3";
+        switch (mode)
         {
-            var client = new MinioClient().WithEndpoint(host[0], host.Length > 1 ? int.Parse(host[1]) : 9000)
-                .WithCredentials(accessKey, secretKey);
-            if (secure)
-            {
-                client = client.WithSSL();
-            }
-
-            return client.Build();
-        });
-        services.AddSingleton<IObjectStoreService, MinioObjectStoreService>();
+            case "filesystem":
+                AddFileSystemStore(services, configuration);
+                break;
+            case "s3":
+                AddS3Store(services, configuration);
+                break;
+            default:
+                throw new InvalidOperationException($"KORKUT_STORAGE must be 'filesystem' or 's3', not '{mode}'.");
+        }
 
         // Upload pipeline primitives.
         services.AddSingleton<IUploadValidatorService, UploadValidatorService>();
@@ -64,6 +66,39 @@ public static partial class StorageSetup
 
         services.AddHostedService<EnsureBucketsHostedService>();
         return services;
+    }
+
+    private static void AddFileSystemStore(IServiceCollection services, IConfiguration configuration)
+    {
+        var path = configuration["KORKUT_STORAGE_PATH"];
+        var secret = configuration["KORKUT_SECRET"] ?? string.Empty;
+        services.TryAddSingleton<IClock>(SystemClock.Instance);
+        services.AddSingleton(sp => new ObjectUrlSigner(secret, sp.GetRequiredService<IClock>()));
+        services.AddSingleton(sp => new FileSystemObjectStoreService(
+            string.IsNullOrWhiteSpace(path) ? DefaultStoragePath : path, sp.GetRequiredService<ObjectUrlSigner>()));
+        services.AddSingleton<IObjectStoreService>(sp => sp.GetRequiredService<FileSystemObjectStoreService>());
+    }
+
+    private static void AddS3Store(IServiceCollection services, IConfiguration configuration)
+    {
+        var endpoint = configuration["KORKUT_MINIO_ENDPOINT"] ?? "localhost:9000";
+        var accessKey = configuration["KORKUT_MINIO_ACCESS_KEY"] ?? "minioadmin";
+        var secretKey = configuration["KORKUT_MINIO_SECRET_KEY"] ?? "minioadmin";
+        var secure = configuration["KORKUT_MINIO_SECURE"] == "1";
+        var host = endpoint.Split(':', 2);
+
+        services.AddSingleton<IMinioClient>(_ =>
+        {
+            var client = new MinioClient().WithEndpoint(host[0], host.Length > 1 ? int.Parse(host[1]) : 9000)
+                .WithCredentials(accessKey, secretKey);
+            if (secure)
+            {
+                client = client.WithSSL();
+            }
+
+            return client.Build();
+        });
+        services.AddSingleton<IObjectStoreService, MinioObjectStoreService>();
     }
 
     /// <summary>
@@ -104,7 +139,7 @@ public static partial class StorageSetup
             }
             catch (Exception ex)
             {
-                // Best-effort: a host without a reachable MinIO still starts; uploads
+                // Best-effort: a host without reachable storage still starts; uploads
                 // will surface the failure when actually attempted.
                 BucketsUnavailable(logger, ex);
             }

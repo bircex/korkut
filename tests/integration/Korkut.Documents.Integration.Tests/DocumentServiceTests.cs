@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Korkut.Documents.Integration.Tests;
 
 /// <summary>Document storage over real MinIO + real PostgreSQL.</summary>
-public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
-    : IClassFixture<PostgresFixture>, IClassFixture<MinioFixture>, IAsyncLifetime
+public class DocumentServiceTests(PostgresFixture pg, ObjectStoreFixture store)
+    : IClassFixture<PostgresFixture>, IClassFixture<ObjectStoreFixture>, IAsyncLifetime
 {
     private Guid _office;
 
@@ -32,7 +32,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private DocumentStorageService Service(KorkutDbContext db) => new(db, minio.StoreService, new Clock());
+    private DocumentStorageService Service(KorkutDbContext db) => new(db, store.StoreService, new Clock());
 
     [Fact]
     public async Task Stored_document_round_trips_with_a_matching_checksum_and_opaque_key()
@@ -53,7 +53,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         Assert.DoesNotContain(_office.ToString(), stored.ObjectKey, StringComparison.OrdinalIgnoreCase);
 
         // Bytes are actually in MinIO (quarantine) and match.
-        await using var download = await minio.StoreService.GetAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
+        await using var download = await store.StoreService.GetAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
         using var ms = new MemoryStream();
         await download.CopyToAsync(ms);
         Assert.Equal(bytes, ms.ToArray());
@@ -79,9 +79,9 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
 
         await using var db2 = pg.NewContext();
         var url = await Service(db2).PresignAsync(_office, stored.Id, TimeSpan.FromMinutes(2));
-        Assert.Contains(stored.ObjectKey, url, StringComparison.Ordinal);
-        // Presigned URLs carry an expiry parameter (short-lived).
-        Assert.Contains("X-Amz-Expires=", url, StringComparison.OrdinalIgnoreCase);
+        // A signed link naming exactly this object (its expiry is pinned in the unit tests).
+        Assert.StartsWith(ObjectUrlSigner.PathPrefix, url, StringComparison.Ordinal);
+        Assert.Equal((ObjectBuckets.Quarantine, stored.ObjectKey), store.Signer.Verify(url[ObjectUrlSigner.PathPrefix.Length..]));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class DocumentServiceTests(PostgresFixture pg, MinioFixture minio)
         }
 
         // Delete the object out from under the DB row -> orphan.
-        await minio.StoreService.RemoveAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
+        await store.StoreService.RemoveAsync(ObjectBuckets.Quarantine, stored.ObjectKey);
 
         await using var db2 = pg.NewContext();
         var report = await Service(db2).ReconcileAsync(ObjectBuckets.Quarantine);

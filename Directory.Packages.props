@@ -61,7 +61,6 @@
     <!-- Object storage (KDM-025) -->
     <PackageVersion Include="Minio" Version="7.0.0" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
-    <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
     <!-- Legal-source tools (Agent/Tools/Law): PDF journal/decision text extraction -->
     <PackageVersion Include="PdfPig" Version="0.1.9" />
     <!-- Transactional e-mail: system-level SMTP sender (single operator account) -->

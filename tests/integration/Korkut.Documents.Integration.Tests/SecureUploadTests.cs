@@ -14,8 +14,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Documents.Integration.Tests;
 
-public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
-    : IClassFixture<PostgresFixture>, IClassFixture<MinioFixture>, IAsyncLifetime
+public class SecureUploadTests(PostgresFixture pg, ObjectStoreFixture store)
+    : IClassFixture<PostgresFixture>, IClassFixture<ObjectStoreFixture>, IAsyncLifetime
 {
     private Guid _office;
 
@@ -43,8 +43,8 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
 
     private SafeUploadService Pipeline(KorkutDbContext db, IMalwareScanService? scanner = null)
     {
-        var docs = new DocumentStorageService(db, minio.StoreService, new Clock());
-        return new SafeUploadService(db, docs, minio.StoreService, new UploadValidatorService(),
+        var docs = new DocumentStorageService(db, store.StoreService, new Clock());
+        return new SafeUploadService(db, docs, store.StoreService, new UploadValidatorService(),
             scanner ?? new MalwareScannerService(), new AuditLog(db, new Clock()));
     }
 
@@ -73,8 +73,9 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         Assert.Equal("clean", doc.Status);
         Assert.Equal(ObjectBuckets.Clean, doc.Bucket);
         // Now downloadable.
-        var url = await new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
-        Assert.Contains(doc.ObjectKey, url, StringComparison.Ordinal);
+        var url = await new DocumentStorageService(db, store.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1));
+        Assert.StartsWith(ObjectUrlSigner.PathPrefix, url, StringComparison.Ordinal);
+        Assert.Equal((ObjectBuckets.Clean, doc.ObjectKey), store.Signer.Verify(url[ObjectUrlSigner.PathPrefix.Length..]));
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         var doc = await db.Documents.AsNoTracking().SingleAsync(x => x.Id == outcome.DocumentId);
         Assert.Equal("rejected", doc.Status);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentStorageService(db, store.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 
     [Fact]
@@ -205,6 +206,6 @@ public class SecureUploadTests(PostgresFixture pg, MinioFixture minio)
         Assert.Equal("quarantine", doc.Status);
         // Still not downloadable.
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new DocumentStorageService(db, minio.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
+            () => new DocumentStorageService(db, store.StoreService, new Clock()).PresignAsync(_office, doc.Id, TimeSpan.FromMinutes(1)));
     }
 }
