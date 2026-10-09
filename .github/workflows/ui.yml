@@ -1,0 +1,45 @@
+name: UI
+
+# Type-check and unit-test the React app in ui/ on every PR into main that touches it.
+# Read-only permissions; no secrets used.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "ui/**"
+      - ".github/workflows/ui.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ui
+
+jobs:
+  ui:
+    name: Type-check and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
