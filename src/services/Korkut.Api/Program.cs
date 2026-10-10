@@ -17,6 +17,10 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// A local install needs no configuration: secrets missing from the environment are generated
+// once into the shared secrets volume and reused (see LocalSecrets).
+builder.Configuration.AddKorkutLocalSecrets();
+
 // Observability: OTel traces/metrics + redacted logs, shared with the Worker;
 // the API adds ASP.NET Core request instrumentation (KDM-007).
 builder.AddKorkutObservability("Korkut.Api", tracing => tracing.AddAspNetCoreInstrumentation());

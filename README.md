@@ -5,7 +5,7 @@
 <h1 align="center">Korkut</h1>
 
 <p align="center">
-  <a href="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/dotnet-migration-ci.yml"><img src="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/dotnet-migration-ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/ci.yml"><img src="https://github.com/recepkizilarslan/korkut-backend/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/.NET-10-blueviolet.svg" alt=".NET 10" />
   <img src="https://img.shields.io/badge/version-CalVer-blue.svg" alt="CalVer" />
@@ -24,19 +24,26 @@ identity.
   Danıştay, UYAP Emsal, mevzuat, KİK, Rekabet, Sayıştay, GİB, Uyuşmazlık, KVKK, BDDK, insurance
   arbitration).
 - **Drafting** — petition/contract drafting in a Canvas editor with DOCX/UDF export.
-- **Correspondence** — propose-and-confirm e-mail; two-way Telegram/WhatsApp/e-mail integrations.
+- **Correspondence** — propose-and-confirm e-mail.
 - **Local-first** — point Korkut at a local OpenAI-compatible model (e.g. LM Studio,
   Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
   passed through **best-effort** redaction first — a mitigation, **not a guarantee**
   (see [DISCLAIMER.md](DISCLAIMER.md)).
-- **Self-hosted, Google sign-in** — Google OIDC only, no passwords; each install serves one office. Overall
+- **Self-hosted** — e-mail and password sign-in, optionally Google; each install serves one office. Overall
   security depends on how *you* deploy it (TLS, backups, updates); provided as-is, with
   no warranty.
 
 ## Quick start
 
-The runtime is a **.NET 10** solution at the repository root (`Korkut.slnx`, `src/`,
-`tests/`; the Python runtime was retired after the .NET migration).
+```bash
+docker compose up -d --build     # then open http://localhost:8090
+```
+
+No configuration is needed; see **[docs/INSTALL.md](docs/INSTALL.md)** for settings and where data
+lives.
+
+To work on the code, the runtime is a **.NET 10** solution at the repository root (`Korkut.slnx`,
+`src/`, `tests/`) and the React app is in `ui/`:
 
 ```bash
 make build     # dotnet build Korkut.slnx
@@ -45,7 +52,6 @@ make run       # start the API on :8080  (dotnet run --project src/Korkut.Api)
 make migrate   # apply EF Core migrations via the migrator
 ```
 
-Full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ## Layout
 
