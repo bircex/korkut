@@ -86,16 +86,6 @@ services:
       - "${KORKUT_GRAFANA_PORT:-3000}:3000"
     restart: unless-stopped
 
-  minio:
-    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: ${KORKUT_MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${KORKUT_MINIO_SECRET_KEY}
-    volumes:
-      - miniodata:/data
-    restart: unless-stopped
-
   api:
     build:
       context: .
@@ -104,9 +94,9 @@ services:
       <<: *app-env
       KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_TOTP_KEY: ${KORKUT_TOTP_KEY}
-      KORKUT_MINIO_ENDPOINT: minio:9000
-      KORKUT_MINIO_ACCESS_KEY: ${KORKUT_MINIO_ACCESS_KEY}
-      KORKUT_MINIO_SECRET_KEY: ${KORKUT_MINIO_SECRET_KEY}
+      # Uploaded documents live on the `objects` volume. Set KORKUT_STORAGE=s3 plus the
+      # KORKUT_MINIO_* variables to keep them in an S3-compatible server instead.
+      KORKUT_STORAGE: ${KORKUT_STORAGE:-filesystem}
       # Same OCR fallback for the document-extraction pipeline (a scanned evrak must become
       # searchable text, not an empty extraction artifact).
       KORKUT_OCR_URL: http://ocr:8080
@@ -128,8 +118,8 @@ services:
         condition: service_completed_successfully
       pgbouncer:
         condition: service_started
-      minio:
-        condition: service_started
+    volumes:
+      - objects:/var/lib/korkut/objects
     restart: unless-stopped
 
   worker:
@@ -155,6 +145,8 @@ services:
       KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_AGENT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
       KORKUT_KNOWLEDGE_URL: http://knowledge:8080
+      # Chat uploads go into the same document store as the API's.
+      KORKUT_STORAGE: ${KORKUT_STORAGE:-filesystem}
       # Scanned uploads (no text layer) are recognised by the OCR host; without this the extractor
       # is text-layer only and a scanned dilekçe reaches the model as "metin çıkarılamadı".
       KORKUT_OCR_URL: http://ocr:8080
@@ -173,6 +165,8 @@ services:
         condition: service_completed_successfully
       pgbouncer:
         condition: service_started
+    volumes:
+      - objects:/var/lib/korkut/objects
     restart: unless-stopped
 
   knowledge:
@@ -236,4 +230,5 @@ services:
 
 volumes:
   pgdata:
-  miniodata:
+  # Uploaded documents. Back this up together with pgdata: the database names every object here.
+  objects:

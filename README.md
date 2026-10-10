@@ -40,7 +40,7 @@ The runtime is a **.NET 10** solution at the repository root (`Korkut.slnx`, `sr
 
 ```bash
 make build     # dotnet build Korkut.slnx
-make test      # full test suite (needs Docker for Postgres/MinIO integration tests)
+make test      # full test suite (needs Docker for the Postgres integration tests)
 make run       # start the API on :8080  (dotnet run --project src/Korkut.Api)
 make migrate   # apply EF Core migrations via the migrator
 ```
