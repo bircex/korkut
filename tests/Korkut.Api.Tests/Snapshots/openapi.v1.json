@@ -2149,6 +2149,46 @@
         ],
         "type": "object"
       },
+      "SetupRequest": {
+        "properties": {
+          "email": {
+            "maxLength": "320",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "full_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "office_name": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "maxLength": "200",
+            "minLength": "10",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "office_name",
+          "full_name",
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
       "SeveranceRequest": {
         "properties": {
           "brut_maas": {
@@ -6828,6 +6868,48 @@
         ]
       }
     },
+    "/api/setup": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      }
+    },
     "/api/signup/pending": {
       "get": {
         "responses": {
@@ -7183,6 +7265,9 @@
     },
     {
       "name": "PetitionTypes"
+    },
+    {
+      "name": "Setup"
     },
     {
       "name": "DraftDocuments"

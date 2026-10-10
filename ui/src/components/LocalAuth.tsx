@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, ApiError } from "../api";
 import { Button, Field } from "../a11y";
+import { STRENGTH_COLORS, STRENGTH_LABELS, passwordStrength } from "../passwordStrength";
 
 // Local password sign-in / registration for the .NET auth contract (KDM-030). Cookie-based:
 // no token is ever read or stored in JS. Driven by `mode`: "login" shows the credentials +
@@ -8,21 +9,6 @@ import { Button, Field } from "../a11y";
 // parola + confirm + strength), which creates a DISABLED office pending platform-admin approval.
 
 type Step = "credentials" | "totp" | "register" | "registered";
-
-const STRENGTH_LABELS = ["Çok zayıf", "Zayıf", "Orta", "İyi", "Güçlü"];
-const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#16a34a"];
-
-// A lightweight password-quality heuristic: length + character-class variety, 0..4.
-function passwordStrength(pw: string): number {
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 10) score++;
-  if (pw.length >= 14) score++;
-  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-  if (/\d/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return Math.min(score, 4);
-}
 
 export function LocalAuth({
   mode,
