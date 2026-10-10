@@ -35,6 +35,9 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
 EXPOSE 8080
 
+# Mount point for the generated secrets volume, owned by the app user so either host can create it.
+RUN mkdir -p /var/lib/korkut/secrets && chown 1654:1654 /var/lib/korkut/secrets
+
 # Run as a non-root user (the noble image ships 'app', UID 1654).
 USER app
 

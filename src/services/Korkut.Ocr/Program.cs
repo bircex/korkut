@@ -12,6 +12,10 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// A local install needs no configuration: secrets missing from the environment are generated
+// once into the shared secrets volume and reused (see LocalSecrets).
+builder.Configuration.AddKorkutLocalSecrets();
+
 builder.AddKorkutObservability("Korkut.Ocr", tracing => tracing.AddAspNetCoreInstrumentation());
 
 builder.Services.AddKorkutWeb(builder.Configuration);
