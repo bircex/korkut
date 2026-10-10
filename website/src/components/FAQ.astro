@@ -1,0 +1,73 @@
+---
+import { FAQS } from "../consts";
+---
+
+<section id="sss" class="band">
+  <div class="wrap center">
+    <span class="eyebrow">SSS</span>
+    <h2>Sıkça sorulan sorular</h2>
+    <p class="section-lead">
+      Aradığınızı bulamazsanız bizimle iletişime geçin; büronuza uygun kurulumu
+      birlikte planlayalım.
+    </p>
+
+    <div class="faq">
+      {
+        FAQS.map((f) => (
+          <details class="faq-item">
+            <summary>
+              <span>{f.q}</span>
+              <span class="chev" aria-hidden="true">+</span>
+            </summary>
+            <p>{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    max-width: 760px;
+    margin: 44px auto 0;
+    text-align: left;
+  }
+  .faq-item {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    list-style: none;
+  }
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+  .chev {
+    flex: none;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--muted);
+    transition: transform 0.2s ease;
+    line-height: 1;
+  }
+  .faq-item[open] .chev {
+    transform: rotate(45deg);
+  }
+  .faq-item p {
+    padding: 0 20px 20px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+</style>

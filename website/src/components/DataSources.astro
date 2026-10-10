@@ -1,0 +1,124 @@
+---
+// "Trusted by" bandı: hero'nun hemen altında, resmî kaynak kartları grid'i.
+// Kurum logoları resmî sitelerinden alınmıştır; her biri ilgili kuruma aittir.
+const sources = [
+  { logo: "/logos/sources/yargitay.png", name: "Yargıtay", sub: "Temyiz kararları & içtihat" },
+  { logo: "/logos/sources/danistay.png", name: "Danıştay", sub: "İdari yargı içtihadı" },
+  { logo: "/logos/sources/anayasa.png", name: "Anayasa Mahkemesi", sub: "Bireysel başvuru & norm denetimi" },
+  { logo: "/logos/sources/uyap.png", name: "UYAP Emsal", sub: "Yerel mahkeme emsal kararları" },
+  { logo: "/logos/sources/mevzuat.png", name: "Mevzuat", sub: "Kanun, KHK & yönetmelik metinleri" },
+  { logo: "/logos/sources/resmigazete.png", name: "Resmî Gazete", sub: "Güncel resmî yayımlar" },
+  { logo: "/logos/sources/rekabet.png", name: "Rekabet Kurumu", sub: "Rekabet Kurulu kararları" },
+  { logo: "/logos/sources/sayistay.png", name: "Sayıştay", sub: "Denetim & temyiz kararları" },
+  { logo: "/logos/sources/ihale.png", name: "KİK", sub: "Kamu İhale Kurulu kararları" },
+  { logo: "/logos/sources/gib.png", name: "GİB", sub: "Özelge, tebliğ & sirküler" },
+  { logo: "/logos/sources/kvkk.png", name: "KVKK", sub: "Veri Koruma Kurulu kararları" },
+];
+const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
+---
+
+<section id="kaynaklar" class="src-band">
+  <div class="wrap center">
+    <p class="trust">
+      <b>10 milyondan fazla</b> karar &amp; mevzuat belgesine
+      <b>11 resmî kaynakta</b> canlı erişim, daima atıfla
+    </p>
+
+    <div class="src-grid">
+      {
+        sources.map((s) => (
+          <div class="src-tile">
+            <div class="src-logo">
+              <img src={`${base}${s.logo.slice(1)}`} alt={`${s.name} logosu`} loading="lazy" />
+            </div>
+            <div class="src-text">
+              <b>{s.name}</b>
+              <span>{s.sub}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="src-note">
+      Kaynak listesi büyümeye devam ediyor; Uyuşmazlık Mahkemesi, BDDK ve
+      sigorta tahkim kararları da kapsam dahilindedir. Uydurma atıfları
+      önlemek için her sonuç kaynağına bağlanır.
+    </p>
+  </div>
+</section>
+
+<style>
+  .src-band {
+    padding: 56px 0 72px;
+  }
+  .trust {
+    color: var(--muted);
+    font-size: 15.5px;
+    margin-bottom: 36px;
+  }
+  .trust b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .src-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    text-align: left;
+  }
+  @media (max-width: 980px) {
+    .src-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  /* Dar ekran ve 200% zoom: tek sütun, kartlar daralabilir. */
+  @media (max-width: 720px) {
+    .src-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .src-text {
+    min-width: 0;
+  }
+  .src-tile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+  }
+  .src-logo {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .src-logo img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+  .src-text b {
+    display: block;
+    font-size: 14.5px;
+    letter-spacing: -0.01em;
+  }
+  .src-text span {
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .src-note {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 30px auto 0;
+    max-width: 640px;
+  }
+</style>

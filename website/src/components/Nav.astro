@@ -1,0 +1,132 @@
+---
+import { NAV_LINKS, REGISTER_URL, APP_URL } from "../consts";
+const base = import.meta.env.BASE_URL;
+// base "/" ile bittiğinden anchor'lar (#...) "/#..." olarak çözülür ve alt
+// sayfalardan da ana sayfaya döner; sayfa yolları da base ile önlenir.
+const resolve = (href: string) => `${base}${href}`;
+---
+
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href={base} aria-label="Korkut ana sayfa">
+        <img
+          class="logo"
+          src={`${base}korkut-logo.svg`}
+          alt="Korkut logosu"
+          width="30"
+          height="30"
+        />
+        <span>Korkut</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Ana menü">
+        {NAV_LINKS.map((l) => <a href={resolve(l.href)}>{l.label}</a>)}
+      </nav>
+
+      <div class="nav-actions">
+        <a class="ghost-link" href={APP_URL} aria-label="Giriş yap">
+          <span>Giriş yap</span>
+        </a>
+        <a href={REGISTER_URL} class="btn btn-primary btn-pill">Ücretsiz Başla</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  header {
+    position: sticky;
+    top: 12px;
+    z-index: 50;
+  }
+  /* Yüzen hap (pill) menü çubuğu */
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 60px;
+    padding: 0 10px 0 20px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: #fff;
+    border: 1px solid var(--line);
+    object-fit: contain;
+    padding: 2px;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    margin-inline: auto;
+  }
+  .nav-links a {
+    color: var(--muted);
+    font-size: 14.5px;
+    font-weight: 500;
+  }
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ghost-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+  .ghost-link:hover {
+    color: var(--ink);
+  }
+  .btn-pill {
+    border-radius: 999px;
+    padding: 10px 20px;
+  }
+  @media (max-width: 860px) {
+    .nav-links {
+      display: none;
+    }
+  }
+  /* Dar ekran ve 200% zoom: çubuk kompakt moda geçer, "Giriş yap" gizlenir. */
+  @media (max-width: 720px) {
+    .ghost-link {
+      display: none;
+    }
+    .bar {
+      height: 54px;
+      padding: 0 8px 0 14px;
+      gap: 12px;
+    }
+    .brand {
+      font-size: 16px;
+    }
+    .btn-pill {
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+  }
+</style>

@@ -12,6 +12,9 @@ tests
 data
 backups
 
+# The marketing site is a separate static deploy, never part of an image.
+website
+
 # The SPA is built inside the image from a clean `npm ci`.
 ui/node_modules
 ui/dist
