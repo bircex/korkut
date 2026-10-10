@@ -49,9 +49,14 @@ Full steps in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ## Layout
 
-Everything lives in this repository: the .NET hosts and modules under `src/`, and the React
-app under `ui/`, which is built into the gateway image and served from the same origin as
-the API.
+Everything lives in this repository:
+
+| Path | What |
+|---|---|
+| `src/` | The .NET hosts and modules |
+| `ui/` | The React app, built into the app image and served from the same origin as the API |
+| `website/` | The Astro marketing site, a separate static deploy |
+| `tests/` | Unit, integration and architecture tests |
 
 ## Documentation
 

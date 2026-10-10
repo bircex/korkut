@@ -2,7 +2,7 @@
   "name": "korkut-landing",
   "private": true,
   "version": "2026.7.0",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "astro dev",
