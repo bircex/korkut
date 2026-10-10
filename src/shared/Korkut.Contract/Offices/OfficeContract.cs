@@ -35,6 +35,13 @@ public interface IOfficeProvisioner
     /// password hash is stored so they can sign in once a platform admin enables the office. Null
     /// when the e-mail already has an account.</summary>
     Task<ProvisionedOffice?> ProvisionLocalAsync(string email, string passwordHash, string officeName, string fullName, CancellationToken ct = default);
+
+    /// <summary>Whether this install already has its office (first-run setup is done).</summary>
+    Task<bool> IsSetupCompleteAsync(CancellationToken ct = default);
+
+    /// <summary>First-run setup: the install's office, enabled, and its owner. Null when an office
+    /// already exists, so it can only ever succeed once.</summary>
+    Task<ProvisionedOffice?> SetupFirstOfficeAsync(string email, string passwordHash, string officeName, string fullName, CancellationToken ct = default);
 }
 
 /// <summary>Admin-console stats in the SPA's shape (pending = disabled offices awaiting approval).</summary>

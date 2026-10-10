@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { api, type User } from "./api";
-import { onSessionExpired, onAuthChanged } from "./session";
+import { onSessionExpired, onAuthChanged, signalAuthChanged } from "./session";
 import { SignIn } from "./components/SignIn";
 import { Signup } from "./components/Signup";
+import { Setup } from "./components/Setup";
 import { Workspace } from "./components/Workspace";
 import { AdminConsole } from "./components/AdminConsole";
 import { navigate, usePath } from "./router";
@@ -15,6 +16,8 @@ export function App() {
   const path = usePath();
   const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
+  // A fresh install has no office or account yet: it shows first-run setup instead of sign-in.
+  const [setupRequired, setSetupRequired] = useState(false);
 
   // Platform admin console route operates on its own session audience under /admin/api
   if (path.startsWith("/admin")) {
@@ -41,7 +44,12 @@ export function App() {
           const here = window.location.pathname + window.location.search;
           if (next && next.startsWith("/") && next !== here) navigate(next, { replace: true });
         })
-        .catch(() => {
+        .catch(async () => {
+          try {
+            setSetupRequired((await api.setupStatus()).setup_required);
+          } catch {
+            setSetupRequired(false); // bilinmiyorsa giriş ekranı gösterilir
+          }
           setStatus("anon");
           try {
             const here = window.location.pathname + window.location.search;
@@ -91,6 +99,9 @@ export function App() {
   }
   if (status === "authed" && user) {
     return <Workspace user={user} onLogout={logout} />;
+  }
+  if (setupRequired) {
+    return <Setup onDone={signalAuthChanged} />;
   }
   // Anonymous: the self-serve "create your firm" step lives at /kayit; everything else is sign-in.
   return path.startsWith("/kayit") ? <Signup /> : <SignIn />;

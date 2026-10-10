@@ -17,6 +17,10 @@ docker compose up -d --build
 Then open <http://localhost:8090>. No `.env` is needed: every setting has a local default, and the
 signing and 2FA keys are generated on first start.
 
+The first time, Korkut asks for the office's name and creates the first account, which runs the
+office (owner). Invite the other members from the settings afterwards. This works once: after
+that, the page is the ordinary sign-in.
+
 To change a setting (the port, a model key, Google sign-in, SMTP), copy `.env.example` to `.env`,
 uncomment the line and run `docker compose up -d` again.
 
@@ -36,5 +40,5 @@ machines on your network.
 
 ## Not there yet
 
-Creating the office's first account from the browser, and choosing a model from the app's
-settings, are in progress; see [OPEN_SOURCE_PLAN.md](OPEN_SOURCE_PLAN.md).
+Choosing the AI model from the app's settings is in progress; until then, set a model key in
+`.env`. See [OPEN_SOURCE_PLAN.md](OPEN_SOURCE_PLAN.md).

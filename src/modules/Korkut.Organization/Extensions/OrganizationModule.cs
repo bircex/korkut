@@ -29,6 +29,7 @@ public sealed class OrganizationModule : IModule
         services.AddScoped<Korkut.Contract.Organization.IProfileService, ProfileService>();
         services.AddScoped<Korkut.Contract.Organization.IInviteService, InviteService>();
         services.AddScoped<Korkut.Contract.Organization.IOnboardingService, OnboardingService>();
+        services.AddScoped<Korkut.Contract.Organization.ISetupService, SetupService>();
         services.AddScoped<Korkut.Contract.Organization.IAuthService, AuthService>();
         services.AddScoped<Korkut.Contract.Organization.IGoogleSignInService, GoogleSignInService>();
     }

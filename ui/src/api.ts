@@ -602,6 +602,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ full_name, email, password, office_name }),
     }),
+  // First-run setup of a fresh install: whether it still has to run, and running it (creates the
+  // office and its owner once; the caller then signs in with the same e-mail and password).
+  setupStatus: () => probe<{ setup_required: boolean }>("/api/setup"),
+  setup: (office_name: string, full_name: string, email: string, password: string) =>
+    probe<{ office_id: string }>("/api/setup", {
+      method: "POST",
+      body: JSON.stringify({ office_name, full_name, email, password }),
+    }),
   requestPasswordReset: (email: string) =>
     probe<{ ok: boolean }>("/api/auth/password/reset-request", {
       method: "POST",
