@@ -67,7 +67,6 @@ Start with the **[documentation index](docs/README.md)**:
 | [INSTALL](docs/INSTALL.md) | Native (macOS / Linux / Windows) and Docker installation |
 | [DEVELOPMENT](docs/DEVELOPMENT.md) | Dev loop: run, test, lint, build, CLIs, adding a tool |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | The single-office model, the matter domain, and the agentic core |
-| [DEPLOYMENT](docs/DEPLOYMENT.md) | Production: Docker + Postgres behind a reverse proxy |
 | [GLOSSARY](docs/GLOSSARY.md) | Turkish legal & product terms in English |
 
 ## Contributing
