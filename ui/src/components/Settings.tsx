@@ -4,12 +4,14 @@ import { navigate, usePath } from "../router";
 import {
   type Icon,
   BookmarkSimple,
+  Cpu,
   EnvelopeSimple,
   PencilSimpleLine,
   Sparkle,
   User as UserIcon,
   Users,
 } from "../icons";
+import { AiSettings } from "./AiSettings";
 import { MailPreferenceSettings } from "./MailPreferenceSettings";
 import { MemorySettings } from "./MemorySettings";
 import { PersonaSettings } from "./PersonaSettings";
@@ -446,6 +448,7 @@ type Tab =
   | "persona"
   | "memory"
   | "style"
+  | "ai"
   | "notifications";
 
 const TAB_TITLE: Record<Tab, string> = {
@@ -454,6 +457,7 @@ const TAB_TITLE: Record<Tab, string> = {
   persona: "Kişilik",
   memory: "Hafıza",
   style: "Yazım stili",
+  ai: "Yapay zeka",
   notifications: "Bildirimler",
 };
 
@@ -464,6 +468,7 @@ const TAB_SLUG: Record<Tab, string> = {
   persona: "kisilik",
   memory: "hafiza",
   style: "stil",
+  ai: "yapay-zeka",
   notifications: "bildirimler",
 };
 
@@ -477,7 +482,7 @@ function tabFromPath(path: string): Tab {
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Hesap", ids: ["account", "members"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
-  { label: "Sistem", ids: ["notifications"] },
+  { label: "Sistem", ids: ["ai", "notifications"] },
 ];
 
 // Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
@@ -487,6 +492,7 @@ const TAB_ICON: Record<Tab, Icon> = {
   persona: Sparkle,
   memory: BookmarkSimple,
   style: PencilSimpleLine,
+  ai: Cpu,
   notifications: EnvelopeSimple,
 };
 
@@ -505,8 +511,13 @@ export function Settings({ user }: { user: User }) {
     { id: "persona", label: "Kişilik" },
     { id: "memory", label: "Hafıza" },
     { id: "style", label: "Stil" },
-    // Bildirim tercihi ofis geneli bir ayar — yalnızca ofis sahibi.
-    ...(user.role === "owner" ? [{ id: "notifications" as Tab, label: "Bildirimler" }] : []),
+    // Model sağlayıcıları ve bildirim tercihi ofis geneli ayarlar — yalnızca ofis sahibi.
+    ...(user.role === "owner"
+      ? [
+          { id: "ai" as Tab, label: "Yapay zeka" },
+          { id: "notifications" as Tab, label: "Bildirimler" },
+        ]
+      : []),
   ];
 
   return (
@@ -593,6 +604,7 @@ export function Settings({ user }: { user: User }) {
           {tab === "persona" && <PersonaSettings />}
           {tab === "memory" && <MemorySettings />}
           {tab === "style" && <StyleTab />}
+          {tab === "ai" && user.role === "owner" && <AiSettings />}
           {tab === "notifications" && user.role === "owner" && <MailPreferenceSettings />}
         </div>
       </div>

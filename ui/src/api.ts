@@ -865,3 +865,69 @@ export const api = {
   exportUrl: (docId: number, format: "docx" | "udf") =>
     `/api/documents/${docId}/export?format=${format}`,
 };
+
+// --- AI settings: the model gateway (llmr) management API, through the owner-only proxy. ---
+export type AiProviderType = {
+  id: string;
+  name: string;
+  credential: "required" | "optional" | "none";
+  default_base_url: string | null;
+  default_reach: string | null;
+  reach_required: boolean;
+  kinds: string[];
+};
+export type AiProvider = {
+  id: string;
+  type: string;
+  base_url: string | null;
+  reach: string | null;
+  enabled: boolean;
+  credential: string | null;
+  problem?: string;
+};
+export type AiModel = {
+  id: string;
+  route: string;
+  kind: string;
+  enabled: boolean;
+  listed: boolean | null;
+  capabilities_source: string | null;
+};
+export type AiRouteSet = { name: string; routes: string[]; usable?: string[]; unavailable?: { route: string; why: string }[] };
+export type AiTestResult = { provider: string; access: "ready" | "denied" | "unknown"; detail?: string; models_listed?: number };
+export type AiCost = { currency: string; amount: string };
+export type AiUsageRow = {
+  model: string | null;
+  requests: number;
+  tokens: { total: number };
+  cost: AiCost[];
+};
+export type AiUsage = { total: AiUsageRow & { cost_complete?: boolean }; data: AiUsageRow[]; cost_complete: boolean };
+
+const AI = "/api/settings/ai/manage";
+const json = (body: unknown): RequestInit => ({ body: JSON.stringify(body) });
+
+export const aiApi = {
+  providerTypes: () => request<{ data: AiProviderType[] }>(`${AI}/provider-types`).then((r) => r.data),
+  providers: () => request<{ data: AiProvider[] }>(`${AI}/providers`).then((r) => r.data),
+  addProvider: (body: { id: string; type: string; credential?: string; base_url?: string; reach?: string }) =>
+    request<AiProvider>(`${AI}/providers`, { method: "POST", ...json(body) }),
+  removeProvider: (id: string) => request<unknown>(`${AI}/providers/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  testProvider: (id: string) => request<AiTestResult>(`${AI}/providers/${encodeURIComponent(id)}/test`, { method: "POST" }),
+  models: (provider: string) =>
+    request<{ data: AiModel[]; listing_error: string | null }>(`${AI}/providers/${encodeURIComponent(provider)}/models`),
+  enableModel: (provider: string, model: string, kind: "chat" | "embedding", describe: boolean) =>
+    request<unknown>(`${AI}/providers/${encodeURIComponent(provider)}/models/${encodeURIComponent(model)}`, {
+      method: "PUT",
+      // A model llmr knows needs only enabling; one it does not (an OpenAI-compatible host) has to
+      // say what it can do, and Korkut's chat needs tools and streaming.
+      ...json(describe && kind === "chat"
+        ? { enabled: true, kind, capabilities: { tools: true, streaming: true } }
+        : { enabled: true, kind }),
+    }),
+  routes: () => request<{ data: AiRouteSet[] }>(`${AI}/routes`).then((r) => r.data),
+  setRoute: (name: string, routes: string[]) =>
+    request<AiRouteSet>(`${AI}/routes/${encodeURIComponent(name)}`, { method: "PUT", ...json({ routes }) }),
+  usage: (fromUnixSeconds: number) =>
+    request<AiUsage>(`${AI}/usage?group_by=model&from=${fromUnixSeconds}`),
+};

@@ -12,6 +12,7 @@ short final answer. A small configurable latency (MOCK_LATENCY_MS) simulates mod
 concurrency actually overlaps. No third-party dependencies (Python stdlib only).
 """
 
+import hashlib
 import json
 import os
 import random
@@ -83,6 +84,13 @@ class Handler(BaseHTTPRequestHandler):
         pass  # keep the load run quiet
 
     def do_GET(self):
+        # A model list, so a gateway (llmr) or a settings screen can discover what is served.
+        if self.path.rstrip("/").endswith("/models"):
+            self._json(200, {"object": "list", "data": [
+                {"id": "mock-chat", "object": "model", "owned_by": "mock"},
+                {"id": "mock-embed", "object": "model", "owned_by": "mock"},
+            ]})
+            return
         self._json(200, {"status": "ok", "service": "mock-llm"})
 
     def do_POST(self):
@@ -93,6 +101,21 @@ class Handler(BaseHTTPRequestHandler):
         # instead of retrying against a knowledge host that can't embed in the load stack.
         if path.endswith("/search"):
             self._json(200, {"hits": FAKE_HITS})
+            return
+
+        if path.endswith("/embeddings"):
+            try:
+                inputs = json.loads(raw or b"{}").get("input", [])
+            except json.JSONDecodeError:
+                inputs = []
+            inputs = [inputs] if isinstance(inputs, str) else inputs
+            # Deterministic: a text's vector depends only on the text.
+            data = [{"object": "embedding", "index": i,
+                     "embedding": [b / 255.0 for b in hashlib.sha256(str(t).encode()).digest()[:8]]}
+                    for i, t in enumerate(inputs)]
+            tokens = sum(len(str(t).split()) for t in inputs)
+            self._json(200, {"object": "list", "model": "mock-embed", "data": data,
+                             "usage": {"prompt_tokens": tokens, "total_tokens": tokens}})
             return
 
         if not path.endswith("/chat/completions"):

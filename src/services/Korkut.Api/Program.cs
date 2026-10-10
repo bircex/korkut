@@ -59,6 +59,26 @@ builder.Services.AddKorkutKnowledge(builder.Configuration["KORKUT_KNOWLEDGE_DB_U
 builder.Services.AddKorkutAi();
 builder.Services.AddKorkutAgent();
 
+// The model gateway's management API, behind the owner-only AI settings screen. Without
+// KORKUT_LLMR_URL the client has no base address and the screen answers 503.
+builder.Services.AddHttpClient(Korkut.Api.Controllers.AiSettingsController.HttpClientName, client =>
+{
+    var url = builder.Configuration["KORKUT_LLMR_URL"];
+    if (!string.IsNullOrWhiteSpace(url))
+    {
+        client.BaseAddress = new Uri(url.TrimEnd('/') + "/");
+    }
+
+    var token = builder.Configuration["KORKUT_LLMR_TOKEN"];
+    if (!string.IsNullOrWhiteSpace(token))
+    {
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+    }
+
+    // A provider test may make one real model call.
+    client.Timeout = TimeSpan.FromSeconds(150);
+});
+
 // Background jobs from the outbox: putting uploaded documents' text into the search index.
 builder.Services.AddKorkutBackgroundJobs(builder.Configuration);
 
