@@ -10,7 +10,7 @@ help:  ## Show this help
 build:  ## Restore + build the .NET solution
 	dotnet build $(SLN)
 
-test:  ## Run the full .NET test suite (needs Docker for Postgres/MinIO integration tests)
+test:  ## Run the full .NET test suite (needs Docker for the Postgres integration tests)
 	dotnet test $(SLN)
 
 run:  ## Start the API server on :8080

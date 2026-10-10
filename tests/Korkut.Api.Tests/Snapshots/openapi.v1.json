@@ -4799,6 +4799,28 @@
         ]
       }
     },
+    "/api/documents/files/{token}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Documents"
+        ]
+      }
+    },
     "/api/documents/{id}": {
       "delete": {
         "parameters": [

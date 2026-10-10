@@ -1,6 +1,7 @@
 using Korkut.Core;
 using Korkut.Contract.Documents;
 using Korkut.Contract.Documents.Requests;
+using Korkut.Documents.Storage;
 using Korkut.Security;
 using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +17,7 @@ namespace Korkut.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/documents")]
-public sealed class DocumentsController(IDocumentFileService documents) : ControllerBase
+public sealed class DocumentsController(IDocumentFileService documents, IServiceProvider services) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = Permissions.DocumentsRead)]
@@ -42,6 +43,29 @@ public sealed class DocumentsController(IDocumentFileService documents) : Contro
     [Authorize(Policy = Permissions.DocumentsRead)]
     public async Task<IActionResult> Download(Guid id, CancellationToken ct)
         => Ok(await documents.PresignDownloadAsync(id, ct));
+
+    /// <summary>
+    /// Serves one object named by a signed, short-lived link from <see cref="Download"/> when the
+    /// documents live on the filesystem: the token itself is the permission, exactly like an S3
+    /// presigned URL, which is why there is no session check here. It is served inline (the app
+    /// opens it for preview) and never cached, so a link that outlives its token reopens nothing.
+    /// </summary>
+    [HttpGet("files/{token}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ServeFile(string token, CancellationToken ct)
+    {
+        var store = services.GetService<FileSystemObjectStoreService>();
+        var signer = services.GetService<ObjectUrlSigner>();
+        if (store is null || signer is null || signer.Verify(token) is not { } target
+            || !await store.ExistsAsync(target.Bucket, target.Key, ct))
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "no-store";
+        var stream = await store.GetAsync(target.Bucket, target.Key, ct);
+        return File(stream, store.ContentTypeOf(target.Bucket, target.Key));
+    }
 
     [HttpPost("{id:guid}/links")]
     [Authorize(Policy = Permissions.DocumentsWrite)]

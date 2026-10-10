@@ -11,8 +11,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Testcontainers.PostgreSql" />
-      <PackageReference Include="Testcontainers.Minio" />
-    <PackageReference Include="Minio" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
 </ItemGroup>
   <ItemGroup>
