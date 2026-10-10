@@ -1,0 +1,135 @@
+---
+// Self-hosted Inter (KDM-032): no external font origin, so the CSP can forbid all
+// third-party assets and the page makes zero cross-origin requests.
+import "@fontsource-variable/inter";
+import "../styles/global.css";
+import { SITE, FAQS } from "../consts";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Kanonik yol, örn. "/". */
+  path?: string;
+  image?: string;
+}
+
+// Astro'nun `base` değeri (sondaki eğik çizgiyle): alt yolda "/korkut/", apex'te "/".
+// Tüm yerel bağlantılar buradan türetilir; alan adı değişince tek yerden çözülür.
+const base = import.meta.env.BASE_URL;
+
+const {
+  title = SITE.title,
+  description = SITE.description,
+  path = base,
+  image = `${base}og.png`,
+} = Astro.props;
+
+const canonical = new URL(path, SITE.url).toString();
+const ogImage = new URL(image, SITE.url).toString();
+
+// JSON-LD yapılandırılmış veri: arama motorları için zengin sonuç.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: SITE.name,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description: SITE.description,
+      url: canonical,
+      inLanguage: "tr-TR",
+      offers: {
+        "@type": "Offer",
+        availability: "https://schema.org/InStock",
+        priceCurrency: "TRY",
+      },
+      author: {
+        "@type": "Organization",
+        name: SITE.author,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: SITE.author,
+      },
+    },
+    {
+      "@type": "WebSite",
+      name: SITE.name,
+      url: canonical,
+      inLanguage: "tr-TR",
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content={SITE.keywords} />
+    <meta name="author" content={SITE.author} />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- İkonlar -->
+    <link rel="icon" type="image/svg+xml" href={`${base}korkut-logo.svg`} />
+    <link rel="apple-touch-icon" href={`${base}korkut-logo.svg`} />
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Korkut: avukatlar için yapay zeka asistanı" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Fontlar: self-hosted (@fontsource-variable/inter), harici istek yok. -->
+
+    <!-- Content Security Policy: yalnizca ayni kaynak. Tum script'ler harici
+         (/_astro/*.js) oldugundan 'unsafe-inline' script gerekmez. style-src, Astro'nun
+         inline scoped stilleri icin 'unsafe-inline' icerir. frame-ancestors / HSTS gibi
+         meta ile uygulanamayan yonergeler public/_headers ile servis edilir. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+
+    <link rel="sitemap" href={`${base}sitemap-index.xml`} />
+
+    <slot name="head" />
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(jsonLd)}
+    />
+  </head>
+  <body>
+    <a href="#icerik" class="visually-hidden">İçeriğe geç</a>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,105 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { CONTACT_EMAIL, LEGAL_UPDATED } from "../consts";
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout
+  title="Gizlilik Politikası · Korkut"
+  description="Korkut'un gizlilik politikası: büro izolasyonu, şifreleme, yapay zeka modellerine giden verinin rumuzlanması ve verileriniz üzerindeki kontrolünüz."
+  path={`${base}gizlilik/`}
+>
+  <Nav />
+  <main id="icerik" class="prose-page">
+    <div class="wrap prose">
+      <h1>Gizlilik Politikası</h1>
+      <p class="updated">Son güncelleme: {LEGAL_UPDATED}</p>
+
+      <p>
+        Korkut, hukuk büroları için geliştirilmiş bir yapay zeka asistanıdır.
+        Müvekkil verisi bir büronun en hassas varlığıdır; Platform baştan sona
+        bu ilkeyle tasarlanmıştır. Bu politika, verilerinizin nasıl korunduğunu
+        ve yapay zeka özellikleri kullanılırken verinin nereye gittiğini
+        açıklar.
+      </p>
+
+      <h2>1. Roller: veri sorumlusu ve veri işleyen</h2>
+      <p>
+        Büronuzun Platform'a girdiği müvekkil, dosya ve yazışma verileri
+        bakımından veri sorumlusu büronuzdur; Korkut bu veriler üzerinde
+        yalnızca hizmeti sunmak için, veri işleyen sıfatıyla işlem yapar.
+        Platform hesabınıza ilişkin veriler (ad soyad, e-posta) bakımından
+        veri sorumlusu Korkut'tur; ayrıntı için
+        <a href={`${base}kvkk/`}>KVKK Aydınlatma Metni</a>'ne bakın.
+      </p>
+
+      <h2>2. Büro izolasyonu</h2>
+      <p>
+        Her büro, veritabanı düzeyinde satır düzeyi güvenlik (row-level
+        security) ile ayrılır. Bir büronun sorguları yalnızca kendi verisine
+        erişebilir; bu kural uygulama kodunda değil, veritabanı katmanında
+        zorunlu kılınır. Hassas alanlar ayrıca şifrelenir. Hiçbir büro bir
+        diğerinin verisini göremez.
+      </p>
+
+      <h2>3. Yapay zeka modellerine giden veri</h2>
+      <p>
+        Sohbet, araştırma ve taslak üretimi için üçüncü taraf büyük dil
+        modellerinden yararlanılır. Modele gönderilen metinlerde isim, T.C.
+        kimlik numarası, telefon, e-posta, IBAN ve dosya numarası gibi
+        bilgiler, gönderim öncesinde en iyi çaba ilkesiyle takma değerlerle
+        değiştirilir (rumuzlama). Aynı rumuzlama, arama dizinine eklenen
+        içerikler için de uygulanır.
+      </p>
+      <div class="note">
+        Rumuzlama azaltıcı bir önlemdir, garanti değildir; serbest metin
+        içindeki her kişisel verinin yakalanacağı taahhüt edilemez. Bulut
+        altyapısının veya model sağlayıcısının yurt dışında olması halinde
+        KVKK md. 9 kapsamındaki değerlendirme büronun sorumluluğundadır.
+      </div>
+
+      <h2>4. Onaysız kalıcı işlem yok</h2>
+      <p>
+        Korkut, siz onaylamadan hiçbir kaydı oluşturmaz, değiştirmez ve hiçbir
+        mesajı göndermez. Her giden e-posta ve yazışma, gönderilmeden önce
+        onayınıza sunulur. Bu kural Platform'un çekirdeğinde yer alır ve
+        kişiselleştirme ayarlarıyla değiştirilemez.
+      </p>
+
+      <h2>5. Erişim ve izlenebilirlik</h2>
+      <p>
+        Platform'a erişim Google ile giriş veya e-posta ve parola ile yapılır;
+        yönetim paneli ayrıca zorunlu iki adımlı doğrulama kullanır. Büro
+        içinde rol tabanlı yetkilendirme uygulanır. Yapay zeka modeline
+        yapılan her çağrı, hangi büro adına ve ne zaman yapıldığıyla birlikte
+        kayıt altına alınır; bu kayıtlar da büro bazında izole tutulur.
+      </p>
+
+      <h2>6. Bu web sitesi</h2>
+      <p>
+        korkutai.com çerez kullanmaz, üçüncü taraf yazı tipi, betik, takip
+        veya analiz aracı yüklemez. Sayfalar yalnızca kendi sunucusundan
+        içerik çeker ve sıkı bir içerik güvenliği politikası (CSP) ile
+        yayımlanır.
+      </p>
+
+      <h2>7. Verilerinizin silinmesi</h2>
+      <p>
+        Büronuz hesabını kapattığında veya yazılı talepte bulunduğunda büro
+        verileri makul bir teknik süre içinde kalıcı olarak silinir. Silme ve
+        diğer talepler için
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> adresine
+        yazabilirsiniz.
+      </p>
+
+      <h2>8. Değişiklikler</h2>
+      <p>
+        Bu politika gerektiğinde güncellenir; güncel sürüm her zaman bu
+        sayfada yayımlanır.
+      </p>
+    </div>
+  </main>
+  <Footer />
+</Layout>

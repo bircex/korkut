@@ -1,0 +1,36 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { REGISTER_URL, DEMO_PATH } from "../consts";
+
+// Eski "Demo iste" bağlantıları kırılmasın: /demo artık uygulamanın kayıt sayfasına
+// yönlendirir (Ücretsiz Başla). Meta refresh CSP'ye takılmaz (inline script yok);
+// görünen bağlantı yönlendirme çalışmazsa yedektir.
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout
+  title="Ücretsiz Başla"
+  description="Büronuzu ücretsiz kaydedin; onaydan sonra Google ile giriş yaparak dakikalar içinde başlayın."
+  path={`${base}${DEMO_PATH}`}
+>
+  <meta slot="head" http-equiv="refresh" content={`0;url=${REGISTER_URL}`} />
+  <main id="icerik">
+    <section class="redirect">
+      <div class="wrap">
+        <h1>Ücretsiz Başla</h1>
+        <p>Sizi kayıt sayfasına yönlendiriyoruz…</p>
+        <p><a class="btn btn-primary" href={REGISTER_URL}>Kayıt sayfasına git</a></p>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .redirect {
+    display: grid;
+    place-items: center;
+    min-height: 60vh;
+    text-align: center;
+    padding: 48px 0;
+  }
+</style>

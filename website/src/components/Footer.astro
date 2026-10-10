@@ -1,0 +1,155 @@
+---
+import { REGISTER_URL, CONTACT_EMAIL, APP_URL } from "../consts";
+const year = 2026;
+const base = import.meta.env.BASE_URL;
+
+const columns = [
+  {
+    title: "Ürün",
+    links: [
+      { href: `${base}#ozellikler`, label: "Özellikler" },
+      { href: `${base}#kaynaklar`, label: "Veri kaynakları" },
+      { href: `${base}guvenlik/`, label: "Güvenlik" },
+      { href: `${base}#sss`, label: "SSS" },
+    ],
+  },
+  {
+    title: "Hesap",
+    links: [
+      { href: APP_URL, label: "Giriş yap" },
+      { href: REGISTER_URL, label: "Ücretsiz Başla" },
+      { href: `mailto:${CONTACT_EMAIL}`, label: "İletişim" },
+    ],
+  },
+  {
+    title: "Hukuki",
+    links: [
+      { href: `${base}kvkk/`, label: "KVKK Aydınlatma Metni" },
+      { href: `${base}gizlilik/`, label: "Gizlilik Politikası" },
+      { href: `${base}kosullar/`, label: "Kullanım Koşulları" },
+    ],
+  },
+];
+---
+
+<footer>
+  <div class="wrap foot">
+    <div class="foot-brand-col">
+      <div class="foot-brand">
+        <img
+          src={`${base}korkut-logo.svg`}
+          alt="Korkut logosu"
+          width="28"
+          height="28"
+        />
+        <span>Korkut</span>
+      </div>
+      <p class="muted tagline">
+        Hukuk büroları için, her büroyu izole tutan yapay zeka asistanı.
+      </p>
+      <a class="muted mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+    </div>
+
+    {
+      columns.map((col) => (
+        <nav class="foot-col" aria-label={col.title}>
+          <b>{col.title}</b>
+          {col.links.map((l) => (
+            <a href={l.href}>{l.label}</a>
+          ))}
+        </nav>
+      ))
+    }
+  </div>
+  <div class="wrap foot-bottom">
+    <span class="muted">© {year} Korkut</span>
+    <span class="muted">
+      Korkut hukuki tavsiye vermez; ayrıntılar için
+      <a class="terms" href={`${base}kosullar/`}>Kullanım Koşulları</a>.
+    </span>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 52px 0 32px;
+    background: var(--bg-soft);
+  }
+  .foot {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .foot {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .foot {
+      grid-template-columns: 1fr;
+    }
+  }
+  .foot-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 17px;
+  }
+  .foot-brand img {
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    padding: 2px;
+    background: #fff;
+  }
+  .tagline {
+    margin: 12px 0 8px;
+    max-width: 280px;
+  }
+  .mail:hover {
+    color: var(--ink);
+  }
+  .foot-col {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .foot-col b {
+    font-size: 13.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .foot-col a {
+    color: var(--muted);
+    font-size: 14.5px;
+    font-weight: 500;
+  }
+  .foot-col a:hover {
+    color: var(--ink);
+  }
+  .muted {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .foot-bottom {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 36px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .terms {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .terms:hover {
+    color: var(--ink);
+  }
+</style>

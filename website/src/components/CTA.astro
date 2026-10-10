@@ -1,0 +1,54 @@
+---
+import { REGISTER_URL, APP_URL } from "../consts";
+const base = import.meta.env.BASE_URL;
+---
+
+<section id="iletisim">
+  <div class="wrap">
+    <div class="cta">
+      <h2>Büronuza Korkut'u getirin</h2>
+      <p>
+        Bulutta dakikalar içinde başlayın. Büronuzu ücretsiz kaydedin;
+        onaydan sonra Google ile giriş yaparak hemen kullanmaya başlayın.
+      </p>
+      <div class="cta-row">
+        <a href={REGISTER_URL} class="btn btn-primary btn-lg">Ücretsiz Başla</a>
+        <a href={APP_URL} class="btn btn-ghost btn-lg">Giriş yap</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    background: linear-gradient(135deg, #0a0a0a, #1f1f1f);
+    border-radius: 24px;
+    padding: 64px 40px;
+    text-align: center;
+    color: #fff;
+  }
+  .cta h2 {
+    color: #fff;
+  }
+  .cta p {
+    color: #c7c7c7;
+    font-size: 18px;
+    max-width: 560px;
+    margin: 0 auto 32px;
+  }
+  .cta-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cta .btn-ghost {
+    background: transparent;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .cta .btn-ghost:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+  }
+</style>

@@ -1,0 +1,247 @@
+---
+import { REGISTER_URL, APP_URL } from "../consts";
+const base = import.meta.env.BASE_URL;
+---
+
+<section class="hero" id="icerik">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <img
+      class="hero-logo"
+      src={`${base}korkut-logo.png`}
+      alt="Korkut"
+      width="84"
+      height="84"
+    />
+
+    <h1>
+      Hukuk büronuz için{" "}<span class="hl">tamamen ücretsiz</span> yapay zeka asistanı
+    </h1>
+
+    <p class="lead">
+      Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya ve
+      duruşmaları takip eder, yazışmaları yürütür. Hepsi tek bir sohbetten,
+      bulutta her büro tamamen izole ve verileriniz güvende kalır.
+    </p>
+
+    <div class="cta-row">
+      <a href={REGISTER_URL} class="btn btn-primary btn-lg btn-round">Ücretsiz Başla</a>
+      <a href={APP_URL} class="btn btn-ghost btn-lg btn-round">Giriş yap</a>
+    </div>
+
+    <p class="hero-note">
+      Her büro izole · Onaysız kalıcı işlem yok · Dakikalar içinde başlayın
+    </p>
+
+    <!-- Büyük ürün çerçevesi: gerçek ekran görüntüsü gelene kadar sohbet demosu -->
+    <div class="product" aria-hidden="true">
+      <div class="product-bar">
+        <span></span><span></span><span></span>
+        <div class="product-url">app.korkutai.com</div>
+      </div>
+      <div class="product-body">
+        <div class="mock-top">
+          <span class="mock-ava">K</span>
+          <div>
+            <div class="mock-name">Korkut</div>
+            <div class="mock-sub">Tek kimlik · arka planda uzmanlık modülleri</div>
+          </div>
+        </div>
+        <div class="mock-body">
+          <div class="msg user">
+            Kira tespitiyle ilgili güncel Yargıtay içtihadını tara ve bir cevap
+            dilekçesi taslağı hazırla.
+          </div>
+          <div class="msg bot">
+            Yargıtay 3. HD'nin <b>2023/4512 K.</b> ve 2 emsal kararını buldum,
+            ilgili mevzuatla birlikte özetledim. Bu içtihatlara dayanan cevap
+            dilekçesi taslağını hazırladım.
+            <div class="approve">
+              <span class="chip ok">✓ Onayla &amp; kaydet</span>
+              <span class="chip no">Düzeltme iste</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding: 72px 0 40px;
+    text-align: center;
+    overflow: hidden;
+  }
+  /* Açık tema doku: soluk nokta ızgarası, merkeze doğru yumuşayan maske. */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #dfe1e6 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%);
+    pointer-events: none;
+  }
+  .wrap {
+    position: relative;
+  }
+  .hero-logo {
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    margin: 0 auto 20px;
+    display: block;
+  }
+  h1 {
+    font-size: clamp(38px, 5.4vw, 60px);
+    line-height: 1.06;
+    letter-spacing: -0.028em;
+    font-weight: 800;
+    max-width: 900px;
+    margin: 0 auto 22px;
+  }
+  h1 .hl {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+  }
+  .lead {
+    font-size: clamp(17px, 2vw, 19px);
+    color: var(--muted);
+    max-width: 660px;
+    margin: 0 auto 32px;
+  }
+  .cta-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-round {
+    border-radius: 999px;
+  }
+  .hero-note {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  /* Büyük ürün çerçevesi */
+  .product {
+    max-width: 980px;
+    margin: 56px auto 0;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .product-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+  .product-bar span {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--line-strong);
+  }
+  .product-url {
+    margin: 0 auto;
+    font-size: 12.5px;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 14px;
+  }
+  .product-body {
+    background: var(--soft);
+  }
+  .mock-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+  }
+  .mock-ava {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+  }
+  .mock-name {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .mock-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .mock-body {
+    padding: 26px 24px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14.5px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.bot b {
+    color: var(--ink);
+  }
+  .approve {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .chip {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+  .chip.ok {
+    background: var(--ink);
+    color: #fff;
+  }
+  .chip.no {
+    background: var(--soft);
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  @media (max-width: 640px) {
+    .msg {
+      max-width: 88%;
+    }
+  }
+</style>
