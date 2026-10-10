@@ -47,7 +47,14 @@ Korkut; `docker compose down -v` also deletes all data.
 Korkut listens on `127.0.0.1` only. Set `KORKUT_BIND_ADDRESS=0.0.0.0` to reach it from other
 machines on your network.
 
-## Not there yet
+## Choosing the AI models
 
-Choosing the AI model from the app's settings is in progress; until then, set a model key in
-`.env`. See [OPEN_SOURCE_PLAN.md](OPEN_SOURCE_PLAN.md).
+Every model call goes through the model gateway (llmr) that the installer starts. After the first
+sign-in, the office owner opens **Ayarlar → Yapay zeka**, adds a provider (a cloud API key, or a
+local server such as Ollama or LM Studio at `http://host.docker.internal:<port>/v1`), tests it, and
+picks the chat model and, for searching uploaded documents, an embedding model. Provider keys are
+kept sealed in the gateway, never in `.env`, and the same screen shows the last 30 days' usage and
+cost.
+
+Documents uploaded before an embedding model was chosen are not searchable until they are indexed
+again.

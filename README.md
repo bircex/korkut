@@ -25,8 +25,8 @@ identity.
   arbitration).
 - **Drafting** — petition/contract drafting in a Canvas editor with DOCX/UDF export.
 - **Correspondence** — propose-and-confirm e-mail.
-- **Local-first** — point Korkut at a local OpenAI-compatible model (e.g. LM Studio,
-  Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
+- **Local-first** — in Ayarlar → Yapay zeka, point Korkut at a local OpenAI-compatible model
+  (e.g. LM Studio, Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
   passed through **best-effort** redaction first — a mitigation, **not a guarantee**
   (see [DISCLAIMER.md](DISCLAIMER.md)).
 - **Self-hosted** — e-mail and password sign-in, optionally Google; each install serves one office. Overall

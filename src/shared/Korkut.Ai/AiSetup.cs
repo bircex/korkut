@@ -3,63 +3,45 @@ using Korkut.Core;
 using Korkut.Pii;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Http.Resilience;
-using Polly;
 
 namespace Korkut.Ai;
 
 /// <summary>
-/// The SHARED AI runtime both AI-plane hosts need: the environment adapter + ported RuntimeConfig,
-/// the Turkish PII redactor (chat masking in the Agent host + document masking in Knowledge
-/// ingestion), the resilient "ai" HttpClient, and the embedder (Knowledge/RAG). The chat side
-/// (providers, router, <see cref="IChatModel"/>) lives in the Agent host's own ChatSetup, so this
-/// layer carries no chat-model concern. When no embedding endpoint is configured a disabled embedder
-/// reports 503 and the host still boots. Called by the Agent and Knowledge hosts.
+/// The shared AI runtime: the environment adapter and <see cref="RuntimeConfig"/>, the Turkish PII
+/// redactor (chat masking and document masking before indexing), the "ai" HttpClient for the model
+/// gateway, and the embedder for document search. The chat side (the provider and the
+/// <see cref="Korkut.Contract.Agent.Model.IChatModelService"/> facade) is registered by the Agent
+/// model module. Without a gateway the embedder is disabled (503 on use) and the host still boots.
 /// </summary>
 public static class AiSetup
 {
+    /// <summary>The route set name document search embeds with.</summary>
+    public const string EmbedRoute = "korkut-embed";
+
     public static IServiceCollection AddKorkutAi(this IServiceCollection services)
     {
         services.TryAddSingleton<IEnvironment, SystemEnvironment>();
         services.TryAddSingleton<RuntimeConfig>();
 
-        // Startup-time inspection of the env to decide whether a real embedder is configured.
-        var env = new SystemEnvironment();
-        var config = new RuntimeConfig(env);
-
-        // Turkish PII redactor — masks cloud-bound chat requests (Agent host) and document text
-        // before it is indexed (Knowledge host). Shared, so it is registered here.
+        // Turkish PII redactor: masks model-bound chat requests and document text before it is
+        // indexed. Shared, so it is registered here.
         services.TryAddSingleton<IPiiRedactorService, PiiRedactorService>();
 
-        // Shared HTTP client for AI backends (embedder + the Agent's chat providers) with a
-        // retry (backoff+jitter) + circuit-breaker handler. No aggressive attempt timeout — model
-        // calls legitimately run for tens of seconds.
-        services.AddHttpClient("ai").AddResilienceHandler("korkut-ai", Resilience);
+        // The client for the model gateway (llmr), used by the chat provider and the embedder. No
+        // retry or circuit breaker here: llmr retries, falls back across routes and rests failing
+        // ones itself, and a second layer would multiply every retry. The timeout leaves room for a
+        // long draft.
+        services.AddHttpClient("ai", client => client.Timeout = TimeSpan.FromMinutes(5));
 
-        // Embeddings (Knowledge/RAG): a real OpenAI-compatible adapter when an endpoint is
-        // configured (prefer a local Ollama/TEI URL), otherwise disabled (503 on use).
-        if (config.HasEmbedding)
-        {
-            services.AddScoped<IEmbedder>(sp => new OpenAiCompatibleEmbedder(
+        // Embeddings for document search go to llmr's korkut-embed route set, chosen in the AI
+        // settings. Without a gateway, embeddings are disabled (503 on use).
+        services.AddScoped<IEmbedder>(sp => sp.GetRequiredService<RuntimeConfig>().LlmrUrl is { } url
+            ? new OpenAiCompatibleEmbedder(
                 sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),
                 sp.GetRequiredService<IEnvironment>(),
-                config.EmbeddingModel, config.EmbeddingBaseUrl!, "KORKUT_EMBEDDING_API_KEY"));
-        }
-        else
-        {
-            services.AddScoped<IEmbedder, DisabledEmbedder>();
-        }
+                EmbedRoute, $"{url}/v1", "KORKUT_LLMR_TOKEN")
+            : new DisabledEmbedder());
 
         return services;
     }
-
-    // Retry (exponential backoff + jitter) + circuit-breaker around backend calls.
-    internal static void Resilience(ResiliencePipelineBuilder<HttpResponseMessage> builder) => builder
-        .AddRetry(new HttpRetryStrategyOptions
-        {
-            MaxRetryAttempts = 3,
-            BackoffType = DelayBackoffType.Exponential,
-            UseJitter = true,
-        })
-        .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions());
 }
