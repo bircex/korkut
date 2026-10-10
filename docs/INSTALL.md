@@ -11,18 +11,26 @@ Korkut runs locally with Docker Compose: one office, on its own machine.
 From the repository root:
 
 ```bash
-docker compose up -d --build
+./install.sh
 ```
 
-Then open <http://localhost:8090>. No `.env` is needed: every setting has a local default, and the
-signing and 2FA keys are generated on first start.
+On Windows, in PowerShell: `.\install.ps1`.
+
+The installer writes the model gateway's two secrets to `.env` (once; running it again never
+changes them) and starts everything with `docker compose up -d --build`. Then open
+<http://localhost:8090>. Every other setting has a local default, and the app's signing and 2FA
+keys are generated on first start.
+
+**Keep a copy of `.env`.** `LLMR_MASTER_KEY` in it seals the AI provider keys you enter; without
+it they cannot be read back.
 
 The first time, Korkut asks for the office's name and creates the first account, which runs the
 office (owner). Invite the other members from the settings afterwards. This works once: after
 that, the page is the ordinary sign-in.
 
-To change a setting (the port, a model key, Google sign-in, SMTP), copy `.env.example` to `.env`,
-uncomment the line and run `docker compose up -d` again.
+To change a setting (the port, a model key, Google sign-in, SMTP), add it to `.env` (see
+`.env.example`) and run `./install.sh` again. Updating Korkut is the same: pull the new version
+and run the installer.
 
 ## Where your data lives
 
@@ -31,8 +39,9 @@ uncomment the line and run `docker compose up -d` again.
 | `pgdata` | The database |
 | `objects` | Uploaded documents |
 | `secrets` | The generated `KORKUT_SECRET` and `KORKUT_TOTP_KEY` |
+| `llmr-data` | The model gateway: providers, models, routes and usage, keys sealed with `LLMR_MASTER_KEY` |
 
-All three survive rebuilds and upgrades. Back them up together. `docker compose down` stops
+All of them survive rebuilds and upgrades. Back them up together with `.env`. `docker compose down` stops
 Korkut; `docker compose down -v` also deletes all data.
 
 Korkut listens on `127.0.0.1` only. Set `KORKUT_BIND_ADDRESS=0.0.0.0` to reach it from other

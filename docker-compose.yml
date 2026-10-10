@@ -1,8 +1,11 @@
-# Korkut, installed locally: `docker compose up -d --build` and open http://localhost:8090. No .env
-# is needed; every setting has a local default and the secrets are generated on first start.
+# Korkut, installed locally: run ./install.sh (install.ps1 on Windows), which writes the model
+# gateway's secrets to .env once and runs `docker compose up -d --build`; then open
+# http://localhost:8090. Every other setting has a local default, and the app's own secrets are
+# generated on first start.
 #
 # One `korkut` container serves the whole app on :8090 (KORKUT_HTTP_PORT). Beside it,
-# ocr and kikproxy are internal helpers with native or TLS needs of their own. One Postgres
+# ocr and kikproxy are internal helpers with native or TLS needs of their own, and llmr is the
+# gateway every AI model call goes through. One Postgres
 # cluster holds the three schemas (operational / korkut_agent / korkut_knowledge); PgBouncer
 # (transaction pooling) fronts it for the app, while the one-shot migrator connects directly
 # (session mode) to apply schema. Grafana LGTM is optional (`--profile ops`). Secrets and
@@ -123,7 +126,10 @@ services:
       # Behind a reverse proxy: Secure cookies over HTTPS, and the proxy's real-client header.
       KORKUT_SECURE_COOKIES: ${KORKUT_SECURE_COOKIES:-}
       KORKUT_CLIENT_IP_HEADER: ${KORKUT_CLIENT_IP_HEADER:-}
-      # Models. Replaced by the llmr gateway in the next phase.
+      # The model gateway. Chat and embeddings move onto it as the settings screen lands; until
+      # then the provider keys below still drive them.
+      KORKUT_LLMR_URL: http://llmr:8080
+      KORKUT_LLMR_TOKEN: ${LLMR_TOKEN:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
@@ -144,6 +150,8 @@ services:
         condition: service_completed_successfully
       pgbouncer:
         condition: service_started
+      llmr:
+        condition: service_healthy
     volumes:
       - objects:/var/lib/korkut/objects
       - secrets:/var/lib/korkut/secrets
@@ -175,9 +183,27 @@ services:
       dockerfile: docker/Dockerfile.kikproxy
     restart: unless-stopped
 
+  # The model gateway (github.com/bircex/llmr): holds the AI provider keys, which models are
+  # enabled and which names route to them, and records usage and cost. Korkut calls it at
+  # http://llmr:8080 with LLMR_TOKEN; nothing is published, so nothing else can reach it.
+  # Pinned by digest: llmr publishes only :latest.
+  llmr:
+    image: ghcr.io/bircex/llmr@sha256:886fa0409577272b15d8e49dd6a9ec0417ebb2c7411b93dcb4e5f002f8755c02
+    environment:
+      LLMR_MASTER_KEY: ${LLMR_MASTER_KEY:?LLMR_MASTER_KEY is not set; run ./install.sh}
+      LLMR_TOKEN: ${LLMR_TOKEN:?LLMR_TOKEN is not set; run ./install.sh}
+    volumes:
+      - llmr-data:/var/lib/llmr
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
 volumes:
   pgdata:
   # Uploaded documents. Back this up together with pgdata: the database names every object here.
   objects:
   # Generated KORKUT_SECRET / KORKUT_TOTP_KEY. Losing it signs everyone out and voids 2FA setups.
   secrets:
+  # The gateway's providers, models, routes and usage; provider keys sealed with LLMR_MASTER_KEY.
+  llmr-data:

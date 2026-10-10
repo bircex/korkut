@@ -36,7 +36,7 @@ identity.
 ## Quick start
 
 ```bash
-docker compose up -d --build     # then open http://localhost:8090
+./install.sh     # Windows: .\install.ps1; then open http://localhost:8090
 ```
 
 No configuration is needed; see **[docs/INSTALL.md](docs/INSTALL.md)** for settings and where data
@@ -70,7 +70,7 @@ Start with the **[documentation index](docs/README.md)**:
 
 | Page | What it covers |
 |---|---|
-| [INSTALL](docs/INSTALL.md) | Native (macOS / Linux / Windows) and Docker installation |
+| [INSTALL](docs/INSTALL.md) | Installing and updating with the installer, settings, where data lives |
 | [DEVELOPMENT](docs/DEVELOPMENT.md) | Dev loop: run, test, lint, build, CLIs, adding a tool |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | The single-office model, the matter domain, and the agentic core |
 | [GLOSSARY](docs/GLOSSARY.md) | Turkish legal & product terms in English |
