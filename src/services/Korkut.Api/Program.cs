@@ -11,6 +11,7 @@ using Korkut.Core;
 using Korkut.Agent.Persistence;
 using Korkut.Ai;
 using Korkut.Api;
+using Korkut.Api.Jobs;
 using Korkut.Api.Setup;
 using Korkut.Knowledge;
 using OpenTelemetry.Trace;
@@ -57,6 +58,9 @@ builder.Services.AddKorkutKnowledge(builder.Configuration["KORKUT_KNOWLEDGE_DB_U
     ?? throw new InvalidOperationException("KORKUT_DB_URL is required."));
 builder.Services.AddKorkutAi();
 builder.Services.AddKorkutAgent();
+
+// Background jobs from the outbox: putting uploaded documents' text into the search index.
+builder.Services.AddKorkutBackgroundJobs(builder.Configuration);
 
 // Access-token auth + deny-by-default permission policies (KDM-018/019).
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);

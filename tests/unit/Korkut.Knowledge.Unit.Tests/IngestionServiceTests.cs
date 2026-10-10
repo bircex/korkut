@@ -16,9 +16,9 @@ public class IngestionServiceTests
         var chunker = new RecordingChunker();
         var svc = new IngestionService(
             chunker, new FakeEmbedder(), new RecordingVectorStore(), new PassthroughRedactor(),
-            new InlineUnitOfWork(), new FakeCurrentUser());
+            new InlineUnitOfWork());
 
-        await svc.IngestAsync(Guid.CreateVersion7(), "before\0after", default);
+        await svc.IngestAsync(Guid.CreateVersion7(), Guid.CreateVersion7(), "before\0after", default);
 
         Assert.Single(chunker.ReceivedTexts);
         Assert.DoesNotContain('\0', chunker.ReceivedTexts[0]);
@@ -66,12 +66,4 @@ public class IngestionServiceTests
         public Task<T> InTenantScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default) => work();
     }
 
-    private sealed class FakeCurrentUser : ICurrentUser
-    {
-        public Guid OfficeId => Guid.CreateVersion7();
-
-        public Guid UserId => Guid.CreateVersion7();
-
-        public IReadOnlySet<string> Permissions => new HashSet<string>();
-    }
 }

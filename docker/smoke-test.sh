@@ -38,11 +38,10 @@ trap cleanup EXIT
 
 echo "== build =="
 docker build -q -f docker/Dockerfile.api      -t korkut-api:$TAG .      >/dev/null; check $? "api image builds"
-docker build -q -f docker/Dockerfile.worker   -t korkut-worker:$TAG .   >/dev/null; check $? "worker image builds"
 docker build -q -f docker/Dockerfile.migrator -t korkut-migrator:$TAG . >/dev/null; check $? "migrator image builds"
 
 echo "== hardening =="
-for img in korkut-api korkut-worker korkut-migrator; do
+for img in korkut-api korkut-migrator; do
   u=$(docker image inspect $img:$TAG --format '{{.Config.User}}')
   [ "$u" = "app" ]; check $? "$img runs as non-root user ('$u')"
 done

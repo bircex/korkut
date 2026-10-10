@@ -14,7 +14,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\services\Korkut.Api\Korkut.Api.csproj" />
-    <ProjectReference Include="..\..\src\services\Korkut.Worker\Korkut.Worker.csproj" />
     <ProjectReference Include="..\..\src\services\Korkut.Migrator\Korkut.Migrator.csproj" />
     <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
   </ItemGroup>

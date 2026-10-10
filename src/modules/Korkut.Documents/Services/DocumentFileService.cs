@@ -6,6 +6,7 @@ using Korkut.Contract.Documents.Storage;
 using Korkut.Contract.Upload.SafeUpload;
 using Korkut.Documents.Repositories;
 using Korkut.Documents.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Korkut.Documents.Services;
 
@@ -14,14 +15,16 @@ namespace Korkut.Documents.Services;
 /// that matter are the aggregate's, not this service's: a document is downloadable only
 /// once it is clean, and a held document cannot be deleted.
 /// </summary>
-public sealed class DocumentFileService(
+public sealed partial class DocumentFileService(
     IDocumentRepository repository,
     ISafeUploadService upload,
     IObjectStoreService objectStore,
     IDocumentRelationService relations,
     IDocumentLifecycleService lifecycle,
     IUnitOfWork unitOfWork,
-    ICurrentUser currentUser) : IDocumentFileService
+    ICurrentUser currentUser,
+    ExtractionService extraction,
+    ILogger<DocumentFileService> logger) : IDocumentFileService
 {
     /// <summary>How long a download URL stays valid — long enough to click, short enough to leak nothing.</summary>
     private TimeSpan DownloadUrlLifetime { get; init; } = TimeSpan.FromMinutes(2);
@@ -30,8 +33,9 @@ public sealed class DocumentFileService(
         => InScopeAsync(async office =>
             (IReadOnlyList<DocumentResponse>)(await repository.ListAsync(office, matterId, ct)).Select(ToResponse).ToList(), ct);
 
-    public Task<DocumentResponse> UploadAsync(Stream content, string filename, CancellationToken ct = default)
-        => InScopeAsync(async office =>
+    public async Task<DocumentResponse> UploadAsync(Stream content, string filename, CancellationToken ct = default)
+    {
+        var (response, clean) = await InScopeAsync(async office =>
         {
             var result = await upload.IngestAsync(office, currentUser.UserId, content, filename, ct);
             if (result.DocumentId is not { } id)
@@ -41,8 +45,38 @@ public sealed class DocumentFileService(
             }
 
             var document = await repository.FindActiveAsync(office, id, ct) ?? throw NotFound();
-            return ToResponse(document);
+            return (ToResponse(document), result.Status == SafeUploadStatus.Clean);
         }, ct);
+
+        if (clean)
+        {
+            await ExtractAsync(response.Id, ct);
+        }
+
+        return response;
+    }
+
+    /// <summary>
+    /// Reads a freshly clean document's text, which queues it for the search index. It runs here,
+    /// in the uploader's request, because a scanned file goes to OCR and OCR is only ever done for
+    /// a caller allowed to read the document; the indexing that follows needs no caller. It runs
+    /// after the upload has committed and is best-effort: a failure leaves a stored, downloadable
+    /// document that is simply not searchable yet.
+    /// </summary>
+    private async Task ExtractAsync(Guid documentId, CancellationToken ct)
+    {
+        try
+        {
+            await InScopeAsync(office => extraction.ExtractAsync(office, documentId, ct), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ExtractionFailed(logger, documentId, ex);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Text extraction failed for document {DocumentId}; it stays unsearchable.")]
+    private static partial void ExtractionFailed(ILogger logger, Guid documentId, Exception ex);
 
     public Task<PresignResponse> PresignDownloadAsync(Guid documentId, CancellationToken ct = default)
         => InScopeAsync(async office =>
