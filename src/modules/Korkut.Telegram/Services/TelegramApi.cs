@@ -76,7 +76,10 @@ internal sealed class TelegramApi(IHttpClientFactory factory) : ITelegramApi
         HttpResponseMessage response;
         try
         {
-            response = await client.PostAsJsonAsync($"./bot{token}/{method}", body, ct);
+            // Buffered with a Content-Length rather than chunked: proxies in front of a local
+            // install handle it more reliably.
+            using var content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json");
+            response = await client.PostAsync($"./bot{token}/{method}", content, ct);
         }
         catch (HttpRequestException)
         {

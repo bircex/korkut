@@ -11,10 +11,13 @@ public class TelegramApiTests
     {
         public List<string> Paths { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        public List<(long? Length, string Body)> Bodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             Paths.Add(request.RequestUri!.AbsolutePath);
-            return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            Bodies.Add((request.Content!.Headers.ContentLength, await request.Content.ReadAsStringAsync(ct)));
+            return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
     }
 
@@ -37,6 +40,18 @@ public class TelegramApiTests
         Assert.Equal("merhaba", update.Message!.Text);
         Assert.Equal("elif", update.Message.From!.Username);
         Assert.Equal("/bot123:abc/getUpdates", Assert.Single(stub.Paths));
+    }
+
+    [Fact]
+    public async Task A_message_is_sent_as_plain_text_with_a_length()
+    {
+        var stub = new Stub(HttpStatusCode.OK, """{"ok":true,"result":{"message_id":3}}""");
+
+        await new TelegramApi(new Factory(stub)).SendMessageAsync("123:abc", 42, "Süre 2 hafta");
+
+        var (length, body) = Assert.Single(stub.Bodies);
+        Assert.NotNull(length);
+        Assert.Equal("""{"chat_id":42,"text":"S\u00FCre 2 hafta"}""", body);
     }
 
     [Fact]
