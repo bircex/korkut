@@ -60,4 +60,5 @@ export {
   Calculator,
   // Sohbette araç çağrısı kartı (ToolCallCard)
   Wrench,
+  Cpu,
 } from "@phosphor-icons/react";

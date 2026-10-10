@@ -63,6 +63,8 @@ async function parseError(res: Response): Promise<ApiError> {
   try {
     const body = await res.json();
     if (body?.detail) detail = body.detail;
+    // The model gateway's own envelope, passed through by the AI settings screen's proxy.
+    else if (body?.error?.message) detail = body.error.message;
   } catch {
     /* keep default */
   }
