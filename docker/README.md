@@ -6,7 +6,6 @@ the repository root.
 | Image | Dockerfile | Base (runtime) | Shape |
 |---|---|---|---|
 | `korkut-api` | `Dockerfile.api` | `aspnet:10.0-noble-chiseled` | the app: API, assistant, knowledge index and the React UI, port 8080 |
-| `korkut-worker` | `Dockerfile.worker` | `runtime:10.0-noble-chiseled` | long-running outbox processor |
 | `korkut-migrator` | `Dockerfile.migrator` | `runtime:10.0-noble-chiseled` | one-shot; applies migrations then exits |
 
 ## Hardening properties
@@ -22,15 +21,14 @@ the repository root.
 - **No baked config/secrets** — runtime configuration comes only from the
   environment; `.dockerignore` keeps `.env*` (except `.env.example`), `bin/`,
   `obj/`, `tests/` and docs out of the context.
-- **Graceful shutdown** — the .NET Generic Host stops on SIGTERM; the API drains
-  and the worker honours its stopping token (KDM-008). Verified in the smoke test.
+- **Graceful shutdown** — the .NET Generic Host stops on SIGTERM; the app drains requests and
+  its background-job runner honours the stopping token (KDM-008). Verified in the smoke test.
 
 ## Build & run
 
 ```bash
 cd dotnet
 docker build -f docker/Dockerfile.api      -t korkut-api      .
-docker build -f docker/Dockerfile.worker   -t korkut-worker   .
 docker build -f docker/Dockerfile.migrator -t korkut-migrator .
 
 # API, hardened runtime flags:

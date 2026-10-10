@@ -20,7 +20,7 @@ public class KnowledgeServiceTests(KnowledgeFixture fixture)
     private async Task<int> IngestAsync(Guid office, Guid documentId, string text)
     {
         await using var scope = fixture.ScopeFor(office);
-        return await scope.ServiceProvider.GetRequiredService<IIngestionService>().IngestAsync(documentId, text);
+        return await scope.ServiceProvider.GetRequiredService<IIngestionService>().IngestAsync(office, documentId, text);
     }
 
     private async Task<Guid> IngestNewAsync(Guid office, string text)

@@ -61,6 +61,7 @@ public static partial class StorageSetup
         services.AddScoped<DocumentRelationService>();
         services.AddScoped<IDocumentRelationService>(sp => sp.GetRequiredService<DocumentRelationService>());
         services.AddScoped<ExtractionService>();
+        services.AddScoped<DocumentTextService>();
         services.AddScoped<Korkut.Documents.Repositories.IDocumentRepository, Korkut.Documents.Repositories.DocumentRepository>();
         services.AddScoped<IDocumentFileService, DocumentFileService>();
 

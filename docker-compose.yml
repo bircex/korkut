@@ -149,20 +149,6 @@ services:
       - secrets:/var/lib/korkut/secrets
     restart: unless-stopped
 
-  worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
-    environment:
-      <<: *app-env
-      KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD:-korkut-app-local}@pgbouncer:6432/korkut
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
-      pgbouncer:
-        condition: service_started
-    restart: unless-stopped
-
   ocr:
     build:
       context: .

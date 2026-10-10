@@ -7,8 +7,8 @@ system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```
 src/
-  services/       hosts: Korkut.Api (the app), Korkut.Ocr, Korkut.KikProxy, Korkut.Worker,
-                  Korkut.Migrator, and Korkut.Web (shared web plumbing)
+  services/       hosts: Korkut.Api (the app, including its background jobs), Korkut.Ocr,
+                  Korkut.KikProxy, Korkut.Migrator, and Korkut.Web (shared web plumbing)
   modules/        feature modules (Clients, Matters, Documents, Knowledge, Agent.*, Tools, ...)
   shared/         kernel, contracts, persistence, security, AI runtime
 tests/            unit, integration (Testcontainers Postgres) and architecture tests

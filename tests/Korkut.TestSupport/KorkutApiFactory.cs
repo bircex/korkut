@@ -25,7 +25,8 @@ namespace Korkut.TestSupport;
 /// </summary>
 public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder("postgres:16-alpine").Build();
+    // The image the compose stack runs: it has pgvector, which the knowledge index needs.
+    private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder("pgvector/pgvector:pg16").Build();
     private readonly string _objectsRoot = Path.Combine(Path.GetTempPath(), "korkut-objects-" + Guid.NewGuid().ToString("N"));
     private string _appConnectionString = string.Empty;
 
@@ -84,6 +85,8 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         // sensitive-endpoint limiter would throttle across tests. Raise it here only
         // (the dedicated rate-limit test uses its own strict host).
         builder.UseSetting("KORKUT_SENSITIVE_RATE_LIMIT", "100000");
+        // Background jobs are run by the tests that exercise them, not by a runner racing them.
+        builder.UseSetting("KORKUT_BACKGROUND_JOBS", "false");
         // Configure Google OIDC on THIS host only (dummy creds) so start/callback work;
         // the real HTTP exchanger + JWKS validator are replaced with deterministic fakes.
         builder.UseSetting("GOOGLE_CLIENT_ID", "test-client-id");
