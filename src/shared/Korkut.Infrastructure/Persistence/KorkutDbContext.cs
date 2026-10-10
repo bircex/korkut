@@ -147,12 +147,6 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.RecoveryCodeConfiguration());
 
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.AdminTotpConfiguration());
-
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.AdminRecoveryCodeConfiguration());
-
-        modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.AdminOfficeModelConfiguration());
-
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.RefreshTokenConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Organization.Entities.OfficeRoleConfiguration());

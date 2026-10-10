@@ -67,27 +67,6 @@ public sealed class RuntimeConfig(IEnvironment env)
 
     public bool HasDeepSeekKey => IsSet("DEEPSEEK_API_KEY");
 
-    /// <summary>
-    /// Compatibility guard (KDM-033): <c>KORKUT_MODELS_FILE</c> is a documented-but-
-    /// aspirational contract that the Python runtime does NOT read. Activating it would
-    /// be a behavioural regression, so the .NET runtime treats it as inert: model
-    /// config comes from the env defaults + the DB catalog + model-routing.yaml.
-    /// Always false — even when the variable is set.
-    /// </summary>
-    public bool ModelsFileIsActive => env.Get("KORKUT_MODELS_FILE") is not null && ModelsFileActivationEnabled;
-
-    /// <summary>
-    /// Compatibility guard (KDM-033): <c>KORKUT_SUPERADMIN_EMAILS</c> is a dead
-    /// documentation variable. The platform-admin allowlist is compiled-in
-    /// (<see cref="Security.AdminAllowlist"/>); this variable grants nothing and is
-    /// never read as authorization. Always false.
-    /// </summary>
-    public bool SuperadminEnvIsActive => env.Get("KORKUT_SUPERADMIN_EMAILS") is not null && SuperadminActivationEnabled;
-
-    // Parity guards: these variables are observed (so their presence is diagnosable)
-    // but activation is compiled OFF — they can never become authoritative config.
-    private const bool ModelsFileActivationEnabled = false;
-    private const bool SuperadminActivationEnabled = false;
 
     private bool IsSet(string name) => !string.IsNullOrWhiteSpace(env.Get(name));
 

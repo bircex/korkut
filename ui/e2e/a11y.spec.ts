@@ -28,22 +28,13 @@ test.describe("Sign-in (auth)", () => {
   });
 });
 
-test.describe("Navigation", () => {
-  test("moving to the register route shows its form", async ({ page }) => {
-    await stubApi(page, { pending: "avukat@example.com", demo: true });
-    await page.goto("/kayit");
-    // The form screen has rendered (navigation + gated render worked). The old standalone
-    // demo-request form was merged into this register form ("Kaydı tamamla").
-    await expect(page.getByRole("button", { name: /Kaydı tamamla/ })).toBeVisible();
-  });
-});
+test.describe("First-run setup (representative form)", () => {
+  test("a fresh install shows setup, which passes axe and is keyboard-operable", async ({ page }) => {
+    await stubApi(page, { setupRequired: true });
+    await page.goto("/");
 
-test.describe("Demo-request (representative form)", () => {
-  test("form passes axe and is fully keyboard-operable", async ({ page }) => {
-    await stubApi(page, { pending: "avukat@example.com", demo: true });
-    await page.goto("/kayit");
-
-    const office = page.getByPlaceholder(/Büro|Ofis|firma/i).first();
+    await expect(page.getByRole("button", { name: /Kurulumu tamamla/ })).toBeVisible();
+    const office = page.getByLabel(/Büro adı/);
     await expect(office).toBeVisible();
     await assertNoSeriousA11yViolations(page);
 

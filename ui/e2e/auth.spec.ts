@@ -13,7 +13,7 @@ test.describe("Local sign-in + TOTP", () => {
       meCalls.push(r.request().url());
       return r.fulfill({ status: 401, contentType: "application/json", body: "{}" });
     });
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ demo_enabled: false }) }));
+    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ totp_required: true }) }));
     let totpBody = "";
     await page.route("**/api/auth/2fa", async (r) => {
@@ -56,7 +56,7 @@ test.describe("Local sign-in + TOTP", () => {
 
   test("switching to the recovery-code field keeps the form accessible", async ({ page }) => {
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ demo_enabled: false }) }));
+    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ totp_required: true }) }));
 
     await page.goto("/giris");
@@ -72,7 +72,7 @@ test.describe("Local sign-in + TOTP", () => {
 
   test("a wrong password surfaces an accessible error", async ({ page }) => {
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ demo_enabled: false }) }));
+    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) =>
       r.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ detail: "E-posta veya parola hatalı" }) }),
     );

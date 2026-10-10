@@ -21,9 +21,8 @@ public class ApiFoundationTests(WebApplicationFactory<Program> factory)
         var json = await Client.GetStringAsync("/api/v1/config");
         using var doc = JsonDocument.Parse(json);
 
-        Assert.True(doc.RootElement.TryGetProperty("demo_enabled", out _));
         Assert.True(doc.RootElement.TryGetProperty("google_configured", out _));
-        Assert.False(doc.RootElement.TryGetProperty("demoEnabled", out _), "must not be camelCase");
+        Assert.False(doc.RootElement.TryGetProperty("googleConfigured", out _), "must not be camelCase");
     }
 
     [Fact]

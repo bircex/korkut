@@ -19,7 +19,6 @@ public sealed class AccessTokenService
 {
     public const string Issuer = "korkut";
     public const string OfficeAudience = "korkut-office";
-    public const string AdminAudience = "korkut-admin";
 
     private readonly SymmetricSecurityKey _key;
     private readonly IClock _clock;

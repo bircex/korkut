@@ -46,20 +46,6 @@
         ],
         "type": "object"
       },
-      "AdminTotpRequest": {
-        "properties": {
-          "code": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "code"
-        ],
-        "type": "object"
-      },
       "AlimonyRequest": {
         "properties": {
           "cocuk_sayisi": {
@@ -136,24 +122,6 @@
           "gunluk_brut_ucret",
           "kullanilmayan_izin_gunu",
           "yas"
-        ],
-        "type": "object"
-      },
-      "AssignModelRequest": {
-        "properties": {
-          "enabled": {
-            "type": "boolean"
-          },
-          "model_key": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "model_key",
-          "enabled"
         ],
         "type": "object"
       },
@@ -968,28 +936,6 @@
         ],
         "type": "object"
       },
-      "DemoRequestRequest": {
-        "properties": {
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "office_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "office_name"
-        ],
-        "type": "object"
-      },
       "DraftRequest": {
         "properties": {
           "instruction": {
@@ -1701,45 +1647,6 @@
           "fazla_mesai_saat",
           "hafta_tatili_saat",
           "resmi_tatil_gun"
-        ],
-        "type": "object"
-      },
-      "RegisterRequest": {
-        "properties": {
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "office_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "password": {
-            "maxLength": "200",
-            "minLength": "10",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "full_name",
-          "email",
-          "password",
-          "office_name"
         ],
         "type": "object"
       },
@@ -2794,427 +2701,6 @@
   },
   "openapi": "3.1.1",
   "paths": {
-    "/admin/api/2fa/challenge": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/2fa/enroll/confirm": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/2fa/enroll/start": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/2fa/recovery": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminTotpRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/auth/google/callback": {
-      "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "state",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "code",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "error",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/auth/google/start": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/logout": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/me": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/models": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/offices": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/offices/{id}": {
-      "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/offices/{id}/disable": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/offices/{id}/enable": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/offices/{id}/model": {
-      "put": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignModelRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignModelRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignModelRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/admin/api/session": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminAuth"
-        ]
-      }
-    },
-    "/admin/api/stats": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminConsole"
-        ]
-      }
-    },
-    "/api/admin/offices": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminOffices"
-        ]
-      }
-    },
-    "/api/admin/offices/{id}/disable": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminOffices"
-        ]
-      }
-    },
-    "/api/admin/offices/{id}/enable": {
-      "post": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminOffices"
-        ]
-      }
-    },
-    "/api/admin/ping": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminPing"
-        ]
-      }
-    },
-    "/api/admin/stats": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "AdminOffices"
-        ]
-      }
-    },
     "/api/auth/2fa": {
       "post": {
         "requestBody": {
@@ -3399,38 +2885,6 @@
         },
         "tags": [
           "Auth"
-        ]
-      }
-    },
-    "/api/auth/register": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Onboarding"
         ]
       }
     },
@@ -4819,38 +4273,6 @@
         },
         "tags": [
           "Deadlines"
-        ]
-      }
-    },
-    "/api/demo-request": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/DemoRequestRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DemoRequestRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DemoRequestRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Onboarding"
         ]
       }
     },
@@ -6910,18 +6332,6 @@
         ]
       }
     },
-    "/api/signup/pending": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
     "/api/style": {
       "get": {
         "responses": {
@@ -7228,18 +6638,6 @@
   ],
   "tags": [
     {
-      "name": "AdminAuth"
-    },
-    {
-      "name": "AdminConsole"
-    },
-    {
-      "name": "AdminOffices"
-    },
-    {
-      "name": "AdminPing"
-    },
-    {
       "name": "Auth"
     },
     {
@@ -7259,9 +6657,6 @@
     },
     {
       "name": "Invites"
-    },
-    {
-      "name": "Onboarding"
     },
     {
       "name": "PetitionTypes"

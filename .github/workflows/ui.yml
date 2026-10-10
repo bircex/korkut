@@ -1,6 +1,6 @@
 name: UI
 
-# Type-check and unit-test the React app in ui/ on every PR into main that touches it.
+# Lint, type-check and unit-test the React app in ui/ on every PR into main that touches it.
 # Read-only permissions; no secrets used.
 
 on:
@@ -23,7 +23,7 @@ defaults:
 
 jobs:
   ui:
-    name: Type-check and test
+    name: Lint, type-check and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Type-check
         run: npm run typecheck
