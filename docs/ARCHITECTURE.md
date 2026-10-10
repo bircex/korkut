@@ -1,6 +1,6 @@
 # Architecture
 
-> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See the repo `Makefile` (`make build|test|run|migrate`) for current operations. Migration records live under [`docs/migration/`](migration/).
+> **Runtime note:** Korkut runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`), with the React app in `ui/`, installed locally with Docker Compose. Commands below that reference `python -m korkut`, `backend/…` or `deploy/…` are from the retired Python runtime.
 
 Korkut is a self-hosted, single-tenant AI assistant for a Turkish law office. It is a single
 FastAPI web app that serves a React SPA, runs an agent over live legal-database tools, and keeps
@@ -123,4 +123,4 @@ built-in default (`store.effective_theme`). Drafts export to DOCX/UDF.
 - **Paths** (`paths.py`) — `config/`, `templates/`, and `data/` are resolved relative to the repo
   root (`KORKUT_ROOT` or a walk-up), so edits survive an editable install.
 - **Secrets** — `.env` (gitignored); `KORKUT_SECRET` signs session cookies. See
-  [DEPLOYMENT.md](DEPLOYMENT.md) for the full environment.
+  [`.env.example`](../.env.example) for the full environment.

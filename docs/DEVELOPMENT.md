@@ -1,6 +1,6 @@
 # Development
 
-> **Runtime note (post-migration):** Korkut's backend now runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`). The Python runtime (`backend/`) was retired after the .NET migration; commands below that reference `python -m korkut`, `backend/…`, or `deploy/…` are historical. See the repo `Makefile` (`make build|test|run|migrate`) for current operations. Migration records live under [`docs/migration/`](migration/).
+> **Runtime note:** Korkut runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`), with the React app in `ui/`, installed locally with Docker Compose. Commands below that reference `python -m korkut`, `backend/…` or `deploy/…` are from the retired Python runtime.
 
 This is the day-to-day developer loop. For first-time setup, see [INSTALL.md](INSTALL.md); for the
 system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
