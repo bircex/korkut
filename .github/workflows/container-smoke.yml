@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "docker/**"
+      - "ui/**"
       - "global.json"
       - ".github/workflows/container-smoke.yml"
 

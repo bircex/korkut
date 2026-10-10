@@ -8,8 +8,9 @@ secrets/
 *.key
 *.pem
 
-# The built SPA is committed under backend/src/korkut/api/static (produced in the korkut-ui
-# repo, copied in via `make ui`). Intentionally NOT ignored so the image ships a ready UI.
+# The SPA lives in ui/ and is built into the gateway image (docker/Dockerfile.gateway).
+ui/node_modules
+src/services/Korkut.Gateway/wwwroot/
 
 # Runtime data (SQLite DB, generated coverage snapshots)
 data/
