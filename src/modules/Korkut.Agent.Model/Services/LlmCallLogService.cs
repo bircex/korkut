@@ -8,7 +8,8 @@ namespace Korkut.Agent.Model.Services;
 /// <summary>
 /// Records each model call to the <c>llm_calls</c> ledger (via <see cref="ILlmCallRepository"/>) and
 /// emits a first-class "llm.call" span carrying provider / model / tokens / cost / latency / office /
-/// feature (principle 8/9). Cost is derived from <see cref="ModelPricing"/> at record time. No
+/// feature (principle 8/9). Cost is what the model gateway priced the call at; 0 when it could not
+/// price it (the gateway's own usage report, in the AI settings, shows which calls those were). No
 /// DbContext here — persistence lives behind the repository.
 /// </summary>
 internal sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) : ILlmCallLogService
@@ -18,7 +19,7 @@ internal sealed class LlmCallLogService(ILlmCallRepository calls, IClock clock) 
     public async Task RecordAsync(
         Guid officeId, string feature, ChatUsage usage, TimeSpan latency, string promptFingerprint, CancellationToken ct = default)
     {
-        var cost = ModelPricing.Cost(usage.ModelId, usage.PromptTokens, usage.CompletionTokens);
+        var cost = usage.CostUsd ?? 0m;
 
         using (var span = Source.StartActivity("llm.call"))
         {

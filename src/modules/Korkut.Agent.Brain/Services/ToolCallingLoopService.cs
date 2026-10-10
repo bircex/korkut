@@ -41,10 +41,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
             .ToList();
 
         var turn = messages.ToList();
-        var prompt = 0;
-        var completion = 0;
-        var provider = string.Empty;
-        var modelId = string.Empty;
+        // Usage across every turn of the loop; the first turn starts it.
+        ChatUsage? usage = null;
         // Legal sources surfaced by tool results, in call order; dedup/caps are the chat service's job.
         List<Korkut.Contract.Agent.Chat.SourceRef>? sources = null;
         // The draft document a tool call produced (draft_document); the last one wins.
@@ -54,14 +52,12 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         {
             // Stream the turn: text deltas reach the user token-by-token via onToken as they arrive,
             // and any tool calls are collected to run before the next turn.
-            var (text, toolCalls, usage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools, onToken, ct);
-            (prompt, completion, provider, modelId) = Accumulate(prompt, completion, usage);
+            var (text, toolCalls, turnUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools, onToken, ct);
+            usage = usage?.Plus(turnUsage) ?? turnUsage;
 
             if (toolCalls is not { Count: > 0 } calls)
             {
-                return new ChatReply(
-                    text, new ChatUsage(provider, modelId, prompt, completion),
-                    Sources: CitedSources(sources, text), Document: document);
+                return new ChatReply(text, usage, Sources: CitedSources(sources, text), Document: document);
             }
 
             // Record the assistant's tool-call turn, then run each call and feed the results back.
@@ -103,10 +99,8 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
         // Iteration cap reached — ask once more (streamed) WITHOUT tools to force a final answer.
         turn.Add(new ChatMessage("user", FinishInstruction));
         var (finalText, _, finalUsage) = await StreamTurnAsync(system, turn, specialty, maxTokens, tools: null, onToken, ct);
-        (prompt, completion, provider, modelId) = Accumulate(prompt, completion, finalUsage);
-        return new ChatReply(
-            finalText, new ChatUsage(provider, modelId, prompt, completion),
-            Sources: CitedSources(sources, finalText), Document: document);
+        usage = usage?.Plus(finalUsage) ?? finalUsage;
+        return new ChatReply(finalText, usage, Sources: CitedSources(sources, finalText), Document: document);
     }
 
     // Drive one streamed model turn: append text deltas (live via onToken), collect any tool calls,
@@ -145,10 +139,6 @@ internal sealed class ToolCallingLoopService(IChatModelService llm, IToolCatalog
     }
 
     // Sum token counts across the loop's model calls; keep the last call's provider/model for the label.
-    private static (int Prompt, int Completion, string Provider, string ModelId) Accumulate(
-        int prompt, int completion, ChatUsage usage)
-        => (prompt + usage.PromptTokens, completion + usage.CompletionTokens, usage.Provider, usage.ModelId);
-
     // ---- user-facing activity labels ------------------------------------------------------------
 
     private static readonly Dictionary<string, string> SourceNames = new()

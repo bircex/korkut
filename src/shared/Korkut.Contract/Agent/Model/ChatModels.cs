@@ -35,10 +35,20 @@ public sealed record ChatRequest(
     double? Temperature = null,
     IReadOnlyList<ToolDefinition>? Tools = null);
 
-/// <summary>Token accounting for one model call — the seam telemetry/billing hangs off (principle 8/9).</summary>
-public sealed record ChatUsage(string Provider, string ModelId, int PromptTokens, int CompletionTokens)
+/// <summary>
+/// Token accounting for one model call — the seam telemetry/billing hangs off (principle 8/9).
+/// <see cref="CostUsd"/> is what the model gateway priced the call at, or null when it could not
+/// (an unpriced model, usage not reported, another currency): unknown, never zero.
+/// </summary>
+public sealed record ChatUsage(string Provider, string ModelId, int PromptTokens, int CompletionTokens, decimal? CostUsd = null)
 {
     public static readonly ChatUsage None = new(string.Empty, string.Empty, 0, 0);
+
+    /// <summary>This call followed by <paramref name="next"/>: tokens add up, the model is the latest
+    /// one, and the cost is known only when both are.</summary>
+    public ChatUsage Plus(ChatUsage next) => new(
+        next.Provider, next.ModelId, PromptTokens + next.PromptTokens, CompletionTokens + next.CompletionTokens,
+        CostUsd is { } a && next.CostUsd is { } b ? a + b : null);
 }
 
 /// <summary>

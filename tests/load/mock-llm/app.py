@@ -173,6 +173,9 @@ class Handler(BaseHTTPRequestHandler):
             for chunk in _chunks(FINAL_TEXT):
                 frame({"choices": [{"index": 0, "delta": {"content": chunk}}]})
 
+        # Say why the model stopped, as every real provider does: a gateway (llmr) treats a stream
+        # that ends without a finish_reason as cut short.
+        frame({"choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls" if tc else "stop"}]})
         frame({"choices": [], "usage": {"prompt_tokens": PROMPT_TOKENS, "completion_tokens": COMPLETION_TOKENS}})
         self.wfile.write(b"data: [DONE]\n\n")
         self.wfile.flush()

@@ -4,7 +4,6 @@
        (Knowledge, Agent.Model) compose it — so it may be referenced by both modules and hosts. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
   <ItemGroup>

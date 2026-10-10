@@ -4,10 +4,13 @@ Durum: uygulanıyor (2026-10-10)
 
 | Faz | Durum |
 |---|---|
-| 0. Yayın öncesi temizlik | Kısmen tamam: rate limit düzeltmesi (#196), GCP ve SaaS dağıtım dosyalarının silinmesi (#201). Kalan: admin allowlist e-postaları (Faz 3 ile), git geçmişi kararı |
+| 0. Yayın öncesi temizlik | Kısmen tamam: rate limit düzeltmesi (#196), GCP ve SaaS dağıtım dosyalarının silinmesi (#201), admin allowlist e-postaları (#205). Kalan: git geçmişi kararı (e-postalar ve Google secret geçmişte duruyor) |
 | 1. Monorepo | Tamam: ui/ (#197), website/ (#200), tek container (#199), MinIO yerine volume (#198). Eski repolar arşivlendi, repo adı `korkut` oldu |
-| 4. Kurulum (ilk adım) | Sıfır ayarla `docker compose up` (#202) ve tarayıcıdan ilk kurulum (#203) tamam. LLM ve diğer ayar ekranları Faz 2 ile gelecek |
-| 2, 3, 5 | Başlamadı |
+| 3. Tek büro | Tamam: SaaS kayıt ve platform admin silindi (#205) |
+| 2. llmr | Tamam: `install.sh` ve llmr servisi (#207), ayarlardan sağlayıcı ve model seçimi (#208), bütün model çağrıları llmr üzerinden |
+| 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208). Kalan: SMTP ve Telegram ayarları, yeniden indeksleme |
+| RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
+| 5. Telegram | Başlamadı |
 
 Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 

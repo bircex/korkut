@@ -9,11 +9,11 @@ using Korkut.Core;
 namespace Korkut.Agent.Model.Services;
 
 /// <summary>
-/// One adapter for every provider that speaks the OpenAI chat-completions schema —
-/// OpenAI ("gpt"), Groq ("groq"), and local Ollama/vLLM ("ollama") — differing only by
-/// base URL, API-key env var, and model. Instantiated once per provider in DI. Keys are
-/// read from the environment at call time and sent only in the Authorization header; a
-/// local backend needs no key.
+/// The chat adapter for the OpenAI chat-completions schema, which Korkut speaks to the model
+/// gateway (llmr): every model call goes through it, whichever provider llmr routes to. The token
+/// is read from the environment at call time and sent only in the Authorization header. Beyond
+/// the plain schema it reads what llmr adds: the call's cost (<c>llmr_cost</c>), its error
+/// envelope, and the rule that a stream which ends without <c>[DONE]</c> was cut short.
 /// </summary>
 public sealed class OpenAiCompatibleChatProviderService(
     HttpClient http, IEnvironment env, string name, string baseUrl, string? apiKeyEnvVar) : IChatProviderService
@@ -51,7 +51,8 @@ public sealed class OpenAiCompatibleChatProviderService(
             throw new ModelUnavailableException("Yapay zeka sağlayıcısı boş yanıt döndürdü.");
         }
 
-        var usage = new ChatUsage(name, selection.ModelId, body!.Usage?.PromptTokens ?? 0, body.Usage?.CompletionTokens ?? 0);
+        var usage = new ChatUsage(
+            name, selection.ModelId, body!.Usage?.PromptTokens ?? 0, body.Usage?.CompletionTokens ?? 0, body.Cost?.Usd);
         return new ChatReply(text ?? string.Empty, usage, toolCalls is { Count: > 0 } ? toolCalls : null);
     }
 
@@ -64,6 +65,9 @@ public sealed class OpenAiCompatibleChatProviderService(
         using var reader = new StreamReader(stream);
 
         int prompt = 0, completion = 0;
+        decimal? cost = null;
+        // llmr ends every complete stream with [DONE]; one that just stops was cut off mid-answer.
+        var finished = false;
         // Tool calls stream incrementally (id + name in the first delta, arguments across many),
         // keyed by index; assembled and emitted once at the end so the loop can run them.
         var toolAcc = new SortedDictionary<int, ToolAccumulator>();
@@ -80,6 +84,7 @@ public sealed class OpenAiCompatibleChatProviderService(
             var data = line[5..].Trim();
             if (data is "[DONE]")
             {
+                finished = true;
                 break;
             }
 
@@ -91,6 +96,17 @@ public sealed class OpenAiCompatibleChatProviderService(
             catch (JsonException)
             {
                 continue;
+            }
+
+            if (frame.Error is { } error)
+            {
+                // A failure after the first byte: llmr cannot fall over to another route by then.
+                throw new ModelUnavailableException($"Yapay zeka yanıtı yarıda kesildi: {error}");
+            }
+
+            if (frame.Cost is { } priced)
+            {
+                cost = priced.Usd;
             }
 
             if (frame.Prompt is { } pv)
@@ -135,6 +151,11 @@ public sealed class OpenAiCompatibleChatProviderService(
             }
         }
 
+        if (!finished)
+        {
+            throw new ModelUnavailableException("Yapay zeka yanıtı yarıda kesildi: bağlantı tamamlanmadan kapandı.");
+        }
+
         var calls = toolAcc.Values
             .Where(a => a.Id is not null && a.Name is not null)
             .Select(a => new ToolInvocation(a.Id!, a.Name!, ParseArguments(a.Args.ToString())))
@@ -157,7 +178,7 @@ public sealed class OpenAiCompatibleChatProviderService(
             yield return ChatStreamEvent.Tools(calls);
         }
 
-        yield return ChatStreamEvent.Final(new ChatUsage(name, selection.ModelId, prompt, completion));
+        yield return ChatStreamEvent.Final(new ChatUsage(name, selection.ModelId, prompt, completion, cost));
     }
 
     private sealed class ToolAccumulator
@@ -250,7 +271,8 @@ public sealed class OpenAiCompatibleChatProviderService(
     private sealed record ToolFragment(int Index, string? Id, string? Name, string? ArgsFragment);
 
     private sealed record StreamFrame(
-        string? Delta, int? Prompt, int? Completion, IReadOnlyList<ToolFragment> ToolFragments);
+        string? Delta, int? Prompt, int? Completion, IReadOnlyList<ToolFragment> ToolFragments,
+        string? Error = null, GatewayCost? Cost = null);
 
     // choices[0].delta carries content (text) and/or tool_calls fragments; a terminal frame may
     // carry usage.{prompt,completion}_tokens.
@@ -308,7 +330,20 @@ public sealed class OpenAiCompatibleChatProviderService(
             }
         }
 
-        return new StreamFrame(delta, prompt, completion, fragments);
+        // llmr's last frame before [DONE] carries the cost; a frame that is only an error means the
+        // stream broke after it started.
+        var cost = root.TryGetProperty("llmr_cost", out var c) && c.ValueKind == JsonValueKind.Object
+            ? c.Deserialize<GatewayCost>(Json)
+            : null;
+        string? error = null;
+        if (root.TryGetProperty("error", out var e) && e.ValueKind == JsonValueKind.Object)
+        {
+            error = e.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String
+                ? m.GetString()
+                : "bilinmeyen hata";
+        }
+
+        return new StreamFrame(delta, prompt, completion, fragments, error, cost);
     }
 
     private static CompletionRequest BuildPayload(ModelSelection selection, ChatRequest request, bool stream)
@@ -379,18 +414,17 @@ public sealed class OpenAiCompatibleChatProviderService(
 
     private HttpRequestMessage Build(CompletionRequest payload)
     {
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            throw new ModelUnavailableException("Yapay zeka model geçidi (llmr) yapılandırılmamış.");
+        }
+
         var message = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/chat/completions")
         {
             Content = JsonContent.Create(payload, options: Json),
         };
-        if (apiKeyEnvVar is not null)
+        if (apiKeyEnvVar is not null && env.Get(apiKeyEnvVar) is { Length: > 0 } key)
         {
-            var key = env.Get(apiKeyEnvVar);
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                throw new ModelUnavailableException($"{name} API anahtarı yapılandırılmamış.");
-            }
-
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         }
 
@@ -409,9 +443,12 @@ public sealed class OpenAiCompatibleChatProviderService(
             throw new ModelUnavailableException($"Yapay zeka sağlayıcısına ulaşılamadı: {ex.Message}");
         }
 
-        return response.IsSuccessStatusCode
-            ? response
-            : throw new ModelUnavailableException($"Yapay zeka sağlayıcısı hatası ({(int)response.StatusCode}).");
+        if (response.IsSuccessStatusCode)
+        {
+            return response;
+        }
+
+        throw new ModelUnavailableException(await DescribeFailureAsync(response, ct));
     }
 
     private sealed record CompletionRequest(
@@ -449,9 +486,63 @@ public sealed class OpenAiCompatibleChatProviderService(
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("arguments")] string? Arguments);
 
+    /// <summary>
+    /// What to tell the user when the gateway refuses. A model that is not chosen yet (no route set,
+    /// nothing enabled, or every route unusable) is a setup step, not a fault, so it points at the
+    /// settings screen; anything else carries llmr's own message.
+    /// </summary>
+    private static async Task<string> DescribeFailureAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        using (response)
+        {
+            GatewayError? error = null;
+            try
+            {
+                error = (await response.Content.ReadFromJsonAsync<GatewayErrorEnvelope>(Json, ct))?.Error;
+            }
+            catch (JsonException)
+            {
+            }
+
+            return error?.Code switch
+            {
+                "model_not_found" or "model_not_enabled" or "no_route" =>
+                    "Yapay zeka modeli seçilmemiş ya da kullanılamıyor. Ofis sahibi Ayarlar → Yapay zeka bölümünden bir sohbet modeli seçmeli.",
+                _ when error?.Message is { Length: > 0 } message => $"Yapay zeka sağlayıcısı hatası ({(int)response.StatusCode}): {message}",
+                _ => $"Yapay zeka sağlayıcısı hatası ({(int)response.StatusCode}).",
+            };
+        }
+    }
+
+    private sealed record GatewayErrorEnvelope([property: JsonPropertyName("error")] GatewayError? Error);
+
+    private sealed record GatewayError(
+        [property: JsonPropertyName("message")] string? Message,
+        [property: JsonPropertyName("code")] string? Code);
+
+    /// <summary>
+    /// llmr's price for one call. Only a fully priced amount in US dollars becomes a cost: a
+    /// self-hosted model is genuinely free, and a partial or unpriced figure stays unknown rather
+    /// than being recorded as a bill that is too low.
+    /// </summary>
+    private sealed record GatewayCost(
+        [property: JsonPropertyName("status")] string? Status,
+        [property: JsonPropertyName("amount")] string? Amount,
+        [property: JsonPropertyName("currency")] string? Currency)
+    {
+        public decimal? Usd => Status switch
+        {
+            "free" => 0m,
+            "priced" when Currency == "USD" && decimal.TryParse(
+                Amount, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var usd) => usd,
+            _ => null,
+        };
+    }
+
     private sealed record CompletionResponse(
         [property: JsonPropertyName("choices")] List<CompletionChoice>? Choices,
-        [property: JsonPropertyName("usage")] CompletionUsage? Usage);
+        [property: JsonPropertyName("usage")] CompletionUsage? Usage,
+        [property: JsonPropertyName("llmr_cost")] GatewayCost? Cost = null);
 
     private sealed record CompletionChoice(
         [property: JsonPropertyName("message")] CompletionMessage? Message);
