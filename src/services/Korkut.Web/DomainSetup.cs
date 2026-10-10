@@ -52,6 +52,7 @@ public static class DomainSetup
         // Clean-architecture cross-cutting: the caller identity + the tenant-pinned unit of work
         // every application service runs inside.
         services.AddHttpContextAccessor();
+        services.AddScoped<Korkut.Core.ActingUser>();
         services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
         services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Persistence.UnitOfWork>();
         // Office-ops (Clean Architecture: repository ports + service).
@@ -79,6 +80,8 @@ public static class DomainSetup
         new Korkut.Calculators.Extensions.CalculatorsModule().Register(services, configuration);
         // Kararlarım: the office's bookmarked decisions from Karar Arama / İlgili Kararlar.
         new Korkut.SavedDecisions.Extensions.SavedDecisionsModule().Register(services, configuration);
+        // Telegram: the office bot, members' links, and the replies to a linked member's messages.
+        new Korkut.Telegram.Extensions.TelegramModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());

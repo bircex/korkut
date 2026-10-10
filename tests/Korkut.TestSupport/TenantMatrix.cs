@@ -44,6 +44,8 @@ public static class TenantMatrix
             ["conversations"] = (1, 2),
             ["chat_messages"] = (1, 2),
             ["saved_decisions"] = (1, 2),
+            ["telegram_bots"] = (1, 1), // one bot per office
+            ["telegram_links"] = (1, 2), // one per member
             // generated_documents / document_versions live in the Agent DB (schema korkut_agent)
             // — covered by AgentTenantIsolationTests. Chat (conversations/messages) is a general
             // operational feature and stays here.

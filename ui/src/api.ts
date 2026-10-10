@@ -931,3 +931,33 @@ export const aiApi = {
   usage: (fromUnixSeconds: number) =>
     request<AiUsage>(`${AI}/usage?group_by=model&from=${fromUnixSeconds}`),
 };
+
+// ---- Telegram: the office bot (owner) and each member's own link -----------------------------
+export type TelegramLinkedMember = { user_id: string; name: string; telegram_username: string | null; linked_at: string };
+export type TelegramSettings = {
+  configured: boolean;
+  enabled: boolean;
+  bot_username: string | null;
+  consent_at: string | null;
+  members: TelegramLinkedMember[];
+};
+export type TelegramLink = {
+  available: boolean;
+  bot_username: string | null;
+  linked: boolean;
+  telegram_username: string | null;
+  linked_at: string | null;
+};
+export type TelegramLinkCode = { code: string; url: string; expires_at: string };
+
+export const telegramApi = {
+  settings: () => request<TelegramSettings>("/api/settings/telegram"),
+  saveSettings: (body: { token?: string; enabled: boolean; consent: boolean }) =>
+    request<TelegramSettings>("/api/settings/telegram", { method: "PUT", ...json(body) }),
+  removeBot: () => request<TelegramSettings>("/api/settings/telegram", { method: "DELETE" }),
+  unlinkMember: (userId: string) =>
+    request<TelegramSettings>(`/api/settings/telegram/members/${encodeURIComponent(userId)}`, { method: "DELETE" }),
+  link: () => request<TelegramLink>("/api/telegram/link"),
+  createCode: () => request<TelegramLinkCode>("/api/telegram/link/code", { method: "POST" }),
+  unlink: () => request<TelegramLink>("/api/telegram/link", { method: "DELETE" }),
+};

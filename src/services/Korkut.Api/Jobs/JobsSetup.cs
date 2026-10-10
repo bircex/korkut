@@ -9,7 +9,7 @@ public static class JobsSetup
     public const string EnabledSetting = "KORKUT_BACKGROUND_JOBS";
 
     /// <summary>
-    /// The job handlers, and the runner that executes them from the outbox. The handlers are
+    /// The job handlers, the runner that executes them from the outbox, and the Telegram poller. The handlers are
     /// always registered so a caller can run a job directly; the runner only when enabled.
     /// </summary>
     public static IServiceCollection AddKorkutBackgroundJobs(this IServiceCollection services, IConfiguration configuration)
@@ -22,6 +22,8 @@ public static class JobsSetup
         if (!string.Equals(configuration[EnabledSetting], "false", StringComparison.OrdinalIgnoreCase))
         {
             services.AddHostedService<OutboxProcessorService>();
+            // Answers the office's Telegram bot; idle until the owner turns the bot on.
+            services.AddHostedService<Korkut.Telegram.Services.TelegramPollingService>();
         }
 
         return services;

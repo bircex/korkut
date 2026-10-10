@@ -36,6 +36,7 @@ public static class ControllerSetup
             .AddApplicationPart(typeof(Korkut.LawClients.Extensions.LawClientsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.Calculators.Extensions.CalculatorsModule).Assembly)
             .AddApplicationPart(typeof(Korkut.SavedDecisions.Extensions.SavedDecisionsModule).Assembly)
+            .AddApplicationPart(typeof(Korkut.Telegram.Extensions.TelegramModule).Assembly)
             .AddJsonOptions(o => KorkutJson.Apply(o.JsonSerializerOptions));
 
         services.Configure<ApiBehaviorOptions>(o => o.InvalidModelStateResponseFactory = context =>

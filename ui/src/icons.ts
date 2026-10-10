@@ -61,4 +61,6 @@ export {
   // Sohbette araç çağrısı kartı (ToolCallCard)
   Wrench,
   Cpu,
+  // Ayarlar → Telegram
+  TelegramLogo,
 } from "@phosphor-icons/react";
