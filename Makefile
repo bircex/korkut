@@ -28,8 +28,8 @@ migrate:  ## Apply EF Core migrations (uses KORKUT_ADMIN_DB_URL)
 ui-dev:  ## Vite dev server with hot reload, proxying /api to VITE_DEV_API_TARGET
 	cd ui && npm install && npm run dev
 
-ui-test:  ## Type-check and unit-test the React app
-	cd ui && npm ci && npm run typecheck && npm test
+ui-test:  ## Lint, type-check and unit-test the React app
+	cd ui && npm ci && npm run lint && npm run typecheck && npm test
 
 website-dev:  ## Astro dev server for the website
 	cd website && npm install && npm run dev

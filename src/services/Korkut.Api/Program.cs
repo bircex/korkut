@@ -44,10 +44,6 @@ builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
 // Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
 builder.Services.AddGoogleOidcRuntime();
 
-// Self-serve signup ticket (short-lived, own audience) — proof of a verified Google email.
-builder.Services.AddSingleton(sp => new SignupTicketService(
-    builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
-
 // Object storage + the secure-document pipeline services (KDM-025..028).
 builder.Services.AddKorkutStorage(builder.Configuration);
 
@@ -66,14 +62,7 @@ builder.Services.AddKorkutAgent();
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(
     builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
-builder.Services.AddSingleton(sp => new AdminAccessTokens(
-    builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
-// Platform-admin console: cookie session, admin TOTP store, and the admin Google flow
-// (same client, separate pre-registered redirect URI).
 builder.Services.TryAddSingleton<Korkut.Core.IEnvironment, Korkut.Core.SystemEnvironment>();
-builder.Services.AddSingleton<Korkut.Api.Auth.AdminSession>();
-builder.Services.AddScoped<Korkut.Security.AdminTwoFactorService>();
-builder.Services.AddHttpClient<Korkut.Api.Auth.AdminGoogleFlow>();
 builder.Services.AddKorkutAuthorization();
 
 // Bound request body size (tightened per-endpoint for uploads in KDM-026). Chat uploads carry a

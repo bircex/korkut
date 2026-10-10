@@ -15,13 +15,11 @@ public sealed class SessionManager(AccessTokenService accessTokens, RefreshToken
     private const string AccessCookie = Korkut.Web.Auth.AccessTokenAuthHandler.AccessCookie;
     public const string RefreshCookie = "korkut_rt";
     private const string PendingCookie = "korkut_2fa";
-    private const string SignupCookie = "korkut_signup";
     private const string RefreshPath = "/api/auth";
 
     private static readonly TimeSpan AccessMaxAge = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan RefreshMaxAge = TimeSpan.FromDays(14);
     private static readonly TimeSpan PendingMaxAge = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan SignupMaxAge = TimeSpan.FromMinutes(15);
 
     private bool Secure => configuration["KORKUT_SECURE_COOKIES"] == "1";
 
@@ -56,14 +54,6 @@ public sealed class SessionManager(AccessTokenService accessTokens, RefreshToken
         var raw = request.Cookies[PendingCookie];
         return string.IsNullOrEmpty(raw) ? Task.FromResult<AccessClaims?>(null) : accessTokens.ValidateAsync(raw);
     }
-
-    /// <summary>Stash a verified-but-account-less Google identity for the self-serve signup step.</summary>
-    public void SetSignup(HttpResponse response, string ticket) =>
-        SetCookie(response, SignupCookie, ticket, SignupMaxAge, "/");
-
-    public string? ReadSignup(HttpRequest request) => request.Cookies[SignupCookie];
-
-    public void ClearSignup(HttpResponse response) => Delete(response, SignupCookie, "/");
 
     public void Clear(HttpResponse response)
     {

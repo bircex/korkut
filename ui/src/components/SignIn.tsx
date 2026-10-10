@@ -8,24 +8,23 @@ import { AuthShell, Brand } from "../ui";
 // The callback bounces failures back here with ?error=<code>; map each to a friendly line.
 const ERROR_MESSAGES: Record<string, string> = {
   verify: "Google doğrulaması tamamlanamadı. Lütfen tekrar deneyin.",
-  no_office: "Bu Google hesabına bağlı aktif bir ofis yok. Kayıt olun ya da ofis sahibinizden davet isteyin.",
+  no_account: "Bu Google hesabı büroya üye değil. Büro sahibinden davet isteyin.",
+  no_office: "Bu Google hesabına bağlı aktif bir büro yok. Büro sahibinden davet isteyin.",
   invite: "Davet kullanılamadı: süresi dolmuş, kullanılmış ya da farklı bir e-posta için olabilir.",
-  pending: "Büronuz henüz onaylanmadı. Onaylandığında giriş yapabilirsiniz.",
+  pending: "Bu büro şu an kapalı. Büro sahibiyle görüşün.",
 };
 
-type Mode = "login" | "register" | "forgot" | "reset" | "invite";
+type Mode = "login" | "forgot" | "reset" | "invite";
 
-// initialMode lets a caller land straight on the register form (e.g. /kayit reached without
-// a Google signup ticket — see Signup.tsx) instead of always defaulting to login.
-export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "register" } = {}) {
+export function SignIn() {
   // Read the callback's ?error once at mount (a lazy initializer avoids a cascading render).
   const [error] = useState<string | null>(() => {
     const code = new URLSearchParams(window.location.search).get("error");
     if (!code) return null;
     return ERROR_MESSAGES[code] ?? "Giriş yapılamadı. Lütfen tekrar deneyin.";
   });
-  // Registration (self-serve signup) is enabled by the same flag that used to gate the demo.
-  const [registerEnabled, setRegisterEnabled] = useState(false);
+  // Google sign-in is optional: the button only appears when the install has configured it.
+  const [googleConfigured, setGoogleConfigured] = useState(false);
   // E-postadaki sıfırlama bağlantısı /giris?reset=TOKEN, davet bağlantısı /?invite=TOKEN ile
   // gelir → doğrudan ilgili ekran açılır.
   const [resetToken] = useState<string | null>(
@@ -38,7 +37,7 @@ export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "reg
     const params = new URLSearchParams(window.location.search);
     if (params.get("invite")) return "invite";
     if (params.get("reset")) return "reset";
-    return initialMode;
+    return "login";
   });
 
   useEffect(() => {
@@ -49,18 +48,17 @@ export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "reg
     }
     api
       .config()
-      .then((c) => setRegisterEnabled(c.demo_enabled))
+      .then((c) => setGoogleConfigured(c.google_configured))
       .catch(() => {});
   }, []);
 
-  const isRegister = mode === "register";
   const googleClasses =
     "flex items-center justify-center gap-2.5 rounded-[10px] border border-zinc-300 bg-white px-4 py-3 text-[15px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-50";
 
   return (
     <AuthShell>
       <div className="mb-4">
-        <Brand subtitle={mode === "register" ? "Yeni büro kaydı" : "Hukuk asistanınız"} />
+        <Brand subtitle="Hukuk asistanınız" />
       </div>
       {error && (
         <div className="rounded-[10px] border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
@@ -77,45 +75,30 @@ export function SignIn({ initialMode = "login" }: { initialMode?: "login" | "reg
       {mode === "reset" && (
         <ResetPassword token={resetToken} onDone={() => setMode("login")} />
       )}
-      {(mode === "login" || mode === "register") && (
+      {mode === "login" && (
         <>
-          <LocalAuth
-            key={mode}
-            mode={mode}
-            onAuthed={signalAuthChanged}
-            onSwitchToLogin={() => setMode("login")}
-          />
-          {mode === "login" && (
-            <button
-              type="button"
-              onClick={() => setMode("forgot")}
-              className="self-start text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
-            >
-              Parolamı unuttum
-            </button>
-          )}
+          <LocalAuth onAuthed={signalAuthChanged} />
+          <button
+            type="button"
+            onClick={() => setMode("forgot")}
+            className="self-start text-[13px] text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+          >
+            Parolamı unuttum
+          </button>
+        </>
+      )}
+      {mode === "login" && googleConfigured && (
+        <>
           <div className="my-1 flex items-center gap-3 text-[12px] text-zinc-500">
             <span className="h-px flex-1 bg-zinc-200" aria-hidden />
             veya
             <span className="h-px flex-1 bg-zinc-200" aria-hidden />
           </div>
+          <a href={api.googleSignInUrl()} className={`mt-1 ${googleClasses}`}>
+            <GoogleMark />
+            Google ile giriş yap
+          </a>
         </>
-      )}
-      {/* One Google button per view: login shows "giriş yap", register shows "kayıt ol". */}
-      {(mode === "login" || mode === "register") && (
-        <a href={api.googleSignInUrl()} className={`mt-1 ${googleClasses}`}>
-          <GoogleMark />
-          {isRegister ? "Google ile kayıt ol" : "Google ile giriş yap"}
-        </a>
-      )}
-      {registerEnabled && (mode === "login" || mode === "register") && (
-        <button
-          type="button"
-          onClick={() => setMode(isRegister ? "login" : "register")}
-          className="mt-1 text-center text-[13px] font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
-        >
-          {isRegister ? "Zaten hesabınız var mı? Giriş yapın" : "Hesabınız yok mu? Yeni büro kaydı"}
-        </button>
       )}
     </AuthShell>
   );

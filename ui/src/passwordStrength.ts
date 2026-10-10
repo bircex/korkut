@@ -1,4 +1,4 @@
-// Parola gücü göstergesi: kayıt ve ilk kurulum formları aynı ölçüyü kullanır.
+// Parola gücü göstergesi (ilk kurulum formu).
 
 export const STRENGTH_LABELS = ["Çok zayıf", "Zayıf", "Orta", "İyi", "Güçlü"];
 export const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#16a34a"];

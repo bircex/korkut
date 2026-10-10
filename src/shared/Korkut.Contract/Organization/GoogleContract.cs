@@ -9,9 +9,6 @@ public enum GoogleSignInStatus
     /// <summary>Identity verified, but Korkut TOTP must be completed before a full session.</summary>
     TwoFactorRequired,
 
-    /// <summary>E-mail verified by Google but no Korkut account exists — eligible for self-serve signup.</summary>
-    SignupEligible,
-
     /// <summary>Rejected — see <see cref="GoogleSignInResult.Reason"/>.</summary>
     Rejected,
 }
@@ -21,14 +18,9 @@ public enum GoogleSignInStatus
 /// to an account, and even then a session may only be issued once <see cref="Status"/> says the
 /// second factor is not pending.
 /// </summary>
-public sealed record GoogleSignInResult(
-    GoogleSignInStatus Status, SessionUser? User, string? Reason, string? Email = null, string? GoogleSub = null)
+public sealed record GoogleSignInResult(GoogleSignInStatus Status, SessionUser? User, string? Reason)
 {
     public static GoogleSignInResult Reject(string reason) => new(GoogleSignInStatus.Rejected, null, reason);
-
-    /// <summary>A verified e-mail with no account behind it: the self-serve signup path.</summary>
-    public static GoogleSignInResult Signup(string email, string googleSub) =>
-        new(GoogleSignInStatus.SignupEligible, null, null, email, googleSub);
 
     public static GoogleSignInResult SignedIn(SessionUser user, bool twoFactorRequired) =>
         new(twoFactorRequired ? GoogleSignInStatus.TwoFactorRequired : GoogleSignInStatus.Authenticated, user, null);

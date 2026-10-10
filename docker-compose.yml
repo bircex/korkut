@@ -119,7 +119,6 @@ services:
       KORKUT_SMTP_PASSWORD: ${KORKUT_SMTP_PASSWORD:-}
       KORKUT_SMTP_FROM: ${KORKUT_SMTP_FROM:-}
       KORKUT_SMTP_FROM_NAME: ${KORKUT_SMTP_FROM_NAME:-Korkut}
-      KORKUT_ADMIN_NOTIFY_EMAIL: ${KORKUT_ADMIN_NOTIFY_EMAIL:-}
       KORKUT_APP_URL: ${KORKUT_APP_URL:-}
       # Behind a reverse proxy: Secure cookies over HTTPS, and the proxy's real-client header.
       KORKUT_SECURE_COOKIES: ${KORKUT_SECURE_COOKIES:-}

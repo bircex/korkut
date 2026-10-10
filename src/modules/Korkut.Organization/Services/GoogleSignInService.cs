@@ -84,13 +84,9 @@ public sealed class GoogleSignInService(
             return GoogleSignInResult.Reject("unverified_email");
         }
 
+        // A verified e-mail with no account behind it is refused ("no_account"): members join by
+        // invitation, and the office's first account is made at first-run setup.
         var resolution = await ResolveAccountAsync(identity, ct);
-        if (resolution.Reason == "no_account")
-        {
-            // Verified e-mail with no Korkut account → eligible for self-serve signup.
-            return GoogleSignInResult.Signup(Normalize(identity.Email), identity.Subject);
-        }
-
         if (resolution.Reason is not null)
         {
             return GoogleSignInResult.Reject(resolution.Reason);

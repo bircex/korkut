@@ -2,27 +2,19 @@ import { useEffect, useState } from "react";
 import { api, type User } from "./api";
 import { onSessionExpired, onAuthChanged, signalAuthChanged } from "./session";
 import { SignIn } from "./components/SignIn";
-import { Signup } from "./components/Signup";
 import { Setup } from "./components/Setup";
 import { Workspace } from "./components/Workspace";
-import { AdminConsole } from "./components/AdminConsole";
-import { navigate, usePath } from "./router";
+import { navigate } from "./router";
 
 // A deep link visited while signed out (e.g. /dosyalar/12). Google sign-in is a full-page
 // round-trip that lands back on "/", so we stash the target and restore it once authed.
 const NEXT_KEY = "korkut:next";
 
 export function App() {
-  const path = usePath();
   const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
   // A fresh install has no office or account yet: it shows first-run setup instead of sign-in.
   const [setupRequired, setSetupRequired] = useState(false);
-
-  // Platform admin console route operates on its own session audience under /admin/api
-  if (path.startsWith("/admin")) {
-    return <AdminConsole />;
-  }
 
   // Probe the session cookie. Runs on mount and again whenever a fresh sign-in
 
@@ -103,6 +95,5 @@ export function App() {
   if (setupRequired) {
     return <Setup onDone={signalAuthChanged} />;
   }
-  // Anonymous: the self-serve "create your firm" step lives at /kayit; everything else is sign-in.
-  return path.startsWith("/kayit") ? <Signup /> : <SignIn />;
+  return <SignIn />;
 }

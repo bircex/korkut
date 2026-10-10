@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Korkut.Api.Controllers;
 
-/// <summary>Public bootstrap flags — mirrors the Python <c>/api/config</c> body.</summary>
-public sealed record ConfigResponse(bool DemoEnabled, bool GoogleConfigured);
+/// <summary>Public bootstrap flags: what the sign-in screen may offer.</summary>
+public sealed record ConfigResponse(bool GoogleConfigured);
 
 /// <summary>A sample list item (a transport shape, deliberately not a domain entity).</summary>
 public sealed record SampleItem(Guid Id, string Name);
@@ -42,7 +42,8 @@ public sealed class FoundationController : ControllerBase
     [HttpGet("config")]
     [HttpGet("/api/config")]
     [AllowAnonymous]
-    public IActionResult Config() => Ok(new ConfigResponse(DemoEnabled: true, GoogleConfigured: false));
+    public IActionResult Config([FromServices] Korkut.Contract.Organization.IGoogleSignInService google)
+        => Ok(new ConfigResponse(GoogleConfigured: google.IsConfigured));
 
     /// <summary>The paged envelope: { items, total }.</summary>
     [HttpGet("samples")]
@@ -67,7 +68,7 @@ public sealed class FoundationController : ControllerBase
     [AllowAnonymous]
     public IActionResult NotFoundDemo() => throw ApiException.NotFound("Kayıt bulunamadı");
 
-    /// <summary>Rate limiting, as applied to login, reset, 2FA, upload and admin.</summary>
+    /// <summary>Rate limiting, as applied to login, reset, 2FA, setup and upload.</summary>
     [HttpGet("sensitive-demo")]
     [AllowAnonymous]
     [EnableRateLimiting(WebSetup.SensitivePolicy)]

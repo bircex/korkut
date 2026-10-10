@@ -19,8 +19,6 @@ public sealed class OrganizationModule : IModule
     public void Register(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IOfficeRepository, OfficeRepository>();
-        services.AddScoped<IOfficeAdminService, OfficeAdminService>();
-        services.AddScoped<Korkut.Contract.Offices.IAdminConsoleService, AdminConsoleService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<Korkut.Contract.Organization.IUserLookup, UserLookup>();
         services.AddScoped<Korkut.Core.IUserLookupService, UserLookupService>();
@@ -28,7 +26,6 @@ public sealed class OrganizationModule : IModule
         services.AddScoped<Korkut.Contract.Organization.IMemberService, MemberService>();
         services.AddScoped<Korkut.Contract.Organization.IProfileService, ProfileService>();
         services.AddScoped<Korkut.Contract.Organization.IInviteService, InviteService>();
-        services.AddScoped<Korkut.Contract.Organization.IOnboardingService, OnboardingService>();
         services.AddScoped<Korkut.Contract.Organization.ISetupService, SetupService>();
         services.AddScoped<Korkut.Contract.Organization.IAuthService, AuthService>();
         services.AddScoped<Korkut.Contract.Organization.IGoogleSignInService, GoogleSignInService>();

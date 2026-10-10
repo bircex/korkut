@@ -34,8 +34,6 @@ builder.Services.TryAddSingleton<IOcrService, DisabledOcrService>();
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton(sp => new AccessTokenService(
     builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
-builder.Services.AddSingleton(sp => new AdminAccessTokens(
-    builder.Configuration["KORKUT_SECRET"] ?? string.Empty, sp.GetRequiredService<IClock>()));
 builder.Services.AddKorkutAuthorization();
 
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 30 * 1024 * 1024);

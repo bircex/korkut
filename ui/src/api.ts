@@ -25,7 +25,7 @@ export type Invite = {
   expires_at: string;
   redeemed: boolean;
 };
-export type PublicConfig = { demo_enabled: boolean; google_configured: boolean };
+export type PublicConfig = { google_configured: boolean };
 export type NewInvite = Invite & { token: string; path: string };
 // Bir sohbet turunda danışılan hukuki kaynak (backend SourceRef, snake_case) — İlgili Kararlar
 // drawer'ını besler. `kind` içtihat/mevzuat ayrımıdır; `source`+`id` karar detayının anahtarıdır.
@@ -435,20 +435,9 @@ export const api = {
   me: () => probe<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
   config: () => request<PublicConfig>("/api/config"),
-  // Google OIDC is the only sign-in: a full-page redirect the browser navigates to.
+  // Optional Google sign-in (when the install configures it): a full-page redirect.
   googleSignInUrl: (invite?: string) =>
     `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
-  // Self-serve demo request (after a Google-verified redirect to /kayit). Creates a DISABLED office
-  // pending a superadmin's approval; no session is issued.
-  // probe(), not request(): an anonymous /kayit visit has no signup ticket, so a 401 here is the
-  // expected "no ticket" outcome — routing it through the authed session layer made it look like
-  // a session expiry and force-navigated to /giris before Signup.tsx's own noTicket branch could run.
-  signupPending: () => probe<{ email: string }>("/api/signup/pending"),
-  demoRequest: (office_name: string, full_name?: string) =>
-    request<{ pending: boolean }>("/api/demo-request", {
-      method: "POST",
-      body: JSON.stringify({ office_name, full_name }),
-    }),
   members: () => request<Member[]>("/api/members"),
   addMember: (email: string, username: string, full_name: string, bar_registry_no?: string) =>
     request<Member>("/api/members", {
@@ -594,13 +583,6 @@ export const api = {
     probe<{ ok: boolean }>("/api/auth/2fa", {
       method: "POST",
       body: JSON.stringify(recovery ? { recovery_code: code } : { code }),
-    }),
-  // Local e-mail/password self-serve registration. Creates a DISABLED office pending a
-  // platform admin; the owner can sign in only after approval.
-  register: (full_name: string, email: string, password: string, office_name: string) =>
-    probe<{ pending: boolean }>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ full_name, email, password, office_name }),
     }),
   // First-run setup of a fresh install: whether it still has to run, and running it (creates the
   // office and its owner once; the caller then signs in with the same e-mail and password).
@@ -883,90 +865,3 @@ export const api = {
   exportUrl: (docId: number, format: "docx" | "udf") =>
     `/api/documents/${docId}/export?format=${format}`,
 };
-
-export type AdminSessionState = {
-  state: "anon" | "authed" | "totp_required" | "bootstrap_required" | "denied";
-  email?: string | null;
-};
-
-export type AdminStats = {
-  offices: number;
-  active: number;
-  pending: number;
-  users: number;
-};
-
-export type AdminOffice = {
-  id: string;
-  name: string;
-  disabled: boolean;
-  owner_email: string | null;
-  members: number;
-  created_at: string | null;
-};
-
-export type AdminModel = {
-  key: string;
-  label: string;
-  model: string;
-  base_url: string;
-  is_local: boolean;
-};
-
-export type AdminOfficeMember = {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-  chats: number;
-  messages: number;
-};
-
-export type AdminOfficeDetail = {
-  id: string;
-  name: string;
-  disabled: boolean;
-  created_at: string | null;
-  model: {
-    enabled: boolean;
-    model_key: string | null;
-    label: string | null;
-  };
-  totals: {
-    chats: number;
-    messages: number;
-    tokens: number;
-  };
-  members: AdminOfficeMember[];
-};
-
-export const adminApi = {
-  session: () => request<AdminSessionState>("/admin/api/session"),
-  stats: () => request<AdminStats>("/admin/api/stats"),
-  offices: () => request<AdminOffice[]>("/admin/api/offices"),
-  officeDetail: (id: string) => request<AdminOfficeDetail>(`/admin/api/offices/${id}`),
-  enableOffice: (id: string) => request<void>(`/admin/api/offices/${id}/enable`, { method: "POST" }),
-  disableOffice: (id: string) => request<void>(`/admin/api/offices/${id}/disable`, { method: "POST" }),
-  assignModel: (id: string, modelKey: string | null, enabled: boolean) =>
-    request<AdminOfficeDetail>(`/admin/api/offices/${id}/model`, {
-      method: "PUT",
-      body: JSON.stringify({ model_key: modelKey, enabled }),
-    }),
-  models: () => request<AdminModel[]>("/admin/api/models"),
-  challenge2fa: (code: string) =>
-    request<void>("/admin/api/2fa/challenge", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    }),
-  enrollStart2fa: () =>
-    request<{ provisioning_uri: string; secret: string }>("/admin/api/2fa/enroll/start", {
-      method: "POST",
-    }),
-  enrollConfirm2fa: (code: string) =>
-    request<{ recovery_codes: string[] }>("/admin/api/2fa/enroll/confirm", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    }),
-  logout: () => request<void>("/admin/api/logout", { method: "POST" }),
-};
-

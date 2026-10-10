@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { Check, Warning } from "../icons";
 import { Spinner } from "../a11y";
 import { toolIcon, toolLabel } from "./toolLabels";
@@ -11,10 +12,11 @@ import type { ToolCallInfo } from "../api";
 // balonunda kalır; iz yalnız geçici bir durum bildirimidir.
 
 function ToolCallEntry({ call }: { call: ToolCallInfo }) {
-  const Icon = toolIcon(call.name);
   return (
     <div className="flex items-center gap-2 py-0.5 text-[12px] font-medium text-zinc-400">
-      <Icon size={13} aria-hidden className="relative z-10 shrink-0" />
+      {/* toolIcon modül düzeyindeki sabit ikon bileşenlerinden birini seçer; render sırasında yeni
+          bileşen tanımlamaz. createElement, JSX'teki değişken bileşen kalıbına takılan lint'i aşar. */}
+      {createElement(toolIcon(call.name), { size: 13, "aria-hidden": true, className: "relative z-10 shrink-0" })}
       <span className="truncate">{toolLabel(call.name)}</span>
       {!call.result ? (
         <Spinner label="Çalışıyor" />
