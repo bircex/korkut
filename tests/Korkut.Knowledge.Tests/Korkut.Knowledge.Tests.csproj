@@ -7,7 +7,6 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
@@ -18,7 +17,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\services\Korkut.Knowledge.Host\Korkut.Knowledge.Host.csproj" />
+    <ProjectReference Include="..\..\src\shared\Korkut.Ai\Korkut.Ai.csproj" />
+    <ProjectReference Include="..\..\src\modules\Korkut.Organization\Korkut.Organization.csproj" />
     <ProjectReference Include="..\..\src\modules\Korkut.Knowledge\Korkut.Knowledge.csproj" />
     <ProjectReference Include="..\..\src\shared\Korkut.Infrastructure\Korkut.Infrastructure.csproj" />
       <ProjectReference Include="..\..\src\shared\Korkut.Security\Korkut.Security.csproj" />

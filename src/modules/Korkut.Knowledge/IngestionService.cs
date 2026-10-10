@@ -16,7 +16,7 @@ public sealed class IngestionService(
     IEmbedder embedder,
     IVectorStoreService storeService,
     IPiiRedactorService redactorService,
-    IUnitOfWork unitOfWork,
+    IKnowledgeUnitOfWork unitOfWork,
     ICurrentUser currentUser) : IIngestionService
 {
     public Task<int> IngestAsync(Guid documentId, string text, CancellationToken ct = default)

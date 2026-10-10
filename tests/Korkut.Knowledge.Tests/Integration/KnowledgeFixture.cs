@@ -1,14 +1,9 @@
+using Korkut.Ai;
+using Korkut.Core;
+using Korkut.Infrastructure.Persistence;
+using Korkut.Knowledge.Persistence;
 using Korkut.Organization;
 using Korkut.Organization.Entities;
-using System.Net.Http.Headers;
-using Korkut.Core;
-using Korkut.Security;
-using Korkut.Infrastructure.Persistence;
-using Korkut.Knowledge;
-using Korkut.Knowledge.Persistence;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -19,29 +14,22 @@ using Testcontainers.PostgreSql;
 namespace Korkut.Knowledge.Tests.Integration;
 
 /// <summary>
-/// Boots the real Knowledge host against a real pgvector-enabled PostgreSQL (Testcontainers),
-/// with the operational schema migrated first (so the cluster-wide <c>korkut_app</c> role exists)
-/// and then the Knowledge schema (which grants to it). The host connects as the least-privileged
-/// <c>korkut_app</c> role, so row-level security is really enforced. A deterministic fake embedder
-/// stands in for a real model, so the full chunk → embed → store → search path runs end-to-end
-/// without an embedding backend.
+/// The Knowledge module as the app host composes it (<c>AddKorkutKnowledge</c> + the shared AI
+/// runtime), against a real pgvector-enabled PostgreSQL (Testcontainers). The operational schema is
+/// migrated first (so the cluster-wide <c>korkut_app</c> role exists), then the Knowledge schema
+/// (which grants to it), and the services connect as the least-privileged <c>korkut_app</c> role, so
+/// row-level security is really enforced. A deterministic fake embedder stands in for a real model,
+/// so the full chunk -> embed -> store -> search path runs end-to-end without an embedding backend.
 /// </summary>
-public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class KnowledgeFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder("pgvector/pgvector:pg16").Build();
-    private string _appConnectionString = string.Empty;
-
-    private sealed class Clock : IClock
-    {
-        public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
-    }
+    private ServiceProvider _services = null!;
 
     public async Task InitializeAsync()
     {
         await _pg.StartAsync();
 
-        // Operational schema first — its TenancyRls migration creates the cluster-wide korkut_app
-        // role that the Knowledge migration grants to. Then the Knowledge schema (pgvector + RLS).
         await using (var ops = OwnerContext())
         {
             await ops.Database.MigrateAsync();
@@ -57,32 +45,45 @@ public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAs
             await ops.Database.ExecuteSqlRawAsync("ALTER ROLE korkut_app WITH LOGIN PASSWORD 'approle_test'");
         }
 
-        _appConnectionString = new NpgsqlConnectionStringBuilder(_pg.GetConnectionString())
+        var appConnection = new NpgsqlConnectionStringBuilder(_pg.GetConnectionString())
         {
             Username = "korkut_app",
             Password = "approle_test",
         }.ConnectionString;
 
-        Environment.SetEnvironmentVariable("KORKUT_KNOWLEDGE_DB_URL", _appConnectionString);
-        _ = Server; // Trigger host construction now that the connection string is set.
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IClock>(SystemClock.Instance);
+        services.AddKorkutKnowledge(appConnection);
+        services.AddKorkutAi();
+        services.RemoveAll<IEmbedder>();
+        services.AddSingleton<IEmbedder, FakeEmbedder>();
+        services.AddScoped<TestCurrentUser>();
+        services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<TestCurrentUser>());
+        _services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 
-    public new async Task DisposeAsync()
+    public async Task DisposeAsync()
     {
+        await _services.DisposeAsync();
         await _pg.DisposeAsync();
-        await base.DisposeAsync();
     }
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    /// <summary>A DI scope acting as a signed-in member of <paramref name="officeId"/>, like one request.</summary>
+    public AsyncServiceScope ScopeFor(Guid officeId)
     {
-        builder.UseSetting("KORKUT_KNOWLEDGE_DB_URL", _appConnectionString);
-        builder.ConfigureTestServices(services =>
-        {
-            // Deterministic embedder so ingest + search run end-to-end without an embedding backend.
-            services.RemoveAll<IEmbedder>();
-            services.AddSingleton<IEmbedder, FakeEmbedder>();
-        });
-        builder.UseEnvironment("Testing");
+        var scope = _services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TestCurrentUser>().OfficeId = officeId;
+        return scope;
+    }
+
+    private sealed class TestCurrentUser : ICurrentUser
+    {
+        public Guid OfficeId { get; set; }
+
+        public Guid UserId { get; } = Guid.CreateVersion7();
+
+        public IReadOnlySet<string> Permissions { get; } = new HashSet<string>();
     }
 
     /// <summary>
@@ -190,13 +191,14 @@ public sealed class KorkutKnowledgeFactory : WebApplicationFactory<Program>, IAs
         return (officeId, userId);
     }
 
-    /// <summary>An HttpClient carrying a valid access token for the given office/user.</summary>
-    public HttpClient ClientFor(Guid officeId, Guid userId, string role = Roles.OfficeOwner)
+    /// <summary>Seed an office in the operational DB and return its id.</summary>
+    public async Task<Guid> SeedOfficeAsync()
     {
-        var token = new AccessTokenService(Environment.GetEnvironmentVariable("KORKUT_SECRET")!, new Clock())
-            .Mint(new AccessClaims(userId, officeId, role, "s1"));
-        var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return client;
+        var officeId = Guid.CreateVersion7();
+        await using var db = OwnerContext();
+        db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
+        db.Users.Add(new User(officeId, $"user-{Guid.CreateVersion7():N}@example.com", Roles.OfficeOwner, null, null, DateTimeOffset.UtcNow));
+        await db.SaveChangesAsync();
+        return officeId;
     }
 }

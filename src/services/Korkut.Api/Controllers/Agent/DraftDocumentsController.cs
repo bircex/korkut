@@ -3,21 +3,20 @@ using Korkut.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Agent.Host.Controllers;
+namespace Korkut.Api.Controllers.Agent;
 
 /// <summary>
-/// AI-drafted documents (the KDM document editor), served by the Agent host. A thin transport: each
+/// AI-drafted documents (the KDM document editor). A thin transport: each
 /// action forwards to <see cref="DocumentAppService"/> (which owns the tenant scope, orchestration,
 /// author resolution, and mapping) and returns the result. Reads matters.read; drafting / accept /
 /// revert / save use matters.write. Export renders the current markdown to docx/UDF.
 /// </summary>
 [ApiController]
 [Route("api/documents")]
-public sealed class DocumentsController(IDocumentAppService docs) : ControllerBase
+public sealed class DraftDocumentsController(IDocumentAppService docs) : ControllerBase
 {
     /// <summary>Every drafted document in the office (the SPA's Belgeler list). Bare array.
-    /// Own path (NOT /api/documents): that one is the operational evrak library on the Api host —
-    /// the gateway routes by path, so the two must not share the list URL.</summary>
+    /// Own path (NOT /api/documents): that one is the operational evrak library.</summary>
     [HttpGet("/api/draft-documents")]
     [Authorize(Policy = Permissions.MattersRead)]
     public async Task<IActionResult> List(CancellationToken ct)

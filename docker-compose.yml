@@ -1,10 +1,10 @@
-# Korkut backend — full multi-host deployment (Phase 11). The single public entry is the
-# gateway (:8090); it routes to the api + agent. Knowledge + ocr are internal (never published).
-# One Postgres cluster holds the three schemas (operational / korkut_agent / korkut_knowledge);
-# PgBouncer (transaction pooling) fronts it for the runtime hosts, while the one-shot migrator
-# connects DIRECTLY (session mode) to apply schema. Telemetry (OTLP) goes to the all-in-one
-# Grafana LGTM stack (Grafana on :3000). Secrets + provider keys come from a .env file the
-# operator supplies (see .env.example) — nothing is baked into an image.
+# Korkut: one `korkut` container serves the whole app on :8090 (KORKUT_HTTP_PORT). Beside it,
+# ocr and kikproxy are internal helpers with native or TLS needs of their own. One Postgres
+# cluster holds the three schemas (operational / korkut_agent / korkut_knowledge); PgBouncer
+# (transaction pooling) fronts it for the app, while the one-shot migrator connects directly
+# (session mode) to apply schema. Grafana LGTM is optional (`--profile ops`). Secrets and
+# provider keys come from a .env file the operator supplies (see .env.example); nothing is
+# baked into an image.
 #
 # First run:  cp .env.example .env  &&  edit .env  &&  docker compose up -d --build
 
@@ -86,7 +86,9 @@ services:
       - "${KORKUT_GRAFANA_PORT:-3000}:3000"
     restart: unless-stopped
 
-  api:
+  # The app: the API, the assistant, the knowledge index and the React app from ui/, in one
+  # process on one origin (session cookies and the Google OAuth callback stay same-origin).
+  korkut:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -97,9 +99,10 @@ services:
       # Uploaded documents live on the `objects` volume. Set KORKUT_STORAGE=s3 plus the
       # KORKUT_MINIO_* variables to keep them in an S3-compatible server instead.
       KORKUT_STORAGE: ${KORKUT_STORAGE:-filesystem}
-      # Same OCR fallback for the document-extraction pipeline (a scanned evrak must become
-      # searchable text, not an empty extraction artifact).
+      # Scanned uploads (no text layer) are recognised by the OCR host; without this the extractor
+      # is text-layer only and a scanned dilekçe reaches the model as "metin çıkarılamadı".
       KORKUT_OCR_URL: http://ocr:8080
+      KORKUT_KIK_PROXY_URL: http://kikproxy:8080
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
@@ -112,7 +115,21 @@ services:
       KORKUT_SMTP_FROM_NAME: ${KORKUT_SMTP_FROM_NAME:-Korkut}
       KORKUT_ADMIN_NOTIFY_EMAIL: ${KORKUT_ADMIN_NOTIFY_EMAIL:-}
       KORKUT_APP_URL: ${KORKUT_APP_URL:-}
-      KORKUT_KIK_PROXY_URL: http://kikproxy:8080
+      # Models. Replaced by the llmr gateway in the next phase.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      KORKUT_OFFICE_TOKEN_BUDGET: ${KORKUT_OFFICE_TOKEN_BUDGET:-0}
+      KORKUT_OFFICE_CONCURRENCY: ${KORKUT_OFFICE_CONCURRENCY:-0}
+      # Embeddings for the knowledge index; unset, chat answers without grounding.
+      KORKUT_EMBEDDING_URL: ${KORKUT_EMBEDDING_URL:-}
+      KORKUT_EMBEDDING_MODEL: ${KORKUT_EMBEDDING_MODEL:-nomic-embed-text}
+      KORKUT_EMBEDDING_API_KEY: ${KORKUT_EMBEDDING_API_KEY:-}
+    ports:
+      - "${KORKUT_HTTP_PORT:-8090}:8080"
     depends_on:
       migrator:
         condition: service_completed_successfully
@@ -136,56 +153,6 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.agent
-    environment:
-      <<: *app-env
-      KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
-      KORKUT_AGENT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
-      KORKUT_KNOWLEDGE_URL: http://knowledge:8080
-      # Chat uploads go into the same document store as the API's.
-      KORKUT_STORAGE: ${KORKUT_STORAGE:-filesystem}
-      # Scanned uploads (no text layer) are recognised by the OCR host; without this the extractor
-      # is text-layer only and a scanned dilekçe reaches the model as "metin çıkarılamadı".
-      KORKUT_OCR_URL: http://ocr:8080
-      KORKUT_KIK_PROXY_URL: http://kikproxy:8080
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-4-8}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      KORKUT_OLLAMA_URL: ${KORKUT_OLLAMA_URL:-}
-      KORKUT_OFFICE_TOKEN_BUDGET: ${KORKUT_OFFICE_TOKEN_BUDGET:-0}
-      KORKUT_OFFICE_CONCURRENCY: ${KORKUT_OFFICE_CONCURRENCY:-0}
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
-      pgbouncer:
-        condition: service_started
-    volumes:
-      - objects:/var/lib/korkut/objects
-    restart: unless-stopped
-
-  knowledge:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.knowledge
-    environment:
-      <<: *app-env
-      KORKUT_KNOWLEDGE_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD}@pgbouncer:6432/korkut
-      KORKUT_EMBEDDING_URL: ${KORKUT_EMBEDDING_URL:-}
-      KORKUT_EMBEDDING_MODEL: ${KORKUT_EMBEDDING_MODEL:-nomic-embed-text}
-      KORKUT_EMBEDDING_API_KEY: ${KORKUT_EMBEDDING_API_KEY:-}
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
-      pgbouncer:
-        condition: service_started
-    restart: unless-stopped
-
   ocr:
     build:
       context: .
@@ -200,32 +167,13 @@ services:
 
   # Single-purpose sidecar for the KİK (Kamu İhale Kurulu) source: ekap.kik.gov.tr's TLS
   # handshake only completes under a relaxed OpenSSL SECLEVEL (docker/kikproxy-openssl.cnf),
-  # kept in its own process so that relaxation never touches api/agent's own outbound calls —
+  # kept in its own process so that relaxation never touches the app's own outbound calls —
   # see LawClientsHttp.cs / KikProxyClient.cs. Stateless, no DB, not internet-facing beyond
   # the one gov.tr host it talks to.
   kikproxy:
     build:
       context: .
       dockerfile: docker/Dockerfile.kikproxy
-    restart: unless-stopped
-
-  gateway:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.gateway
-    environment:
-      <<: *app-env
-      KORKUT_API_URL: http://api:8080
-      KORKUT_AGENT_URL: http://agent:8080
-    # The browser entry: serves the React app from ui/ and proxies /api, all on one origin so
-    # session cookies and the Google OAuth callback stay same-origin.
-    ports:
-      - "${KORKUT_HTTP_PORT:-8090}:8080"
-    depends_on:
-      api:
-        condition: service_started
-      agent:
-        condition: service_started
     restart: unless-stopped
 
 volumes:

@@ -35,9 +35,11 @@ public static class KnowledgeSetup
         services.AddScoped<IVectorStoreService, PgVectorStoreService>();
         services.AddScoped<IIngestionService, IngestionService>();
         services.AddScoped<IRetrievalService, RetrievalService>();
-        // The Knowledge DB has its own unit of work (its own context + tenant scope), so in the
-        // Knowledge host IUnitOfWork resolves to this one.
-        services.AddScoped<IUnitOfWork, KnowledgeUnitOfWork>();
+        // The Knowledge DB has its own unit of work (its own context + tenant scope), under its own
+        // interface so it never displaces the operational IUnitOfWork in the same container.
+        services.AddScoped<IKnowledgeUnitOfWork, KnowledgeUnitOfWork>();
+        // What chat grounding and the search tool consume: retrieval that never fails the turn.
+        services.AddScoped<IKnowledgeSearchService, GroundingSearchService>();
         return services;
     }
 

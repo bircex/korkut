@@ -10,7 +10,7 @@ namespace Korkut.Knowledge;
 public sealed class RetrievalService(
     IEmbedder embedder,
     IVectorStoreService storeService,
-    IUnitOfWork unitOfWork,
+    IKnowledgeUnitOfWork unitOfWork,
     ICurrentUser currentUser) : IRetrievalService
 {
     public const int DefaultTopK = 6;

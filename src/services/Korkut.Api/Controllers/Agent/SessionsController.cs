@@ -5,10 +5,10 @@ using Korkut.Web.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Korkut.Agent.Host.Controllers;
+namespace Korkut.Api.Controllers.Agent;
 
 /// <summary>
-/// The assistant's conversations ("sessions") + chat, served by the Agent host. A thin transport:
+/// The assistant's conversations ("sessions") + chat, A thin transport:
 /// each action forwards the request to an application service (which owns the tenant scope,
 /// orchestration, and response mapping) and returns the result. Reads use matters.read; create /
 /// chat / rename / clone / delete use matters.write.

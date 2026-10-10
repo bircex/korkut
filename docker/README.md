@@ -1,11 +1,11 @@
 # Korkut .NET container images (KDM-009)
 
-Hardened, minimal, reproducible images for the three .NET hosts. Build context is
+Hardened, minimal, reproducible images for the .NET hosts. Build context is
 the repository root.
 
 | Image | Dockerfile | Base (runtime) | Shape |
 |---|---|---|---|
-| `korkut-api` | `Dockerfile.api` | `aspnet:10.0-noble-chiseled` | HTTP API, port 8080 |
+| `korkut-api` | `Dockerfile.api` | `aspnet:10.0-noble-chiseled` | the app: API, assistant, knowledge index and the React UI, port 8080 |
 | `korkut-worker` | `Dockerfile.worker` | `runtime:10.0-noble-chiseled` | long-running outbox processor |
 | `korkut-migrator` | `Dockerfile.migrator` | `runtime:10.0-noble-chiseled` | one-shot; applies migrations then exits |
 

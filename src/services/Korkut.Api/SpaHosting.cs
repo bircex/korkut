@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
 
-namespace Korkut.Gateway;
+namespace Korkut.Api;
 
 /// <summary>
-/// Serves the built React app (ui/, copied into wwwroot by the image) from the public entry, so
-/// the browser talks to one origin: session cookies and the Google OAuth callback stay
-/// same-origin with no extra proxy tier. Every path the proxy and health endpoints do not claim
-/// falls back to index.html for client-side routing (/sohbet/12, /ayarlar/...).
+/// Serves the built React app (ui/, copied into wwwroot by the image) from the same host as the
+/// API, so the browser talks to one origin: session cookies and the Google OAuth callback stay
+/// same-origin. Every non-API path no endpoint claims falls back to index.html for client-side
+/// routing (/sohbet/12, /ayarlar/...).
 /// </summary>
 public static class SpaHosting
 {
@@ -24,6 +24,13 @@ public static class SpaHosting
         var options = new StaticFileOptions { OnPrepareResponse = ctx => PrepareResponse(ctx.Context) };
         app.UseStaticFiles(options);
         app.MapFallbackToFile("index.html", options);
+        // An /api path no controller claims is a missing endpoint, not a page: answer 404 rather
+        // than the app shell, or a client calling a wrong URL gets HTML with a 200.
+        app.MapFallback("/api/{**rest}", context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return Task.CompletedTask;
+        });
         return app;
     }
 

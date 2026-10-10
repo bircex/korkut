@@ -6,7 +6,7 @@ namespace Korkut.Knowledge.Tests.Integration;
 /// (unique ids), so they never collide.
 /// </summary>
 [CollectionDefinition(Name)]
-public sealed class IntegrationSuite : ICollectionFixture<KorkutKnowledgeFactory>
+public sealed class IntegrationSuite : ICollectionFixture<KnowledgeFixture>
 {
     public const string Name = "integration";
 }
