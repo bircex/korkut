@@ -7,10 +7,12 @@ public sealed record TelegramLinkedMember(Guid UserId, string Name, string? Tele
 
 /// <summary>
 /// The office's Telegram bot as the owner sees it. The token itself is never returned; the bot's
-/// username shows which bot is connected.
+/// username shows which bot is connected. <c>Problem</c> is what keeps the bot from receiving
+/// messages right now, if anything.
 /// </summary>
 public sealed record TelegramSettingsResponse(
-    bool Configured, bool Enabled, string? BotUsername, DateTimeOffset? ConsentAt, IReadOnlyList<TelegramLinkedMember> Members);
+    bool Configured, bool Enabled, string? BotUsername, DateTimeOffset? ConsentAt, IReadOnlyList<TelegramLinkedMember> Members,
+    string? Problem = null);
 
 /// <summary>
 /// Body for changing the office's bot. A token, when given, replaces the stored one (and unlinks

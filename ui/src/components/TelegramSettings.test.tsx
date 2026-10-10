@@ -20,13 +20,14 @@ vi.mock("../api", async (importOriginal) => {
   };
 });
 
-const OFF: Settings = { configured: false, enabled: false, bot_username: null, consent_at: null, members: [] };
+const OFF: Settings = { configured: false, enabled: false, bot_username: null, consent_at: null, members: [], problem: null };
 const ON: Settings = {
   configured: true,
   enabled: true,
   bot_username: "buro_bot",
   consent_at: "2026-10-10T10:00:00Z",
   members: [{ user_id: "u1", name: "Elif Korkmaz", telegram_username: "elif", linked_at: "2026-10-10T11:00:00Z" }],
+  problem: null,
 };
 
 describe("TelegramSettings", () => {
@@ -60,6 +61,13 @@ describe("TelegramSettings", () => {
     fireEvent.click(screen.getByRole("button", { name: "Botu aç" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("tanımadı");
+  });
+
+  it("tells the owner what keeps the bot from receiving messages", async () => {
+    vi.mocked(telegramApi.settings).mockResolvedValue({ ...ON, problem: "Bu botun mesajlarını başka bir program okuyor." });
+    render(<TelegramSettings />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("başka bir program");
   });
 
   it("unlinks a member", async () => {

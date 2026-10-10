@@ -73,6 +73,11 @@ export function TelegramSettings() {
             {data.enabled ? "Açık" : "Kapalı"}
           </span>
         </div>
+        {data.problem && (
+          <p role="status" className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+            {data.problem}
+          </p>
+        )}
         {data.bot_username && (
           <p className="mb-3 text-[13px] text-zinc-600">
             Bağlı bot:{" "}

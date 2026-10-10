@@ -17,7 +17,7 @@ namespace Korkut.Telegram.Services;
 /// answering, so a restart never answers the same message twice.
 /// </summary>
 public sealed partial class TelegramPollingService(
-    IServiceScopeFactory scopes, ITelegramApi telegram, ILogger<TelegramPollingService> logger) : BackgroundService
+    IServiceScopeFactory scopes, ITelegramApi telegram, TelegramBotStatus status, ILogger<TelegramPollingService> logger) : BackgroundService
 {
     private const int PollSeconds = 25;
     private const int MaxParallelChats = 4;
@@ -67,16 +67,23 @@ public sealed partial class TelegramPollingService(
         if (bot is null)
         {
             _lastError = null;
+            status.Report(null);
             return IdleDelay;
         }
 
         var (office, token, offset) = bot.Value;
-        var updates = await telegram.GetUpdatesAsync(token, offset, PollSeconds, ct);
+        var received = await telegram.GetUpdatesAsync(token, offset, PollSeconds, ct);
         if (_lastError is not null)
         {
             Recovered(logger);
             _lastError = null;
         }
+
+        status.Report(null);
+
+        // Telegram never sends an update below the offset; anything that claims to (a proxy
+        // replaying a response) would run a member's turn twice, so it is dropped.
+        var updates = received.Where(u => u.UpdateId >= offset).ToList();
 
         if (updates.Count == 0)
         {
@@ -170,6 +177,7 @@ public sealed partial class TelegramPollingService(
         switch (ex.ErrorCode)
         {
             case 401 or 404:
+                status.Report("Telegram bot anahtarını reddetti. BotFather'dan anahtarı yeniden alıp girin.");
                 if (first)
                 {
                     TokenRejected(logger);
@@ -177,6 +185,7 @@ public sealed partial class TelegramPollingService(
 
                 return TimeSpan.FromMinutes(1);
             case 409:
+                status.Report("Bu botun mesajlarını başka bir program okuyor. Bir bot yalnızca tek bir Korkut kurulumunda kullanılabilir.");
                 if (first)
                 {
                     BotInUse(logger);
@@ -186,6 +195,7 @@ public sealed partial class TelegramPollingService(
             case 429:
                 return TimeSpan.FromSeconds(Math.Clamp(ex.RetryAfter ?? 5, 1, 300));
             default:
+                status.Report("Telegram'a ulaşılamıyor. Bu bilgisayarın internet bağlantısını denetleyin.");
                 if (first)
                 {
                     Unreachable(logger, ex.Message);

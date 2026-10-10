@@ -23,6 +23,7 @@ public sealed class TelegramModule : IModule
         services.AddScoped<ITelegramLinkService, TelegramLinkService>();
         services.AddScoped<TelegramUpdateHandler>();
         services.AddSingleton<ITelegramApi, TelegramApi>();
+        services.AddSingleton<TelegramBotStatus>();
 
         var apiUrl = configuration[ApiUrlSetting];
         services.AddHttpClient(TelegramApi.HttpClientName, client =>

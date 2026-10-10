@@ -14,7 +14,7 @@ namespace Korkut.Telegram.Services;
 /// </summary>
 internal sealed class TelegramSettingsService(
     ITelegramRepository repository, ITelegramApi telegram, ISecretEncryptor encryptor, IUserLookup users,
-    IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : ITelegramSettingsService
+    TelegramBotStatus status, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : ITelegramSettingsService
 {
     public Task<Result<TelegramSettingsResponse>> GetAsync(CancellationToken ct = default)
         => InScopeAsync(async office => Result<TelegramSettingsResponse>.Ok(await DescribeAsync(office, ct)), ct);
@@ -79,6 +79,7 @@ internal sealed class TelegramSettingsService(
                 }
 
                 bot.Connect(encryptor.Encrypt(Encoding.UTF8.GetBytes(token!)), botUsername, clock.UtcNow);
+                status.Report(null); // whatever the old token ran into, this one was just accepted
             }
 
             bot.Configure(request.Enabled, currentUser.UserId, request.Consent, clock.UtcNow);
@@ -123,8 +124,10 @@ internal sealed class TelegramSettingsService(
         var members = links
             .Select(l => new TelegramLinkedMember(l.UserId, names.GetValueOrDefault(l.UserId, "Üye"), l.TelegramUsername, l.LinkedAt!.Value))
             .ToList();
+        var enabled = bot is { Enabled: true, TokenCipher: not null };
         return new TelegramSettingsResponse(
-            bot?.TokenCipher is not null, bot?.Enabled ?? false, bot?.BotUsername, bot?.ConsentAt, members);
+            bot?.TokenCipher is not null, bot?.Enabled ?? false, bot?.BotUsername, bot?.ConsentAt, members,
+            enabled ? status.Problem : null);
     }
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

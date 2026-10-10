@@ -940,6 +940,7 @@ export type TelegramSettings = {
   bot_username: string | null;
   consent_at: string | null;
   members: TelegramLinkedMember[];
+  problem: string | null;
 };
 export type TelegramLink = {
   available: boolean;
