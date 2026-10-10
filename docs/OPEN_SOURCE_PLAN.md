@@ -1,8 +1,15 @@
 # Açık kaynak planı
 
-Durum: taslak, onay bekliyor (2026-10-09)
+Durum: uygulanıyor (2026-10-10)
 
-Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut-backend`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
+| Faz | Durum |
+|---|---|
+| 0. Yayın öncesi temizlik | Kısmen tamam: rate limit düzeltmesi (#196), GCP ve SaaS dağıtım dosyalarının silinmesi (#201). Kalan: admin allowlist e-postaları (Faz 3 ile), git geçmişi kararı |
+| 1. Monorepo | Tamam: ui/ (#197), website/ (#200), tek container (#199), MinIO yerine volume (#198). Eski repolar arşivlendi, repo adı `korkut` oldu |
+| 4. Kurulum (ilk adım) | Sıfır ayarla `docker compose up` (#202) ve tarayıcıdan ilk kurulum (#203) tamam. LLM ve diğer ayar ekranları Faz 2 ile gelecek |
+| 2, 3, 5 | Başlamadı |
+
+Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 
 Her faz ayrı bir PR'dır ve kendi başına çalışır durumda bırakılır.
 

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"                 # korkut-backend
+ROOT="$(cd "$HERE/../.." && pwd)"                 # repository root
 N="${N_TENANTS:-10}"
 HOST_BASE="${HOST_BASE:-http://localhost:8090}"   # host-side entry (ui → gateway)
 PASSWORD="${LOAD_PASSWORD:-LoadTest12345!}"

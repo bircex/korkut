@@ -15,7 +15,7 @@
 - [ ] `ruff check .` and `ruff format --check .` pass (backend)
 - [ ] `mypy` passes (backend)
 - [ ] `pytest` passes (backend)
-- [ ] UI changes go in the **korkut-ui** repo; if the committed SPA was refreshed, `make ui` was run
+- [ ] UI changes pass `make ui-test`
 
 ## Checklist
 

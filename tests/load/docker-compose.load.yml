@@ -4,7 +4,7 @@
 # It (1) adds a mock OpenAI-compatible LLM and points the agent's cloud provider at it, so a run
 # measures OUR infra instead of DeepSeek's rate limiter; (2) switches the OCR host to the real
 # Tesseract engine; (3) adds an on-demand k6 runner on the stack network (reaches gateway:8080 and
-# ocr:8080 directly). Relative paths are resolved from the root compose's directory (korkut-backend).
+# ocr:8080 directly). Relative paths are resolved from the root compose's directory (the repository root).
 services:
   mock-llm:
     build:

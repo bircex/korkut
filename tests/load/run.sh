@@ -10,7 +10,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"                 # korkut-backend
+ROOT="$(cd "$HERE/../.." && pwd)"                 # repository root
 cd "$ROOT"
 COMPOSE="docker compose -f docker-compose.yml -f tests/load/docker-compose.load.yml"
 # Host entry = the gateway mapped to :8091 by the load overlay (the SPA proxy on :8090 doesn't
