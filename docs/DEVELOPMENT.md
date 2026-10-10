@@ -1,101 +1,66 @@
 # Development
 
-> **Runtime note:** Korkut runs on **.NET 10** at the repository root (`Korkut.slnx`, `src/`), with the React app in `ui/`, installed locally with Docker Compose. Commands below that reference `python -m korkut`, `backend/…` or `deploy/…` are from the retired Python runtime.
-
-This is the day-to-day developer loop. For first-time setup, see [INSTALL.md](INSTALL.md); for the
+The day-to-day developer loop. To install and use Korkut, see [INSTALL.md](INSTALL.md); for the
 system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Layout
 
 ```
-backend/                Python package (src-layout) + tests
-  src/korkut/
-    api/                FastAPI app, Google-OIDC auth + invites, matters, documents, dispatcher, adduser
-    core/               agent loop, tool registry, model router, providers, redactor, DB
-    brain/              agent entry point (answer) + office persona
-    tools/              legal-database search/fetch tools (auto-discovered)
-    messaging/          outbound channels (e-mail now)
-    integrations/       inbound two-way connectors (Telegram/WhatsApp/e-mail)
-    api/static/         the prebuilt SPA (committed; source lives in the korkut-ui repo)
-deploy/                 Dockerfile, docker-compose(.prod).yml, cron
-config/                 model-routing, redaction rules, tool tiers
-templates/              petition/contract examples + intake schemas
-scripts/                install + release helpers
+src/
+  services/       hosts: Korkut.Api (the app), Korkut.Ocr, Korkut.KikProxy, Korkut.Worker,
+                  Korkut.Migrator, and Korkut.Web (shared web plumbing)
+  modules/        feature modules (Clients, Matters, Documents, Knowledge, Agent.*, Tools, ...)
+  shared/         kernel, contracts, persistence, security, AI runtime
+tests/            unit, integration (Testcontainers Postgres) and architecture tests
+ui/               the React app (Vite), built into the app image
+website/          the Astro marketing site, a separate static deploy
+templates/        petition/contract skeletons + intake schemas, shipped in the app image
+docker/           Dockerfiles and the image smoke test
 ```
 
-The React SPA now lives in the separate **korkut-ui** repo and the Astro landing site in
-**korkut-website**. This backend only ships the prebuilt SPA under `backend/src/korkut/api/static`.
+`make help` lists the shortcuts below.
 
-## Running the dev servers
+## Running it
 
-Two terminals:
+The simplest loop is the full stack, rebuilt after a change:
 
 ```bash
-# 1) API server on :8080
-cd backend && ../.venv/bin/python -m korkut.api
-
-# 2) Vite dev server on :5173 (proxies /api -> :8080, hot reload) — from the sibling korkut-ui repo
-cd ../korkut-ui && npm run dev
+make up                      # docker compose up -d --build, http://localhost:8090
 ```
 
-Rebuild the production SPA from the sibling korkut-ui repo into the backend's static dir (served by
-FastAPI at `/`):
+For UI work with hot reload, keep the stack running and start Vite, pointing it at the stack:
 
 ```bash
-make ui
+VITE_DEV_API_TARGET=http://localhost:8090 make ui-dev    # http://localhost:5173
 ```
 
-## Quality gates
-
-Run before every commit (CI enforces the same — `.github/workflows/ci.yml`):
+## Tests and checks
 
 ```bash
-make test     # backend: pytest + ruff check + mypy
-make lint     # backend ruff (check + format)
-make ui       # rebuild the SPA from ../korkut-ui into the backend static dir
+make test        # .NET: unit + integration + architecture (needs Docker for Postgres)
+make ui-test     # React: type-check + vitest
+cd website && npm run check && npm run build
 ```
 
-Or directly:
+CI runs the same on every pull request (`.github/workflows/`), plus the container smoke test
+(`docker/smoke-test.sh`) when images or the UI change.
+
+The OpenAPI document is snapshotted. After an intentional API change, regenerate it and review the
+diff:
 
 ```bash
-cd backend && ../.venv/bin/ruff check . && ../.venv/bin/ruff format --check . \
-  && ../.venv/bin/mypy && ../.venv/bin/python -m pytest
+KORKUT_OPENAPI_UPDATE=1 dotnet test tests/Korkut.Api.Tests --filter OpenApiSnapshot
 ```
 
-Keep the tree **ruff-clean**, **mypy-clean**, and free of dead code. New code needs tests; CI fails
-under the coverage floor.
+## Database migrations
 
-## CLI entry points
+Each context keeps its migrations next to it (operational: `src/shared/Korkut.Infrastructure`,
+agent: `src/shared/Korkut.Agent.Persistence`, knowledge: `src/modules/Korkut.Knowledge`). The
+migrator applies all of them when the stack starts. Row-level security and the privileged resolver
+functions are hand-written SQL inside the migrations; new tenant tables need an RLS policy there.
 
-```bash
-python -m korkut                       # terminal chat (brain only, no UI)
-python -m korkut.api                   # FastAPI web server (:8080)
-python -m korkut.api.adduser <email>   # create/manage users (--google-sub to bind, --disable)
-python -m korkut.api.dispatcher        # flush queued outbound messages (cron)
-python -m korkut.integrations.runner   # poll connectors, answer inbound (cron)
-python -m korkut.tools.<name> --query "..."   # run a single legal-database tool
-```
+## Adding an assistant tool
 
-## Adding a legal-database tool
-
-Tools live under `backend/src/korkut/tools/<name>/` and are auto-discovered by the registry
-(`core/tool_registry.py`). A tool is a self-contained folder:
-
-```
-tools/<name>/
-  tool.yaml     # name, description, parameters, requires_key
-  client.py     # run_tool(**params) -> JSON-serializable dict
-  __main__.py   # CLI entry (reuses tools/_base/cli)
-  README.md     # what it does, parameters, example
-```
-
-Keep the offered tool surface tight: prefer one consolidated tool with a `source` enum over many
-near-identical ones (see `tools/search_decisions/`). A composite tool can hide the ones it replaces
-via `supersedes` in its `tool.yaml`. See [ARCHITECTURE.md](ARCHITECTURE.md) and
-`backend/src/korkut/tools/README.md`.
-
-## Tests
-
-`pytest` runs offline by default (network/live tests are deselected). The web tests reload the store
-and app against a temp SQLite file and patch the brain. See `backend/tests/` for the patterns
-(`test_matters.py`, `test_matter_tools.py`, `test_web_auth.py`).
+Tools live in `src/modules/Korkut.Tools`. A tool is a class implementing `IAgentTool`; the app
+registers every implementation in that assembly. Keep the offered surface tight: prefer one tool
+with a `source` parameter over many near-identical ones.

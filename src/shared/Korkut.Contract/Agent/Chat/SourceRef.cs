@@ -2,7 +2,7 @@ namespace Korkut.Contract.Agent.Chat;
 
 /// <summary>
 /// One legal source the assistant consulted during a chat turn, normalized for the UI's
-/// "İlgili Kararlar" drawer (see korkut-ui/docs/DRAWER_ROADMAP.md). Produced by the legal search
+/// "İlgili Kararlar" drawer (see ui/docs/DRAWER_ROADMAP.md). Produced by the legal search
 /// tools, accumulated by the tool loop, deduplicated/capped by the chat service, then delivered
 /// three ways off the same value: the SSE <c>sources</c> frame, the chat response, and the
 /// persisted assistant message (chat_messages.sources_json).

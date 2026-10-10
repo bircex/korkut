@@ -35,9 +35,8 @@ push and pull request; run them locally first:
 ../.venv/bin/python -m pytest
 ```
 
-**Frontend** — the React SPA now lives in the separate **korkut-ui** repo. Make UI changes there;
-this repo only ships the prebuilt SPA under `backend/src/korkut/api/static`. To refresh it from a
-sibling `korkut-ui` checkout, run `make ui`.
+**Frontend** — the React app lives in `ui/` and the website in `website/`; see
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for their dev servers and checks.
 
 Or use the shortcuts: `make test`, `make lint`.
 
