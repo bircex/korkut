@@ -87,6 +87,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Telegram.Entities.TelegramLink> TelegramLinks => Set<Korkut.Telegram.Entities.TelegramLink>();
 
+    public DbSet<Korkut.Reminders.Entities.SentReminder> SentReminders => Set<Korkut.Reminders.Entities.SentReminder>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -138,6 +140,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Telegram.Entities.TelegramBotConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Telegram.Entities.TelegramLinkConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Reminders.Entities.SentReminderConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Documents.Entities.DocumentConfiguration());
 

@@ -31,4 +31,11 @@ internal sealed class UserLookup(DbContext db) : IUserLookup
             .Where(u => u.OfficeId == officeId && u.Id == userId)
             .Select(u => u.Role)
             .SingleOrDefaultAsync(ct);
+
+    public Task<string?> OwnerEmailAsync(Guid officeId, CancellationToken ct = default)
+        => db.Set<User>().AsNoTracking()
+            .Where(u => u.OfficeId == officeId && u.Role == Korkut.Core.Roles.OfficeOwner)
+            .OrderBy(u => u.CreatedAt)
+            .Select(u => (string?)u.Email)
+            .FirstOrDefaultAsync(ct);
 }

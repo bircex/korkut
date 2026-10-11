@@ -82,6 +82,8 @@ public static class DomainSetup
         new Korkut.SavedDecisions.Extensions.SavedDecisionsModule().Register(services, configuration);
         // Telegram: the office bot, members' links, and the replies to a linked member's messages.
         new Korkut.Telegram.Extensions.TelegramModule().Register(services, configuration);
+        // Reminders: deadlines, hearings and agenda records, sent through Telegram and e-mail.
+        new Korkut.Reminders.Extensions.RemindersModule().Register(services, configuration);
         // The static legal catalog, and the two read-only services derived from it:
         // coverage (what the assistant can draft) and markdown export.
         services.AddSingleton(_ => new Korkut.Contract.Templates.TemplateCatalog());

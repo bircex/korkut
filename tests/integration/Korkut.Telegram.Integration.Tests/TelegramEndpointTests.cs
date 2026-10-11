@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Offices;
+using Korkut.Contract.Telegram;
 using Korkut.Core;
 using Korkut.Organization.Entities;
 using Korkut.Security;
@@ -239,5 +240,31 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
             Assert.NotNull(second);
             Assert.NotEqual(first, second);
         }
+    }
+
+    [Fact]
+    public async Task Notices_reach_only_linked_members_and_only_while_the_bot_is_on()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var lawyerId = await AddLawyerAsync(office); // never links
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        var chatId = Random.Shared.NextInt64(100_000_000, 900_000_000);
+        await TurnOnAsync(owner);
+        var issued = await (await owner.PostAsync("/api/telegram/link/code", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        await SendAsync(app, office, chatId, $"/start {issued.GetProperty("code").GetString()}");
+
+        async Task<int> NotifyAsync(IReadOnlyCollection<Guid>? to)
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+            return await scope.ServiceProvider.GetRequiredService<ITelegramNotifier>().NotifyAsync(office, to, "Süre: İstinaf");
+        }
+
+        Assert.Equal(1, await NotifyAsync(null));
+        Assert.Equal((chatId, "Süre: İstinaf"), telegram.Sent[^1]);
+        Assert.Equal(0, await NotifyAsync([lawyerId]));
+
+        await owner.PutAsJsonAsync("/api/settings/telegram", new { enabled = false, consent = true }, Json);
+        Assert.Equal(0, await NotifyAsync(null));
     }
 }

@@ -61,7 +61,7 @@ export function TelegramSettings() {
           @BotFather
         </a>{" "}
         ile büroya ait bir bot oluşturun ve verdiği anahtarı aşağıya yapıştırın. Bot, bu bilgisayardan Telegram'a bağlanır;
-        dışarıya bir adres açmanız gerekmez.
+        dışarıya bir adres açmanız gerekmez. Bağlı üyelere süre, duruşma ve görev hatırlatmaları da bu bottan gelir.
       </p>
 
       <section aria-labelledby="telegram-bot" className="rounded-lg border border-zinc-200 p-4">

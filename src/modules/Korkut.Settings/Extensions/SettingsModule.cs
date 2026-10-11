@@ -22,5 +22,6 @@ public sealed class SettingsModule : IModule
         services.AddScoped<IMemoryService, MemoryService>();
         services.AddScoped<IMailPreferenceRepository, MailPreferenceRepository>();
         services.AddScoped<IMailPreferenceService, MailPreferenceService>();
+        services.AddScoped<INotificationAddressLookup, NotificationAddressLookup>();
     }
 }

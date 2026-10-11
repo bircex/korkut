@@ -103,6 +103,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             var conversation = new Conversation(office, $"conv{i}", null, null, DateTimeOffset.UtcNow);
             db.Conversations.Add(conversation);
             db.ChatMessages.Add(new ConversationMessage(office, conversation.Id, "user", $"cm{i}", DateTimeOffset.UtcNow));
+            db.SentReminders.Add(new Korkut.Reminders.Entities.SentReminder(office, $"task:{i}", "task", Guid.CreateVersion7(), DateTimeOffset.UtcNow));
             db.SavedDecisions.Add(new SavedDecision(
                 office, Guid.CreateVersion7(), "yargitay", $"ext{office:N}{i}", $"Karar {i}",
                 null, null, null, null, null, null, null, DateTimeOffset.UtcNow));
