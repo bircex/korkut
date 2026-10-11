@@ -10,4 +10,7 @@ public interface IUserLookup
     /// <summary>User id → display name. Ids with no user are simply absent; an empty input yields an empty map.</summary>
     Task<IReadOnlyDictionary<Guid, string>> DisplayNamesAsync(
         Guid officeId, IReadOnlyCollection<Guid> userIds, CancellationToken ct = default);
+
+    /// <summary>The member's role ("owner", "lawyer", ...), or null when they are not in the office.</summary>
+    Task<string?> RoleAsync(Guid officeId, Guid userId, CancellationToken ct = default);
 }

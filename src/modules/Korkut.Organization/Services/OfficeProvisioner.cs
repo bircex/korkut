@@ -39,6 +39,18 @@ public sealed class OfficeProvisioner(DbContext db, IClock clock) : IOfficeProvi
         return new ProvisionedOffice(reader.GetGuid(0), reader.GetGuid(1));
     }
 
+    public async Task<InstallOffice?> InstallOfficeAsync(CancellationToken ct = default)
+    {
+        // The offices table is the tenant root and readable without a tenant scope.
+        var conn = await OpenAsync(ct);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, name, disabled FROM korkut.offices ORDER BY created_at LIMIT 1";
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct)
+            ? new InstallOffice(reader.GetGuid(0), reader.GetString(1), reader.GetBoolean(2))
+            : null;
+    }
+
     private async Task<NpgsqlConnection> OpenAsync(CancellationToken ct)
     {
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();

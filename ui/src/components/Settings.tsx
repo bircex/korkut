@@ -5,6 +5,7 @@ import {
   type Icon,
   BookmarkSimple,
   Cpu,
+  TelegramLogo,
   EnvelopeSimple,
   PencilSimpleLine,
   Sparkle,
@@ -12,6 +13,7 @@ import {
   Users,
 } from "../icons";
 import { AiSettings } from "./AiSettings";
+import { TelegramLinkSection, TelegramSettings } from "./TelegramSettings";
 import { MailPreferenceSettings } from "./MailPreferenceSettings";
 import { MemorySettings } from "./MemorySettings";
 import { PersonaSettings } from "./PersonaSettings";
@@ -449,6 +451,7 @@ type Tab =
   | "memory"
   | "style"
   | "ai"
+  | "telegram"
   | "notifications";
 
 const TAB_TITLE: Record<Tab, string> = {
@@ -458,6 +461,7 @@ const TAB_TITLE: Record<Tab, string> = {
   memory: "Hafıza",
   style: "Yazım stili",
   ai: "Yapay zeka",
+  telegram: "Telegram",
   notifications: "Bildirimler",
 };
 
@@ -469,6 +473,7 @@ const TAB_SLUG: Record<Tab, string> = {
   memory: "hafiza",
   style: "stil",
   ai: "yapay-zeka",
+  telegram: "telegram",
   notifications: "bildirimler",
 };
 
@@ -482,7 +487,7 @@ function tabFromPath(path: string): Tab {
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Hesap", ids: ["account", "members"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
-  { label: "Sistem", ids: ["ai", "notifications"] },
+  { label: "Sistem", ids: ["ai", "telegram", "notifications"] },
 ];
 
 // Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
@@ -493,6 +498,7 @@ const TAB_ICON: Record<Tab, Icon> = {
   memory: BookmarkSimple,
   style: PencilSimpleLine,
   ai: Cpu,
+  telegram: TelegramLogo,
   notifications: EnvelopeSimple,
 };
 
@@ -515,6 +521,7 @@ export function Settings({ user }: { user: User }) {
     ...(user.role === "owner"
       ? [
           { id: "ai" as Tab, label: "Yapay zeka" },
+          { id: "telegram" as Tab, label: "Telegram" },
           { id: "notifications" as Tab, label: "Bildirimler" },
         ]
       : []),
@@ -594,6 +601,7 @@ export function Settings({ user }: { user: User }) {
                 <Row label="Ad Soyad" value={user.full_name ?? "—"} />
               </dl>
               <BarNoField initial={user.bar_registry_no} />
+              <TelegramLinkSection />
               <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
                 <p className="m-0 text-[13px] text-zinc-600">Giriş yöntemi</p>
                 <StatusBadge tone="success">Google</StatusBadge>
@@ -605,6 +613,7 @@ export function Settings({ user }: { user: User }) {
           {tab === "memory" && <MemorySettings />}
           {tab === "style" && <StyleTab />}
           {tab === "ai" && user.role === "owner" && <AiSettings />}
+          {tab === "telegram" && user.role === "owner" && <TelegramSettings />}
           {tab === "notifications" && user.role === "owner" && <MailPreferenceSettings />}
         </div>
       </div>

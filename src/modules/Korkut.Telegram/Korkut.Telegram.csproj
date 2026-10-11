@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Telegram module: the office's bot, each member's link to it, and the poller that answers a
+       linked member's messages with a chat turn run as that member. Same layout as Finance
+       (Entities/Repositories/Services/Extensions/Controllers). References only
+       kernel/contract/persistence plus the permission resolver. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Korkut.Telegram.Unit.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Korkut.Core\Korkut.Core.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Contract\Korkut.Contract.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Persistence\Korkut.Persistence.csproj" />
+    <ProjectReference Include="..\..\shared\Korkut.Security\Korkut.Security.csproj" />
+  </ItemGroup>
+</Project>

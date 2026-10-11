@@ -8,9 +8,9 @@ Durum: uygulanıyor (2026-10-10)
 | 1. Monorepo | Tamam: ui/ (#197), website/ (#200), tek container (#199), MinIO yerine volume (#198). Eski repolar arşivlendi, repo adı `korkut` oldu |
 | 3. Tek büro | Tamam: SaaS kayıt ve platform admin silindi (#205) |
 | 2. llmr | Tamam: `install.sh` ve llmr servisi (#207), ayarlardan sağlayıcı ve model seçimi (#208), bütün model çağrıları llmr üzerinden |
-| 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208). Kalan: SMTP ve Telegram ayarları, yeniden indeksleme |
+| 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208), Telegram ayarları. Kalan: SMTP ayarları, yeniden indeksleme |
 | RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
-| 5. Telegram | Başlamadı |
+| 5. Telegram | Bot, hesap bağlama ve Telegram'dan sohbet tamam. Kalan: yanıtın düzenlenen mesajla akması, dosya gönderimi, hatırlatmalar |
 
 Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 
@@ -27,7 +27,7 @@ Her faz ayrı bir PR'dır ve kendi başına çalışır durumda bırakılır.
 | Hostlar | Api, Agent.Host, Knowledge.Host, Gateway, Ocr, KikProxy, Worker, Migrator. Hepsi aynı DB'ye bağlanıyor. Worker bugün hiçbir iş yapmıyor. Knowledge `/ingest`'i repoda çağıran yok |
 | LLM | Kayıtlı sadece 2 provider var (Anthropic, DeepSeek). `config/model-routing.yaml` hiç okunmuyor. Genel amaçlı `OpenAiCompatibleChatProviderService` tool çağırma ve streaming destekliyor, olduğu gibi llmr'a yönlendirilebilir. Provider katmanının neredeyse hiç testi yok |
 | Çok kiracılık | 37 tabloda `office_id`, 33 tabloda RLS, 14 `SECURITY DEFINER` fonksiyon, `OfficeId` 157 dosyada yaklaşık 1535 kez geçiyor |
-| Telegram | Kod yok, sadece dokümanlarda geçiyor |
+| Telegram | `Korkut.Telegram` modülü: büro botu, üye bağlama, long polling ile sohbet |
 | Hassas içerik | `AdminAllowlist.cs` içinde 3 kişisel Gmail adresi var (git geçmişinde de), `build.yml` içinde GCP proje bilgileri, kodda `korkutai.com`. Git'e girmiş `.env` ya da anahtar yok |
 | Prod | app.korkutai.com ve admin.korkutai.com çok kiracılı yapıya bağlı. Faz 3 sonrası main prod'a deploy edilemez |
 | llmr imajı | Sadece `ghcr.io/bircex/llmr:latest` yayında (main'i takip ediyor). README'deki `vX.Y.Z` etiketli imajlar ve `2026.9.0` etiketi GHCR'da yok |
@@ -158,6 +158,15 @@ Embedding adımı sadece Faz 1'de belge indeksleme bağlandıktan sonra anlam ka
 - Bildirimler: yaklaşan süreler, duruşmalar ve görev hatırlatmaları. Bugün böyle bir zamanlayıcı yok (Worker hiçbir iş yapmıyor). Hatırlatma işi sıfırdan yazılır; e-posta hatırlatmaları da aynı altyapıyı kullanır.
 - Dosya: PDF ya da fotoğraf gönderilirse belge yükleme ve OCR akışına girer.
 - Gizlilik: bot mesajları uçtan uca şifreli değildir, müvekkil bilgisi Telegram sunucularından geçer. Bu yüzden entegrasyon varsayılan olarak kapalı gelir. Owner açarken bir KVKK uyarısını onaylar. Her kullanıcı da kendi hesabını ayrıca bağlar.
+
+Durum (ilk PR):
+- Owner Ayarlar → Telegram'da bot anahtarını girer. Anahtar `getMe` ile denetlenir ve şifreli saklanır. Botu açmak için KVKK onayı gerekir. Başka bir bota geçilirse bağlantılar silinir.
+- Üye Ayarlar → Hesap'ta "Telegram'ı bağla"ya basar. 15 dakika geçerli, tek kullanımlık kod `t.me/<bot>?start=<kod>` bağlantısıyla gider. Kodun yalnızca SHA-256'sı saklanır.
+- Mesajlar üyenin rolündeki yetkilerle, normal bir sohbet turu olarak yanıtlanır. HTTP isteği olmadan çalışabilmesi için `ActingUser` eklendi; büro araçları üyeyi web'deki gibi görür. Sohbetler web'deki sohbet listesinde de görünür.
+- Yanıt bekleme süresince "yazıyor…" gösterilir, uzun yanıtlar 4096 karakterde paragraf sınırından bölünür.
+- 401/409/erişim sorunları loglanır ve ayarlar ekranında gösterilir. Bot anahtarı URL'de olduğu için bu istemcinin logları kapalıdır, izlerde `/bot` yolları filtrelenir.
+- Mesaj konumu (`update_offset`) yanıtlamadan önce kaydedilir: yeniden başlatmada bir mesaj iki kez yanıtlanmaz.
+- `KORKUT_TELEGRAM_API_URL` Bot API adresini değiştirir (testler ve kendi Bot API sunucusunu kullananlar için).
 
 ## Kapsam dışı
 

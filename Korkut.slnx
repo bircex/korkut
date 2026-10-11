@@ -30,6 +30,7 @@
     <Project Path="src/modules/Korkut.LawClients/Korkut.LawClients.csproj" />
     <Project Path="src/modules/Korkut.Calculators/Korkut.Calculators.csproj" />
     <Project Path="src/modules/Korkut.SavedDecisions/Korkut.SavedDecisions.csproj" />
+    <Project Path="src/modules/Korkut.Telegram/Korkut.Telegram.csproj" />
     <Project Path="src/modules/Korkut.Coverage/Korkut.Coverage.csproj" />
     <Project Path="src/modules/Korkut.Jobs/Korkut.Jobs.csproj" />
     <Project Path="src/modules/Korkut.Knowledge/Korkut.Knowledge.csproj" />
@@ -52,6 +53,7 @@
     <Project Path="tests/unit/Korkut.Agent.Model.Unit.Tests/Korkut.Agent.Model.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Agent.Chat.Unit.Tests/Korkut.Agent.Chat.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Tools.Unit.Tests/Korkut.Tools.Unit.Tests.csproj" />
+    <Project Path="tests/unit/Korkut.Telegram.Unit.Tests/Korkut.Telegram.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Finance.Unit.Tests/Korkut.Finance.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Knowledge.Unit.Tests/Korkut.Knowledge.Unit.Tests.csproj" />
     <Project Path="tests/unit/Korkut.Security.Unit.Tests/Korkut.Security.Unit.Tests.csproj" />
@@ -78,6 +80,7 @@
     <Project Path="tests/integration/Korkut.Finance.Integration.Tests/Korkut.Finance.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.LawClients.Integration.Tests/Korkut.LawClients.Integration.Tests.csproj" />
     <Project Path="tests/integration/Korkut.Calculators.Integration.Tests/Korkut.Calculators.Integration.Tests.csproj" />
+    <Project Path="tests/integration/Korkut.Telegram.Integration.Tests/Korkut.Telegram.Integration.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Korkut.Api.Tests/Korkut.Api.Tests.csproj" />

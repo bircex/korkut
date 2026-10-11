@@ -47,7 +47,10 @@ public static class ObservabilitySetup
         otel.WithTracing(tracing =>
         {
             tracing.AddSource(ActivitySourceName)
-                .AddHttpClientInstrumentation();
+                .AddHttpClientInstrumentation(o =>
+                    // The Telegram Bot API carries the bot token in the URL path (/bot<token>/...).
+                    o.FilterHttpRequestMessage = request =>
+                        request.RequestUri?.AbsolutePath.StartsWith("/bot", StringComparison.Ordinal) != true);
             configureTracing?.Invoke(tracing);
             if (!string.IsNullOrWhiteSpace(otlpEndpoint))
             {

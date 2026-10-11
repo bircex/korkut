@@ -1960,6 +1960,24 @@
         },
         "type": "object"
       },
+      "SaveTelegramSettingsRequest": {
+        "properties": {
+          "consent": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "token": {
+            "maxLength": "200",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "SentenceExecutionRequest": {
         "properties": {
           "ceza_ay": {
@@ -6392,6 +6410,81 @@
         ]
       }
     },
+    "/api/settings/telegram": {
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramSettings"
+        ]
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramSettings"
+        ]
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramSettingsRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramSettingsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTelegramSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramSettings"
+        ]
+      }
+    },
+    "/api/settings/telegram/members/{userId}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramSettings"
+        ]
+      }
+    },
     "/api/setup": {
       "get": {
         "responses": {
@@ -6640,6 +6733,40 @@
         ]
       }
     },
+    "/api/telegram/link": {
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramLink"
+        ]
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramLink"
+        ]
+      }
+    },
+    "/api/telegram/link/code": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "TelegramLink"
+        ]
+      }
+    },
     "/api/v1/config": {
       "get": {
         "responses": {
@@ -6831,6 +6958,12 @@
     },
     {
       "name": "Tasks"
+    },
+    {
+      "name": "TelegramSettings"
+    },
+    {
+      "name": "TelegramLink"
     }
   ]
 }

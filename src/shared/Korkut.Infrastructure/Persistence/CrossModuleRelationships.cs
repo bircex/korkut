@@ -4,6 +4,8 @@ using Korkut.Hearings;
 using Korkut.Hearings.Entities;
 using Korkut.Matters;
 using Korkut.Matters.Entities;
+using Korkut.Organization.Entities;
+using Korkut.Telegram.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korkut.Infrastructure.Persistence;
@@ -32,6 +34,18 @@ internal static class CrossModuleRelationships
             .WithMany()
             .HasForeignKey(x => new { x.OfficeId, x.MatterId })
             .HasPrincipalKey(m => new { m.OfficeId, m.Id })
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // A member's Telegram link goes with the member; the bot goes with the office.
+        modelBuilder.Entity<TelegramLink>()
+            .HasOne<User>()
+            .WithOne()
+            .HasForeignKey<TelegramLink>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TelegramBot>()
+            .HasOne<Office>()
+            .WithOne()
+            .HasForeignKey<TelegramBot>(x => x.OfficeId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

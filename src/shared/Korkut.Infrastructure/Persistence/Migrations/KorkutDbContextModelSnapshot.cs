@@ -1770,6 +1770,96 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("tasks", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramBot", b =>
+                {
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("BotUsername")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("bot_username");
+
+                    b.Property<DateTimeOffset?>("ConsentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consent_at");
+
+                    b.Property<Guid?>("ConsentBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("consent_by");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("TokenCipher")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("token_cipher");
+
+                    b.Property<long>("UpdateOffset")
+                        .HasColumnType("bigint")
+                        .HasColumnName("update_offset");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("OfficeId");
+
+                    b.ToTable("telegram_bots", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramLink", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<long?>("ChatId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("chat_id");
+
+                    b.Property<DateTimeOffset?>("CodeExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("code_expires_at");
+
+                    b.Property<string>("CodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<Guid?>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset?>("LinkedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("linked_at");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<string>("TelegramUsername")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("telegram_username");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("ChatId")
+                        .IsUnique();
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique();
+
+                    b.HasIndex("OfficeId");
+
+                    b.ToTable("telegram_links", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Documents.Entities.DocumentExtraction", b =>
                 {
                     b.HasOne("Korkut.Documents.Entities.Document", null)
@@ -1815,6 +1905,24 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OfficeId", "MatterId")
                         .HasPrincipalKey("OfficeId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramBot", b =>
+                {
+                    b.HasOne("Korkut.Organization.Entities.Office", null)
+                        .WithOne()
+                        .HasForeignKey("Korkut.Telegram.Entities.TelegramBot", "OfficeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramLink", b =>
+                {
+                    b.HasOne("Korkut.Organization.Entities.User", null)
+                        .WithOne()
+                        .HasForeignKey("Korkut.Telegram.Entities.TelegramLink", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

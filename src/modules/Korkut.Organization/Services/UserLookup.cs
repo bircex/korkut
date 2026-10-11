@@ -25,4 +25,10 @@ internal sealed class UserLookup(DbContext db) : IUserLookup
             .Select(u => new { u.Id, Name = u.FullName ?? u.Email })
             .ToDictionaryAsync(u => u.Id, u => u.Name, ct);
     }
+
+    public Task<string?> RoleAsync(Guid officeId, Guid userId, CancellationToken ct = default)
+        => db.Set<User>().AsNoTracking()
+            .Where(u => u.OfficeId == officeId && u.Id == userId)
+            .Select(u => u.Role)
+            .SingleOrDefaultAsync(ct);
 }

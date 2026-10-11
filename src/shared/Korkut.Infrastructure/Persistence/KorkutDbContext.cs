@@ -83,6 +83,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.SavedDecisions.Entities.SavedDecision> SavedDecisions => Set<Korkut.SavedDecisions.Entities.SavedDecision>();
 
+    public DbSet<Korkut.Telegram.Entities.TelegramBot> TelegramBots => Set<Korkut.Telegram.Entities.TelegramBot>();
+
+    public DbSet<Korkut.Telegram.Entities.TelegramLink> TelegramLinks => Set<Korkut.Telegram.Entities.TelegramLink>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");
@@ -130,6 +134,10 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Chat.Entities.ConversationMessageConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.SavedDecisions.Entities.SavedDecisionConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Telegram.Entities.TelegramBotConfiguration());
+
+        modelBuilder.ApplyConfiguration(new Korkut.Telegram.Entities.TelegramLinkConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Documents.Entities.DocumentConfiguration());
 
