@@ -507,6 +507,28 @@ function TabIcon({ id }: { id: Tab }) {
   return <Ikon size={17} aria-hidden className="shrink-0" />;
 }
 
+/** The ways this account can sign in: e-mail + password, Google, or both. */
+export function SignInMethods({ user }: { user: Pick<User, "has_password" | "google_linked"> }) {
+  const methods = [
+    user.has_password && "E-posta ve parola",
+    user.google_linked && "Google",
+  ].filter((m): m is string => Boolean(m));
+  return (
+    <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
+      <p className="m-0 text-[13px] text-zinc-600">
+        {methods.length > 1 ? "Giriş yöntemleri" : "Giriş yöntemi"}
+      </p>
+      <div className="flex flex-wrap justify-end gap-2">
+        {methods.map((m) => (
+          <StatusBadge key={m} tone="success">
+            {m}
+          </StatusBadge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Settings({ user }: { user: User }) {
   const path = usePath();
   const tab = tabFromPath(path);
@@ -602,10 +624,7 @@ export function Settings({ user }: { user: User }) {
               </dl>
               <BarNoField initial={user.bar_registry_no} />
               <TelegramLinkSection />
-              <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
-                <p className="m-0 text-[13px] text-zinc-600">Giriş yöntemi</p>
-                <StatusBadge tone="success">Google</StatusBadge>
-              </div>
+              <SignInMethods user={user} />
             </div>
           )}
           {tab === "members" && <Members isOwner={user.role === "owner"} />}
