@@ -5,6 +5,7 @@ using Korkut.Hearings.Entities;
 using Korkut.Matters;
 using Korkut.Matters.Entities;
 using Korkut.Organization.Entities;
+using Korkut.Reminders.Entities;
 using Korkut.Telegram.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,6 +47,11 @@ internal static class CrossModuleRelationships
             .HasOne<Office>()
             .WithOne()
             .HasForeignKey<TelegramBot>(x => x.OfficeId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SentReminder>()
+            .HasOne<Office>()
+            .WithMany()
+            .HasForeignKey(x => x.OfficeId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -22,6 +22,7 @@ zemin, beyaz kart, "Korkut" markası, koyu CTA düğmesi, "otomatik gönderildi"
 | 4 | Büro onaylandı (admin enable, disabled→enabled geçişi) | Büro sahibi | "Korkut büronuz onaylandı" | Giriş yap → `/giris` | `OfficeAdminService.SendApprovedEmailAsync` |
 | 5 | Parola sıfırlama isteği | İsteyen (hesap varsa) | "Korkut parola sıfırlama" | Parolayı sıfırla → `/giris?reset=TOKEN` (1 saat, tek kullanımlık) | `AuthService.RequestPasswordResetAsync` |
 | 6 | Parola değişti | Hesap sahibi | "Korkut hesabınızın parolası değişti" | — | `EmailSecurityNotifier.NotifyPasswordChangedAsync` |
+| 7 | Süre, duruşma ya da ajanda hatırlatması zamanı geldi | Büronun bildirim adresi (Ayarlar → Bildirimler, yoksa büro sahibi; bildirimler kapalıysa gönderilmez) | "Hatırlatma: {başlık}" | Korkut'u aç → `/giris` | `ReminderService.RunOnceAsync` |
 
 Enumeration güvenliği: 5 numara hesap olsa da olmasa da API 200 döner; mail yalnız hesap varsa
 gider ve gönderim hatası da sessizce yutulur (davranış tek tip kalır).
@@ -29,7 +30,6 @@ gider ve gönderim hatası da sessizce yutulur (davranış tek tip kalır).
 ## Bilerek GÖNDERİLMEYENLER (şimdilik)
 
 - Davet kabul edildiğinde davet edene bildirim (opsiyonel; istenirse #1'in yanına eklenir).
-- Duruşma/süre hatırlatmaları — worker/reminder hattı ayrı iş (bkz. mail-system pivot notları).
 - Admin 2FA/oturum olayları — admin konsolu tek kişilik; gerek görülmedi.
 
 ## Davet mekanizması (tek akış)

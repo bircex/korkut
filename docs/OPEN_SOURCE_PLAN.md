@@ -10,7 +10,7 @@ Durum: uygulanıyor (2026-10-10)
 | 2. llmr | Tamam: `install.sh` ve llmr servisi (#207), ayarlardan sağlayıcı ve model seçimi (#208), bütün model çağrıları llmr üzerinden |
 | 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208), Telegram ayarları. Kalan: SMTP ayarları, yeniden indeksleme |
 | RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
-| 5. Telegram | Bot, hesap bağlama ve Telegram'dan sohbet tamam. Kalan: yanıtın düzenlenen mesajla akması, dosya gönderimi, hatırlatmalar |
+| 5. Telegram | Bot, hesap bağlama, Telegram'dan sohbet (#210) ve hatırlatmalar tamam. Kalan: yanıtın düzenlenen mesajla akması, dosya gönderimi |
 
 Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 
@@ -167,6 +167,14 @@ Durum (ilk PR):
 - 401/409/erişim sorunları loglanır ve ayarlar ekranında gösterilir. Bot anahtarı URL'de olduğu için bu istemcinin logları kapalıdır, izlerde `/bot` yolları filtrelenir.
 - Mesaj konumu (`update_offset`) yanıtlamadan önce kaydedilir: yeniden başlatmada bir mesaj iki kez yanıtlanmaz.
 - `KORKUT_TELEGRAM_API_URL` Bot API adresini değiştirir (testler ve kendi Bot API sunucusunu kullananlar için).
+
+Hatırlatmalar (`Korkut.Reminders`): zamanlayıcı dakikada bir çalışır, Telegram'a ve büronun bildirim adresine yazar.
+- Süre: son günden `ReminderDaysBefore` gün önce saat 09:00'da (Türkiye saati), son gün bitene kadar. Bağlı bütün üyelere gider.
+- Duruşma: bir gün önce saat 09:00'da, duruşma başlayana kadar. Bağlı bütün üyelere gider.
+- Ajanda kaydı: başlangıçtan `RemindBeforeMin` dakika önce; "hatırlatma" türünde değer yoksa başlangıçta. Gün boyu kayıtlar 09:00'da başlar sayılır. Atanan kişiye, atanmamışsa herkese gider.
+- Her hatırlatma bir kez gider (`sent_reminders`); tarih değişirse yenisi kurulur. Korkut kapalıyken zamanı gelenler, kayıt hâlâ ilerideyse açılınca gider.
+- Tekrarlayan ajanda kayıtlarında (`Rrule`) yalnızca ilk tekrar hatırlatılır.
+- Kullanılmayan `DeadlineReminderService` (outbox'a yazıp hiç işlenmeyen) silindi.
 
 ## Kapsam dışı
 

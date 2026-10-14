@@ -22,3 +22,12 @@ public interface IMailPreferenceService
 
     Task<Result<MailPreferenceResponse>> SaveAsync(SaveMailPreferenceRequest request, CancellationToken ct = default);
 }
+
+/// <summary>
+/// Where the office's notification mail goes: the address set in Ayarlar → Bildirimler, else the
+/// owner's. Null when the office turned notification mail off. Reads in the caller's tenant scope.
+/// </summary>
+public interface INotificationAddressLookup
+{
+    Task<string?> AddressAsync(Guid officeId, CancellationToken ct = default);
+}

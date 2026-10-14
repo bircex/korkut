@@ -41,7 +41,9 @@ public sealed class ProfileService(
     private async Task<ProfileResponse> ToResponseAsync(Guid officeId, User self, CancellationToken ct)
     {
         var office = await offices.FindAsync(officeId, ct);
-        return new ProfileResponse(self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role);
+        return new ProfileResponse(
+            self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role,
+            HasPassword: self.PasswordHash is not null, GoogleLinked: self.IsBound);
     }
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

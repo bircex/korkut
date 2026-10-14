@@ -5,6 +5,8 @@ export type User = {
   bar_registry_no: string | null;
   role: "owner" | "lawyer";
   office: string | null;
+  has_password: boolean; // can sign in with e-mail + password
+  google_linked: boolean; // has completed a first Google sign-in
 };
 export type Member = {
   id: number;

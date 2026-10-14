@@ -47,7 +47,8 @@ export function MailPreferenceSettings() {
     <div>
       <p className="mb-4 text-[13px] text-zinc-500">
         Korkut, e-postaları tek bir sistem hesabından gönderir. Güvenlik ve davet e-postaları her
-        zaman gönderilir; buradaki tercih yalnızca bilgilendirme e-postalarını etkiler.
+        zaman gönderilir; buradaki tercih yalnızca bilgilendirme e-postalarını etkiler. Süre, duruşma
+        ve görev hatırlatmaları da bu adrese gider.
       </p>
       <div className="rounded-lg border border-zinc-200 p-3">
         <div className="flex flex-col gap-4">
