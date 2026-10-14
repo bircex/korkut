@@ -123,7 +123,8 @@ public static partial class StorageSetup
         services.AddSingleton<IOcrService>(sp => new HttpOcrService(
             sp.GetRequiredService<IHttpClientFactory>(),
             sp.GetRequiredService<IHttpContextAccessor>(),
-            ocrUrl));
+            ocrUrl,
+            sp.GetService<Korkut.Core.IActingUserCredential>()));
         services.AddSingleton<ITextExtractorService>(sp => new OcrFallbackTextExtractorService(
             new PlainTextExtractorService(sp.GetRequiredService<ILogger<PlainTextExtractorService>>()),
             sp.GetRequiredService<IOcrService>(),

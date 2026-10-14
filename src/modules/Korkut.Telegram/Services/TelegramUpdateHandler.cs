@@ -3,6 +3,7 @@ using Korkut.Contract.Offices;
 using Korkut.Contract.Organization;
 using Korkut.Core;
 using Korkut.Security;
+using Korkut.Telegram.Entities;
 using Korkut.Telegram.Repositories;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,8 @@ public sealed partial class TelegramUpdateHandler(
         "Merhaba! Bu bot bir Korkut bürosuna bağlı. Kullanmak için Korkut'ta Ayarlar → Hesap bölümünden \"Telegram'ı bağla\" düğmesine basın.";
 
     private const string Help =
-        "Sorunuzu ya da isteğinizi yazmanız yeterli; Korkut'taki sohbetle aynı şekilde yanıt veririm.\n\n/yeni ile yeni bir sohbet başlatabilirsiniz.";
+        "Sorunuzu ya da isteğinizi yazmanız yeterli; Korkut'taki sohbetle aynı şekilde yanıt veririm. "
+        + "Belge ya da fotoğraf da gönderebilirsiniz; ne istediğinizi açıklamasına yazın.\n\n/yeni ile yeni bir sohbet başlatabilirsiniz.";
 
     private const string Failed = "Bir sorun oluştu ve yanıt veremedim. Biraz sonra yeniden deneyin.";
 
@@ -35,14 +37,15 @@ public sealed partial class TelegramUpdateHandler(
         }
 
         var chatId = message.Chat.Id;
-        var text = message.Text?.Trim();
-        if (string.IsNullOrEmpty(text))
+        var attachment = Attachment(message);
+        var text = (message.Text ?? message.Caption)?.Trim() ?? string.Empty;
+        if (attachment is null && text.Length == 0)
         {
-            await ReplyAsync(token, chatId, "Şimdilik yalnızca yazılı mesajları yanıtlayabiliyorum.", ct);
+            await ReplyAsync(token, chatId, "Yazılı mesajları, belgeleri ve fotoğrafları yanıtlayabiliyorum.", ct);
             return;
         }
 
-        var (command, argument) = ParseCommand(text);
+        var (command, argument) = attachment is null ? ParseCommand(text) : (string.Empty, string.Empty);
         if (command == "/start" && argument.Length > 0)
         {
             await LinkAsync(office.Id, token, chatId, message.From?.Username, argument, ct);
@@ -71,37 +74,105 @@ public sealed partial class TelegramUpdateHandler(
                 return;
         }
 
+        if (attachment is { Size: > TelegramApi.MaxDownloadBytes })
+        {
+            await ReplyAsync(token, chatId, "Bu dosya Telegram üzerinden alınamayacak kadar büyük (en fazla 20 MB). Korkut'a tarayıcıdan yükleyebilirsiniz.", ct);
+            return;
+        }
+
         // From here on the scope speaks as the member, so every tool sees them as the caller.
         var permissions = authorization.ResolvePermissions(role);
-        acting.Set(office.Id, link.UserId, permissions);
+        acting.Set(office.Id, link.UserId, role, permissions);
 
+        var reply = new StreamingReply(telegram, token, chatId);
         using var typing = KeepTyping(token, chatId, ct);
         try
         {
-            var conversation = link.ConversationId ?? await StartConversationAsync(office.Id, link.UserId, ct);
-            var outcome = await chat.ChatAsync(office.Id, link.UserId, conversation, text, permissions, ct);
-            if (outcome is null)
-            {
-                // The conversation was deleted in the app: carry on in a new one.
-                conversation = await StartConversationAsync(office.Id, link.UserId, ct);
-                outcome = await chat.ChatAsync(office.Id, link.UserId, conversation, text, permissions, ct);
-            }
-
+            var answer = attachment is null
+                ? await ChatAsync(office.Id, link, text, permissions, reply, typing, ct)
+                : await UploadAsync(office.Id, link, attachment, token, text, permissions, ct);
             await typing.StopAsync();
-            await ReplyAsync(token, chatId, string.IsNullOrWhiteSpace(outcome?.Reply) ? Failed : outcome.Reply, ct);
+            await reply.FinishAsync(string.IsNullOrWhiteSpace(answer) ? Failed : answer, ct);
         }
-        catch (Exception ex) when (ex is ModelUnavailableException or BudgetExceededException)
+        catch (Exception ex) when (ex is ModelUnavailableException or BudgetExceededException or TelegramApiException)
         {
             await typing.StopAsync();
-            await ReplyAsync(token, chatId, ex.Message, ct);
+            await reply.FinishAsync(Interrupted(reply, ex.Message), ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             TurnFailed(logger, ex);
             await typing.StopAsync();
-            await ReplyAsync(token, chatId, Failed, ct);
+            await reply.FinishAsync(Interrupted(reply, Failed), ct);
         }
     }
+
+    /// <summary>A text turn, shown as it is written.</summary>
+    private async Task<string?> ChatAsync(
+        Guid office, TelegramLink link, string text, IReadOnlySet<string> permissions, StreamingReply reply, Typing typing, CancellationToken ct)
+    {
+        async Task OnToken(string delta)
+        {
+            await typing.StopAsync(); // the message itself now shows progress
+            await reply.AppendAsync(delta, ct);
+        }
+
+        var conversation = link.ConversationId ?? await StartConversationAsync(office, link.UserId, ct);
+        var outcome = await chat.ChatStreamAsync(office, link.UserId, conversation, text, permissions, _ => Task.CompletedTask, OnToken, ct: ct);
+        if (outcome is null)
+        {
+            // The conversation was deleted in the app: carry on in a new one.
+            conversation = await StartConversationAsync(office, link.UserId, ct);
+            outcome = await chat.ChatStreamAsync(office, link.UserId, conversation, text, permissions, _ => Task.CompletedTask, OnToken, ct: ct);
+        }
+
+        return outcome?.Reply;
+    }
+
+    /// <summary>A document or photo: fetched from Telegram and taken in like an upload in the app
+    /// (text extracted, scans read by OCR), with the caption as the question.</summary>
+    private async Task<string?> UploadAsync(
+        Guid office, TelegramLink link, TelegramAttachment attachment, string token, string caption,
+        IReadOnlySet<string> permissions, CancellationToken ct)
+    {
+        var bytes = await telegram.DownloadFileAsync(token, attachment.FileId, ct);
+        var conversation = link.ConversationId ?? await StartConversationAsync(office, link.UserId, ct);
+        var outcome = await UploadToAsync(conversation);
+        if (outcome is null)
+        {
+            conversation = await StartConversationAsync(office, link.UserId, ct);
+            outcome = await UploadToAsync(conversation);
+        }
+
+        return outcome?.Reply;
+
+        async Task<UploadOutcome?> UploadToAsync(Guid id)
+        {
+            using var content = new MemoryStream(bytes, writable: false);
+            return await chat.UploadAsync(office, link.UserId, id, attachment.FileName, attachment.ContentType, content, caption, permissions, ct);
+        }
+    }
+
+    /// <summary>What a member sent besides text, if anything: a document, or the largest size of a photo.</summary>
+    internal static TelegramAttachment? Attachment(TelegramMessage message)
+    {
+        if (message.Document is { } document)
+        {
+            return new TelegramAttachment(
+                document.FileId, string.IsNullOrWhiteSpace(document.FileName) ? "belge" : document.FileName,
+                document.MimeType ?? "application/octet-stream", document.FileSize);
+        }
+
+        return message.Photo is { Count: > 0 } sizes
+            ? sizes.MaxBy(p => (long)p.Width * p.Height) is { } photo
+                ? new TelegramAttachment(photo.FileId, $"foto-{message.MessageId}.jpg", "image/jpeg", photo.FileSize)
+                : null
+            : null;
+    }
+
+    /// <summary>When a reply breaks off, what was already written stays, followed by why.</summary>
+    private static string Interrupted(StreamingReply reply, string why)
+        => reply.Text.Trim().Length == 0 ? why : $"{reply.Text.Trim()}\n\n({why})";
 
     private async Task LinkAsync(Guid office, string token, long chatId, string? username, string code, CancellationToken ct)
     {
@@ -218,3 +289,6 @@ public sealed partial class TelegramUpdateHandler(
     [LoggerMessage(Level = LogLevel.Error, Message = "A Telegram message could not be answered.")]
     private static partial void TurnFailed(ILogger logger, Exception ex);
 }
+
+/// <summary>A file a member sent: what to fetch, and how to name and read it.</summary>
+internal sealed record TelegramAttachment(string FileId, string FileName, string ContentType, long? Size);

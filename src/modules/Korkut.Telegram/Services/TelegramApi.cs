@@ -12,7 +12,14 @@ public interface ITelegramApi
     /// <summary>Long-polls for updates from <paramref name="offset"/> on, waiting up to <paramref name="timeoutSeconds"/>.</summary>
     Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(string token, long offset, int timeoutSeconds, CancellationToken ct = default);
 
-    Task SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default);
+    /// <summary>Sends a message; returns its id, so it can be edited.</summary>
+    Task<long> SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default);
+
+    /// <summary>Replaces a sent message's text (how a reply grows while it is being written).</summary>
+    Task EditMessageTextAsync(string token, long chatId, long messageId, string text, CancellationToken ct = default);
+
+    /// <summary>Downloads a file a member sent, by its id. Telegram serves bots files up to 20 MB.</summary>
+    Task<byte[]> DownloadFileAsync(string token, string fileId, CancellationToken ct = default);
 
     Task SendTypingAsync(string token, long chatId, CancellationToken ct = default);
 }
@@ -41,7 +48,31 @@ public sealed record TelegramMessage(
     [property: JsonPropertyName("message_id")] long MessageId,
     [property: JsonPropertyName("from")] TelegramUser? From,
     [property: JsonPropertyName("chat")] TelegramChat Chat,
-    [property: JsonPropertyName("text")] string? Text);
+    [property: JsonPropertyName("text")] string? Text,
+    [property: JsonPropertyName("caption")] string? Caption = null,
+    [property: JsonPropertyName("document")] TelegramDocument? Document = null,
+    [property: JsonPropertyName("photo")] IReadOnlyList<TelegramPhotoSize>? Photo = null);
+
+/// <summary>A file sent as a document (a PDF, a Word file).</summary>
+public sealed record TelegramDocument(
+    [property: JsonPropertyName("file_id")] string FileId,
+    [property: JsonPropertyName("file_name")] string? FileName,
+    [property: JsonPropertyName("mime_type")] string? MimeType,
+    [property: JsonPropertyName("file_size")] long? FileSize);
+
+/// <summary>One size of a sent photo; Telegram lists them smallest first.</summary>
+public sealed record TelegramPhotoSize(
+    [property: JsonPropertyName("file_id")] string FileId,
+    [property: JsonPropertyName("width")] int Width,
+    [property: JsonPropertyName("height")] int Height,
+    [property: JsonPropertyName("file_size")] long? FileSize);
+
+internal sealed record TelegramFile(
+    [property: JsonPropertyName("file_id")] string FileId,
+    [property: JsonPropertyName("file_path")] string? FilePath,
+    [property: JsonPropertyName("file_size")] long? FileSize);
+
+internal sealed record TelegramSentMessage([property: JsonPropertyName("message_id")] long MessageId);
 
 public sealed record TelegramUpdate(
     [property: JsonPropertyName("update_id")] long UpdateId,
@@ -64,8 +95,43 @@ internal sealed class TelegramApi(IHttpClientFactory factory) : ITelegramApi
         => CallAsync<IReadOnlyList<TelegramUpdate>>(
             token, "getUpdates", new { offset, timeout = timeoutSeconds, allowed_updates = MessagesOnly }, ct);
 
-    public Task SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default)
-        => CallAsync<JsonElement>(token, "sendMessage", new { chat_id = chatId, text }, ct);
+    /// <summary>The most a bot may download through the Bot API.</summary>
+    public const long MaxDownloadBytes = 20 * 1024 * 1024;
+
+    public async Task<long> SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default)
+        => (await CallAsync<TelegramSentMessage>(token, "sendMessage", new { chat_id = chatId, text }, ct)).MessageId;
+
+    public Task EditMessageTextAsync(string token, long chatId, long messageId, string text, CancellationToken ct = default)
+        => CallAsync<JsonElement>(token, "editMessageText", new { chat_id = chatId, message_id = messageId, text }, ct);
+
+    public async Task<byte[]> DownloadFileAsync(string token, string fileId, CancellationToken ct = default)
+    {
+        var file = await CallAsync<TelegramFile>(token, "getFile", new { file_id = fileId }, ct);
+        if (file.FilePath is null || file.FileSize > MaxDownloadBytes)
+        {
+            throw new TelegramApiException(400, "Dosya Telegram'dan indirilemeyecek kadar büyük.");
+        }
+
+        try
+        {
+            using var response = await factory.CreateClient(HttpClientName).GetAsync($"./file/bot{token}/{file.FilePath}", ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new TelegramApiException((int)response.StatusCode, "Dosya Telegram'dan indirilemedi.");
+            }
+
+            if (response.Content.Headers.ContentLength > MaxDownloadBytes)
+            {
+                throw new TelegramApiException(400, "Dosya Telegram'dan indirilemeyecek kadar büyük.");
+            }
+
+            return await response.Content.ReadAsByteArrayAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+            throw new TelegramApiException(null, "Telegram'a ulaşılamadı.");
+        }
+    }
 
     public Task SendTypingAsync(string token, long chatId, CancellationToken ct = default)
         => CallAsync<JsonElement>(token, "sendChatAction", new { chat_id = chatId, action = "typing" }, ct);
