@@ -132,10 +132,12 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
         return client;
     }
 
-    private async Task<Guid> AddLawyerAsync(Guid office)
+    private Task<Guid> AddLawyerAsync(Guid office) => AddMemberAsync(office, Roles.Lawyer);
+
+    private async Task<Guid> AddMemberAsync(Guid office, string role)
     {
         await using var db = factory.OwnerContext();
-        var user = new User(office, $"avukat-{Guid.CreateVersion7():N}@example.com", Roles.Lawyer, null, null, DateTimeOffset.UtcNow);
+        var user = new User(office, $"uye-{Guid.CreateVersion7():N}@example.com", role, null, null, DateTimeOffset.UtcNow);
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return user.Id;
@@ -340,5 +342,99 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
             Document: new TelegramDocument("big", "dosya.pdf", "application/pdf", 40L * 1024 * 1024)));
 
         Assert.Contains("20 MB", telegram.Sent[^1].Text);
+    }
+
+    /// <summary>Links a member's chat to the bot, the way the app's "Telegram'ı bağla" does.</summary>
+    private static async Task LinkAsync(WebApplicationFactory<Program> app, HttpClient member, Guid office, long chatId)
+    {
+        var issued = await (await member.PostAsync("/api/telegram/link/code", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        await SendAsync(app, office, chatId, $"/start {issued.GetProperty("code").GetString()}");
+    }
+
+    private static async Task<Guid> CreateMatterAsync(HttpClient owner, string title, Guid? member = null)
+    {
+        var created = await (await owner.PostAsJsonAsync("/api/matters", new { title }, Json)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        var id = created.GetProperty("id").GetGuid();
+        if (member is { } user)
+        {
+            Assert.True((await owner.PostAsJsonAsync($"/api/matters/{id}/team", new { user_id = user }, Json)).IsSuccessStatusCode);
+        }
+
+        return id;
+    }
+
+    private async Task<Guid?> ConversationMatterAsync(Guid userId)
+    {
+        await using var db = factory.OwnerContext();
+        var conversation = (await db.TelegramLinks.AsNoTracking().SingleAsync(l => l.UserId == userId)).ConversationId;
+        return conversation is null ? null : (await db.Conversations.AsNoTracking().SingleAsync(c => c.Id == conversation)).MatterId;
+    }
+
+    [Fact]
+    public async Task A_member_moves_between_their_matters_and_never_into_another()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var lawyerId = await AddLawyerAsync(office);
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        var lawyer = As(app, office, lawyerId, Roles.Lawyer);
+        var chatId = Random.Shared.NextInt64(100_000_000, 900_000_000);
+        await TurnOnAsync(owner);
+        await LinkAsync(app, lawyer, office, chatId);
+
+        await SendAsync(app, office, chatId, "/dosyalar");
+        Assert.Contains("erişebildiğiniz bir dosya yok", telegram.Sent[^1].Text);
+
+        var mine = await CreateMatterAsync(owner, "Kira tespit davası", lawyerId);
+        await CreateMatterAsync(owner, "Gizli birleşme dosyası");
+
+        // The list holds only the lawyer's matter.
+        await SendAsync(app, office, chatId, "/dosyalar");
+        Assert.Contains("Kira tespit davası", telegram.Sent[^1].Text);
+        Assert.DoesNotContain("birleşme", telegram.Sent[^1].Text);
+
+        // A matter they are not on gets the same answer as one that does not exist.
+        await SendAsync(app, office, chatId, "/dosya Gizli birleşme");
+        Assert.Equal("Bu dosya bulunamadı veya yetkiniz yok.", telegram.Sent[^1].Text);
+        await SendAsync(app, office, chatId, "/dosya yok böyle bir dosya");
+        Assert.Equal("Bu dosya bulunamadı veya yetkiniz yok.", telegram.Sent[^1].Text);
+
+        await SendAsync(app, office, chatId, "/dosya KİRA TESPİT");
+        Assert.StartsWith("«Kira tespit davası» dosyasına geçtim", telegram.Sent[^1].Text);
+        Assert.Equal(mine, await ConversationMatterAsync(lawyerId));
+        await SendAsync(app, office, chatId, "Duruşma ne zaman?");
+        Assert.Equal($"{lawyerId}|False|Duruşma ne zaman?", telegram.Sent[^1].Text);
+
+        // /yeni stays in the matter; /kisisel leaves it.
+        await SendAsync(app, office, chatId, "/yeni");
+        Assert.StartsWith("«Kira tespit davası» dosyasında yeni bir sohbet", telegram.Sent[^1].Text);
+        Assert.Equal(mine, await ConversationMatterAsync(lawyerId));
+        await SendAsync(app, office, chatId, "/kisisel");
+        Assert.StartsWith("Kişisel sohbete geçtim", telegram.Sent[^1].Text);
+        await SendAsync(app, office, chatId, "Genel bir soru");
+        Assert.Null(await ConversationMatterAsync(lawyerId));
+    }
+
+    [Fact]
+    public async Task A_member_without_personal_chats_is_pointed_to_their_matters()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var readerId = await AddMemberAsync(office, Roles.Reader);
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        var chatId = Random.Shared.NextInt64(100_000_000, 900_000_000);
+        await TurnOnAsync(owner);
+        await LinkAsync(app, As(app, office, readerId, Roles.Reader), office, chatId);
+
+        await SendAsync(app, office, chatId, "Merhaba");
+        Assert.StartsWith("Kişisel sohbet açma yetkiniz yok", telegram.Sent[^1].Text);
+        await SendAsync(app, office, chatId, "/kisisel");
+        Assert.StartsWith("Kişisel sohbet açma yetkiniz yok", telegram.Sent[^1].Text);
+
+        await CreateMatterAsync(owner, "Miras davası", readerId);
+        await SendAsync(app, office, chatId, "/dosya miras");
+        Assert.StartsWith("«Miras davası» dosyasına geçtim", telegram.Sent[^1].Text);
+        await SendAsync(app, office, chatId, "Özet ver");
+        Assert.Equal($"{readerId}|False|Özet ver", telegram.Sent[^1].Text);
     }
 }
