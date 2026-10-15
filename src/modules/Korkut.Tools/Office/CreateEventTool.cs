@@ -30,6 +30,11 @@ public sealed class CreateEventTool(ITaskService tasks) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var title = ToolArgs.String(arguments, "title");
         var startAt = ToolArgs.DateTime(arguments, "start_at");
         if (string.IsNullOrWhiteSpace(title) || startAt is not { } start)
@@ -44,7 +49,7 @@ public sealed class CreateEventTool(ITaskService tasks) : IAgentTool
             DueDate = start,
             EndAt = ToolArgs.DateTime(arguments, "end_at"),
             AllDay = false,
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
         };
         var result = await tasks.CreateAsync(request, ct);
         if (!result.IsSuccess)

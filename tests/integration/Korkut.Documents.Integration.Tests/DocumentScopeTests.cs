@@ -3,9 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Korkut.Contract.Documents;
 using Korkut.Core;
 using Korkut.Organization.Entities;
 using Korkut.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Korkut.Documents.Integration.Tests;
 
@@ -74,5 +76,21 @@ public class DocumentScopeTests(KorkutApiFactory factory)
         // Nobody links their document to a matter they cannot see.
         var linked = await b.PostAsJsonAsync($"/api/documents/{bsOwn}/links", new { target_type = "matter", target_id = matter }, Json);
         Assert.Equal(HttpStatusCode.NotFound, linked.StatusCode);
+
+        // Search over documents follows the same rule, and a matter's conversation only reaches that matter's.
+        var aOwn = await UploadAsync(a, "notlar.pdf");
+        Assert.Equivalent(new[] { onMatter, aOwn }, await SearchableAsync(office, aId, null));
+        Assert.Equal([onMatter], await SearchableAsync(office, aId, matter));
+        Assert.Equal([bsOwn], await SearchableAsync(office, bId, null));
+        Assert.Null(await SearchableAsync(office, ownerId, null, Roles.OfficeOwner));
+        Assert.Equal([onMatter], await SearchableAsync(office, ownerId, matter, Roles.OfficeOwner));
+    }
+
+    private async Task<IReadOnlySet<Guid>?> SearchableAsync(Guid office, Guid user, Guid? matter, string role = Roles.Lawyer)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<ActingUser>().Set(office, user, role, Roles.BuiltIn[role]);
+        return await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().InTenantScopeAsync(office,
+            () => scope.ServiceProvider.GetRequiredService<IDocumentAccess>().VisibleDocumentIdsAsync(office, matter));
     }
 }

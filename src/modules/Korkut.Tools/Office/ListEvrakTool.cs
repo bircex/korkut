@@ -23,7 +23,7 @@ public sealed class ListEvrakTool(ICorrespondenceService correspondence) : IAgen
     {
         var result = await correspondence.ListAsync(ToolArgs.String(arguments, "direction"), ct);
         return result.IsSuccess
-            ? ToolResult.Ok(ToolArgs.Result(result.Value!))
+            ? ToolResult.Ok(ToolArgs.Result(context.MatterId is { } bound ? result.Value!.Where(c => c.MatterId == bound).ToList() : result.Value!))
             : ToolResult.Error(result.Error!.Detail);
     }
 }

@@ -29,7 +29,9 @@ public sealed class UpcomingAgendaTool(ICalendarService calendar) : IAgentTool
         var days = Math.Clamp(ToolArgs.Int(arguments, "days") ?? 14, 1, 365);
         var agenda = await calendar.AgendaAsync(days, ct);
         return agenda.IsSuccess
-            ? ToolResult.Ok(ToolArgs.Result(agenda.Value!))
+            ? ToolResult.Ok(ToolArgs.Result(context.MatterId is { } bound
+                ? agenda.Value! with { Items = agenda.Value!.Items.Where(i => i.MatterId == bound).ToList() }
+                : agenda.Value!))
             : ToolResult.Error(agenda.Error!.Detail);
     }
 }

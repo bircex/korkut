@@ -64,6 +64,8 @@ public static partial class StorageSetup
         services.AddScoped<DocumentTextService>();
         services.AddScoped<Korkut.Documents.Repositories.IDocumentRepository, Korkut.Documents.Repositories.DocumentRepository>();
         services.AddScoped<IDocumentFileService, DocumentFileService>();
+        services.AddScoped<DocumentAccess>();
+        services.AddScoped<IDocumentAccess>(sp => sp.GetRequiredService<DocumentAccess>());
 
         services.AddHostedService<EnsureBucketsHostedService>();
         return services;

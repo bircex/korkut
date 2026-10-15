@@ -40,6 +40,35 @@ public static class ToolArgs
     public static DateOnly? Date(JsonElement args, string name)
         => String(args, name) is { } s && DateOnly.TryParse(s, out var d) ? d : null;
 
+    /// <summary>What the assistant says when asked about another matter inside a matter's conversation.</summary>
+    public const string OtherMatter =
+        "Bu sohbet bir dosyaya ait; başka bir dosyanın kayıtlarına buradan erişilemez. O dosyanın kendi sohbetini kullanın.";
+
+    /// <summary>
+    /// The matter a call is about. In a conversation that belongs to a matter it is that matter: an
+    /// omitted matter_id means it, and a different one is refused. Elsewhere it is the argument, if any.
+    /// </summary>
+    public static bool TryMatter(JsonElement args, AgentToolContext context, out Guid? matterId, out ToolResult? refusal)
+    {
+        refusal = null;
+        Guid? given = TryGuid(args, "matter_id", out var id) ? id : null;
+        if (context.MatterId is { } bound)
+        {
+            if (given is { } other && other != bound)
+            {
+                matterId = null;
+                refusal = ToolResult.Error(OtherMatter);
+                return false;
+            }
+
+            matterId = bound;
+            return true;
+        }
+
+        matterId = given;
+        return true;
+    }
+
     /// <summary>Serialize tool output to the shared snake_case JSON the model reads.</summary>
     public static string Result(object value) => JsonSerializer.Serialize(value, Json);
 }

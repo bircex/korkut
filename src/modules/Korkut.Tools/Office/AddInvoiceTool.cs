@@ -30,6 +30,11 @@ public sealed class AddInvoiceTool(IFinanceService finance) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         if (!arguments.TryGetProperty("amount", out var amountEl) || !amountEl.TryGetDecimal(out var amount))
         {
             return ToolResult.Error("'amount' gereklidir.");
@@ -39,7 +44,7 @@ public sealed class AddInvoiceTool(IFinanceService finance) : IAgentTool
         {
             Amount = amount,
             ClientId = ToolArgs.TryGuid(arguments, "client_id", out var cid) ? cid : null,
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
             Description = ToolArgs.String(arguments, "description"),
         };
         var result = await finance.CreateInvoiceAsync(request, ct);

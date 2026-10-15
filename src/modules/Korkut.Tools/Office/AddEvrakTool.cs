@@ -29,6 +29,11 @@ public sealed class AddEvrakTool(ICorrespondenceService correspondence) : IAgent
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var direction = ToolArgs.String(arguments, "direction");
         var title = ToolArgs.String(arguments, "title");
         if (string.IsNullOrWhiteSpace(direction) || string.IsNullOrWhiteSpace(title))
@@ -40,7 +45,7 @@ public sealed class AddEvrakTool(ICorrespondenceService correspondence) : IAgent
         {
             Direction = direction.Trim(),
             Title = title.Trim(),
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
         };
         var result = await correspondence.CreateAsync(request, ct);
         if (!result.IsSuccess)

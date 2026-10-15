@@ -21,7 +21,12 @@ public sealed class ListTasksTool(ITaskService tasks) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var result = await tasks.ListAsync(ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null, ct: ct);
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
+        var result = await tasks.ListAsync(matter, ct: ct);
         return result.IsSuccess
             ? ToolResult.Ok(ToolArgs.Result(result.Value!))
             : ToolResult.Error(result.Error!.Detail);

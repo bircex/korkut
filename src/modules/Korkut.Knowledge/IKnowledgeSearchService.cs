@@ -9,5 +9,6 @@ namespace Korkut.Knowledge;
 /// </summary>
 public interface IKnowledgeSearchService
 {
-    Task<IReadOnlyList<SearchHit>> SearchAsync(string query, int topK, CancellationToken ct = default);
+    /// <summary>Searches the documents the caller may see, only one matter's when <paramref name="matterId"/> is given.</summary>
+    Task<IReadOnlyList<SearchHit>> SearchAsync(string query, int topK, Guid? matterId = null, CancellationToken ct = default);
 }

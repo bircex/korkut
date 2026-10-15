@@ -1,3 +1,4 @@
+using Korkut.Contract.Matters;
 using Korkut.Agent.Chat.Repositories;
 using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent;
@@ -37,6 +38,7 @@ internal sealed class SessionChatService(
     IUsageGovernorService governorService,
     IAgentToolLoopService toolLoopService,
     ConversationAccess access,
+    IMatterLookup matters,
     TimeProvider clock) : ISessionChatService
 {
     private const int MaxExtractedChars = 20_000;
@@ -233,11 +235,11 @@ internal sealed class SessionChatService(
         }
 
         // Phase 2 — NO transaction: grounding (HTTP) + the model/tool loop. Tools self-scope per call.
-        var system = await WithGroundingAsync(prep.System, titleSeed, ct);
+        var system = await WithGroundingAsync(prep.System, titleSeed, prep.MatterId, ct);
         await using var governed = await governorService.BeginCallAsync(officeId, ct);
         var timer = Stopwatch.StartNew();
         var reply = await toolLoopService.RunAsync(
-            system, prep.Messages, new AgentToolContext(officeId, userId, permissions, conversationId),
+            system, prep.Messages, new AgentToolContext(officeId, userId, permissions, conversationId, prep.MatterId),
             ModelSpecialty.Dispatcher, config.ReplyHeadroom * 4, onStep, onToken, onToolCall, onToolResult, ct);
         timer.Stop();
 
@@ -263,8 +265,10 @@ internal sealed class SessionChatService(
 
             await sessions.AppendMessageAsync(officeId, conversationId, "user", userContent, sourcesJson: null, ct);
             var system = await BuildSystemPromptAsync(officeId, userId, ct);
+            system += await MatterContextAsync(officeId, conversation.MatterId, ct);
             var history = await sessions.MessagesAsync(officeId, conversationId, ct);
-            return new Prepared(conversation.Title, system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList());
+            return new Prepared(
+                conversation.Title, system, history.Select(m => new ChatMessage(m.Role, m.Content)).ToList(), conversation.MatterId);
         }, ct);
 
     // Phase 3: persist the assistant reply and auto-title a fresh conversation (both on the operational
@@ -287,7 +291,29 @@ internal sealed class SessionChatService(
         }, ct);
 
     /// <summary>Phase-1 snapshot handed to the (transaction-free) model loop.</summary>
-    private sealed record Prepared(string Title, string System, List<ChatMessage> Messages);
+    private sealed record Prepared(string Title, string System, List<ChatMessage> Messages, Guid? MatterId);
+
+    /// <summary>
+    /// A matter's conversation is about that matter: the prompt names it and says the tools stay on it.
+    /// Only the title goes in; details (and the client, masked by the caller's permissions) come
+    /// through the get_matter tool, so the prompt never carries more than the caller may see.
+    /// </summary>
+    private async Task<string> MatterContextAsync(Guid officeId, Guid? matterId, CancellationToken ct)
+    {
+        if (matterId is not { } id)
+        {
+            return string.Empty;
+        }
+
+        var titles = await matters.TitlesAsync(officeId, [id], ct);
+        var title = titles.GetValueOrDefault(id, string.Empty);
+        return $"""
+
+
+            Bu sohbet "{title}" dosyasına aittir (dosya kimliği: {id}). Sorular aksi belirtilmedikçe bu dosyayla ilgilidir.
+            Araçlar yalnızca bu dosya üzerinde çalışır ve belge araması yalnızca bu dosyanın belgelerini kapsar; başka bir dosyayla ilgili istekleri kibarca reddet ve kullanıcıyı o dosyanın sohbetine yönlendir. Dosya ayrıntıları gerektiğinde get_matter aracını kullan.
+            """;
+    }
 
     /// <summary>
     /// Retrieve grounded chunks for <paramref name="query"/> from the Knowledge service and append
@@ -295,9 +321,9 @@ internal sealed class SessionChatService(
     /// is unconfigured/unreachable the search yields nothing and the original prompt is returned
     /// unchanged, so a chat turn never fails for lack of retrieval.
     /// </summary>
-    private async Task<string> WithGroundingAsync(string system, string query, CancellationToken ct)
+    private async Task<string> WithGroundingAsync(string system, string query, Guid? matterId, CancellationToken ct)
     {
-        var hits = await knowledge.SearchAsync(query, GroundingTopK, ct);
+        var hits = await knowledge.SearchAsync(query, GroundingTopK, matterId, ct);
         if (hits.Count == 0)
         {
             return system;

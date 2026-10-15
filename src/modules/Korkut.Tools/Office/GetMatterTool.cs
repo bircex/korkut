@@ -25,7 +25,12 @@ public sealed class GetMatterTool(IMatterService matters) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        if (!ToolArgs.TryGuid(arguments, "matter_id", out var id))
+        if (!ToolArgs.TryMatter(arguments, context, out var resolved, out var refusal))
+        {
+            return refusal!;
+        }
+
+        if (resolved is not { } id)
         {
             return ToolResult.Error("'matter_id' gereklidir.");
         }
