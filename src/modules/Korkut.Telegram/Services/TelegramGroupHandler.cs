@@ -20,7 +20,7 @@ namespace Korkut.Telegram.Services;
 public sealed partial class TelegramGroupHandler(
     ITelegramRepository repository, ITelegramApi telegram, IUnitOfWork unitOfWork, IUserLookup users,
     IRolePermissions rolePermissions, ActingUser acting, ISessionAppService sessions, ISessionChatService chat,
-    IMatterService matters, IMatterLookup matterLookup, IClock clock, ILogger<TelegramGroupHandler> logger)
+    IMatterService matters, TelegramGroupGuard guard, IClock clock, ILogger<TelegramGroupHandler> logger)
 {
     internal const string NotAllowed = "Bu dosya için yetkiniz yok.";
 
@@ -125,7 +125,7 @@ public sealed partial class TelegramGroupHandler(
             return;
         }
 
-        if (!await EveryoneMaySeeAsync(office, token, chatId, botId, group.MatterId, ct))
+        if (!await guard.EveryoneMaySeeAsync(office, token, chatId, group.MatterId, ct))
         {
             await ReplyAsync(token, chatId, StrangersPresent, ct);
             return;
@@ -272,44 +272,6 @@ public sealed partial class TelegramGroupHandler(
     /// <summary>Whether the acting member can see the matter (their scope, as in the app).</summary>
     private async Task<bool> SeesAsync(Guid matterId, CancellationToken ct)
         => (await matters.ListAsync(ct)).Value?.Any(m => m.Id == matterId) == true;
-
-    /// <summary>
-    /// Whether every person in the group may see the matter: the bot must know each of them (the
-    /// group's member count, less the bot, matches whom it has seen), and each must be a linked
-    /// member on the matter's team or one who sees every matter.
-    /// </summary>
-    private async Task<bool> EveryoneMaySeeAsync(Guid office, string token, long chatId, long botId, Guid matterId, CancellationToken ct)
-    {
-        var count = await telegram.GetChatMemberCountAsync(token, chatId, ct);
-        return await unitOfWork.InTenantScopeAsync(office, async () =>
-        {
-            var known = (await repository.GroupMembersAsync(chatId, ct)).Where(id => id != botId).ToList();
-            if (count - 1 != known.Count)
-            {
-                return false; // someone the bot has not seen, or someone gone it missed
-            }
-
-            var team = (await matterLookup.TeamsAsync(office, ct)).GetValueOrDefault(matterId) ?? [];
-            foreach (var telegramUserId in known)
-            {
-                var link = await repository.FindLinkByChatAsync(telegramUserId, ct);
-                var role = link is null ? null : await users.RoleAsync(office, link.UserId, ct);
-                if (link is null || role is null)
-                {
-                    return false;
-                }
-
-                var granted = await rolePermissions.ForRoleAsync(office, role, ct);
-                if (!granted.Contains(Permissions.MattersRead)
-                    || !(granted.Contains(Permissions.MattersViewAll) || team.Contains(link.UserId)))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }, ct);
-    }
 
     /// <summary>Remembers who is in the group from what a message shows: its sender, and who joined or left.</summary>
     private Task<int> TrackAsync(Guid office, long chatId, long botId, TelegramMessage message, CancellationToken ct)

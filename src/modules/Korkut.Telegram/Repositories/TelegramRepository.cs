@@ -27,6 +27,9 @@ internal sealed class TelegramRepository(DbContext db) : ITelegramRepository
     public Task<TelegramGroup?> FindGroupAsync(long chatId, CancellationToken ct = default)
         => db.Set<TelegramGroup>().SingleOrDefaultAsync(g => g.ChatId == chatId, ct);
 
+    public async Task<IReadOnlyList<long>> GroupsForMatterAsync(Guid matterId, CancellationToken ct = default)
+        => await db.Set<TelegramGroup>().AsNoTracking().Where(g => g.MatterId == matterId).Select(g => g.ChatId).ToListAsync(ct);
+
     public void Add(TelegramGroup group) => db.Set<TelegramGroup>().Add(group);
 
     public void Remove(TelegramGroup group) => db.Set<TelegramGroup>().Remove(group);

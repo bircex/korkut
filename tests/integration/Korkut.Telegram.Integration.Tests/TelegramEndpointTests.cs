@@ -512,6 +512,19 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
         telegram.MemberCounts[groupId] = 4;
         await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Özet ver");
         Assert.Equal("Bu grupta dosyaya yetkisi olmayan kişiler olduğu için içerik paylaşamıyorum.", telegram.Sent[^1].Text);
+
+        // The matter's reminders follow the same rule: none while a stranger is there, then the group hears them.
+        async Task<int> RemindAsync()
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+            return await scope.ServiceProvider.GetRequiredService<ITelegramNotifier>()
+                .NotifyMatterGroupsAsync(office, matter, "Duruşma: Kira tespit davası");
+        }
+
+        Assert.Equal(0, await RemindAsync());
+        telegram.MemberCounts[groupId] = 3;
+        Assert.Equal(1, await RemindAsync());
+        Assert.Equal((groupId, "Duruşma: Kira tespit davası"), telegram.Sent[^1]);
     }
 
     [Fact]

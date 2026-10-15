@@ -20,6 +20,8 @@ public interface ITelegramRepository
     /// <summary>Tracked, for mutation.</summary>
     Task<TelegramGroup?> FindGroupAsync(long chatId, CancellationToken ct = default);
 
+    Task<IReadOnlyList<long>> GroupsForMatterAsync(Guid matterId, CancellationToken ct = default);
+
     void Add(TelegramGroup group);
 
     void Remove(TelegramGroup group);

@@ -10,4 +10,8 @@ public interface ITelegramNotifier
     /// <summary>Sends <paramref name="text"/> to the given members (all linked members when null);
     /// returns how many chats it reached.</summary>
     Task<int> NotifyAsync(Guid officeId, IReadOnlyCollection<Guid>? userIds, string text, CancellationToken ct = default);
+
+    /// <summary>Sends <paramref name="text"/> to the groups bound to a matter, each only while everyone
+    /// in it may see the matter; returns how many groups it reached.</summary>
+    Task<int> NotifyMatterGroupsAsync(Guid officeId, Guid matterId, string text, CancellationToken ct = default);
 }
