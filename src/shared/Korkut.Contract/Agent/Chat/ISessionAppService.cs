@@ -4,7 +4,9 @@ namespace Korkut.Contract.Agent.Chat;
 /// <summary>The session use-cases a controller forwards to: tenant scope + orchestration + DTO mapping live here.</summary>
 public interface ISessionAppService
 {
-    Task<SessionPageResponse> ListAsync(int? limit, int? offset, CancellationToken ct = default);
+    /// <summary>The caller's conversations: their personal ones and their matters', optionally one
+    /// matter's (<paramref name="matterId"/>) or personal ones only.</summary>
+    Task<SessionPageResponse> ListAsync(int? limit, int? offset, Guid? matterId = null, bool personal = false, CancellationToken ct = default);
 
     Task<SessionBriefResponse> CreateAsync(Guid? matterId, CancellationToken ct = default);
 

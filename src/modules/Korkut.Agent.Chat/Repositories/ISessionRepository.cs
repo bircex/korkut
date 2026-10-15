@@ -1,3 +1,4 @@
+using Korkut.Agent.Chat.Abstractions;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
 namespace Korkut.Agent.Chat.Repositories;
@@ -14,7 +15,7 @@ public interface ISessionRepository
     Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default);
 
     /// <summary>A page of conversation briefs (newest first) plus the total count.</summary>
-    Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, int limit, int offset, CancellationToken ct = default);
+    Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, SessionFilter filter, int limit, int offset, CancellationToken ct = default);
 
     /// <summary>A single conversation's brief, or null if missing.</summary>
     Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default);

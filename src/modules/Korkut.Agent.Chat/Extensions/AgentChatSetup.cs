@@ -17,6 +17,7 @@ public static class AgentChatSetup
     {
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<ISessionService, SessionService>();
+        services.AddScoped<ConversationAccess>();
         services.AddScoped<ISessionChatService, SessionChatService>();
         services.AddScoped<ISessionAppService, SessionAppService>();
         services.AddScoped<IChatAppService, ChatAppService>();

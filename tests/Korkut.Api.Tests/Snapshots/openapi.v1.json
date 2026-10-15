@@ -6318,6 +6318,21 @@
                 "string"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "matterId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "personal",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

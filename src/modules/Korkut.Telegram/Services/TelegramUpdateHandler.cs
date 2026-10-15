@@ -93,7 +93,7 @@ public sealed partial class TelegramUpdateHandler(
             await typing.StopAsync();
             await reply.FinishAsync(string.IsNullOrWhiteSpace(answer) ? Failed : answer, ct);
         }
-        catch (Exception ex) when (ex is ModelUnavailableException or BudgetExceededException or TelegramApiException)
+        catch (Exception ex) when (ex is ModelUnavailableException or BudgetExceededException or TelegramApiException or ForbiddenException)
         {
             await typing.StopAsync();
             await reply.FinishAsync(Interrupted(reply, ex.Message), ct);

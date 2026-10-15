@@ -1,3 +1,4 @@
+using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent.Chat;
 using Korkut.Chat;
 using Korkut.Chat.Entities;
@@ -32,9 +33,23 @@ internal sealed class SessionRepository(DbContext db)
     public Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default)
         => FindAsync(officeId, id, ct);
 
-    public async Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, int limit, int offset, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(
+        Guid officeId, SessionFilter filter, int limit, int offset, CancellationToken ct = default)
     {
-        var scoped = Scoped(officeId);
+        var ids = filter.MatterIds.ToList();
+        var user = filter.UserId;
+        var scoped = Scoped(officeId).Where(x =>
+            (x.MatterId == null && x.CreatedBy == user)
+            || (x.MatterId != null && (filter.AllMatters || ids.Contains(x.MatterId.Value))));
+        if (filter.PersonalOnly)
+        {
+            scoped = scoped.Where(x => x.MatterId == null);
+        }
+        else if (filter.MatterId is { } matterId)
+        {
+            scoped = scoped.Where(x => x.MatterId == matterId);
+        }
+
         var total = await scoped.CountAsync(ct);
         var page = await scoped.OrderByDescending(x => x.UpdatedAt).Skip(offset).Take(limit).Select(ToBrief).ToListAsync(ct);
         return (page, total);

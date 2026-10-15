@@ -15,8 +15,8 @@ internal sealed class SessionService(ISessionRepository repo, IClock clock) : IS
     public Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default)
         => repo.GetAsync(officeId, id, ct);
 
-    public Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, int limit, int offset, CancellationToken ct = default)
-        => repo.ListAsync(officeId, limit, offset, ct);
+    public Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, SessionFilter filter, int limit, int offset, CancellationToken ct = default)
+        => repo.ListAsync(officeId, filter, limit, offset, ct);
 
     public Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default)
         => repo.GetBriefAsync(officeId, id, ct);
