@@ -30,6 +30,7 @@ public sealed class MattersController(IMatterService matters) : ControllerBase
         => (await matters.CreateAsync(body, ct)).ToActionResult(m => Created($"/api/matters/{m.Id}", m));
 
     [HttpPatch("{id:guid}")]
+    [Authorize(Policy = Permissions.MattersWrite)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMatterRequest request, CancellationToken ct)
         => (await matters.UpdateAsync(id, request, ct)).ToActionResult();
 

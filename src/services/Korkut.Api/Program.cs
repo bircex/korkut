@@ -101,12 +101,13 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 app.UseKorkutWeb();
+app.UseKorkutSpaFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapKorkutHealthChecks();
-app.UseKorkutSpa();
+app.MapKorkutSpa();
 
 app.Run();
 

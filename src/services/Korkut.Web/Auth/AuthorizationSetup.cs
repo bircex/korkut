@@ -9,7 +9,8 @@ namespace Korkut.Web.Auth;
 /// Wires the access-token authentication scheme and a deny-by-default authorization
 /// policy per permission (policy name == permission string). Endpoints require a
 /// permission via <c>.RequireAuthorization(Permissions.X)</c> — never an inline role
-/// check (KDM-019).
+/// check (KDM-019). An endpoint that names no policy and is not marked anonymous still needs a
+/// signed-in caller (the fallback policy), so forgetting an attribute never opens an endpoint.
 /// </summary>
 public static class AuthorizationSetup
 {
@@ -20,7 +21,10 @@ public static class AuthorizationSetup
         services.AddAuthentication(AccessTokenAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, AccessTokenAuthHandler>(AccessTokenAuthHandler.SchemeName, _ => { });
 
-        var authz = services.AddAuthorizationBuilder();
+        var authz = services.AddAuthorizationBuilder()
+            .SetFallbackPolicy(new AuthorizationPolicyBuilder(AccessTokenAuthHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .Build());
         foreach (var permission in Permissions.All)
         {
             authz.AddPolicy(permission, policy => policy

@@ -21,14 +21,14 @@ public static class HealthEndpoints
         {
             Predicate = _ => false,
             ResponseWriter = WriteMinimalStatus,
-        });
+        }).AllowAnonymous();
 
         // Readiness: dependency-tagged checks (none registered until KDM-011+).
         app.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("ready"),
             ResponseWriter = WriteMinimalStatus,
-        });
+        }).AllowAnonymous();
 
         return app;
     }
