@@ -12,7 +12,7 @@ namespace Korkut.Hearings.Controllers;
 public sealed class HearingsController(IHearingService hearings) : ControllerBase
 {
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.AgendaWrite)]
     public async Task<IActionResult> Create(Guid id, [FromBody] CreateHearingRequest body, CancellationToken ct)
         => (await hearings.AddAsync(id, body, ct)).ToActionResult(h => Created($"/api/matters/{id}/hearings/{h.Id}", h));
 }

@@ -14,7 +14,7 @@ namespace Korkut.Reports.Controllers;
 public sealed class ReportsController(IReportsService reports) : ControllerBase
 {
     [HttpGet("overview")]
-    [Authorize(Policy = Permissions.BillingRead)]
+    [Authorize(Policy = Permissions.ReportsRead)]
     public async Task<IActionResult> Overview([FromQuery] int? days, CancellationToken ct)
         => Ok(await reports.OverviewAsync(days, ct));
 }

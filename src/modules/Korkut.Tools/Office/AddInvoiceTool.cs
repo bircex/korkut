@@ -26,7 +26,7 @@ public sealed class AddInvoiceTool(IFinanceService finance) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.BillingWrite;
+    public string? RequiredPermission => Permissions.FinanceWrite;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

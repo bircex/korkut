@@ -9,7 +9,7 @@ namespace Korkut.Telegram.Controllers;
 /// <summary>The office bot, for the owner (office.settings).</summary>
 [ApiController]
 [Route("api/settings/telegram")]
-[Authorize(Policy = Permissions.OfficeSettings)]
+[Authorize(Policy = Permissions.IntegrationsManage)]
 public sealed class TelegramSettingsController(ITelegramSettingsService settings) : ControllerBase
 {
     [HttpGet]
@@ -32,7 +32,7 @@ public sealed class TelegramSettingsController(ITelegramSettingsService settings
 /// <summary>The caller's own Telegram link; every member may manage theirs.</summary>
 [ApiController]
 [Route("api/telegram/link")]
-[Authorize(Policy = Permissions.MattersRead)]
+[Authorize(Policy = Permissions.ChatUse)]
 public sealed class TelegramLinkController(ITelegramLinkService links) : ControllerBase
 {
     [HttpGet]

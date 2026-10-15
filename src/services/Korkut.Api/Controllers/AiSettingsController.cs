@@ -15,7 +15,7 @@ namespace Korkut.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/settings/ai/manage")]
-[Authorize(Policy = Permissions.OfficeSettings)]
+[Authorize(Policy = Permissions.IntegrationsManage)]
 public sealed class AiSettingsController(IHttpClientFactory http) : ControllerBase
 {
     public const string HttpClientName = "llmr-manage";

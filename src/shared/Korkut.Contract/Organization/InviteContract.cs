@@ -48,7 +48,7 @@ public sealed record CreateInviteRequest
     public string? Email { get; init; }
 
     /// <summary>Optional; defaults to "lawyer" when omitted.</summary>
-    [RegularExpression("owner|lawyer", ErrorMessage = "role 'owner' veya 'lawyer' olmalıdır.")]
+    [RegularExpression("^[a-z0-9-]{1,50}$", ErrorMessage = "Geçersiz rol.")]
     public string? Role { get; init; }
 
     /// <summary>Davet edilenin adı-soyadı; kabulde hesap bu adla açılır.</summary>

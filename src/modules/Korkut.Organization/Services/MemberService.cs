@@ -14,7 +14,7 @@ namespace Korkut.Organization.Services;
 /// never allowed to remove themselves. Every call RETURNS a <see cref="Result"/>.
 /// </summary>
 public sealed class MemberService(
-    IUserRepository repository, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMemberService
+    IUserRepository repository, IRoleService roles, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMemberService
 {
     public Task<Result<IReadOnlyList<MemberResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -23,8 +23,14 @@ public sealed class MemberService(
     public Task<Result<MemberResponse>> CreateAsync(CreateMemberRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
+            var role = request.Role ?? Roles.Lawyer;
+            if (!await roles.ExistsAsync(office, role, ct))
+            {
+                return Result<MemberResponse>.Unprocessable("Böyle bir rol yok.");
+            }
+
             var member = new User(
-                office, request.Email!.Trim().ToLowerInvariant(), request.Role ?? Roles.Lawyer,
+                office, request.Email!.Trim().ToLowerInvariant(), role,
                 request.FullName?.Trim(), request.BarRegistryNo?.Trim(), clock.UtcNow);
             await repository.AddAsync(member, ct);
             return Result<MemberResponse>.Ok(ToResponse(member));
@@ -40,10 +46,15 @@ public sealed class MemberService(
             }
 
             var role = request.Role!;
+            if (!await roles.ExistsAsync(office, role, ct))
+            {
+                return Result.Unprocessable("Böyle bir rol yok.");
+            }
+
             if (member.Role == Roles.OfficeOwner && role != Roles.OfficeOwner
                 && !await repository.HasAnotherOwnerAsync(office, memberId, ct))
             {
-                return Result.Conflict("Ofiste en az bir sahip kalmalıdır.");
+                return Result.Conflict("Büroda en az bir yönetici kalmalıdır.");
             }
 
             member.ChangeRole(role);
@@ -67,7 +78,7 @@ public sealed class MemberService(
 
             if (member.Role == Roles.OfficeOwner && !await repository.HasAnotherOwnerAsync(office, memberId, ct))
             {
-                return Result.Conflict("Ofiste en az bir sahip kalmalıdır.");
+                return Result.Conflict("Büroda en az bir yönetici kalmalıdır.");
             }
 
             return await repository.RemoveAsync(office, memberId, ct) ? Result.Ok() : Result.NotFound("Üye bulunamadı.");

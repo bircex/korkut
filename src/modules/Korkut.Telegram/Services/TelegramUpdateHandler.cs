@@ -2,7 +2,6 @@ using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Offices;
 using Korkut.Contract.Organization;
 using Korkut.Core;
-using Korkut.Security;
 using Korkut.Telegram.Entities;
 using Korkut.Telegram.Repositories;
 using Microsoft.Extensions.Logging;
@@ -16,7 +15,7 @@ namespace Korkut.Telegram.Services;
 /// </summary>
 public sealed partial class TelegramUpdateHandler(
     ITelegramRepository repository, ITelegramApi telegram, IUnitOfWork unitOfWork, IUserLookup users,
-    AuthorizationService authorization, ActingUser acting, ISessionAppService sessions, ISessionChatService chat,
+    IRolePermissions rolePermissions, ActingUser acting, ISessionAppService sessions, ISessionChatService chat,
     IClock clock, ILogger<TelegramUpdateHandler> logger)
 {
     private const string NotLinked =
@@ -81,7 +80,7 @@ public sealed partial class TelegramUpdateHandler(
         }
 
         // From here on the scope speaks as the member, so every tool sees them as the caller.
-        var permissions = authorization.ResolvePermissions(role);
+        var permissions = await rolePermissions.ForRoleAsync(office.Id, role, ct);
         acting.Set(office.Id, link.UserId, role, permissions);
 
         var reply = new StreamingReply(telegram, token, chatId);

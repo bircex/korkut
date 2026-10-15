@@ -17,7 +17,7 @@ public sealed class ListNotesTool(INoteService notes) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.MattersRead;
+    public string? RequiredPermission => Permissions.NotesRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

@@ -22,7 +22,7 @@ public sealed class UpcomingAgendaTool(ICalendarService calendar) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.MattersRead;
+    public string? RequiredPermission => Permissions.AgendaRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

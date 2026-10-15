@@ -21,4 +21,7 @@ public interface IUserRepository : IRepository<User>
 
     /// <summary>True if the office already has a user with this e-mail (identity is per office).</summary>
     Task<bool> ExistsWithEmailAsync(Guid officeId, string email, CancellationToken ct = default);
+
+    /// <summary>How many members hold each role.</summary>
+    Task<IReadOnlyDictionary<string, int>> CountByRoleAsync(Guid officeId, CancellationToken ct = default);
 }

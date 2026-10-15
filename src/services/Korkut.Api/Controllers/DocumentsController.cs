@@ -81,7 +81,7 @@ public sealed class DocumentsController(IDocumentFileService documents, IService
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Permissions.DocumentsWrite)]
+    [Authorize(Policy = Permissions.DocumentsDelete)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await documents.DeleteAsync(id, ct);

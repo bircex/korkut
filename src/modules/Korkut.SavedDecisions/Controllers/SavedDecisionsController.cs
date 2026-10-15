@@ -15,17 +15,17 @@ namespace Korkut.SavedDecisions.Controllers;
 public sealed class SavedDecisionsController(ISavedDecisionService decisions) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.DocumentsRead)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> List(CancellationToken ct)
         => (await decisions.ListAsync(ct)).ToListActionResult();
 
     [HttpPost]
-    [Authorize(Policy = Permissions.DocumentsWrite)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> Save([FromBody] SaveDecisionRequest body, CancellationToken ct)
         => (await decisions.SaveAsync(body, ct)).ToActionResult(d => Created($"/api/saved-decisions/{d.Id}", d));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Permissions.DocumentsWrite)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> Remove(Guid id, CancellationToken ct)
         => (await decisions.RemoveAsync(id, ct)).ToActionResult();
 }

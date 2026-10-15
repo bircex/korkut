@@ -128,7 +128,7 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
             db.UserTotps.Add(new UserTotp(office, uid, $"enc{i}", DateTimeOffset.UtcNow));
             db.RecoveryCodes.Add(new RecoveryCode(office, uid, $"rc{office:N}{i}", DateTimeOffset.UtcNow));
             db.RefreshTokens.Add(new RefreshToken(Guid.CreateVersion7(), Guid.CreateVersion7(), office, uid, $"rt{office:N}{i}", DateTimeOffset.UtcNow.AddDays(14), DateTimeOffset.UtcNow));
-            db.OfficeCustomRoles.Add(new OfficeRole(office, $"role{i}", "R", ["matters.read"], DateTimeOffset.UtcNow));
+            db.OfficeRoles.Add(new OfficeRole(office, $"role{i}", "R", null, ["matters.read"], false, DateTimeOffset.UtcNow));
             db.TelegramLinks.Add(new Korkut.Telegram.Entities.TelegramLink(office, uid));
             if (i == 0)
             {

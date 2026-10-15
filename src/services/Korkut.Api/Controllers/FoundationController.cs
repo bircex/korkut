@@ -65,6 +65,6 @@ public sealed class FoundationController : ControllerBase
 
     /// <summary>Deny-by-default permissions: this one needs matters.write.</summary>
     [HttpPost("matters-demo")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.MattersEdit)]
     public IActionResult MattersDemo() => Ok(OkResponse.Done);
 }

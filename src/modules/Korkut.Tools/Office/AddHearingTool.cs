@@ -26,7 +26,7 @@ public sealed class AddHearingTool(IHearingService hearings) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.MattersWrite;
+    public string? RequiredPermission => Permissions.AgendaWrite;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

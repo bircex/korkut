@@ -14,8 +14,9 @@ namespace Korkut.Ocr.Controllers;
 public sealed record OcrResponse(string Text, int Pages, IReadOnlyList<string> PageTexts);
 
 /// <summary>
-/// The internal OCR surface: turn a scanned image or a text-less PDF into text. Authenticated with
-/// the shared access token (matters.read — OCR is a read over a document) and not publicly routed;
+/// The internal OCR surface: turn a scanned image or a text-less PDF into text. Any caller with a
+/// valid access token (the app forwards the member's own, after it has authorized the upload; this
+/// host cannot see the office's roles) and not publicly routed;
 /// the gateway keeps it in-cluster and Knowledge ingestion calls it only when a document has no
 /// embedded text. When no engine is configured the engine raises OcrUnavailableException, which the
 /// shared handler maps to 503.
@@ -24,7 +25,7 @@ public sealed record OcrResponse(string Text, int Pages, IReadOnlyList<string> P
 public sealed class OcrController(IOcrService service) : ControllerBase
 {
     [HttpPost("/extract")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize]
     public async Task<IActionResult> Extract(IFormFile? file, CancellationToken ct)
     {
         if (file is null || file.Length == 0)

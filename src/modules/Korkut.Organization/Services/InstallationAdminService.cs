@@ -26,13 +26,26 @@ public enum InstallationAdminOutcome
 /// asks for a reset; after that the admin changes it in the app.
 /// </summary>
 public sealed class InstallationAdminService(
-    IOfficeProvisioner provisioner, IUserRepository users, IUnitOfWork unitOfWork, IPasswordHasher passwordHasher, IClock clock)
+    IOfficeProvisioner provisioner, IUserRepository users, IRoleService roles, IUnitOfWork unitOfWork,
+    IPasswordHasher passwordHasher, IClock clock)
 {
     public const string DefaultOfficeName = "Hukuk Bürosu";
     private const string AdminName = "Yönetici";
 
     public async Task<InstallationAdminOutcome> EnsureAsync(
         string password, string? officeName, bool resetPassword, CancellationToken ct = default)
+    {
+        var outcome = await EnsureAdminAsync(password, officeName, resetPassword, ct);
+        if (await provisioner.InstallOfficeAsync(ct) is { } office)
+        {
+            await roles.EnsureSystemRolesAsync(office.Id, ct);
+        }
+
+        return outcome;
+    }
+
+    private async Task<InstallationAdminOutcome> EnsureAdminAsync(
+        string password, string? officeName, bool resetPassword, CancellationToken ct)
     {
         var hash = passwordHasher.Hash(password);
         var office = await provisioner.InstallOfficeAsync(ct);

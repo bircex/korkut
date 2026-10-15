@@ -17,7 +17,7 @@ public sealed class ListExpensesTool(IFinanceService finance) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.BillingRead;
+    public string? RequiredPermission => Permissions.FinanceRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

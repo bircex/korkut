@@ -15,17 +15,17 @@ namespace Korkut.Correspondence.Controllers;
 public sealed class CorrespondenceController(ICorrespondenceService correspondence) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.NotesRead)]
     public async Task<IActionResult> List([FromQuery] string? direction, CancellationToken ct)
         => (await correspondence.ListAsync(direction, ct)).ToListActionResult();
 
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.NotesWrite)]
     public async Task<IActionResult> Create([FromBody] CreateCorrespondenceRequest body, CancellationToken ct)
         => (await correspondence.CreateAsync(body, ct)).ToActionResult(c => Created($"/api/evrak/{c.Id}", c));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.NotesWrite)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         => (await correspondence.DeleteAsync(id, ct)).ToActionResult();
 }
