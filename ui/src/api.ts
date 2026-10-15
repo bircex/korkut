@@ -982,3 +982,19 @@ export const rolesApi = {
   setMemberRole: (memberId: string | number, role: string) =>
     request<void>(`/api/members/${memberId}`, { method: "PATCH", ...json({ role }) }),
 };
+
+// ---- A matter's team: who works on it (and so sees it) ---------------------------------------
+export type MatterTeamMember = { user_id: string; name: string; is_lead: boolean; added_at: string };
+export type MatterTeam = { members: MatterTeamMember[]; can_manage: boolean };
+export type MatterTeamCandidate = { user_id: string; name: string };
+
+export const teamApi = {
+  get: (matterId: string) => request<MatterTeam>(`/api/matters/${matterId}/team`),
+  candidates: (matterId: string) => request<MatterTeamCandidate[]>(`/api/matters/${matterId}/team/candidates`),
+  add: (matterId: string, userId: string, isLead = false) =>
+    request<MatterTeam>(`/api/matters/${matterId}/team`, { method: "POST", ...json({ user_id: userId, is_lead: isLead }) }),
+  setLead: (matterId: string, userId: string, isLead: boolean) =>
+    request<MatterTeam>(`/api/matters/${matterId}/team/${userId}`, { method: "PATCH", ...json({ is_lead: isLead }) }),
+  remove: (matterId: string, userId: string) =>
+    request<MatterTeam>(`/api/matters/${matterId}/team/${userId}`, { method: "DELETE" }),
+};

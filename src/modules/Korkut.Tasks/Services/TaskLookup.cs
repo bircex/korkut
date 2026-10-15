@@ -34,6 +34,6 @@ internal sealed class TaskLookup(DbContext db) : ITaskLookup
             .Select(t => new TaskCalendarRow(
                 t.Id, t.Category, t.Type, t.Title, t.DueAt!.Value, t.EndAt, t.AllDay,
                 t.MatterId, t.ClientId, t.AssigneeId, t.Location, t.Status, t.Description,
-                t.Rrule, t.RemindBeforeMin, t.ReminderStatus))
+                t.Rrule, t.RemindBeforeMin, t.ReminderStatus, t.CreatedBy))
             .ToListAsync(ct);
 }

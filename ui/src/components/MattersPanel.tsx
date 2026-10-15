@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type ClientBrief, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
+import { MatterTeam } from "./MatterTeam";
 import { ArrowLeft, CaretRight } from "../icons";
 import { DataTable } from "./DataTable";
 import { matchPath, navigate, usePath } from "../router";
@@ -230,6 +231,8 @@ export function MattersPanel({
                 </button>
               </div>
             </div>
+
+            <MatterTeam matterId={detail.id} />
 
             {detail.client && (
               <ClientDetailsCard

@@ -15,5 +15,8 @@ public sealed class MattersModule : IModule
         services.AddScoped<IMatterRepository, MatterRepository>();
         services.AddScoped<IMatterService, MatterService>();
         services.AddScoped<IMatterLookup, MatterLookup>();
+        services.AddScoped<IMatterMemberRepository, MatterMemberRepository>();
+        services.AddScoped<IMatterAccess, MatterAccess>();
+        services.AddScoped<IMatterTeamService, MatterTeamService>();
     }
 }

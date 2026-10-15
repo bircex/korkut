@@ -24,6 +24,7 @@ internal sealed class CalendarService(
     IMatterLookup matters,
     IClientLookup clients,
     IUserLookup users,
+    IMatterAccess access,
     IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : ICalendarService
 {
     /// <summary>The agenda look-ahead window, in days, clamped to a sane range.</summary>
@@ -47,10 +48,12 @@ internal sealed class CalendarService(
             var now = clock.UtcNow;
             var until = now.AddDays(window);
 
-            var hearingRows = await hearings.ListInRangeAsync(office, now, until, null, ct);
+            var scope = await access.ScopeAsync(office, ct);
+            var hearingRows = (await hearings.ListInRangeAsync(office, now, until, null, ct))
+                .Where(h => scope.CanSee(h.MatterId)).ToList();
             // Include today's / just-overdue open deadlines (from a day before now through the window).
             var deadlineRows = (await deadlines.ListInRangeAsync(office, now.AddDays(-1), until, null, ct))
-                .Where(d => d.CompletedAt == null).ToList();
+                .Where(d => d.CompletedAt == null && scope.CanSee(d.MatterId, d.CreatedBy)).ToList();
 
             var titles = await matters.TitlesAsync(office, Ids(hearingRows.Select(h => (Guid?)h.MatterId)), ct);
 
@@ -71,8 +74,11 @@ internal sealed class CalendarService(
     private async Task<IReadOnlyList<CalendarEntryResponse>> BuildEntriesAsync(
         Guid office, DateTimeOffset? start, DateTimeOffset? end, string? category, Guid? matterId, CancellationToken ct)
     {
+        // Only what the caller may see: their matters' records, and their own records with no matter.
+        var scope = await access.ScopeAsync(office, ct);
         IReadOnlyList<TaskCalendarRow> taskRows = category is null || TaskCategories.Contains(category)
-            ? await tasks.ListInRangeAsync(office, start, end, matterId, ct)
+            ? (await tasks.ListInRangeAsync(office, start, end, matterId, ct))
+                .Where(t => scope.CanSee(t.MatterId, t.AssigneeId, t.CreatedBy)).ToList()
             : [];
         if (category is not null && TaskCategories.Contains(category))
         {
@@ -80,10 +86,12 @@ internal sealed class CalendarService(
         }
 
         IReadOnlyList<DeadlineResponse> deadlineRows = category is null or "deadline"
-            ? await deadlines.ListInRangeAsync(office, start, end, matterId, ct)
+            ? (await deadlines.ListInRangeAsync(office, start, end, matterId, ct))
+                .Where(d => scope.CanSee(d.MatterId, d.CreatedBy)).ToList()
             : [];
         IReadOnlyList<HearingCalendarRow> hearingRows = category is null or "hearing"
-            ? await hearings.ListInRangeAsync(office, start, end, matterId, ct)
+            ? (await hearings.ListInRangeAsync(office, start, end, matterId, ct))
+                .Where(h => scope.CanSee(h.MatterId)).ToList()
             : [];
 
         var (titles, names, emails) = await ResolveNamesAsync(office,

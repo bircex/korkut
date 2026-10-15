@@ -16,9 +16,10 @@ public sealed class WorkTask : Entity, ITenantOwned, IAggregateRoot
         Guid officeId, string category, string title, string? description, string? type,
         Guid? matterId, Guid? assigneeId, Guid? clientId,
         DateTimeOffset? dueAt, DateTimeOffset? endAt, bool allDay,
-        string? location, string? rrule, int? remindBeforeMin, DateTimeOffset createdAt)
+        string? location, string? rrule, int? remindBeforeMin, DateTimeOffset createdAt, Guid? createdBy = null)
         : base(NewId())
     {
+        CreatedBy = createdBy;
         OfficeId = officeId;
         Category = category;
         Title = title;
@@ -84,6 +85,9 @@ public sealed class WorkTask : Entity, ITenantOwned, IAggregateRoot
     public DateTimeOffset? CompletedAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
+
+    /// <summary>Who added it. A record is visible with its matter, or to whoever added it or it is assigned to.</summary>
+    public Guid? CreatedBy { get; private set; }
 
     /// <summary>Moving to "done" stamps the completion time; moving away clears it.</summary>
     public void SetStatus(string status, DateTimeOffset now)

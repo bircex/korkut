@@ -46,6 +46,18 @@
         ],
         "type": "object"
       },
+      "AddTeamMemberRequest": {
+        "properties": {
+          "is_lead": {
+            "type": "boolean"
+          },
+          "user_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AlimonyRequest": {
         "properties": {
           "cocuk_sayisi": {
@@ -2128,6 +2140,14 @@
           "mahsup_gun",
           "ozel_durum"
         ],
+        "type": "object"
+      },
+      "SetTeamLeadRequest": {
+        "properties": {
+          "is_lead": {
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "SeveranceRequest": {
@@ -5534,6 +5554,175 @@
         ]
       }
     },
+    "/api/matters/{matterId}/team": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MatterTeam"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamMemberRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamMemberRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MatterTeam"
+        ]
+      }
+    },
+    "/api/matters/{matterId}/team/candidates": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MatterTeam"
+        ]
+      }
+    },
+    "/api/matters/{matterId}/team/{userId}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MatterTeam"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "matterId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamLeadRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamLeadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamLeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MatterTeam"
+        ]
+      }
+    },
     "/api/me": {
       "get": {
         "responses": {
@@ -6964,6 +7153,9 @@
     },
     {
       "name": "Matters"
+    },
+    {
+      "name": "MatterTeam"
     },
     {
       "name": "Notes"

@@ -9,7 +9,7 @@ public sealed record TaskCounts(int Open, int Done, int Overdue);
 public sealed record TaskCalendarRow(
     Guid Id, string Category, string? Type, string Title, DateTimeOffset StartAt, DateTimeOffset? EndAt, bool AllDay,
     Guid? MatterId, Guid? ClientId, Guid? AssigneeId, string? Location, string Status, string? Description,
-    string? Rrule, int? RemindBeforeMin, string ReminderStatus);
+    string? Rrule, int? RemindBeforeMin, string ReminderStatus, Guid? CreatedBy = null);
 
 /// <summary>
 /// Cross-module read of the office's agenda records. The dashboard tallies görev-category records by

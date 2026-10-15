@@ -14,20 +14,27 @@ namespace Korkut.Matters.Services;
 /// Matter use-cases over the repository port; every call runs in the caller's tenant scope and
 /// RETURNS a <see cref="Result"/>. Owns the court-title snapshot rule. Cross-module reads (client
 /// brief, court name, a matter's hearings + deadlines) go through Contract lookups, never other
-/// modules' entities.
+/// modules' entities. A caller sees only the matters in their scope (their teams, or all with
+/// matters.view_all); any other matter reads as not found. Opening a matter puts the caller on its
+/// team as the lead.
 /// </summary>
 internal sealed class MatterService(
-    IMatterRepository matters, IHearingLookup hearings, IDeadlineLookup deadlines, ICourtLookup courts,
-    IClientLookup clients, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterService
+    IMatterRepository matters, IMatterMemberRepository members, IMatterAccess access, IHearingLookup hearings,
+    IDeadlineLookup deadlines, ICourtLookup courts, IClientLookup clients, IUnitOfWork unitOfWork,
+    ICurrentUser currentUser, IClock clock) : IMatterService
 {
     public Task<Result<IReadOnlyList<MatterResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
-            Result<IReadOnlyList<MatterResponse>>.Ok((await matters.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
+        {
+            var scope = await access.ScopeAsync(office, ct);
+            return Result<IReadOnlyList<MatterResponse>>.Ok(
+                (await matters.ListAsync(office, ct)).Where(m => scope.CanSee(m.Id)).Select(ToResponse).ToList());
+        }, ct);
 
     public Task<Result<MatterDetailResponse>> GetAsync(Guid id, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var matter = await matters.FindAsync(office, id, ct);
+            var matter = await VisibleAsync(office, id, ct);
             if (matter is null)
             {
                 return Result<MatterDetailResponse>.NotFound("Dosya bulunamadı.");
@@ -68,13 +75,15 @@ internal sealed class MatterService(
                 request.FileNo?.Trim(), request.CaseType?.Trim(), request.Counterparty?.Trim(),
                 request.CourtId, courtName, clock.UtcNow);
             await matters.AddAsync(matter, ct);
+            members.Add(new MatterMember(office, matter.Id, currentUser.UserId, isLead: true, currentUser.UserId, clock.UtcNow));
+            await members.SaveChangesAsync(ct);
             return Result<MatterResponse>.Ok(ToResponse(matter));
         }, ct);
 
     public Task<Result<MatterResponse>> UpdateAsync(Guid id, UpdateMatterRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var matter = await matters.FindForUpdateAsync(office, id, ct);
+            var matter = await VisibleAsync(office, id, ct) is null ? null : await matters.FindForUpdateAsync(office, id, ct);
             if (matter is null)
             {
                 return Result<MatterResponse>.NotFound("Dosya bulunamadı.");
@@ -99,9 +108,18 @@ internal sealed class MatterService(
     public Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
+            if (await VisibleAsync(office, id, ct) is null)
+            {
+                return Result.NotFound("Dosya bulunamadı.");
+            }
+
             await matters.SoftDeleteAsync(office, id, clock.UtcNow, ct);
             return Result.Ok();
         }, ct);
+
+    /// <summary>The matter, if it exists and is in the caller's scope.</summary>
+    private async Task<Matter?> VisibleAsync(Guid office, Guid id, CancellationToken ct)
+        => (await access.ScopeAsync(office, ct)).CanSee(id) ? await matters.FindAsync(office, id, ct) : null;
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)
     {

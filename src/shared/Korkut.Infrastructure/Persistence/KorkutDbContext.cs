@@ -46,6 +46,8 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Courts.Entities.Court> Courts => Set<Korkut.Courts.Entities.Court>();
 
+    public DbSet<Korkut.Matters.Entities.MatterMember> MatterMembers => Set<Korkut.Matters.Entities.MatterMember>();
+
     public DbSet<Korkut.Matters.Entities.Party> Parties => Set<Korkut.Matters.Entities.Party>();
 
     public DbSet<Korkut.Tasks.Entities.WorkTask> Tasks => Set<Korkut.Tasks.Entities.WorkTask>();
@@ -107,6 +109,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
         modelBuilder.ApplyConfiguration(new Korkut.Clients.Entities.ClientConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Courts.Entities.CourtConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Matters.Entities.PartyConfiguration());
+        modelBuilder.ApplyConfiguration(new Korkut.Matters.Entities.MatterMemberConfiguration());
         modelBuilder.ApplyConfiguration(new Korkut.Hearings.Entities.HearingConfiguration());
 
         modelBuilder.ApplyConfiguration(new Korkut.Audit.AuditEventConfiguration());

@@ -23,7 +23,7 @@ internal sealed class DeadlineLookup(IDeadlineRepository repository, DbContext d
 
     private static DeadlineResponse ToResponse(Deadline d) =>
         new(d.Id, d.Title, d.DueDate, d.Kind, d.CompletedAt is null ? "open" : "done", d.MatterId, d.Notes,
-            d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt);
+            d.TimeZoneId, d.ReminderDaysBefore, d.CompletedAt, d.CreatedAt, d.CreatedBy);
 
     public async Task<DeadlineCounts> CountsAsync(Guid officeId, DateOnly today, DateOnly until, CancellationToken ct = default)
     {

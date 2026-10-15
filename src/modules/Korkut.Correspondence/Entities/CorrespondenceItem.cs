@@ -7,9 +7,10 @@ public sealed class CorrespondenceItem : Entity, ITenantOwned, IAggregateRoot
 {
     public CorrespondenceItem(
         Guid officeId, string direction, string title, string? referenceNo, DateOnly? docDate,
-        Guid? matterId, string? notes, DateTimeOffset createdAt)
+        Guid? matterId, string? notes, DateTimeOffset createdAt, Guid? createdBy = null)
         : base(NewId())
     {
+        CreatedBy = createdBy;
         OfficeId = officeId;
         Direction = direction;
         Title = title;
@@ -41,6 +42,9 @@ public sealed class CorrespondenceItem : Entity, ITenantOwned, IAggregateRoot
     public DateOnly? DocDate { get; private set; }
 
     public string? Notes { get; private set; }
+
+    /// <summary>Who recorded it; an item with no matter is visible only to them (and to who sees every matter).</summary>
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 }
