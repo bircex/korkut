@@ -42,7 +42,12 @@ internal sealed class MatterService(
 
             var hearingRows = await hearings.ListForMatterAsync(office, id, ct);
             var deadlineRows = await deadlines.ListInRangeAsync(office, null, null, id, ct);
-            var client = matter.ClientId is { } clientId ? await clients.BriefAsync(office, clientId, ct) : null;
+            // The client card shows the name with clients.read, and the details only with their own permissions.
+            var perms = currentUser.Permissions;
+            var client = matter.ClientId is { } clientId && perms.Contains(Permissions.ClientsRead)
+                ? (await clients.BriefAsync(office, clientId, ct))?.Masked(
+                    perms.Contains(Permissions.ClientsContact), perms.Contains(Permissions.ClientsIdentity))
+                : null;
             return Result<MatterDetailResponse>.Ok(new MatterDetailResponse(
                 matter.Id, matter.Title, matter.ClientNameSnapshot, matter.FileNo, matter.CourtNameSnapshot,
                 matter.CaseType, matter.Counterparty, matter.Status, matter.OpenedAt, matter.UpdatedAt,

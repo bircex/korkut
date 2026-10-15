@@ -39,10 +39,15 @@ function FieldGrid({
   f,
   set,
   withName,
+  contactHidden,
+  identityHidden,
 }: {
   f: Fields;
   set: (k: keyof Fields) => (v: string) => void;
   withName?: boolean;
+  /** Details the member may not see are left out of the form; the server keeps their values. */
+  contactHidden?: boolean;
+  identityHidden?: boolean;
 }) {
   const Field = (label: string, k: keyof Fields, type = "text") => (
     <label className="flex flex-col gap-1">
@@ -53,11 +58,11 @@ function FieldGrid({
   return (
     <div className="grid grid-cols-2 gap-2">
       {withName && <div className="col-span-2">{Field("Ad Soyad", "full_name")}</div>}
-      {Field("TCKN", "national_id")}
-      {Field("Telefon", "phone")}
-      {Field("E-posta", "email")}
-      {Field("Doğum tarihi", "date_of_birth", "date")}
-      <div className="col-span-2">{Field("Adres", "address")}</div>
+      {!identityHidden && Field("TCKN", "national_id")}
+      {!contactHidden && Field("Telefon", "phone")}
+      {!contactHidden && Field("E-posta", "email")}
+      {!identityHidden && Field("Doğum tarihi", "date_of_birth", "date")}
+      {!contactHidden && <div className="col-span-2">{Field("Adres", "address")}</div>}
     </div>
   );
 }
@@ -170,13 +175,13 @@ export function ClientsPanel() {
                   key: "phone",
                   label: "Telefon",
                   className: "hidden sm:table-cell",
-                  render: (c) => <span className="text-zinc-600">{c.phone ?? "-"}</span>,
+                  render: (c) => <span className="text-zinc-600">{c.contact_hidden ? "gizli" : (c.phone ?? "-")}</span>,
                 },
                 {
                   key: "email",
                   label: "E-posta",
                   className: "hidden md:table-cell",
-                  render: (c) => <span className="text-zinc-500">{c.email ?? "-"}</span>,
+                  render: (c) => <span className="text-zinc-500">{c.contact_hidden ? "gizli" : (c.email ?? "-")}</span>,
                 },
                 {
                   key: "actions",
@@ -224,7 +229,13 @@ export function ClientsPanel() {
           }
         >
           <div className="flex flex-col gap-3">
-            <FieldGrid f={ef} set={setE} withName />
+            <FieldGrid
+              f={ef}
+              set={setE}
+              withName
+              contactHidden={editing?.contact_hidden}
+              identityHidden={editing?.identity_hidden}
+            />
             {error && <span className="text-[13px] text-red-600">{error}</span>}
           </div>
         </Modal>

@@ -210,6 +210,10 @@ export type ClientBrief = {
   national_id: string | null;
   address: string | null;
   date_of_birth: string | null;
+  /** Telefon, e-posta ve adres bu kullanıcıdan gizli (izni yok). */
+  contact_hidden?: boolean;
+  /** TCKN ve doğum tarihi bu kullanıcıdan gizli (izni yok). */
+  identity_hidden?: boolean;
 };
 export type ClientPatch = {
   full_name?: string;
