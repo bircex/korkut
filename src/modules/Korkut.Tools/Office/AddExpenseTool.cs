@@ -29,6 +29,11 @@ public sealed class AddExpenseTool(IFinanceService finance) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         if (!arguments.TryGetProperty("amount", out var amountEl) || !amountEl.TryGetDecimal(out var amount))
         {
             return ToolResult.Error("'amount' gereklidir.");
@@ -38,7 +43,7 @@ public sealed class AddExpenseTool(IFinanceService finance) : IAgentTool
         {
             Amount = amount,
             Description = ToolArgs.String(arguments, "description"),
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
         };
         
         var result = await finance.CreateExpenseAsync(request, ct);

@@ -30,7 +30,12 @@ public sealed class AddHearingTool(IHearingService hearings) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        if (!ToolArgs.TryGuid(arguments, "matter_id", out var matterId))
+        if (!ToolArgs.TryMatter(arguments, context, out var resolved, out var refusal))
+        {
+            return refusal!;
+        }
+
+        if (resolved is not { } matterId)
         {
             return ToolResult.Error("'matter_id' gereklidir.");
         }

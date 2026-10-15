@@ -29,6 +29,11 @@ public sealed class AddDeadlineTool(IDeadlineService deadlines) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var title = ToolArgs.String(arguments, "title");
         var dueDate = ToolArgs.Date(arguments, "due_date");
         if (string.IsNullOrWhiteSpace(title) || dueDate is not { } due)
@@ -40,7 +45,7 @@ public sealed class AddDeadlineTool(IDeadlineService deadlines) : IAgentTool
         {
             Title = title.Trim(),
             DueDate = due,
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
         };
         var result = await deadlines.CreateAsync(request, ct);
         if (!result.IsSuccess)

@@ -28,11 +28,16 @@ public sealed class ListEventsTool(ICalendarService calendar) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var entries = await calendar.ListEntriesAsync(
             ToolArgs.DateTime(arguments, "start"),
             ToolArgs.DateTime(arguments, "end"),
             category: null,
-            ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            matter,
             ct);
         return entries.IsSuccess
             ? ToolResult.Ok(ToolArgs.Result(entries.Value!))

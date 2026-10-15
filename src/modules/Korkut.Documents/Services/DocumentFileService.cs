@@ -20,6 +20,7 @@ namespace Korkut.Documents.Services;
 /// </summary>
 public sealed partial class DocumentFileService(
     IDocumentRepository repository,
+    DocumentAccess documentAccess,
     IMatterAccess access,
     IMatterLookup matters,
     ISafeUploadService upload,
@@ -154,35 +155,8 @@ public sealed partial class DocumentFileService(
         }
     }
 
-    /// <summary>
-    /// Who sees which document, and which matters a document is linked to. The uploader always
-    /// sees their own; otherwise a link to a matter in the caller's scope (directly, or through one
-    /// of its parties) does.
-    /// </summary>
-    private async Task<(Func<Document, bool> Visible, Func<Document, IReadOnlySet<Guid>> MattersOf)> VisibilityAsync(
-        Guid office, CancellationToken ct)
-    {
-        var scope = await access.ScopeAsync(office, ct);
-        var links = await repository.RelationsAsync(office, ct);
-        var partyMatters = links.Any(l => l.TargetType == DocumentRelationTarget.Party)
-            ? await matters.PartyMattersAsync(office, ct)
-            : new Dictionary<Guid, Guid>();
-        var byDocument = links
-            .Select(l => (l.DocumentId, Matter: l.TargetType switch
-            {
-                DocumentRelationTarget.Matter => l.TargetId,
-                DocumentRelationTarget.Party => partyMatters.TryGetValue(l.TargetId, out var m) ? m : (Guid?)null,
-                _ => null,
-            }))
-            .Where(x => x.Matter is not null)
-            .GroupBy(x => x.DocumentId)
-            .ToDictionary(g => g.Key, g => (IReadOnlySet<Guid>)g.Select(x => x.Matter!.Value).ToHashSet());
-
-        IReadOnlySet<Guid> MattersOf(Document d) => byDocument.TryGetValue(d.Id, out var set) ? set : new HashSet<Guid>();
-        bool Visible(Document d) => scope.AllMatters || d.OwnerId == scope.UserId
-            || (d.MatterId is { } m && scope.CanSee(m)) || MattersOf(d).Any(scope.CanSee);
-        return (Visible, MattersOf);
-    }
+    private Task<(Func<Document, bool> Visible, Func<Document, IReadOnlySet<Guid>> MattersOf)> VisibilityAsync(
+        Guid office, CancellationToken ct) => documentAccess.VisibilityAsync(office, ct);
 
     private static NotFoundException NotFound() => new("Belge bulunamadı.");
 

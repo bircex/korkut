@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 using Korkut.Ai;
 using Korkut.Core;
 using Korkut.Infrastructure.Persistence;
@@ -58,6 +59,9 @@ public sealed class KnowledgeFixture : IAsyncLifetime
         services.AddKorkutAi();
         services.RemoveAll<IEmbedder>();
         services.AddSingleton<IEmbedder, FakeEmbedder>();
+        // Who sees which document is the Documents module's rule (covered there); here every one is visible.
+        services.AddSingleton<IDocumentAccess, EveryDocument>();
+        services.AddSingleton<IUnitOfWork, DirectUnitOfWork>();
         services.AddScoped<TestCurrentUser>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<TestCurrentUser>());
         _services = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
@@ -75,6 +79,17 @@ public sealed class KnowledgeFixture : IAsyncLifetime
         var scope = _services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<TestCurrentUser>().OfficeId = officeId;
         return scope;
+    }
+
+    private sealed class EveryDocument : IDocumentAccess
+    {
+        public Task<IReadOnlySet<Guid>?> VisibleDocumentIdsAsync(Guid officeId, Guid? matterId = null, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlySet<Guid>?>(null);
+    }
+
+    private sealed class DirectUnitOfWork : IUnitOfWork
+    {
+        public Task<T> InTenantScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default) => work();
     }
 
     private sealed class TestCurrentUser : ICurrentUser

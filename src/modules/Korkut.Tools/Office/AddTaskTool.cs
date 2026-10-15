@@ -30,6 +30,11 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var title = ToolArgs.String(arguments, "title");
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -40,7 +45,7 @@ public sealed class AddTaskTool(ITaskService tasks) : IAgentTool
         {
             Title = title.Trim(),
             Description = ToolArgs.String(arguments, "description"),
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
             DueDate = ToolArgs.DateTime(arguments, "due_at"),
         };
         var result = await tasks.CreateAsync(request, ct);

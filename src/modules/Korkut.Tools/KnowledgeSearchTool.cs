@@ -46,7 +46,8 @@ public sealed class KnowledgeSearchTool(IKnowledgeSearchService knowledge) : IAg
 
         var topK = arguments.TryGetProperty("top_k", out var k) && k.TryGetInt32(out var n) ? n : DefaultTopK;
 
-        var hits = await knowledge.SearchAsync(query, topK, ct);
+        // Inside a matter's conversation, only that matter's documents.
+        var hits = await knowledge.SearchAsync(query, topK, context.MatterId, ct);
         if (hits.Count == 0)
         {
             return ToolResult.Ok("İlgili belge bulunamadı.");

@@ -1,3 +1,4 @@
+using Korkut.Contract.Documents;
 using Korkut.Core;
 using Microsoft.Extensions.Logging;
 
@@ -6,16 +7,36 @@ namespace Korkut.Knowledge;
 /// <summary>
 /// <see cref="IKnowledgeSearchService"/> over the in-process <see cref="IRetrievalService"/>.
 /// Retrieval is best-effort grounding: a missing embedding backend, a model outage or a database
-/// error is logged and answered with no hits, never surfaced as a failed chat turn.
+/// error is logged and answered with no hits, never surfaced as a failed chat turn. Only passages
+/// from documents the caller may see come back (<see cref="IDocumentAccess"/>): it asks the index
+/// for more than it needs and keeps the visible ones.
 /// </summary>
-public sealed partial class GroundingSearchService(IRetrievalService retrieval, ILogger<GroundingSearchService> logger)
+public sealed partial class GroundingSearchService(
+    IRetrievalService retrieval, IDocumentAccess documents, IUnitOfWork unitOfWork, ICurrentUser currentUser,
+    ILogger<GroundingSearchService> logger)
     : IKnowledgeSearchService
 {
-    public async Task<IReadOnlyList<SearchHit>> SearchAsync(string query, int topK, CancellationToken ct = default)
+    private const int Overfetch = 5;
+
+    public async Task<IReadOnlyList<SearchHit>> SearchAsync(string query, int topK, Guid? matterId = null, CancellationToken ct = default)
     {
         try
         {
-            return await retrieval.SearchAsync(query, Math.Clamp(topK, 1, RetrievalService.MaxTopK), ct);
+            var k = Math.Clamp(topK, 1, RetrievalService.MaxTopK);
+            var office = currentUser.OfficeId;
+            var visible = await unitOfWork.InTenantScopeAsync(office, () => documents.VisibleDocumentIdsAsync(office, matterId, ct), ct);
+            if (visible is { Count: 0 })
+            {
+                return [];
+            }
+
+            if (visible is null)
+            {
+                return await retrieval.SearchAsync(query, k, ct);
+            }
+
+            var hits = await retrieval.SearchAsync(query, Math.Min(k * Overfetch, RetrievalService.MaxTopK), ct);
+            return hits.Where(h => visible.Contains(h.DocumentId)).Take(k).ToList();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

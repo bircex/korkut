@@ -28,6 +28,11 @@ public sealed class AddNoteTool(INoteService notes) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
         var body = ToolArgs.String(arguments, "body");
         if (string.IsNullOrWhiteSpace(body))
         {
@@ -37,7 +42,7 @@ public sealed class AddNoteTool(INoteService notes) : IAgentTool
         var request = new CreateNoteRequest
         {
             Body = body.Trim(),
-            MatterId = ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null,
+            MatterId = matter,
         };
         var result = await notes.CreateAsync(request, ct);
         if (!result.IsSuccess)

@@ -23,7 +23,7 @@ public sealed class ListMattersTool(IMatterService matters) : IAgentTool
     {
         var result = await matters.ListAsync(ct);
         return result.IsSuccess
-            ? ToolResult.Ok(ToolArgs.Result(result.Value!))
+            ? ToolResult.Ok(ToolArgs.Result(context.MatterId is { } bound ? result.Value!.Where(m => m.Id == bound).ToList() : result.Value!))
             : ToolResult.Error(result.Error!.Detail);
     }
 }

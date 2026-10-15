@@ -21,7 +21,12 @@ public sealed class ListDeadlinesTool(IDeadlineService deadlines) : IAgentTool
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {
-        var result = await deadlines.ListAsync(ToolArgs.TryGuid(arguments, "matter_id", out var mid) ? mid : null, ct);
+        if (!ToolArgs.TryMatter(arguments, context, out var matter, out var refusal))
+        {
+            return refusal!;
+        }
+
+        var result = await deadlines.ListAsync(matter, ct);
         return result.IsSuccess
             ? ToolResult.Ok(ToolArgs.Result(result.Value!))
             : ToolResult.Error(result.Error!.Detail);
