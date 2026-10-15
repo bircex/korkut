@@ -75,7 +75,7 @@ public sealed class MemberService(
 
     private MemberResponse ToResponse(User u) =>
         new(u.Id, u.Email, u.Email, u.FullName, u.BarRegistryNo, u.Role, u.TwoFactorEnabled,
-            u.IsActive, u.IsBound, u.Id == currentUser.UserId, u.CreatedAt);
+            u.IsActive, u.PasswordHash is not null, u.Id == currentUser.UserId, u.CreatedAt);
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)
     {

@@ -87,41 +87,8 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("KORKUT_SENSITIVE_RATE_LIMIT", "100000");
         // Background jobs are run by the tests that exercise them, not by a runner racing them.
         builder.UseSetting("KORKUT_BACKGROUND_JOBS", "false");
-        // Configure Google OIDC on THIS host only (dummy creds) so start/callback work;
-        // the real HTTP exchanger + JWKS validator are replaced with deterministic fakes.
-        builder.UseSetting("GOOGLE_CLIENT_ID", "test-client-id");
-        builder.UseSetting("GOOGLE_CLIENT_SECRET", "test-client-secret");
-        builder.UseSetting("GOOGLE_REDIRECT_URI", "https://app.example.com/api/auth/google/callback");
-        builder.ConfigureTestServices(services =>
-        {
-            services.RemoveAll<IOidcTokenExchanger>();
-            services.AddSingleton<IOidcTokenExchanger, FakeTokenExchanger>();
-            services.RemoveAll<IGoogleIdTokenValidator>();
-            services.AddSingleton<IGoogleIdTokenValidator, FakeIdTokenValidator>();
-        });
         builder.UseEnvironment("Testing");
     }
-
-    /// <summary>Passes the auth code straight through as the "id token".</summary>
-    private sealed class FakeTokenExchanger : IOidcTokenExchanger
-    {
-        public Task<string> ExchangeForIdTokenAsync(string code, string codeVerifier, CancellationToken ct = default)
-            => Task.FromResult(code);
-    }
-
-    /// <summary>Decodes a test id token of the form "sub|email|emailVerified|nonce".</summary>
-    private sealed class FakeIdTokenValidator : IGoogleIdTokenValidator
-    {
-        public Task<GoogleIdentity> ValidateAsync(string idToken, CancellationToken ct = default)
-        {
-            var parts = idToken.Split('|');
-            return Task.FromResult(new GoogleIdentity(parts[0], parts[1], bool.Parse(parts[2]), parts[3]));
-        }
-    }
-
-    /// <summary>Build a test id token the FakeIdTokenValidator understands.</summary>
-    public static string FakeIdToken(string sub, string email, string nonce, bool emailVerified = true)
-        => $"{sub}|{email}|{emailVerified}|{nonce}";
 
     /// <summary>Owner/superuser context for seeding (RLS bypassed) — tests only.</summary>
     public KorkutDbContext OwnerContext()
@@ -166,17 +133,16 @@ public sealed class KorkutApiFactory : WebApplicationFactory<Program>, IAsyncLif
     }
 
     /// <summary>
-    /// Seed an office + a Google-linked user WITHOUT a local password (SSO-only). Used to prove a
-    /// reset request now issues a token for such accounts too.
+    /// Seed an office + a user WITHOUT a password yet (a member the owner added). Used to prove a
+    /// reset request issues a token for such accounts too, which is how they set their first one.
     /// </summary>
-    public async Task<(Guid OfficeId, Guid UserId, string Email)> SeedGoogleUserAsync(string role = Roles.OfficeOwner)
+    public async Task<(Guid OfficeId, Guid UserId, string Email)> SeedPasswordlessUserAsync(string role = Roles.OfficeOwner)
     {
         var officeId = Guid.CreateVersion7();
         var email = $"user-{Guid.CreateVersion7():N}@example.com";
         await using var db = OwnerContext();
         db.Offices.Add(new Office(officeId, "Test Bürosu", DateTimeOffset.UtcNow));
         var user = new User(officeId, email, role, null, null, DateTimeOffset.UtcNow);
-        user.LinkGoogle($"google-sub-{Guid.CreateVersion7():N}");
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return (officeId, user.Id, email);

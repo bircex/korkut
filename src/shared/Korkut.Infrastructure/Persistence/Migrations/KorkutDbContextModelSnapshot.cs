@@ -1334,11 +1334,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("full_name");
 
-                    b.Property<string>("GoogleSub")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("google_sub");
-
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
@@ -1371,10 +1366,6 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnName("two_factor_enabled");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GoogleSub")
-                        .IsUnique()
-                        .HasDatabaseName("ux_users_google_sub");
 
                     b.HasIndex("OfficeId", "Email")
                         .IsUnique()

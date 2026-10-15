@@ -5,7 +5,7 @@ namespace Korkut.Organization.Entities;
 /// <summary>
 /// A person with access to an office. One aggregate carries both sides of that: who they
 /// are to the office (e-mail, name, bar registry number, role) and how they authenticate
-/// (password hash, Google link, TOTP, lockout counters).
+/// (password hash, TOTP, lockout counters).
 /// </summary>
 /// <remarks>
 /// Every change that alters what a session is allowed to do rotates <see cref="SecurityStamp"/>,
@@ -47,9 +47,6 @@ public sealed class User : Entity, ITenantOwned, IAggregateRoot
     /// <summary>Role key ('owner' | 'lawyer' | a custom role key) — a named permission set.</summary>
     public string Role { get; private set; } = "lawyer";
 
-    /// <summary>Google provider subject — the stable identity link (never the e-mail).</summary>
-    public string? GoogleSub { get; private set; }
-
     /// <summary>Whether the user has Korkut TOTP enrolled.</summary>
     public bool TwoFactorEnabled { get; private set; }
 
@@ -64,9 +61,6 @@ public sealed class User : Entity, ITenantOwned, IAggregateRoot
     public DateTimeOffset? LockoutEnd { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
-
-    /// <summary>The person has completed a first Google sign-in, so their account is linked.</summary>
-    public bool IsBound => GoogleSub is not null;
 
     /// <summary>False while the account is locked out.</summary>
     public bool IsActive => LockoutEnd is null;
@@ -121,8 +115,6 @@ public sealed class User : Entity, ITenantOwned, IAggregateRoot
         LockoutEnd = null;
     }
 
-    /// <summary>Links the Google identity that will sign this person in from now on.</summary>
-    public void LinkGoogle(string googleSub) => GoogleSub = googleSub;
 
     public void EnableTwoFactor() => TwoFactorEnabled = true;
 

@@ -2,10 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Korkut.Contract.Organization;
 
-/// <summary>A member as the office listing shows them, including whether this row is the caller.</summary>
+/// <summary>A member as the office listing shows them, including whether this row is the caller.
+/// <paramref name="HasPassword"/> is false for a member added by the owner who has not set one yet.</summary>
 public sealed record MemberResponse(
     Guid Id, string Username, string Email, string? FullName, string? BarRegistryNo, string Role,
-    bool TwoFactorEnabled, bool IsActive, bool Bound, bool IsSelf, DateTimeOffset CreatedAt);
+    bool TwoFactorEnabled, bool IsActive, bool HasPassword, bool IsSelf, DateTimeOffset CreatedAt);
 
 /// <summary>Body for adding a member to the office.</summary>
 public sealed record CreateMemberRequest

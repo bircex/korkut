@@ -17,7 +17,7 @@ zemin, beyaz kart, "Korkut" markası, koyu CTA düğmesi, "otomatik gönderildi"
 | # | Tetik | Alıcı | Konu | CTA | Kod |
 |---|-------|-------|------|-----|-----|
 | 1 | Davet oluşturuldu | Davet edilen | "Korkut'a davet edildiniz" | Daveti kabul et → `/?invite=TOKEN` | `InviteService.SendInviteEmailAsync` |
-| 2 | Yeni büro başvurusu (Google veya lokal kayıt) | Başvuran | "Korkut başvurunuz alındı" | — | `OnboardingService.NotifySignupAsync` |
+| 2 | Yeni büro başvurusu (kayıt) | Başvuran | "Korkut başvurunuz alındı" | — | `OnboardingService.NotifySignupAsync` |
 | 3 | Yeni büro başvurusu | Operatör (`KORKUT_ADMIN_NOTIFY_EMAIL`) | "Yeni büro başvurusu: {büro}" | Admin panelini aç | `OnboardingService.NotifySignupAsync` |
 | 4 | Büro onaylandı (admin enable, disabled→enabled geçişi) | Büro sahibi | "Korkut büronuz onaylandı" | Giriş yap → `/giris` | `OfficeAdminService.SendApprovedEmailAsync` |
 | 5 | Parola sıfırlama isteği | İsteyen (hesap varsa) | "Korkut parola sıfırlama" | Parolayı sıfırla → `/giris?reset=TOKEN` (1 saat, tek kullanımlık) | `AuthService.RequestPasswordResetAsync` |
@@ -35,7 +35,7 @@ gider ve gönderim hatası da sessizce yutulur (davranış tek tip kalır).
 ## Davet mekanizması (tek akış)
 
 "Yeni üye ekle" = davet: Ayarlar → Üyeler'de **Ad Soyad + E-posta** girilir, davet oluşturulur;
-bağlantı hem **e-postayla gider** hem **kopyalanabilir**. Bağlantıya tıklayan Google ile giriş
-yapınca **daveti oluşturan büroya** katılır (token büroyu adresler; davetle yeni büro açılmaz).
+bağlantı hem **e-postayla gider** hem **kopyalanabilir**. Bağlantıya tıklayan kendi parolasını
+belirleyince **daveti oluşturan büroya** katılır (token büroyu adresler; davetle yeni büro açılmaz).
 Ad-soyad davet satırında saklanır ve kabulde hesaba işlenir. Tek kullanımlık, 7 gün geçerli,
 iptal edilebilir.

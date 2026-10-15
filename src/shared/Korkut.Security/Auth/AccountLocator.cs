@@ -16,10 +16,6 @@ public sealed class AccountLocator(DbContext db) : IAccountLocator
         string normalizedEmail, CancellationToken ct = default)
         => ResolveAsync("korkut.resolve_users_by_email", normalizedEmail, ct);
 
-    public Task<IReadOnlyList<AccountLocation>> FindAnyByEmailAsync(
-        string normalizedEmail, CancellationToken ct = default)
-        => ResolveAsync("korkut.resolve_all_users_by_email", normalizedEmail, ct);
-
     private async Task<IReadOnlyList<AccountLocation>> ResolveAsync(
         string function, string normalizedEmail, CancellationToken ct)
     {

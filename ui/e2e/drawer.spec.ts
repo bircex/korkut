@@ -38,8 +38,6 @@ async function stubSignedInChat(page: Page) {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.route("**/api/me", (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(USER) }));
-  await page.route("**/api/config", (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
   await page.route("**/api/coverage", (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ total_decisions: 1000, by_court: [], decision_sources: [] }) }));
   await page.route("**/api/tasks**", (r) =>

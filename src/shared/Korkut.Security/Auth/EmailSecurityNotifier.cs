@@ -15,6 +15,10 @@ public sealed partial class EmailSecurityNotifier(
     public async Task NotifyPasswordChangedAsync(Guid officeId, string email, CancellationToken ct = default)
     {
         LogPasswordChanged(logger, officeId);
+        if (!email.Contains('@', StringComparison.Ordinal))
+        {
+            return; // the installation admin signs in with a user name and has no mailbox
+        }
 
         const string subject = "Korkut AI hesabınızın parolası değişti";
         var body = EmailTemplates.Render(

@@ -16,16 +16,6 @@ public class ApiFoundationTests(WebApplicationFactory<Program> factory)
     private HttpClient Client => factory.CreateClient();
 
     [Fact]
-    public async Task Config_uses_snake_case_keys()
-    {
-        var json = await Client.GetStringAsync("/api/v1/config");
-        using var doc = JsonDocument.Parse(json);
-
-        Assert.True(doc.RootElement.TryGetProperty("google_configured", out _));
-        Assert.False(doc.RootElement.TryGetProperty("googleConfigured", out _), "must not be camelCase");
-    }
-
-    [Fact]
     public async Task List_uses_items_total_envelope()
     {
         var json = await Client.GetStringAsync("/api/v1/samples");
@@ -74,7 +64,7 @@ public class ApiFoundationTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task Response_carries_correlation_id_header()
     {
-        var response = await Client.GetAsync("/api/v1/config");
+        var response = await Client.GetAsync("/api/v1/samples");
 
         Assert.True(response.Headers.Contains("X-Correlation-ID"));
     }

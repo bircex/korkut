@@ -112,9 +112,10 @@ services:
       # is text-layer only and a scanned dilekçe reaches the model as "metin çıkarılamadı".
       KORKUT_OCR_URL: http://ocr:8080
       KORKUT_KIK_PROXY_URL: http://kikproxy:8080
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      # The installation admin (korkut-admin), created on first start; see install.sh.
+      KORKUT_ADMIN_PASSWORD: ${KORKUT_ADMIN_PASSWORD:?KORKUT_ADMIN_PASSWORD is not set; run ./install.sh}
+      KORKUT_ADMIN_PASSWORD_RESET: ${KORKUT_ADMIN_PASSWORD_RESET:-}
+      KORKUT_OFFICE_NAME: ${KORKUT_OFFICE_NAME:-}
       # Transactional e-mail: single operator SMTP account. Unset -> mail is logged, not sent.
       KORKUT_SMTP_HOST: ${KORKUT_SMTP_HOST:-smtp.gmail.com}
       KORKUT_SMTP_PORT: ${KORKUT_SMTP_PORT:-587}

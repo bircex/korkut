@@ -29,7 +29,8 @@ identity.
   (e.g. LM Studio, Ollama) and nothing leaves the machine. If you choose a cloud model, outbound text is
   passed through **best-effort** redaction first — a mitigation, **not a guarantee**
   (see [DISCLAIMER.md](DISCLAIMER.md)).
-- **Self-hosted** — e-mail and password sign-in, optionally Google; each install serves one office. Overall
+- **Self-hosted** — one office per install, one admin (`korkut-admin`) created by the installer, members
+  invited by e-mail; password sign-in with optional two-step verification, nothing external. Overall
   security depends on how *you* deploy it (TLS, backups, updates); provided as-is, with
   no warranty.
 

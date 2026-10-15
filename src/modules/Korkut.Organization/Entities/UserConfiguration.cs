@@ -16,12 +16,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.BarRegistryNo).HasMaxLength(50);
         builder.Property(x => x.PasswordHash).HasMaxLength(400);
         builder.Property(x => x.Role).HasMaxLength(50);
-        builder.Property(x => x.GoogleSub).HasMaxLength(255);
-        builder.Ignore(x => x.IsBound);
         builder.Ignore(x => x.IsActive);
         // Email is unique within an office (tenant-scoped identity).
         builder.HasIndex(x => new { x.OfficeId, x.Email }).IsUnique().HasDatabaseName("ux_users_office_email");
-        // A Google identity links to exactly one account (globally unique subject).
-        builder.HasIndex(x => x.GoogleSub).IsUnique().HasDatabaseName("ux_users_google_sub");
     }
 }

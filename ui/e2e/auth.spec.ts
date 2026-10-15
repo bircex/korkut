@@ -13,7 +13,6 @@ test.describe("Local sign-in + TOTP", () => {
       meCalls.push(r.request().url());
       return r.fulfill({ status: 401, contentType: "application/json", body: "{}" });
     });
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ totp_required: true }) }));
     let totpBody = "";
     await page.route("**/api/auth/2fa", async (r) => {
@@ -24,7 +23,7 @@ test.describe("Local sign-in + TOTP", () => {
     await page.goto("/giris");
 
     // Step 1 — credentials. The form is accessible and keyboard-operable.
-    const email = page.getByRole("textbox", { name: "E-posta" });
+    const email = page.getByRole("textbox", { name: "E-posta ya da kullanıcı adı" });
     const password = page.getByLabel("Parola");
     await expect(email).toBeVisible();
     await assertNoSeriousA11yViolations(page);
@@ -56,11 +55,10 @@ test.describe("Local sign-in + TOTP", () => {
 
   test("switching to the recovery-code field keeps the form accessible", async ({ page }) => {
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ totp_required: true }) }));
 
     await page.goto("/giris");
-    await page.getByRole("textbox", { name: "E-posta" }).fill("av@example.com");
+    await page.getByRole("textbox", { name: "E-posta ya da kullanıcı adı" }).fill("av@example.com");
     await page.getByLabel("Parola").fill("p");
     await page.getByRole("button", { name: "Giriş yap" }).click();
 
@@ -72,13 +70,12 @@ test.describe("Local sign-in + TOTP", () => {
 
   test("a wrong password surfaces an accessible error", async ({ page }) => {
     await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
-    await page.route("**/api/config", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: false }) }));
     await page.route("**/api/auth/login", (r) =>
       r.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ detail: "E-posta veya parola hatalı" }) }),
     );
 
     await page.goto("/giris");
-    await page.getByRole("textbox", { name: "E-posta" }).fill("av@example.com");
+    await page.getByRole("textbox", { name: "E-posta ya da kullanıcı adı" }).fill("av@example.com");
     await page.getByLabel("Parola").fill("yanlis");
     await page.getByRole("button", { name: "Giriş yap" }).click();
 
