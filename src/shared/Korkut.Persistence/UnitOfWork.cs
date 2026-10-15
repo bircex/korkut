@@ -5,9 +5,10 @@ namespace Korkut.Persistence;
 
 /// <summary>
 /// EF/Postgres <see cref="IUnitOfWork"/>: opens a transaction, pins
-/// <c>app.current_office</c> for its duration (RLS), runs the work and commits.
+/// <c>app.current_office</c> for its duration (RLS), runs the work and commits. When a member is
+/// behind the scope, the matter-bound tables are narrowed to their matters too.
 /// </summary>
-public sealed class UnitOfWork(DbContext db) : IUnitOfWork
+public sealed class UnitOfWork(DbContext db, ICurrentUser? currentUser = null) : IUnitOfWork
 {
     public async Task<T> InTenantScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {
@@ -22,7 +23,7 @@ public sealed class UnitOfWork(DbContext db) : IUnitOfWork
             return await work();
         }
 
-        await using var scope = await db.BeginTenantScopeAsync(officeId, ct);
+        await using var scope = await db.BeginTenantScopeAsync(officeId, Tenancy.MemberOf(currentUser, officeId), ct);
         var result = await work();
         await scope.CommitAsync(ct);
         return result;

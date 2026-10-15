@@ -11,7 +11,8 @@ namespace Korkut.Agent.Persistence;
 /// The two contexts are separate connections, so a turn that reads operational data (persona/style)
 /// while writing Agent state pins BOTH. This is the persistence boundary; no service holds a context.
 /// </summary>
-public sealed class AgentUnitOfWork(AgentDbContext agent, Microsoft.EntityFrameworkCore.DbContext office) : IAgentUnitOfWork
+public sealed class AgentUnitOfWork(
+    AgentDbContext agent, Microsoft.EntityFrameworkCore.DbContext office, Korkut.Core.ICurrentUser? currentUser = null) : IAgentUnitOfWork
 {
     public async Task<T> InScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {
@@ -23,7 +24,7 @@ public sealed class AgentUnitOfWork(AgentDbContext agent, Microsoft.EntityFramew
 
     public async Task<T> InOfficeScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {
-        await using var scope = await office.BeginTenantScopeAsync(officeId, ct);
+        await using var scope = await office.BeginTenantScopeAsync(officeId, Tenancy.MemberOf(currentUser, officeId), ct);
         var result = await work();
         await scope.CommitAsync(ct);
         return result;
@@ -32,7 +33,7 @@ public sealed class AgentUnitOfWork(AgentDbContext agent, Microsoft.EntityFramew
     public async Task<T> InDualScopeAsync<T>(Guid officeId, Func<Task<T>> work, CancellationToken ct = default)
     {
         await using var agentScope = await agent.BeginTenantScopeAsync(officeId, ct);
-        await using var officeScope = await office.BeginTenantScopeAsync(officeId, ct);
+        await using var officeScope = await office.BeginTenantScopeAsync(officeId, Tenancy.MemberOf(currentUser, officeId), ct);
         var result = await work();
         await officeScope.CommitAsync(ct);
         await agentScope.CommitAsync(ct);

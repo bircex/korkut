@@ -12,4 +12,10 @@ public interface ICurrentUser
     Guid UserId { get; }
 
     IReadOnlySet<string> Permissions { get; }
+
+    /// <summary>
+    /// Whether there is a member behind this scope at all. A background job, or a request made
+    /// before signing in, has none; the database then applies only the office boundary.
+    /// </summary>
+    bool IsKnown => true;
 }

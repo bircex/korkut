@@ -19,4 +19,6 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor, ActingUser ac
     public Guid UserId => acting.Current?.UserId ?? User.UserId();
 
     public IReadOnlySet<string> Permissions => acting.Current?.Permissions ?? User.Permissions();
+
+    public bool IsKnown => acting.Current is not null || accessor.HttpContext?.User.Identity?.IsAuthenticated == true;
 }
