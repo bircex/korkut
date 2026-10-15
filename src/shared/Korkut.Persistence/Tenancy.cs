@@ -15,17 +15,36 @@ public static class Tenancy
 
     /// <summary>
     /// Begin a transaction and pin the tenant for its duration. Dispose commits;
-    /// callers do their tenant-scoped work inside the returned scope.
+    /// callers do their tenant-scoped work inside the returned scope. With a
+    /// <paramref name="member"/>, the matter-bound tables also show only that member's
+    /// matters (<c>app.current_user</c>, <c>app.all_matters</c>, read by
+    /// <c>korkut.can_see_matter</c>); without one (a background job) only the office boundary applies.
     /// </summary>
     public static async Task<ITenantScope> BeginTenantScopeAsync(
-        this DbContext db, Guid officeId, CancellationToken cancellationToken = default)
+        this DbContext db, Guid officeId, MatterScopeMember? member = null, CancellationToken cancellationToken = default)
     {
         var tx = await db.Database.BeginTransactionAsync(cancellationToken);
         // is_local = true → scoped to this transaction only.
+        var user = member?.UserId.ToString() ?? string.Empty;
+        var allMatters = member is { AllMatters: false } ? "0" : "1";
         await db.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT set_config({SettingName}, {officeId.ToString()}, true)", cancellationToken);
+            $"SELECT set_config({SettingName}, {officeId.ToString()}, true), set_config('app.current_user', {user}, true), set_config('app.all_matters', {allMatters}, true)",
+            cancellationToken);
         return new TenantScope(tx);
     }
+
+    /// <summary>Begin a tenant transaction with no member behind it (office boundary only).</summary>
+    public static Task<ITenantScope> BeginTenantScopeAsync(this DbContext db, Guid officeId, CancellationToken cancellationToken)
+        => db.BeginTenantScopeAsync(officeId, null, cancellationToken);
+
+    /// <summary>
+    /// The member a scope runs as, for the matter-bound RLS policies; null when nobody is behind it
+    /// (a job, a request before sign-in) or the caller belongs to another office.
+    /// </summary>
+    public static MatterScopeMember? MemberOf(Korkut.Core.ICurrentUser? user, Guid officeId)
+        => user is { IsKnown: true } && user.OfficeId == officeId
+            ? new MatterScopeMember(user.UserId, user.Permissions.Contains(Korkut.Core.Permissions.MattersViewAll))
+            : null;
 
     private sealed class TenantScope(Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction tx) : ITenantScope
     {
@@ -35,6 +54,9 @@ public static class Tenancy
         public async ValueTask DisposeAsync() => await tx.DisposeAsync();
     }
 }
+
+/// <summary>Who a tenant scope runs as, for the matter-bound tables.</summary>
+public sealed record MatterScopeMember(Guid UserId, bool AllMatters);
 
 /// <summary>A tenant-pinned transaction scope.</summary>
 public interface ITenantScope : IAsyncDisposable
