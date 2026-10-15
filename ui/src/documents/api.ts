@@ -17,7 +17,7 @@ export type DocumentVersion = {
 
 export const documentsApi = {
   list: (matterId?: string) =>
-    sessionRequest<DocumentDto[]>(`/api/documents${matterId ? `?matter_id=${encodeURIComponent(matterId)}` : ""}`),
+    sessionRequest<DocumentDto[]>(`/api/documents${matterId ? `?matterId=${encodeURIComponent(matterId)}` : ""}`),
 
   /** Presigned download URL — throws ApiError(403/409) if the document is not clean. */
   presign: (id: string) => sessionRequest<{ url: string }>(`/api/documents/${id}/download`),

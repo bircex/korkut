@@ -7,6 +7,7 @@ import {
   type ChatMessage,
   type DocBrief,
   type DocumentRef,
+  type MatterBrief,
   type SourceRef,
   type SessionBrief,
   type Task,
@@ -19,6 +20,7 @@ import { KararAramaPanel } from "./KararAramaPanel";
 import { KararlarimPanel } from "./KararlarimPanel";
 import { CalculatorsPanel } from "./CalculatorsPanel";
 import { ToolCallCard } from "./ToolCallCard";
+import { ChatTree } from "./ChatTree";
 import { can, P } from "../permissions";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
@@ -50,7 +52,7 @@ import { FinancePanel } from "./FinancePanel";
 import { MattersPanel } from "./MattersPanel";
 import { CalendarPanel } from "./CalendarPanel";
 import { TasksPanel } from "./TasksPanel";
-import { matchPath, navigate, usePath } from "../router";
+import { matchPath, navigate, usePath, useSearch } from "../router";
 import { setThemeMode, useThemeMode, type ThemeMode } from "../theme";
 import {
   type Icon,
@@ -330,6 +332,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const [sessionsTotal, setSessionsTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [docs, setDocs] = useState<DocBrief[]>([]);
+  const [matters, setMatters] = useState<MatterBrief[]>([]); // sol menüdeki sohbet klasörleri
+  const search = useSearch();
   const [homeTasks, setHomeTasks] = useState<Task[]>([]); // ana ekrandaki açık görevler
   const path = usePath();
   const view = viewFromPath(path);
@@ -337,6 +341,11 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   const route = view === "chats" ? chatRoute(path) : null;
   const currentId = route?.id ?? null;
   const pane: "chat" | "document" = route?.pane ?? "chat";
+  // Ana ekrandan başlayacak sohbetin dosyası (/?dosya=:id); yoksa kişisel sohbet.
+  const homeMatter = view === "chats" && route === null ? new URLSearchParams(search).get("dosya") : null;
+  const canPersonal = can(user, P.chatGeneral);
+  const currentMatterId = currentId !== null ? (sessions.find((x) => x.id === currentId)?.matter_id ?? null) : null;
+  const currentMatter = currentMatterId != null ? (matters.find((m) => m.id === String(currentMatterId)) ?? null) : null;
   // Belgeler'den tam sayfa açılan belge (sohbet kimliği) — yalnız docs görünümünde anlamlı.
   const fullDocId = view === "docs" ? docRoute(path) : null;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -395,6 +404,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
       }
     })();
   }, []);
+
+  // Sohbet klasörleri: görebildiği dosyalar (sunucu süzer).
+  const mattersReadable = can(user, P.mattersRead);
+  useEffect(() => {
+    if (!mattersReadable) return;
+    api
+      .matters()
+      .then((r) => setMatters(r.items))
+      .catch(() => {
+        /* best effort: sohbetler yine listelenir */
+      });
+  }, [mattersReadable]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -505,9 +526,14 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     navigate(`/sohbet/${id}`); // yükleme URL efektinde
   }
 
-  function newChat() {
+  // Yeni sohbet ana ekrandan başlar: bir dosyada (/?dosya=:id) ya da kişisel ("/").
+  function newChat(matterId: string | null = null) {
     closeSidebarOnMobile();
-    navigate(VIEW_PATH.chats); // "/" → URL efekti ana ekranı kurar
+    navigate(matterId ? `${VIEW_PATH.chats}?dosya=${encodeURIComponent(matterId)}` : VIEW_PATH.chats);
+    // Az önce açılan bir dosya henüz listede olmayabilir.
+    if (matterId && !matters.some((m) => m.id === matterId)) {
+      api.matters().then((r) => setMatters(r.items)).catch(() => {});
+    }
     loadHomeTasks();
   }
 
@@ -602,6 +628,85 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     }
   }
 
+  // Sol menüdeki tek sohbet satırı (ChatTree klasörlerinin içinde çizilir).
+  function sessionRow(s: SessionBrief) {
+    return (
+    <div
+      key={s.id}
+      className={
+        "group relative flex items-center gap-1 rounded-lg px-2 py-2 text-sm " +
+        (view === "chats" && s.id === currentId ? "bg-zinc-100" : "hover:bg-zinc-50")
+      }
+    >
+      {renamingId === s.id ? (
+        <input
+          autoFocus
+          value={renameText}
+          onChange={(e) => setRenameText(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitRename();
+            if (e.key === "Escape") setRenamingId(null);
+          }}
+          className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+        />
+      ) : (
+        <a
+          href={`/sohbet/${s.id}`}
+          onClick={(e) => {
+            e.preventDefault();
+            openSession(s.id);
+          }}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          title={s.title}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-zinc-800">{s.title}</div>
+            <div className="truncate text-[11px] text-zinc-400">
+              {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+        </a>
+      )}
+      <button
+        onClick={() => setRowMenuId((id) => (id === s.id ? null : s.id))}
+        className={
+          "shrink-0 rounded-md px-1.5 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 " +
+          (rowMenuId === s.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")
+        }
+        title="Seçenekler"
+      >
+        <DotsThree size={18} weight="bold" aria-hidden />
+      </button>
+      {rowMenuId === s.id && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setRowMenuId(null)} />
+          <div className="absolute right-2 top-9 z-40 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+            <button
+              onClick={() => startRename(s)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              Yeniden adlandır
+            </button>
+            <button
+              onClick={() => cloneChat(s.id)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              Klonla
+            </button>
+            <button
+              onClick={() => remove(s.id)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              Sil
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+    );
+  }
+
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     e.target.value = "";
@@ -616,6 +721,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
   async function send() {
     const t = text.trim();
     if ((!t && !attachment) || sending) return;
+    if (currentId === null && homeMatter === null && !canPersonal) return; // önce bir dosya seçilmeli
     const file = attachment;
     setText("");
     setAttachment(null);
@@ -633,7 +739,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
     setSendingId(targetId); // pin the "yazıyor…" indicator to this chat (updated below for new chats)
     try {
       if (targetId === null) {
-        const created = await api.createSession();
+        const created = await api.createSession(homeMatter ?? undefined);
         targetId = created.id;
         // navigate'ten ÖNCE: yükleme efekti bu oturumu "yüklü" saysın, iyimser mesajlar ezilmesin.
         currentIdRef.current = targetId;
@@ -904,94 +1010,25 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Sohbetler
                 </span>
-                {/* A personal conversation takes chat.general; otherwise conversations start inside a matter. */}
-                {can(user, P.chatGeneral) && (
-                  <button
-                    onClick={() => newChat()}
-                    title="Yeni sohbet"
-                    className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                  >
-                    <Plus size={18} aria-hidden />
-                  </button>
-                )}
+                {/* Ana ekrana döner; sohbetin dosyası orada seçilir (kişisel sohbet chat.general ister). */}
+                <button
+                  onClick={() => newChat()}
+                  title="Yeni sohbet"
+                  aria-label="Yeni sohbet"
+                  className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                >
+                  <Plus size={18} aria-hidden />
+                </button>
               </div>
               <nav className="flex-1 overflow-y-auto px-2 pb-2">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className={
-                      "group relative flex items-center gap-1 rounded-lg px-2 py-2 text-sm " +
-                      (view === "chats" && s.id === currentId ? "bg-zinc-100" : "hover:bg-zinc-50")
-                    }
-                  >
-                    {renamingId === s.id ? (
-                      <input
-                        autoFocus
-                        value={renameText}
-                        onChange={(e) => setRenameText(e.target.value)}
-                        onBlur={commitRename}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitRename();
-                          if (e.key === "Escape") setRenamingId(null);
-                        }}
-                        className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none focus:border-zinc-900"
-                      />
-                    ) : (
-                      <a
-                        href={`/sohbet/${s.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          openSession(s.id);
-                        }}
-                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                        title={s.title}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-zinc-800">{s.title}</div>
-                          <div className="truncate text-[11px] text-zinc-400">
-                            {[s.created_by_name, whenLabel(s.updated_at)].filter(Boolean).join(" · ")}
-                          </div>
-                        </div>
-                      </a>
-                    )}
-                    <button
-                      onClick={() => setRowMenuId((id) => (id === s.id ? null : s.id))}
-                      className={
-                        "shrink-0 rounded-md px-1.5 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 " +
-                        (rowMenuId === s.id ? "opacity-100" : "opacity-0 group-hover:opacity-100")
-                      }
-                      title="Seçenekler"
-                    >
-                      <DotsThree size={18} weight="bold" aria-hidden />
-                    </button>
-                    {rowMenuId === s.id && (
-                      <>
-                        <div className="fixed inset-0 z-30" onClick={() => setRowMenuId(null)} />
-                        <div className="absolute right-2 top-9 z-40 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                          <button
-                            onClick={() => startRename(s)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                          >
-                            Yeniden adlandır
-                          </button>
-                          <button
-                            onClick={() => cloneChat(s.id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                          >
-                            Klonla
-                          </button>
-                          <button
-                            onClick={() => remove(s.id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Sil
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-                {sessions.length === 0 && <p className="px-2 py-3 text-[13px] text-zinc-400">Henüz sohbet yok.</p>}
+                <ChatTree
+                  sessions={sessions}
+                  matters={matters}
+                  currentId={view === "chats" ? currentId : null}
+                  canPersonal={canPersonal}
+                  renderRow={sessionRow}
+                  onNew={newChat}
+                />
                 {sessions.length < sessionsTotal && (
                   <button
                     onClick={loadOlder}
@@ -1041,7 +1078,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             <DocumentLibrary docs={docs} currentId={currentId} onOpen={openDocFromList} />
           )
         ) : view === "matters" ? (
-          <MattersPanel user={user} onOpenSession={(id) => openSession(id)} />
+          <MattersPanel user={user} onOpenSession={(id) => openSession(id)} onNewChat={(id) => newChat(id)} />
         ) : view === "clients" ? (
           <ClientsPanel />
         ) : view === "finance" ? (
@@ -1067,6 +1104,31 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   {timeGreeting()}, {firstName(user)}
                 </h2>
                 <p className="mt-2 text-[15px] text-zinc-500">Size nasıl yardımcı olabilirim?</p>
+                {(matters.length > 0 || !canPersonal) && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-sm">
+                    <label htmlFor="home-matter" className="text-zinc-500">
+                      Sohbetin dosyası
+                    </label>
+                    <select
+                      id="home-matter"
+                      value={homeMatter ?? ""}
+                      onChange={(e) => newChat(e.target.value || null)}
+                      className="max-w-xs rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-800 outline-none focus:border-zinc-900"
+                    >
+                      <option value="" disabled={!canPersonal}>
+                        {canPersonal ? "Kişisel (dosyasız)" : "Bir dosya seçin"}
+                      </option>
+                      {matters.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {homeMatter === null && !canPersonal && (
+                  <p className="mt-2 text-[13px] text-zinc-400">Sohbetler dosyalar altında tutulur; başlamak için bir dosya seçin.</p>
+                )}
               </div>
               {homeTasks.length > 0 && (
                 <div className="mx-auto w-full max-w-xl">
@@ -1117,6 +1179,18 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             </section>
           ) : (
           <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5">
+            {currentMatter && (
+              <a
+                href={`/dosyalar/${currentMatter.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/dosyalar/${currentMatter.id}`);
+                }}
+                className="flex items-center gap-1.5 self-start rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-600 hover:text-zinc-900"
+              >
+                <Folder size={13} aria-hidden /> {currentMatter.title}
+              </a>
+            )}
             {/* Belge chip'i: bu sohbetin belgesi varsa (geçmişte de) editöre buradan dönülür —
                 header'da artık Editör düğmesi yok. */}
             {sessionDoc && pane !== "document" && (
@@ -1278,7 +1352,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             />
             <button
               type="submit"
-              disabled={sending || (!text.trim() && !attachment)}
+              disabled={sending || (!text.trim() && !attachment) || (currentId === null && homeMatter === null && !canPersonal)}
               className="rounded-[10px] bg-zinc-900 px-4 py-3 text-[15px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
             >
               Gönder
