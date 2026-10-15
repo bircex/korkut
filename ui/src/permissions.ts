@@ -9,6 +9,8 @@ export const P = {
   chatGeneral: "chat.general",
   documentsRead: "documents.read",
   agendaRead: "agenda.read",
+  notesRead: "notes.read",
+  notesWrite: "notes.write",
   clientsRead: "clients.read",
   financeRead: "finance.read",
   reportsRead: "reports.read",
