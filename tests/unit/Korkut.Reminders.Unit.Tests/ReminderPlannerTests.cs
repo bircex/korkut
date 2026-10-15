@@ -82,8 +82,23 @@ public class ReminderPlannerTests
     }
 
     [Fact]
-    public void Unassigned_records_go_to_everyone()
-        => Assert.Null(Assert.Single(ReminderPlanner.Agenda([Task(Utc(10, 14, 11), 0)], Matters, Utc(10, 14, 11))).Recipients);
+    public void An_unassigned_record_goes_to_whoever_added_it()
+    {
+        var author = Guid.NewGuid();
+        var task = Task(Utc(10, 14, 11), 0) with { CreatedBy = author };
+
+        Assert.Equal([author], Assert.Single(ReminderPlanner.Agenda([task], Matters, Utc(10, 14, 11))).Recipients);
+    }
+
+    [Fact]
+    public void Matter_records_go_to_the_matters_team()
+    {
+        var hearing = new HearingCalendarRow(Guid.NewGuid(), MatterId, Utc(10, 14, 11, 30), null, null);
+        var due = Assert.Single(ReminderPlanner.Hearings([hearing], Matters, Utc(10, 13, 6)));
+
+        Assert.Null(due.Recipients); // resolved to the team when sent
+        Assert.Equal(MatterId, due.MatterId);
+    }
 
     [Fact]
     public void Records_without_a_lead_are_reminded_only_when_they_are_reminders()

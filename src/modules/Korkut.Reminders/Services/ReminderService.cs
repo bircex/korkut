@@ -13,8 +13,9 @@ using Microsoft.Extensions.Logging;
 namespace Korkut.Reminders.Services;
 
 /// <summary>
-/// One pass: find the reminders that are due, mark them sent, then deliver them to members on
-/// Telegram and to the office's notification address. Marking comes first, so a crash mid-way
+/// One pass: find the reminders that are due, mark them sent, then deliver them on Telegram to the
+/// people they concern (a matter's team, a task's assignee, whoever added a record with no matter)
+/// and to the office's notification address. Marking comes first, so a crash mid-way
 /// loses a reminder rather than sending it twice.
 /// </summary>
 public sealed partial class ReminderService(
@@ -30,7 +31,7 @@ public sealed partial class ReminderService(
     /// <summary>Sends what is due at <paramref name="now"/>; returns how many reminders went out.</summary>
     public async Task<int> RunOnceAsync(Guid officeId, DateTimeOffset now, CancellationToken ct = default)
     {
-        var (due, address) = await unitOfWork.InTenantScopeAsync(officeId, async () =>
+        var (due, address, teams) = await unitOfWork.InTenantScopeAsync(officeId, async () =>
         {
             var d = await deadlines.ListInRangeAsync(officeId, now.AddDays(-2), now + DeadlineHorizon, null, ct);
             var h = await hearings.ListInRangeAsync(officeId, now, now + HearingHorizon, null, ct);
@@ -51,22 +52,30 @@ public sealed partial class ReminderService(
             }
 
             await sent.SaveChangesAsync(ct);
-            return (fresh, fresh.Count > 0 ? await addresses.AddressAsync(officeId, ct) : null);
+            return fresh.Count > 0
+                ? (fresh, await addresses.AddressAsync(officeId, ct), await matters.TeamsAsync(officeId, ct))
+                : (fresh, null, new Dictionary<Guid, IReadOnlyList<Guid>>());
         }, ct);
 
         foreach (var reminder in due)
         {
-            await DeliverAsync(officeId, reminder, address, ct);
+            // Named people, or the matter's team; nobody who cannot see the matter.
+            IReadOnlyCollection<Guid> to = reminder.Recipients
+                ?? (reminder.MatterId is { } m && teams.TryGetValue(m, out var team) ? team : []);
+            await DeliverAsync(officeId, reminder, to, address, ct);
         }
 
         return due.Count;
     }
 
-    private async Task DeliverAsync(Guid officeId, DueReminder reminder, string? address, CancellationToken ct)
+    private async Task DeliverAsync(Guid officeId, DueReminder reminder, IReadOnlyCollection<Guid> to, string? address, CancellationToken ct)
     {
         try
         {
-            await telegram.NotifyAsync(officeId, reminder.Recipients, ReminderPlanner.Text(reminder), ct);
+            if (to.Count > 0)
+            {
+                await telegram.NotifyAsync(officeId, to, ReminderPlanner.Text(reminder), ct);
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

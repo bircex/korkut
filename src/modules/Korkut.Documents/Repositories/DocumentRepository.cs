@@ -19,6 +19,9 @@ internal sealed class DocumentRepository(DbContext db) : Repository<Document>(db
     public Task<Document?> FindActiveAsync(Guid officeId, Guid documentId, CancellationToken ct = default)
         => Active(officeId).SingleOrDefaultAsync(d => d.Id == documentId, ct);
 
+    public async Task<IReadOnlyList<DocumentRelation>> RelationsAsync(Guid officeId, CancellationToken ct = default)
+        => await Db.Set<DocumentRelation>().AsNoTracking().Where(r => r.OfficeId == officeId).ToListAsync(ct);
+
     private IQueryable<Document> Active(Guid officeId)
         => Scoped(officeId).AsNoTracking().Where(d => d.Status != DocumentStatus.Tombstoned);
 }

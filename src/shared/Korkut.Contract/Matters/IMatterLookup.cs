@@ -19,6 +19,12 @@ public interface IMatterLookup
     /// <summary>Active (non-deleted) matter counts grouped by status, for the dashboard.</summary>
     Task<IReadOnlyDictionary<string, int>> StatusCountsAsync(Guid officeId, CancellationToken ct = default);
 
+    /// <summary>Each matter's team: matter id → the members on it.</summary>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> TeamsAsync(Guid officeId, CancellationToken ct = default);
+
+    /// <summary>Which matter each party belongs to.</summary>
+    Task<IReadOnlyDictionary<Guid, Guid>> PartyMattersAsync(Guid officeId, CancellationToken ct = default);
+
     /// <summary>Which client each active matter is for (matters with no client are left out).</summary>
     Task<IReadOnlyList<MatterClientLink>> ClientLinksAsync(Guid officeId, CancellationToken ct = default);
 }
