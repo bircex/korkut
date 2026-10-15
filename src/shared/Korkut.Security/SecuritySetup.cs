@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Korkut.Security;
 
 /// <summary>
-/// DI registration for local authentication, recovery (KDM-015) and Google OIDC
-/// (KDM-016). Callback endpoints and session issuance are wired in KDM-018.
+/// DI registration for local authentication, recovery (KDM-015), two-factor sign-in and sessions.
+/// Members sign in with e-mail (the installation admin: with its user name) and a password only.
 /// </summary>
 public static class SecuritySetup
 {
@@ -24,11 +24,6 @@ public static class SecuritySetup
         services.AddScoped<Korkut.Organization.IResetTokenResolver, Korkut.Security.Auth.ResetTokenResolver>();
         services.AddScoped<Korkut.Organization.IPasswordResetTokenRepository, Korkut.Security.Auth.PasswordResetTokenRepository>();
         services.AddScoped<Korkut.Organization.ISecurityNotifier, Korkut.Security.Auth.EmailSecurityNotifier>();
-
-        // Google OIDC: bind to the EXISTING exact env names (preserved from Python).
-        services.AddSingleton(BindGoogleOptions(configuration));
-        services.AddSingleton<IOidcFlowStore, InMemoryOidcFlowStore>();
-        services.AddScoped<Korkut.Organization.IGoogleAccountDirectory, Korkut.Security.Auth.GoogleAccountDirectory>();
 
         // TOTP 2FA (KDM-017). The envelope key is operator-supplied; if it is missing
         // and 2FA is used, resolution fails closed — never a silent random fallback.
@@ -69,12 +64,4 @@ public static class SecuritySetup
         services.AddScoped<RefreshTokenService>();
         return services;
     }
-
-    /// <summary>Reads GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI verbatim.</summary>
-    public static GoogleOidcOptions BindGoogleOptions(IConfiguration configuration) => new()
-    {
-        ClientId = configuration["GOOGLE_CLIENT_ID"] ?? string.Empty,
-        ClientSecret = configuration["GOOGLE_CLIENT_SECRET"] ?? string.Empty,
-        RedirectUri = configuration["GOOGLE_REDIRECT_URI"] ?? string.Empty,
-    };
 }

@@ -10,9 +10,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Korkut.Api.Controllers;
 
-/// <summary>Public bootstrap flags: what the sign-in screen may offer.</summary>
-public sealed record ConfigResponse(bool GoogleConfigured);
-
 /// <summary>A sample list item (a transport shape, deliberately not a domain entity).</summary>
 public sealed record SampleItem(Guid Id, string Name);
 
@@ -37,14 +34,6 @@ public sealed record EchoResponse(string Title);
 [Route("api/v1")]
 public sealed class FoundationController : ControllerBase
 {
-    /// <summary>A stable public contract: what the sign-in screen may offer. Served at both
-    /// <c>/api/config</c> (what the SPA calls) and the versioned <c>/api/v1/config</c>.</summary>
-    [HttpGet("config")]
-    [HttpGet("/api/config")]
-    [AllowAnonymous]
-    public IActionResult Config([FromServices] Korkut.Contract.Organization.IGoogleSignInService google)
-        => Ok(new ConfigResponse(GoogleConfigured: google.IsConfigured));
-
     /// <summary>The paged envelope: { items, total }.</summary>
     [HttpGet("samples")]
     [AllowAnonymous]

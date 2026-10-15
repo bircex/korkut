@@ -70,9 +70,8 @@ public sealed class AuthService(
     public async Task RequestPasswordResetAsync(RequestPasswordResetRequest request, CancellationToken ct = default)
     {
         var email = Normalize(request.Email!);
-        // SSO-inclusive: a Google-linked account (no local password yet) can still request a
-        // reset link and set a password — unlike sign-in, which stays password-only.
-        var office = await LocateSingleAccountAsync(email, includeSso: true, ct);
+        // An account with no password yet (a member the owner added) uses this to set its first one.
+        var office = await LocateSingleAccountAsync(email, ct);
         if (office is null)
         {
             return; // silently no-op: no enumeration signal
@@ -150,6 +149,22 @@ public sealed class AuthService(
         }, ct);
     }
 
+    public Task<SessionUser?> ChangePasswordAsync(Guid officeId, Guid userId, ChangePasswordRequest request, CancellationToken ct = default)
+        => unitOfWork.InTenantScopeAsync(officeId, async () =>
+        {
+            var user = await users.FindForUpdateAsync(officeId, userId, ct);
+            if (user?.PasswordHash is null || !passwordHasher.Verify(request.CurrentPassword!, user.PasswordHash).Verified)
+            {
+                return null;
+            }
+
+            // SetPassword rotates the stamp and epoch, which ends every other session.
+            user.SetPassword(passwordHasher.Hash(request.NewPassword!));
+            await users.SaveChangesAsync(ct);
+            await notifier.NotifyPasswordChangedAsync(officeId, user.Email, ct);
+            return ToSessionUser(user);
+        }, ct);
+
     private async Task<SignInResult> AuthenticateAsync(Guid officeId, string email, string password, CancellationToken ct)
     {
         var user = await users.FindByEmailForUpdateAsync(officeId, email, ct);
@@ -198,14 +213,9 @@ public sealed class AuthService(
     /// (the same e-mail in two offices) cannot be disambiguated without asking, which would
     /// itself leak that the accounts exist. Both answer the same way.
     /// </summary>
-    private Task<Guid?> LocateSingleAccountAsync(string email, CancellationToken ct)
-        => LocateSingleAccountAsync(email, includeSso: false, ct);
-
-    private async Task<Guid?> LocateSingleAccountAsync(string email, bool includeSso, CancellationToken ct)
+    private async Task<Guid?> LocateSingleAccountAsync(string email, CancellationToken ct)
     {
-        var candidates = includeSso
-            ? await accounts.FindAnyByEmailAsync(email, ct)
-            : await accounts.FindByEmailAsync(email, ct);
+        var candidates = await accounts.FindByEmailAsync(email, ct);
         return candidates.Count == 1 ? candidates[0].OfficeId : null;
     }
 

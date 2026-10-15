@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, ApiError, type Invite, type Member, type StyleFields, type User } from "../api";
 import { navigate, usePath } from "../router";
+import { Button, Field } from "../a11y";
 import {
   type Icon,
   BookmarkSimple,
@@ -24,23 +25,6 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
       <dt className="font-medium text-zinc-900">{label}</dt>
       <dd className="text-zinc-500">{value}</dd>
     </div>
-  );
-}
-
-function StatusBadge({
-  tone,
-  children,
-}: {
-  tone: "neutral" | "success" | "warning";
-  children: ReactNode;
-}) {
-  const dot =
-    tone === "success" ? "bg-emerald-500" : tone === "warning" ? "bg-amber-500" : "bg-zinc-400";
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 py-1 pr-2 pl-1 text-xs font-medium text-zinc-700">
-      <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
-      {children}
-    </span>
   );
 }
 
@@ -165,7 +149,7 @@ function Members({ isOwner }: { isOwner: boolean }) {
 
   function memberStatus(m: Member): string {
     if (!m.is_active) return "pasif";
-    return m.bound ? "Google bağlı" : "davet bekliyor";
+    return m.has_password ? "aktif" : "parola bekliyor";
   }
 
   const pendingInvites = invites.filter((i) => !i.redeemed);
@@ -272,8 +256,8 @@ function Members({ isOwner }: { isOwner: boolean }) {
               </div>
             )}
             <p className="m-0 text-[12px] text-zinc-400">
-              Davet bağlantısı e-postayla gider ve kopyalanabilir; yeni üye tıklayıp Google ile
-              giriş yapınca doğrudan büronuza katılır. Bağlantı tek kullanımlıktır ve 7 gün
+              Davet bağlantısı e-postayla gider ve kopyalanabilir; yeni üye tıklayıp kendi parolasını
+              belirleyince doğrudan büronuza katılır. Bağlantı tek kullanımlıktır ve 7 gün
               geçerlidir.
             </p>
           </div>
@@ -507,25 +491,70 @@ function TabIcon({ id }: { id: Tab }) {
   return <Ikon size={17} aria-hidden className="shrink-0" />;
 }
 
-/** The ways this account can sign in: e-mail + password, Google, or both. */
-export function SignInMethods({ user }: { user: Pick<User, "has_password" | "google_linked"> }) {
-  const methods = [
-    user.has_password && "E-posta ve parola",
-    user.google_linked && "Google",
-  ].filter((m): m is string => Boolean(m));
+/** The signed-in member changes their own password (the installation admin starts with a generated one). */
+export function ChangePassword() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const mismatch = confirm.length > 0 && next !== confirm;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setDone(false);
+    if (next.length < 10) {
+      setError("Yeni parola en az 10 karakter olmalıdır.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.changePassword(current, next);
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Parola değiştirilemedi.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="mt-6 flex items-center justify-between gap-4 rounded-lg bg-zinc-50 px-4 py-3">
-      <p className="m-0 text-[13px] text-zinc-600">
-        {methods.length > 1 ? "Giriş yöntemleri" : "Giriş yöntemi"}
-      </p>
-      <div className="flex flex-wrap justify-end gap-2">
-        {methods.map((m) => (
-          <StatusBadge key={m} tone="success">
-            {m}
-          </StatusBadge>
-        ))}
+    <form onSubmit={submit} aria-labelledby="change-password" className="mt-6 rounded-lg border border-zinc-200 p-4">
+      <h2 id="change-password" className="mb-3 text-[15px] font-semibold text-zinc-900">
+        Parolayı değiştir
+      </h2>
+      <div className="flex flex-col gap-3">
+        <Field label="Mevcut parola" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+        <Field label="Yeni parola" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} hint="En az 10 karakter." required />
+        <Field
+          label="Yeni parola (tekrar)"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          error={mismatch ? "Parolalar aynı değil." : undefined}
+          required
+        />
       </div>
-    </div>
+      {error && (
+        <p role="alert" className="mt-3 text-[13px] text-red-700">
+          {error}
+        </p>
+      )}
+      {done && (
+        <p role="status" className="mt-3 text-[13px] text-emerald-800">
+          Parolanız değişti. Diğer cihazlardaki oturumlar kapatıldı.
+        </p>
+      )}
+      <Button type="submit" className="mt-4" disabled={busy || !current || !next || mismatch}>
+        {busy ? "Değiştiriliyor…" : "Parolayı değiştir"}
+      </Button>
+    </form>
   );
 }
 
@@ -619,12 +648,13 @@ export function Settings({ user }: { user: User }) {
                 <Row label="Hukuk bürosu" value={user.office ?? "—"} />
                 <Row label="Rol" value={<RoleBadge role={user.role} />} />
                 <Row label="Kullanıcı adı" value={user.username} />
-                <Row label="E-posta" value={user.email} />
+                {/* The installation admin signs in with a user name and has no e-mail. */}
+                {user.email.includes("@") && <Row label="E-posta" value={user.email} />}
                 <Row label="Ad Soyad" value={user.full_name ?? "—"} />
               </dl>
               <BarNoField initial={user.bar_registry_no} />
               <TelegramLinkSection />
-              <SignInMethods user={user} />
+              <ChangePassword />
             </div>
           )}
           {tab === "members" && <Members isOwner={user.role === "owner"} />}

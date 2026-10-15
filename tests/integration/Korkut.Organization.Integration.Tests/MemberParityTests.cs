@@ -28,7 +28,7 @@ public class MemberParityTests(KorkutApiFactory factory)
             .Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal("Av. Yeni", created.GetProperty("full_name").GetString());
         Assert.Equal("99999", created.GetProperty("bar_registry_no").GetString());
-        Assert.False(created.GetProperty("bound").GetBoolean());   // no Google link yet
+        Assert.False(created.GetProperty("has_password").GetBoolean()); // sets one through a reset link
         Assert.True(created.GetProperty("is_active").GetBoolean()); // not locked out
         Assert.False(created.GetProperty("is_self").GetBoolean());  // not the caller
 

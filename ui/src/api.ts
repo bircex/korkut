@@ -5,8 +5,6 @@ export type User = {
   bar_registry_no: string | null;
   role: "owner" | "lawyer";
   office: string | null;
-  has_password: boolean; // can sign in with e-mail + password
-  google_linked: boolean; // has completed a first Google sign-in
 };
 export type Member = {
   id: number;
@@ -16,7 +14,7 @@ export type Member = {
   bar_registry_no: string | null;
   role: "owner" | "lawyer";
   is_active: boolean;
-  bound: boolean; // has completed a first Google sign-in
+  has_password: boolean; // false until a member the owner added sets one
   is_self: boolean;
 };
 export type Invite = {
@@ -27,7 +25,6 @@ export type Invite = {
   expires_at: string;
   redeemed: boolean;
 };
-export type PublicConfig = { google_configured: boolean };
 export type NewInvite = Invite & { token: string; path: string };
 // Bir sohbet turunda danışılan hukuki kaynak (backend SourceRef, snake_case) — İlgili Kararlar
 // drawer'ını besler. `kind` içtihat/mevzuat ayrımıdır; `source`+`id` karar detayının anahtarıdır.
@@ -436,10 +433,6 @@ async function protectedFetch(path: string, opts: RequestInit = {}): Promise<Res
 export const api = {
   me: () => probe<User>("/api/me"),
   coverage: () => request<Coverage>("/api/coverage"),
-  config: () => request<PublicConfig>("/api/config"),
-  // Optional Google sign-in (when the install configures it): a full-page redirect.
-  googleSignInUrl: (invite?: string) =>
-    `/api/auth/google/start${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`,
   members: () => request<Member[]>("/api/members"),
   addMember: (email: string, username: string, full_name: string, bar_registry_no?: string) =>
     request<Member>("/api/members", {
@@ -586,13 +579,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(recovery ? { recovery_code: code } : { code }),
     }),
-  // First-run setup of a fresh install: whether it still has to run, and running it (creates the
-  // office and its owner once; the caller then signs in with the same e-mail and password).
-  setupStatus: () => probe<{ setup_required: boolean }>("/api/setup"),
-  setup: (office_name: string, full_name: string, email: string, password: string) =>
-    probe<{ office_id: string }>("/api/setup", {
+  // The signed-in member changes their own password; the session is issued again, so they stay in.
+  changePassword: (current_password: string, new_password: string) =>
+    request<void>("/api/me/password", {
       method: "POST",
-      body: JSON.stringify({ office_name, full_name, email, password }),
+      body: JSON.stringify({ current_password, new_password }),
     }),
   requestPasswordReset: (email: string) =>
     probe<{ ok: boolean }>("/api/auth/password/reset-request", {

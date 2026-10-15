@@ -8,7 +8,7 @@ Durum: uygulanıyor (2026-10-10)
 | 1. Monorepo | Tamam: ui/ (#197), website/ (#200), tek container (#199), MinIO yerine volume (#198). Eski repolar arşivlendi, repo adı `korkut` oldu |
 | 3. Tek büro | Tamam: SaaS kayıt ve platform admin silindi (#205) |
 | 2. llmr | Tamam: `install.sh` ve llmr servisi (#207), ayarlardan sağlayıcı ve model seçimi (#208), bütün model çağrıları llmr üzerinden |
-| 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208), Telegram ayarları. Kalan: SMTP ayarları, yeniden indeksleme |
+| 4. Kurulum ve ayarlar | `install.sh` (#207), kurulumda üretilen `korkut-admin` hesabı (tarayıcıdan ilk kurulumun #203 yerini aldı), Yapay zeka ayarları (#208), Telegram ayarları. Google girişi tamamen kaldırıldı. Kalan: SMTP ayarları, yeniden indeksleme |
 | RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
 | 5. Telegram | Tamam: bot, hesap bağlama, Telegram'dan sohbet (#210), hatırlatmalar (#212), akan yanıtlar ve belge/fotoğraf gönderimi |
 
@@ -116,7 +116,7 @@ Repo public olmadan önce mutlaka yapılması gerekenler:
   - Platform admin'i kaldırılır: `/admin/api`, `AdminAuthHandler`, `AdminAllowlist`, admin TOTP, `admin_*` tabloları, UI'daki `AdminConsole`.
   - "Büro kapalı" kontrolleri ve çok büroda aynı e-posta mantığı kaldırılır.
   - Davetler kalır (büroya üye eklemek için gerekli).
-  - Google girişi isteğe bağlı olur (env yoksa düğme görünmez). Bilinmeyen bir Google hesabı kayıt açamaz, sadece davet edilmiş kullanıcı girebilir.
+  - Google girişi tamamen kaldırıldı (kod, UI, `google_sub` kolonu, OIDC ayarları). Giriş yalnızca yerel: kurulumun ürettiği `korkut-admin` kullanıcı adıyla, üyeler e-postayla, hepsi parolayla.
 - `admin_*` tabloları yeni bir migration ile düşürülür; mevcut migration'lar yeniden squash edilmez.
 - SMTP olmadan parola sıfırlama: owner üyelerin parolasını UI'dan sıfırlayabilir. Owner'ın kendisi için `docker compose exec korkut korkut reset-password <e-posta>` komutu eklenir.
 - **3b (ayrı karar):** `office_id` sütunları ve RLS tamamen sökülür. 37 tablo, yaklaşık 1500 referans ve 14 SQL fonksiyonu kapsıyor, regresyon riski yüksek. Kullanıcıya görünen hiçbir fark yaratmıyor: tek büro satırı arka planda kalır, RLS de ek bir savunma katmanı olarak çalışmaya devam eder. Önerim 3a ile yetinip 3b'yi şimdilik yapmamak.

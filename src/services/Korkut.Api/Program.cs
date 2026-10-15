@@ -36,14 +36,12 @@ builder.Services.AddKorkutControllers();
 // endpoints are added per module; DI here makes their services available.
 builder.Services.AddKorkutDomain(builder.Configuration);
 
-// Auth services (password/hasher/directory/AuthService/TOTP/Google/OIDC) + the
-// refresh-token + Google sign-in services the session endpoints use (KDM-012..017).
+// Auth services (password/hasher/directory/AuthService/TOTP) + the refresh-token service the
+// session endpoints use (KDM-012..017). Sign-in is local only: e-mail (or the admin's user name) and password.
 builder.Services.AddKorkutAuth(builder.Configuration);
 builder.Services.AddScoped<Korkut.Security.RefreshTokenService>();
 builder.Services.AddScoped<Korkut.Api.Auth.SessionManager>();
 
-// Google OIDC: typed HttpClient token exchanger + JWKS id-token validator + the flow.
-builder.Services.AddGoogleOidcRuntime();
 
 // Object storage + the secure-document pipeline services (KDM-025..028).
 builder.Services.AddKorkutStorage(builder.Configuration);
@@ -78,6 +76,10 @@ builder.Services.AddHttpClient(Korkut.Api.Controllers.AiSettingsController.HttpC
     // A provider test may make one real model call.
     client.Timeout = TimeSpan.FromSeconds(150);
 });
+
+// The installation's office and its admin (korkut-admin), created on first start from the
+// password the installer generated. Runs before the app takes requests.
+builder.Services.AddHostedService<InstallationAdminBootstrap>();
 
 // Background jobs from the outbox: putting uploaded documents' text into the search index.
 builder.Services.AddKorkutBackgroundJobs(builder.Configuration);

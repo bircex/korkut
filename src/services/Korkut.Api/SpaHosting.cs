@@ -5,8 +5,7 @@ namespace Korkut.Api;
 
 /// <summary>
 /// Serves the built React app (ui/, copied into wwwroot by the image) from the same host as the
-/// API, so the browser talks to one origin: session cookies and the Google OAuth callback stay
-/// same-origin. Every non-API path no endpoint claims falls back to index.html for client-side
+/// API, so the browser talks to one origin and session cookies stay same-origin. Every non-API path no endpoint claims falls back to index.html for client-side
 /// routing (/sohbet/12, /ayarlar/...).
 /// </summary>
 public static class SpaHosting

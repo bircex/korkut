@@ -84,11 +84,13 @@ export function LocalAuth({ onAuthed }: { onAuthed: () => void }) {
   }
 
   return (
-    <form onSubmit={submitCredentials} className="flex flex-col gap-3" aria-label="E-posta ile giriş">
+    <form onSubmit={submitCredentials} className="flex flex-col gap-3" aria-label="Giriş">
       <Field
-        label="E-posta"
-        type="email"
+        label="E-posta ya da kullanıcı adı"
+        type="text"
         autoComplete="username"
+        autoCapitalize="none"
+        spellCheck={false}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required

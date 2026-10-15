@@ -233,6 +233,28 @@
         ],
         "type": "object"
       },
+      "ChangePasswordRequest": {
+        "properties": {
+          "current_password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "new_password": {
+            "minLength": "10",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "type": "object"
+      },
       "ChatRequest": {
         "properties": {
           "text": {
@@ -1299,6 +1321,7 @@
       "LoginRequest": {
         "properties": {
           "email": {
+            "maxLength": "320",
             "type": [
               "null",
               "string"
@@ -2074,46 +2097,6 @@
         ],
         "type": "object"
       },
-      "SetupRequest": {
-        "properties": {
-          "email": {
-            "maxLength": "320",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "full_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "office_name": {
-            "maxLength": "200",
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "password": {
-            "maxLength": "200",
-            "minLength": "10",
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "required": [
-          "office_name",
-          "full_name",
-          "email",
-          "password"
-        ],
-        "type": "object"
-      },
       "SeveranceRequest": {
         "properties": {
           "brut_maas": {
@@ -2748,53 +2731,6 @@
         },
         "tags": [
           "Auth"
-        ]
-      }
-    },
-    "/api/auth/google/callback": {
-      "get": {
-        "parameters": [
-          {
-            "in": "query",
-            "name": "state",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "code",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "error",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "GoogleAuth"
-        ]
-      }
-    },
-    "/api/auth/google/start": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "GoogleAuth"
         ]
       }
     },
@@ -4169,18 +4105,6 @@
         },
         "tags": [
           "Clients"
-        ]
-      }
-    },
-    "/api/config": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Foundation"
         ]
       }
     },
@@ -5619,6 +5543,38 @@
         ]
       }
     },
+    "/api/me/password": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Password"
+        ]
+      }
+    },
     "/api/members": {
       "get": {
         "responses": {
@@ -6485,48 +6441,6 @@
         ]
       }
     },
-    "/api/setup": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Setup"
-        ]
-      },
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Setup"
-        ]
-      }
-    },
     "/api/style": {
       "get": {
         "responses": {
@@ -6767,18 +6681,6 @@
         ]
       }
     },
-    "/api/v1/config": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Foundation"
-        ]
-      }
-    },
     "/api/v1/echo": {
       "post": {
         "requestBody": {
@@ -6885,16 +6787,13 @@
       "name": "Foundation"
     },
     {
-      "name": "GoogleAuth"
-    },
-    {
       "name": "Invites"
     },
     {
-      "name": "PetitionTypes"
+      "name": "Password"
     },
     {
-      "name": "Setup"
+      "name": "PetitionTypes"
     },
     {
       "name": "DraftDocuments"

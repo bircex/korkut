@@ -38,43 +38,6 @@ public class UserProfileEndpointTests(KorkutApiFactory factory)
     }
 
     [Fact]
-    public async Task Me_reports_password_only_sign_in()
-    {
-        var (office, user, _) = await factory.SeedUserWithPasswordAsync("Parola-1234!");
-        var me = await factory.ClientFor(office, user).GetFromJsonAsync<JsonElement>("/api/me", Json);
-
-        Assert.True(me.GetProperty("has_password").GetBoolean());
-        Assert.False(me.GetProperty("google_linked").GetBoolean());
-    }
-
-    [Fact]
-    public async Task Me_reports_google_only_sign_in()
-    {
-        var (office, user, _) = await factory.SeedGoogleUserAsync();
-        var me = await factory.ClientFor(office, user).GetFromJsonAsync<JsonElement>("/api/me", Json);
-
-        Assert.False(me.GetProperty("has_password").GetBoolean());
-        Assert.True(me.GetProperty("google_linked").GetBoolean());
-    }
-
-    [Fact]
-    public async Task Me_reports_both_sign_in_methods()
-    {
-        var (office, user, _) = await factory.SeedUserWithPasswordAsync("Parola-1234!");
-        await using (var db = factory.OwnerContext())
-        {
-            var row = await db.Users.SingleAsync(u => u.Id == user);
-            row.LinkGoogle($"google-sub-{Guid.CreateVersion7():N}");
-            await db.SaveChangesAsync();
-        }
-
-        var me = await factory.ClientFor(office, user).GetFromJsonAsync<JsonElement>("/api/me", Json);
-
-        Assert.True(me.GetProperty("has_password").GetBoolean());
-        Assert.True(me.GetProperty("google_linked").GetBoolean());
-    }
-
-    [Fact]
     public async Task Update_me_requires_auth()
     {
         var anon = factory.CreateClient();

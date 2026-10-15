@@ -96,7 +96,7 @@ public static class DomainSetup
         // owned by the Organization module (registered above).
         // Invites (Clean Architecture: repository port + service + cross-tenant resolver port).
         services.AddScoped<Korkut.Organization.IInviteResolver, Korkut.Organization.Services.InviteResolver>();
-        // Self-serve onboarding provisions a disabled office for a verified Google identity (raw RLS-bypass SQL).
+        // The installation's one office and its admin, created before any session exists (RLS-bypass SQL).
         services.AddScoped<Korkut.Contract.Offices.IOfficeProvisioner, Korkut.Organization.Services.OfficeProvisioner>();
 
         return services;

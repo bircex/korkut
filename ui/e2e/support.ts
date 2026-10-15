@@ -7,14 +7,8 @@ import AxeBuilder from "@axe-core/playwright";
  * Stub the API so screens render deterministically without a live backend.
  * By default the visitor is signed OUT (so the auth screen shows).
  */
-export async function stubApi(page: Page, opts: { google?: boolean; setupRequired?: boolean } = {}) {
+export async function stubApi(page: Page) {
   await page.route("**/api/me", (r) => r.fulfill({ status: 401, body: "{}", contentType: "application/json" }));
-  await page.route("**/api/config", (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ google_configured: opts.google ?? true }) }),
-  );
-  await page.route("**/api/setup", (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ setup_required: opts.setupRequired ?? false }) }),
-  );
 }
 
 /** Fail the test on any critical/serious axe violation (acceptance criterion 1).

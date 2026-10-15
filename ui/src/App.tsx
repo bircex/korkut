@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 import { api, type User } from "./api";
-import { onSessionExpired, onAuthChanged, signalAuthChanged } from "./session";
+import { onSessionExpired, onAuthChanged } from "./session";
 import { SignIn } from "./components/SignIn";
-import { Setup } from "./components/Setup";
 import { Workspace } from "./components/Workspace";
 import { navigate } from "./router";
 
-// A deep link visited while signed out (e.g. /dosyalar/12). Google sign-in is a full-page
-// round-trip that lands back on "/", so we stash the target and restore it once authed.
+// A deep link visited while signed out (e.g. /dosyalar/12): stashed, and restored once signed in.
 const NEXT_KEY = "korkut:next";
 
 export function App() {
   const [status, setStatus] = useState<"loading" | "anon" | "authed">("loading");
   const [user, setUser] = useState<User | null>(null);
-  // A fresh install has no office or account yet: it shows first-run setup instead of sign-in.
-  const [setupRequired, setSetupRequired] = useState(false);
 
   // Probe the session cookie. Runs on mount and again whenever a fresh sign-in
 
@@ -36,12 +32,7 @@ export function App() {
           const here = window.location.pathname + window.location.search;
           if (next && next.startsWith("/") && next !== here) navigate(next, { replace: true });
         })
-        .catch(async () => {
-          try {
-            setSetupRequired((await api.setupStatus()).setup_required);
-          } catch {
-            setSetupRequired(false); // bilinmiyorsa giriş ekranı gösterilir
-          }
+        .catch(() => {
           setStatus("anon");
           try {
             const here = window.location.pathname + window.location.search;
@@ -91,9 +82,6 @@ export function App() {
   }
   if (status === "authed" && user) {
     return <Workspace user={user} onLogout={logout} />;
-  }
-  if (setupRequired) {
-    return <Setup onDone={signalAuthChanged} />;
   }
   return <SignIn />;
 }
