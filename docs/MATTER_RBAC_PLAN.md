@@ -1,6 +1,6 @@
 # Dosya merkezli yapı ve yetki (RBAC) planı
 
-Durum: taslak, karar bekliyor (2026-10-15). Kararlar §11'de.
+Durum: onaylandı (2026-10-15). Kararlar §11'de; tercih belirtilmeyen yerlerde önerilen seçenek benimsendi.
 
 ## 1. Hedef
 
@@ -257,19 +257,20 @@ Lokal kurulum şu an boş, yalnızca `korkut-admin` var. Yine de dönüşüm her
 - Dosyasız mevcut sohbetler oluşturanın kişisel sohbeti olur. Oluşturanı bilinmeyenler yöneticiye kalır.
 - Oluşturanı bilinmeyen görevler atanan kişiye ve yöneticiye görünür.
 
-## 11. Karar bekleyen sorular
+## 11. Kararlar
 
-1. **Dosya sohbetleri paylaşımlı mı?**
-   - Öneri: ekipteki herkes dosyanın bütün sohbetlerini okur ve yazar.
-   - Alternatif: herkesin kendi sohbeti olur; diğerleri yalnızca okur, ya da hiç göremez.
-2. **Kim dosya açar ve ekibi kim yönetir?**
-   - Öneri: dosyayı Yönetici, Avukat ve Sekreter açar. Ekibi Yönetici ile dosyanın sorumlu avukatı yönetir.
-3. **Müvekkil listesi kimde?**
-   - Öneri: tam liste Yönetici, Sekreter ve Muhasebe'de. Avukat yalnızca kendi dosyalarının müvekkillerini görür.
-4. **Kişisel (dosyasız) sohbet olsun mu?** Öneri: evet, yalnızca sahibine görünür. Araştırma ve hesaplama için.
-5. **Mali bilgiyi kim görür?**
-   - Öneri: yalnızca Yönetici ve Muhasebe.
-   - Açık nokta: avukatlar kendi dosyalarının masraflarını girebilsin mi (yazma var, okuma yok)?
-6. **Telegram gruplarında müvekkil iletişim ve kimlik bilgisi hiç verilmesin mi?** Öneri: evet, yalnızca özel sohbette verilsin.
-7. **Mevcut dosyalara ekip:** dönüşümde dosyalar boş ekiple mi kalsın (yalnızca yönetici görür), yoksa bütün avukatlar mı eklensin?
-8. **Hazır roller:** §3.2'deki altı rol ve dağılım uygun mu, eklenecek ya da çıkarılacak rol var mı (örneğin "Ortak avukat")?
+2026-10-15'te sorulan dört soruda tercih belirtilmedi; aşağıda önerilen seçenekler benimsendi. Sonradan değiştirilebilirler.
+
+1. **Dosya sohbetleri paylaşımlıdır.** Ekipteki herkes dosyanın bütün sohbetlerini okur ve yazar.
+2. **Dosya açma ve ekip yönetimi:**
+   - Dosyayı Yönetici, Avukat ve Sekreter açar; açan dosyanın sorumlusu olur.
+   - Ekibi Yönetici ile dosyanın sorumlu avukatı yönetir.
+   - Bunun için `matters.manage_team` izni, görebildiği dosyalarda değil, yalnızca sorumlusu olduğu dosyalarda geçerlidir. Yöneticide bu kısıt yoktur.
+3. **Müvekkil listesi:**
+   - Tam liste Yönetici, Sekreter ve Muhasebe'dedir. Avukat ve stajyer yalnızca kendi dosyalarının müvekkillerini görür.
+   - Kimlik ve iletişim bilgisi ayrıca izne bağlıdır; Stajyer ve Okuyucu bu bilgileri göremez.
+4. **Kişisel (dosyasız) sohbet vardır** ve yalnızca sahibine görünür.
+5. **Mali kısım yalnızca Yönetici ve Muhasebe'dedir.** Avukat masraf da giremez.
+6. **Telegram gruplarında** müvekkil iletişim ve kimlik bilgisi hiç verilmez, yalnızca özel sohbette verilir.
+7. **Mevcut dosyalar** boş ekiple başlar ve yalnızca yönetici görür. Ekip yönetici tarafından atanır.
+8. **Hazır roller** §3.2'deki altı roldür. Gerekirse Ayarlar → Roller'den yenisi eklenir.
