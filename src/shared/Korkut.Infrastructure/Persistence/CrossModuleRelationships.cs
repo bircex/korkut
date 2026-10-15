@@ -37,6 +37,13 @@ internal static class CrossModuleRelationships
             .HasPrincipalKey(m => new { m.OfficeId, m.Id })
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Leaving the office takes a member off every matter's team.
+        modelBuilder.Entity<Korkut.Matters.Entities.MatterMember>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // A member's Telegram link goes with the member; the bot goes with the office.
         modelBuilder.Entity<TelegramLink>()
             .HasOne<User>()

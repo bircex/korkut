@@ -240,6 +240,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
                     b.Property<string>("Direction")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -323,6 +327,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
 
                     b.Property<DateOnly>("DueDate")
                         .HasColumnType("date")
@@ -964,6 +972,44 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("matters", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Matters.Entities.MatterMember", b =>
+                {
+                    b.Property<Guid>("MatterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matter_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.Property<Guid?>("AddedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("added_by");
+
+                    b.Property<bool>("IsLead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_lead");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.HasKey("MatterId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("OfficeId", "MatterId");
+
+                    b.HasIndex("OfficeId", "UserId")
+                        .HasDatabaseName("ix_matter_members_office_user");
+
+                    b.ToTable("matter_members", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Matters.Entities.Party", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1026,6 +1072,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
 
                     b.Property<Guid?>("MatterId")
                         .HasColumnType("uuid")
@@ -1735,6 +1785,10 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
                     b.Property<string>("Description")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
@@ -1931,6 +1985,22 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasForeignKey("OfficeId", "ClientId")
                         .HasPrincipalKey("OfficeId", "Id")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Korkut.Matters.Entities.MatterMember", b =>
+                {
+                    b.HasOne("Korkut.Organization.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Korkut.Matters.Entities.Matter", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId", "MatterId")
+                        .HasPrincipalKey("OfficeId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Korkut.Matters.Entities.Party", b =>

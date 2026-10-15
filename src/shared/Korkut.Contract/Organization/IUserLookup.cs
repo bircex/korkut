@@ -14,6 +14,9 @@ public interface IUserLookup
     /// <summary>The member's role ("owner", "lawyer", ...), or null when they are not in the office.</summary>
     Task<string?> RoleAsync(Guid officeId, Guid userId, CancellationToken ct = default);
 
+    /// <summary>Every member of the office: id → display name.</summary>
+    Task<IReadOnlyDictionary<Guid, string>> DirectoryAsync(Guid officeId, CancellationToken ct = default);
+
     /// <summary>The office owner's e-mail (the earliest owner when there are several).</summary>
     Task<string?> OwnerEmailAsync(Guid officeId, CancellationToken ct = default);
 }

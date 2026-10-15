@@ -39,14 +39,17 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
     }
 
     /// <summary>The caller the use-case reads its tenant from (normally the access token).</summary>
-    private sealed class TestCurrentUser(Guid office) : ICurrentUser
+    private sealed class TestCurrentUser(Guid office, Guid user) : ICurrentUser
     {
         public Guid OfficeId => office;
 
-        public Guid UserId => Guid.Empty;
+        public Guid UserId => user;
 
-        public IReadOnlySet<string> Permissions => new HashSet<string>();
+        // These tests cover matters themselves, not who sees them: the caller sees every matter.
+        public IReadOnlySet<string> Permissions => new HashSet<string> { Korkut.Core.Permissions.MattersViewAll };
     }
+
+    private Guid _user;
 
     public async Task InitializeAsync()
     {
@@ -54,6 +57,9 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         _office = Guid.CreateVersion7();
         await using var db = pg.NewContext();
         db.Offices.Add(new Office(_office, "O", DateTimeOffset.UtcNow));
+        var user = new Korkut.Organization.Entities.User(_office, "sahip@ornek.av.tr", Korkut.Core.Roles.OfficeOwner, null, null, DateTimeOffset.UtcNow);
+        _user = user.Id;
+        db.Users.Add(user);
         await db.SaveChangesAsync();
     }
 
@@ -61,10 +67,15 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
 
     // Exercise the use-case service over the real EF repositories, so these tests still cover
     // the court-snapshot rule, soft-delete listing, and the tenant-aware composite FKs.
-    private MatterService Service(KorkutDbContext db) =>
-        new(new MatterRepository(db), new HearingLookup(new HearingRepository(db), db), new NoDeadlines(),
+    private MatterService Service(KorkutDbContext db)
+    {
+        var caller = new TestCurrentUser(_office, _user);
+        var members = new MatterMemberRepository(db);
+        return new(new MatterRepository(db), members, new MatterAccess(members, caller),
+            new HearingLookup(new HearingRepository(db), db), new NoDeadlines(),
             new CourtLookup(new CourtRepository(db)), new ClientLookup(db),
-            new DirectUnitOfWork(), new TestCurrentUser(_office), new Clock());
+            new DirectUnitOfWork(), caller, new Clock());
+    }
 
     // These tests cover the matter/court/hearing paths, not deadline composition.
     private sealed class NoDeadlines : Korkut.Contract.Deadlines.IDeadlineLookup

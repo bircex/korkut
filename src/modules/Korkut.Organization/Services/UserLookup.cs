@@ -38,4 +38,10 @@ internal sealed class UserLookup(DbContext db) : IUserLookup
             .OrderBy(u => u.CreatedAt)
             .Select(u => (string?)u.Email)
             .FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyDictionary<Guid, string>> DirectoryAsync(Guid officeId, CancellationToken ct = default)
+        => await db.Set<User>().AsNoTracking()
+            .Where(u => u.OfficeId == officeId)
+            .Select(u => new { u.Id, Name = u.FullName ?? u.Email })
+            .ToDictionaryAsync(u => u.Id, u => u.Name, ct);
 }

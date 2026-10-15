@@ -76,6 +76,11 @@ public class TenantMatrixTests(PostgresFixture pg) : IClassFixture<PostgresFixtu
     {
         // Reuse an existing matter for the party FK so the matters count stays exact.
         var matterId = await db.Matters.Where(m => m.OfficeId == office).Select(m => m.Id).FirstAsync();
+        var userIds = await db.Users.Where(u => u.OfficeId == office).Select(u => u.Id).ToListAsync();
+        foreach (var userId in userIds)
+        {
+            db.MatterMembers.Add(new Korkut.Matters.Entities.MatterMember(office, matterId, userId, false, null, DateTimeOffset.UtcNow));
+        }
         for (var i = 0; i < n; i++)
         {
             var client = new Client(office, $"c{i}", "individual", null, null, null, null, null, DateTimeOffset.UtcNow);

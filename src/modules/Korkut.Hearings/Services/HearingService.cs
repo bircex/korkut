@@ -13,7 +13,7 @@ namespace Korkut.Hearings.Services;
 /// composite FK enforces the office on top of that). Every call RETURNS a <see cref="Result"/>.
 /// </summary>
 internal sealed class HearingService(
-    IHearingRepository hearings, IMatterLookup matters, IUnitOfWork unitOfWork, ICurrentUser currentUser)
+    IHearingRepository hearings, IMatterLookup matters, IMatterAccess access, IUnitOfWork unitOfWork, ICurrentUser currentUser)
     : IHearingService
 {
     public Task<Result<HearingResponse>> AddAsync(Guid matterId, CreateHearingRequest request, CancellationToken ct = default)
@@ -22,7 +22,7 @@ internal sealed class HearingService(
         
         return unitOfWork.InTenantScopeAsync(office, async () =>
         {
-            if (!await matters.ExistsAsync(office, matterId, ct))
+            if (!(await access.ScopeAsync(office, ct)).CanSee(matterId) || !await matters.ExistsAsync(office, matterId, ct))
             {
                 return Result<HearingResponse>.NotFound("Dosya bulunamadı.");
             }

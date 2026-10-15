@@ -10,9 +10,10 @@ public sealed class Deadline : Entity, ITenantOwned, IAggregateRoot
 {
     public Deadline(
         Guid officeId, string title, DateOnly dueDate, string kind, Guid? matterId,
-        string timeZoneId, int reminderDaysBefore, string? notes, DateTimeOffset createdAt)
+        string timeZoneId, int reminderDaysBefore, string? notes, DateTimeOffset createdAt, Guid? createdBy = null)
         : base(NewId())
     {
+        CreatedBy = createdBy;
         OfficeId = officeId;
         Title = title;
         DueDate = dueDate;
@@ -49,6 +50,9 @@ public sealed class Deadline : Entity, ITenantOwned, IAggregateRoot
     public DateTimeOffset? CompletedAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
+
+    /// <summary>Who added it; a deadline with no matter is visible only to them (and to who sees every matter).</summary>
+    public Guid? CreatedBy { get; private set; }
 
     public bool IsCompleted => CompletedAt is not null;
 
