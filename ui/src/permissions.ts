@@ -6,6 +6,7 @@ export const P = {
   mattersRead: "matters.read",
   mattersCreate: "matters.create",
   chatUse: "chat.use",
+  chatGeneral: "chat.general",
   documentsRead: "documents.read",
   agendaRead: "agenda.read",
   clientsRead: "clients.read",

@@ -36,6 +36,7 @@ internal sealed class SessionChatService(
     ILlmCallLogService callLogService,
     IUsageGovernorService governorService,
     IAgentToolLoopService toolLoopService,
+    ConversationAccess access,
     TimeProvider clock) : ISessionChatService
 {
     private const int MaxExtractedChars = 20_000;
@@ -249,12 +250,13 @@ internal sealed class SessionChatService(
     }
 
     // Phase 1: reads office data (persona/style/memory) + writes the user turn — all on the operational
-    // DB — in one short office scope. Returns null (rolling back nothing) when the conversation is gone.
+    // DB — in one short office scope. Returns null (rolling back nothing) when the conversation is gone
+    // or not the caller's to see (a matter they are not on, someone else's personal conversation).
     private Task<Prepared?> PrepareTurnAsync(Guid officeId, Guid userId, Guid conversationId, string userContent, CancellationToken ct)
         => uow.InOfficeScopeAsync<Prepared?>(officeId, async () =>
         {
             var conversation = await sessions.GetAsync(officeId, conversationId, ct);
-            if (conversation is null)
+            if (conversation is null || !await access.CanSeeAsync(officeId, conversation.MatterId, conversation.CreatedBy, ct))
             {
                 return null;
             }

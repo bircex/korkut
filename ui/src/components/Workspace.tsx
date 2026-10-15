@@ -904,13 +904,16 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Sohbetler
                 </span>
-                <button
-                  onClick={() => newChat()}
-                  title="Yeni sohbet"
-                  className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                >
-                  <Plus size={18} aria-hidden />
-                </button>
+                {/* A personal conversation takes chat.general; otherwise conversations start inside a matter. */}
+                {can(user, P.chatGeneral) && (
+                  <button
+                    onClick={() => newChat()}
+                    title="Yeni sohbet"
+                    className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                  >
+                    <Plus size={18} aria-hidden />
+                  </button>
+                )}
               </div>
               <nav className="flex-1 overflow-y-auto px-2 pb-2">
                 {sessions.map((s) => (

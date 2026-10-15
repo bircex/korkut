@@ -23,8 +23,9 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
 
     [HttpGet]
     [Authorize(Policy = Permissions.ChatUse)]
-    public async Task<IActionResult> List([FromQuery] int? limit, [FromQuery] int? offset, CancellationToken ct)
-        => Ok(await sessions.ListAsync(limit, offset, ct));
+    public async Task<IActionResult> List(
+        [FromQuery] int? limit, [FromQuery] int? offset, [FromQuery] Guid? matterId, [FromQuery] bool personal, CancellationToken ct)
+        => Ok(await sessions.ListAsync(limit, offset, matterId, personal, ct));
 
     [HttpPost]
     [Authorize(Policy = Permissions.ChatUse)]

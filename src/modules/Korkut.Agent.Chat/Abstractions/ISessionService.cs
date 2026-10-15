@@ -10,7 +10,7 @@ public interface ISessionService
 
     Task<Conversation?> GetAsync(Guid officeId, Guid id, CancellationToken ct = default);
 
-    Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, int limit, int offset, CancellationToken ct = default);
+    Task<(IReadOnlyList<SessionBrief> Items, int Total)> ListAsync(Guid officeId, SessionFilter filter, int limit, int offset, CancellationToken ct = default);
 
     Task<SessionBrief?> GetBriefAsync(Guid officeId, Guid id, CancellationToken ct = default);
 

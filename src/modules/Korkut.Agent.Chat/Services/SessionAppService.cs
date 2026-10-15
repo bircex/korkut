@@ -2,6 +2,7 @@ using Korkut.Agent.Chat.Abstractions;
 using Korkut.Contract.Agent.Chat;
 using Korkut.Contract.Agent;
 using Korkut.Chat;
+using Korkut.Contract.Matters;
 using Korkut.Core;
 using ICurrentUser = Korkut.Contract.Agent.ICurrentUser;
 
@@ -11,16 +12,23 @@ namespace Korkut.Agent.Chat.Services;
 /// Session use-cases the controller forwards to: runs the domain service inside a tenant-scoped unit
 /// of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder), resolves author names, and
 /// maps to response DTOs. Not-found is a thrown <see cref="NotFoundException"/> (→ 404 by the handler).
+/// A matter's conversations belong to its team, a personal one only to its owner
+/// (<see cref="ConversationAccess"/>); any other conversation reads as not found.
 /// </summary>
-internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir)
+internal sealed class SessionAppService(
+    IAgentUnitOfWork uow, ICurrentUser current, ISessionService svc, IUserLookupService dir, ConversationAccess access,
+    IMatterLookup matters)
     : ISessionAppService
 {
-    public async Task<SessionPageResponse> ListAsync(int? limit, int? offset, CancellationToken ct = default)
+    private const string NotFound = "Görüşme bulunamadı.";
+
+    public async Task<SessionPageResponse> ListAsync(int? limit, int? offset, Guid? matterId = null, bool personal = false, CancellationToken ct = default)
     {
         var office = current.OfficeId;
         var take = Math.Clamp(limit ?? 20, 1, 100);
         var skip = Math.Max(offset ?? 0, 0);
-        var (items, total) = await uow.InDualScopeAsync(office, () => svc.ListAsync(office, take, skip, ct), ct);
+        var (items, total) = await uow.InDualScopeAsync(office, async () =>
+            await svc.ListAsync(office, await access.FilterAsync(office, matterId, personal, ct), take, skip, ct), ct);
         var names = await ResolveNamesAsync(items, ct);
         return new SessionPageResponse(items.Select(b => ToBrief(b, names)).ToList(), total);
     }
@@ -28,10 +36,20 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     public async Task<SessionBriefResponse> CreateAsync(Guid? matterId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        if (matterId is null && !current.Permissions.Contains(Permissions.ChatGeneral))
+        {
+            throw new ForbiddenException("Kişisel sohbet açma yetkiniz yok; bir dosyanın içinde sohbet açın.");
+        }
+
         var brief = await uow.InDualScopeAsync(office, async () =>
         {
-            var id = await svc.CreateAsync(office, current.UserId, matterId, ct);
-            return await svc.GetBriefAsync(office, id, ct);
+            if (matterId is { } id && !(await access.CanSeeAsync(office, id, null, ct) && await matters.ExistsAsync(office, id, ct)))
+            {
+                throw new NotFoundException("Dosya bulunamadı.");
+            }
+
+            var created = await svc.CreateAsync(office, current.UserId, matterId, ct);
+            return await svc.GetBriefAsync(office, created, ct);
         }, ct);
         return await ToBriefAsync(brief!, ct);
     }
@@ -42,7 +60,7 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
         var data = await uow.InDualScopeAsync(office, async () =>
         {
             var brief = await svc.GetBriefAsync(office, id, ct);
-            if (brief is null)
+            if (brief is null || !await access.CanSeeAsync(office, brief.MatterId, brief.CreatedBy, ct))
             {
                 return ((SessionBrief Brief, List<ChatMessageResponse> Messages)?)null;
             }
@@ -66,14 +84,26 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
     {
         var office = current.OfficeId;
         var brief = await uow.InDualScopeAsync(office, async () =>
-            await svc.RenameAsync(office, id, title.Trim(), ct) ? await svc.GetBriefAsync(office, id, ct) : null, ct);
+            await access.CanSeeAsync(office, id, ct) && await svc.RenameAsync(office, id, title.Trim(), ct)
+                ? await svc.GetBriefAsync(office, id, ct)
+                : null, ct);
         return brief is null ? throw new NotFoundException("Görüşme bulunamadı.") : await ToBriefAsync(brief, ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var ok = await uow.InDualScopeAsync(office, () => svc.DeleteAsync(office, id, ct), ct);
+        var ok = await uow.InDualScopeAsync(office, async () =>
+        {
+            if (!await access.CanSeeAsync(office, id, ct))
+            {
+                return false;
+            }
+
+            return await access.CanRemoveAsync(office, id, ct)
+                ? await svc.DeleteAsync(office, id, ct)
+                : throw new ForbiddenException("Bu sohbeti yalnızca açan kişi silebilir.");
+        }, ct);
         if (!ok)
         {
             throw new NotFoundException("Görüşme bulunamadı.");
@@ -85,6 +115,11 @@ internal sealed class SessionAppService(IAgentUnitOfWork uow, ICurrentUser curre
         var office = current.OfficeId;
         var brief = await uow.InDualScopeAsync(office, async () =>
         {
+            if (!await access.CanSeeAsync(office, id, ct))
+            {
+                return null;
+            }
+
             var newId = await svc.CloneAsync(office, id, current.UserId, ct);
             return newId is null ? null : await svc.GetBriefAsync(office, newId.Value, ct);
         }, ct);

@@ -1,3 +1,4 @@
+using Korkut.Agent.Chat.Services;
 using Korkut.Agent.Drafting.Entities;
 using Korkut.Agent.Drafting.Repositories;
 using Korkut.Agent.Drafting.Abstractions;
@@ -16,19 +17,44 @@ namespace Korkut.Agent.Drafting.Services;
 /// tenant-scoped unit of work (<see cref="IAgentUnitOfWork"/> — the only DbContext holder). Drafting
 /// composes the office persona so it pins BOTH databases; the rest touch the Agent DB. Not-found /
 /// bad-format are thrown <see cref="NotFoundException"/> / <see cref="BadRequestException"/> the shared handler maps.
+/// A draft belongs to its conversation: whoever may see the conversation may see and work on the
+/// draft (<see cref="ConversationAccess"/>); anyone else gets not found.
 /// </summary>
 internal sealed class DocumentAppService(
     IAgentUnitOfWork uow, ICurrentUser current,
     ISessionService sessions, IDraftDocumentService docs, IDraftingService drafting,
-    IUserLookupService dir, IDocumentExporter exporter) : IDocumentAppService
+    IUserLookupService dir, IDocumentExporter exporter, ConversationAccess access) : IDocumentAppService
 {
     public async Task<IReadOnlyList<DocBriefResponse>> ListAsync(CancellationToken ct = default)
     {
         var office = current.OfficeId;
-        var rows = await uow.InScopeAsync(office, () => docs.ListAsync(office, ct), ct);
+        var rows = await uow.InDualScopeAsync(office, async () =>
+        {
+            var visible = new List<GeneratedDocument>();
+            foreach (var d in await docs.ListAsync(office, ct))
+            {
+                if (await access.CanSeeAsync(office, d.ConversationId, ct))
+                {
+                    visible.Add(d);
+                }
+            }
+
+            return visible;
+        }, ct);
         return rows
             .Select(d => new DocBriefResponse(d.Id, d.ConversationId, d.Title, KindOf(d.Title), d.UpdatedAt))
             .ToList();
+    }
+
+    /// <summary>The draft's conversation must be the caller's to see; otherwise the draft does not exist for them.</summary>
+    private async Task EnsureVisibleAsync(Guid office, Guid docId, CancellationToken ct)
+    {
+        var visible = await uow.InDualScopeAsync(office, async () =>
+            await docs.GetAsync(office, docId, ct) is { } doc && await access.CanSeeAsync(office, doc.ConversationId, ct), ct);
+        if (!visible)
+        {
+            throw new NotFoundException("Belge bulunamadı.");
+        }
     }
 
     /// <summary>
@@ -51,8 +77,8 @@ internal sealed class DocumentAppService(
         var data = await uow.InDualScopeAsync(office, async () =>
         {
             var conv = await sessions.GetAsync(office, sessionId, ct);
-            
-            if (conv is null)
+
+            if (conv is null || !await access.CanSeeAsync(office, conv.MatterId, conv.CreatedBy, ct))
             {
                 return null;
             }
@@ -68,6 +94,7 @@ internal sealed class DocumentAppService(
     public async Task<PendingEditResponse> DraftAsync(Guid docId, string instruction, string? petitionType, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        await EnsureVisibleAsync(office, docId, ct);
         var result = await uow.InDualScopeAsync(office,
             () => drafting.DraftAsync(office, current.UserId, docId, instruction.Trim(), petitionType, ct), ct);
         return result is null
@@ -78,6 +105,7 @@ internal sealed class DocumentAppService(
     public async Task<DocumentDataResponse> AcceptAsync(Guid docId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        await EnsureVisibleAsync(office, docId, ct);
         var author = await dir.EmailAsync(office, current.UserId, ct);
         var data = await uow.InScopeAsync(office,
             async () => await docs.AcceptPendingAsync(office, docId, author, ct) ? await BuildAsync(office, docId, ct) : null, ct);
@@ -87,6 +115,7 @@ internal sealed class DocumentAppService(
     public async Task<DocumentDataResponse> RevertAsync(Guid docId, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        await EnsureVisibleAsync(office, docId, ct);
         var data = await uow.InScopeAsync(office,
             async () => await docs.RevertPendingAsync(office, docId, ct) ? await BuildAsync(office, docId, ct) : null, ct);
         return data ?? throw new NotFoundException("Belge bulunamadı.");
@@ -95,6 +124,7 @@ internal sealed class DocumentAppService(
     public async Task<DocumentDataResponse> SaveAsync(Guid docId, string title, string contentMd, CancellationToken ct = default)
     {
         var office = current.OfficeId;
+        await EnsureVisibleAsync(office, docId, ct);
         var author = await dir.EmailAsync(office, current.UserId, ct);
         var data = await uow.InScopeAsync(office,
             async () => await docs.SaveAsync(office, docId, title.Trim(), contentMd, author, ct) ? await BuildAsync(office, docId, ct) : null, ct);
@@ -110,6 +140,7 @@ internal sealed class DocumentAppService(
         }
 
         var office = current.OfficeId;
+        await EnsureVisibleAsync(office, docId, ct);
         var doc = await uow.InScopeAsync(office, () => docs.GetAsync(office, docId, ct), ct);
         
         if (doc is null)
