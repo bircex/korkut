@@ -3,8 +3,10 @@ export type User = {
   email: string;
   full_name: string | null;
   bar_registry_no: string | null;
-  role: "owner" | "lawyer";
+  role: string; // role key: owner, lawyer, intern, secretary, accounting, reader or custom-…
+  role_name: string;
   office: string | null;
+  permissions: string[];
 };
 export type Member = {
   id: number;
@@ -12,7 +14,7 @@ export type Member = {
   email: string;
   full_name: string | null;
   bar_registry_no: string | null;
-  role: "owner" | "lawyer";
+  role: string;
   is_active: boolean;
   has_password: boolean; // false until a member the owner added sets one
   is_self: boolean;
@@ -21,7 +23,7 @@ export type Invite = {
   id: number;
   email: string | null;
   full_name: string | null;
-  role: "owner" | "lawyer";
+  role: string;
   expires_at: string;
   redeemed: boolean;
 };
@@ -442,7 +444,7 @@ export const api = {
   removeMember: (id: number) =>
     request<{ ok: boolean }>(`/api/members/${id}`, { method: "DELETE" }),
   invites: () => request<Invite[]>("/api/invites"),
-  createInvite: (input: { email?: string | null; full_name?: string | null; role?: "owner" | "lawyer" }) =>
+  createInvite: (input: { email?: string | null; full_name?: string | null; role?: string }) =>
     request<NewInvite>("/api/invites", { method: "POST", body: JSON.stringify(input) }),
   // Davet linkine tıklayan kişinin katılım ekranı: token tüketilmeden davet bilgisi.
   peekInvite: (token: string) =>
@@ -954,4 +956,29 @@ export const telegramApi = {
   link: () => request<TelegramLink>("/api/telegram/link"),
   createCode: () => request<TelegramLinkCode>("/api/telegram/link/code", { method: "POST" }),
   unlink: () => request<TelegramLink>("/api/telegram/link", { method: "DELETE" }),
+};
+
+// ---- Roles: named permission sets the office manages (Ayarlar → Roller) ----------------------
+export type PermissionInfo = { key: string; label: string; hint: string | null };
+export type PermissionGroup = { name: string; permissions: PermissionInfo[] };
+export type Role = {
+  key: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  is_system: boolean;
+  editable: boolean;
+  member_count: number;
+};
+export type RolesResponse = { catalog: PermissionGroup[]; roles: Role[] };
+export type SaveRole = { name: string; description?: string | null; permissions: string[] };
+
+export const rolesApi = {
+  list: () => request<RolesResponse>("/api/roles"),
+  create: (body: SaveRole) => request<Role>("/api/roles", { method: "POST", ...json(body) }),
+  update: (key: string, body: SaveRole) =>
+    request<Role>(`/api/roles/${encodeURIComponent(key)}`, { method: "PUT", ...json(body) }),
+  remove: (key: string) => request<void>(`/api/roles/${encodeURIComponent(key)}`, { method: "DELETE" }),
+  setMemberRole: (memberId: string | number, role: string) =>
+    request<void>(`/api/members/${memberId}`, { method: "PATCH", ...json({ role }) }),
 };

@@ -63,4 +63,6 @@ export {
   Cpu,
   // Ayarlar → Telegram
   TelegramLogo,
+  // Ayarlar → Roller
+  ShieldCheck,
 } from "@phosphor-icons/react";
