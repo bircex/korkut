@@ -556,7 +556,7 @@ export const api = {
     if (params?.start) q.set("start", params.start);
     if (params?.end) q.set("end", params.end);
     if (params?.category) q.set("category", params.category);
-    if (params?.matter_id != null) q.set("matter_id", String(params.matter_id));
+    if (params?.matter_id != null) q.set("matterId", String(params.matter_id));
     const qs = q.toString();
     return request<{ items: CalendarEvent[] }>(`/api/calendar/events${qs ? `?${qs}` : ""}`);
   },
@@ -605,7 +605,7 @@ export const api = {
     request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
   createSession: (matterId?: string) =>
     request<SessionBrief>(
-      `/api/sessions${matterId ? `?matter_id=${matterId}` : ""}`,
+      `/api/sessions${matterId ? `?matterId=${matterId}` : ""}`,
       { method: "POST" },
     ),
   getSession: (id: number) => request<SessionDetail>(`/api/sessions/${id}`),

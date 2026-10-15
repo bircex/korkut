@@ -19,9 +19,11 @@ const STATUS_LABEL: Record<string, string> = { open: "Açık", closed: "Kapalı"
 export function MattersPanel({
   user,
   onOpenSession,
+  onNewChat,
 }: {
   user: User;
   onOpenSession: (sessionId: number) => void;
+  onNewChat: (matterId: string) => void;
 }) {
   const [matters, setMatters] = useState<MatterBrief[]>([]);
   const [clients, setClients] = useState<ClientBrief[]>([]);
@@ -171,10 +173,9 @@ export function MattersPanel({
     refresh();
   }
 
-  async function openChat() {
-    if (!detail) return;
-    const sess = await api.createSession(detail.id);
-    onOpenSession(sess.id);
+  // Sohbet ilk mesajla açılır (boş sohbet birikmesin); ana ekran bu dosyaya bağlı başlar.
+  function openChat() {
+    if (detail) onNewChat(detail.id);
   }
 
   // ---- Detail view ----
