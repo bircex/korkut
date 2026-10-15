@@ -12,7 +12,7 @@ namespace Korkut.Telegram.Services;
 /// </summary>
 internal sealed partial class TelegramNotifier(
     ITelegramRepository repository, ITelegramApi telegram, ISecretEncryptor encryptor, IUnitOfWork unitOfWork,
-    ILogger<TelegramNotifier> logger) : ITelegramNotifier
+    TelegramGroupGuard guard, ILogger<TelegramNotifier> logger) : ITelegramNotifier
 {
     public async Task<int> NotifyAsync(Guid officeId, IReadOnlyCollection<Guid>? userIds, string text, CancellationToken ct = default)
     {
@@ -42,6 +42,48 @@ internal sealed partial class TelegramNotifier(
         {
             try
             {
+                foreach (var part in TelegramText.Split(text))
+                {
+                    await telegram.SendMessageAsync(token, chatId, part, ct);
+                }
+
+                reached++;
+            }
+            catch (TelegramApiException ex)
+            {
+                NotDelivered(logger, ex.ErrorCode, ex.Message);
+            }
+        }
+
+        return reached;
+    }
+
+    public async Task<int> NotifyMatterGroupsAsync(Guid officeId, Guid matterId, string text, CancellationToken ct = default)
+    {
+        var (token, groups) = await unitOfWork.InTenantScopeAsync(officeId, async () =>
+        {
+            var bot = await repository.FindBotAsync(officeId, ct);
+            return bot is not { Enabled: true, TokenCipher: not null }
+                ? (null, [])
+                : ((string?)Encoding.UTF8.GetString(encryptor.Decrypt(bot.TokenCipher)), await repository.GroupsForMatterAsync(matterId, ct));
+        }, ct);
+
+        if (token is null)
+        {
+            return 0;
+        }
+
+        var reached = 0;
+        foreach (var chatId in groups)
+        {
+            try
+            {
+                // A group with anyone who may not see the matter hears nothing about it.
+                if (!await guard.EveryoneMaySeeAsync(officeId, token, chatId, matterId, ct))
+                {
+                    continue;
+                }
+
                 foreach (var part in TelegramText.Split(text))
                 {
                     await telegram.SendMessageAsync(token, chatId, part, ct);

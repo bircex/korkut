@@ -76,6 +76,13 @@ public sealed partial class ReminderService(
             {
                 await telegram.NotifyAsync(officeId, to, ReminderPlanner.Text(reminder), ct);
             }
+
+            // A matter-wide reminder (not one for named people, such as a task's) also reaches the
+            // matter's Telegram groups, each only while everyone in it may see the matter.
+            if (reminder.Recipients is null && reminder.MatterId is { } matterId)
+            {
+                await telegram.NotifyMatterGroupsAsync(officeId, matterId, ReminderPlanner.Text(reminder), ct);
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

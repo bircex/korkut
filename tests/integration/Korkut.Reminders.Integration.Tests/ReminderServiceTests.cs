@@ -32,6 +32,14 @@ public class ReminderServiceTests(KorkutApiFactory factory)
             Sent.Add((userIds, text));
             return Task.FromResult(1);
         }
+
+        public List<(Guid Matter, string Text)> ToGroups { get; } = [];
+
+        public Task<int> NotifyMatterGroupsAsync(Guid officeId, Guid matterId, string text, CancellationToken ct = default)
+        {
+            ToGroups.Add((matterId, text));
+            return Task.FromResult(1);
+        }
     }
 
     private sealed class Mail : IEmailSender
@@ -109,6 +117,10 @@ public class ReminderServiceTests(KorkutApiFactory factory)
         Assert.All(mail.Sent, m => Assert.Equal(ownerEmail, m.To));
         Assert.Contains(mail.Sent, m => m.Subject == "Hatırlatma: Süre: İstinaf süresi");
         Assert.Equal(3, mail.Sent.Count);
+
+        // The matter's Telegram groups hear the deadline and the hearing, not the lawyer's task.
+        Assert.Equal(2, telegram.ToGroups.Count);
+        Assert.DoesNotContain(telegram.ToGroups, n => n.Text.StartsWith("Görev:", StringComparison.Ordinal));
 
         // A minute later nothing is sent again.
         Assert.Equal(0, await RunAsync(app, office, now.AddMinutes(1)));
