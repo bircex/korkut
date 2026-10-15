@@ -601,8 +601,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ token, password }),
     }),
-  sessions: (limit = 20, offset = 0) =>
-    request<SessionPage>(`/api/sessions?limit=${limit}&offset=${offset}`),
+  sessions: (limit = 20, offset = 0, matterId?: string) =>
+    request<SessionPage>(
+      `/api/sessions?limit=${limit}&offset=${offset}${matterId ? `&matterId=${encodeURIComponent(matterId)}` : ""}`,
+    ),
   createSession: (matterId?: string) =>
     request<SessionBrief>(
       `/api/sessions${matterId ? `?matterId=${matterId}` : ""}`,
@@ -991,6 +993,22 @@ export const rolesApi = {
 export type MatterTeamMember = { user_id: string; name: string; is_lead: boolean; added_at: string };
 export type MatterTeam = { members: MatterTeamMember[]; can_manage: boolean };
 export type MatterTeamCandidate = { user_id: string; name: string };
+
+export type Note = {
+  id: string;
+  body: string;
+  channel: string;
+  matter_id: string | null;
+  client_id: string | null;
+  occurred_at: string;
+  created_at: string;
+};
+
+export const notesApi = {
+  list: (matterId: string) => request<Note[]>(`/api/notes?matterId=${encodeURIComponent(matterId)}`),
+  create: (matterId: string, body: string) =>
+    request<Note>("/api/notes", { method: "POST", ...json({ body, matter_id: matterId }) }),
+};
 
 export const teamApi = {
   get: (matterId: string) => request<MatterTeam>(`/api/matters/${matterId}/team`),

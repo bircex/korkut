@@ -4,7 +4,10 @@ import { ClientDetailsCard } from "./ClientDetailsCard";
 import { MatterTeam } from "./MatterTeam";
 import { ArrowLeft, CaretRight } from "../icons";
 import { DataTable } from "./DataTable";
-import { matchPath, navigate, usePath } from "../router";
+import { matchPath, navigate, usePath, useSearch } from "../router";
+import { can, P } from "../permissions";
+import { DocumentsPanel } from "../documents/DocumentsPanel";
+import { MatterAgenda, MatterChats, MatterFinance, MatterNotes } from "./MatterSections";
 import { Modal } from "./Modal";
 
 // Minimal "Dosyalar" (matters) workspace: browse the office's case files, open one to see its
@@ -15,6 +18,19 @@ const input =
   "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400";
 
 const STATUS_LABEL: Record<string, string> = { open: "Açık", closed: "Kapalı" };
+
+// Dosya sayfasının sekmeleri; her biri görmek için gereken yetkiyle. Açık sekme URL'de (?sekme=).
+type Tab = "ozet" | "sohbetler" | "belgeler" | "ajanda" | "notlar" | "muvekkil" | "ekip" | "mali";
+const TABS: { key: Tab; label: string; perm?: string }[] = [
+  { key: "ozet", label: "Özet" },
+  { key: "sohbetler", label: "Sohbetler", perm: P.chatUse },
+  { key: "belgeler", label: "Belgeler", perm: P.documentsRead },
+  { key: "ajanda", label: "Ajanda", perm: P.agendaRead },
+  { key: "notlar", label: "Notlar", perm: P.notesRead },
+  { key: "muvekkil", label: "Müvekkil", perm: P.clientsRead },
+  { key: "ekip", label: "Ekip" },
+  { key: "mali", label: "Mali", perm: P.financeRead },
+];
 
 export function MattersPanel({
   user,
@@ -31,6 +47,10 @@ export function MattersPanel({
   const path = usePath();
   // Açık dosya URL'den okunur: /dosyalar → liste, /dosyalar/:id → detay.
   const routeMid = matchPath("/dosyalar/:id", path)?.id ?? null;
+  const search = useSearch();
+  const tabs = TABS.filter((t) => !t.perm || can(user, t.perm));
+  const asked = new URLSearchParams(search).get("sekme");
+  const tab: Tab = tabs.find((t) => t.key === asked)?.key ?? "ozet";
   const [adding, setAdding] = useState<"matter" | "hearing" | "deadline" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -200,125 +220,157 @@ export function MattersPanel({
           <div className="mx-auto max-w-3xl px-4 py-4">
             {error && <div className="mb-3 text-xs text-red-600">{error}</div>}
 
-            <div className="rounded-xl border border-zinc-200 p-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <Field label="Müvekkil" value={detail.client?.full_name} />
-                <Field label="Mahkeme" value={detail.court} />
-                <Field label="Esas no" value={detail.file_no} />
-                <Field label="Dava türü" value={detail.case_type} />
-                <Field label="Karşı taraf" value={detail.counterparty} />
-                <div>
-                  <div className="text-[11px] uppercase tracking-wide text-zinc-400">Durum</div>
+            <div role="tablist" aria-label="Dosya bölümleri" className="mb-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-zinc-200">
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => navigate(`/dosyalar/${detail.id}${t.key === "ozet" ? "" : `?sekme=${t.key}`}`, { replace: true })}
+                  className={
+                    "-mb-px shrink-0 border-b-2 px-3 py-2 text-sm " +
+                    (tab === t.key
+                      ? "border-zinc-900 font-medium text-zinc-900"
+                      : "border-transparent text-zinc-500 hover:text-zinc-800")
+                  }
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div role="tabpanel" aria-label={tabs.find((t) => t.key === tab)?.label}>
+              {tab === "ozet" && (
+                <>
+                <div className="rounded-xl border border-zinc-200 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <Field label="Müvekkil" value={detail.client?.full_name} />
+                    <Field label="Mahkeme" value={detail.court} />
+                    <Field label="Esas no" value={detail.file_no} />
+                    <Field label="Dava türü" value={detail.case_type} />
+                    <Field label="Karşı taraf" value={detail.counterparty} />
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-zinc-400">Durum</div>
+                      <button
+                        onClick={toggleStatus}
+                        className="mt-0.5 rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200"
+                      >
+                        {STATUS_LABEL[detail.status] ?? detail.status} ↺
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={openChat}
+                      className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
+                    >
+                      Bu dosyada sohbet aç
+                    </button>
+                    <button
+                      onClick={removeMatter}
+                      className="ml-auto rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-2 mt-6 flex items-center gap-3">
+                  <h2 className="text-sm font-semibold text-zinc-700">Duruşmalar</h2>
                   <button
-                    onClick={toggleStatus}
-                    className="mt-0.5 rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200"
+                    onClick={() => setAdding("hearing")}
+                    className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
                   >
-                    {STATUS_LABEL[detail.status] ?? detail.status} ↺
+                    + Duruşma
                   </button>
                 </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={openChat}
-                  className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
-                >
-                  Bu dosyada sohbet aç
-                </button>
-                <button
-                  onClick={removeMatter}
-                  className="ml-auto rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                >
-                  Sil
-                </button>
-              </div>
-            </div>
-
-            <MatterTeam matterId={detail.id} />
-
-            {detail.client && (
-              <ClientDetailsCard
-                client={detail.client}
-                onSaved={(c) => setDetail({ ...detail, client: c })}
-              />
-            )}
-
-            <div className="mb-2 mt-6 flex items-center gap-3">
-              <h2 className="text-sm font-semibold text-zinc-700">Duruşmalar</h2>
-              <button
-                onClick={() => setAdding("hearing")}
-                className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                + Duruşma
-              </button>
-            </div>
-            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-              {detail.hearings.length === 0 && (
-                <div className="px-4 py-3 text-sm text-zinc-400">Henüz duruşma yok.</div>
-              )}
-              {detail.hearings.map((h) => (
-                <div key={h.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                  <span className="font-medium text-zinc-800">
-                    {h.date}
-                    {h.time ? ` ${h.time}` : ""}
-                  </span>
-                  <span className="text-zinc-500">{h.type ?? ""}</span>
-                  <span className="ml-auto text-xs text-zinc-400">{h.location ?? ""}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mb-2 mt-6 flex items-center gap-3">
-              <h2 className="text-sm font-semibold text-zinc-700">Süreler</h2>
-              <button
-                onClick={() => setAdding("deadline")}
-                className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                + Süre
-              </button>
-            </div>
-            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-              {detail.deadlines.length === 0 && (
-                <div className="px-4 py-3 text-sm text-zinc-400">Henüz süre yok.</div>
-              )}
-              {detail.deadlines.map((d) => (
-                <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                  <span
-                    className={`font-medium ${
-                      d.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
-                    }`}
-                  >
-                    {d.due_date}
-                  </span>
-                  <span className="text-zinc-600">{d.title}</span>
-                  <span className="text-xs text-zinc-400">{d.type ?? ""}</span>
-                  {d.status !== "done" && (
-                    <button
-                      onClick={() => completeDeadline(d.id)}
-                      className="ml-auto rounded-md border border-zinc-200 px-2 py-0.5 text-xs text-zinc-600 hover:bg-zinc-50"
-                    >
-                      Tamamlandı
-                    </button>
+                <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+                  {detail.hearings.length === 0 && (
+                    <div className="px-4 py-3 text-sm text-zinc-400">Henüz duruşma yok.</div>
                   )}
+                  {detail.hearings.map((h) => (
+                    <div key={h.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                      <span className="font-medium text-zinc-800">
+                        {h.date}
+                        {h.time ? ` ${h.time}` : ""}
+                      </span>
+                      <span className="text-zinc-500">{h.type ?? ""}</span>
+                      <span className="ml-auto text-xs text-zinc-400">{h.location ?? ""}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Belgeler</h2>
-            <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-              {detail.documents.length === 0 && (
-                <div className="px-4 py-3 text-sm text-zinc-400">Bu dosyaya bağlı belge yok.</div>
+                <div className="mb-2 mt-6 flex items-center gap-3">
+                  <h2 className="text-sm font-semibold text-zinc-700">Süreler</h2>
+                  <button
+                    onClick={() => setAdding("deadline")}
+                    className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+                  >
+                    + Süre
+                  </button>
+                </div>
+                <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+                  {detail.deadlines.length === 0 && (
+                    <div className="px-4 py-3 text-sm text-zinc-400">Henüz süre yok.</div>
+                  )}
+                  {detail.deadlines.map((d) => (
+                    <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                      <span
+                        className={`font-medium ${
+                          d.status === "done" ? "text-zinc-400 line-through" : "text-zinc-800"
+                        }`}
+                      >
+                        {d.due_date}
+                      </span>
+                      <span className="text-zinc-600">{d.title}</span>
+                      <span className="text-xs text-zinc-400">{d.type ?? ""}</span>
+                      {d.status !== "done" && (
+                        <button
+                          onClick={() => completeDeadline(d.id)}
+                          className="ml-auto rounded-md border border-zinc-200 px-2 py-0.5 text-xs text-zinc-600 hover:bg-zinc-50"
+                        >
+                          Tamamlandı
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
-              {detail.documents.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => onOpenSession(d.conversation_id)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50"
-                >
-                  <span className="min-w-0 flex-1 truncate text-zinc-800">{d.title}</span>
-                  <span className="shrink-0 text-xs text-zinc-400">{d.status}</span>
-                  <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
-                </button>
-              ))}
+              {tab === "sohbetler" && (
+                <MatterChats matterId={detail.id} onOpen={onOpenSession} onNew={openChat} />
+              )}
+              {tab === "belgeler" && (
+                <>
+                  <DocumentsPanel matterId={detail.id} />
+                <h2 className="mb-2 mt-6 text-sm font-semibold text-zinc-700">Taslaklar</h2>
+                <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
+                  {detail.documents.length === 0 && (
+                    <div className="px-4 py-3 text-sm text-zinc-400">Bu dosyada taslak yok.</div>
+                  )}
+                  {detail.documents.map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => onOpenSession(d.conversation_id)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-zinc-800">{d.title}</span>
+                      <span className="shrink-0 text-xs text-zinc-400">{d.status}</span>
+                      <CaretRight size={14} aria-hidden className="shrink-0 text-zinc-300" />
+                    </button>
+                  ))}
+                </div>
+                </>
+              )}
+              {tab === "ajanda" && <MatterAgenda matterId={detail.id} />}
+              {tab === "notlar" && <MatterNotes matterId={detail.id} canWrite={can(user, P.notesWrite)} />}
+              {tab === "muvekkil" &&
+                (detail.client ? (
+                  <ClientDetailsCard client={detail.client} onSaved={(c) => setDetail({ ...detail, client: c })} />
+                ) : (
+                  <p className="text-sm text-zinc-400">Bu dosyaya bağlı müvekkil yok.</p>
+                ))}
+              {tab === "ekip" && <MatterTeam matterId={detail.id} />}
+              {tab === "mali" && <MatterFinance matterId={detail.id} />}
             </div>
           </div>
         </div>
