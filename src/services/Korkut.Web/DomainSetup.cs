@@ -53,6 +53,7 @@ public static class DomainSetup
         // every application service runs inside.
         services.AddHttpContextAccessor();
         services.AddScoped<Korkut.Core.ActingUser>();
+        services.AddSingleton<Korkut.Core.IActingUserCredential, Korkut.Web.Identity.ActingUserCredential>();
         services.AddScoped<Korkut.Core.ICurrentUser, Korkut.Web.Identity.HttpCurrentUser>();
         services.AddScoped<Korkut.Core.IUnitOfWork, Korkut.Persistence.UnitOfWork>();
         // Office-ops (Clean Architecture: repository ports + service).

@@ -29,10 +29,17 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
     private static readonly byte[] ZipMagic = [0x50, 0x4B, 0x03, 0x04];
     private static readonly byte[] Ole2Magic = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 
+    // Image signatures: JPEG, PNG, TIFF (both byte orders), GIF, and RIFF (WebP).
+    private static readonly byte[][] ImageMagics =
+    [
+        [0xFF, 0xD8, 0xFF], [0x89, 0x50, 0x4E, 0x47], [0x49, 0x49, 0x2A, 0x00], [0x4D, 0x4D, 0x00, 0x2A],
+        "GIF8"u8.ToArray(), "RIFF"u8.ToArray(),
+    ];
+
     // Optional so tests/call sites outside DI (`new PlainTextExtractorService()`) keep working.
     private readonly ILogger<PlainTextExtractorService> _logger = logger ?? NullLogger<PlainTextExtractorService>.Instance;
 
-    public string ParserVersion => "plaintext-v3";
+    public string ParserVersion => "plaintext-v4";
 
     public async Task<IReadOnlyList<TextExtractorServiceResult>> ExtractAsync(Stream content, string contentType, CancellationToken ct = default)
     {
@@ -59,6 +66,13 @@ public sealed partial class PlainTextExtractorService(ILogger<PlainTextExtractor
             // runs) yet — that needs either a proper library or an external converter, not a
             // hand-rolled parser. Fail safe like a corrupt/encrypted PDF: no spans, no crash.
             LegacyDocNotSupported(_logger);
+            return [];
+        }
+
+        // A photo or scan has no text layer; read as text its bytes would pass for one and keep
+        // OCR from ever being asked.
+        if (contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || ImageMagics.Any(m => StartsWith(header, m)))
+        {
             return [];
         }
 

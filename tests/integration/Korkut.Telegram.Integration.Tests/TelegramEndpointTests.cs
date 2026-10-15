@@ -45,36 +45,69 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
         public Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(string token, long offset, int timeoutSeconds, CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<TelegramUpdate>>([]);
 
-        public Task SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default)
+        public Dictionary<string, byte[]> Files { get; } = [];
+
+        public Task<long> SendMessageAsync(string token, long chatId, string text, CancellationToken ct = default)
         {
             lock (Sent)
             {
                 Sent.Add((chatId, text));
+                return Task.FromResult((long)Sent.Count);
+            }
+        }
+
+        /// <summary>An edit changes the message in place, so <see cref="Sent"/> shows what is on screen.</summary>
+        public Task EditMessageTextAsync(string token, long chatId, long messageId, string text, CancellationToken ct = default)
+        {
+            lock (Sent)
+            {
+                Sent[(int)messageId - 1] = (chatId, text);
             }
 
             return Task.CompletedTask;
         }
 
+        public Task<byte[]> DownloadFileAsync(string token, string fileId, CancellationToken ct = default)
+            => Task.FromResult(Files[fileId]);
+
         public Task SendTypingAsync(string token, long chatId, CancellationToken ct = default) => Task.CompletedTask;
     }
 
-    /// <summary>Answers "who am I | what was said", read from the app's current user.</summary>
+    /// <summary>
+    /// Answers "who am I | what was said", read from the app's current user, streaming it word by
+    /// word; an upload answers with what arrived.
+    /// </summary>
     private sealed class WhoAmIChat(ICurrentUser current) : ISessionChatService
     {
+        private string Answer(string text) => $"{current.UserId}|{current.Permissions.Contains(Permissions.OfficeSettings)}|{text}";
+
         public Task<ChatOutcome?> ChatAsync(
             Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions, CancellationToken ct = default)
-            => Task.FromResult<ChatOutcome?>(new ChatOutcome(
-                $"{current.UserId}|{current.Permissions.Contains(Permissions.OfficeSettings)}|{text}", "Telegram", null, null));
+            => Task.FromResult<ChatOutcome?>(new ChatOutcome(Answer(text), "Telegram", null, null));
 
-        public Task<UploadOutcome?> UploadAsync(
+        public async Task<UploadOutcome?> UploadAsync(
             Guid officeId, Guid userId, Guid conversationId, string fileName, string contentType, Stream content, string text,
-            IReadOnlySet<string> permissions, CancellationToken ct = default) => throw new NotSupportedException();
+            IReadOnlySet<string> permissions, CancellationToken ct = default)
+        {
+            using var reader = new StreamReader(content);
+            var body = await reader.ReadToEndAsync(ct);
+            return new UploadOutcome(Answer($"{fileName}|{contentType}|{body}|{text}"), "Telegram", fileName);
+        }
 
-        public Task<ChatOutcome?> ChatStreamAsync(
+        public async Task<ChatOutcome?> ChatStreamAsync(
             Guid officeId, Guid userId, Guid conversationId, string text, IReadOnlySet<string> permissions,
             Func<string, Task> onStep, Func<string, Task> onToken,
             Func<string, JsonElement, Task>? onToolCall = null, Func<string, string, bool, Task>? onToolResult = null,
-            CancellationToken ct = default) => throw new NotSupportedException();
+            CancellationToken ct = default)
+        {
+            var answer = Answer(text);
+            foreach (var piece in answer.Chunk(5))
+            {
+                await onToken(new string(piece));
+            }
+
+            return new ChatOutcome(answer, "Telegram", null, null);
+        }
     }
 
     private (WebApplicationFactory<Program> App, FakeTelegram Telegram) Host()
@@ -108,12 +141,14 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
         return user.Id;
     }
 
-    private static async Task SendAsync(WebApplicationFactory<Program> app, Guid office, long chatId, string text, string? username = "avukat")
+    private static Task SendAsync(WebApplicationFactory<Program> app, Guid office, long chatId, string text, string? username = "avukat")
+        => DeliverAsync(app, office, new TelegramMessage(1, new TelegramUser(chatId, false, "Avukat", username), new TelegramChat(chatId, "private"), text));
+
+    private static async Task DeliverAsync(WebApplicationFactory<Program> app, Guid office, TelegramMessage message)
     {
         await using var scope = app.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<TelegramUpdateHandler>().HandleAsync(
-            new InstallOffice(office, "Test Bürosu", false), GoodToken,
-            new TelegramUpdate(1, new TelegramMessage(1, new TelegramUser(chatId, false, "Avukat", username), new TelegramChat(chatId, "private"), text)));
+            new InstallOffice(office, "Test Bürosu", false), GoodToken, new TelegramUpdate(1, message));
     }
 
     private static async Task<HttpResponseMessage> TurnOnAsync(HttpClient owner, bool consent = true)
@@ -266,5 +301,44 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
 
         await owner.PutAsJsonAsync("/api/settings/telegram", new { enabled = false, consent = true }, Json);
         Assert.Equal(0, await NotifyAsync(null));
+    }
+
+    [Fact]
+    public async Task A_document_sent_to_the_bot_is_taken_in_like_an_upload()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var lawyerId = await AddLawyerAsync(office);
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        var lawyer = As(app, office, lawyerId, Roles.Lawyer);
+        var chatId = Random.Shared.NextInt64(1_000_000_000, 9_000_000_000);
+        await TurnOnAsync(owner);
+        var issued = await (await lawyer.PostAsync("/api/telegram/link/code", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        await SendAsync(app, office, chatId, $"/start {issued.GetProperty("code").GetString()}");
+        telegram.Files["file-1"] = "Davacı vekili beyanları"u8.ToArray();
+
+        await DeliverAsync(app, office, new TelegramMessage(
+            7, new TelegramUser(chatId, false, "Avukat", "avukat"), new TelegramChat(chatId, "private"), null,
+            Caption: "Bunu özetle", Document: new TelegramDocument("file-1", "dilekce.pdf", "application/pdf", 23)));
+
+        Assert.Equal((chatId, $"{lawyerId}|False|dilekce.pdf|application/pdf|Davacı vekili beyanları|Bunu özetle"), telegram.Sent[^1]);
+    }
+
+    [Fact]
+    public async Task A_file_too_large_for_bots_is_declined_before_downloading()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        var chatId = Random.Shared.NextInt64(1_000_000_000, 9_000_000_000);
+        await TurnOnAsync(owner);
+        var issued = await (await owner.PostAsync("/api/telegram/link/code", null)).Content.ReadFromJsonAsync<JsonElement>(Json);
+        await SendAsync(app, office, chatId, $"/start {issued.GetProperty("code").GetString()}");
+
+        await DeliverAsync(app, office, new TelegramMessage(
+            8, new TelegramUser(chatId, false, "Sahip", null), new TelegramChat(chatId, "private"), null,
+            Document: new TelegramDocument("big", "dosya.pdf", "application/pdf", 40L * 1024 * 1024)));
+
+        Assert.Contains("20 MB", telegram.Sent[^1].Text);
     }
 }

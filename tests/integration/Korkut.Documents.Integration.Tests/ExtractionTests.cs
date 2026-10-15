@@ -95,7 +95,7 @@ public class ExtractionTests(PostgresFixture pg, ObjectStoreFixture store)
         {
             Assert.Equal(docId, s.DocumentId);
             Assert.Equal(1, s.DocumentVersion);
-            Assert.Equal("plaintext-v3", s.ParserVersion);
+            Assert.Equal("plaintext-v4", s.ParserVersion);
             Assert.NotEmpty(s.SourceChecksumSha256);
             Assert.NotEmpty(s.SourceObjectKey);
         });
@@ -144,7 +144,7 @@ public class ExtractionTests(PostgresFixture pg, ObjectStoreFixture store)
             .Where(x => x.DocumentId == docId).GroupBy(x => x.ParserVersion)
             .Select(g => new { g.Key, Text = g.First().Text }).ToListAsync();
         Assert.Equal(2, byParser.Count); // both artifact versions coexist
-        Assert.Contains(byParser, x => x is { Key: "plaintext-v3", Text: "metin" });
+        Assert.Contains(byParser, x => x is { Key: "plaintext-v4", Text: "metin" });
         Assert.Contains(byParser, x => x is { Key: "test-upper-v1", Text: "METIN" });
     }
 
@@ -226,7 +226,7 @@ public class ExtractionTests(PostgresFixture pg, ObjectStoreFixture store)
 
         var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
         Assert.Contains(spans, s => s.Text.Contains("Vekaletname"));
-        Assert.All(spans, s => Assert.Equal("plaintext-v3", s.ParserVersion));
+        Assert.All(spans, s => Assert.Equal("plaintext-v4", s.ParserVersion));
     }
 
     /// <summary>
@@ -307,7 +307,7 @@ public class ExtractionTests(PostgresFixture pg, ObjectStoreFixture store)
         var spans = await db.DocumentExtractions.AsNoTracking().Where(x => x.DocumentId == docId).ToListAsync();
         Assert.Contains(spans, s => s.Text.Contains("Basvuru"));
         Assert.Contains(spans, s => s.Text.Contains("Sayin Mahkeme"));
-        Assert.All(spans, s => Assert.Equal("plaintext-v3", s.ParserVersion));
+        Assert.All(spans, s => Assert.Equal("plaintext-v4", s.ParserVersion));
     }
 
     /// <summary>End-to-end for UDF (UYAP) upload — the format this fix was specifically requested for.</summary>

@@ -10,7 +10,7 @@ Durum: uygulanıyor (2026-10-10)
 | 2. llmr | Tamam: `install.sh` ve llmr servisi (#207), ayarlardan sağlayıcı ve model seçimi (#208), bütün model çağrıları llmr üzerinden |
 | 4. Kurulum ve ayarlar | `install.sh` (#207), tarayıcıdan ilk kurulum (#203), Yapay zeka ayarları (#208), Telegram ayarları. Kalan: SMTP ayarları, yeniden indeksleme |
 | RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
-| 5. Telegram | Bot, hesap bağlama, Telegram'dan sohbet (#210) ve hatırlatmalar tamam. Kalan: yanıtın düzenlenen mesajla akması, dosya gönderimi |
+| 5. Telegram | Tamam: bot, hesap bağlama, Telegram'dan sohbet (#210), hatırlatmalar (#212), akan yanıtlar ve belge/fotoğraf gönderimi |
 
 Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 
@@ -163,7 +163,8 @@ Durum (ilk PR):
 - Owner Ayarlar → Telegram'da bot anahtarını girer. Anahtar `getMe` ile denetlenir ve şifreli saklanır. Botu açmak için KVKK onayı gerekir. Başka bir bota geçilirse bağlantılar silinir.
 - Üye Ayarlar → Hesap'ta "Telegram'ı bağla"ya basar. 15 dakika geçerli, tek kullanımlık kod `t.me/<bot>?start=<kod>` bağlantısıyla gider. Kodun yalnızca SHA-256'sı saklanır.
 - Mesajlar üyenin rolündeki yetkilerle, normal bir sohbet turu olarak yanıtlanır. HTTP isteği olmadan çalışabilmesi için `ActingUser` eklendi; büro araçları üyeyi web'deki gibi görür. Sohbetler web'deki sohbet listesinde de görünür.
-- Yanıt bekleme süresince "yazıyor…" gösterilir, uzun yanıtlar 4096 karakterde paragraf sınırından bölünür.
+- Yanıt yazıldıkça görünür: ilk kelimeler bir mesaj açar, mesaj en fazla 1,5 saniyede bir düzenlenir, bitince tam yanıtla değiştirilir. Uzun yanıtlar 4096 karakterde paragraf sınırından bölünüp sonraki mesajlarda sürer. İlk kelimeye kadar "yazıyor…" gösterilir.
+- Belge ya da fotoğraf gönderilirse (en fazla 20 MB, Bot API sınırı) uygulamadaki yükleme gibi işlenir: metin çıkarılır, taranmış belge ve fotoğraflar OCR'dan geçer, açıklama soru olur. OCR servisi çağıranı kendisi doğruladığı için, HTTP isteği olmayan bu akışta üye adına 15 dakikalık bir erişim token'ı üretilir (`IActingUserCredential`).
 - 401/409/erişim sorunları loglanır ve ayarlar ekranında gösterilir. Bot anahtarı URL'de olduğu için bu istemcinin logları kapalıdır, izlerde `/bot` yolları filtrelenir.
 - Mesaj konumu (`update_offset`) yanıtlamadan önce kaydedilir: yeniden başlatmada bir mesaj iki kez yanıtlanmaz.
 - `KORKUT_TELEGRAM_API_URL` Bot API adresini değiştirir (testler ve kendi Bot API sunucusunu kullananlar için).

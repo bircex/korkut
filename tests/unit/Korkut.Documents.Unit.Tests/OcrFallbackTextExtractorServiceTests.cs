@@ -78,7 +78,7 @@ public class OcrFallbackTextExtractorServiceTests
     public void ParserVersion_ComposesTheInnerVersion_SoOcrTextIsANewArtifactSet()
     {
         // KDM-027: OCR-recovered text must never overwrite what the text-layer parser stored.
-        Assert.Equal("plaintext-v3+ocr-v1", Sut(new FakeOcrService()).ParserVersion);
+        Assert.Equal("plaintext-v4+ocr-v1", Sut(new FakeOcrService()).ParserVersion);
     }
 
     [Fact]

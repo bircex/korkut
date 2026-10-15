@@ -83,6 +83,36 @@ public class HttpOcrServiceTests
         Assert.Equal("Bearer token-123", handler.Request!.Headers.Authorization!.ToString());
     }
 
+    private sealed class FixedCredential(string? token) : Korkut.Core.IActingUserCredential
+    {
+        public string? BearerToken() => token;
+    }
+
+    [Fact]
+    public async Task ExtractAsync_OutsideARequest_SendsATokenForTheActingMember()
+    {
+        // A document sent on Telegram has no request to forward; the member it runs as stands in.
+        var handler = new StubHandler(HttpStatusCode.OK, """{"text":"x","pages":1,"page_texts":["x"]}""");
+        var sut = new HttpOcrService(new StubFactory(handler), new HttpContextAccessor(), "http://ocr:8080", new FixedCredential("member-token"));
+
+        await sut.ExtractAsync(Pdf(), "application/pdf");
+
+        Assert.Equal("Bearer member-token", handler.Request!.Headers.Authorization!.ToString());
+    }
+
+    [Fact]
+    public async Task ExtractAsync_InARequest_NeverSwapsInTheActingMember()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, """{"text":"x","pages":1,"page_texts":["x"]}""");
+        var accessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
+        accessor.HttpContext.Request.Headers.Authorization = "Bearer caller";
+        var sut = new HttpOcrService(new StubFactory(handler), accessor, "http://ocr:8080", new FixedCredential("member-token"));
+
+        await sut.ExtractAsync(Pdf(), "application/pdf");
+
+        Assert.Equal("Bearer caller", handler.Request!.Headers.Authorization!.ToString());
+    }
+
     [Fact]
     public async Task ExtractAsync_WithAMalformedContentType_StillSendsTheRequest()
     {

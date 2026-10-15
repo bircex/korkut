@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Korkut.Contract.Documents.OCR;
+using Korkut.Core;
 using Microsoft.AspNetCore.Http;
 
 namespace Korkut.Documents.Services;
@@ -12,12 +13,12 @@ namespace Korkut.Documents.Services;
 /// from a host that has no native OCR binaries of its own: recognition is heavy and
 /// native-dependency-bound, so it stays in its own image and every other host calls it over HTTP.
 /// The caller's own auth is forwarded (the endpoint is guarded by <c>matters.read</c>), matching how
-/// <c>HttpKnowledgeSearch</c> reaches Knowledge. Any non-success response becomes
+/// <c>HttpKnowledgeSearch</c> reaches Knowledge; outside a request, a token for the acting member is sent instead. Any non-success response becomes
 /// <see cref="OcrUnavailableException"/> — including the 503 the host returns when no engine is
 /// configured — so a caller sees one failure shape regardless of where the OCR path broke.
 /// </summary>
 internal sealed class HttpOcrService(
-    IHttpClientFactory httpFactory, IHttpContextAccessor accessor, string baseUrl) : IOcrService
+    IHttpClientFactory httpFactory, IHttpContextAccessor accessor, string baseUrl, IActingUserCredential? acting = null) : IOcrService
 {
     private static readonly JsonSerializerOptions Json =
         new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
@@ -82,6 +83,12 @@ internal sealed class HttpOcrService(
         var incoming = accessor.HttpContext?.Request;
         if (incoming is null)
         {
+            // No request (a Telegram message, say): act for the member the work runs as, if any.
+            if (acting?.BearerToken() is { } token)
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
             return;
         }
 
