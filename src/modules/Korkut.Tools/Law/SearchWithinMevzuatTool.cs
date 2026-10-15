@@ -33,7 +33,7 @@ public sealed class SearchWithinMevzuatTool(ILawClientsSearchService search) : I
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.DocumentsRead;
+    public string? RequiredPermission => Permissions.ResearchUse;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

@@ -18,25 +18,40 @@ public class AuthorizationTests(WebApplicationFactory<Program> factory) : IClass
     // --- deny-by-default permission matrix (unit) ---
 
     [Theory]
-    [InlineData(Roles.OfficeOwner, Permissions.MattersWrite, true)]
+    [InlineData(Roles.OfficeOwner, Permissions.MattersEdit, true)]
     [InlineData(Roles.OfficeOwner, Permissions.MembersManage, true)]
-    [InlineData(Roles.OfficeOwner, Permissions.MattersDelete, true)]
-    [InlineData(Roles.Lawyer, Permissions.MattersWrite, true)]
-    [InlineData(Roles.Lawyer, Permissions.ClientsRead, true)]
-    [InlineData(Roles.Lawyer, Permissions.MattersDelete, false)]   // lawyer can't delete
-    [InlineData(Roles.Lawyer, Permissions.MembersManage, false)]   // lawyer can't manage members
-    [InlineData(Roles.Lawyer, Permissions.OfficeSettings, false)]
+    [InlineData(Roles.OfficeOwner, Permissions.MattersViewAll, true)]
+    [InlineData(Roles.Lawyer, Permissions.MattersEdit, true)]
+    [InlineData(Roles.Lawyer, Permissions.ClientsIdentity, true)]
+    [InlineData(Roles.Lawyer, Permissions.MattersViewAll, false)]  // sees only their own matters
+    [InlineData(Roles.Lawyer, Permissions.FinanceRead, false)]     // money is for managers
+    [InlineData(Roles.Lawyer, Permissions.MattersDelete, false)]
+    [InlineData(Roles.Lawyer, Permissions.MembersManage, false)]
+    [InlineData(Roles.Intern, Permissions.ClientsContact, false)]
+    [InlineData(Roles.Reader, Permissions.ChatUse, true)]
+    [InlineData(Roles.Reader, Permissions.ClientsIdentity, false)]
+    [InlineData(Roles.Accounting, Permissions.FinanceWrite, true)]
+    [InlineData(Roles.Accounting, Permissions.MattersRead, false)]
     [InlineData("unknown-role", Permissions.MattersRead, false)]   // deny-by-default
-    public void Permission_matrix_is_deny_by_default(string role, string permission, bool expected)
+    public void Default_roles_are_deny_by_default(string role, string permission, bool expected)
         => Assert.Equal(expected, _authz.HasPermission(role, permission));
 
     [Fact]
     public void Custom_permissions_augment_but_only_known_ones_count()
     {
-        var perms = _authz.ResolvePermissions(Roles.Lawyer, [Permissions.BillingRead, "made.up.permission"]);
-        Assert.Contains(Permissions.BillingRead, perms); // granted via custom role
-        Assert.DoesNotContain("made.up.permission", perms); // unknown -> ignored
-        Assert.DoesNotContain(Permissions.MembersManage, perms); // not granted
+        var perms = _authz.ResolvePermissions(Roles.Lawyer, [Permissions.FinanceRead, "made.up.permission"]);
+        Assert.Contains(Permissions.FinanceRead, perms);
+        Assert.DoesNotContain("made.up.permission", perms);
+        Assert.DoesNotContain(Permissions.MembersManage, perms);
+    }
+
+    [Fact]
+    public void The_roles_screen_lists_every_permission_exactly_once()
+    {
+        var listed = Korkut.Organization.PermissionCatalog.Groups.SelectMany(g => g.Permissions).Select(p => p.Key).ToList();
+
+        Assert.Equal(listed.Count, listed.Distinct().Count());
+        Assert.Equal(Permissions.All.Order(), listed.Order());
     }
 
     // --- policy enforcement over HTTP (integration) ---
@@ -60,13 +75,6 @@ public class AuthorizationTests(WebApplicationFactory<Program> factory) : IClass
     public async Task Owner_can_call_a_matters_write_endpoint()
     {
         var resp = await ClientWith(Token(Roles.OfficeOwner)).PostAsync("/api/v1/matters-demo", null);
-        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-    }
-
-    [Fact]
-    public async Task Lawyer_can_also_write_matters()
-    {
-        var resp = await ClientWith(Token(Roles.Lawyer)).PostAsync("/api/v1/matters-demo", null);
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
 

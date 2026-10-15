@@ -1086,8 +1086,8 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("role");
 
                     b.Property<string>("TokenHash")
@@ -1146,6 +1146,15 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1154,8 +1163,8 @@ namespace Korkut.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.Property<Guid>("OfficeId")
@@ -1167,13 +1176,17 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("permissions");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OfficeId", "Key")
                         .IsUnique()
-                        .HasDatabaseName("ux_custom_roles_office_key");
+                        .HasDatabaseName("ux_office_roles_office_key");
 
-                    b.ToTable("office_custom_roles", "korkut");
+                    b.ToTable("office_roles", "korkut");
                 });
 
             modelBuilder.Entity("Korkut.Organization.Entities.PasswordResetToken", b =>

@@ -8,17 +8,16 @@ namespace Korkut.Web.Auth;
 
 /// <summary>
 /// Turns a Bearer access token into a ClaimsPrincipal. Minimal token claims
-/// (sub/oid/role/stamp) are expanded into per-permission claims via the deny-by-
-/// default <see cref="AuthorizationService"/>, so policies check permissions, never
-/// role names. Custom-role permissions are layered in by a claims transformation
-/// (DB-backed) when present; built-in roles resolve without a DB round-trip.
+/// (sub/oid/role/stamp) are expanded into per-permission claims from the office's role
+/// (<see cref="Korkut.Core.IRolePermissions"/>, cached briefly), so policies check permissions,
+/// never role names, and a role the office edits applies on the next request.
 /// </summary>
 public sealed class AccessTokenAuthHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
     AccessTokenService accessTokens,
-    AuthorizationService authorization) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    Korkut.Core.IRolePermissions rolePermissions) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "korkut-access";
     public const string AccessCookie = "korkut_at";
@@ -49,7 +48,7 @@ public sealed class AccessTokenAuthHandler(
         identity.AddClaim(new Claim(OfficeClaim, claims.OfficeId.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Role, claims.Role));
         identity.AddClaim(new Claim(StampClaim, claims.SecurityStamp));
-        foreach (var permission in authorization.ResolvePermissions(claims.Role))
+        foreach (var permission in await rolePermissions.ForRoleAsync(claims.OfficeId, claims.Role, Context.RequestAborted))
         {
             identity.AddClaim(new Claim(PermissionClaim, permission));
         }

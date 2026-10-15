@@ -13,7 +13,7 @@ public sealed class InviteConfiguration : IEntityTypeConfiguration<Invite>
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Email).HasMaxLength(320);
         builder.Property(x => x.FullName).HasMaxLength(200);
-        builder.Property(x => x.Role).HasMaxLength(20);
+        builder.Property(x => x.Role).HasMaxLength(50);
         builder.Property(x => x.TokenHash).HasMaxLength(64);
         builder.Ignore(x => x.IsPending);
         builder.HasIndex(x => x.TokenHash).HasDatabaseName("ix_invites_token_hash");

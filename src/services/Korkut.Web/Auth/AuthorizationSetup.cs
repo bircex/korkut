@@ -2,6 +2,7 @@ using Korkut.Core;
 using Korkut.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Korkut.Web.Auth;
 
@@ -17,6 +18,8 @@ public static class AuthorizationSetup
     public static IServiceCollection AddKorkutAuthorization(this IServiceCollection services)
     {
         services.AddSingleton<AuthorizationService>();
+        // The app host registers the office's stored roles first; a host without them gets the defaults.
+        services.TryAddSingleton<IRolePermissions, BuiltInRolePermissions>();
 
         services.AddAuthentication(AccessTokenAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, AccessTokenAuthHandler>(AccessTokenAuthHandler.SchemeName, _ => { });

@@ -16,6 +16,6 @@ namespace Korkut.Api.Controllers;
 public sealed class CoverageController(ICoverageService coverage) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public IActionResult Get() => Ok(coverage.Get());
 }

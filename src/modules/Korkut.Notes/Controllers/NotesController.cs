@@ -12,12 +12,12 @@ namespace Korkut.Notes.Controllers;
 public sealed class NotesController(INoteService notes) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.NotesRead)]
     public async Task<IActionResult> List([FromQuery] Guid? matterId, CancellationToken ct)
         => (await notes.ListAsync(matterId, ct)).ToActionResult();
 
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.NotesWrite)]
     public async Task<IActionResult> Create([FromBody] CreateNoteRequest body, CancellationToken ct)
         => (await notes.CreateAsync(body, ct)).ToActionResult(n => Created($"/api/notes/{n.Id}", n));
 }

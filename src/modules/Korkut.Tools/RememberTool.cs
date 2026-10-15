@@ -31,7 +31,7 @@ public sealed class RememberTool(IMemoryService memory) : IAgentTool
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.MattersWrite;
+    public string? RequiredPermission => Permissions.ChatUse;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

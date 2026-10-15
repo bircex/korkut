@@ -221,7 +221,7 @@
       "ChangeMemberRoleRequest": {
         "properties": {
           "role": {
-            "pattern": "owner|lawyer",
+            "pattern": "^[a-z0-9-]{1,50}$",
             "type": [
               "null",
               "string"
@@ -614,7 +614,7 @@
             ]
           },
           "role": {
-            "pattern": "owner|lawyer",
+            "pattern": "^[a-z0-9-]{1,50}$",
             "type": [
               "null",
               "string"
@@ -763,7 +763,7 @@
             ]
           },
           "role": {
-            "pattern": "owner|lawyer",
+            "pattern": "^[a-z0-9-]{1,50}$",
             "type": [
               "null",
               "string"
@@ -1948,6 +1948,39 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "SaveRoleRequest": {
+        "properties": {
+          "description": {
+            "maxLength": "500",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "maxLength": "100",
+            "minLength": "2",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "null",
+              "array"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
+        ],
         "type": "object"
       },
       "SaveStyleRequest": {
@@ -5901,6 +5934,110 @@
         ]
       }
     },
+    "/api/roles": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Roles"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
+    "/api/roles/{key}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Roles"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
     "/api/saved-decisions": {
       "get": {
         "responses": {
@@ -6836,6 +6973,9 @@
     },
     {
       "name": "Profile"
+    },
+    {
+      "name": "Roles"
     },
     {
       "name": "Reports"

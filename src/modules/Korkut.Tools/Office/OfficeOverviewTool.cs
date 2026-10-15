@@ -23,7 +23,7 @@ public sealed class OfficeOverviewTool(IReportsService reports) : IAgentTool
     public string? RequiresKey => null;
 
     // Surfaces money, like the reports endpoint → billing.read (both built-in roles hold it).
-    public string? RequiredPermission => Permissions.BillingRead;
+    public string? RequiredPermission => Permissions.ReportsRead;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

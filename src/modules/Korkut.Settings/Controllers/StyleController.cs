@@ -15,12 +15,12 @@ namespace Korkut.Settings.Controllers;
 public sealed class StyleController(IStyleService style) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Get(CancellationToken ct)
         => (await style.GetAsync(ct)).ToActionResult();
 
     [HttpPut("user")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> SaveUser([FromBody] SaveStyleRequest body, CancellationToken ct)
         => (await style.SaveUserAsync(body, ct)).ToActionResult();
 

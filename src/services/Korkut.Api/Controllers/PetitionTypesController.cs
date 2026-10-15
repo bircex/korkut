@@ -16,7 +16,7 @@ namespace Korkut.Api.Controllers;
 public sealed class PetitionTypesController(TemplateCatalog catalog) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public IActionResult List()
         => Ok(catalog.Categories(TemplateCatalog.Dilekce)
             .Select(c => new PetitionCategoryResponse(

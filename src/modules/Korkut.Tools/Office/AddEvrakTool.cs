@@ -25,7 +25,7 @@ public sealed class AddEvrakTool(ICorrespondenceService correspondence) : IAgent
 
     public string? RequiresKey => null;
 
-    public string? RequiredPermission => Permissions.MattersWrite;
+    public string? RequiredPermission => Permissions.NotesWrite;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

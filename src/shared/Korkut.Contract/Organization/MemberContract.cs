@@ -21,7 +21,7 @@ public sealed record CreateMemberRequest
     public string? Username { get; init; }
 
     /// <summary>Optional; defaults to "lawyer" when the form omits it.</summary>
-    [RegularExpression("owner|lawyer", ErrorMessage = "role 'owner' veya 'lawyer' olmalıdır.")]
+    [RegularExpression("^[a-z0-9-]{1,50}$", ErrorMessage = "Geçersiz rol.")]
     public string? Role { get; init; }
 
     [MaxLength(200, ErrorMessage = "Ad en fazla 200 karakter olabilir.")]
@@ -35,7 +35,7 @@ public sealed record CreateMemberRequest
 public sealed record ChangeMemberRoleRequest
 {
     [Required(ErrorMessage = "Rol zorunludur.")]
-    [RegularExpression("owner|lawyer", ErrorMessage = "role 'owner' veya 'lawyer' olmalıdır.")]
+    [RegularExpression("^[a-z0-9-]{1,50}$", ErrorMessage = "Geçersiz rol.")]
     public string? Role { get; init; }
 }
 

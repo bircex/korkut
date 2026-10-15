@@ -17,7 +17,7 @@ namespace Korkut.Api.Controllers;
 public sealed class ExportController(IExportService export) : ControllerBase
 {
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.DocumentsRead)]
     public IActionResult Export([FromBody] ExportDocumentRequest body)
     {
         var document = export.Export(body);

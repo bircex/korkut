@@ -25,4 +25,11 @@ public sealed class UserRepository(DbContext db) : Repository<User>(db), IUserRe
         => Scoped(officeId).AsNoTracking()
             .Where(u => u.Role == Roles.OfficeOwner && u.Id != excludingId)
             .AnyAsync(ct);
+
+    public async Task<IReadOnlyDictionary<string, int>> CountByRoleAsync(Guid officeId, CancellationToken ct = default)
+        => await Db.Set<User>().AsNoTracking()
+            .Where(u => u.OfficeId == officeId)
+            .GroupBy(u => u.Role)
+            .Select(g => new { Role = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Role, x => x.Count, ct);
 }

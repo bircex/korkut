@@ -40,7 +40,7 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Organization.Entities.RefreshToken> RefreshTokens => Set<Korkut.Organization.Entities.RefreshToken>();
 
-    public DbSet<Organization.Entities.OfficeRole> OfficeCustomRoles => Set<Korkut.Organization.Entities.OfficeRole>();
+    public DbSet<Organization.Entities.OfficeRole> OfficeRoles => Set<Korkut.Organization.Entities.OfficeRole>();
 
     public DbSet<Clients.Entities.Client> Clients => Set<Korkut.Clients.Entities.Client>();
 

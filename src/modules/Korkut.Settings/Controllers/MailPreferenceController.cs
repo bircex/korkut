@@ -12,7 +12,7 @@ namespace Korkut.Settings.Controllers;
 public sealed class MailPreferenceController(IMailPreferenceService preferences) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.OfficeSettings)]
     public async Task<IActionResult> Get(CancellationToken ct)
         => (await preferences.GetAsync(ct)).ToActionResult();
 

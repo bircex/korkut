@@ -4,10 +4,12 @@ namespace Korkut.Contract.Organization;
 
 /// <summary>
 /// The signed-in user as the client's session probe expects it (Username repeats the e-mail, or
-/// is the installation admin's user name).
+/// is the installation admin's user name). <paramref name="Permissions"/> is what the member's role
+/// grants, so the app shows only what they may use; the server checks every call regardless.
 /// </summary>
 public sealed record ProfileResponse(
-    string Username, string Email, string? FullName, string? BarRegistryNo, string? Office, string Role);
+    string Username, string Email, string? FullName, string? BarRegistryNo, string? Office, string Role,
+    string RoleName, IReadOnlyList<string> Permissions);
 
 /// <summary>Body for the caller updating their own profile.</summary>
 public sealed record UpdateProfileRequest

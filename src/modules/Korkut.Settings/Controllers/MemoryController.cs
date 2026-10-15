@@ -15,12 +15,12 @@ namespace Korkut.Settings.Controllers;
 public sealed class MemoryController(IMemoryService memory) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> List(CancellationToken ct)
         => (await memory.ListAsync(ct)).ToActionResult();
 
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Add([FromBody] CreateMemoryRequest body, CancellationToken ct)
         => (await memory.AddAsync(body, ct)).ToActionResult(m => Created($"/api/memory/{m.Id}", m));
 

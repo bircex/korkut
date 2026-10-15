@@ -18,37 +18,37 @@ public sealed class DraftDocumentsController(IDocumentAppService docs) : Control
     /// <summary>Every drafted document in the office (the SPA's Belgeler list). Bare array.
     /// Own path (NOT /api/documents): that one is the operational evrak library.</summary>
     [HttpGet("/api/draft-documents")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.DocumentsRead)]
     public async Task<IActionResult> List(CancellationToken ct)
         => Ok(await docs.ListAsync(ct));
 
     [HttpGet("/api/sessions/{sessionId:guid}/document")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.DocumentsRead)]
     public async Task<IActionResult> ForSession(Guid sessionId, CancellationToken ct)
         => Ok(await docs.ForSessionAsync(sessionId, ct));
 
     [HttpPost("{docId:guid}/draft")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.DocumentsWrite)]
     public async Task<IActionResult> Draft(Guid docId, [FromBody] DraftRequest body, CancellationToken ct)
         => Ok(await docs.DraftAsync(docId, body.Instruction!, body.PetitionType, ct));
 
     [HttpPost("{docId:guid}/accept")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.DocumentsWrite)]
     public async Task<IActionResult> Accept(Guid docId, CancellationToken ct)
         => Ok(await docs.AcceptAsync(docId, ct));
 
     [HttpPost("{docId:guid}/revert")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.DocumentsWrite)]
     public async Task<IActionResult> Revert(Guid docId, CancellationToken ct)
         => Ok(await docs.RevertAsync(docId, ct));
 
     [HttpPut("{docId:guid}")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.DocumentsWrite)]
     public async Task<IActionResult> Save(Guid docId, [FromBody] SaveDocumentRequest body, CancellationToken ct)
         => Ok(await docs.SaveAsync(docId, body.Title!, body.ContentMd!, ct));
 
     [HttpGet("{docId:guid}/export")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.DocumentsRead)]
     public async Task<IActionResult> Export(Guid docId, [FromQuery] string? format, CancellationToken ct)
     {
         var e = await docs.ExportAsync(docId, format, ct);

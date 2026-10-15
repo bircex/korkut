@@ -22,12 +22,12 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
         new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> List([FromQuery] int? limit, [FromQuery] int? offset, CancellationToken ct)
         => Ok(await sessions.ListAsync(limit, offset, ct));
 
     [HttpPost]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Create([FromQuery] Guid? matterId, CancellationToken ct)
     {
         var brief = await sessions.CreateAsync(matterId, ct);
@@ -35,17 +35,17 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
         => Ok(await sessions.GetAsync(id, ct));
 
     [HttpPatch("{id:guid}")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Rename(Guid id, [FromBody] RenameSessionRequest body, CancellationToken ct)
         => Ok(await sessions.RenameAsync(id, body.Title!, ct));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await sessions.DeleteAsync(id, ct);
@@ -53,12 +53,12 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
     }
 
     [HttpPost("{id:guid}/clone")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Clone(Guid id, CancellationToken ct)
         => Ok(await sessions.CloneAsync(id, ct));
 
     [HttpPost("{id:guid}/upload")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Upload(Guid id, CancellationToken ct)
     {
         if (!Request.HasFormContentType)
@@ -79,12 +79,12 @@ public sealed class SessionsController(ISessionAppService sessions, IChatAppServ
     }
 
     [HttpPost("{id:guid}/chat")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Chat(Guid id, [FromBody] ChatRequest body, CancellationToken ct)
         => Ok(await chat.ChatAsync(id, body.Text!, ct));
 
     [HttpPost("{id:guid}/chat/stream")]
-    [Authorize(Policy = Permissions.MattersWrite)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> ChatStream(Guid id, [FromBody] ChatRequest body, CancellationToken ct)
     {
         Response.Headers.ContentType = "text/event-stream";

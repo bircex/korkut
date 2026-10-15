@@ -13,7 +13,8 @@ namespace Korkut.Organization.Services;
 /// empty profile, it is a dead session, so it reads as Unauthorized. Every call RETURNS a Result.
 /// </summary>
 public sealed class ProfileService(
-    IUserRepository users, IOfficeRepository offices, IUnitOfWork unitOfWork, ICurrentUser currentUser) : IProfileService
+    IUserRepository users, IOfficeRepository offices, IOfficeRoleRepository roles, IRolePermissions rolePermissions,
+    IUnitOfWork unitOfWork, ICurrentUser currentUser) : IProfileService
 {
     public Task<Result<ProfileResponse>> GetAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -41,8 +42,11 @@ public sealed class ProfileService(
     private async Task<ProfileResponse> ToResponseAsync(Guid officeId, User self, CancellationToken ct)
     {
         var office = await offices.FindAsync(officeId, ct);
+        var role = await roles.FindAsync(officeId, self.Role, ct);
+        var roleName = role?.Name ?? Roles.Names.GetValueOrDefault(self.Role, self.Role);
+        var permissions = await rolePermissions.ForRoleAsync(officeId, self.Role, ct);
         return new ProfileResponse(
-            self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role);
+            self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role, roleName, [.. permissions.Order()]);
     }
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

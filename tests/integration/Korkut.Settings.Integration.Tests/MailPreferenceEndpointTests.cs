@@ -36,10 +36,9 @@ public class MailPreferenceEndpointTests(KorkutApiFactory factory)
         Assert.False(saved.GetProperty("notifications_enabled").GetBoolean());
         Assert.Equal("bildirim@buro.test", saved.GetProperty("notify_email").GetString());
 
-        // A lawyer can read but not edit (403 on PUT; can_edit false).
+        // Notification mail is an office setting: a lawyer neither reads nor changes it.
         var lawyer = factory.ClientFor(office, owner, Roles.Lawyer);
-        var lawyerView = await lawyer.GetFromJsonAsync<JsonElement>("/api/mail-preferences", Json);
-        Assert.False(lawyerView.GetProperty("can_edit").GetBoolean());
+        Assert.Equal(HttpStatusCode.Forbidden, (await lawyer.GetAsync("/api/mail-preferences")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,
             (await lawyer.PutAsJsonAsync("/api/mail-preferences", new { notificationsEnabled = true }, Json)).StatusCode);
     }

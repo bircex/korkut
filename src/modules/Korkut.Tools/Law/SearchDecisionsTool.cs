@@ -45,7 +45,7 @@ public sealed class SearchDecisionsTool(ILawClientsSearchService search) : IAgen
 
     public string? RequiresKey => null; // always offered; a source whose key is missing errors at runtime
 
-    public string? RequiredPermission => Permissions.DocumentsRead;
+    public string? RequiredPermission => Permissions.ResearchUse;
 
     public async Task<ToolResult> InvokeAsync(JsonElement arguments, AgentToolContext context, CancellationToken ct = default)
     {

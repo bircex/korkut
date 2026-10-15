@@ -16,7 +16,7 @@ namespace Korkut.LawClients.Controllers;
 public sealed class LegalController(ILawClientsSearchService search, ILawClientsDocumentService documents) : ControllerBase
 {
     [HttpGet("documents")]
-    [Authorize(Policy = Permissions.DocumentsRead)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> GetDocument(
         [FromQuery] string? source, [FromQuery] string? id, [FromQuery] string? articleId,
         [FromQuery] int? page, CancellationToken ct)
@@ -30,7 +30,7 @@ public sealed class LegalController(ILawClientsSearchService search, ILawClients
     }
 
     [HttpGet("madde-tree")]
-    [Authorize(Policy = Permissions.DocumentsRead)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> GetMaddeTree([FromQuery] string? mevzuatId, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(mevzuatId))
@@ -42,7 +42,7 @@ public sealed class LegalController(ILawClientsSearchService search, ILawClients
     }
 
     [HttpGet("search")]
-    [Authorize(Policy = Permissions.DocumentsRead)]
+    [Authorize(Policy = Permissions.ResearchUse)]
     public async Task<IActionResult> Search(
         [FromQuery] string? source,
         [FromQuery] string? query,

@@ -17,6 +17,7 @@ namespace Korkut.Organization.Services;
 /// </summary>
 public sealed partial class InviteService(
     IInviteRepository repository,
+    IRoleService roles,
     IInviteResolver resolver,
     IUserRepository users,
     IOfficeRepository offices,
@@ -44,9 +45,15 @@ public sealed partial class InviteService(
         var rawToken = tokenHasher.NewRawToken();
         var result = await InScopeAsync(currentUser.OfficeId, async office =>
         {
+            var role = request.Role ?? Roles.Lawyer;
+            if (!await roles.ExistsAsync(office, role, ct))
+            {
+                return Result<InviteCreatedResponse>.Unprocessable("Böyle bir rol yok.");
+            }
+
             var now = clock.UtcNow;
             var invite = new Invite(
-                office, email, request.Role ?? Roles.Lawyer,
+                office, email, role,
                 tokenHasher.Hash(rawToken), now + Lifetime, currentUser.UserId, now, fullName);
             await repository.AddAsync(invite, ct);
             return Result<InviteCreatedResponse>.Ok(new InviteCreatedResponse(

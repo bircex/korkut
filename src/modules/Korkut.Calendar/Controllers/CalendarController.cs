@@ -17,14 +17,14 @@ namespace Korkut.Calendar.Controllers;
 public sealed class CalendarController(ICalendarService calendar) : ControllerBase
 {
     [HttpGet("events")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.AgendaRead)]
     public async Task<IActionResult> List(
         [FromQuery] DateTimeOffset? start, [FromQuery] DateTimeOffset? end,
         [FromQuery] string? category, [FromQuery] Guid? matterId, CancellationToken ct)
         => (await calendar.ListEntriesAsync(start, end, category, matterId, ct)).ToListActionResult();
 
     [HttpGet("upcoming")]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.AgendaRead)]
     public async Task<IActionResult> Upcoming([FromQuery] int? days, CancellationToken ct)
         => (await calendar.AgendaAsync(days ?? 14, ct)).ToActionResult();
 }

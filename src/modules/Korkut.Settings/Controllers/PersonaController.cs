@@ -12,7 +12,7 @@ namespace Korkut.Settings.Controllers;
 public sealed class PersonaController(IPersonaService persona) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = Permissions.MattersRead)]
+    [Authorize(Policy = Permissions.ChatUse)]
     public async Task<IActionResult> Get(CancellationToken ct)
         => (await persona.GetAsync(ct)).ToActionResult();
 
