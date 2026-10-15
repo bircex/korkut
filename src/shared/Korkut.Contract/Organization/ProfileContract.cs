@@ -9,7 +9,7 @@ namespace Korkut.Contract.Organization;
 /// </summary>
 public sealed record ProfileResponse(
     string Username, string Email, string? FullName, string? BarRegistryNo, string? Office, string Role,
-    string RoleName, IReadOnlyList<string> Permissions);
+    string RoleName, IReadOnlyList<string> Permissions, Guid Id);
 
 /// <summary>Body for the caller updating their own profile.</summary>
 public sealed record UpdateProfileRequest

@@ -1,10 +1,27 @@
 import { useEffect, useState } from "react";
-import { api, type Member, type Task } from "../api";
+import { api, type Member, type Task, type User } from "../api";
 import { navigate, useSearch } from "../router";
 import { Modal } from "./Modal";
 
 // Görevler — to-dos assigned to office members, optionally due-dated. A first slice: create,
-// assign, mark done, delete, and filter open vs. all.
+// assign, mark done, delete, and filter open vs. all. The list is already only what the member may
+// see (their matters' tasks and the ones naming them); "Kapsam" narrows it further.
+
+type Scope = "" | "bana" | "benim" | "dosya";
+
+const SCOPES: { value: Scope; label: string }[] = [
+  { value: "", label: "Görebildiklerim" },
+  { value: "bana", label: "Bana atananlar" },
+  { value: "benim", label: "Açtıklarım" },
+  { value: "dosya", label: "Dosyalarımdakiler" },
+];
+
+function inScope(t: Task, scope: Scope, me: string | undefined): boolean {
+  if (scope === "bana") return me !== undefined && String(t.assignee_id) === me;
+  if (scope === "benim") return me !== undefined && t.created_by === me;
+  if (scope === "dosya") return t.matter_id != null;
+  return true;
+}
 
 const input =
   "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900";
@@ -15,11 +32,19 @@ function fmtDate(iso: string | null): string {
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
-export function TasksPanel() {
-  // "Tamamlananları da göster" filtresi URL'de yaşar: /gorevler?tum=1.
+export function TasksPanel({ user }: { user: User }) {
+  // Filtreler URL'de yaşar: /gorevler?tum=1&kapsam=bana.
   const search = useSearch();
-  const showAll = new URLSearchParams(search).has("tum");
-  const setShowAll = (v: boolean) => navigate(v ? "/gorevler?tum=1" : "/gorevler", { replace: true });
+  const params = new URLSearchParams(search);
+  const showAll = params.has("tum");
+  const scope = (SCOPES.find((s) => s.value === params.get("kapsam"))?.value ?? "") as Scope;
+  const go = (all: boolean, sc: Scope) => {
+    const q = new URLSearchParams();
+    if (all) q.set("tum", "1");
+    if (sc) q.set("kapsam", sc);
+    navigate(q.toString() ? `/gorevler?${q}` : "/gorevler", { replace: true });
+  };
+  const setShowAll = (v: boolean) => go(v, scope);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [adding, setAdding] = useState(false);
@@ -46,6 +71,8 @@ export function TasksPanel() {
       .then((d) => setTasks(d.items))
       .catch(() => {});
   }
+
+  const shown = tasks.filter((t) => inScope(t, scope, user.id));
 
   async function add() {
     const t = title.trim();
@@ -83,6 +110,20 @@ export function TasksPanel() {
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <h1 className="text-lg font-bold text-zinc-900">Görevler</h1>
         <label className="ml-auto flex items-center gap-1.5 text-[13px] text-zinc-600">
+          Kapsam
+          <select
+            value={scope}
+            onChange={(e) => go(showAll, e.target.value as Scope)}
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-[13px] text-zinc-800 outline-none focus:border-zinc-900"
+          >
+            {SCOPES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5 text-[13px] text-zinc-600">
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
           Tamamlananları da göster
         </label>
@@ -96,16 +137,17 @@ export function TasksPanel() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-4">
-          {tasks.length === 0 ? (
+          {shown.length === 0 ? (
             <p className="text-[13px] text-zinc-400">Görev yok.</p>
           ) : (
             <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
-              {tasks.map((t) => (
+              {shown.map((t) => (
                 <div key={t.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                   <input
                     type="checkbox"
                     checked={t.status === "done"}
                     onChange={() => toggleDone(t)}
+                    aria-label={`${t.title}: tamamlandı`}
                     className="shrink-0"
                   />
                   <div className="min-w-0 flex-1">

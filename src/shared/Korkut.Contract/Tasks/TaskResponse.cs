@@ -6,4 +6,4 @@ public sealed record TaskResponse(
     Guid? MatterId, Guid? AssigneeId, string? AssigneeName, Guid? ClientId,
     DateTimeOffset? DueDate, DateTimeOffset? EndAt, bool AllDay, string? Location,
     string? Rrule, int? RemindBeforeMin, string ReminderStatus,
-    DateTimeOffset? CompletedAt, DateTimeOffset CreatedAt);
+    DateTimeOffset? CompletedAt, DateTimeOffset CreatedAt, Guid? CreatedBy = null);

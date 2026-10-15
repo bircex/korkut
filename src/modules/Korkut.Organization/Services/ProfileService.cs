@@ -46,7 +46,7 @@ public sealed class ProfileService(
         var roleName = role?.Name ?? Roles.Names.GetValueOrDefault(self.Role, self.Role);
         var permissions = await rolePermissions.ForRoleAsync(officeId, self.Role, ct);
         return new ProfileResponse(
-            self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role, roleName, [.. permissions.Order()]);
+            self.Email, self.Email, self.FullName, self.BarRegistryNo, office?.Name, self.Role, roleName, [.. permissions.Order()], self.Id);
     }
 
     private Task<T> InScopeAsync<T>(Func<Guid, Task<T>> work, CancellationToken ct)

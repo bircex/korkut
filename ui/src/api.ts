@@ -7,6 +7,7 @@ export type User = {
   role_name: string;
   office: string | null;
   permissions: string[];
+  id?: string;
 };
 export type Member = {
   id: number;
@@ -267,6 +268,7 @@ export type Task = {
   rrule: string | null;
   remind_before_min: number | null;
   reminder_status: string;
+  created_by?: string | null;
 };
 
 // Body for creating an agenda record (görev / hatırlatma / randevu).
