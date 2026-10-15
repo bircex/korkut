@@ -18,18 +18,26 @@ public static class SpaHosting
         "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; " +
         "object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
 
-    public static WebApplication UseKorkutSpa(this WebApplication app)
+    private static readonly StaticFileOptions Files = new() { OnPrepareResponse = ctx => PrepareResponse(ctx.Context) };
+
+    /// <summary>The app's files, served before authentication: the sign-in screen is one of them.</summary>
+    public static WebApplication UseKorkutSpaFiles(this WebApplication app)
     {
-        var options = new StaticFileOptions { OnPrepareResponse = ctx => PrepareResponse(ctx.Context) };
-        app.UseStaticFiles(options);
-        app.MapFallbackToFile("index.html", options);
+        app.UseStaticFiles(Files);
+        return app;
+    }
+
+    /// <summary>Client-side routes get the app shell; the app decides what a signed-out visitor sees.</summary>
+    public static WebApplication MapKorkutSpa(this WebApplication app)
+    {
+        app.MapFallbackToFile("index.html", Files).AllowAnonymous();
         // An /api path no controller claims is a missing endpoint, not a page: answer 404 rather
         // than the app shell, or a client calling a wrong URL gets HTML with a 200.
         app.MapFallback("/api/{**rest}", context =>
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return Task.CompletedTask;
-        });
+        }).AllowAnonymous();
         return app;
     }
 

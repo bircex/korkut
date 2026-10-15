@@ -84,7 +84,8 @@ public static class WebSetup
         app.UseMiddleware<Korkut.Web.Middleware.CorrelationIdMiddleware>();
         app.UseCors(DefaultCorsPolicy);
         app.UseRateLimiter();
-        app.MapOpenApi();
+        // The API description is public anyway (the code is open source).
+        app.MapOpenApi().AllowAnonymous();
         return app;
     }
 }

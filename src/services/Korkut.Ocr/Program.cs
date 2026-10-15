@@ -48,8 +48,8 @@ app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Korkut.Ocr", status = "ok" }));
 app.MapControllers();
-app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/live").AllowAnonymous();
+app.MapHealthChecks("/health/ready").AllowAnonymous();
 
 app.Run();
 
