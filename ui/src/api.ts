@@ -979,6 +979,25 @@ export type Role = {
 export type RolesResponse = { catalog: PermissionGroup[]; roles: Role[] };
 export type SaveRole = { name: string; description?: string | null; permissions: string[] };
 
+export type AuditEvent = {
+  id: string;
+  at: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  details: string | null;
+};
+export type AuditPage = { items: AuditEvent[]; total: number };
+
+export const auditApi = {
+  list: (limit = 50, offset = 0, action?: string) =>
+    request<AuditPage>(
+      `/api/audit?limit=${limit}&offset=${offset}${action ? `&action=${encodeURIComponent(action)}` : ""}`,
+    ),
+};
+
 export const rolesApi = {
   list: () => request<RolesResponse>("/api/roles"),
   create: (body: SaveRole) => request<Role>("/api/roles", { method: "POST", ...json(body) }),

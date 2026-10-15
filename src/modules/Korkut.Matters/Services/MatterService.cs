@@ -1,6 +1,7 @@
 using Korkut.Matters.Repositories;
 using Korkut.Matters.Entities;
 using Korkut.Contract;
+using Korkut.Contract.Audit;
 using Korkut.Contract.Clients;
 using Korkut.Contract.Courts;
 using Korkut.Contract.Deadlines;
@@ -21,7 +22,7 @@ namespace Korkut.Matters.Services;
 internal sealed class MatterService(
     IMatterRepository matters, IMatterMemberRepository members, IMatterAccess access, IHearingLookup hearings,
     IDeadlineLookup deadlines, ICourtLookup courts, IClientLookup clients, IUnitOfWork unitOfWork,
-    ICurrentUser currentUser, IClock clock) : IMatterService
+    ICurrentUser currentUser, IAuditLog audit, IClock clock) : IMatterService
 {
     public Task<Result<IReadOnlyList<MatterResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -48,6 +49,13 @@ internal sealed class MatterService(
                 ? (await clients.BriefAsync(office, clientId, ct))?.Masked(
                     perms.Contains(Permissions.ClientsContact), perms.Contains(Permissions.ClientsIdentity))
                 : null;
+            if (client is not null && AuditActions.ShownDetails(client) is { Count: > 0 } shown)
+            {
+                await audit.WriteAsync(new AuditEntry(
+                    office, currentUser.UserId, null, null, AuditActions.ClientDetailsViewed, "client", client.Id, null,
+                    new { fields = shown, matter_id = matter.Id }), ct);
+            }
+
             return Result<MatterDetailResponse>.Ok(new MatterDetailResponse(
                 matter.Id, matter.Title, matter.ClientNameSnapshot, matter.FileNo, matter.CourtNameSnapshot,
                 matter.CaseType, matter.Counterparty, matter.Status, matter.OpenedAt, matter.UpdatedAt,

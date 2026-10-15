@@ -8,6 +8,7 @@ import {
   Cpu,
   TelegramLogo,
   ShieldCheck,
+  ClockCounterClockwise,
   EnvelopeSimple,
   PencilSimpleLine,
   Sparkle,
@@ -17,6 +18,7 @@ import {
 import { AiSettings } from "./AiSettings";
 import { TelegramLinkSection, TelegramSettings } from "./TelegramSettings";
 import { RolesSettings } from "./RolesSettings";
+import { AuditLog } from "./AuditLog";
 import { can, P } from "../permissions";
 import { MailPreferenceSettings } from "./MailPreferenceSettings";
 import { MemorySettings } from "./MemorySettings";
@@ -479,7 +481,8 @@ type Tab =
   | "ai"
   | "telegram"
   | "notifications"
-  | "roles";
+  | "roles"
+  | "audit";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
@@ -491,6 +494,7 @@ const TAB_TITLE: Record<Tab, string> = {
   telegram: "Telegram",
   notifications: "Bildirimler",
   roles: "Roller",
+  audit: "Erişim kayıtları",
 };
 
 // URL slug per tab, e.g. /ayarlar/model — lets a tab be bookmarked, shared, or survive a reload.
@@ -504,6 +508,7 @@ const TAB_SLUG: Record<Tab, string> = {
   telegram: "telegram",
   notifications: "bildirimler",
   roles: "roller",
+  audit: "erisim-kayitlari",
 };
 
 function tabFromPath(path: string): Tab {
@@ -516,7 +521,7 @@ function tabFromPath(path: string): Tab {
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
   { label: "Hesap", ids: ["account", "members", "roles"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
-  { label: "Sistem", ids: ["ai", "telegram", "notifications"] },
+  { label: "Sistem", ids: ["ai", "telegram", "notifications", "audit"] },
 ];
 
 // Sekme ikonları — Phosphor set'inden (bkz. ../icons.ts).
@@ -530,6 +535,7 @@ const TAB_ICON: Record<Tab, Icon> = {
   telegram: TelegramLogo,
   notifications: EnvelopeSimple,
   roles: ShieldCheck,
+  audit: ClockCounterClockwise,
 };
 
 function TabIcon({ id }: { id: Tab }) {
@@ -619,6 +625,7 @@ export function Settings({ user }: { user: User }) {
       { id: "ai", label: "Yapay zeka", show: can(user, P.integrationsManage) },
       { id: "telegram", label: "Telegram", show: can(user, P.integrationsManage) },
       { id: "notifications", label: "Bildirimler", show: can(user, P.officeSettings) },
+      { id: "audit", label: "Erişim kayıtları", show: can(user, P.auditRead) },
     ] as { id: Tab; label: string; show: boolean }[]
   ).filter((t) => t.show);
 
@@ -709,6 +716,7 @@ export function Settings({ user }: { user: User }) {
           {tab === "ai" && can(user, P.integrationsManage) && <AiSettings />}
           {tab === "telegram" && can(user, P.integrationsManage) && <TelegramSettings />}
           {tab === "notifications" && can(user, P.officeSettings) && <MailPreferenceSettings />}
+          {tab === "audit" && can(user, P.auditRead) && <AuditLog />}
         </div>
       </div>
     </div>

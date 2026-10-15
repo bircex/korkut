@@ -3,6 +3,7 @@ using Korkut.Organization.Repositories;
 using Korkut.Organization.Entities;
 using Korkut.Organization;
 using Korkut.Contract;
+using Korkut.Contract.Audit;
 using Korkut.Contract.Organization;
 using Korkut.Core;
 
@@ -14,7 +15,8 @@ namespace Korkut.Organization.Services;
 /// never allowed to remove themselves. Every call RETURNS a <see cref="Result"/>.
 /// </summary>
 public sealed class MemberService(
-    IUserRepository repository, IRoleService roles, IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMemberService
+    IUserRepository repository, IRoleService roles, IUnitOfWork unitOfWork, ICurrentUser currentUser, IAuditLog audit,
+    IClock clock) : IMemberService
 {
     public Task<Result<IReadOnlyList<MemberResponse>>> ListAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -57,8 +59,12 @@ public sealed class MemberService(
                 return Result.Conflict("Büroda en az bir yönetici kalmalıdır.");
             }
 
+            var before = member.Role;
             member.ChangeRole(role);
             await repository.SaveChangesAsync(ct);
+            await audit.WriteAsync(new AuditEntry(
+                office, currentUser.UserId, null, null, AuditActions.MemberRoleChanged, "user", memberId,
+                new { role = before }, new { role }), ct);
             return Result.Ok();
         }, ct);
 
@@ -81,7 +87,14 @@ public sealed class MemberService(
                 return Result.Conflict("Büroda en az bir yönetici kalmalıdır.");
             }
 
-            return await repository.RemoveAsync(office, memberId, ct) ? Result.Ok() : Result.NotFound("Üye bulunamadı.");
+            if (!await repository.RemoveAsync(office, memberId, ct))
+            {
+                return Result.NotFound("Üye bulunamadı.");
+            }
+
+            await audit.WriteAsync(new AuditEntry(
+                office, currentUser.UserId, null, null, AuditActions.MemberRemoved, "user", memberId, new { role = member.Role }, null), ct);
+            return Result.Ok();
         }, ct);
 
     private MemberResponse ToResponse(User u) =>

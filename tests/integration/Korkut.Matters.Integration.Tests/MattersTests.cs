@@ -74,7 +74,13 @@ public class MattersTests(PostgresFixture pg) : IClassFixture<PostgresFixture>, 
         return new(new MatterRepository(db), members, new MatterAccess(members, caller),
             new HearingLookup(new HearingRepository(db), db), new NoDeadlines(),
             new CourtLookup(new CourtRepository(db)), new ClientLookup(db),
-            new DirectUnitOfWork(), caller, new Clock());
+            new DirectUnitOfWork(), caller, new NoAudit(), new Clock());
+    }
+
+    // The audit trail has its own tests.
+    private sealed class NoAudit : Korkut.Contract.Audit.IAuditLog
+    {
+        public Task WriteAsync(Korkut.Contract.Audit.AuditEntry entry, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     // These tests cover the matter/court/hearing paths, not deadline composition.

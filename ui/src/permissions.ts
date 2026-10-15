@@ -19,6 +19,7 @@ export const P = {
   rolesManage: "roles.manage",
   officeSettings: "office.settings",
   integrationsManage: "integrations.manage",
+  auditRead: "audit.read",
 } as const;
 
 export function can(user: Pick<User, "permissions"> | null | undefined, permission: string): boolean {

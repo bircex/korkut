@@ -1,5 +1,6 @@
 using Korkut.Finance.Repositories;
 using Korkut.Contract;
+using Korkut.Contract.Audit;
 using Korkut.Contract.Finance;
 using Korkut.Core;
 using Korkut.Finance.Entities;
@@ -12,12 +13,15 @@ namespace Korkut.Finance.Services;
 /// </summary>
 internal sealed class FinanceService(
     IInvoiceRepository invoices, IExpenseRepository expenses,
-    IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IFinanceService, IFinanceLookup
+    IUnitOfWork unitOfWork, ICurrentUser currentUser, IAuditLog audit, IClock clock) : IFinanceService, IFinanceLookup
 {
     // ---- Invoices ----
     public Task<Result<IReadOnlyList<InvoiceResponse>>> ListInvoicesAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
-            Result<IReadOnlyList<InvoiceResponse>>.Ok((await invoices.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
+        {
+            await RecordViewAsync(office, "invoices", ct);
+            return Result<IReadOnlyList<InvoiceResponse>>.Ok((await invoices.ListAsync(office, ct)).Select(ToResponse).ToList());
+        }, ct);
 
     public Task<Result<InvoiceResponse>> CreateInvoiceAsync(CreateInvoiceRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -51,7 +55,10 @@ internal sealed class FinanceService(
     // ---- Expenses ----
     public Task<Result<IReadOnlyList<ExpenseResponse>>> ListExpensesAsync(CancellationToken ct = default)
         => InScopeAsync(async office =>
-            Result<IReadOnlyList<ExpenseResponse>>.Ok((await expenses.ListAsync(office, ct)).Select(ToResponse).ToList()), ct);
+        {
+            await RecordViewAsync(office, "expenses", ct);
+            return Result<IReadOnlyList<ExpenseResponse>>.Ok((await expenses.ListAsync(office, ct)).Select(ToResponse).ToList());
+        }, ct);
 
     public Task<Result<ExpenseResponse>> CreateExpenseAsync(CreateExpenseRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
@@ -70,7 +77,16 @@ internal sealed class FinanceService(
 
     // ---- Roll-up ----
     public Task<Result<FinanceSummaryResponse>> GetSummaryAsync(CancellationToken ct = default)
-        => InScopeAsync(async office => Result<FinanceSummaryResponse>.Ok(await TotalsAsync(office, ct)), ct);
+        => InScopeAsync(async office =>
+        {
+            await RecordViewAsync(office, "summary", ct);
+            return Result<FinanceSummaryResponse>.Ok(await TotalsAsync(office, ct));
+        }, ct);
+
+    /// <summary>Every look at the office's money is recorded in the audit trail.</summary>
+    private Task RecordViewAsync(Guid office, string what, CancellationToken ct)
+        => audit.WriteAsync(new AuditEntry(
+            office, currentUser.UserId, null, null, AuditActions.FinanceViewed, "finance", null, null, new { what }), ct);
 
     /// <summary>Cross-module read used by the reports dashboard, in the caller's already-open scope.</summary>
     public Task<FinanceSummaryResponse> GetTotalsAsync(Guid officeId, CancellationToken ct = default)

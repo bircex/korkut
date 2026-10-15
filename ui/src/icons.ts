@@ -65,4 +65,6 @@ export {
   TelegramLogo,
   // Ayarlar → Roller
   ShieldCheck,
+  // Ayarlar → Erişim kayıtları
+  ClockCounterClockwise,
 } from "@phosphor-icons/react";
