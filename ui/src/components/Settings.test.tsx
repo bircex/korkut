@@ -56,3 +56,32 @@ describe("ChangePassword", () => {
     expect(await axeComponent(document.body)).toHaveNoViolations();
   });
 });
+
+describe("Settings tabs", () => {
+  const base = { username: "u", email: "u@ornek.av.tr", full_name: "Üye", bar_registry_no: null, office: "Büro" };
+
+  it("shows a reader only what a reader may use", async () => {
+    const { Settings } = await import("./Settings");
+    render(<Settings user={{ ...base, role: "reader", role_name: "Okuyucu", permissions: ["matters.read", "chat.use"] }} />);
+
+    const labels = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(labels).toContain("Hesap");
+    expect(labels).toContain("Kişilik");
+    expect(labels).not.toContain("Üyeler");
+    expect(labels).not.toContain("Roller");
+    expect(labels).not.toContain("Yapay zeka");
+    expect(screen.getByText("Okuyucu")).toBeInTheDocument();
+  });
+
+  it("shows the owner every tab", async () => {
+    const { Settings } = await import("./Settings");
+    render(
+      <Settings
+        user={{ ...base, role: "owner", role_name: "Yönetici", permissions: ["members.manage", "roles.manage", "chat.use", "integrations.manage", "office.settings"] }}
+      />,
+    );
+
+    const labels = screen.getAllByRole("button").map((b) => b.textContent);
+    for (const tab of ["Üyeler", "Roller", "Yapay zeka", "Telegram", "Bildirimler"]) expect(labels).toContain(tab);
+  });
+});

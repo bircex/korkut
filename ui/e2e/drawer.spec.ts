@@ -8,7 +8,8 @@ import { assertNoSeriousA11yViolations } from "./support";
 
 const USER = {
   username: "av", email: "av@example.com", full_name: "Av. Test",
-  bar_registry_no: null, role: "owner", office: "Test Bürosu",
+  bar_registry_no: null, role: "owner", role_name: "Yönetici", office: "Test Bürosu",
+  permissions: ["matters.read", "chat.use", "documents.read", "agenda.read", "research.use"],
 };
 
 const SOURCES = [

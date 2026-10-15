@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { api, ApiError, type Invite, type Member, type StyleFields, type User } from "../api";
+import { api, ApiError, rolesApi, type Invite, type Member, type Role, type StyleFields, type User } from "../api";
 import { navigate, usePath } from "../router";
 import { Button, Field } from "../a11y";
 import {
@@ -7,6 +7,7 @@ import {
   BookmarkSimple,
   Cpu,
   TelegramLogo,
+  ShieldCheck,
   EnvelopeSimple,
   PencilSimpleLine,
   Sparkle,
@@ -15,6 +16,8 @@ import {
 } from "../icons";
 import { AiSettings } from "./AiSettings";
 import { TelegramLinkSection, TelegramSettings } from "./TelegramSettings";
+import { RolesSettings } from "./RolesSettings";
+import { can, P } from "../permissions";
 import { MailPreferenceSettings } from "./MailPreferenceSettings";
 import { MemorySettings } from "./MemorySettings";
 import { PersonaSettings } from "./PersonaSettings";
@@ -28,10 +31,10 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
+function RoleBadge({ name }: { name: string }) {
   return (
     <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
-      {role === "owner" ? "Sahip" : "Üye"}
+      {name}
     </span>
   );
 }
@@ -81,8 +84,10 @@ function BarNoField({ initial }: { initial: string | null }) {
   );
 }
 
-function Members({ isOwner }: { isOwner: boolean }) {
+function Members() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [inviteRole, setInviteRole] = useState("lawyer");
   const [invites, setInvites] = useState<Invite[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -93,8 +98,21 @@ function Members({ isOwner }: { isOwner: boolean }) {
 
   useEffect(() => {
     api.members().then(setMembers).catch(() => {});
-    if (isOwner) api.invites().then(setInvites).catch(() => {});
-  }, [isOwner]);
+    api.invites().then(setInvites).catch(() => {});
+    rolesApi.list().then((r) => setRoles(r.roles)).catch(() => {});
+  }, []);
+
+  const roleName = (key: string) => roles.find((r) => r.key === key)?.name ?? key;
+
+  async function changeRole(m: Member, role: string) {
+    setError("");
+    try {
+      await rolesApi.setMemberRole(m.id, role);
+      setMembers((list) => list.map((x) => (x.id === m.id ? { ...x, role } : x)));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Rol değiştirilemedi");
+    }
+  }
 
   async function remove(m: Member) {
     if (!confirm(`${m.full_name ?? m.username} ofisten çıkarılsın mı?`)) return;
@@ -118,7 +136,7 @@ function Members({ isOwner }: { isOwner: boolean }) {
       const inv = await api.createInvite({
         email: inviteEmail.trim(),
         full_name: inviteName.trim(),
-        role: "lawyer",
+        role: inviteRole,
       });
       setInvites((list) => [inv, ...list]);
       setInviteEmail("");
@@ -170,10 +188,27 @@ function Members({ isOwner }: { isOwner: boolean }) {
                 {m.is_self && <span className="text-zinc-400"> (siz)</span>}
               </span>
               <span className="block truncate text-[12px] text-zinc-400">
-                {m.email} · {m.role === "owner" ? "Sahip" : "Üye"} · {memberStatus(m)}
+                {m.email} · {memberStatus(m)}
               </span>
             </span>
-            {isOwner && !m.is_self && m.is_active && (
+            {m.is_self ? (
+              <span className="shrink-0 text-[12px] text-zinc-500">{roleName(m.role)}</span>
+            ) : (
+              <select
+                aria-label={`${m.full_name ?? m.username} rolü`}
+                value={m.role}
+                onChange={(e) => changeRole(m, e.target.value)}
+                className="shrink-0 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[12px]"
+              >
+                {roles.map((r) => (
+                  <option key={r.key} value={r.key}>
+                    {r.name}
+                  </option>
+                ))}
+                {!roles.some((r) => r.key === m.role) && <option value={m.role}>{m.role}</option>}
+              </select>
+            )}
+            {!m.is_self && m.is_active && (
               <button
                 onClick={() => remove(m)}
                 className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
@@ -185,8 +220,8 @@ function Members({ isOwner }: { isOwner: boolean }) {
         ))}
       </div>
 
-      {isOwner ? (
-        <>
+      {error && !newLink && <p className="mb-3 text-[13px] text-red-600">{error}</p>}
+      <>
           <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
             <p className="m-0 text-[13px] font-medium text-zinc-700">Yeni üye ekle</p>
             <input
@@ -195,6 +230,18 @@ function Members({ isOwner }: { isOwner: boolean }) {
               placeholder="Ad Soyad"
               className={inputCls}
             />
+            <select
+              aria-label="Yeni üyenin rolü"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              className={inputCls}
+            >
+              {roles.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
             <div className="flex items-center gap-2">
               <input
                 type="email"
@@ -242,7 +289,7 @@ function Members({ isOwner }: { isOwner: boolean }) {
                   <div key={i.id} className="flex items-center gap-2 py-1.5 text-[12px]">
                     <span className="min-w-0 flex-1 truncate text-zinc-600">
                       {[i.full_name, i.email].filter(Boolean).join(" · ") || "herkese açık"} ·{" "}
-                      {i.role === "owner" ? "Sahip" : "Üye"} ·{" "}
+                      {roleName(i.role)} ·{" "}
                       {new Date(i.expires_at).toLocaleDateString("tr-TR")} tarihine kadar
                     </span>
                     <button
@@ -261,12 +308,7 @@ function Members({ isOwner }: { isOwner: boolean }) {
               geçerlidir.
             </p>
           </div>
-        </>
-      ) : (
-        <p className="m-0 text-[13px] text-zinc-400">
-          Üye eklemek/çıkarmak yalnızca ofis sahibine açık.
-        </p>
-      )}
+      </>
     </div>
   );
 }
@@ -436,7 +478,8 @@ type Tab =
   | "style"
   | "ai"
   | "telegram"
-  | "notifications";
+  | "notifications"
+  | "roles";
 
 const TAB_TITLE: Record<Tab, string> = {
   account: "Hesap",
@@ -447,6 +490,7 @@ const TAB_TITLE: Record<Tab, string> = {
   ai: "Yapay zeka",
   telegram: "Telegram",
   notifications: "Bildirimler",
+  roles: "Roller",
 };
 
 // URL slug per tab, e.g. /ayarlar/model — lets a tab be bookmarked, shared, or survive a reload.
@@ -459,6 +503,7 @@ const TAB_SLUG: Record<Tab, string> = {
   ai: "yapay-zeka",
   telegram: "telegram",
   notifications: "bildirimler",
+  roles: "roller",
 };
 
 function tabFromPath(path: string): Tab {
@@ -469,7 +514,7 @@ function tabFromPath(path: string): Tab {
 
 // Groups the left-nav tabs for the "Gruplu liste" picker option below.
 const TAB_GROUPS: { label: string; ids: Tab[] }[] = [
-  { label: "Hesap", ids: ["account", "members"] },
+  { label: "Hesap", ids: ["account", "members", "roles"] },
   { label: "Kişiselleştirme", ids: ["persona", "memory", "style"] },
   { label: "Sistem", ids: ["ai", "telegram", "notifications"] },
 ];
@@ -484,6 +529,7 @@ const TAB_ICON: Record<Tab, Icon> = {
   ai: Cpu,
   telegram: TelegramLogo,
   notifications: EnvelopeSimple,
+  roles: ShieldCheck,
 };
 
 function TabIcon({ id }: { id: Tab }) {
@@ -561,22 +607,20 @@ export function ChangePassword() {
 export function Settings({ user }: { user: User }) {
   const path = usePath();
   const tab = tabFromPath(path);
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "account", label: "Hesap" },
-    { id: "members", label: "Üyeler" },
-    // Persona is office-wide; everyone sees it, only the owner can edit (gated server-side).
-    { id: "persona", label: "Kişilik" },
-    { id: "memory", label: "Hafıza" },
-    { id: "style", label: "Stil" },
-    // Model sağlayıcıları ve bildirim tercihi ofis geneli ayarlar — yalnızca ofis sahibi.
-    ...(user.role === "owner"
-      ? [
-          { id: "ai" as Tab, label: "Yapay zeka" },
-          { id: "telegram" as Tab, label: "Telegram" },
-          { id: "notifications" as Tab, label: "Bildirimler" },
-        ]
-      : []),
-  ];
+  // Each tab shows only for the permission its screen needs (the server checks every call too).
+  const tabs: { id: Tab; label: string }[] = (
+    [
+      { id: "account", label: "Hesap", show: true },
+      { id: "members", label: "Üyeler", show: can(user, P.membersManage) },
+      { id: "roles", label: "Roller", show: can(user, P.rolesManage) },
+      { id: "persona", label: "Kişilik", show: can(user, P.chatUse) },
+      { id: "memory", label: "Hafıza", show: can(user, P.chatUse) },
+      { id: "style", label: "Stil", show: can(user, P.chatUse) },
+      { id: "ai", label: "Yapay zeka", show: can(user, P.integrationsManage) },
+      { id: "telegram", label: "Telegram", show: can(user, P.integrationsManage) },
+      { id: "notifications", label: "Bildirimler", show: can(user, P.officeSettings) },
+    ] as { id: Tab; label: string; show: boolean }[]
+  ).filter((t) => t.show);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white text-zinc-900 lg:flex-row">
@@ -646,7 +690,7 @@ export function Settings({ user }: { user: User }) {
             <div>
               <dl className="mb-6 divide-y divide-zinc-950/5 text-sm">
                 <Row label="Hukuk bürosu" value={user.office ?? "—"} />
-                <Row label="Rol" value={<RoleBadge role={user.role} />} />
+                <Row label="Rol" value={<RoleBadge name={user.role_name} />} />
                 <Row label="Kullanıcı adı" value={user.username} />
                 {/* The installation admin signs in with a user name and has no e-mail. */}
                 {user.email.includes("@") && <Row label="E-posta" value={user.email} />}
@@ -657,13 +701,14 @@ export function Settings({ user }: { user: User }) {
               <ChangePassword />
             </div>
           )}
-          {tab === "members" && <Members isOwner={user.role === "owner"} />}
-          {tab === "persona" && <PersonaSettings />}
-          {tab === "memory" && <MemorySettings />}
-          {tab === "style" && <StyleTab />}
-          {tab === "ai" && user.role === "owner" && <AiSettings />}
-          {tab === "telegram" && user.role === "owner" && <TelegramSettings />}
-          {tab === "notifications" && user.role === "owner" && <MailPreferenceSettings />}
+          {tab === "members" && can(user, P.membersManage) && <Members />}
+          {tab === "roles" && can(user, P.rolesManage) && <RolesSettings />}
+          {tab === "persona" && can(user, P.chatUse) && <PersonaSettings />}
+          {tab === "memory" && can(user, P.chatUse) && <MemorySettings />}
+          {tab === "style" && can(user, P.chatUse) && <StyleTab />}
+          {tab === "ai" && can(user, P.integrationsManage) && <AiSettings />}
+          {tab === "telegram" && can(user, P.integrationsManage) && <TelegramSettings />}
+          {tab === "notifications" && can(user, P.officeSettings) && <MailPreferenceSettings />}
         </div>
       </div>
     </div>

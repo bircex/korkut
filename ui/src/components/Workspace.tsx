@@ -19,6 +19,7 @@ import { KararAramaPanel } from "./KararAramaPanel";
 import { KararlarimPanel } from "./KararlarimPanel";
 import { CalculatorsPanel } from "./CalculatorsPanel";
 import { ToolCallCard } from "./ToolCallCard";
+import { can, P } from "../permissions";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
 import { ConfirmDialog } from "../a11y";
@@ -301,23 +302,24 @@ const VIEW_TITLE: Record<SidebarView, string> = {
 
 // Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama, Hesap Makineleri),
 // Sohbetler (ayrı, kendi listesiyle aşağıda).
-const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string }[] }[] = [
+// Each item names the permission its screen needs; a member sees only what they may use.
+const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string; perm?: string }[] }[] = [
   {
     label: "Ofisim",
     items: [
-      { key: "matters", label: "Dosyalar" },
-      { key: "clients", label: "Müvekkiller" },
-      { key: "finance", label: "Mali" },
-      { key: "tasks", label: "Görevler" },
-      { key: "calendar", label: "Takvim" },
-      { key: "docs", label: "Belgeler" },
-      { key: "kararlarim", label: "Kararlarım" },
+      { key: "matters", label: "Dosyalar", perm: P.mattersRead },
+      { key: "clients", label: "Müvekkiller", perm: P.clientsRead },
+      { key: "finance", label: "Mali", perm: P.financeRead },
+      { key: "tasks", label: "Görevler", perm: P.agendaRead },
+      { key: "calendar", label: "Takvim", perm: P.agendaRead },
+      { key: "docs", label: "Belgeler", perm: P.documentsRead },
+      { key: "kararlarim", label: "Kararlarım", perm: P.researchUse },
     ],
   },
   {
     label: "Araçlar",
     items: [
-      { key: "kararArama", label: "Karar Arama" },
+      { key: "kararArama", label: "Karar Arama", perm: P.researchUse },
       { key: "calculators", label: "Hesap Makineleri" },
     ],
   },
@@ -828,7 +830,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                       {user.full_name ?? user.username}
                     </div>
                     <div className="text-[12px] text-zinc-400">
-                      {[user.office, user.role === "owner" ? "Sahip" : "Üye"].filter(Boolean).join(" · ")}
+                      {[user.office, user.role_name].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   <button
@@ -860,7 +862,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
             <div className="fixed inset-0 z-10 bg-black/30 sm:hidden" onClick={() => setSidebarOpen(false)} />
             <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-zinc-200 bg-white sm:static sm:z-auto">
               <div className="flex flex-col gap-3 px-3 pt-3">
-                {NAV_GROUPS.map((g) => (
+                {NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((it) => !it.perm || can(user, it.perm)) }))
+                  .filter((g) => g.items.length > 0)
+                  .map((g) => (
                   <div key={g.label}>
                     <div className="px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                       {g.label}
@@ -894,6 +898,8 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                 ))}
               </div>
 
+              {can(user, P.chatUse) ? (
+              <>
               <div className="mt-3 flex items-center justify-between border-t border-zinc-200 px-4 pb-1 pt-3">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Sohbetler
@@ -993,6 +999,10 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                   </button>
                 )}
               </nav>
+              </>
+              ) : (
+                <div className="flex-1" />
+              )}
               {/* Sol alt: oturum açan kullanıcının profili. */}
               <div className="flex items-center gap-2.5 border-t border-zinc-200 px-3 py-3">
                 <UserAvatar user={user} size={32} />
@@ -1001,7 +1011,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     {user.full_name ?? user.username}
                   </div>
                   <div className="truncate text-[11px] text-zinc-400">
-                    {user.role === "owner" ? "Kurucu" : "Avukat"}
+                    {user.role_name}
                   </div>
                 </div>
               </div>
