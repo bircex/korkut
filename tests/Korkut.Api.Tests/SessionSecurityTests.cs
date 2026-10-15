@@ -52,7 +52,7 @@ public class SessionSecurityTests(WebApplicationFactory<Program> factory) : ICla
     [Fact]
     public async Task Responses_carry_security_headers()
     {
-        var response = await factory.CreateClient().GetAsync("/api/v1/config");
+        var response = await factory.CreateClient().GetAsync("/api/v1/samples");
 
         Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
         Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").Single());

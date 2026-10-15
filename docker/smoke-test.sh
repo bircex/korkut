@@ -80,8 +80,8 @@ done
 check $ready "GET /health/live -> 200 (read-only rootfs)"
 code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/health/ready" 2>/dev/null)
 [ "$code" = "200" ]; check $? "GET /health/ready -> 200"
-body=$(curl -s "http://localhost:$PORT/api/v1/config" 2>/dev/null)
-echo "$body" | grep -q "google_configured"; check $? "GET /api/v1/config serves snake_case contract"
+body=$(curl -s "http://localhost:$PORT/api/v1/samples" 2>/dev/null)
+echo "$body" | grep -q '"total"'; check $? "GET /api/v1/samples serves the paged JSON contract"
 type=$(curl -s -o /dev/null -w '%{content_type}' "http://localhost:$PORT/sohbet/1" 2>/dev/null)
 echo "$type" | grep -q "text/html"; check $? "a client-side route serves the app shell"
 
