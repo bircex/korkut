@@ -24,6 +24,29 @@ internal sealed class TelegramRepository(DbContext db) : ITelegramRepository
             .OrderBy(l => l.LinkedAt)
             .ToListAsync(ct);
 
+    public Task<TelegramGroup?> FindGroupAsync(long chatId, CancellationToken ct = default)
+        => db.Set<TelegramGroup>().SingleOrDefaultAsync(g => g.ChatId == chatId, ct);
+
+    public void Add(TelegramGroup group) => db.Set<TelegramGroup>().Add(group);
+
+    public void Remove(TelegramGroup group) => db.Set<TelegramGroup>().Remove(group);
+
+    public async Task<IReadOnlyList<long>> GroupMembersAsync(long chatId, CancellationToken ct = default)
+        => await db.Set<TelegramGroupMember>().AsNoTracking()
+            .Where(m => m.ChatId == chatId).Select(m => m.TelegramUserId).ToListAsync(ct);
+
+    public async Task AddGroupMemberAsync(Guid officeId, long chatId, long telegramUserId, DateTimeOffset now, CancellationToken ct = default)
+    {
+        if (!await db.Set<TelegramGroupMember>().AnyAsync(m => m.ChatId == chatId && m.TelegramUserId == telegramUserId, ct))
+        {
+            db.Set<TelegramGroupMember>().Add(new TelegramGroupMember(officeId, chatId, telegramUserId, now));
+            await db.SaveChangesAsync(ct);
+        }
+    }
+
+    public Task RemoveGroupMemberAsync(long chatId, long telegramUserId, CancellationToken ct = default)
+        => db.Set<TelegramGroupMember>().Where(m => m.ChatId == chatId && m.TelegramUserId == telegramUserId).ExecuteDeleteAsync(ct);
+
     public void Add(TelegramBot bot) => db.Set<TelegramBot>().Add(bot);
 
     public void Add(TelegramLink link) => db.Set<TelegramLink>().Add(link);

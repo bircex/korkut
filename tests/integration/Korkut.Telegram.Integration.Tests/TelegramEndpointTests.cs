@@ -71,6 +71,12 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
             => Task.FromResult(Files[fileId]);
 
         public Task SendTypingAsync(string token, long chatId, CancellationToken ct = default) => Task.CompletedTask;
+
+        /// <summary>How many each group has, as Telegram would count them (the bot included).</summary>
+        public Dictionary<long, int> MemberCounts { get; } = [];
+
+        public Task<int> GetChatMemberCountAsync(string token, long chatId, CancellationToken ct = default)
+            => Task.FromResult(MemberCounts.GetValueOrDefault(chatId));
     }
 
     /// <summary>
@@ -436,5 +442,103 @@ public class TelegramEndpointTests(KorkutApiFactory factory)
         Assert.StartsWith("«Miras davası» dosyasına geçtim", telegram.Sent[^1].Text);
         await SendAsync(app, office, chatId, "Özet ver");
         Assert.Equal($"{readerId}|False|Özet ver", telegram.Sent[^1].Text);
+    }
+
+    private static Task SayInGroupAsync(
+        WebApplicationFactory<Program> app, Guid office, long groupId, long from, string text,
+        IReadOnlyList<TelegramUser>? joined = null, TelegramUser? left = null)
+        => DeliverAsync(app, office, new TelegramMessage(
+            1, new TelegramUser(from, false, "Üye", null), new TelegramChat(groupId, "group", "Dosya grubu"), text,
+            NewChatMembers: joined, LeftChatMember: left));
+
+    [Fact]
+    public async Task A_group_bound_to_a_matter_answers_only_while_everyone_in_it_may_see_the_matter()
+    {
+        var (app, telegram) = Host();
+        var (office, ownerId) = await factory.SeedOfficeAsync();
+        var (aliId, ayseId) = (await AddLawyerAsync(office), await AddLawyerAsync(office));
+        var owner = As(app, office, ownerId, Roles.OfficeOwner);
+        await TurnOnAsync(owner);
+        var ali = Random.Shared.NextInt64(100_000_000, 900_000_000);
+        var ayse = ali + 1;
+        var stranger = new TelegramUser(ali + 2, false, "Yabancı", null);
+        var groupId = -Random.Shared.NextInt64(100_000_000, 900_000_000);
+        await LinkAsync(app, As(app, office, aliId, Roles.Lawyer), office, ali);
+        await LinkAsync(app, As(app, office, ayseId, Roles.Lawyer), office, ayse);
+        var matter = await CreateMatterAsync(owner, "Kira tespit davası", aliId);
+        await CreateMatterAsync(owner, "Başka dosya", ayseId);
+
+        // Ali binds the group to his matter; only he and the bot are in it.
+        telegram.MemberCounts[groupId] = 2;
+        await SayInGroupAsync(app, office, groupId, ali, "/baglan kira tespit");
+        Assert.StartsWith("Bu grup «Kira tespit davası» dosyasına bağlandı", telegram.Sent[^1].Text);
+        await using (var db = factory.OwnerContext())
+        {
+            Assert.Equal(matter, (await db.TelegramGroups.AsNoTracking().SingleAsync(g => g.ChatId == groupId)).MatterId);
+        }
+
+        // Talk not addressed to the bot is left alone; a question to it is answered as Ali.
+        var before = telegram.Sent.Count;
+        await SayInGroupAsync(app, office, groupId, ali, "toplantı saat kaçtaydı?");
+        Assert.Equal(before, telegram.Sent.Count);
+        await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Duruşma ne zaman?");
+        Assert.Equal((groupId, $"{aliId}|False|Duruşma ne zaman?"), telegram.Sent[^1]);
+
+        // Someone who is not a member joins: nothing is shared while they are there.
+        telegram.MemberCounts[groupId] = 3;
+        await SayInGroupAsync(app, office, groupId, ali, string.Empty, joined: [stranger]);
+        await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Özet ver");
+        Assert.Equal("Bu grupta dosyaya yetkisi olmayan kişiler olduğu için içerik paylaşamıyorum.", telegram.Sent[^1].Text);
+        telegram.MemberCounts[groupId] = 2;
+        await SayInGroupAsync(app, office, groupId, ali, string.Empty, left: stranger);
+        await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Özet ver");
+        Assert.Equal($"{aliId}|False|Özet ver", telegram.Sent[^1].Text);
+
+        // Ayşe is a member of the office but not of this matter's team.
+        telegram.MemberCounts[groupId] = 3;
+        await SayInGroupAsync(app, office, groupId, ayse, "@korkut_test_bot Merhaba");
+        Assert.Equal("Bu dosya için yetkiniz yok.", telegram.Sent[^1].Text);
+        await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Özet ver");
+        Assert.Equal("Bu grupta dosyaya yetkisi olmayan kişiler olduğu için içerik paylaşamıyorum.", telegram.Sent[^1].Text);
+        await SayInGroupAsync(app, office, groupId, ayse, "/baglan başka dosya");
+        Assert.Equal("Bu dosya için yetkiniz yok.", telegram.Sent[^1].Text); // not hers to move
+
+        // Once she is on the team, the group may talk again.
+        Assert.True((await owner.PostAsJsonAsync($"/api/matters/{matter}/team", new { user_id = ayseId }, Json)).IsSuccessStatusCode);
+        await SayInGroupAsync(app, office, groupId, ayse, "@korkut_test_bot Merhaba");
+        Assert.Equal($"{ayseId}|False|Merhaba", telegram.Sent[^1].Text);
+
+        // Someone the bot never saw (it was not an admin when they joined) counts as a stranger.
+        telegram.MemberCounts[groupId] = 4;
+        await SayInGroupAsync(app, office, groupId, ali, "@korkut_test_bot Özet ver");
+        Assert.Equal("Bu grupta dosyaya yetkisi olmayan kişiler olduğu için içerik paylaşamıyorum.", telegram.Sent[^1].Text);
+    }
+
+    [Fact]
+    public async Task Membership_updates_keep_track_of_who_is_in_a_group()
+    {
+        var (app, _) = Host();
+        var (office, _) = await factory.SeedOfficeAsync();
+        var groupId = -Random.Shared.NextInt64(100_000_000, 900_000_000);
+        var someone = new TelegramUser(Random.Shared.NextInt64(100_000_000, 900_000_000), false, "Biri", null);
+
+        async Task ChangeAsync(string status)
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<TelegramUpdateHandler>().HandleAsync(
+                new InstallOffice(office, "Test Bürosu", false), GoodToken,
+                new TelegramUpdate(1, null, new TelegramChatMemberUpdated(new TelegramChat(groupId, "supergroup"), new TelegramChatMember(status, someone))));
+        }
+
+        async Task<bool> KnownAsync()
+        {
+            await using var db = factory.OwnerContext();
+            return await db.TelegramGroupMembers.AnyAsync(m => m.ChatId == groupId && m.TelegramUserId == someone.Id);
+        }
+
+        await ChangeAsync("member");
+        Assert.True(await KnownAsync());
+        await ChangeAsync("kicked");
+        Assert.False(await KnownAsync());
     }
 }

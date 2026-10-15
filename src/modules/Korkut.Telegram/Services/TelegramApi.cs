@@ -22,6 +22,9 @@ public interface ITelegramApi
     Task<byte[]> DownloadFileAsync(string token, string fileId, CancellationToken ct = default);
 
     Task SendTypingAsync(string token, long chatId, CancellationToken ct = default);
+
+    /// <summary>How many are in a group, the bot and any other bots included.</summary>
+    Task<int> GetChatMemberCountAsync(string token, long chatId, CancellationToken ct = default);
 }
 
 /// <summary>Telegram answered with <c>ok: false</c>, or not at all.</summary>
@@ -42,7 +45,8 @@ public sealed record TelegramUser(
 
 public sealed record TelegramChat(
     [property: JsonPropertyName("id")] long Id,
-    [property: JsonPropertyName("type")] string Type);
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("title")] string? Title = null);
 
 public sealed record TelegramMessage(
     [property: JsonPropertyName("message_id")] long MessageId,
@@ -51,7 +55,10 @@ public sealed record TelegramMessage(
     [property: JsonPropertyName("text")] string? Text,
     [property: JsonPropertyName("caption")] string? Caption = null,
     [property: JsonPropertyName("document")] TelegramDocument? Document = null,
-    [property: JsonPropertyName("photo")] IReadOnlyList<TelegramPhotoSize>? Photo = null);
+    [property: JsonPropertyName("photo")] IReadOnlyList<TelegramPhotoSize>? Photo = null,
+    [property: JsonPropertyName("new_chat_members")] IReadOnlyList<TelegramUser>? NewChatMembers = null,
+    [property: JsonPropertyName("left_chat_member")] TelegramUser? LeftChatMember = null,
+    [property: JsonPropertyName("reply_to_message")] TelegramMessage? ReplyToMessage = null);
 
 /// <summary>A file sent as a document (a PDF, a Word file).</summary>
 public sealed record TelegramDocument(
@@ -76,7 +83,22 @@ internal sealed record TelegramSentMessage([property: JsonPropertyName("message_
 
 public sealed record TelegramUpdate(
     [property: JsonPropertyName("update_id")] long UpdateId,
-    [property: JsonPropertyName("message")] TelegramMessage? Message);
+    [property: JsonPropertyName("message")] TelegramMessage? Message,
+    [property: JsonPropertyName("chat_member")] TelegramChatMemberUpdated? ChatMember = null);
+
+/// <summary>Someone joined, left or changed standing in a group (sent while the bot is an admin there).</summary>
+public sealed record TelegramChatMemberUpdated(
+    [property: JsonPropertyName("chat")] TelegramChat Chat,
+    [property: JsonPropertyName("new_chat_member")] TelegramChatMember NewChatMember);
+
+public sealed record TelegramChatMember(
+    [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("user")] TelegramUser User,
+    [property: JsonPropertyName("is_member")] bool? IsMember = null)
+{
+    /// <summary>Whether this standing means being in the group.</summary>
+    public bool InGroup => Status is "creator" or "administrator" or "member" || (Status == "restricted" && IsMember == true);
+}
 
 /// <summary>
 /// <see cref="ITelegramApi"/> over HTTPS. The token is part of every URL, so this client's
@@ -86,14 +108,15 @@ internal sealed class TelegramApi(IHttpClientFactory factory) : ITelegramApi
 {
     public const string HttpClientName = "telegram";
 
-    private static readonly string[] MessagesOnly = ["message"];
+    // Messages, and membership changes in groups (Telegram sends those only to a group's admins).
+    private static readonly string[] Updates = ["message", "chat_member"];
 
     public Task<TelegramUser> GetMeAsync(string token, CancellationToken ct = default)
         => CallAsync<TelegramUser>(token, "getMe", new { }, ct);
 
     public Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(string token, long offset, int timeoutSeconds, CancellationToken ct = default)
         => CallAsync<IReadOnlyList<TelegramUpdate>>(
-            token, "getUpdates", new { offset, timeout = timeoutSeconds, allowed_updates = MessagesOnly }, ct);
+            token, "getUpdates", new { offset, timeout = timeoutSeconds, allowed_updates = Updates }, ct);
 
     /// <summary>The most a bot may download through the Bot API.</summary>
     public const long MaxDownloadBytes = 20 * 1024 * 1024;
@@ -135,6 +158,9 @@ internal sealed class TelegramApi(IHttpClientFactory factory) : ITelegramApi
 
     public Task SendTypingAsync(string token, long chatId, CancellationToken ct = default)
         => CallAsync<JsonElement>(token, "sendChatAction", new { chat_id = chatId, action = "typing" }, ct);
+
+    public Task<int> GetChatMemberCountAsync(string token, long chatId, CancellationToken ct = default)
+        => CallAsync<int>(token, "getChatMemberCount", new { chat_id = chatId }, ct);
 
     private async Task<T> CallAsync<T>(string token, string method, object body, CancellationToken ct)
     {
