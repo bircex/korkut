@@ -38,6 +38,8 @@ public class StreamingReplyTests
 
         public Task SendTypingAsync(string token, long chatId, CancellationToken ct = default) => Task.CompletedTask;
 
+        public Task<int> GetChatMemberCountAsync(string token, long chatId, CancellationToken ct = default) => Task.FromResult(2);
+
         public Task<byte[]> DownloadFileAsync(string token, string fileId, CancellationToken ct = default) => throw new NotSupportedException();
     }
 

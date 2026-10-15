@@ -20,7 +20,7 @@ namespace Korkut.Telegram.Services;
 public sealed partial class TelegramUpdateHandler(
     ITelegramRepository repository, ITelegramApi telegram, IUnitOfWork unitOfWork, IUserLookup users,
     IRolePermissions rolePermissions, ActingUser acting, ISessionAppService sessions, ISessionChatService chat,
-    IMatterService matters, IClock clock, ILogger<TelegramUpdateHandler> logger)
+    IMatterService matters, TelegramGroupHandler groups, IClock clock, ILogger<TelegramUpdateHandler> logger)
 {
     private const string NotLinked =
         "Merhaba! Bu bot bir Korkut bürosuna bağlı. Kullanmak için Korkut'ta Ayarlar → Hesap bölümünden \"Telegram'ı bağla\" düğmesine basın.";
@@ -40,10 +40,22 @@ public sealed partial class TelegramUpdateHandler(
 
     public async Task HandleAsync(InstallOffice office, string token, TelegramUpdate update, CancellationToken ct = default)
     {
+        if (update.ChatMember is { } change)
+        {
+            await groups.MembershipAsync(office.Id, token, change, ct);
+            return;
+        }
+
         var message = update.Message;
+        if (message?.Chat.Type is "group" or "supergroup")
+        {
+            await groups.HandleAsync(office.Id, token, message, ct);
+            return;
+        }
+
         if (message is null || message.Chat.Type != "private")
         {
-            return; // groups and channels are not a member's own chat
+            return; // channels are not anyone's chat
         }
 
         var chatId = message.Chat.Id;
@@ -296,7 +308,7 @@ public sealed partial class TelegramUpdateHandler(
 
     private const int MaxListed = 30;
 
-    private static string Describe(MatterResponse m)
+    internal static string Describe(MatterResponse m)
         => m.FileNo is { Length: > 0 } no ? $"{m.Title} ({no})" : m.Title;
 
     /// <summary>

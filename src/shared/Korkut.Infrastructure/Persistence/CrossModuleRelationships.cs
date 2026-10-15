@@ -50,6 +50,14 @@ internal static class CrossModuleRelationships
             .WithOne()
             .HasForeignKey<TelegramLink>(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+        // A group bound to a matter goes with the matter. Who is in a group is known before it is
+        // bound (people already there must count too), so those rows stand on their own.
+        modelBuilder.Entity<TelegramGroup>()
+            .HasOne<Matter>()
+            .WithMany()
+            .HasForeignKey(x => new { x.OfficeId, x.MatterId })
+            .HasPrincipalKey(m => new { m.OfficeId, m.Id })
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<TelegramBot>()
             .HasOne<Office>()
             .WithOne()

@@ -1903,6 +1903,64 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.ToTable("telegram_bots", "korkut");
                 });
 
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramGroup", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("chat_id");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset>("LinkedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("linked_at");
+
+                    b.Property<Guid>("LinkedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("linked_by");
+
+                    b.Property<Guid>("MatterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matter_id");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.HasKey("ChatId");
+
+                    b.HasIndex("OfficeId", "MatterId");
+
+                    b.ToTable("telegram_groups", "korkut");
+                });
+
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramGroupMember", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("chat_id");
+
+                    b.Property<long>("TelegramUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("telegram_user_id");
+
+                    b.Property<Guid>("OfficeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("office_id");
+
+                    b.Property<DateTimeOffset>("SeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("seen_at");
+
+                    b.HasKey("ChatId", "TelegramUserId");
+
+                    b.HasIndex("OfficeId");
+
+                    b.ToTable("telegram_group_members", "korkut");
+                });
+
             modelBuilder.Entity("Korkut.Telegram.Entities.TelegramLink", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -2031,6 +2089,16 @@ namespace Korkut.Infrastructure.Persistence.Migrations
                     b.HasOne("Korkut.Organization.Entities.Office", null)
                         .WithOne()
                         .HasForeignKey("Korkut.Telegram.Entities.TelegramBot", "OfficeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Korkut.Telegram.Entities.TelegramGroup", b =>
+                {
+                    b.HasOne("Korkut.Matters.Entities.Matter", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId", "MatterId")
+                        .HasPrincipalKey("OfficeId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

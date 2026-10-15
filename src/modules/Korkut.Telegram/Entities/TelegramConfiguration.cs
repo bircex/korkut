@@ -32,3 +32,26 @@ public sealed class TelegramLinkConfiguration : IEntityTypeConfiguration<Telegra
         builder.Ignore(x => x.IsLinked);
     }
 }
+
+/// <summary>EF mapping for groups bound to a matter (one matter per group).</summary>
+public sealed class TelegramGroupConfiguration : IEntityTypeConfiguration<TelegramGroup>
+{
+    public void Configure(EntityTypeBuilder<TelegramGroup> builder)
+    {
+        builder.ToTable("telegram_groups");
+        builder.HasKey(x => x.ChatId);
+        builder.Property(x => x.ChatId).ValueGeneratedNever();
+        builder.HasIndex(x => new { x.OfficeId, x.MatterId });
+    }
+}
+
+/// <summary>EF mapping for the people the bot knows are in a group.</summary>
+public sealed class TelegramGroupMemberConfiguration : IEntityTypeConfiguration<TelegramGroupMember>
+{
+    public void Configure(EntityTypeBuilder<TelegramGroupMember> builder)
+    {
+        builder.ToTable("telegram_group_members");
+        builder.HasKey(x => new { x.ChatId, x.TelegramUserId });
+        builder.HasIndex(x => x.OfficeId);
+    }
+}

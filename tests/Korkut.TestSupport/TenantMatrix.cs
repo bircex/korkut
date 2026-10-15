@@ -46,6 +46,8 @@ public static class TenantMatrix
             ["saved_decisions"] = (1, 2),
             ["telegram_bots"] = (1, 1), // one bot per office
             ["telegram_links"] = (1, 2), // one per member
+            ["telegram_groups"] = (1, 2),
+            ["telegram_group_members"] = (1, 2),
             ["matter_members"] = (1, 2),
             ["sent_reminders"] = (1, 2),
             // generated_documents / document_versions live in the Agent DB (schema korkut_agent)

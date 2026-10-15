@@ -39,3 +39,22 @@ public class MatterLookupTests
         Assert.Empty(TelegramUpdateHandler.Find(Matters, "boşanma"));
     }
 }
+
+public class GroupRuleTests
+{
+    [Fact]
+    public void Client_contact_and_identity_are_never_given_in_a_group()
+    {
+        var inGroup = TelegramGroupHandler.InGroup(Korkut.Core.Permissions.All);
+
+        Assert.DoesNotContain(Korkut.Core.Permissions.ClientsContact, inGroup);
+        Assert.DoesNotContain(Korkut.Core.Permissions.ClientsIdentity, inGroup);
+        Assert.Contains(Korkut.Core.Permissions.ClientsRead, inGroup);
+    }
+
+    [Theory]
+    [InlineData("123456:abc", 123456)]
+    [InlineData("nonsense", 0)]
+    public void The_bot_knows_itself_from_its_token(string token, long id)
+        => Assert.Equal(id, TelegramGroupHandler.BotId(token));
+}

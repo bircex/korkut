@@ -22,6 +22,7 @@ public sealed class TelegramModule : IModule
         services.AddScoped<ITelegramSettingsService, TelegramSettingsService>();
         services.AddScoped<ITelegramLinkService, TelegramLinkService>();
         services.AddScoped<TelegramUpdateHandler>();
+        services.AddScoped<TelegramGroupHandler>();
         services.AddScoped<ITelegramNotifier, TelegramNotifier>();
         services.AddSingleton<ITelegramApi, TelegramApi>();
         services.AddSingleton<TelegramBotStatus>();
