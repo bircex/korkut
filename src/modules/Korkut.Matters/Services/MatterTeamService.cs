@@ -1,4 +1,5 @@
 using Korkut.Contract;
+using Korkut.Contract.Audit;
 using Korkut.Contract.Matters;
 using Korkut.Contract.Organization;
 using Korkut.Core;
@@ -13,7 +14,7 @@ namespace Korkut.Matters.Services;
 /// </summary>
 internal sealed class MatterTeamService(
     IMatterRepository matters, IMatterMemberRepository members, IMatterAccess access, IUserLookup users,
-    IUnitOfWork unitOfWork, ICurrentUser currentUser, IClock clock) : IMatterTeamService
+    IUnitOfWork unitOfWork, ICurrentUser currentUser, IAuditLog audit, IClock clock) : IMatterTeamService
 {
     private const string NotFound = "Dosya bulunamadı.";
 
@@ -60,6 +61,7 @@ internal sealed class MatterTeamService(
             }
 
             await members.SaveChangesAsync(ct);
+            await RecordAsync(office, AuditActions.TeamMemberAdded, matterId, new { user_id = request.UserId, is_lead = request.IsLead }, ct);
             return Result<MatterTeamResponse>.Ok(await DescribeAsync(office, matterId, ct));
         }, ct);
 
@@ -74,6 +76,7 @@ internal sealed class MatterTeamService(
 
             member.SetLead(request.IsLead);
             await members.SaveChangesAsync(ct);
+            await RecordAsync(office, AuditActions.TeamLeadChanged, matterId, new { user_id = userId, is_lead = request.IsLead }, ct);
             return Result<MatterTeamResponse>.Ok(await DescribeAsync(office, matterId, ct));
         }, ct);
 
@@ -88,8 +91,12 @@ internal sealed class MatterTeamService(
 
             members.Remove(member);
             await members.SaveChangesAsync(ct);
+            await RecordAsync(office, AuditActions.TeamMemberRemoved, matterId, new { user_id = userId }, ct);
             return Result<MatterTeamResponse>.Ok(await DescribeAsync(office, matterId, ct));
         }, ct);
+
+    private Task RecordAsync(Guid office, string action, Guid matterId, object change, CancellationToken ct)
+        => audit.WriteAsync(new AuditEntry(office, currentUser.UserId, null, null, action, "matter", matterId, null, change), ct);
 
     private Task<Result<MatterTeamResponse>> ChangeAsync(Guid matterId, Func<Guid, Task<Result<MatterTeamResponse>>> change, CancellationToken ct)
         => InScopeAsync(async office =>

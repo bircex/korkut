@@ -1,6 +1,7 @@
 using Korkut.Clients.Repositories;
 using Korkut.Clients.Entities;
 using Korkut.Contract;
+using Korkut.Contract.Audit;
 using Korkut.Contract.Clients;
 using Korkut.Contract.Matters;
 using Korkut.Core;
@@ -17,7 +18,7 @@ namespace Korkut.Clients.Services;
 /// </summary>
 internal sealed class ClientService(
     IClientRepository repository, IMatterAccess access, IMatterLookup matters, IUnitOfWork unitOfWork,
-    ICurrentUser currentUser, IClock clock) : IClientService
+    ICurrentUser currentUser, IAuditLog audit, IClock clock) : IClientService
 {
     private const string NotFound = "Müvekkil bulunamadı.";
 
@@ -33,9 +34,14 @@ internal sealed class ClientService(
         => InScopeAsync(async office =>
         {
             var client = await repository.FindAsync(office, id, ct);
-            return client is null || !(await VisibilityAsync(office, ct))(client)
-                ? Result<ClientResponse>.NotFound(NotFound)
-                : Result<ClientResponse>.Ok(ToResponse(client));
+            if (client is null || !(await VisibilityAsync(office, ct))(client))
+            {
+                return Result<ClientResponse>.NotFound(NotFound);
+            }
+
+            var response = ToResponse(client);
+            await RecordDetailsAsync(office, response, ct);
+            return Result<ClientResponse>.Ok(response);
         }, ct);
 
     public Task<Result<ClientResponse>> CreateAsync(CreateClientRequest request, CancellationToken ct = default)
@@ -106,6 +112,17 @@ internal sealed class ClientService(
 
     private static string? Normalize(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>Opening a client with contact or identity details in view is recorded (the fields, not their values).</summary>
+    private async Task RecordDetailsAsync(Guid office, ClientResponse client, CancellationToken ct)
+    {
+        var shown = AuditActions.ShownDetails(client);
+        if (shown.Count > 0)
+        {
+            await audit.WriteAsync(new AuditEntry(
+                office, currentUser.UserId, null, null, AuditActions.ClientDetailsViewed, "client", client.Id, null, new { fields = shown }), ct);
+        }
+    }
 
     private ClientResponse ToResponse(Client c) =>
         new ClientResponse(c.Id, c.FullName, c.Kind, c.Email, c.Phone, c.NationalId, c.Address, c.DateOfBirth, c.CreatedAt)

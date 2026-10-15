@@ -2755,6 +2755,51 @@
   },
   "openapi": "3.1.1",
   "paths": {
+    "/api/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Audit"
+        ]
+      }
+    },
     "/api/auth/2fa": {
       "post": {
         "requestBody": {
@@ -7111,6 +7156,9 @@
   "tags": [
     {
       "name": "AiSettings"
+    },
+    {
+      "name": "Audit"
     },
     {
       "name": "Auth"

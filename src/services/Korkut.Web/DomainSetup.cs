@@ -34,6 +34,9 @@ public static class DomainSetup
 
         // IClock is registered by the composition root; audit + stores are scoped.
         services.AddScoped<IAuditLog, Korkut.Audit.AuditLog>();
+        services.AddScoped<IAuditQuery, Korkut.Audit.AuditQuery>();
+        // Refused requests (403) are recorded in the same trail.
+        services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler, Korkut.Web.Auth.DeniedAccessAudit>();
         // Office-core modules (clients + courts + matters/parties + hearings). Cross-module FKs are
         // configured in Infrastructure; cross-module reads go through Contract lookups
         // (ICourtLookup, IHearingLookup, IMatterLookup).
