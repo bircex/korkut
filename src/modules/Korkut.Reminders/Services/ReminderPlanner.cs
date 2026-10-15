@@ -4,18 +4,23 @@ using Korkut.Contract.Tasks;
 
 namespace Korkut.Reminders.Services;
 
-/// <summary>A reminder whose moment has come. <see cref="Recipients"/> null means every linked member.</summary>
+/// <summary>
+/// A reminder whose moment has come. It goes to <see cref="Recipients"/> when the planner names them
+/// (a task's assignee, or whoever added a record with no matter), otherwise to the team of
+/// <see cref="MatterId"/>: never to someone who cannot see the matter.
+/// </summary>
 internal sealed record DueReminder(
-    string Key, string Kind, Guid ItemId, DateTimeOffset At, IReadOnlyCollection<Guid>? Recipients, string Title, IReadOnlyList<string> Lines);
+    string Key, string Kind, Guid ItemId, DateTimeOffset At, IReadOnlyCollection<Guid>? Recipients, string Title,
+    IReadOnlyList<string> Lines, Guid? MatterId = null);
 
 /// <summary>
 /// Decides which reminders are due, from the office's records and the current moment. Pure: no
 /// clock, no database, so the calendar rules can be checked on their own.
 /// <list type="bullet">
-/// <item>Deadline: at 09:00 office time, <c>ReminderDaysBefore</c> days before the last day, until that day ends.</item>
-/// <item>Hearing: at 09:00 the day before, until it starts.</item>
+/// <item>Deadline: at 09:00 office time, <c>ReminderDaysBefore</c> days before the last day, until that day ends (to the matter's team).</item>
+/// <item>Hearing: at 09:00 the day before, until it starts (to the matter's team).</item>
 /// <item>Agenda record: <c>RemindBeforeMin</c> before it starts (a hatırlatma with none, when it starts),
-/// to its assignee or, unassigned, to everyone; an all-day record "starts" at 09:00. Late by up to an hour is still useful.</item>
+/// to its assignee or, unassigned, to whoever added it; an all-day record "starts" at 09:00. Late by up to an hour is still useful.</item>
 /// </list>
 /// A reminder that came due while Korkut was down still goes out, as long as the item is ahead.
 /// </summary>
@@ -59,7 +64,9 @@ internal static class ReminderPlanner
                 $"Son gün: {Date(d.DueDate)} ({(left == 0 ? "bugün" : left == 1 ? "yarın" : $"{left} gün kaldı")})",
             };
             AddMatter(lines, d.MatterId, matters);
-            yield return new DueReminder(Key("deadline", d.Id, d.DueDate.DayNumber, at), "deadline", d.Id, at, null, $"Süre: {d.Title}", lines);
+            IReadOnlyCollection<Guid>? owner = d.MatterId is null && d.CreatedBy is { } by ? [by] : null;
+            yield return new DueReminder(
+                Key("deadline", d.Id, d.DueDate.DayNumber, at), "deadline", d.Id, at, owner, $"Süre: {d.Title}", lines, d.MatterId);
         }
     }
 
@@ -88,7 +95,8 @@ internal static class ReminderPlanner
             }
 
             var title = matters.TryGetValue(h.MatterId, out var matter) ? $"Duruşma: {matter}" : "Duruşma";
-            yield return new DueReminder(Key("hearing", h.Id, h.ScheduledAt.ToUnixTimeSeconds(), at), "hearing", h.Id, at, null, title, lines);
+            yield return new DueReminder(
+                Key("hearing", h.Id, h.ScheduledAt.ToUnixTimeSeconds(), at), "hearing", h.Id, at, null, title, lines, h.MatterId);
         }
     }
 
@@ -125,8 +133,10 @@ internal static class ReminderPlanner
 
             AddMatter(lines, t.MatterId, matters);
             var label = t.Category switch { "randevu" => "Randevu", "hatirlatma" => "Hatırlatma", _ => "Görev" };
-            IReadOnlyCollection<Guid>? to = t.AssigneeId is { } assignee ? [assignee] : null;
-            yield return new DueReminder(Key("task", t.Id, t.StartAt.ToUnixTimeSeconds(), at), "task", t.Id, at, to, $"{label}: {t.Title}", lines);
+            // The assignee; unassigned, whoever added it; with neither, the matter's team.
+            IReadOnlyCollection<Guid>? to = t.AssigneeId is { } assignee ? [assignee] : t.CreatedBy is { } by ? [by] : null;
+            yield return new DueReminder(
+                Key("task", t.Id, t.StartAt.ToUnixTimeSeconds(), at), "task", t.Id, at, to, $"{label}: {t.Title}", lines, t.MatterId);
         }
     }
 

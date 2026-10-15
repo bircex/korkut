@@ -14,4 +14,7 @@ public interface IDocumentRepository : IRepository<Document>
 
     /// <summary>An active document by id; null when it is missing or tombstoned.</summary>
     Task<Document?> FindActiveAsync(Guid officeId, Guid documentId, CancellationToken ct = default);
+
+    /// <summary>What every document is linked to (client, matter, party), for deciding who sees it.</summary>
+    Task<IReadOnlyList<DocumentRelation>> RelationsAsync(Guid officeId, CancellationToken ct = default);
 }

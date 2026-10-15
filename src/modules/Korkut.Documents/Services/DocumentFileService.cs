@@ -1,4 +1,5 @@
 using Korkut.Contract.Documents;
+using Korkut.Contract.Matters;
 using Korkut.Core;
 using Korkut.Contract.Documents.Requests;
 using Korkut.Contract.Documents.Responses;
@@ -13,10 +14,14 @@ namespace Korkut.Documents.Services;
 /// <summary>
 /// The document library over the repository and the upload/lifecycle ports. The two rules
 /// that matter are the aggregate's, not this service's: a document is downloadable only
-/// once it is clean, and a held document cannot be deleted.
+/// once it is clean, and a held document cannot be deleted. Who sees a document: whoever uploaded
+/// it, the team of any matter it is linked to (directly or through one of the matter's parties),
+/// and whoever sees every matter. Any other document reads as not found.
 /// </summary>
 public sealed partial class DocumentFileService(
     IDocumentRepository repository,
+    IMatterAccess access,
+    IMatterLookup matters,
     ISafeUploadService upload,
     IObjectStoreService objectStore,
     IDocumentRelationService relations,
@@ -31,7 +36,16 @@ public sealed partial class DocumentFileService(
 
     public Task<IReadOnlyList<DocumentResponse>> ListAsync(Guid? matterId, CancellationToken ct = default)
         => InScopeAsync(async office =>
-            (IReadOnlyList<DocumentResponse>)(await repository.ListAsync(office, matterId, ct)).Select(ToResponse).ToList(), ct);
+        {
+            var (visible, matterOf) = await VisibilityAsync(office, ct);
+            var documents = (await repository.ListAsync(office, null, ct)).Where(visible);
+            if (matterId is { } id)
+            {
+                documents = documents.Where(d => d.MatterId == id || matterOf(d).Contains(id));
+            }
+
+            return (IReadOnlyList<DocumentResponse>)documents.Select(ToResponse).ToList();
+        }, ct);
 
     public async Task<DocumentResponse> UploadAsync(Stream content, string filename, CancellationToken ct = default)
     {
@@ -81,7 +95,7 @@ public sealed partial class DocumentFileService(
     public Task<PresignResponse> PresignDownloadAsync(Guid documentId, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
-            var document = await repository.FindActiveAsync(office, documentId, ct) ?? throw NotFound();
+            var document = await VisibleAsync(office, documentId, ct);
             if (!document.IsDownloadable)
             {
                 throw new ConflictException("Belge henüz indirilemez (tarama tamamlanmadı veya reddedildi).");
@@ -92,12 +106,18 @@ public sealed partial class DocumentFileService(
         }, ct);
 
     public Task<DocumentLinkResponse> LinkAsync(Guid documentId, LinkDocumentRequest request, CancellationToken ct = default)
-        => InScopeAsync(async office => new DocumentLinkResponse(await relations.LinkAsync(
-            office, currentUser.UserId, documentId, request.TargetType!, request.TargetId, request.IsPrimary, ct)), ct);
+        => InScopeAsync(async office =>
+        {
+            await VisibleAsync(office, documentId, ct);
+            await RequireVisibleTargetAsync(office, request, ct);
+            return new DocumentLinkResponse(await relations.LinkAsync(
+                office, currentUser.UserId, documentId, request.TargetType!, request.TargetId, request.IsPrimary, ct));
+        }, ct);
 
     public Task UnlinkAsync(Guid documentId, LinkDocumentRequest request, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
+            await VisibleAsync(office, documentId, ct);
             await relations.UnlinkAsync(office, currentUser.UserId, documentId, request.TargetType!, request.TargetId, ct);
             return true;
         }, ct);
@@ -105,9 +125,64 @@ public sealed partial class DocumentFileService(
     public Task DeleteAsync(Guid documentId, CancellationToken ct = default)
         => InScopeAsync(async office =>
         {
+            await VisibleAsync(office, documentId, ct);
             await lifecycle.TombstoneAsync(office, documentId, ct);
             return true;
         }, ct);
+
+    /// <summary>The document, if it exists and the caller may see it; not found otherwise.</summary>
+    private async Task<Document> VisibleAsync(Guid office, Guid documentId, CancellationToken ct)
+    {
+        var document = await repository.FindActiveAsync(office, documentId, ct) ?? throw NotFound();
+        var (visible, _) = await VisibilityAsync(office, ct);
+        return visible(document) ? document : throw NotFound();
+    }
+
+    /// <summary>A document may only be linked to a matter (or a matter's party) the caller sees.</summary>
+    private async Task RequireVisibleTargetAsync(Guid office, LinkDocumentRequest request, CancellationToken ct)
+    {
+        var scope = await access.ScopeAsync(office, ct);
+        var matter = request.TargetType switch
+        {
+            DocumentRelationTarget.Matter => request.TargetId,
+            DocumentRelationTarget.Party => (await matters.PartyMattersAsync(office, ct)).TryGetValue(request.TargetId, out var m) ? m : (Guid?)null,
+            _ => null,
+        };
+        if (matter is { } id && !scope.CanSee(id))
+        {
+            throw new NotFoundException("Dosya bulunamadı.");
+        }
+    }
+
+    /// <summary>
+    /// Who sees which document, and which matters a document is linked to. The uploader always
+    /// sees their own; otherwise a link to a matter in the caller's scope (directly, or through one
+    /// of its parties) does.
+    /// </summary>
+    private async Task<(Func<Document, bool> Visible, Func<Document, IReadOnlySet<Guid>> MattersOf)> VisibilityAsync(
+        Guid office, CancellationToken ct)
+    {
+        var scope = await access.ScopeAsync(office, ct);
+        var links = await repository.RelationsAsync(office, ct);
+        var partyMatters = links.Any(l => l.TargetType == DocumentRelationTarget.Party)
+            ? await matters.PartyMattersAsync(office, ct)
+            : new Dictionary<Guid, Guid>();
+        var byDocument = links
+            .Select(l => (l.DocumentId, Matter: l.TargetType switch
+            {
+                DocumentRelationTarget.Matter => l.TargetId,
+                DocumentRelationTarget.Party => partyMatters.TryGetValue(l.TargetId, out var m) ? m : (Guid?)null,
+                _ => null,
+            }))
+            .Where(x => x.Matter is not null)
+            .GroupBy(x => x.DocumentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlySet<Guid>)g.Select(x => x.Matter!.Value).ToHashSet());
+
+        IReadOnlySet<Guid> MattersOf(Document d) => byDocument.TryGetValue(d.Id, out var set) ? set : new HashSet<Guid>();
+        bool Visible(Document d) => scope.AllMatters || d.OwnerId == scope.UserId
+            || (d.MatterId is { } m && scope.CanSee(m)) || MattersOf(d).Any(scope.CanSee);
+        return (Visible, MattersOf);
+    }
 
     private static NotFoundException NotFound() => new("Belge bulunamadı.");
 

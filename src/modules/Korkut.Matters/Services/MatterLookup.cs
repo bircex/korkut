@@ -45,4 +45,17 @@ internal sealed class MatterLookup(IMatterRepository repository, DbContext db) :
             .Where(m => m.OfficeId == officeId && m.DeletedAt == null && m.ClientId != null)
             .Select(m => new MatterClientLink(m.Id, m.ClientId!.Value))
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<Guid, Guid>> PartyMattersAsync(Guid officeId, CancellationToken ct = default)
+        => await db.Set<Party>().AsNoTracking()
+            .Where(p => p.OfficeId == officeId)
+            .ToDictionaryAsync(p => p.Id, p => p.MatterId, ct);
+
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> TeamsAsync(Guid officeId, CancellationToken ct = default)
+        => (await db.Set<MatterMember>().AsNoTracking()
+                .Where(m => m.OfficeId == officeId)
+                .Select(m => new { m.MatterId, m.UserId })
+                .ToListAsync(ct))
+            .GroupBy(m => m.MatterId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<Guid>)g.Select(m => m.UserId).ToList());
 }

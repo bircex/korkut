@@ -74,6 +74,8 @@ public class ReminderServiceTests(KorkutApiFactory factory)
         db.Users.Add(lawyer);
         var matter = new Matter(office, "2026/77 Esas", null, null, null, null, null, null, null, now);
         db.Matters.Add(matter);
+        // The lawyer works on the matter; the owner does not (and so hears nothing about it).
+        db.MatterMembers.Add(new MatterMember(office, matter.Id, lawyer.Id, true, null, now));
         var today = DateOnly.FromDateTime(now.ToOffset(TimeSpan.FromHours(3)).DateTime);
         db.Deadlines.Add(new Deadline(office, "İstinaf süresi", today.AddDays(2), "internal", matter.Id, "Europe/Istanbul", 5, null, now));
         db.MatterHearings.Add(new Hearing(office, matter.Id, now.AddHours(3), "Tahkikat", "Ankara 3. İş Mahkemesi", null));
@@ -101,8 +103,8 @@ public class ReminderServiceTests(KorkutApiFactory factory)
         Assert.Equal(3, await RunAsync(app, office, now));
 
         Assert.Equal(3, telegram.Sent.Count);
-        Assert.Contains(telegram.Sent, n => n.To is null && n.Text.StartsWith("Süre: İstinaf süresi\n", StringComparison.Ordinal) && n.Text.Contains("Dosya: 2026/77 Esas"));
-        Assert.Contains(telegram.Sent, n => n.To is null && n.Text.StartsWith("Duruşma: 2026/77 Esas\n", StringComparison.Ordinal));
+        Assert.Contains(telegram.Sent, n => n.To is { } to && to.SequenceEqual([lawyer]) && n.Text.StartsWith("Süre: İstinaf süresi\n", StringComparison.Ordinal) && n.Text.Contains("Dosya: 2026/77 Esas"));
+        Assert.Contains(telegram.Sent, n => n.To is { } to && to.SequenceEqual([lawyer]) && n.Text.StartsWith("Duruşma: 2026/77 Esas\n", StringComparison.Ordinal));
         Assert.Contains(telegram.Sent, n => n.To is { } to && to.SequenceEqual([lawyer]) && n.Text.StartsWith("Görev: Bilirkişi raporuna itiraz", StringComparison.Ordinal));
         Assert.All(mail.Sent, m => Assert.Equal(ownerEmail, m.To));
         Assert.Contains(mail.Sent, m => m.Subject == "Hatırlatma: Süre: İstinaf süresi");
