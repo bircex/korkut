@@ -12,11 +12,15 @@ function fmtDate(iso: string | null): string {
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
-function Ro({ label, value }: { label: string; value: string | null }) {
+function Ro({ label, value, hidden }: { label: string; value: string | null; hidden?: boolean }) {
   return (
     <div>
       <div className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</div>
-      <div className="mt-0.5 text-zinc-800">{value || "—"}</div>
+      {hidden ? (
+        <div className="mt-0.5 text-[12px] text-zinc-400">Görme yetkiniz yok</div>
+      ) : (
+        <div className="mt-0.5 text-zinc-800">{value || "—"}</div>
+      )}
     </div>
   );
 }
@@ -98,24 +102,22 @@ export function ClientDetailsCard({
 
       {!editing ? (
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Ro label="TCKN" value={client.national_id} />
-          <Ro label="Telefon" value={client.phone} />
-          <Ro label="E-posta" value={client.email} />
-          <Ro label="Doğum tarihi" value={fmtDate(client.date_of_birth)} />
-          <Ro label="Adres" value={client.address} />
+          <Ro label="TCKN" value={client.national_id} hidden={client.identity_hidden} />
+          <Ro label="Telefon" value={client.phone} hidden={client.contact_hidden} />
+          <Ro label="E-posta" value={client.email} hidden={client.contact_hidden} />
+          <Ro label="Doğum tarihi" value={fmtDate(client.date_of_birth)} hidden={client.identity_hidden} />
+          <Ro label="Adres" value={client.address} hidden={client.contact_hidden} />
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <Ed label="TCKN" value={f.national_id} onChange={set("national_id")} />
-          <Ed label="Telefon" value={f.phone} onChange={set("phone")} />
-          <Ed label="E-posta" value={f.email} onChange={set("email")} />
-          <Ed
-            label="Doğum tarihi"
-            type="date"
-            value={f.date_of_birth}
-            onChange={set("date_of_birth")}
-          />
-          <Ed label="Adres" value={f.address} onChange={set("address")} />
+          {/* Fields the member may not see are left out; the server keeps their values. */}
+          {!client.identity_hidden && <Ed label="TCKN" value={f.national_id} onChange={set("national_id")} />}
+          {!client.contact_hidden && <Ed label="Telefon" value={f.phone} onChange={set("phone")} />}
+          {!client.contact_hidden && <Ed label="E-posta" value={f.email} onChange={set("email")} />}
+          {!client.identity_hidden && (
+            <Ed label="Doğum tarihi" type="date" value={f.date_of_birth} onChange={set("date_of_birth")} />
+          )}
+          {!client.contact_hidden && <Ed label="Adres" value={f.address} onChange={set("address")} />}
           <div className="mt-1 flex gap-2">
             <button
               onClick={save}

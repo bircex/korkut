@@ -10,9 +10,10 @@ public sealed class Client : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
 {
     public Client(
         Guid officeId, string fullName, string kind, string? email, string? phone,
-        string? nationalId, string? address, DateOnly? dateOfBirth, DateTimeOffset createdAt)
+        string? nationalId, string? address, DateOnly? dateOfBirth, DateTimeOffset createdAt, Guid? createdBy = null)
         : base(NewId())
     {
+        CreatedBy = createdBy;
         OfficeId = officeId;
         FullName = fullName;
         Kind = kind;
@@ -48,6 +49,9 @@ public sealed class Client : Entity, ITenantOwned, ISoftDeletable, IAggregateRoo
     public DateOnly? DateOfBirth { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
+
+    /// <summary>Who added the client; they see it even before it has a matter.</summary>
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
