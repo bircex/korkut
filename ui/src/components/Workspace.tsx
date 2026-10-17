@@ -1084,7 +1084,7 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
         ) : view === "finance" ? (
           <FinancePanel />
         ) : view === "tasks" ? (
-          <TasksPanel />
+          <TasksPanel user={user} />
         ) : view === "calendar" ? (
           <CalendarPanel />
         ) : view === "kararlarim" ? (

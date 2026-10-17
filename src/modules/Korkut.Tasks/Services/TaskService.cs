@@ -105,5 +105,5 @@ internal sealed class TaskService(
         new(t.Id, t.Category, t.Title, t.Description, t.Type, t.Status, t.MatterId, t.AssigneeId,
             t.AssigneeId is { } a && names.TryGetValue(a, out var n) ? n : null, t.ClientId,
             t.DueAt, t.EndAt, t.AllDay, t.Location, t.Rrule, t.RemindBeforeMin, t.ReminderStatus,
-            t.CompletedAt, t.CreatedAt);
+            t.CompletedAt, t.CreatedAt, t.CreatedBy);
 }
