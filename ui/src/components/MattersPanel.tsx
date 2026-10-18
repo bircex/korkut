@@ -251,37 +251,47 @@ export function MattersPanel({
                     <Field label="Karşı taraf" value={detail.counterparty} />
                     <div>
                       <div className="text-[11px] uppercase tracking-wide text-zinc-400">Durum</div>
-                      <button
-                        onClick={toggleStatus}
-                        className="mt-0.5 rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200"
-                      >
-                        {STATUS_LABEL[detail.status] ?? detail.status} ↺
-                      </button>
+                      {can(user, P.mattersEdit) ? (
+                        <button
+                          onClick={toggleStatus}
+                          className="mt-0.5 rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200"
+                        >
+                          {STATUS_LABEL[detail.status] ?? detail.status} ↺
+                        </button>
+                      ) : (
+                        <div className="mt-0.5 text-sm text-zinc-700">{STATUS_LABEL[detail.status] ?? detail.status}</div>
+                      )}
                     </div>
                   </div>
                   <div className="mt-4 flex gap-2">
-                    <button
-                      onClick={openChat}
-                      className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
-                    >
-                      Bu dosyada sohbet aç
-                    </button>
-                    <button
-                      onClick={removeMatter}
-                      className="ml-auto rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Sil
-                    </button>
+                    {can(user, P.chatUse) && (
+                      <button
+                        onClick={openChat}
+                        className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
+                      >
+                        Bu dosyada sohbet aç
+                      </button>
+                    )}
+                    {can(user, P.mattersDelete) && (
+                      <button
+                        onClick={removeMatter}
+                        className="ml-auto rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Sil
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="mb-2 mt-6 flex items-center gap-3">
                   <h2 className="text-sm font-semibold text-zinc-700">Duruşmalar</h2>
-                  <button
-                    onClick={() => setAdding("hearing")}
-                    className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-                  >
-                    + Duruşma
-                  </button>
+                  {can(user, P.agendaWrite) && (
+                    <button
+                      onClick={() => setAdding("hearing")}
+                      className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      + Duruşma
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
                   {detail.hearings.length === 0 && (
@@ -301,12 +311,14 @@ export function MattersPanel({
 
                 <div className="mb-2 mt-6 flex items-center gap-3">
                   <h2 className="text-sm font-semibold text-zinc-700">Süreler</h2>
-                  <button
-                    onClick={() => setAdding("deadline")}
-                    className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-                  >
-                    + Süre
-                  </button>
+                  {can(user, P.agendaWrite) && (
+                    <button
+                      onClick={() => setAdding("deadline")}
+                      className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      + Süre
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200">
                   {detail.deadlines.length === 0 && (
@@ -323,7 +335,7 @@ export function MattersPanel({
                       </span>
                       <span className="text-zinc-600">{d.title}</span>
                       <span className="text-xs text-zinc-400">{d.type ?? ""}</span>
-                      {d.status !== "done" && (
+                      {d.status !== "done" && can(user, P.agendaWrite) && (
                         <button
                           onClick={() => completeDeadline(d.id)}
                           className="ml-auto rounded-md border border-zinc-200 px-2 py-0.5 text-xs text-zinc-600 hover:bg-zinc-50"
@@ -553,12 +565,14 @@ export function MattersPanel({
       <header className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <h1 className="text-lg font-bold text-zinc-900">Dosyalar</h1>
         <span className="ml-auto text-xs text-zinc-400">{user.office ?? ""}</span>
-        <button
-          onClick={() => setAdding("matter")}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Yeni dosya
-        </button>
+        {can(user, P.mattersCreate) && (
+          <button
+            onClick={() => setAdding("matter")}
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Yeni dosya
+          </button>
+        )}
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-5xl px-4 py-4">

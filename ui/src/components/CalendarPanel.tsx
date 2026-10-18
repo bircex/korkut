@@ -1,3 +1,4 @@
+import { P, useCan } from "../permissions";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type CalendarEvent, type ClientBrief, type MatterBrief } from "../api";
 import { ArrowsClockwise, Bell, CaretLeft, CaretRight } from "../icons";
@@ -122,6 +123,7 @@ function parseYmd(s: string | null): Date | null {
 }
 
 export function CalendarPanel() {
+  const canWrite = useCan(P.agendaWrite);
   // Görünüm modu ve tarih imleci URL query'sinden türer — state değil.
   const search = useSearch();
   const params = new URLSearchParams(search);
@@ -304,12 +306,14 @@ export function CalendarPanel() {
           <option value="hearing">Duruşma</option>
           <option value="deadline">Süre</option>
         </select>
-        <button
-          onClick={() => openFormOn(ymdOf(cursor))}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Yeni kayıt
-        </button>
+        {canWrite && (
+          <button
+            onClick={() => openFormOn(ymdOf(cursor))}
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Yeni kayıt
+          </button>
+        )}
       </div>
 
       {adding && (
@@ -718,6 +722,7 @@ function EventRow({
   onComplete: (e: CalendarEvent) => void;
   onRemove: (id: number) => void;
 }) {
+  const canWrite = useCan(P.agendaWrite);
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
       <span className="w-14 shrink-0 text-[12px] text-zinc-500">
@@ -752,7 +757,7 @@ function EventRow({
           {[e.matter_title, e.client_name, e.location].filter(Boolean).join(" · ") || "—"}
         </div>
       </div>
-      {!e.recurring && e.status !== "done" && (
+      {canWrite && !e.recurring && e.status !== "done" && (
         <button
           onClick={() => onComplete(e)}
           className="shrink-0 rounded-md px-2 py-1 text-[12px] text-emerald-600 hover:bg-emerald-50"
@@ -760,13 +765,15 @@ function EventRow({
           Bitti
         </button>
       )}
-      <button
-        onClick={() => onRemove(e.id)}
-        title={e.recurring ? "Tüm tekrar serisini sil" : "Sil"}
-        className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-      >
-        Sil
-      </button>
+      {canWrite && (
+        <button
+          onClick={() => onRemove(e.id)}
+          title={e.recurring ? "Tüm tekrar serisini sil" : "Sil"}
+          className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+        >
+          Sil
+        </button>
+      )}
     </div>
   );
 }

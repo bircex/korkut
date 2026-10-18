@@ -1,3 +1,4 @@
+import { P, useCan } from "../permissions";
 import { useEffect, useState } from "react";
 import { api, type Member, type Task, type User } from "../api";
 import { navigate, useSearch } from "../router";
@@ -33,6 +34,7 @@ function fmtDate(iso: string | null): string {
 }
 
 export function TasksPanel({ user }: { user: User }) {
+  const canWrite = useCan(P.agendaWrite);
   // Filtreler URL'de yaşar: /gorevler?tum=1&kapsam=bana.
   const search = useSearch();
   const params = new URLSearchParams(search);
@@ -127,12 +129,14 @@ export function TasksPanel({ user }: { user: User }) {
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
           Tamamlananları da göster
         </label>
-        <button
-          onClick={() => setAdding(true)}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Yeni görev
-        </button>
+        {canWrite && (
+          <button
+            onClick={() => setAdding(true)}
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Yeni görev
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -147,6 +151,7 @@ export function TasksPanel({ user }: { user: User }) {
                     type="checkbox"
                     checked={t.status === "done"}
                     onChange={() => toggleDone(t)}
+                    disabled={!canWrite}
                     aria-label={`${t.title}: tamamlandı`}
                     className="shrink-0"
                   />
@@ -163,12 +168,14 @@ export function TasksPanel({ user }: { user: User }) {
                       {[t.assignee_name, fmtDate(t.due_date)].filter(Boolean).join(" · ") || "—"}
                     </div>
                   </div>
-                  <button
-                    onClick={() => remove(t.id)}
-                    className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-                  >
-                    Sil
-                  </button>
+                  {canWrite && (
+                    <button
+                      onClick={() => remove(t.id)}
+                      className="shrink-0 rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+                    >
+                      Sil
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
