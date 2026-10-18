@@ -303,7 +303,7 @@ const VIEW_TITLE: Record<SidebarView, string> = {
 };
 
 // Sol menü 3 grup: Ofisim (operasyonel), Araçlar (Karar Arama, Hesap Makineleri),
-// Sohbetler (ayrı, kendi listesiyle aşağıda).
+// Dosyalar (sohbetleri klasörlerde, kendi listesiyle aşağıda).
 // Each item names the permission its screen needs; a member sees only what they may use.
 const NAV_GROUPS: { label: string; items: { key: SidebarView; label: string; perm?: string }[] }[] = [
   {
@@ -1007,8 +1007,9 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               {can(user, P.chatUse) ? (
               <>
               <div className="mt-3 flex items-center justify-between border-t border-zinc-200 px-4 pb-1 pt-3">
+                {/* Sohbetler dosya klasörlerinde durur; kişisel sohbetler en altta ayrı bir başlıkta. */}
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                  Sohbetler
+                  Dosyalar
                 </span>
                 {/* Ana ekrana döner; sohbetin dosyası orada seçilir (kişisel sohbet chat.general ister). */}
                 <button
@@ -1043,18 +1044,6 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
               ) : (
                 <div className="flex-1" />
               )}
-              {/* Sol alt: oturum açan kullanıcının profili. */}
-              <div className="flex items-center gap-2.5 border-t border-zinc-200 px-3 py-3">
-                <UserAvatar user={user} size={32} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-medium text-zinc-800">
-                    {user.full_name ?? user.username}
-                  </div>
-                  <div className="truncate text-[11px] text-zinc-400">
-                    {user.role_name}
-                  </div>
-                </div>
-              </div>
             </aside>
           </>
         )}
