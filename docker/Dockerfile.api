@@ -4,7 +4,7 @@
 # are pinned by digest for reproducibility. Build context is the repository root.
 
 # SPA stage: the React app in ui/, built once and served by this host as static files.
-FROM node:22-alpine AS ui
+FROM node:26-alpine AS ui
 WORKDIR /ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
