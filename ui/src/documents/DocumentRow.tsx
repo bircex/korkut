@@ -4,6 +4,7 @@ import { ConfirmDialog, useToast } from "../a11y";
 import { DocumentStatusBadge } from "./DocumentStatusBadge";
 import { documentsApi } from "./api";
 import { capabilities, uiStatus, type DocumentDto } from "./status";
+import { P, useCan } from "../permissions";
 
 // One document row (KDM-031): filename truncates, status is explicit, and preview/
 // download are offered ONLY when capabilities permit — a pending/rejected file has
@@ -20,6 +21,11 @@ export function DocumentRow({
 }) {
   const status = uiStatus(doc);
   const caps = capabilities(status);
+  // What the file allows, narrowed by what the member may do.
+  const mayWrite = useCan(P.documentsWrite);
+  const mayDelete = useCan(P.documentsDelete);
+  const canLink = caps.canLink && mayWrite;
+  const canDelete = caps.canDelete && mayDelete;
   const { notify } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,7 +76,7 @@ export function DocumentRow({
             Önizle
           </button>
         )}
-        {caps.canLink && (
+        {canLink && (
           <button
             type="button"
             onClick={() => onOpenLinks(doc)}
@@ -79,7 +85,7 @@ export function DocumentRow({
             Bağla
           </button>
         )}
-        {caps.canDelete && (
+        {canDelete && (
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}

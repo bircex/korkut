@@ -1,3 +1,4 @@
+import { P, useCan } from "../permissions";
 import { useCallback, useEffect, useState } from "react";
 import { api, type Expense, type FinanceSummary, type Invoice } from "../api";
 import { Modal } from "./Modal";
@@ -43,6 +44,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 export function FinancePanel() {
+  const canWrite = useCan(P.financeWrite);
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -116,18 +118,22 @@ export function FinancePanel() {
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <h1 className="text-lg font-bold text-zinc-900">Mali</h1>
-        <button
-          onClick={() => setAdding("invoice")}
-          className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Fatura
-        </button>
-        <button
-          onClick={() => setAdding("expense")}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Masraf
-        </button>
+        {canWrite && (
+          <>
+            <button
+              onClick={() => setAdding("invoice")}
+              className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+            >
+              + Fatura
+            </button>
+            <button
+              onClick={() => setAdding("expense")}
+              className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+            >
+              + Masraf
+            </button>
+          </>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -192,7 +198,7 @@ export function FinancePanel() {
                   className: "w-44 text-right",
                   render: (i) => (
                     <span className="flex items-center justify-end gap-1">
-                      {i.status !== "paid" && (
+                      {i.status !== "paid" && canWrite && (
                         <button
                           onClick={() => markPaid(i.id)}
                           className="rounded-md border border-zinc-300 px-2 py-1 text-[12px] text-zinc-700 hover:border-zinc-900"
@@ -200,12 +206,14 @@ export function FinancePanel() {
                           Tahsil edildi
                         </button>
                       )}
-                      <button
-                        onClick={() => removeInvoice(i.id)}
-                        className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-                      >
-                        Sil
-                      </button>
+                      {canWrite && (
+                        <button
+                          onClick={() => removeInvoice(i.id)}
+                          className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+                        >
+                          Sil
+                        </button>
+                      )}
                     </span>
                   ),
                 },
@@ -250,12 +258,14 @@ export function FinancePanel() {
                 label: "",
                 className: "w-16 text-right",
                 render: (e) => (
-                  <button
-                    onClick={() => removeExpense(e.id)}
-                    className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
-                  >
-                    Sil
-                  </button>
+                  canWrite && (
+                    <button
+                      onClick={() => removeExpense(e.id)}
+                      className="rounded-md px-2 py-1 text-[12px] text-red-600 hover:bg-red-50"
+                    >
+                      Sil
+                    </button>
+                  )
                 ),
               },
             ]}

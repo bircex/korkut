@@ -1,3 +1,4 @@
+import { P, useCan } from "../permissions";
 import { useState } from "react";
 import { api, type ClientBrief } from "../api";
 
@@ -56,6 +57,7 @@ export function ClientDetailsCard({
   client: ClientBrief;
   onSaved: (updated: ClientBrief) => void;
 }) {
+  const canWrite = useCan(P.clientsWrite);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({
@@ -89,7 +91,7 @@ export function ClientDetailsCard({
     <div className="mt-4 rounded-xl border border-zinc-200 p-4">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-zinc-700">Müvekkil bilgileri</h2>
-        {!editing && (
+        {!editing && canWrite && (
           <button
             onClick={() => setEditing(true)}
             className="text-[12px] text-zinc-500 hover:text-zinc-900"

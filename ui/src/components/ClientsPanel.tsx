@@ -1,3 +1,4 @@
+import { P, useCan } from "../permissions";
 import { useEffect, useState } from "react";
 import { api, ApiError, type ClientBrief } from "../api";
 import { Modal } from "./Modal";
@@ -68,6 +69,7 @@ function FieldGrid({
 }
 
 export function ClientsPanel() {
+  const canWrite = useCan(P.clientsWrite);
   const [clients, setClients] = useState<ClientBrief[] | null>(null);
   const [nf, setNf] = useState<Fields>({ ...EMPTY });
   const [adding, setAdding] = useState(false);
@@ -130,16 +132,18 @@ export function ClientsPanel() {
     <div className="flex h-full min-w-0 flex-1 flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3">
         <h1 className="text-lg font-bold text-zinc-900">Müvekkiller</h1>
-        <button
-          onClick={() => {
-            setNf({ ...EMPTY });
-            setError("");
-            setAdding(true);
-          }}
-          className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-        >
-          + Yeni müvekkil
-        </button>
+        {canWrite && (
+          <button
+            onClick={() => {
+              setNf({ ...EMPTY });
+              setError("");
+              setAdding(true);
+            }}
+            className="ml-auto rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Yeni müvekkil
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -187,14 +191,15 @@ export function ClientsPanel() {
                   key: "actions",
                   label: "",
                   className: "w-20 text-right",
-                  render: (c) => (
-                    <button
-                      onClick={() => openEdit(c)}
-                      className="rounded-md px-2 py-1 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                    >
-                      Düzenle
-                    </button>
-                  ),
+                  render: (c) =>
+                    canWrite && (
+                      <button
+                        onClick={() => openEdit(c)}
+                        className="rounded-md px-2 py-1 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                      >
+                        Düzenle
+                      </button>
+                    ),
                 },
               ]}
             />

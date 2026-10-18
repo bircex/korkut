@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { P, useCan } from "../permissions";
 import { ToastProvider } from "../a11y";
 import { AsyncBoundary, type AsyncStatus } from "../components/AsyncState";
 import { DocumentRow } from "./DocumentRow";
@@ -43,11 +44,12 @@ function Panel({ matterId }: { matterId?: string }) {
     fetchDocs();
   }, [fetchDocs]);
 
+  const canUpload = useCan(P.documentsWrite);
   return (
     <section aria-label="Belgeler" className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="m-0 text-lg font-bold text-zinc-900">Belgeler</h2>
-        <UploadButton matterId={matterId} onUploaded={reload} />
+        {canUpload && <UploadButton matterId={matterId} onUploaded={reload} />}
       </div>
 
       <AsyncBoundary status={status} error={error} isEmpty={docs.length === 0} emptyTitle="Henüz belge yok" onRetry={reload}>

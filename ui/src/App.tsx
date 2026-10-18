@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PermissionsContext } from "./permissions";
 import { api, type User } from "./api";
 import { onSessionExpired, onAuthChanged } from "./session";
 import { SignIn } from "./components/SignIn";
@@ -81,7 +82,11 @@ export function App() {
     return <div className="grid min-h-dvh place-items-center text-sm text-zinc-500">…</div>;
   }
   if (status === "authed" && user) {
-    return <Workspace user={user} onLogout={logout} />;
+    return (
+      <PermissionsContext.Provider value={user.permissions}>
+        <Workspace user={user} onLogout={logout} />
+      </PermissionsContext.Provider>
+    );
   }
   return <SignIn />;
 }
