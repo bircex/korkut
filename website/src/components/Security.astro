@@ -2,28 +2,28 @@
 const base = import.meta.env.BASE_URL;
 const items = [
   {
-    title: "Her büro tamamen izole",
-    body: "Her büro veritabanı düzeyinde satır düzeyi güvenlik ile ayrılır. Hiçbir büro bir diğerinin verisini göremez.",
+    title: "Veriler kendi makinenizde",
+    body: "Korkut büronuzun bilgisayarına veya sunucusuna kurulur. Dosyalar, müvekkiller, belgeler ve sohbetler kendi veritabanınızda durur; proje ekibinin erişimi yoktur.",
   },
   {
-    title: "Buluta giderken rumuzlama",
-    body: "Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgiler önce en iyi çaba ile rumuzlanır.",
+    title: "Yerel model, sıfır dışarı akış",
+    body: "LM Studio veya Ollama gibi yerel bir modelle çalıştırın; hiçbir metin makinenizden çıkmaz. Bulut modeli seçerseniz giden metin önce en iyi çaba ile rumuzlanır.",
+  },
+  {
+    title: "Dosya bazlı yetkilendirme",
+    body: "Hazır ve özel roller, izin bazlı yetkiler. Herkes yalnızca ekibinde olduğu dosyaları görür; kural veritabanında da (satır düzeyi güvenlik) uygulanır.",
+  },
+  {
+    title: "Hassas bilgiye ayrı izin",
+    body: "Müvekkil iletişim ve kimlik bilgileri ile mali kayıtlar ayrı izinlere bağlıdır; izni olmayana maskelenmiş görünür.",
+  },
+  {
+    title: "Erişim kayıtları",
+    body: "Müvekkil bilgisi ve mali kayıt görüntülemeleri, rol ve ekip değişiklikleri, reddedilen erişimler kayıt altındadır.",
   },
   {
     title: "Onaysız kalıcı işlem yok",
-    body: "Siz onaylamadan hiçbir kayıt oluşturulmaz, hiçbir mesaj gönderilmez. Her giden mesaj önce önünüze gelir.",
-  },
-  {
-    title: "Güçlü kimlik doğrulama",
-    body: "Google ile giriş veya e-posta ve parola; yönetim panelinde zorunlu iki adımlı doğrulama (TOTP).",
-  },
-  {
-    title: "Şifreli hassas alanlar",
-    body: "Müvekkil kimlik bilgileri gibi hassas alanlar veritabanında ayrıca şifrelenir.",
-  },
-  {
-    title: "Her model çağrısı kayıtlı",
-    body: "Yapay zekaya yapılan her çağrı büro bazında kayıt altındadır; sistem tek bir denetlenen giriş noktasının arkasında çalışır.",
+    body: "Siz onaylamadan hiçbir kayıt oluşturulmaz, hiçbir mesaj gönderilmez. Kod açık olduğu için her şeyi kendiniz denetleyebilirsiniz.",
   },
 ];
 ---
@@ -33,8 +33,8 @@ const items = [
     <span class="eyebrow">Gizlilik &amp; Güvenlik</span>
     <h2>Veriler kontrolünüzde kalır</h2>
     <p class="section-lead">
-      Müvekkil verisi en hassas varlığınızdır. Korkut baştan sona bu ilkeyle
-      tasarlandı; KVKK sorumluluğu sizde, kontrol de sizde kalır.
+      Müvekkil verisi en hassas varlığınızdır. Korkut'u kendiniz kurar ve
+      işletirsiniz; veri de, kontrol de, KVKK sorumluluğu da büronuzda kalır.
     </p>
   </div>
 
@@ -53,8 +53,8 @@ const items = [
   <div class="wrap center foot-row">
     <p class="disclaimer">
       Korkut hukuki tavsiye vermez; her çıktı, nitelikli bir avukatın gözden
-      geçirmesi gereken bir taslaktır. Ayrıntılar
-      <a href={`${base}kosullar/`}>Kullanım Koşulları</a>'nda yer alır.
+      geçirmesi gereken bir taslaktır. Ayrıntılar{" "}
+      <a href={`${base}kosullar/`}>Lisans ve sorumluluk</a> sayfasında yer alır.
     </p>
     <a class="more" href={`${base}guvenlik/`}>Ayrıntılı güvenlik sayfası →</a>
   </div>

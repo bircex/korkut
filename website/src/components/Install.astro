@@ -1,0 +1,140 @@
+---
+import { LOCAL_APP_URL, REPO_URL, RELEASES_URL } from "../consts";
+
+// Kurulum: depodaki docs/INSTALL.md'nin kısa hâli. Komutlar oradakilerle aynı tutulur.
+const steps = [
+  {
+    title: "Depoyu indirin",
+    body: "Tek gereksinim Docker (Compose v2 ile). Kaynak kodu GitHub'dan alın.",
+    code: `git clone ${REPO_URL}.git\ncd korkut`,
+  },
+  {
+    title: "Kurun",
+    body: "Kurulum gizli anahtarları ve yönetici parolasını üretir, her şeyi Docker ile başlatır.",
+    code: "./install.sh",
+    alt: "Windows (PowerShell): .\\install.ps1",
+  },
+  {
+    title: "Giriş yapın",
+    body: "Kullanıcı adı korkut-admin, parola kurulumun sonunda ekrana yazılır. Sonra üyelerinizi davet edin.",
+    code: LOCAL_APP_URL,
+  },
+  {
+    title: "Modelinizi seçin",
+    body: "Ayarlar → Yapay zeka'dan LM Studio, Ollama gibi yerel bir model ya da bir bulut sağlayıcısı bağlayın.",
+  },
+];
+---
+
+<section id="kurulum">
+  <div class="wrap center">
+    <span class="eyebrow">Kurulum</span>
+    <h2>Dakikalar içinde kendi makinenizde</h2>
+    <p class="section-lead">
+      Korkut bir hizmet değil, büronuza kurduğunuz bir yazılımdır. Bir
+      bilgisayar ya da sunucu, Docker ve dört adım yeter.
+    </p>
+  </div>
+
+  <ol class="wrap steps">
+    {
+      steps.map((s, i) => (
+        <li class="step">
+          <div class="num" aria-hidden="true">
+            {i + 1}
+          </div>
+          <h3>{s.title}</h3>
+          <p>{s.body}</p>
+          {s.code && <pre><code>{s.code}</code></pre>}
+          {s.alt && <p class="alt">{s.alt}</p>}
+        </li>
+      ))
+    }
+  </ol>
+
+  <div class="wrap center links">
+    <a class="btn btn-primary" href={`${import.meta.env.BASE_URL}dokumantasyon/kurulum/`}>Kurulum belgesi</a>
+    <a class="btn btn-ghost" href={RELEASES_URL} rel="noopener">Sürümler</a>
+  </div>
+</section>
+
+<style>
+  /* Adımlar yukarıdan aşağı: solda numara ve onları bağlayan çizgi, sağda içerik. */
+  .steps {
+    max-width: 720px;
+    margin: 48px auto 0;
+    list-style: none;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+  }
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    column-gap: 18px;
+    padding-bottom: 30px;
+    min-width: 0;
+  }
+  .step:last-child {
+    padding-bottom: 0;
+  }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 36px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--line);
+  }
+  .step:last-child::before {
+    display: none;
+  }
+  .step > :not(.num) {
+    grid-column: 2;
+  }
+  .num {
+    grid-row: 1 / span 4;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .step h3 {
+    font-size: 18px;
+    margin: 5px 0 6px;
+  }
+  .step p {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0;
+  }
+  pre {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    background: #0a0a0a;
+    color: #e5e5e5;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .alt {
+    font-size: 13px !important;
+    margin-top: 6px !important;
+  }
+  .links {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+</style>

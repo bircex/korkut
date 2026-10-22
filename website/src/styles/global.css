@@ -186,6 +186,65 @@ h2 {
   margin: 18px 0;
 }
 
+/* Dokümantasyon sayfalarındaki Markdown: alt başlık, kod, tablo, alıntı. */
+.prose h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 26px 0 8px;
+}
+.prose code {
+  font-size: 0.9em;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.prose pre {
+  background: #0a0a0a;
+  color: #e5e5e5;
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 12px 0 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px;
+  font-size: 14.5px;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  vertical-align: top;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.prose th {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.prose blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--line-strong);
+  background: var(--soft);
+  border-radius: 0 8px 8px 0;
+}
+.prose blockquote p {
+  margin: 0;
+}
+
 /* Accessibility helper */
 .visually-hidden {
   position: absolute !important;

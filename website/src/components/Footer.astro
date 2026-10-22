@@ -1,5 +1,12 @@
 ---
-import { REGISTER_URL, CONTACT_EMAIL, APP_URL } from "../consts";
+import {
+  CONTACT_EMAIL,
+  REPO_URL,
+  RELEASES_URL,
+  CONTRIBUTING_URL,
+  LICENSE_URL,
+  SECURITY_POLICY_URL,
+} from "../consts";
 const year = 2026;
 const base = import.meta.env.BASE_URL;
 
@@ -14,19 +21,22 @@ const columns = [
     ],
   },
   {
-    title: "Hesap",
+    title: "Açık kaynak",
     links: [
-      { href: APP_URL, label: "Giriş yap" },
-      { href: REGISTER_URL, label: "Ücretsiz Başla" },
-      { href: `mailto:${CONTACT_EMAIL}`, label: "İletişim" },
+      { href: REPO_URL, label: "GitHub" },
+      { href: `${base}dokumantasyon/`, label: "Dokümantasyon" },
+      { href: RELEASES_URL, label: "Sürümler" },
+      { href: CONTRIBUTING_URL, label: "Katkı rehberi" },
     ],
   },
   {
     title: "Hukuki",
     links: [
-      { href: `${base}kvkk/`, label: "KVKK Aydınlatma Metni" },
-      { href: `${base}gizlilik/`, label: "Gizlilik Politikası" },
-      { href: `${base}kosullar/`, label: "Kullanım Koşulları" },
+      { href: LICENSE_URL, label: "MIT Lisansı" },
+      { href: `${base}kosullar/`, label: "Lisans ve sorumluluk" },
+      { href: `${base}kvkk/`, label: "KVKK notu" },
+      { href: `${base}gizlilik/`, label: "Site gizliliği" },
+      { href: SECURITY_POLICY_URL, label: "Güvenlik açığı bildirimi" },
     ],
   },
 ];
@@ -45,7 +55,7 @@ const columns = [
         <span>Korkut</span>
       </div>
       <p class="muted tagline">
-        Hukuk büroları için, her büroyu izole tutan yapay zeka asistanı.
+        Hukuk büroları için açık kaynak, kendi makinenizde çalışan yapay zeka asistanı.
       </p>
       <a class="muted mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
     </div>
@@ -62,10 +72,10 @@ const columns = [
     }
   </div>
   <div class="wrap foot-bottom">
-    <span class="muted">© {year} Korkut</span>
+    <span class="muted">© {year} Korkut katkıcıları · MIT lisansı</span>
     <span class="muted">
-      Korkut hukuki tavsiye vermez; ayrıntılar için
-      <a class="terms" href={`${base}kosullar/`}>Kullanım Koşulları</a>.
+      Korkut hukuki tavsiye vermez ve olduğu gibi sunulur; ayrıntılar için{" "}
+      <a class="terms" href={`${base}kosullar/`}>Lisans ve sorumluluk</a>.
     </span>
   </div>
 </footer>

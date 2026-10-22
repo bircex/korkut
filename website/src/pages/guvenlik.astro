@@ -2,40 +2,40 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { CONTACT_EMAIL, LEGAL_UPDATED } from "../consts";
+import { LEGAL_UPDATED, REPO_URL, SECURITY_POLICY_URL } from "../consts";
 const base = import.meta.env.BASE_URL;
 
 const pillars = [
   {
-    title: "Veritabanı düzeyinde izolasyon",
-    body: "Her büro satır düzeyi güvenlik (RLS) ile ayrılır; kural uygulama kodunda değil veritabanı katmanında zorunludur.",
+    title: "Kendi makinenizde",
+    body: "Korkut büronuzun bilgisayarına veya sunucusuna kurulur; uygulama varsayılan olarak yalnızca o makinenin kendisinden (127.0.0.1) erişilebilir.",
   },
   {
-    title: "Rumuzlama",
-    body: "Modele ve arama dizinine giden metinde TCKN, isim, telefon, e-posta ve IBAN en iyi çaba ile takma değerlere çevrilir.",
+    title: "Dosya bazlı yetki",
+    body: "Rol ve izin bazlı yetkilendirme; herkes yalnızca ekibinde olduğu dosyaları görür. Kural veritabanında satır düzeyi güvenlikle de uygulanır.",
+  },
+  {
+    title: "Yerel model seçeneği",
+    body: "Yerel, OpenAI uyumlu bir modelle (LM Studio, Ollama) hiçbir metin makineden çıkmaz. Bulut modelinde giden metin önce rumuzlanır.",
   },
   {
     title: "Onay akışı",
     body: "Onaysız hiçbir kalıcı kayıt oluşmaz, hiçbir mesaj gönderilmez. Bu kural kişiselleştirmeyle değiştirilemez.",
   },
   {
-    title: "Güçlü kimlik doğrulama",
-    body: "Google ile giriş veya e-posta ve parola; yönetim panelinde zorunlu iki adımlı doğrulama (TOTP).",
+    title: "Erişim kayıtları",
+    body: "Hassas bilgi görüntülemeleri, yetki değişiklikleri ve reddedilen erişimler kayıt altındadır; yönetici Ayarlar'dan izler.",
   },
   {
-    title: "İzlenebilirlik",
-    body: "Her yapay zeka çağrısı büro bazında kayıt altındadır; sistem tek bir denetlenen giriş noktasının arkasında çalışır.",
-  },
-  {
-    title: "Çerezsiz tanıtım sitesi",
-    body: "korkutai.com çerez ve üçüncü taraf istek içermez; sıkı CSP ve HSTS ile yayımlanır.",
+    title: "Açık kod",
+    body: "Bütün kaynak kodu açıktır. Güvenlik iddialarını okuyarak, test ederek ve denetleyerek kendiniz doğrulayabilirsiniz.",
   },
 ];
 ---
 
 <Layout
   title="Güvenlik · Korkut"
-  description="Korkut'un güvenlik mimarisi: satır düzeyi güvenlikle büro izolasyonu, buluta giden verinin rumuzlanması, onay akışı, kimlik doğrulama ve izlenebilirlik."
+  description="Korkut'un güvenlik mimarisi: kendi makinenizde çalışma, dosya bazlı yetkilendirme ve satır düzeyi güvenlik, yerel model seçeneği, onay akışı ve erişim kayıtları."
   path={`${base}guvenlik/`}
 >
   <Nav />
@@ -46,8 +46,9 @@ const pillars = [
 
       <p>
         Korkut, müvekkil verisinin bir büronun en hassas varlığı olduğu
-        ilkesiyle tasarlandı. Bu sayfa, pazarlama diliyle değil, mimarinin
-        gerçekte nasıl çalıştığıyla güvenliği anlatır.
+        ilkesiyle tasarlandı. Bu sayfa mimarinin gerçekte nasıl çalıştığını
+        anlatır; kod açık olduğu için her iddiayı{" "}
+        <a href={REPO_URL} rel="noopener">depoda</a> kendiniz doğrulayabilirsiniz.
       </p>
 
       <div class="pillars" aria-label="Güvenlik ilkeleri">
@@ -61,32 +62,46 @@ const pillars = [
         }
       </div>
 
-      <h2>Büro izolasyonu</h2>
+      <h2>Kendi makinenizde çalışma</h2>
       <p>
-        Her büronun verisi, veritabanında satır düzeyi güvenlik (row-level
-        security) politikalarıyla ayrılır. Bir sorgu hangi uygulama kodundan
-        gelirse gelsin, yalnızca o büronun satırlarına erişebilir; izolasyon
-        uygulama katmanındaki bir filtreye değil, veritabanının kendisine
-        dayanır. Hassas alanlar ayrıca şifrelenir. Şema değişiklikleri,
-        uygulamanın kullandığı hesaptan ayrı, yetkisi kısıtlanmış bir göç
-        (migration) hesabıyla uygulanır.
+        Korkut bir bulut hizmeti değildir; Docker ile büronuzun kendi
+        makinesine kurulur ve tek bir büroya hizmet eder. Veritabanı, belgeler
+        ve sohbetler o makinede durur. Uygulama varsayılan olarak yalnızca
+        makinenin kendisinden erişilebilir; ağınıza ya da internete açmak
+        sizin kararınızdır ve bu durumda TLS, güvenlik duvarı, yedekleme ve
+        güncellemeler de sizin sorumluluğunuzdadır.
+      </p>
+
+      <h2>Yetkilendirme</h2>
+      <p>
+        Her işlem bir izne bağlıdır ve izinler rollerde toplanır. Yönetici,
+        avukat, stajyer, sekreter, muhasebe ve okuyucu hazır rollerdir; büro
+        kendi rollerini de tanımlayabilir. Dosyaların bir ekibi vardır ve
+        herkes yalnızca ekibinde olduğu dosyaları, o dosyaların sohbetlerini,
+        belgelerini ve ajandasını görür. Müvekkil iletişim ve kimlik
+        bilgileri ile mali kayıtlar ayrı izinlere bağlıdır. Dosya kapsamı
+        yalnızca uygulama kodunda değil, veritabanında satır düzeyi güvenlik
+        (row-level security) politikalarıyla da uygulanır. Yapay zeka
+        araçları da kullanıcının yetkileriyle çalışır; bir dosyanın
+        sohbetinde asistan yalnızca o dosyanın verisine erişir.
       </p>
 
       <h2>Yapay zeka veri akışı</h2>
       <p>
-        Sohbet, araştırma ve taslak üretimi büyük dil modelleriyle çalışır.
-        Modele gönderilmeden önce metin bir rumuzlama katmanından geçer: T.C.
-        kimlik numaraları (geçerlilik denetimiyle), isimler, telefon
-        numaraları, e-posta adresleri, IBAN'lar ve dosya numaraları takma
-        değerlerle değiştirilir. Aynı katman, belge aramada kullanılan vektör
-        dizinine eklenen içeriklere de uygulanır; yani kalıcı arama dizini de
-        rumuzlanmış metin üzerinde kurulur.
+        Hangi modelin kullanılacağını büro seçer. Yerel, OpenAI uyumlu bir
+        model (LM Studio, Ollama gibi) bağlarsanız sohbet, araştırma ve taslak
+        üretimi için hiçbir metin makinenizden çıkmaz. Bir bulut modeli
+        seçerseniz, modele gönderilmeden önce metin bir rumuzlama katmanından
+        geçer: T.C. kimlik numaraları (geçerlilik denetimiyle), isimler,
+        telefon numaraları, e-posta adresleri ve IBAN'lar takma değerlerle
+        değiştirilir. Sağlayıcı anahtarları kurulumun ürettiği ana anahtarla
+        şifrelenerek saklanır.
       </p>
       <div class="note">
         Rumuzlama en iyi çaba ilkesiyle çalışır ve bir garanti değildir;
         serbest metindeki her kişisel verinin yakalanacağı taahhüt edilemez.
-        Sınırlar için <a href={`${base}gizlilik/`}>Gizlilik Politikası</a>'na
-        bakın.
+        Bulut modeli kullanımında yurt dışına veri aktarımı (KVKK md. 9)
+        sorumluluğu büroya aittir; bkz. <a href={`${base}kvkk/`}>KVKK notu</a>.
       </div>
 
       <h2>Onay akışı</h2>
@@ -98,25 +113,15 @@ const pillars = [
         ayarları bu kuralın üzerine yazamaz.
       </p>
 
-      <h2>Kimlik ve yetki</h2>
+      <h2>Kimlik doğrulama ve kayıt</h2>
       <p>
-        Giriş Google hesabıyla veya e-posta ve parolayla yapılır; parolalar
-        yalnızca geri döndürülemez özet olarak saklanır. Yeni büro kayıtları
-        yönetici onayından geçer, büroya katılım e-postaya bağlı davet
-        bağlantılarıyla olur. Büro içinde rol tabanlı yetkilendirme uygulanır;
-        yapay zeka araçları da kullanıcının rolünün izin verdiği işlemlerle
-        sınırlıdır. Platform yönetim paneli, Google girişine ek olarak zorunlu
-        iki adımlı doğrulama (TOTP) ister.
-      </p>
-
-      <h2>İzlenebilirlik ve kayıt</h2>
-      <p>
-        Yapay zeka modeline yapılan her çağrı; hangi büro adına, hangi modelle
-        ve ne zaman yapıldığı bilgisiyle birlikte kayıt altına alınır ve bu
-        kayıtlar da büro bazında izole tutulur. Trafik, kimlik doğrulamanın
-        uygulandığı tek bir giriş noktası üzerinden iç servislere dağıtılır;
-        iç servisler doğrudan internete açık değildir. Büro başına kullanım
-        bütçeleri ve hız sınırları uygulanır.
+        Kurulum, yönetici hesabının (korkut-admin) ilk parolasını üretir;
+        diğer üyeler e-postaya bağlı davetle katılır. Parolalar yalnızca geri
+        döndürülemez özet olarak saklanır, iki adımlı doğrulama (TOTP)
+        desteklenir. Müvekkil bilgisi ve mali kayıt görüntülemeleri, rol ve
+        ekip değişiklikleri ile yetkisi olmadığı için reddedilen istekler
+        erişim kayıtlarına yazılır; müvekkil bilgileri kayda değerleriyle
+        değil, alan adlarıyla geçer.
       </p>
 
       <h2>Bu web sitesi</h2>
@@ -129,10 +134,11 @@ const pillars = [
 
       <h2>Güvenlik açığı bildirimi</h2>
       <p>
-        Bir güvenlik açığı bulduğunuzu düşünüyorsanız
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> adresine
-        yazın. Bildirimleri ciddiyetle inceler, doğrulanan bulguları en kısa
-        sürede gideririz.
+        Bir güvenlik açığı bulduğunuzu düşünüyorsanız lütfen herkese açık bir
+        issue açmayın; depodaki{" "}
+        <a href={SECURITY_POLICY_URL} rel="noopener">güvenlik politikasında</a>{" "}
+        anlatılan yoldan özel olarak bildirin. Doğrulanan bulgular en kısa
+        sürede giderilir ve sürüm notlarında duyurulur.
       </p>
     </div>
   </main>

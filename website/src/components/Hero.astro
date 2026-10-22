@@ -1,5 +1,6 @@
 ---
-import { REGISTER_URL, APP_URL } from "../consts";
+import { REPO_URL } from "../consts";
+import GitHubIcon from "./GitHubIcon.astro";
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -14,30 +15,38 @@ const base = import.meta.env.BASE_URL;
       height="84"
     />
 
+    <a class="badge" href={REPO_URL} rel="noopener">
+      <span class="badge-dot" aria-hidden="true"></span>
+      Açık kaynak · MIT lisansı
+    </a>
+
     <h1>
-      Hukuk büronuz için{" "}<span class="hl">tamamen ücretsiz</span> yapay zeka asistanı
+      Hukuk büroları için{" "}<span class="hl">açık kaynak</span> yapay zeka asistanı
     </h1>
 
     <p class="lead">
-      Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya ve
-      duruşmaları takip eder, yazışmaları yürütür. Hepsi tek bir sohbetten,
-      bulutta her büro tamamen izole ve verileriniz güvende kalır.
+      Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve
+      süreleri takip eder. Kendi makinenize kurulur, verileriniz büronuzda
+      kalır. Yerel bir modelle çalıştırırsanız hiçbir metin dışarı çıkmaz.
     </p>
 
     <div class="cta-row">
-      <a href={REGISTER_URL} class="btn btn-primary btn-lg btn-round">Ücretsiz Başla</a>
-      <a href={APP_URL} class="btn btn-ghost btn-lg btn-round">Giriş yap</a>
+      <a href="#kurulum" class="btn btn-primary btn-lg btn-round">Kurulumu gör</a>
+      <a href={REPO_URL} rel="noopener" class="btn btn-ghost btn-lg btn-round gh">
+        <GitHubIcon size={18} />
+        GitHub'da incele
+      </a>
     </div>
 
     <p class="hero-note">
-      Her büro izole · Onaysız kalıcı işlem yok · Dakikalar içinde başlayın
+      Kendi sunucunuzda · Yerel model desteği · Abonelik yok
     </p>
 
     <!-- Büyük ürün çerçevesi: gerçek ekran görüntüsü gelene kadar sohbet demosu -->
     <div class="product" aria-hidden="true">
       <div class="product-bar">
         <span></span><span></span><span></span>
-        <div class="product-url">app.korkutai.com</div>
+        <div class="product-url">localhost:8090</div>
       </div>
       <div class="product-body">
         <div class="mock-top">
@@ -86,6 +95,33 @@ const base = import.meta.env.BASE_URL;
   }
   .wrap {
     position: relative;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 18px;
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .badge:hover {
+    color: var(--ink);
+  }
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+  }
+  .gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
   .hero-logo {
     width: 84px;

@@ -1,5 +1,6 @@
 ---
-import { NAV_LINKS, REGISTER_URL, APP_URL } from "../consts";
+import { NAV_LINKS, REPO_URL } from "../consts";
+import GitHubIcon from "./GitHubIcon.astro";
 const base = import.meta.env.BASE_URL;
 // base "/" ile bittiğinden anchor'lar (#...) "/#..." olarak çözülür ve alt
 // sayfalardan da ana sayfaya döner; sayfa yolları da base ile önlenir.
@@ -25,10 +26,11 @@ const resolve = (href: string) => `${base}${href}`;
       </nav>
 
       <div class="nav-actions">
-        <a class="ghost-link" href={APP_URL} aria-label="Giriş yap">
-          <span>Giriş yap</span>
+        <a class="ghost-link" href={REPO_URL} rel="noopener" aria-label="Korkut GitHub deposu">
+          <GitHubIcon />
+          <span>GitHub</span>
         </a>
-        <a href={REGISTER_URL} class="btn btn-primary btn-pill">Ücretsiz Başla</a>
+        <a href={resolve("#kurulum")} class="btn btn-primary btn-pill">Kur</a>
       </div>
     </div>
   </div>
@@ -111,9 +113,9 @@ const resolve = (href: string) => `${base}${href}`;
       display: none;
     }
   }
-  /* Dar ekran ve 200% zoom: çubuk kompakt moda geçer, "Giriş yap" gizlenir. */
+  /* Dar ekran ve 200% zoom: çubuk kompakt moda geçer, GitHub yazısı gizlenir (simge kalır). */
   @media (max-width: 720px) {
-    .ghost-link {
+    .ghost-link span {
       display: none;
     }
     .bar {
