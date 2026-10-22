@@ -21,6 +21,9 @@ public sealed class AgentDbContext(DbContextOptions<AgentDbContext> options) : D
 
     public DbSet<Korkut.Agent.Ledger.Entities.LlmCall> LlmCalls => Set<Korkut.Agent.Ledger.Entities.LlmCall>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        => configurationBuilder.UseUtcTimestamps();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(AgentPersistenceSetup.AgentSchema);
