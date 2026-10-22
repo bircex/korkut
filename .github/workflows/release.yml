@@ -1,0 +1,239 @@
+name: Release
+
+# One button cuts a CalVer release (YYYY.MM.PATCH) from main. See docs/RELEASING.md.
+#
+#   verify    the full .NET and UI test suites on main
+#   prepare   next version from the tags, CHANGELOG "Unreleased" -> dated section, versions in the
+#             UI and website packages, a "Release vX" commit on main and the vX tag
+#   images    every service image for linux/amd64 and linux/arm64, each on a native runner
+#   manifest  the two architectures joined under ghcr.io/bircex/<image>:X and :latest
+#   publish   the install bundle (korkut.tar.gz / .zip) and the GitHub release with the notes
+#
+# "Dry run" builds and tests everything but pushes nothing: no commit, tag, image or release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build and test everything, publish nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/bircex
+
+jobs:
+  verify:
+    name: Verify main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: .NET build and test (integration tests use Docker)
+        run: |
+          dotnet build Korkut.slnx -c Release
+          dotnet test Korkut.slnx -c Release --no-build
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: UI lint, type-check and test
+        working-directory: ui
+        run: |
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm test
+
+  prepare:
+    name: Version and tag
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      ref: ${{ steps.commit.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Next CalVer version
+        id: version
+        run: |
+          version="$(scripts/release/next-version.sh)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "### Korkut $version" >> "$GITHUB_STEP_SUMMARY"
+      - name: Release notes are ready
+        run: python3 scripts/release/changelog.py check
+      - name: Cut the changelog and set the version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 scripts/release/changelog.py cut "$VERSION" "$(date -u +%Y-%m-%d)"
+          (cd ui && npm version "$VERSION" --no-git-tag-version --allow-same-version)
+          (cd website && npm version "$VERSION" --no-git-tag-version --allow-same-version)
+      - name: Commit and tag
+        id: commit
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          git config user.name BirceX
+          git config user.email birceX@recepkizilarslan.com
+          git commit -am "Release v$VERSION"
+          git tag -a "v$VERSION" -m "Korkut $VERSION"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: not pushing v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+            echo "ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            git push origin HEAD:main "v$VERSION"
+            echo "ref=v$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+  images:
+    name: Image ${{ matrix.image }} (${{ matrix.arch }})
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [korkut, korkut-migrator, korkut-ocr, korkut-kikproxy]
+        arch: [amd64, arm64]
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+          - { image: korkut, dockerfile: docker/Dockerfile.api }
+          - { image: korkut-migrator, dockerfile: docker/Dockerfile.migrator }
+          - { image: korkut-ocr, dockerfile: docker/Dockerfile.ocr }
+          - { image: korkut-kikproxy, dockerfile: docker/Dockerfile.kikproxy }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: ${{ !inputs.dry_run }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build${{ !inputs.dry_run && ' and push by digest' || '' }}
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/${{ matrix.arch }}
+          build-args: KORKUT_VERSION=${{ needs.prepare.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+          outputs: ${{ inputs.dry_run && 'type=cacheonly' || format('type=image,name={0}/{1},push-by-digest=true,name-canonical=true,push=true', env.REGISTRY, matrix.image) }}
+      - name: Keep the digest for the manifest
+        if: ${{ !inputs.dry_run }}
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p digests
+          touch "digests/${DIGEST#sha256:}"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.dry_run }}
+        with:
+          name: digest-${{ matrix.image }}-${{ matrix.arch }}
+          path: digests/*
+          retention-days: 1
+
+  manifest:
+    name: Publish ${{ matrix.image }}
+    needs: [prepare, images]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        image: [korkut, korkut-migrator, korkut-ocr, korkut-kikproxy]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-${{ matrix.image }}-*
+          path: digests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Join amd64 and arm64 under the version and latest tags
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ matrix.image }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        working-directory: digests
+        run: |
+          docker buildx imagetools create -t "$IMAGE:$VERSION" -t "$IMAGE:latest" \
+            $(printf "$IMAGE@sha256:%s " *)
+          docker buildx imagetools inspect "$IMAGE:$VERSION"
+
+  publish:
+    name: GitHub release
+    needs: [prepare, manifest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+      - name: Install bundle
+        run: scripts/release/bundle.sh "${{ needs.prepare.outputs.version }}"
+      - name: Release notes
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          {
+            python3 scripts/release/changelog.py notes "$VERSION"
+            cat <<NOTES
+
+          ## Kurulum
+
+          Gereksinim: Docker (Compose v2).
+
+          \`\`\`bash
+          curl -fsSL https://github.com/bircex/korkut/releases/download/v$VERSION/korkut.tar.gz | tar xz
+          cd korkut && ./install.sh
+          \`\`\`
+
+          Windows: \`korkut.zip\` dosyasını açıp PowerShell'de \`.\\install.ps1\` çalıştırın. Güncellemek için
+          yeni sürümü aynı klasörün üzerine açıp kurulumu yeniden çalıştırın; \`.env\` ve veriler korunur.
+
+          İmajlar: \`ghcr.io/bircex/korkut\`, \`korkut-migrator\`, \`korkut-ocr\`, \`korkut-kikproxy\` (\`$VERSION\`, linux/amd64 ve linux/arm64).
+          Belgeler: https://korkutai.com/dokumantasyon/
+          NOTES
+          } | sed 's/^          //' > notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          gh release create "v$VERSION" dist/korkut.tar.gz dist/korkut.zip dist/SHA256SUMS \
+            --title "Korkut $VERSION" --notes-file notes.md --verify-tag --latest
+      - name: Redeploy the website with the new version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Pushes made by this workflow do not trigger other workflows, so start it explicitly.
+          if [ -f .github/workflows/pages.yml ]; then gh workflow run pages.yml --ref main; fi

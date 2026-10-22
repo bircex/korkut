@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Install or update Korkut on this machine: creates the secrets the stack needs in .env (once),
-# then builds and starts it with Docker Compose. Safe to run again: a value already in .env is
-# never changed, because the model gateway's key seals every provider key stored in it.
+# then starts it with Docker Compose. In a release download (a VERSION file, no source code) it
+# pulls that release's published images; in a source checkout it builds them. Safe to run again:
+# a secret already in .env is never changed, because the model gateway's key seals every provider
+# key stored in it.
 #
-#   ./install.sh                         install, or update to this checkout
+#   ./install.sh                         install, or update to this release / checkout
 #   ./install.sh --reset-admin-password  give korkut-admin a new password (if it was lost)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -52,11 +54,24 @@ elif $reset_admin; then
 fi
 chmod 600 .env
 
+# A release download runs the images published for its version; a source checkout builds them.
+if [ -f VERSION ] && [ ! -d src ]; then
+  version="$(tr -d '[:space:]' < VERSION)"
+  # Always follows the release in this folder, so unpacking a newer one and running this updates.
+  grep -v '^KORKUT_VERSION=' .env > .env.tmp && mv .env.tmp .env && chmod 600 .env
+  echo "KORKUT_VERSION=$version" >> .env
+  echo "install: Korkut $version"
+  docker compose pull
+  up=(up -d --no-build)
+else
+  up=(up -d --build)
+fi
+
 if $reset_admin; then
   # One start with the reset flag sets the admin's password back to the one in .env.
-  KORKUT_ADMIN_PASSWORD_RESET=1 docker compose up -d --build
+  KORKUT_ADMIN_PASSWORD_RESET=1 docker compose "${up[@]}"
 else
-  docker compose up -d --build
+  docker compose "${up[@]}"
 fi
 
 port="$(grep -E '^KORKUT_HTTP_PORT=' .env | cut -d= -f2 || true)"
