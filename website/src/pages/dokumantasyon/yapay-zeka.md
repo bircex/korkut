@@ -23,7 +23,7 @@ LM Studio, Ollama veya OpenAI uyumlu başka bir sunucuyla modeli kendi makineniz
 
 OpenAI, Anthropic veya Google Gemini için türü seçip API anahtarınızı girin, **Test et** ile doğrulayıp sohbet modelini seçin. Bulut modeli kullanıldığında modele giden metin önce bir rumuzlama katmanından geçer: T.C. kimlik numaraları, isimler, telefon, e-posta ve IBAN'lar takma değerlerle değiştirilir.
 
-> Rumuzlama en iyi çaba ile çalışır, bir garanti değildir. Bulut sağlayıcısına veri gönderimi KVKK md. 9 kapsamında yurt dışı aktarım sayılabilir; sorumluluk büroya aittir. Bkz. [KVKK notu](/kvkk/).
+> Rumuzlama en iyi çaba ile çalışır, bir garanti değildir. Bulut sağlayıcısına veri gönderimi KVKK md. 9 kapsamında yurt dışı aktarım sayılabilir; sorumluluk büroya aittir. Bkz. [KVKK notu](../../kvkk/).
 
 ## Belge arama modeli (embedding)
 

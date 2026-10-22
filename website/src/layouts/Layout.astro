@@ -24,8 +24,10 @@ const {
   image = `${base}og.png`,
 } = Astro.props;
 
-const canonical = new URL(path, SITE.url).toString();
-const ogImage = new URL(image, SITE.url).toString();
+// Sitenin gerçekten yayınlandığı origin (astro.config.mjs'teki `site`).
+const origin = Astro.site ?? SITE.url;
+const canonical = new URL(path, origin).toString();
+const ogImage = new URL(image, origin).toString();
 
 // JSON-LD yapılandırılmış veri: arama motorları için zengin sonuç.
 const jsonLd = {

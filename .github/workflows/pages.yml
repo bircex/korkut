@@ -34,8 +34,17 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: website/package-lock.json
+      - name: Pages address
+        id: pages
+        uses: actions/configure-pages@v5
       - run: npm ci
-      - run: npm run build
+      - name: Build for the address Pages serves the site at
+        env:
+          # https://korkutai.com and "" once the custom domain is set,
+          # https://bircex.github.io and "/korkut" until then.
+          SITE_ORIGIN: ${{ steps.pages.outputs.origin }}
+          SITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
       - name: Security headers
         run: npm run check:headers
       - uses: actions/upload-pages-artifact@v3
