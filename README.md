@@ -5,7 +5,7 @@
 <h1 align="center">Korkut</h1>
 
 <p align="center">
-  <a href="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml"><img src="https://github.com/recepkizilarslan/korkut/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/bircex/korkut/actions/workflows/ci.yml"><img src="https://github.com/bircex/korkut/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/.NET-10-blueviolet.svg" alt=".NET 10" />
   <img src="https://img.shields.io/badge/version-CalVer-blue.svg" alt="CalVer" />
