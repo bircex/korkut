@@ -102,15 +102,16 @@ export function RolesSettings() {
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200">
-        <table className="w-full min-w-[640px] border-collapse text-[13px]">
+        <table className="w-full min-w-[560px] border-collapse text-[13px]">
           <thead>
             <tr className="bg-zinc-50">
               <th scope="col" className="sticky left-0 bg-zinc-50 px-3 py-2 text-left font-medium text-zinc-500">
                 İzin
               </th>
               {data.roles.map((r) => (
-                <th key={r.key} scope="col" className="px-2 py-2 text-center align-bottom font-semibold text-zinc-800">
-                  <span className="block">{r.name}</span>
+                <th key={r.key} scope="col" className="max-w-[96px] px-2 py-2 text-center align-bottom font-semibold text-zinc-800">
+                  {/* Uzun rol adları (ör. "Dış danışman") alt satıra geçer; sütun taşmaz. */}
+                  <span className="block break-words">{r.name}</span>
                   <span className="block text-[11px] font-normal text-zinc-500">{r.member_count} üye</span>
                   {!r.is_system && r.member_count === 0 && (
                     <button

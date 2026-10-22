@@ -95,6 +95,9 @@ public sealed class KorkutDbContext(DbContextOptions<KorkutDbContext> options) :
 
     public DbSet<Korkut.Reminders.Entities.SentReminder> SentReminders => Set<Korkut.Reminders.Entities.SentReminder>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        => configurationBuilder.UseUtcTimestamps();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("korkut");

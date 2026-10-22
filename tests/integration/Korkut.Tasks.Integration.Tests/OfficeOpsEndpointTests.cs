@@ -77,4 +77,25 @@ public class OfficeOpsEndpointTests(KorkutApiFactory factory)
         var patch = await client.PatchAsJsonAsync($"/api/tasks/{id}", new { status = "bogus" });
         Assert.Equal(HttpStatusCode.UnprocessableEntity, patch.StatusCode);
     }
+
+    [Fact]
+    public async Task A_time_sent_in_turkish_time_is_kept_as_the_same_instant()
+    {
+        // Postgres stores instants; a +03:00 offset used to fail the save with a 500.
+        var (office, user) = await factory.SeedOfficeAsync();
+        var client = factory.ClientFor(office, user);
+
+        var create = await client.PostAsJsonAsync("/api/tasks",
+            new { category = "randevu", title = "Müvekkil görüşmesi", due_date = "2026-11-03T15:30:00+03:00", all_day = false });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+
+        var task = await create.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var due = DateTimeOffset.Parse(task.GetProperty("due_date").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal(new DateTimeOffset(2026, 11, 3, 12, 30, 0, TimeSpan.Zero), due);
+
+        // Filtering by a range given in Turkish time works too.
+        var listed = await client.GetAsync("/api/calendar/events?start=2026-11-03T00:00:00%2B03:00&end=2026-11-04T00:00:00%2B03:00");
+        Assert.Equal(HttpStatusCode.OK, listed.StatusCode);
+        Assert.Contains("Müvekkil görüşmesi", await listed.Content.ReadAsStringAsync());
+    }
 }

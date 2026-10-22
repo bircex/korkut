@@ -16,6 +16,9 @@ public sealed class KnowledgeDbContext(DbContextOptions<KnowledgeDbContext> opti
 {
     public DbSet<KnowledgeChunkEntity> Chunks => Set<KnowledgeChunkEntity>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        => configurationBuilder.UseUtcTimestamps();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(KnowledgeSetup.KnowledgeSchema);
