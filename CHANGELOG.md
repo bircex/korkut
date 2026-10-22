@@ -25,4 +25,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Consolidated legal-search tools** from 18 near-identical tools to 3 source-routed tools,
   cutting the per-request token footprint.
 
-[Unreleased]: https://github.com/recepkizilarslan/korkut/commits/main
+[Unreleased]: https://github.com/bircex/korkut/commits/main

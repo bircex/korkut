@@ -16,7 +16,7 @@ export const SITE = {
 } as const;
 
 // Açık kaynak proje: kaynak kodu, kurulum belgesi, katkı ve güvenlik bildirimi.
-export const REPO_URL = "https://github.com/recepkizilarslan/korkut";
+export const REPO_URL = "https://github.com/bircex/korkut";
 export const DOCS_URL = `${REPO_URL}/blob/main/docs/INSTALL.md`;
 export const ISSUES_URL = `${REPO_URL}/issues`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;

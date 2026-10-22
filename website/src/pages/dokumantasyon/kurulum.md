@@ -14,7 +14,7 @@ Korkut bir bulut hizmeti değil, büronuzun kendi bilgisayarına veya sunucusuna
 ## Kurulum
 
 ```bash
-git clone https://github.com/recepkizilarslan/korkut.git
+git clone https://github.com/bircex/korkut.git
 cd korkut
 ./install.sh
 ```

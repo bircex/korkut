@@ -11,7 +11,7 @@ Instead, use one of these private channels:
 
 1. **GitHub Private Vulnerability Reporting** (preferred): open a report from the repository's
    **Security → Report a vulnerability** tab
-   (<https://github.com/recepkizilarslan/korkut/security/advisories/new>).
+   (<https://github.com/bircex/korkut/security/advisories/new>).
 2. **Email**: <recepkizilarslan@gmail.com> with the subject `SECURITY: Korkut`.
 
 Please include:

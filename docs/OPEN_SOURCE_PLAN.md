@@ -12,7 +12,7 @@ Durum: uygulanıyor (2026-10-10)
 | RAG | Tamam: yüklenen belgeler indekse giriyor (#206) |
 | 5. Telegram | Tamam: bot, hesap bağlama, Telegram'dan sohbet (#210), hatırlatmalar (#212), akan yanıtlar ve belge/fotoğraf gönderimi |
 
-Hedef: Korkut tek bir açık kaynak repoda (`recepkizilarslan/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
+Hedef: Korkut tek bir açık kaynak repoda (`bircex/korkut`) toplanır. `docker compose up` ile kurulur, her kurulum tek bir büroya hizmet eder. Bütün model çağrıları [llmr](https://github.com/bircex/llmr) üzerinden geçer. Kurulum bir sihirbazla yapılır, ayarlar sonradan UI'dan değiştirilir. Telegram'dan Korkut'la konuşulabilir.
 
 Her faz ayrı bir PR'dır ve kendi başına çalışır durumda bırakılır.
 
@@ -74,7 +74,7 @@ Compose kendi başına rastgele sır üretemez. Kurulum için şu sırlar gereki
 Repo public olmadan önce mutlaka yapılması gerekenler:
 
 - `AdminAllowlist.cs` ve testteki kişisel e-postalar kaldırılır (admin yapısı Faz 3'te tamamen gidiyor).
-- `build.yml` GCP'den GHCR'a (`ghcr.io/recepkizilarslan/korkut`) çevrilir. `korkut-pipelines`'a dispatch kaldırılır.
+- `build.yml` GCP'den GHCR'a (`ghcr.io/bircex/korkut`) çevrilir. `korkut-pipelines`'a dispatch kaldırılır.
 - `korkutai.com` sabitleri mevcut `KORKUT_APP_URL` env'ine bağlanır.
 - `WebSetup.cs`: `CF-Connecting-IP` koşulsuz güveniliyor. Self-host'ta bu header ile rate limit atlatılabiliyor. Bu header'a ancak bir ayar açıksa güvenilecek.
 - `docs/SAAS_ARCHITECTURE.md`, `docs/PROVISIONING.md` ve `docs/migration/*` arşivlenir ya da silinir.
@@ -190,5 +190,5 @@ Hatırlatmalar (`Korkut.Reminders`): zamanlayıcı dakikada bir çalışır, Tel
 2. Faz 3b (RLS ve `office_id` sökümü) yapılsın mı, yoksa ertelensin mi? Önerim ertelemek.
 3. `korkut-admin`'deki commit edilmemiş iş atılabilir mi?
 4. Website açık kaynağa girsin mi, girerse hangi lisansla?
-5. İmajlar GHCR'da `ghcr.io/recepkizilarslan/korkut` adıyla mı yayınlansın? Repo adı `korkut` olarak değişsin mi?
+5. İmajlar GHCR'da `ghcr.io/bircex/korkut` adıyla mı yayınlansın? Repo adı `korkut` olarak değişsin mi?
 6. llmr tarafı (BirceX): `LLMR_MASTER_KEY_FILE` desteği eklensin ve sürüm etiketli imajlar (`2026.9.0`) gerçekten yayınlansın mı? İkisi de küçük iş, ama llmr reposunda yapılır.
