@@ -1,7 +1,7 @@
 name: Website
 
 # Type-check and build the static site in website/ on every PR into main that touches it.
-# Read-only permissions; no secrets used. Deploys happen outside CI (Cloudflare Workers Builds).
+# Read-only permissions; no secrets used. Merges to main deploy through pages.yml (GitHub Pages).
 
 on:
   pull_request:
