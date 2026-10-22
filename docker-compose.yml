@@ -1,5 +1,6 @@
 # Korkut, installed locally: run ./install.sh (install.ps1 on Windows), which writes the model
-# gateway's secrets to .env once and runs `docker compose up -d --build`; then open
+# gateway's secrets to .env once and starts the stack (a release pulls the published images
+# named below, a source checkout builds them); then open
 # http://localhost:8090. Every other setting has a local default, and the app's own secrets are
 # generated on first start.
 #
@@ -70,9 +71,13 @@ services:
 
   # One-shot: applies every schema (operational + agent + knowledge) as the superuser, then exits.
   migrator:
+    # A release pulls this image (KORKUT_VERSION in .env); a source checkout builds it.
+    image: ghcr.io/bircex/korkut-migrator:${KORKUT_VERSION:-local}
     build:
       context: .
       dockerfile: docker/Dockerfile.migrator
+      args:
+        KORKUT_VERSION: ${KORKUT_VERSION:-local}
     environment:
       KORKUT_ADMIN_DB_URL: postgres://postgres:${POSTGRES_PASSWORD:-korkut-local}@postgres:5432/korkut
     command: ["migrate"]
@@ -94,9 +99,13 @@ services:
   # The app: the API, the assistant, the knowledge index and the React app from ui/, in one
   # process on one origin (session cookies and the Google OAuth callback stay same-origin).
   korkut:
+    # A release pulls this image (KORKUT_VERSION in .env); a source checkout builds it.
+    image: ghcr.io/bircex/korkut:${KORKUT_VERSION:-local}
     build:
       context: .
       dockerfile: docker/Dockerfile.api
+      args:
+        KORKUT_VERSION: ${KORKUT_VERSION:-local}
     environment:
       <<: *app-env
       KORKUT_DB_URL: postgres://korkut_app:${KORKUT_APP_DB_PASSWORD:-korkut-app-local}@pgbouncer:6432/korkut
@@ -150,9 +159,13 @@ services:
     restart: unless-stopped
 
   ocr:
+    # A release pulls this image (KORKUT_VERSION in .env); a source checkout builds it.
+    image: ghcr.io/bircex/korkut-ocr:${KORKUT_VERSION:-local}
     build:
       context: .
       dockerfile: docker/Dockerfile.ocr
+      args:
+        KORKUT_VERSION: ${KORKUT_VERSION:-local}
     environment:
       <<: *app-env
       # The image ships the native binaries (tesseract + poppler), but the host defaults to the
@@ -170,9 +183,13 @@ services:
   # see LawClientsHttp.cs / KikProxyClient.cs. Stateless, no DB, not internet-facing beyond
   # the one gov.tr host it talks to.
   kikproxy:
+    # A release pulls this image (KORKUT_VERSION in .env); a source checkout builds it.
+    image: ghcr.io/bircex/korkut-kikproxy:${KORKUT_VERSION:-local}
     build:
       context: .
       dockerfile: docker/Dockerfile.kikproxy
+      args:
+        KORKUT_VERSION: ${KORKUT_VERSION:-local}
     restart: unless-stopped
 
   # The model gateway (github.com/bircex/llmr): holds the AI provider keys, which models are

@@ -53,6 +53,9 @@ bin/
 obj/
 [Dd]ebug/
 [Rr]elease/
+# ...but not the release tooling (scripts/release/), whose install bundle lands in dist/.
+!scripts/release/
+/dist/
 *.user
 *.suo
 .vs/

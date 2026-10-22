@@ -16,13 +16,23 @@ WORKDIR /src
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ ./src/
 RUN dotnet restore src/services/Korkut.Ocr/Korkut.Ocr.csproj
+ARG KORKUT_VERSION=local
 RUN dotnet publish src/services/Korkut.Ocr/Korkut.Ocr.csproj \
-    -c Release -o /app --no-restore /p:UseAppHost=false
+    -c Release -o /app --no-restore /p:UseAppHost=false \
+    /p:InformationalVersion=${KORKUT_VERSION}
 
 # Final stage — full noble runtime (NOT chiseled) so the native OCR binaries can be installed.
 # Tesseract (+ Turkish/English data) does the recognition; poppler-utils' pdftoppm rasterises PDFs.
 # Enable the real engine at runtime with KORKUT_OCR_ENGINE=tesseract (see Korkut.Ocr/Program.cs).
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS final
+# Release metadata: the CalVer version this image was built as, and where it comes from (the
+# source label also links the published GHCR package to the repository).
+ARG KORKUT_VERSION=local
+LABEL org.opencontainers.image.title="Korkut OCR" \
+      org.opencontainers.image.version="${KORKUT_VERSION}" \
+      org.opencontainers.image.source="https://github.com/bircex/korkut" \
+      org.opencontainers.image.licenses="MIT"
+ENV KORKUT_VERSION=${KORKUT_VERSION}
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         tesseract-ocr tesseract-ocr-tur tesseract-ocr-eng poppler-utils \

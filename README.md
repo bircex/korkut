@@ -37,8 +37,13 @@ identity.
 ## Quick start
 
 ```bash
-./install.sh     # Windows: .\install.ps1; then open http://localhost:8090
+curl -fsSL https://github.com/bircex/korkut/releases/latest/download/korkut.tar.gz | tar xz
+cd korkut && ./install.sh     # Windows: unpack korkut.zip, run .\install.ps1
 ```
+
+Then open http://localhost:8090. From a clone of this repository, `./install.sh` builds from source
+instead. Releases follow CalVer (`YYYY.MM.PATCH`); see [CHANGELOG.md](CHANGELOG.md) and
+[docs/RELEASING.md](docs/RELEASING.md).
 
 No configuration is needed; see **[docs/INSTALL.md](docs/INSTALL.md)** for settings and where data
 lives.

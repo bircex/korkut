@@ -6,10 +6,20 @@ WORKDIR /src
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ ./src/
 RUN dotnet restore src/services/Korkut.Migrator/Korkut.Migrator.csproj
+ARG KORKUT_VERSION=local
 RUN dotnet publish src/services/Korkut.Migrator/Korkut.Migrator.csproj \
-    -c Release -o /app --no-restore /p:UseAppHost=false
+    -c Release -o /app --no-restore /p:UseAppHost=false \
+    /p:InformationalVersion=${KORKUT_VERSION}
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
+# Release metadata: the CalVer version this image was built as, and where it comes from (the
+# source label also links the published GHCR package to the repository).
+ARG KORKUT_VERSION=local
+LABEL org.opencontainers.image.title="Korkut migrator" \
+      org.opencontainers.image.version="${KORKUT_VERSION}" \
+      org.opencontainers.image.source="https://github.com/bircex/korkut" \
+      org.opencontainers.image.licenses="MIT"
+ENV KORKUT_VERSION=${KORKUT_VERSION}
 WORKDIR /app
 COPY --from=build /app ./
 ENV DOTNET_EnableDiagnostics=0

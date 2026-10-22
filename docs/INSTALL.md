@@ -8,18 +8,23 @@ Korkut runs locally with Docker Compose: one office, on its own machine.
 
 ## Install
 
-From the repository root:
+Download the latest release and run the installer:
 
 ```bash
+curl -fsSL https://github.com/bircex/korkut/releases/latest/download/korkut.tar.gz | tar xz
+cd korkut
 ./install.sh
 ```
 
-On Windows, in PowerShell: `.\install.ps1`.
+On Windows, download `korkut.zip` from the [latest release](https://github.com/bircex/korkut/releases/latest),
+unpack it and run `.\install.ps1` in PowerShell.
 
 The installer writes the model gateway's two secrets and the admin's first password to `.env`
-(once; running it again never changes them) and starts everything with `docker compose up -d --build`.
-Then open <http://localhost:8090>. Every other setting has a local default, and the app's signing and
-2FA keys are generated on first start.
+(once; running it again never changes them), pulls that release's images from
+`ghcr.io/bircex` and starts everything. Then open <http://localhost:8090>. Every other setting has a
+local default, and the app's signing and 2FA keys are generated on first start.
+
+From a clone of the repository, the same `./install.sh` builds the images from source instead.
 
 **Keep a copy of `.env`.** `LLMR_MASTER_KEY` in it seals the AI provider keys you enter; without
 it they cannot be read back.
@@ -46,8 +51,20 @@ The password in `.env` is only the first one. If the admin's password is lost, r
 the admin's other sessions end.
 
 To change a setting (the port, SMTP), add it to `.env` (see
-`.env.example`) and run `./install.sh` again. Updating Korkut is the same: pull the new version
-and run the installer.
+`.env.example`) and run `./install.sh` again.
+
+## Updating
+
+Unpack the new release over the same folder and run the installer again; `.env` and your data are
+kept:
+
+```bash
+curl -fsSL https://github.com/bircex/korkut/releases/latest/download/korkut.tar.gz | tar xz
+cd korkut && ./install.sh
+```
+
+From a source checkout: `git pull`, then `./install.sh`. What changed in each version is in
+[CHANGELOG.md](../CHANGELOG.md).
 
 ## Where your data lives
 
