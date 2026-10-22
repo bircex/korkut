@@ -1,0 +1,144 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { DOCS, DOC_GROUPS, docHref } from "../../docs";
+import { REPO_URL } from "../../consts";
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout
+  title="Dokümantasyon · Korkut"
+  description="Korkut'un kurulumu ve bütün özellikleri: sohbet, araştırma, taslaklar, dosyalar, ajanda, belgeler, mali, roller ve yetkiler, erişim kayıtları, Telegram."
+  path={`${base}dokumantasyon/`}
+>
+  <Nav />
+  <main id="icerik" class="docs-index">
+    <div class="wrap">
+      <span class="eyebrow">Dokümantasyon</span>
+      <h1>Korkut'u nasıl kullanırım?</h1>
+      <p class="lead">
+        Kurulumdan yetkilendirmeye, her özellik için ayrı bir sayfa. Eksik ya da yanlış bir şey görürseniz
+        sayfanın altındaki bağlantıdan <a href={REPO_URL} rel="noopener">GitHub'da</a> düzeltebilirsiniz.
+      </p>
+
+      {
+        DOC_GROUPS.map((g) => (
+          <section class="group" aria-labelledby={`g-${g}`}>
+            <h2 id={`g-${g}`}>{g}</h2>
+            <div class="cards">
+              {DOCS.filter((d) => d.group === g).map((d) => (
+                <a class="card" href={docHref(base, d.slug)}>
+                  {d.shot ? (
+                    <img src={`${base}${d.shot.slice(1)}`} alt="" width="1440" height="900" loading="lazy" />
+                  ) : (
+                    <div class="card-art" aria-hidden="true">
+                      <pre>./install.sh</pre>
+                    </div>
+                  )}
+                  <div class="card-text">
+                    <b>{d.title}</b>
+                    <span>{d.description}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .docs-index {
+    padding: 56px 0 96px;
+  }
+  h1 {
+    font-size: clamp(32px, 4.5vw, 48px);
+    letter-spacing: -0.024em;
+    margin: 6px 0 12px;
+  }
+  .lead {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 680px;
+  }
+  .lead a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .group {
+    margin-top: 48px;
+    padding: 0;
+  }
+  .group h2 {
+    font-size: 20px;
+    margin: 0 0 16px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 960px) {
+    .cards {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .cards {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    color: var(--ink);
+    transition: 0.15s ease;
+  }
+  .card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .card img,
+  .card-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top center;
+    border-bottom: 1px solid var(--line);
+  }
+  .card-art {
+    display: grid;
+    place-items: center;
+    background: #0a0a0a;
+  }
+  .card-art pre {
+    color: #e5e5e5;
+    font-size: 18px;
+    margin: 0;
+  }
+  .card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 18px 18px;
+  }
+  .card-text b {
+    font-size: 16px;
+  }
+  .card-text span {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+</style>

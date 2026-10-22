@@ -63,13 +63,13 @@ for (const path of PAGES) {
 }
 
 test.describe("redirects", () => {
-  test("/demo forwards old links to the app register page", async ({ page }) => {
+  test("/demo forwards old links to the install section", async ({ page }) => {
     // Navigasyonsuz doğrula (anlık meta refresh sayfayı hemen terk eder).
     const res = await page.request.get("/demo");
     expect(res.status()).toBeLessThan(400);
     const html = await res.text();
     expect(html).toContain('http-equiv="refresh"');
-    expect(html).toContain("https://app.korkutai.com/kayit");
+    expect(html).toContain("/#kurulum");
   });
 });
 

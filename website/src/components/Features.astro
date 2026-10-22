@@ -1,5 +1,6 @@
 ---
-// Yetenekler: üç grup (Hukuk / Ofis / Özelleştirme). Her alt yetenek kendi
+import { docHref } from "../docs";
+// Yetenekler: dört grup (Hukuk / Ofis / Özelleştirme). Her alt yetenek kendi
 // bloğunda, medya bir sağda bir solda akacak şekilde (zigzag) listelenir:
 //   shot: "/shots/arastirma.png"  → görsel
 //   video: "/shots/dilekce.mp4"   → video
@@ -12,6 +13,8 @@ type Tab = {
   points: string[];
   shot?: string | null;
   video?: string | null;
+  // Bu yeteneğin dokümantasyon sayfası (src/docs.ts içindeki slug).
+  doc: string;
 };
 type Group = { key: string; eyebrow: string; title: string; lead: string; tabs: Tab[] };
 
@@ -23,7 +26,22 @@ const groups: Group[] = [
     lead: "İçtihattan dilekçeye, belge incelemesine kadar hukuki işin ağır yükünü Korkut taşır, siz onaylarsınız.",
     tabs: [
       {
+        id: "sohbet",
+        doc: "sohbet",
+        tab: "Sohbet",
+        title: "Dosyanın içinde sohbet",
+        body: "Sohbetler dosyaların altında durur. Bir dosyanın sohbetinde Korkut yalnızca o dosyanın kayıtları ve belgeleriyle çalışır; ekip aynı sohbeti birlikte yürütür. Dosyasız işler için kişisel sohbet de vardır.",
+        points: [
+          "Dosya klasörleri altında sohbetler, ekiple ortak",
+          "Dosya sohbetinde asistan yalnızca o dosyaya erişir",
+          "Hangi aracı neyle çağırdığı sohbette görünür",
+        ],
+        shot: "/shots/sohbet.png",
+        video: null,
+      },
+      {
         id: "arastirma",
+        doc: "arastirma",
         tab: "Araştırma",
         title: "İçtihat & mevzuat araştırması",
         body: "Yargıtay, Danıştay, UYAP Emsal, Anayasa Mahkemesi ve mevzuatta canlı arama yapar; emsalleri özetler ve daima kaynak gösterir.",
@@ -37,6 +55,7 @@ const groups: Group[] = [
       },
       {
         id: "dilekce",
+        doc: "dilekce-ve-sozlesme",
         tab: "Dilekçe",
         title: "Dilekçe yazımı",
         body: "Dava, cevap ve beyan dilekçelerini sohbetten üretir; yan yana açılan editörde birlikte düzenlersiniz. Mahkeme başlık düzeni ve talep sonucu kalıpları hazır gelir.",
@@ -50,6 +69,7 @@ const groups: Group[] = [
       },
       {
         id: "sozlesme",
+        doc: "dilekce-ve-sozlesme",
         tab: "Sözleşme",
         title: "Sözleşme taslağı",
         body: "Hizmet, lisans ve kira dahil sözleşmeleri madde madde kurar; SLA, bedel, gizlilik ve fesih hükümlerini işinize göre uyarlar, riskli hükümlerde sizi uyarır.",
@@ -63,6 +83,7 @@ const groups: Group[] = [
       },
       {
         id: "belgeler",
+        doc: "belgeler",
         tab: "Belgeler",
         title: "Belge kütüphanesi",
         body: "Üretilen her taslak tek kütüphanede durur: sözleşmeler ve dilekçeler ayrı gruplanır, her belge bağlandığı sohbet ve dosyayla birlikte açılır.",
@@ -84,32 +105,49 @@ const groups: Group[] = [
     tabs: [
       {
         id: "dosya",
+        doc: "dosyalar",
         tab: "Dosyalar",
         title: "Dosya yönetimi",
-        body: "Dosya no, mahkeme, dava türü ve karşı tarafı tek panelde tutar; durum güncellemeleri ve notlarla izler. Yaklaşan duruşmaları dosya listesinin başında gösterir.",
+        body: "Dosya no, mahkeme, dava türü ve karşı tarafı tek panelde tutar. Her dosyanın bir ekibi vardır; sohbetler, belgeler, ajanda ve notlar dosyanın altında toplanır ve yalnızca ekip görür.",
         points: [
-          "Dosya oluştur, güncelle, listele",
-          "Mahkeme, esas no ve karşı taraf tek yerde",
+          "Sohbetler, belgeler ve ajanda dosya altında",
+          "Dosya ekibi: herkes yalnızca kendi dosyalarını görür",
           "Onaysız hiçbir kayıt oluşturulmaz",
         ],
-        shot: "/shots/dosya.png",
+        shot: "/shots/dosya-detay.png",
+        video: null,
+      },
+      {
+        id: "ekip",
+        doc: "dosyalar",
+        tab: "Dosya ekibi",
+        title: "Her dosyanın kendi ekibi",
+        body: "Dosyayı yalnızca ekibindekiler görür. Sorumlu avukat ekibi kendisi yönetir; ekipten çıkan biri dosyaya artık erişemez. Kural veritabanında da uygulanır.",
+        points: [
+          "Ekibe ekle, sorumlu yap, çıkar",
+          "Ekipte olmayana dosya hiç görünmez",
+          "Takvim, görev, belge ve sohbet aynı kurala uyar",
+        ],
+        shot: "/shots/ekip.png",
         video: null,
       },
       {
         id: "muvekkil",
+        doc: "muvekkiller",
         tab: "Müvekkiller",
         title: "Müvekkil yönetimi",
-        body: "Müvekkilin kişisel ve iletişim bilgilerini tek kartta tutar; buluta giden metinlerde bu bilgiler otomatik maskelenir (rumuzlanır).",
+        body: "Müvekkilin kişisel ve iletişim bilgilerini tek kartta tutar. İletişim ve kimlik bilgilerini yalnızca izni olan görür; bulut modeli kullanırsanız giden metinde bu bilgiler maskelenir.",
         points: [
           "Ad, T.C. kimlik no, telefon, e-posta ve adres tek kartta",
-          "Müvekkili dosyalarla ilişkilendirme",
-          "Buluta giden metinde otomatik maskeleme",
+          "İletişim ve kimlik bilgisi ayrı izne bağlı",
+          "Bulut modelinde otomatik maskeleme",
         ],
         shot: "/shots/muvekkil.png",
         video: null,
       },
       {
         id: "takvim",
+        doc: "ajanda",
         tab: "Takvim",
         title: "Duruşma takvimi & etkinlikler",
         body: "Duruşmaları ekler ve listeler; tekrarlayan etkinlikleri (rrule) destekler, yaklaşan işleri önden gösterir.",
@@ -123,6 +161,7 @@ const groups: Group[] = [
       },
       {
         id: "gorev",
+        doc: "ajanda",
         tab: "Görev & süre",
         title: "Süre takibi & görev gündemi",
         body: "Usul sürelerini ve görevleri takip eder; proaktif gündemle neyin yaklaştığını hatırlatır, tamamlananları işaretler.",
@@ -136,6 +175,7 @@ const groups: Group[] = [
       },
       {
         id: "butce",
+        doc: "mali",
         tab: "Bütçe & cari",
         title: "Fatura, masraf & cari takibi",
         body: "Fatura ve masrafları kaydeder; müvekkil bazında cari hesabı (faturalanan, tahsil edilen, kalan bakiye) özetler.",
@@ -150,6 +190,70 @@ const groups: Group[] = [
     ],
   },
   {
+    key: "guvenlik",
+    eyebrow: "Ekip ve güvenlik",
+    title: "Kim neyi görür, siz belirleyin",
+    lead: "Rol ve dosya bazlı yetkiler, erişim kayıtları, büronun kendi Telegram botu ve dilediğiniz yapay zeka modeli; hepsi kendi makinenizde.",
+    tabs: [
+      {
+        id: "roller",
+        doc: "roller-ve-yetkiler",
+        tab: "Roller",
+        title: "Roller ve yetkiler",
+        body: "Avukat, stajyer, sekreter, muhasebe ve okuyucu gibi hazır roller; büroya özel roller de tanımlayabilirsiniz. Her izin tek tek açılıp kapanır, değişiklik hemen geçerli olur.",
+        points: [
+          "29 izin, hazır ve özel roller",
+          "Müvekkil iletişim ve kimlik bilgisi ayrı izinle",
+          "Mali kayıtlar yalnızca yetkiliye",
+        ],
+        shot: "/shots/roller.png",
+        video: null,
+      },
+      {
+        id: "erisim",
+        doc: "erisim-kayitlari",
+        tab: "Erişim kayıtları",
+        title: "Erişim kayıtları",
+        body: "Kim hangi müvekkilin bilgisine ya da mali kayıtlara baktı, kim kimi ekibe ekledi, kim yetkisi olmayan bir şeyi denedi; hepsi kayıt altında.",
+        points: [
+          "Müvekkil bilgisi ve mali kayıt görüntülemeleri",
+          "Rol ve ekip değişiklikleri, reddedilen erişimler",
+          "Kayda değer değil, alan adı yazılır",
+        ],
+        shot: "/shots/erisim.png",
+        video: null,
+      },
+      {
+        id: "telegram",
+        doc: "telegram",
+        tab: "Telegram",
+        title: "Telegram'dan Korkut",
+        body: "Büronun kendi botuyla özelden yazışın, dosyalar arasında geçin, hatırlatmaları alın. Bir grubu dosyaya bağlayın; gruptaki herkes dosyanın ekibindeyse bot cevap verir, değilse içerik paylaşmaz.",
+        points: [
+          "/dosya, /dosyalar ve /kisisel komutları",
+          "Dosyaya bağlı gruplar, üyelik denetimi",
+          "Gruplarda müvekkil bilgisi hiç paylaşılmaz",
+        ],
+        shot: "/shots/telegram.png",
+        video: null,
+      },
+      {
+        id: "yapay-zeka",
+        doc: "yapay-zeka",
+        tab: "Yapay zeka",
+        title: "Modelinizi siz seçin",
+        body: "LM Studio veya Ollama ile yerel bir model bağlayın, hiçbir metin makinenizden çıkmasın. Ya da OpenAI, Anthropic veya Gemini gibi bir bulut modeli seçin; giden metin önce rumuzlanır.",
+        points: [
+          "Yerel, OpenAI uyumlu modeller",
+          "Bulut modelinde rumuzlama",
+          "Kullanım ve maliyet görünümü",
+        ],
+        shot: "/shots/yapay-zeka.png",
+        video: null,
+      },
+    ],
+  },
+  {
     key: "ozellestir",
     eyebrow: "Özelleştirme",
     title: "Büronuza göre uyarlayın",
@@ -157,6 +261,7 @@ const groups: Group[] = [
     tabs: [
       {
         id: "kisilik",
+        doc: "kisisellestirme",
         tab: "Kişilik",
         title: "Asistan kişiliği",
         body: "Korkut'un ses tonunu, uzmanlık alanlarını ve büro kurallarını belirleyin. Çekirdek güvenlik/atıf/onay kuralları koddadır; buradan yalnızca üzerine eklersiniz.",
@@ -170,26 +275,28 @@ const groups: Group[] = [
       },
       {
         id: "hafiza",
+        doc: "kisisellestirme",
         tab: "Hafıza",
         title: "Kalıcı hafıza",
         body: "Büronun kalıcı tercihlerini ve notlarını her sohbette hatırlar. Korkut'un önerdiği notlar siz onaylayana kadar beklemede kalır; hiçbir şey izinsiz hatırlanmaz.",
         points: [
           "Büro geneli kalıcı notlar ve tercihler",
           "Öner-ve-onayla: onaysız bilgi hatırlanmaz",
-          "Buluta giderken maskelenir",
+          "Bulut modelinde maskelenir",
         ],
         shot: "/shots/hafiza.png",
         video: null,
       },
       {
         id: "stil",
+        doc: "kisisellestirme",
         tab: "Stil",
         title: "Antet, imza & belge stili",
         body: "Dilekçe ve sözleşmelerin antetini, imza bloğunu ve üslubunu tek yerden yönetin. Antet ve imza modele gönderilmez; belgeye aynen eklenir.",
         points: [
           "Büro anteti ve imza bloğu",
           "Standart kalıplar (kapanış, vekâlet ücreti…)",
-          "Antet/imza buluta gönderilmez",
+          "Antet ve imza modele gönderilmez",
         ],
         shot: "/shots/stil.png",
         video: null,
@@ -228,6 +335,7 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
                       </li>
                     ))}
                   </ul>
+                  <a class="doc-link" href={docHref(base, t.doc)}>Dokümantasyonu oku →</a>
                 </div>
 
                 <div class="row-media">
@@ -270,6 +378,15 @@ const base = import.meta.env.BASE_URL; // "/korkut/" alt yolunda, apex'te "/"
 </div>
 
 <style>
+  .doc-link {
+    display: inline-block;
+    margin-top: 14px;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
   #ozellikler {
     padding-bottom: 96px;
   }

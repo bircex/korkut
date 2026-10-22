@@ -7,97 +7,55 @@ const base = import.meta.env.BASE_URL;
 ---
 
 <Layout
-  title="Gizlilik Politikası · Korkut"
-  description="Korkut'un gizlilik politikası: büro izolasyonu, şifreleme, yapay zeka modellerine giden verinin rumuzlanması ve verileriniz üzerindeki kontrolünüz."
+  title="Site gizliliği · Korkut"
+  description="korkutai.com tanıtım sitesi çerez kullanmaz, analiz aracı yüklemez ve ziyaretçilerden kişisel veri toplamaz. Korkut uygulaması ise sizin makinenizde çalışır."
   path={`${base}gizlilik/`}
 >
   <Nav />
   <main id="icerik" class="prose-page">
     <div class="wrap prose">
-      <h1>Gizlilik Politikası</h1>
+      <h1>Site gizliliği</h1>
       <p class="updated">Son güncelleme: {LEGAL_UPDATED}</p>
 
       <p>
-        Korkut, hukuk büroları için geliştirilmiş bir yapay zeka asistanıdır.
-        Müvekkil verisi bir büronun en hassas varlığıdır; Platform baştan sona
-        bu ilkeyle tasarlanmıştır. Bu politika, verilerinizin nasıl korunduğunu
-        ve yapay zeka özellikleri kullanılırken verinin nereye gittiğini
-        açıklar.
+        Bu sayfa yalnızca bu tanıtım sitesini (korkutai.com) kapsar. Korkut
+        uygulaması sizin makinenizde çalışır ve oradaki veriler sizin
+        kontrolünüzdedir; uygulamadaki kişisel verilerle ilgili konum için{" "}
+        <a href={`${base}kvkk/`}>KVKK notuna</a> bakın.
       </p>
 
-      <h2>1. Roller: veri sorumlusu ve veri işleyen</h2>
+      <h2>1. Topladığımız veri</h2>
       <p>
-        Büronuzun Platform'a girdiği müvekkil, dosya ve yazışma verileri
-        bakımından veri sorumlusu büronuzdur; Korkut bu veriler üzerinde
-        yalnızca hizmeti sunmak için, veri işleyen sıfatıyla işlem yapar.
-        Platform hesabınıza ilişkin veriler (ad soyad, e-posta) bakımından
-        veri sorumlusu Korkut'tur; ayrıntı için
-        <a href={`${base}kvkk/`}>KVKK Aydınlatma Metni</a>'ne bakın.
+        Bu site statik sayfalardan oluşur. Hesap, form, bülten kaydı veya
+        iletişim formu yoktur; ziyaretçilerden kişisel veri toplanmaz.
       </p>
 
-      <h2>2. Büro izolasyonu</h2>
+      <h2>2. Çerezler ve izleme</h2>
       <p>
-        Her büro, veritabanı düzeyinde satır düzeyi güvenlik (row-level
-        security) ile ayrılır. Bir büronun sorguları yalnızca kendi verisine
-        erişebilir; bu kural uygulama kodunda değil, veritabanı katmanında
-        zorunlu kılınır. Hassas alanlar ayrıca şifrelenir. Hiçbir büro bir
-        diğerinin verisini göremez.
+        Site çerez kullanmaz. Analiz aracı, reklam izleyicisi, üçüncü taraf
+        yazı tipi veya betik yüklemez; bütün kaynaklar aynı alan adından
+        sunulur ve sıkı bir içerik güvenliği politikasıyla (CSP) bu kural
+        tarayıcıda da zorunlu tutulur.
       </p>
 
-      <h2>3. Yapay zeka modellerine giden veri</h2>
+      <h2>3. Barındırma kayıtları</h2>
       <p>
-        Sohbet, araştırma ve taslak üretimi için üçüncü taraf büyük dil
-        modellerinden yararlanılır. Modele gönderilen metinlerde isim, T.C.
-        kimlik numarası, telefon, e-posta, IBAN ve dosya numarası gibi
-        bilgiler, gönderim öncesinde en iyi çaba ilkesiyle takma değerlerle
-        değiştirilir (rumuzlama). Aynı rumuzlama, arama dizinine eklenen
-        içerikler için de uygulanır.
-      </p>
-      <div class="note">
-        Rumuzlama azaltıcı bir önlemdir, garanti değildir; serbest metin
-        içindeki her kişisel verinin yakalanacağı taahhüt edilemez. Bulut
-        altyapısının veya model sağlayıcısının yurt dışında olması halinde
-        KVKK md. 9 kapsamındaki değerlendirme büronun sorumluluğundadır.
-      </div>
-
-      <h2>4. Onaysız kalıcı işlem yok</h2>
-      <p>
-        Korkut, siz onaylamadan hiçbir kaydı oluşturmaz, değiştirmez ve hiçbir
-        mesajı göndermez. Her giden e-posta ve yazışma, gönderilmeden önce
-        onayınıza sunulur. Bu kural Platform'un çekirdeğinde yer alır ve
-        kişiselleştirme ayarlarıyla değiştirilemez.
+        Siteyi sunan barındırma altyapısı, her web sunucusu gibi isteklerin
+        teknik kayıtlarını (IP adresi, zaman, istenen sayfa) güvenlik ve
+        işletim amacıyla kısa süreli tutabilir. Bu kayıtlar ziyaretçileri
+        tanımlamak veya profillemek için kullanılmaz.
       </p>
 
-      <h2>5. Erişim ve izlenebilirlik</h2>
+      <h2>4. Dış bağlantılar</h2>
       <p>
-        Platform'a erişim Google ile giriş veya e-posta ve parola ile yapılır;
-        yönetim paneli ayrıca zorunlu iki adımlı doğrulama kullanır. Büro
-        içinde rol tabanlı yetkilendirme uygulanır. Yapay zeka modeline
-        yapılan her çağrı, hangi büro adına ve ne zaman yapıldığıyla birlikte
-        kayıt altına alınır; bu kayıtlar da büro bazında izole tutulur.
+        Sitedeki GitHub bağlantıları sizi github.com'a götürür; orada GitHub'ın
+        kendi gizlilik koşulları geçerlidir.
       </p>
 
-      <h2>6. Bu web sitesi</h2>
+      <h2>5. İletişim</h2>
       <p>
-        korkutai.com çerez kullanmaz, üçüncü taraf yazı tipi, betik, takip
-        veya analiz aracı yüklemez. Sayfalar yalnızca kendi sunucusundan
-        içerik çeker ve sıkı bir içerik güvenliği politikası (CSP) ile
-        yayımlanır.
-      </p>
-
-      <h2>7. Verilerinizin silinmesi</h2>
-      <p>
-        Büronuz hesabını kapattığında veya yazılı talepte bulunduğunda büro
-        verileri makul bir teknik süre içinde kalıcı olarak silinir. Silme ve
-        diğer talepler için
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> adresine
-        yazabilirsiniz.
-      </p>
-
-      <h2>8. Değişiklikler</h2>
-      <p>
-        Bu politika gerektiğinde güncellenir; güncel sürüm her zaman bu
-        sayfada yayımlanır.
+        Sorularınız için <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>{" "}
+        adresine yazabilirsiniz.
       </p>
     </div>
   </main>

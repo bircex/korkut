@@ -5,59 +5,71 @@ export const SITE = {
   // Sitenin yayınlandığı origin (özel alan adı, apex). astro.config.mjs'te base "/".
   url: "https://korkutai.com",
   name: "Korkut",
-  title: "Korkut: Avukatlar için yapay zeka asistanı",
+  title: "Korkut: Hukuk büroları için açık kaynak yapay zeka asistanı",
   description:
-    "Avukatlar ve hukuk büroları için Korkut; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve bütçeyi takip eder, yazışmaları yürütür. Bulutta her büro tamamen izole ve verileriniz güvende kalır.",
+    "Korkut, hukuk büroları için açık kaynak (MIT) yapay zeka asistanıdır. Kendi makinenize kurulur; içtihat ve mevzuat araştırır, dilekçe yazar, dosya, duruşma ve süreleri takip eder. Yerel bir modelle çalıştırırsanız hiçbir veri büronuzdan çıkmaz.",
   locale: "tr_TR",
   lang: "tr",
   author: "Korkut",
   keywords:
-    "hukuk yapay zeka, avukat asistanı, içtihat arama, mevzuat arama, dilekçe taslağı, Yargıtay, Danıştay, bulut hukuk asistanı, kurumsal hukuk yapay zeka, KVKK",
+    "açık kaynak hukuk yapay zeka, avukat asistanı, kendi sunucunda yapay zeka, yerel model, LM Studio, Ollama, içtihat arama, mevzuat arama, dilekçe taslağı, Yargıtay, Danıştay, KVKK, MIT lisans",
 } as const;
 
-// Uygulama girişi (bulut): Google ile giriş app subdomain'inde yapılır.
-export const APP_URL = "https://app.korkutai.com";
+// Açık kaynak proje: kaynak kodu, kurulum belgesi, katkı ve güvenlik bildirimi.
+export const REPO_URL = "https://github.com/recepkizilarslan/korkut";
+export const DOCS_URL = `${REPO_URL}/blob/main/docs/INSTALL.md`;
+export const ISSUES_URL = `${REPO_URL}/issues`;
+export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
+export const CONTRIBUTING_URL = `${REPO_URL}/blob/main/CONTRIBUTING.md`;
+export const SECURITY_POLICY_URL = `${REPO_URL}/blob/main/SECURITY.md`;
+export const RELEASES_URL = `${REPO_URL}/releases`;
+
+// Kurulumdan sonra uygulamanın açıldığı yerel adres.
+export const LOCAL_APP_URL = "http://localhost:8090";
 
 // İletişim.
 export const CONTACT_EMAIL = "iletisim@korkutai.com";
 
-// Ücretsiz Başla: kayıt doğrudan uygulamanın kayıt sayfasında yapılır. Eski /demo
-// bağlantıları da oraya yönlenir (pages/demo.astro).
-export const REGISTER_URL = `${APP_URL}/kayit`;
+// Eski "/demo" (bulut dönemi kayıt sayfası) bağlantıları kırılmasın diye kurulum bölümüne yönlenir.
 export const DEMO_PATH = "demo";
 
 // Sıkça sorulan sorular: hem FAQ bölümü hem de FAQPage yapılandırılmış verisi.
 export const FAQS = [
   {
+    q: "Korkut ücretli mi?",
+    a: "Hayır. Korkut MIT lisanslı açık kaynak bir projedir; indirip kurmak, kullanmak, değiştirmek ve büronuzda çalıştırmak ücretsizdir. Abonelik veya kullanıcı başı ücret yoktur. Bulut tabanlı bir yapay zeka modeli seçerseniz o sağlayıcının ücretlerini siz ödersiniz.",
+  },
+  {
     q: "Verilerim nerede tutuluyor?",
-    a: "Her büro veritabanı düzeyinde tamamen izole edilir (satır düzeyi güvenlik ile) ve hassas alanlar şifrelenir; hiçbir büro bir diğerinin verisini göremez.",
+    a: "Tamamen sizin makinenizde. Korkut büronuzun kendi bilgisayarına veya sunucusuna kurulur; dosyalar, müvekkiller, belgeler ve sohbetler orada, kendi veritabanınızda durur. Proje ekibinin kurulumunuza veya verilerinize hiçbir erişimi yoktur.",
   },
   {
-    q: "Nasıl başlıyorum, kuruluma gerek var mı?",
-    a: "Bulutta teknik kurulum yoktur: Ücretsiz Başla ile büronuzu kaydedersiniz, onaydan sonra Google ile giriş yaparak dakikalar içinde başlarsınız. Bakım ve güncellemeler bize aittir.",
+    q: "Kurulum için ne gerekiyor?",
+    a: "Docker (Compose v2 ile) yeterli. Depoyu indirip tek komutla kurarsınız: macOS ve Linux'ta ./install.sh, Windows'ta .\\install.ps1. Kurulum yönetici hesabının ilk parolasını üretir ve uygulamayı http://localhost:8090 adresinde açar.",
   },
   {
-    q: "Korkut hangi yapay zeka modellerini kullanıyor?",
-    a: "Korkut, hukuki işe uygun üst düzey modellerle çalışacak biçimde yapılandırılır. Modele giden metinde isim, T.C. kimlik no ve dosya no gibi bilgilerin yerine önce en iyi çaba ile takma değer konur.",
+    q: "Hangi yapay zeka modelleriyle çalışıyor?",
+    a: "Seçim sizin. Ayarlar → Yapay zeka'dan LM Studio veya Ollama gibi yerel, OpenAI uyumlu bir modele bağlanırsanız hiçbir metin makinenizden çıkmaz. Dilerseniz OpenAI, Anthropic veya Google Gemini gibi bir bulut modeli de seçebilirsiniz; bu durumda modele giden metin önce en iyi çaba ile rumuzlanır.",
   },
   {
-    q: "Verilerim güvende mi?",
-    a: "Modele giden metin önce en iyi çaba ile rumuzlanır ve her büro veritabanında izole tutulur. Rumuzlama azaltıcı bir önlemdir, garanti değildir; sınır ötesi veri aktarımı (KVKK md. 9) sorumluluğu size aittir.",
+    q: "Büroda herkes her şeyi görebilir mi?",
+    a: "Hayır. Yetkiler rol ve dosya bazlıdır: avukat, stajyer, sekreter, muhasebe ve okuyucu gibi hazır roller vardır, kendi rollerinizi de tanımlayabilirsiniz. Herkes yalnızca ekibinde olduğu dosyaları görür; müvekkil iletişim ve kimlik bilgileri ile mali kayıtlar ayrıca izne bağlıdır.",
   },
   {
     q: "Korkut hukuki tavsiye veriyor mu?",
-    a: "Hayır. Korkut hukuki danışmanlık veya temsil sağlamaz. Araştırma, özet, dilekçe ve sözleşme taslağı dahil her çıktı, nitelikli bir avukatın gözden geçirmesi gereken bir taslaktır. Çıktının doğruluğunu teyit etmek kullanıcının sorumluluğundadır.",
+    a: "Hayır. Korkut hukuki danışmanlık veya temsil sağlamaz. Araştırma, özet, dilekçe ve sözleşme taslağı dahil her çıktı, nitelikli bir avukatın gözden geçirmesi gereken bir taslaktır. Yazılım olduğu gibi, hiçbir garanti olmaksızın sunulur.",
   },
 ] as const;
 
 // Hukuki metinlerin son güncelleme tarihi (her metin değişikliğinde güncellenir).
-export const LEGAL_UPDATED = "2 Ağustos 2026";
+export const LEGAL_UPDATED = "21 Ekim 2026";
 
 // Navigasyon bağlantıları. "#..." olanlar ana sayfa bölümleridir (alt sayfalarda
 // otomatik olarak "/#..." biçimine çözülür); diğerleri ayrı sayfa yollarıdır.
 export const NAV_LINKS = [
-  { href: "#kaynaklar", label: "Veri kaynakları" },
   { href: "#ozellikler", label: "Özellikler" },
   { href: "#guvenlik", label: "Güvenlik" },
+  { href: "#kurulum", label: "Kurulum" },
+  { href: "dokumantasyon/", label: "Dokümantasyon" },
   { href: "#sss", label: "SSS" },
 ] as const;

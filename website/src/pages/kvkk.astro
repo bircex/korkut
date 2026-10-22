@@ -2,131 +2,92 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { CONTACT_EMAIL, LEGAL_UPDATED } from "../consts";
+import { LEGAL_UPDATED } from "../consts";
 const base = import.meta.env.BASE_URL;
 ---
 
 <Layout
-  title="KVKK Aydınlatma Metni · Korkut"
-  description="Korkut'un 6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamındaki aydınlatma metni: işlenen veriler, amaçlar, aktarım ve haklarınız."
+  title="KVKK notu · Korkut"
+  description="Korkut'u kuran büro veri sorumlusudur; proje ekibi kurulumlara ve verilere erişmez. Bulut model kullanımı, yurt dışı aktarım ve büronun KVKK yükümlülükleri."
   path={`${base}kvkk/`}
 >
   <Nav />
   <main id="icerik" class="prose-page">
     <div class="wrap prose">
-      <h1>KVKK Aydınlatma Metni</h1>
+      <h1>KVKK notu</h1>
       <p class="updated">Son güncelleme: {LEGAL_UPDATED}</p>
 
       <p>
-        Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu
-        ("KVKK") uyarınca, Korkut platformunu ("Korkut" veya "Platform")
-        kullanan kişilerin kişisel verilerinin nasıl işlendiğini açıklamak
-        amacıyla hazırlanmıştır.
+        Bu not, Korkut'u kullanan büroların 6698 sayılı Kişisel Verilerin
+        Korunması Kanunu (KVKK) kapsamındaki konumunu açıklar. Bir aydınlatma
+        metni değildir ve hukuki görüş yerine geçmez; büronuzun kendi
+        aydınlatma metinlerini ve kayıtlarını hazırlaması gerekir.
       </p>
 
-      <h2>1. Veri sorumlusu</h2>
+      <h2>1. Veri sorumlusu büronun kendisidir</h2>
       <p>
-        Platform hesabınıza ilişkin kişisel veriler bakımından veri sorumlusu
-        Korkut'tur. Her türlü soru ve talebiniz için
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> adresinden bize
-        ulaşabilirsiniz.
+        Korkut büronun kendi makinesine kurulan ve büronun işlettiği bir
+        yazılımdır. Müvekkiller, karşı taraflar, dosyalar ve büro çalışanları
+        hakkındaki kişisel veriler büronun kendi veritabanında işlenir. Bu
+        nedenle bu verilerin veri sorumlusu büronun kendisidir.
       </p>
-      <div class="note">
-        Büronuzun Platform'a girdiği müvekkil ve dosya verileri bakımından veri
-        sorumlusu ilgili hukuk bürosudur; Korkut bu veriler bakımından veri
-        işleyen sıfatıyla hareket eder.
-      </div>
 
-      <h2>2. İşlenen kişisel veriler</h2>
+      <h2>2. Proje ekibi verilerinize erişmez</h2>
+      <p>
+        Korkut'u geliştiren açık kaynak proje, kurulumlarınıza veya
+        verilerinize erişmez, uzaktan bağlanmaz ve uygulama proje ekibine
+        kullanım verisi göndermez. Proje ekibi bu anlamda ne veri sorumlusu ne
+        de veri işleyendir. Kurulumunuza dışarıdan bir hizmet sağlayıcı bakım
+        veriyorsa, o sağlayıcıyla ayrıca sözleşme yapmanız gerekebilir.
+      </p>
+
+      <h2>3. Yapay zeka modeli seçimi ve yurt dışı aktarım</h2>
+      <p>
+        Yerel bir model (LM Studio, Ollama gibi) kullandığınızda sohbet ve
+        taslak metinleri makinenizden çıkmaz. Bir bulut yapay zeka
+        sağlayıcısı seçerseniz modele gönderilen metin o sağlayıcıya, çoğu
+        zaman yurt dışına aktarılır. Korkut bu metni gönderim öncesinde en iyi
+        çaba ile rumuzlar (T.C. kimlik no, isim, telefon, e-posta, IBAN), ancak
+        rumuzlama bir garanti değildir. Bu durumda KVKK md. 9 kapsamındaki yurt
+        dışı aktarım şartlarını sağlamak ve sağlayıcıyla gerekli sözleşmeleri
+        yapmak büronun sorumluluğundadır.
+      </p>
+
+      <h2>4. Diğer dış bağlantılar</h2>
+      <p>
+        Hukuki araştırma sorguları kamuya açık kaynaklara (Yargıtay, Danıştay,
+        UYAP Emsal, mevzuat ve benzerleri) gider; bu sorgulara müvekkil
+        bilgisi eklememeye özen gösterin. Telegram ve e-posta
+        entegrasyonlarını açarsanız ilgili mesajlar bu hizmetler üzerinden
+        iletilir.
+      </p>
+
+      <h2>5. Korkut'un yardımcı olduğu yükümlülükler</h2>
       <ul>
         <li>
-          <b>Kimlik ve iletişim bilgileri:</b> ad soyad, e-posta adresi, büro
-          adı (kayıt ve davet akışlarında).
+          Erişimin sınırlandırılması: rol ve dosya bazlı yetkiler, müvekkil
+          iletişim ve kimlik bilgileri için ayrı izinler.
         </li>
         <li>
-          <b>Hesap bilgileri:</b> Google ile giriş yapılması halinde Google
-          hesabı tanımlayıcısı; yerel kayıt halinde parolanızın geri
-          döndürülemez özeti (parolanın kendisi saklanmaz).
+          İzlenebilirlik: hassas bilgi görüntülemeleri ve yetki
+          değişikliklerine ait erişim kayıtları.
         </li>
         <li>
-          <b>Kullanım ve işlem kayıtları:</b> oturum bilgileri, işlem zamanı ve
-          teknik günlük kayıtları (güvenlik ve hata tespiti için).
-        </li>
-        <li>
-          <b>Büro içerikleri:</b> büronuzun Platform'a girdiği dosya, müvekkil,
-          görev ve yazışma içerikleri (büro adına, veri işleyen sıfatıyla).
+          Veri minimizasyonu: yerel model seçeneği ve bulut çağrılarında
+          rumuzlama.
         </li>
       </ul>
-
-      <h2>3. İşleme amaçları ve hukuki sebepler</h2>
-      <ul>
-        <li>
-          Hesabın oluşturulması, hizmetin sunulması ve sürdürülmesi (KVKK md.
-          5/2-c: sözleşmenin kurulması ve ifası).
-        </li>
-        <li>
-          Platform güvenliğinin sağlanması, kötüye kullanımın önlenmesi ve hata
-          tespiti (KVKK md. 5/2-f: meşru menfaat).
-        </li>
-        <li>
-          Yasal yükümlülüklerin yerine getirilmesi (KVKK md. 5/2-ç).
-        </li>
-        <li>
-          Bu kapsamlara girmeyen haller için açık rızanız (KVKK md. 5/1).
-        </li>
-      </ul>
-
-      <h2>4. Aktarım ve yurt dışı işleme</h2>
       <p>
-        Platform bulut altyapısında barındırılır ve yapay zeka özellikleri
-        için üçüncü taraf model sağlayıcılarından yararlanır. Modele giden
-        metinlerde isim, T.C. kimlik numarası ve dosya numarası gibi bilgiler
-        en iyi çaba ilkesiyle önce rumuzlanır; bu bir garanti değil, azaltıcı
-        bir önlemdir. Bulut altyapısının veya model sağlayıcısının yurt
-        dışında bulunması halinde KVKK md. 9 kapsamındaki sınır ötesi aktarım
-        değerlendirmesi, veri sorumlusu sıfatıyla büronun sorumluluğundadır.
-        Ayrıntı için
-        <a href={`${base}gizlilik/`}>Gizlilik Politikası</a>'na bakın.
+        Saklama süreleri, ilgili kişi başvuruları, VERBİS kaydı, yedeklerin
+        güvenliği ve aydınlatma yükümlülüğü gibi konular ise büronun kendi
+        süreçleriyle yürütülür.
       </p>
 
-      <h2>5. Saklama süresi</h2>
+      <h2>6. Bu web sitesi</h2>
       <p>
-        Kişisel veriler, işleme amacının gerektirdiği süre ve ilgili mevzuatta
-        öngörülen zamanaşımı süreleri boyunca saklanır; süre sonunda silinir,
-        yok edilir veya anonim hale getirilir. Hesabın kapatılması halinde
-        büro verileri makul bir teknik süre içinde kalıcı olarak silinir.
-      </p>
-
-      <h2>6. Çerezler</h2>
-      <p>
-        Bu tanıtım sitesi (korkutai.com) çerez kullanmaz, üçüncü taraf takip
-        veya analiz aracı içermez. Uygulama (app.korkutai.com) yalnızca oturum
-        yönetimi için zorunlu oturum çerezi kullanır; pazarlama veya takip
-        amaçlı çerez kullanılmaz.
-      </p>
-
-      <h2>7. Haklarınız</h2>
-      <p>KVKK md. 11 uyarınca;</p>
-      <ul>
-        <li>kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
-        <li>işlenmişse buna ilişkin bilgi talep etme,</li>
-        <li>işleme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
-        <li>yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme,</li>
-        <li>eksik veya yanlış işlenmişse düzeltilmesini isteme,</li>
-        <li>KVKK md. 7 çerçevesinde silinmesini veya yok edilmesini isteme,</li>
-        <li>otomatik sistemlerle analiz sonucu aleyhinize bir sonucun ortaya çıkmasına itiraz etme,</li>
-        <li>kanuna aykırı işleme nedeniyle zarara uğramanız halinde zararın giderilmesini talep etme</li>
-      </ul>
-      <p>
-        haklarına sahipsiniz. Taleplerinizi
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> adresine
-        iletebilirsiniz; başvurular en geç 30 gün içinde yanıtlanır.
-      </p>
-
-      <h2>8. Değişiklikler</h2>
-      <p>
-        Bu metin gerektiğinde güncellenir; güncel sürüm her zaman bu sayfada
-        yayımlanır ve sayfanın başındaki tarih güncellenir.
+        Bu tanıtım sitesi çerez kullanmaz ve ziyaretçilerden kişisel veri
+        toplamaz; ayrıntılar için <a href={`${base}gizlilik/`}>site gizliliği</a>{" "}
+        sayfasına bakın.
       </p>
     </div>
   </main>

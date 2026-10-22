@@ -2,127 +2,97 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { CONTACT_EMAIL, LEGAL_UPDATED } from "../consts";
+import { LEGAL_UPDATED, LICENSE_URL, REPO_URL, CONTRIBUTING_URL } from "../consts";
 const base = import.meta.env.BASE_URL;
 ---
 
 <Layout
-  title="Kullanım Koşulları · Korkut"
-  description="Korkut kullanım koşulları: hizmetin kapsamı, hesap ve büro onayı, kabul edilebilir kullanım, garanti reddi ve sorumluluk sınırı."
+  title="Lisans ve sorumluluk · Korkut"
+  description="Korkut MIT lisanslı açık kaynak yazılımdır: kullanım ve değiştirme serbestliği, garanti reddi, hukuki tavsiye olmaması ve kurulumu işletenin sorumlulukları."
   path={`${base}kosullar/`}
 >
   <Nav />
   <main id="icerik" class="prose-page">
     <div class="wrap prose">
-      <h1>Kullanım Koşulları</h1>
+      <h1>Lisans ve sorumluluk</h1>
       <p class="updated">Son güncelleme: {LEGAL_UPDATED}</p>
 
       <p>
-        Bu koşullar, Korkut platformunun ("Korkut" veya "Platform")
-        kullanımını düzenler. Platform'a kaydolarak veya Platform'u
-        kullanarak bu koşulları kabul etmiş sayılırsınız.
+        Korkut, hukuk büroları için geliştirilen açık kaynak bir yazılımdır.
+        Bir hizmet değil, büronuzun kendi makinesine kurup kendisinin
+        işlettiği bir yazılımdır. Bu sayfa lisansı ve sorumlulukların nasıl
+        paylaşıldığını sade bir dille özetler; bağlayıcı metin depodaki{" "}
+        <a href={LICENSE_URL} rel="noopener">LICENSE</a> dosyasıdır.
       </p>
 
-      <h2>1. Hizmetin kapsamı</h2>
+      <h2>1. MIT lisansı</h2>
       <p>
-        Korkut; hukuk büroları için içtihat ve mevzuat araştırması, dilekçe ve
-        belge taslağı üretimi, dosya, takvim, görev ve yazışma yönetimi sunan
-        bulut tabanlı bir yapay zeka asistanıdır. Hizmet, bir hukuk bürosunun
-        iç çalışma aracı olarak tasarlanmıştır.
+        Korkut <a href={LICENSE_URL} rel="noopener">MIT lisansıyla</a>{" "}
+        yayımlanır. Yazılımı ücretsiz olarak kullanabilir, kopyalayabilir,
+        değiştirebilir, birleştirebilir, yayımlayabilir ve dağıtabilirsiniz;
+        tek koşul, telif hakkı bildiriminin ve lisans metninin yazılımın
+        kopyalarında korunmasıdır. Abonelik, kullanıcı başı ücret veya lisans
+        anahtarı yoktur.
       </p>
 
-      <h2>2. Hukuki tavsiye değildir</h2>
+      <h2>2. Garanti yoktur</h2>
+      <p>
+        Yazılım "olduğu gibi" sunulur. Ticari elverişlilik, belirli bir amaca
+        uygunluk ve ihlal etmeme dahil açık veya örtülü hiçbir garanti
+        verilmez. Yazarlar ve katkıcılar, yazılımın kullanımından veya
+        kullanılamamasından doğan hiçbir talep, zarar ya da sorumluluktan
+        mesul tutulamaz.
+      </p>
+
+      <h2>3. Hukuki tavsiye değildir</h2>
       <p>
         Korkut hukuki danışmanlık veya avukatlık hizmeti vermez ve avukatın
-        yerine geçmez. Araştırma sonuçları, özetler, dilekçe ve sözleşme
-        taslakları dahil her çıktı, nitelikli bir avukatın gözden geçirmesi
-        gereken bir taslaktır. Çıktının doğruluğunu, güncelliğini ve somut
-        olaya uygunluğunu teyit etmek kullanıcının sorumluluğundadır. Yapay
-        zeka modelleri hatalı veya eksik sonuç üretebilir.
+        yerine geçmez. Araştırma sonuçları, özetler, hesaplamalar, dilekçe ve
+        sözleşme taslakları dahil her çıktı, nitelikli bir avukatın gözden
+        geçirmesi gereken bir taslaktır. Çıktının doğruluğunu, güncelliğini ve
+        somut olaya uygunluğunu teyit etmek kullanıcının sorumluluğundadır.
+        Yapay zeka modelleri hatalı veya eksik sonuç üretebilir.
       </p>
 
-      <h2>3. Hesap ve büro onayı</h2>
+      <h2>4. Kurulumu işletenin sorumlulukları</h2>
+      <p>
+        Korkut'u kuran büro, kurulumun tek işletmecisidir. Özellikle şunlar
+        büronun sorumluluğundadır:
+      </p>
       <ul>
         <li>
-          Kayıt sırasında verdiğiniz bilgilerin doğru ve güncel olmasından siz
-          sorumlusunuz.
+          Kurulumun bulunduğu makinenin ve ağın güvenliği; uygulamayı ağa
+          veya internete açıyorsanız TLS, güvenlik duvarı ve erişim
+          denetimi.
         </li>
         <li>
-          Yeni büro kayıtları, platform yöneticisinin onayından sonra
-          etkinleşir; Korkut bir başvuruyu gerekçe göstermeksizin reddetme
-          hakkını saklı tutar.
+          Düzenli yedekleme ve yedeklerin güvenli saklanması; kurulumun
+          ürettiği <code>.env</code> dosyasının (ana anahtar dahil) korunması.
         </li>
+        <li>Güncellemelerin, özellikle güvenlik düzeltmelerinin, zamanında uygulanması.</li>
         <li>
-          Hesap erişim bilgilerinizin güvenliğinden ve hesabınız altında
-          gerçekleşen işlemlerden siz sorumlusunuz.
+          Kişisel verilerin işlenmesinde mevzuata uyum; bkz.{" "}
+          <a href={`${base}kvkk/`}>KVKK notu</a>.
         </li>
+        <li>Üyelere verilen rol ve yetkilerin büronun ihtiyacına uygun ayarlanması.</li>
       </ul>
 
-      <h2>4. Kabul edilebilir kullanım</h2>
-      <ul>
-        <li>Platform yalnızca hukuka uygun amaçlarla kullanılabilir.</li>
-        <li>
-          Platform'un güvenlik önlemlerini aşmaya, diğer büroların verilerine
-          erişmeye veya hizmeti aksatmaya yönelik girişimler yasaktır.
-        </li>
-        <li>
-          Platform üzerinden gönderilen yazışmaların içeriğinden, gönderimi
-          onaylayan kullanıcı sorumludur.
-        </li>
-      </ul>
-
-      <h2>5. Veriler</h2>
+      <h2>5. Üçüncü taraf hizmetler</h2>
       <p>
-        Verilerin işlenmesine ilişkin esaslar
-        <a href={`${base}gizlilik/`}>Gizlilik Politikası</a> ve
-        <a href={`${base}kvkk/`}>KVKK Aydınlatma Metni</a>'nde düzenlenmiştir.
-        Büronuzun Platform'a girdiği içerikler büronuza aittir; Korkut bu
-        içerikler üzerinde hizmeti sunmak için gereken sınırlı kullanım hakkı
-        dışında hak iddia etmez.
+        Korkut bazı işler için büronun seçtiği dış hizmetlerle konuşabilir:
+        bir bulut yapay zeka sağlayıcısı (OpenAI, Anthropic, Google Gemini
+        gibi), Telegram ve e-posta sunucusu. Hukuki araştırma sırasında
+        yapılan sorgular Yargıtay, Danıştay, UYAP Emsal ve mevzuat gibi kamuya
+        açık kaynaklara gider. Bu hizmetlerin kullanımı kendi koşullarına
+        tabidir; hangilerinin etkin olacağına büro karar verir.
       </p>
 
-      <h2>6. Garanti reddi</h2>
+      <h2>6. Katkı</h2>
       <p>
-        Platform "OLDUĞU GİBİ" ve "MEVCUT HALİYLE", açık veya örtülü hiçbir
-        garanti verilmeksizin sunulur. Kesintisiz, hatasız veya belirli bir
-        amaca uygun çalışacağı taahhüt edilmez.
-      </p>
-
-      <h2>7. Sorumluluk sınırı</h2>
-      <p>
-        Uygulanacak hukukun izin verdiği azami ölçüde Korkut; kar kaybı, veri
-        kaybı, itibar kaybı dahil dolaylı veya sonuç niteliğindeki
-        zararlardan sorumlu tutulamaz. Platform çıktılarının bir yargı
-        sürecinde veya hukuki işlemde kullanılmasından doğan sonuçlar,
-        çıktıyı gözden geçirip kullanan tarafa aittir.
-      </p>
-
-      <h2>8. Askıya alma ve fesih</h2>
-      <p>
-        Bu koşulların ihlali halinde Korkut, hesabı veya büroyu önceden
-        bildirimle ya da ihlalin ağırlığına göre derhal askıya alabilir veya
-        kapatabilir. Siz de hesabınızı dilediğiniz zaman kapatabilirsiniz;
-        kapanış sonrası veriler Gizlilik Politikası'nda açıklandığı şekilde
-        silinir.
-      </p>
-
-      <h2>9. Ücretlendirme</h2>
-      <p>
-        Hizmetin güncel ücretlendirme modeli kayıt sürecinde bildirilir.
-        Korkut, ücretlendirmede değişikliğe gitme hakkını saklı tutar;
-        değişiklikler mevcut kullanıcılara makul süre önceden duyurulur.
-      </p>
-
-      <h2>10. Değişiklikler ve uygulanacak hukuk</h2>
-      <p>
-        Korkut bu koşulları güncelleyebilir; güncel sürüm bu sayfada
-        yayımlanır ve önemli değişiklikler kullanıcılara duyurulur. Bu
-        koşullar Türkiye Cumhuriyeti hukukuna tabidir.
-      </p>
-
-      <p>
-        Sorularınız için:
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        Hata bildirimleri, öneriler ve kod katkıları{" "}
+        <a href={REPO_URL} rel="noopener">GitHub deposunda</a> kabul edilir.
+        Gönderdiğiniz katkılar aynı MIT lisansıyla yayımlanır; ayrıntılar{" "}
+        <a href={CONTRIBUTING_URL} rel="noopener">katkı rehberindedir</a>.
       </p>
     </div>
   </main>

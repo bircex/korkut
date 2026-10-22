@@ -3,7 +3,7 @@
 // third-party assets and the page makes zero cross-origin requests.
 import "@fontsource-variable/inter";
 import "../styles/global.css";
-import { SITE, FAQS } from "../consts";
+import { SITE, FAQS, REPO_URL } from "../consts";
 
 interface Props {
   title?: string;
@@ -35,13 +35,16 @@ const jsonLd = {
       "@type": "SoftwareApplication",
       name: SITE.name,
       applicationCategory: "BusinessApplication",
-      operatingSystem: "Web",
+      operatingSystem: "Linux, macOS, Windows (Docker)",
       description: SITE.description,
       url: canonical,
       inLanguage: "tr-TR",
+      license: "https://opensource.org/licenses/MIT",
+      isAccessibleForFree: true,
+      codeRepository: REPO_URL,
       offers: {
         "@type": "Offer",
-        availability: "https://schema.org/InStock",
+        price: "0",
         priceCurrency: "TRY",
       },
       author: {

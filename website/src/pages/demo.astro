@@ -1,25 +1,26 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { REGISTER_URL, DEMO_PATH } from "../consts";
+import { DEMO_PATH } from "../consts";
 
-// Eski "Demo iste" bağlantıları kırılmasın: /demo artık uygulamanın kayıt sayfasına
-// yönlendirir (Ücretsiz Başla). Meta refresh CSP'ye takılmaz (inline script yok);
+// Eski "Demo iste" ve "Ücretsiz Başla" bağlantıları kırılmasın: /demo artık ana sayfadaki
+// kurulum bölümüne yönlendirir. Meta refresh CSP'ye takılmaz (inline script yok);
 // görünen bağlantı yönlendirme çalışmazsa yedektir.
 const base = import.meta.env.BASE_URL;
+const target = `${base}#kurulum`;
 ---
 
 <Layout
-  title="Ücretsiz Başla"
-  description="Büronuzu ücretsiz kaydedin; onaydan sonra Google ile giriş yaparak dakikalar içinde başlayın."
+  title="Kurulum"
+  description="Korkut açık kaynaktır; Docker ile kendi makinenize dakikalar içinde kurarsınız."
   path={`${base}${DEMO_PATH}`}
 >
-  <meta slot="head" http-equiv="refresh" content={`0;url=${REGISTER_URL}`} />
+  <meta slot="head" http-equiv="refresh" content={`0;url=${target}`} />
   <main id="icerik">
     <section class="redirect">
       <div class="wrap">
-        <h1>Ücretsiz Başla</h1>
-        <p>Sizi kayıt sayfasına yönlendiriyoruz…</p>
-        <p><a class="btn btn-primary" href={REGISTER_URL}>Kayıt sayfasına git</a></p>
+        <h1>Kurulum</h1>
+        <p>Korkut artık açık kaynak; sizi kurulum adımlarına yönlendiriyoruz…</p>
+        <p><a class="btn btn-primary" href={target}>Kurulum adımlarına git</a></p>
       </div>
     </section>
   </main>
