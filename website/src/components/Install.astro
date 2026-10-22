@@ -1,16 +1,17 @@
 ---
-import { LOCAL_APP_URL, REPO_URL, RELEASES_URL } from "../consts";
+import { LOCAL_APP_URL, LATEST_BUNDLE_URL, RELEASES_URL } from "../consts";
 
 // Kurulum: depodaki docs/INSTALL.md'nin kısa hâli. Komutlar oradakilerle aynı tutulur.
 const steps = [
   {
-    title: "Depoyu indirin",
-    body: "Tek gereksinim Docker (Compose v2 ile). Kaynak kodu GitHub'dan alın.",
-    code: `git clone ${REPO_URL}.git\ncd korkut`,
+    title: "Son sürümü indirin",
+    body: "Tek gereksinim Docker (Compose v2 ile). Kurulum paketini indirip açın.",
+    code: `curl -fsSL \\\n  ${LATEST_BUNDLE_URL} \\\n  | tar xz\ncd korkut`,
+    alt: "Windows: Sürümler sayfasından korkut.zip dosyasını indirip açın.",
   },
   {
     title: "Kurun",
-    body: "Kurulum gizli anahtarları ve yönetici parolasını üretir, her şeyi Docker ile başlatır.",
+    body: "Kurulum gizli anahtarları ve yönetici parolasını üretir, o sürümün Docker imajlarını indirip başlatır.",
     code: "./install.sh",
     alt: "Windows (PowerShell): .\\install.ps1",
   },

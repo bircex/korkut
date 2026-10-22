@@ -13,19 +13,33 @@ Korkut bir bulut hizmeti değil, büronuzun kendi bilgisayarına veya sunucusuna
 
 ## Kurulum
 
+Son sürümün kurulum paketini indirip açın ve kurulum betiğini çalıştırın:
+
+```bash
+curl -fsSL https://github.com/bircex/korkut/releases/latest/download/korkut.tar.gz | tar xz
+cd korkut
+./install.sh
+```
+
+Windows'ta [son sürüm](https://github.com/bircex/korkut/releases/latest) sayfasından `korkut.zip` dosyasını indirip açın ve PowerShell ile `.\install.ps1` çalıştırın.
+
+Kurulum betiği şunları yapar:
+
+1. Yapay zeka geçidinin iki gizli anahtarını ve yönetici hesabının ilk parolasını üretip `.env` dosyasına yazar. Betiği yeniden çalıştırmak bu değerleri değiştirmez.
+2. O sürümün Docker imajlarını `ghcr.io/bircex` üzerinden indirip her şeyi başlatır.
+3. Sonunda giriş adresini ve yönetici parolasını ekrana yazar.
+
+Sürümler takvim tabanlı numaralanır (`YIL.AY.SIRA`, örneğin `2026.10.0`). Her sürümde nelerin değiştiği [değişiklik günlüğünde](https://github.com/bircex/korkut/blob/main/CHANGELOG.md) yazar.
+
+### Kaynak koddan kurulum
+
+Depoyu klonlayıp aynı betiği çalıştırırsanız imajlar indirilmez, kaynak koddan derlenir:
+
 ```bash
 git clone https://github.com/bircex/korkut.git
 cd korkut
 ./install.sh
 ```
-
-Windows'ta PowerShell ile `.\install.ps1` çalıştırın.
-
-Kurulum betiği şunları yapar:
-
-1. Yapay zeka geçidinin iki gizli anahtarını ve yönetici hesabının ilk parolasını üretip `.env` dosyasına yazar. Betiği yeniden çalıştırmak bu değerleri değiştirmez.
-2. `docker compose up -d --build` ile her şeyi derleyip başlatır.
-3. Sonunda giriş adresini ve yönetici parolasını ekrana yazar.
 
 > **`.env` dosyasının bir kopyasını saklayın.** İçindeki `LLMR_MASTER_KEY`, yapay zeka sağlayıcı anahtarlarını şifreler; bu anahtar olmadan girdiğiniz sağlayıcı anahtarları geri okunamaz.
 
@@ -52,14 +66,14 @@ Korkut varsayılan olarak yalnızca kurulduğu makineden (`127.0.0.1`) erişileb
 
 Bir ayarı (port, e-posta sunucusu vb.) değiştirmek için `.env` dosyasına ekleyin (seçeneklerin listesi depodaki `.env.example` dosyasındadır) ve `./install.sh` komutunu yeniden çalıştırın.
 
-Güncellemek de aynıdır:
+Güncellemek için yeni sürümü aynı klasörün üzerine açıp kurulum betiğini yeniden çalıştırın. `.env` dosyası pakette olmadığı için ayarlarınız ve verileriniz korunur:
 
 ```bash
-git pull
-./install.sh
+curl -fsSL https://github.com/bircex/korkut/releases/latest/download/korkut.tar.gz | tar xz
+cd korkut && ./install.sh
 ```
 
-Veritabanı değişiklikleri başlangıçta otomatik uygulanır.
+Kaynak koddan kurduysanız `git pull` ve ardından `./install.sh` yeterlidir. Veritabanı değişiklikleri başlangıçta otomatik uygulanır.
 
 ## Yönetici parolasını unuttuysanız
 

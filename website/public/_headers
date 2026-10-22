@@ -1,7 +1,7 @@
-# Host-level security headers (KDM-032). Cloudflare Pages / any host that honours a
-# _headers file serves these. The CSP is ALSO set as a <meta http-equiv> in the page
-# head (Layout.astro) so it applies even on a host that ignores this file; the
-# directives that a meta tag cannot carry (frame-ancestors, HSTS) live only here.
+# Host-level security headers (KDM-032) for hosts that honour a _headers file (Cloudflare,
+# Netlify). GitHub Pages, where korkutai.com is served from, ignores this file: there the CSP comes
+# from the <meta http-equiv> in Layout.astro (kept identical by scripts/check-headers.mjs), and
+# HTTPS is enforced by Pages. The rest of this list is the reference for a header-capable host.
 /*
   Content-Security-Policy: default-src 'self'; base-uri 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload

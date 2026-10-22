@@ -23,6 +23,9 @@ export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 export const CONTRIBUTING_URL = `${REPO_URL}/blob/main/CONTRIBUTING.md`;
 export const SECURITY_POLICY_URL = `${REPO_URL}/blob/main/SECURITY.md`;
 export const RELEASES_URL = `${REPO_URL}/releases`;
+// Her sürümün kurulum paketi aynı adı taşır, bu yüzden en yenisi hep bu adreste durur.
+export const LATEST_RELEASE_URL = `${RELEASES_URL}/latest`;
+export const LATEST_BUNDLE_URL = `${RELEASES_URL}/latest/download/korkut.tar.gz`;
 
 // Kurulumdan sonra uygulamanın açıldığı yerel adres.
 export const LOCAL_APP_URL = "http://localhost:8090";
@@ -45,7 +48,7 @@ export const FAQS = [
   },
   {
     q: "Kurulum için ne gerekiyor?",
-    a: "Docker (Compose v2 ile) yeterli. Depoyu indirip tek komutla kurarsınız: macOS ve Linux'ta ./install.sh, Windows'ta .\\install.ps1. Kurulum yönetici hesabının ilk parolasını üretir ve uygulamayı http://localhost:8090 adresinde açar.",
+    a: "Docker (Compose v2 ile) yeterli. Son sürümü indirip tek komutla kurarsınız: macOS ve Linux'ta ./install.sh, Windows'ta .\\install.ps1. Kurulum yönetici hesabının ilk parolasını üretir ve uygulamayı http://localhost:8090 adresinde açar.",
   },
   {
     q: "Hangi yapay zeka modelleriyle çalışıyor?",

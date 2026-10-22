@@ -7,7 +7,7 @@ as a static site. The page content is in Turkish; the theme is black-and-white
 ## Development
 
 ```bash
-cd landing
+cd website
 npm install
 npm run dev        # http://localhost:4321
 npm run build      # static output in dist/
@@ -38,5 +38,14 @@ npm run preview    # preview the built output
 
 ## Deployment
 
-It's a static build — drop the `dist/` folder on any static host
-(GitHub Pages, Netlify, Vercel, Cloudflare Pages, Nginx).
+Every push to `main` that touches `website/` builds the site and publishes it to GitHub Pages
+(`.github/workflows/pages.yml`); the Release workflow also redeploys it. The custom domain
+`korkutai.com` is set in the repository's Settings > Pages, with its DNS at Cloudflare:
+
+| Type | Name | Value |
+|---|---|---|
+| A | `@` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
+| AAAA | `@` | `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153` |
+| CNAME | `www` | `bircex.github.io` |
+
+Keep the records **DNS only** (grey cloud) so GitHub can issue and renew the certificate.
