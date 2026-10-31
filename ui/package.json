@@ -1,7 +1,7 @@
 {
   "name": "korkut-frontend",
   "private": true,
-  "version": "2026.7.0",
+  "version": "2026.10.0",
   "license": "MIT",
   "type": "module",
   "scripts": {

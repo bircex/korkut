@@ -10,6 +10,8 @@ request; the Release workflow (`.github/workflows/release.yml`, see
 
 ## [Unreleased]
 
+## [2026.10.0] - 2026-10-31
+
 ### Added
 - **Self-hosted, single office**: one install per office on its own machine, started with
   `./install.sh` (Windows: `.\install.ps1`). The installer creates the `korkut-admin` account and its
@@ -59,4 +61,6 @@ request; the Release workflow (`.github/workflows/release.yml`, see
 - **Consolidated legal-search tools** from 18 near-identical tools to 3 source-routed tools,
   cutting the per-request token footprint.
 
-[Unreleased]: https://github.com/bircex/korkut/commits/main
+[Unreleased]: https://github.com/bircex/korkut/compare/v2026.10.0...HEAD
+[2026.10.0]: https://github.com/bircex/korkut/compare/v2026.7.0...v2026.10.0
+[2026.7.0]: https://github.com/bircex/korkut/releases/tag/v2026.7.0
