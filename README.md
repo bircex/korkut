@@ -123,4 +123,4 @@ platform, or legal advice. It is provided **"AS IS"**, without warranty of any k
 
 ## License
 
-[MIT](LICENSE) © Recep Kızılarslan
+[MIT](LICENSE) © BirceX
