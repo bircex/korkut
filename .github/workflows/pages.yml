@@ -47,7 +47,7 @@ jobs:
         run: npm run build
       - name: Security headers
         run: npm run check:headers
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: website/dist
 
