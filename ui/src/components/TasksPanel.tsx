@@ -1,3 +1,4 @@
+import { Select } from "../a11y";
 import { P, useCan } from "../permissions";
 import { useEffect, useState } from "react";
 import { api, type Member, type Task, type User } from "../api";
@@ -113,17 +114,12 @@ export function TasksPanel({ user }: { user: User }) {
         <h1 className="text-lg font-bold text-zinc-900">Görevler</h1>
         <label className="ml-auto flex items-center gap-1.5 text-[13px] text-zinc-600">
           Kapsam
-          <select
+          <Select
             value={scope}
-            onChange={(e) => go(showAll, e.target.value as Scope)}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-[13px] text-zinc-800 outline-none focus:border-zinc-900"
-          >
-            {SCOPES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => go(showAll, v as Scope)}
+            size="sm"
+            options={SCOPES.map((s) => ({ value: s.value, label: s.label }))}
+          />
         </label>
         <label className="flex items-center gap-1.5 text-[13px] text-zinc-600">
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
@@ -218,18 +214,14 @@ export function TasksPanel({ user }: { user: User }) {
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
               Atanan (opsiyonel)
-              <select
+              <Select
                 value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className={`${input} text-zinc-700`}
-              >
-                <option value="">—</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.full_name ?? m.username}
-                  </option>
-                ))}
-              </select>
+                onChange={setAssignee}
+                options={[
+                  { value: "", label: "—" },
+                  ...members.map((m) => ({ value: String(m.id), label: m.full_name ?? m.username })),
+                ]}
+              />
             </label>
             <div className="flex gap-3">
               <label className="flex flex-1 flex-col gap-1 text-[13px] text-zinc-600">

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axeComponent } from "../test/axe";
+import { choose } from "../test/select";
 import { MatterTeam } from "./MatterTeam";
 import { teamApi, type MatterTeam as Team } from "../api";
 
@@ -21,7 +22,7 @@ describe("MatterTeam", () => {
     vi.mocked(teamApi.add).mockResolvedValue({ ...team, members: [LEAD, { ...LEAD, user_id: "u2", name: "Av. Mert", is_lead: false }] });
     render(<MatterTeam matterId="m1" />);
 
-    fireEvent.change(await screen.findByLabelText("Ekibe eklenecek üye"), { target: { value: "u2" } });
+    choose(await screen.findByLabelText("Ekibe eklenecek üye"), "Av. Mert");
     fireEvent.click(screen.getByRole("button", { name: "Ekibe ekle" }));
 
     await waitFor(() => expect(teamApi.add).toHaveBeenCalledWith("m1", "u2"));

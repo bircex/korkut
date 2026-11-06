@@ -4,6 +4,7 @@
 export { Button } from "./Button";
 export { Field, TextArea } from "./Field";
 export { NumberField, DateField, DateRangeField, SelectField, CheckboxField, RepeatableListField } from "./FormFields";
+export { Select, type SelectOption, type SelectSize } from "./Select";
 export { Dialog, ConfirmDialog } from "./Dialog";
 export { Menu, type MenuItem } from "./Menu";
 export { ToastProvider, useToast } from "./Toast";

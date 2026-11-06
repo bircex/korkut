@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, auditApi, type AuditEvent } from "../api";
-import { Button } from "../a11y";
+import { Button, Select } from "../a11y";
 
 // Ayarlar → Erişim kayıtları: kimin, ne zaman, neye eriştiği ya da neyi değiştirdiği. Müvekkil
 // bilgisi görüntülemeleri alan adıyla tutulur, değerleriyle değil. Yalnızca audit.read ile görünür.
@@ -99,20 +99,15 @@ export function AuditLog() {
         </p>
         <label className="ml-auto flex items-center gap-2 text-sm text-zinc-600">
           Tür
-          <select
+          <Select
             value={filter}
-            onChange={(e) => {
+            onChange={(v) => {
               setLoading(true);
-              setFilter(e.target.value);
+              setFilter(v);
             }}
-            className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-800 outline-none focus:border-zinc-900"
-          >
-            {FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            options={FILTERS.map((f) => ({ value: f.value, label: f.label }))}
+          />
         </label>
       </div>
       {error && (

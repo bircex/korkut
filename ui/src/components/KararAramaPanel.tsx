@@ -10,7 +10,7 @@ import {
   MagnifyingGlass,
   Warning,
 } from "../icons";
-import { Spinner } from "../a11y";
+import { Spinner, Select } from "../a11y";
 import { RightDrawer } from "./RightDrawer";
 import { SmartDecisionDetail } from "./DecisionDetail";
 import { SaveDecisionButton } from "./SaveDecisionButton";
@@ -395,13 +395,11 @@ export function KararAramaPanel() {
           <div className="p-5">
             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Kaynak">
-                <select value={source} onChange={(e) => setSource(e.target.value)} className={INPUT_CLS}>
-                  {SOURCES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={source}
+                  onChange={setSource}
+                  options={SOURCES.map((s) => ({ value: s.value, label: s.label }))}
+                />
               </Field>
               <Field label="Arama Terimi" required className="sm:col-span-2">
                 <div className="relative">
@@ -423,14 +421,14 @@ export function KararAramaPanel() {
                 <>
                   {sourceMeta.sortable && (
                     <Field label="Sıralama">
-                      <select
+                      <Select
                         value={sort}
-                        onChange={(e) => setSort(e.target.value as "relevance" | "date")}
-                        className={INPUT_CLS}
-                      >
-                        <option value="relevance">Alaka</option>
-                        <option value="date">En yeni</option>
-                      </select>
+                        onChange={(v) => setSort(v as "relevance" | "date")}
+                        options={[
+                          { value: "relevance", label: "Alaka" },
+                          { value: "date", label: "En yeni" },
+                        ]}
+                      />
                     </Field>
                   )}
                   {sourceMeta.dateFilter && (
@@ -465,34 +463,42 @@ export function KararAramaPanel() {
                   )}
                   {has("applicationType") && (
                     <Field label="Başvuru türü">
-                      <select value={applicationType} onChange={(e) => setApplicationType(e.target.value)} className={INPUT_CLS}>
-                        <option value="">(tümü)</option>
-                        <option value="norm">Norm denetimi</option>
-                        <option value="individual">Bireysel başvuru</option>
-                      </select>
+                      <Select
+                        value={applicationType}
+                        onChange={setApplicationType}
+                        options={[
+                          { value: "", label: "(tümü)" },
+                          { value: "norm", label: "Norm denetimi" },
+                          { value: "individual", label: "Bireysel başvuru" },
+                        ]}
+                      />
                     </Field>
                   )}
                   {has("scope") && (
                     <Field label="Kapsam">
-                      <select value={scope} onChange={(e) => setScope(e.target.value)} className={INPUT_CLS}>
-                        <option value="">(tümü)</option>
-                        <option value="all">Tümü</option>
-                        <option value="esas">Esas</option>
-                        <option value="karar">Karar</option>
-                      </select>
+                      <Select
+                        value={scope}
+                        onChange={setScope}
+                        options={[
+                          { value: "", label: "(tümü)" },
+                          { value: "all", label: "Tümü" },
+                          { value: "esas", label: "Esas" },
+                          { value: "karar", label: "Karar" },
+                        ]}
+                      />
                     </Field>
                   )}
                   {has("decisionType") &&
                     (sourceMeta.decisionTypeOptions ? (
                       <Field label="Karar türü">
-                        <select value={decisionType} onChange={(e) => setDecisionType(e.target.value)} className={INPUT_CLS}>
-                          <option value="">(tümü)</option>
-                          {sourceMeta.decisionTypeOptions.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
+                        <Select
+                          value={decisionType}
+                          onChange={setDecisionType}
+                          options={[
+                            { value: "", label: "(tümü)" },
+                            ...sourceMeta.decisionTypeOptions.map((o) => ({ value: o.value, label: o.label })),
+                          ]}
+                        />
                       </Field>
                     ) : (
                       <Field label="Karar türü">
@@ -506,23 +512,27 @@ export function KararAramaPanel() {
                     ))}
                   {has("legislationType") && (
                     <Field label="Mevzuat türü">
-                      <select value={legislationType} onChange={(e) => setLegislationType(e.target.value)} className={INPUT_CLS}>
-                        <option value="">(tümü)</option>
-                        {LEGISLATION_TYPES.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        value={legislationType}
+                        onChange={setLegislationType}
+                        options={[
+                          { value: "", label: "(tümü)" },
+                          ...LEGISLATION_TYPES.map((o) => ({ value: o.value, label: o.label })),
+                        ]}
+                      />
                     </Field>
                   )}
                   {has("searchScope") && (
                     <Field label="Arama kapsamı">
-                      <select value={searchScope} onChange={(e) => setSearchScope(e.target.value)} className={INPUT_CLS}>
-                        <option value="">Başlıkta (varsayılan)</option>
-                        <option value="content">Metin içinde</option>
-                        <option value="title_and_content">Başlık + metin</option>
-                      </select>
+                      <Select
+                        value={searchScope}
+                        onChange={setSearchScope}
+                        options={[
+                          { value: "", label: "Başlıkta (varsayılan)" },
+                          { value: "content", label: "Metin içinde" },
+                          { value: "title_and_content", label: "Başlık + metin" },
+                        ]}
+                      />
                     </Field>
                   )}
                   {has("mevzuatNo") && (

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api, ApiError, rolesApi, type Invite, type Member, type Role, type StyleFields, type User } from "../api";
 import { navigate, usePath } from "../router";
-import { Button, Field } from "../a11y";
+import { Button, Field, Select } from "../a11y";
 import {
   type Icon,
   BookmarkSimple,
@@ -196,19 +196,17 @@ function Members() {
             {m.is_self ? (
               <span className="shrink-0 text-[12px] text-zinc-500">{roleName(m.role)}</span>
             ) : (
-              <select
+              <Select
                 aria-label={`${m.full_name ?? m.username} rolü`}
                 value={m.role}
-                onChange={(e) => changeRole(m, e.target.value)}
-                className="shrink-0 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[12px]"
-              >
-                {roles.map((r) => (
-                  <option key={r.key} value={r.key}>
-                    {r.name}
-                  </option>
-                ))}
-                {!roles.some((r) => r.key === m.role) && <option value={m.role}>{m.role}</option>}
-              </select>
+                onChange={(v) => changeRole(m, v)}
+                size="xs"
+                className="shrink-0"
+                options={[
+                  ...roles.map((r) => ({ value: r.key, label: r.name })),
+                  ...(!roles.some((r) => r.key === m.role) ? [{ value: m.role, label: m.role }] : []),
+                ]}
+              />
             )}
             {!m.is_self && m.is_active && (
               <button
@@ -232,18 +230,12 @@ function Members() {
               placeholder="Ad Soyad"
               className={inputCls}
             />
-            <select
+            <Select
               aria-label="Yeni üyenin rolü"
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value)}
-              className={inputCls}
-            >
-              {roles.map((r) => (
-                <option key={r.key} value={r.key}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+              onChange={setInviteRole}
+              options={roles.map((r) => ({ value: r.key, label: r.name }))}
+            />
             <div className="flex items-center gap-2">
               <input
                 type="email"

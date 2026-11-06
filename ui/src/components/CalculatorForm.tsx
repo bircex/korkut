@@ -96,7 +96,7 @@ function FieldRenderer({
           label={field.label}
           hint={field.help}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           options={[
             { value: "true", label: "Evet" },
             { value: "false", label: "Hayır" },
@@ -112,7 +112,7 @@ function FieldRenderer({
           hint={field.help}
           error={requiredError}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           options={field.options ?? []}
         />
       );

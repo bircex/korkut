@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { axeComponent } from "../test/axe";
+import { choose } from "../test/select";
 import { AiSettings, CHAT_ROUTE, EMBED_ROUTE } from "./AiSettings";
 import { aiApi, ApiError, type AiProviderType } from "../api";
 
@@ -57,7 +58,7 @@ describe("AiSettings", () => {
     vi.mocked(aiApi.addProvider).mockResolvedValueOnce({ id: "anthropic", type: "anthropic", base_url: null, reach: null, enabled: true, credential: "…test" });
     render(<AiSettings />);
 
-    fireEvent.change(await screen.findByRole("combobox", { name: /^Sağlayıcı/ }), { target: { value: "anthropic" } });
+    choose(await screen.findByRole("combobox", { name: /^Sağlayıcı/ }), "Anthropic");
     fireEvent.change(screen.getByLabelText(/API anahtarı/), { target: { value: " sk-ant-test " } });
     fireEvent.click(screen.getByRole("button", { name: "Ekle" }));
 
@@ -69,7 +70,7 @@ describe("AiSettings", () => {
     vi.mocked(aiApi.addProvider).mockResolvedValueOnce({ id: "openai-compatible", type: "openai-compatible", base_url: null, reach: null, enabled: true, credential: null });
     render(<AiSettings />);
 
-    fireEvent.change(await screen.findByRole("combobox", { name: /^Sağlayıcı/ }), { target: { value: "openai-compatible" } });
+    choose(await screen.findByRole("combobox", { name: /^Sağlayıcı/ }), "OpenAI-compatible");
     fireEvent.change(screen.getByLabelText(/Adres/), { target: { value: "http://host.docker.internal:11434/v1" } });
     fireEvent.click(screen.getByRole("button", { name: "Ekle" }));
 
@@ -89,8 +90,8 @@ describe("AiSettings", () => {
     vi.mocked(aiApi.setRoute).mockResolvedValue({ name: "x", routes: [] });
     render(<AiSettings />);
 
-    fireEvent.change(await screen.findByLabelText(/Sohbet modeli/), { target: { value: "anthropic/claude-sonnet-5" } });
-    fireEvent.change(screen.getByLabelText(/Belge arama modeli/), { target: { value: "ollama/nomic-embed-text" } });
+    choose(await screen.findByLabelText(/Sohbet modeli/), "anthropic/claude-sonnet-5");
+    choose(screen.getByLabelText(/Belge arama modeli/), "ollama/nomic-embed-text");
     fireEvent.click(screen.getByRole("button", { name: "Kaydet" }));
 
     await waitFor(() => expect(aiApi.setRoute).toHaveBeenCalledTimes(2));

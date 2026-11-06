@@ -1,6 +1,7 @@
-import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, useId } from "react";
+import { type InputHTMLAttributes, type ReactNode, useId } from "react";
 import { X } from "../icons";
 import { FieldShell } from "./fieldShell";
+import { Select, type SelectOption } from "./Select";
 import { FIELD_INPUT_CLS, type BaseFieldProps, useFieldIds } from "./fieldIds";
 
 // Typed form-field primitives (KDM roadmap: tool/calculator forms). Every field carries its own
@@ -122,32 +123,36 @@ export function SelectField({
   hint,
   required,
   options,
+  value,
+  onChange,
   placeholder = "Seçiniz",
-  ...props
-}: BaseProps &
-  Omit<SelectHTMLAttributes<HTMLSelectElement>, "aria-invalid"> & {
-    options: { value: string; label: string }[];
-    placeholder?: string;
-  }) {
+  disabled,
+  name,
+}: BaseProps & {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  name?: string;
+}) {
   const { id, errorId, hintId, describedBy } = useFieldIds(error, hint);
   return (
     <FieldShell id={id} label={label} required={required} hint={hint} hintId={hintId} error={error} errorId={errorId}>
-      <select
-        {...props}
+      <Select
         id={id}
+        size="lg"
+        name={name}
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder={placeholder}
         required={required}
+        disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         aria-errormessage={error ? errorId : undefined}
-        className={FIELD_INPUT_CLS}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      />
     </FieldShell>
   );
 }

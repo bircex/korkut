@@ -24,7 +24,7 @@ import { ChatTree } from "./ChatTree";
 import { can, P } from "../permissions";
 import { RightDrawer } from "./RightDrawer";
 import { SourcesDrawer } from "./SourcesDrawer";
-import { ConfirmDialog } from "../a11y";
+import { ConfirmDialog, Select } from "../a11y";
 import { Settings } from "./Settings";
 import { FileAttachmentCard } from "./FileAttachmentCard";
 
@@ -1098,21 +1098,17 @@ export function Workspace({ user, onLogout }: { user: User; onLogout: () => void
                     <label htmlFor="home-matter" className="text-zinc-500">
                       Sohbetin dosyası
                     </label>
-                    <select
+                    <Select
                       id="home-matter"
                       value={homeMatter ?? ""}
-                      onChange={(e) => newChat(e.target.value || null)}
-                      className="max-w-xs rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-800 outline-none focus:border-zinc-900"
-                    >
-                      <option value="" disabled={!canPersonal}>
-                        {canPersonal ? "Kişisel (dosyasız)" : "Bir dosya seçin"}
-                      </option>
-                      {matters.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.title}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => newChat(v || null)}
+                      size="sm"
+                      className="max-w-xs"
+                      options={[
+                        { value: "", label: canPersonal ? "Kişisel (dosyasız)" : "Bir dosya seçin", disabled: !canPersonal },
+                        ...matters.map((m) => ({ value: m.id, label: m.title })),
+                      ]}
+                    />
                   </div>
                 )}
                 {homeMatter === null && !canPersonal && (

@@ -1,3 +1,4 @@
+import { Select } from "../a11y";
 import { useEffect, useState } from "react";
 import { api, type MemoryItem } from "../api";
 
@@ -72,15 +73,15 @@ export function MemorySettings() {
             className="resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
           />
           <div className="flex items-center gap-2">
-            <select
+            <Select
               value={kind}
-              onChange={(e) => setKind(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-900"
-            >
-              <option value="note">Not</option>
-              <option value="fact">Bilgi</option>
-              <option value="preference">Tercih</option>
-            </select>
+              onChange={setKind}
+              options={[
+                { value: "note", label: "Not" },
+                { value: "fact", label: "Bilgi" },
+                { value: "preference", label: "Tercih" },
+              ]}
+            />
             <button
               onClick={add}
               disabled={busy || !text.trim()}
