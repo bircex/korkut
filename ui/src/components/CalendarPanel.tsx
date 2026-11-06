@@ -1,3 +1,4 @@
+import { Select } from "../a11y";
 import { P, useCan } from "../permissions";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type CalendarEvent, type ClientBrief, type MatterBrief } from "../api";
@@ -294,18 +295,18 @@ export function CalendarPanel() {
         </div>
         <span className="min-w-40 text-sm font-medium text-zinc-800">{label}</span>
 
-        <select
+        <Select
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className={`${input} text-zinc-700`}
-        >
-          <option value="">Tümü</option>
-          <option value="gorev">Görev</option>
-          <option value="hatirlatma">Hatırlatma</option>
-          <option value="randevu">Randevu</option>
-          <option value="hearing">Duruşma</option>
-          <option value="deadline">Süre</option>
-        </select>
+          onChange={setFilter}
+          options={[
+            { value: "", label: "Tümü" },
+            { value: "gorev", label: "Görev" },
+            { value: "hatirlatma", label: "Hatırlatma" },
+            { value: "randevu", label: "Randevu" },
+            { value: "hearing", label: "Duruşma" },
+            { value: "deadline", label: "Süre" },
+          ]}
+        />
         {canWrite && (
           <button
             onClick={() => openFormOn(ymdOf(cursor))}
@@ -340,15 +341,15 @@ export function CalendarPanel() {
           }
         >
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <select
+            <Select
               value={f.category}
-              onChange={(e) => setF({ ...f, category: e.target.value })}
-              className={`${input} text-zinc-700`}
-            >
-              <option value="gorev">Görev</option>
-              <option value="hatirlatma">Hatırlatma</option>
-              <option value="randevu">Randevu</option>
-            </select>
+              onChange={(v) => setF({ ...f, category: v })}
+              options={[
+                { value: "gorev", label: "Görev" },
+                { value: "hatirlatma", label: "Hatırlatma" },
+                { value: "randevu", label: "Randevu" },
+              ]}
+            />
             <input
               value={f.title}
               onChange={(e) => setF({ ...f, title: e.target.value })}
@@ -384,46 +385,38 @@ export function CalendarPanel() {
                 Tüm gün
               </label>
             </div>
-            <select
+            <Select
               value={f.matter_id}
-              onChange={(e) => setF({ ...f, matter_id: e.target.value })}
-              className={`${input} text-zinc-700`}
-            >
-              <option value="">Dosya (opsiyonel)</option>
-              {matters.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.title}
-                </option>
-              ))}
-            </select>
-            <select
+              onChange={(v) => setF({ ...f, matter_id: v })}
+              options={[
+                { value: "", label: "Dosya (opsiyonel)" },
+                ...matters.map((m) => ({ value: m.id, label: m.title })),
+              ]}
+            />
+            <Select
               value={f.client_id}
-              onChange={(e) => setF({ ...f, client_id: e.target.value })}
-              className={`${input} text-zinc-700`}
-            >
-              <option value="">Müvekkil (opsiyonel)</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.full_name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setF({ ...f, client_id: v })}
+              options={[
+                { value: "", label: "Müvekkil (opsiyonel)" },
+                ...clients.map((c) => ({ value: c.id, label: c.full_name })),
+              ]}
+            />
             <input
               value={f.location}
               onChange={(e) => setF({ ...f, location: e.target.value })}
               placeholder="Yer (adliye/ofis/online)"
               className={`${input} col-span-2`}
             />
-            <select
+            <Select
               value={f.repeat}
-              onChange={(e) => setF({ ...f, repeat: e.target.value })}
-              className={`${input} text-zinc-700`}
-            >
-              <option value="">Tekrar yok</option>
-              <option value="daily">Her gün</option>
-              <option value="weekly">Her hafta</option>
-              <option value="monthly">Her ay</option>
-            </select>
+              onChange={(v) => setF({ ...f, repeat: v })}
+              options={[
+                { value: "", label: "Tekrar yok" },
+                { value: "daily", label: "Her gün" },
+                { value: "weekly", label: "Her hafta" },
+                { value: "monthly", label: "Her ay" },
+              ]}
+            />
             <input
               type="date"
               value={f.until}
@@ -432,17 +425,17 @@ export function CalendarPanel() {
               title="Tekrar bitiş tarihi (opsiyonel)"
               className={`${input} text-zinc-700 disabled:opacity-50`}
             />
-            <select
-              value={f.remind}
-              onChange={(e) => setF({ ...f, remind: e.target.value })}
+            <Select
               title="Başlamadan önce e-posta hatırlatması"
-              className={`${input} text-zinc-700`}
-            >
-              <option value="">Hatırlatma yok</option>
-              <option value="15">15 dk önce</option>
-              <option value="60">1 saat önce</option>
-              <option value="1440">1 gün önce</option>
-            </select>
+              value={f.remind}
+              onChange={(v) => setF({ ...f, remind: v })}
+              options={[
+                { value: "", label: "Hatırlatma yok" },
+                { value: "15", label: "15 dk önce" },
+                { value: "60", label: "1 saat önce" },
+                { value: "1440", label: "1 gün önce" },
+              ]}
+            />
           </div>
         </Modal>
       )}

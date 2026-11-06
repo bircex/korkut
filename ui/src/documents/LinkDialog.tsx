@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../api";
-import { Button, Dialog, ConfirmDialog, Field, useToast, Spinner } from "../a11y";
+import { Button, Dialog, ConfirmDialog, Field, useToast, Spinner, Select } from "../a11y";
 import { documentsApi, type DocumentVersion, type LinkTarget } from "./api";
 import type { DocumentDto } from "./status";
 
@@ -53,15 +53,16 @@ export function LinkDialog({ doc, onClose, onChanged }: { doc: DocumentDto; onCl
       <form onSubmit={link} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1.5 text-[13px] text-zinc-500">
           Tür
-          <select
+          <Select
             value={target}
-            onChange={(e) => setTarget(e.target.value as LinkTarget)}
-            className="rounded-[10px] border border-zinc-300 bg-white px-3 py-2.5 text-[15px] text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
-          >
-            <option value="matter">Dosya</option>
-            <option value="client">Müvekkil</option>
-            <option value="party">Taraf</option>
-          </select>
+            onChange={(v) => setTarget(v as LinkTarget)}
+            size="lg"
+            options={[
+              { value: "matter", label: "Dosya" },
+              { value: "client", label: "Müvekkil" },
+              { value: "party", label: "Taraf" },
+            ]}
+          />
         </label>
         <Field label="Kayıt no (ID)" value={targetId} onChange={(e) => setTargetId(e.target.value)} required />
         <Button type="submit" disabled={busy || !targetId.trim()}>

@@ -1,3 +1,4 @@
+import { Select } from "../a11y";
 import { useCallback, useEffect, useState } from "react";
 import { api, type ClientBrief, type MatterBrief, type MatterDetail, type User } from "../api";
 import { ClientDetailsCard } from "./ClientDetailsCard";
@@ -616,18 +617,14 @@ export function MattersPanel({
             </label>
             <label className="flex flex-col gap-1 text-[13px] text-zinc-600">
               Müvekkil *
-              <select
-                className={input}
+              <Select
                 value={nm.client_id}
-                onChange={(e) => setNm({ ...nm, client_id: e.target.value })}
-              >
-                <option value="">Müvekkil seçin…</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setNm({ ...nm, client_id: v })}
+                options={[
+                  { value: "", label: "Müvekkil seçin…" },
+                  ...clients.map((c) => ({ value: c.id, label: c.full_name })),
+                ]}
+              />
               {clients.length === 0 && (
                 <span className="text-xs text-amber-600">
                   Henüz müvekkil yok, önce Müvekkiller sayfasından ekleyin.

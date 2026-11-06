@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { axeComponent } from "../test/axe";
+import { choose } from "../test/select";
 import { TasksPanel } from "./TasksPanel";
 import { api, type Task, type User } from "../api";
 
@@ -61,15 +62,15 @@ describe("TasksPanel scope", () => {
     render(<TasksPanel user={ME} />);
     expect(await screen.findByText("Dosyadaki")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Kapsam"), { target: { value: "bana" } });
+    choose(screen.getByLabelText("Kapsam"), "Bana atananlar");
     expect(screen.getByText("Bana atanan")).toBeInTheDocument();
     expect(screen.queryByText("Benim açtığım")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Kapsam"), { target: { value: "benim" } });
+    choose(screen.getByLabelText("Kapsam"), "Açtıklarım");
     expect(screen.getByText("Benim açtığım")).toBeInTheDocument();
     expect(screen.queryByText("Dosyadaki")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Kapsam"), { target: { value: "dosya" } });
+    choose(screen.getByLabelText("Kapsam"), "Dosyalarımdakiler");
     expect(screen.getByText("Dosyadaki")).toBeInTheDocument();
     expect(screen.queryByText("Bana atanan")).not.toBeInTheDocument();
     expect(window.location.search).toBe("?kapsam=dosya");

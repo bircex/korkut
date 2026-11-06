@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axeComponent } from "../test/axe";
 import { describe, it, expect, vi } from "vitest";
@@ -185,20 +185,81 @@ describe("DateField", () => {
 });
 
 describe("SelectField", () => {
-  it("lists the given options behind a placeholder", () => {
+  const OPTIONS = [
+    { value: "yasal", label: "Yasal" },
+    { value: "avans", label: "Avans" },
+    { value: "ticari", label: "Ticari", disabled: true },
+  ];
+
+  it("is a labelled combobox that lists the options behind a placeholder", async () => {
+    render(<SelectField label="Faiz türü" value="" onChange={() => {}} options={OPTIONS} />);
+    const select = screen.getByRole("combobox", { name: "Faiz türü" });
+    expect(select).toHaveTextContent("Seçiniz");
+    expect(select).toHaveAttribute("aria-expanded", "false");
+    expect(await axeComponent(document.body)).toHaveNoViolations();
+
+    fireEvent.click(select);
+    expect(select).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Seçiniz", "Yasal", "Avans", "Ticari"]);
+    expect(screen.getByRole("option", { name: "Ticari" })).toHaveAttribute("aria-disabled", "true");
+    expect(await axeComponent(document.body)).toHaveNoViolations();
+  });
+
+  it("chooses with the mouse and marks the current value", () => {
+    const onChange = vi.fn();
+    render(<SelectField label="Faiz türü" value="yasal" onChange={onChange} options={OPTIONS} />);
+    const select = screen.getByRole("combobox", { name: "Faiz türü" });
+    expect(select).toHaveTextContent("Yasal");
+    fireEvent.click(select);
+    expect(screen.getByRole("option", { name: "Yasal" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("option", { name: "Avans" }));
+    expect(onChange).toHaveBeenCalledWith("avans");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("is operable from the keyboard, skips disabled options and keeps Escape to itself", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const onOuterKey = vi.fn();
     render(
-      <SelectField
-        label="Faiz türü"
-        value=""
-        onChange={() => {}}
-        options={[
-          { value: "yasal", label: "Yasal" },
-          { value: "avans", label: "Avans" },
-        ]}
-      />,
+      <div onKeyDown={onOuterKey}>
+        <SelectField label="Faiz türü" value="" onChange={onChange} options={OPTIONS} />
+      </div>,
     );
-    const select = screen.getByLabelText("Faiz türü") as HTMLSelectElement;
-    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Seçiniz", "Yasal", "Avans"]);
+    const select = screen.getByRole("combobox", { name: "Faiz türü" });
+    select.focus();
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
+    // The last option is disabled, so the highlight stays on "Avans".
+    expect(select).toHaveAttribute("aria-activedescendant", screen.getByRole("option", { name: "Avans" }).id);
+    await user.keyboard("{Enter}");
+    expect(onChange).toHaveBeenCalledWith("avans");
+
+    await user.keyboard("{ArrowDown}{Escape}");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(select).toHaveFocus();
+    expect(onOuterKey).not.toHaveBeenCalledWith(expect.objectContaining({ key: "Escape" }));
+  });
+
+  it("jumps to an option by typing its first letters", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<SelectField label="Faiz türü" value="" onChange={onChange} options={OPTIONS} />);
+    screen.getByRole("combobox").focus();
+    await user.keyboard("av");
+    expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", screen.getByRole("option", { name: "Avans" }).id);
+    await user.keyboard("{Enter}");
+    expect(onChange).toHaveBeenCalledWith("avans");
+  });
+
+  it("blocks form submission while a required select is empty", () => {
+    render(
+      <form aria-label="f">
+        <SelectField label="Faiz türü" value="" onChange={() => {}} options={OPTIONS} required />
+      </form>,
+    );
+    expect((screen.getByRole("form", { name: "f" }) as HTMLFormElement).checkValidity()).toBe(false);
   });
 });
 

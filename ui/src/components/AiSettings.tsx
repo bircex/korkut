@@ -237,7 +237,7 @@ function AddProvider({
       <SelectField
         label="Sağlayıcı"
         value={typeId}
-        onChange={(e) => setTypeId(e.target.value)}
+        onChange={setTypeId}
         options={types.filter((t) => t.kinds.includes("chat")).map((t) => ({ value: t.id, label: t.name }))}
         required
       />
@@ -265,7 +265,7 @@ function AddProvider({
         <SelectField
           label="Veri nereye gidiyor?"
           value={reach}
-          onChange={(e) => setReach(e.target.value)}
+          onChange={setReach}
           options={REACH_OPTIONS}
           hint="Yerel modeller için 'Bu makinede' seçin; bu bilgi verinin büro dışına çıkıp çıkmadığını belirler."
           required
@@ -344,7 +344,7 @@ function ModelChoice({
           <SelectField
             label="Sohbet modeli"
             value={chat}
-            onChange={(e) => setChat(e.target.value)}
+            onChange={setChat}
             options={options}
             hint="Sohbet, dilekçe taslakları ve araç çağrıları bu modelle yapılır."
             required
@@ -352,7 +352,7 @@ function ModelChoice({
           <SelectField
             label="Belge arama modeli (embedding, isteğe bağlı)"
             value={embed}
-            onChange={(e) => setEmbed(e.target.value)}
+            onChange={setEmbed}
             options={options}
             hint="Yüklenen belgelerin aranabilmesi için bir embedding modeli seçin. Sonradan değiştirirseniz belgelerin yeniden indekslenmesi gerekir."
           />

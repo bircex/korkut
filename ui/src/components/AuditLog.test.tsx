@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { axeComponent } from "../test/axe";
+import { choose } from "../test/select";
 import { AuditLog } from "./AuditLog";
 import { auditApi, type AuditEvent } from "../api";
 
@@ -45,7 +46,7 @@ describe("AuditLog", () => {
     render(<AuditLog />);
     await screen.findByText("Kayıt yok.");
 
-    fireEvent.change(screen.getByLabelText("Tür"), { target: { value: "finance" } });
+    choose(screen.getByLabelText("Tür"), "Mali");
 
     await waitFor(() => expect(auditApi.list).toHaveBeenLastCalledWith(50, 0, "finance"));
   });

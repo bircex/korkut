@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, teamApi, type MatterTeam as Team, type MatterTeamCandidate } from "../api";
-import { Button } from "../a11y";
+import { Button, Select } from "../a11y";
 
 // Dosyanın ekibi: dosyayı ve ona bağlı her şeyi (duruşma, süre, görev, not, evrak) yalnızca
 // ekipteki üyeler görür; Yönetici bütün dosyaları görür. Ekibi dosyanın sorumlusu değiştirir.
@@ -85,19 +85,16 @@ export function MatterTeam({ matterId }: { matterId: string }) {
           <label className="sr-only" htmlFor={`add-${matterId}`}>
             Ekibe eklenecek üye
           </label>
-          <select
+          <Select
             id={`add-${matterId}`}
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value="">Üye seçin…</option>
-            {candidates.map((c) => (
-              <option key={c.user_id} value={c.user_id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelected}
+            className="min-w-0 flex-1"
+            options={[
+              { value: "", label: "Üye seçin…" },
+              ...candidates.map((c) => ({ value: c.user_id, label: c.name })),
+            ]}
+          />
           <Button variant="secondary" className="px-3 py-2 text-sm" disabled={busy || !selected} onClick={() => run(() => teamApi.add(matterId, selected))}>
             Ekibe ekle
           </Button>
