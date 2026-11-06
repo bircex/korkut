@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ReactNode } from "react";
 import {
   aiApi,
   ApiError,
@@ -37,7 +37,7 @@ function message(err: unknown, fallback: string) {
 
 type Choice = { route: string; describe: boolean };
 
-export function AiSettings() {
+function AiSettingsInner() {
   const [types, setTypes] = useState<AiProviderType[]>([]);
   const [providers, setProviders] = useState<AiProvider[] | null>(null);
   const [models, setModels] = useState<Record<string, AiModel[]>>({});
@@ -54,9 +54,12 @@ export function AiSettings() {
     (async () => {
       try {
         const [t, p, r] = await Promise.all([aiApi.providerTypes(), aiApi.providers(), aiApi.routes()]);
+        if (!Array.isArray(p) || !Array.isArray(t) || !Array.isArray(r)) {
+          throw new Error("Model geçidinden beklenmeyen bir yanıt geldi.");
+        }
         const usable = p.filter((x) => x.enabled && !x.problem);
         const lists = await Promise.all(
-          usable.map((x) => aiApi.models(x.id).then((m) => [x.id, m.data] as const).catch(() => [x.id, []] as const)),
+          usable.map((x) => aiApi.models(x.id).then((m) => [x.id, Array.isArray(m.data) ? m.data : []] as const).catch(() => [x.id, []] as const)),
         );
         if (!current) return;
         setTypes(t);
@@ -69,7 +72,7 @@ export function AiSettings() {
       }
       try {
         const u = await aiApi.usage(Math.floor(Date.now() / 1000) - 30 * 24 * 3600);
-        if (current) setUsage(u);
+        if (current) setUsage(u && Array.isArray(u.data) ? u : null);
       } catch {
         if (current) setUsage(null);
       }
@@ -291,7 +294,7 @@ function ModelChoice({
   routes: AiRouteSet[];
   onChanged: () => void;
 }) {
-  const current = (name: string) => routes.find((r) => r.name === name)?.routes[0] ?? "";
+  const current = (name: string) => routes.find((r) => r.name === name)?.routes?.[0] ?? "";
   const [chat, setChat] = useState(current(CHAT_ROUTE));
   const [embed, setEmbed] = useState(current(EMBED_ROUTE));
   const [status, setStatus] = useState<string | null>(null);
@@ -368,8 +371,8 @@ function ModelChoice({
 }
 
 function Usage({ usage }: { usage: AiUsage | null }) {
-  const cost = (c: { currency: string; amount: string }[]) =>
-    c.length === 0 ? "Yok" : c.map((x) => `${Number(x.amount).toFixed(2)} ${x.currency}`).join(" + ");
+  const cost = (c: { currency: string; amount: string }[] | undefined) =>
+    !c || c.length === 0 ? "Yok" : c.map((x) => `${Number(x.amount).toFixed(2)} ${x.currency}`).join(" + ");
   return (
     <section aria-labelledby="ai-usage">
       <h2 id="ai-usage" className="mb-3 text-[15px] font-semibold text-zinc-900">
@@ -393,7 +396,7 @@ function Usage({ usage }: { usage: AiUsage | null }) {
                 <tr key={row.model ?? "none"} className="border-t border-zinc-100">
                   <td className="py-1">{row.model ?? "Yanıtlanamayan istekler"}</td>
                   <td className="py-1">{row.requests}</td>
-                  <td className="py-1">{row.tokens.total.toLocaleString("tr-TR")}</td>
+                  <td className="py-1">{(row.tokens?.total ?? 0).toLocaleString("tr-TR")}</td>
                   <td className="py-1">{cost(row.cost)}</td>
                 </tr>
               ))}
@@ -408,5 +411,34 @@ function Usage({ usage }: { usage: AiUsage | null }) {
         </>
       )}
     </section>
+  );
+}
+
+// A malformed gateway answer must not blank the whole app: show what went wrong here instead.
+class AiSettingsBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error) {
+    console.error("AiSettings render failed", error);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <p role="alert" className="text-[13px] text-red-700">
+          Yapay zeka ayarları görüntülenemedi: {this.state.error.message}
+        </p>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function AiSettings() {
+  return (
+    <AiSettingsBoundary>
+      <AiSettingsInner />
+    </AiSettingsBoundary>
   );
 }
